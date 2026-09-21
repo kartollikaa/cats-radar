@@ -28,7 +28,7 @@ Rules, enforced by a Konsist test in `:app`:
 
 Source-set convention inside a KMP module: `commonMain` is the default home; `androidMain` holds
 only the implementations that need the platform and the `actual` declarations; `commonTest` runs
-with fakes; `androidUnitTest` is for Robolectric-backed tests (Room DAOs, migrations).
+with fakes; `androidHostTest` is for Robolectric-backed tests (Room DAOs, migrations).
 
 Adding a screen: State/Intent/Effect/Store + mapper in `:presentation`, composables in `:ui`,
 `NavKey` + entry + Koin registration in `:app`. Adding a platform capability: interface in
