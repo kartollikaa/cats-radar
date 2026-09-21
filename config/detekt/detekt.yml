@@ -1,6 +1,37 @@
 build:
-  maxIssues: 0
+  maxIssues: 0 # zero tolerance: any finding fails ./gradlew check
 
 naming:
   FunctionNaming:
-    ignoreAnnotated: ['Composable']
+    ignoreAnnotated: ['Composable'] # the default pattern rejects PascalCase, which every composable uses
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*|[A-Z][a-zA-Z0-9]*' # UI-token constants may be PascalCase (compose-patterns.md §7)
+    propertyPattern: '[A-Za-z][A-Za-z0-9]*' # top-level vals may not contain underscores (compose-patterns.md §7)
+    privatePropertyPattern: '_?[A-Za-z][A-Za-z0-9]*' # same rule, private top-level vals
+
+style:
+  MagicNumber:
+    ignoreNamedArgument: true # a named dp/sp argument is self-documenting (compose-patterns.md §7)
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/ui/**']
+  MaxLineLength:
+    maxLineLength: 120 # matches .editorconfig max_line_length
+
+formatting:
+  MaximumLineLength:
+    maxLineLength: 120 # matches .editorconfig max_line_length
+
+comments:
+  UndocumentedPublicClass:
+    active: false # KDoc is earned, not mandatory (code-commenting-standards.md)
+  UndocumentedPublicFunction:
+    active: false # KDoc is earned, not mandatory (code-commenting-standards.md)
+
+# compose-rules ships its own default config, already active for every rule below except
+# these three opt-ins; only the deviations from that default need to be listed here.
+Compose:
+  Material2:
+    active: true # project renders with Material3 only; flag any Material2 usage
+  PreviewNaming:
+    active: true # our @Preview functions use the *Preview suffix (compose-patterns.md §9)
+  UnstableCollections:
+    active: true # State collections must be Immutable* (compose-patterns.md §2)
