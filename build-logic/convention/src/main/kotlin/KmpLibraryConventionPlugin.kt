@@ -27,8 +27,9 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 minSdk = libs.version("android-minSdk").toInt()
                 withHostTestBuilder {}.configure { isIncludeAndroidResources = true }
                 compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
-                // AGP's Kotlin Multiplatform Android Library plugin has no lint-report task yet,
-                // in or out of `check` — this severity policy is inert until AGP adds one.
+                // AGP 9.4.1's KMP Android library plugin creates lint *analysis* tasks
+                // (lintAnalyzeAndroidHostTest) but no report/abort task, so this severity policy
+                // is inert: findings are computed and never surfaced, in or out of `check`.
                 lint {
                     configureLintSeverity()
                 }
@@ -38,5 +39,9 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 implementation(libs.library("kotlin-test"))
             }
         }
+
+        // The analysis above has nothing to report to, so disable it rather than pay for it on
+        // every `check` — see the comment on lint {} above.
+        tasks.matching { it.name == "lintAnalyzeAndroidHostTest" }.configureEach { enabled = false }
     }
 }
