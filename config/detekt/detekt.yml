@@ -1,5 +1,5 @@
-build:
-  maxIssues: 0 # zero tolerance: any finding fails ./gradlew check
+# buildUponDefaultConfig = true (DetektConventionPlugin) merges this on top of every ruleset's
+# shipped defaults, including compose-rules' own — only real deviations belong here.
 
 naming:
   FunctionNaming:
@@ -11,20 +11,9 @@ naming:
 
 style:
   MagicNumber:
-    ignoreNamedArgument: true # a named dp/sp argument is self-documenting (compose-patterns.md §7)
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/ui/**']
-  MaxLineLength:
-    maxLineLength: 120 # matches .editorconfig max_line_length
-
-formatting:
-  MaximumLineLength:
-    maxLineLength: 120 # matches .editorconfig max_line_length
-
-comments:
-  UndocumentedPublicClass:
-    active: false # KDoc is earned, not mandatory (code-commenting-standards.md)
-  UndocumentedPublicFunction:
-    active: false # KDoc is earned, not mandatory (code-commenting-standards.md)
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview', 'ThemePreviews'] # preview functions are invoked by tooling, not by call sites (compose-preview-patterns.md §1)
 
 # compose-rules ships its own default config, already active for every rule below except
 # these three opt-ins; only the deviations from that default need to be listed here.
@@ -35,3 +24,5 @@ Compose:
     active: true # our @Preview functions use the *Preview suffix (compose-patterns.md §9)
   UnstableCollections:
     active: true # State collections must be Immutable* (compose-patterns.md §2)
+  PreviewAnnotationNaming:
+    active: false # requires a Preview-prefixed name; contradicts the fixed name ThemePreviews (compose-preview-patterns.md §1)
