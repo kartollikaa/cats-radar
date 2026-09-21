@@ -13,7 +13,7 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | in-review |
+| 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | merged |
 | 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | planned |
 | 3 | Domain core: models, Tuning, Geohash, SessionSplitter | Pure domain types and the two geometric/temporal primitives, fully unit-tested. | safe | ~500 | 1 | planned |
 | 4 | Room database and repositories | Encounter and PlaceCell entities, DAOs, `CatsDatabase` (KMP driver), repository implementations, Robolectric tests. | safe | ~600 | 3 | planned |
@@ -34,6 +34,7 @@
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | planned |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | planned |
+| 22 | Cat coat | `CatCoat` picker strip after tally/photo, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -60,14 +61,15 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ### Slice 3 — Domain core
 - **In scope:** `Encounter`, `PlaceCell`, `Session`, enums `EncounterKind`, `EncounterOrigin`, `LocationSource`,
-  `PlaceStatus`; `Tuning`; `Geohash.encode/decode/prefix` with published vectors; `SessionSplitter`; `localDate()`
+  `PlaceStatus`, `CatCoat`; `Tuning`; `Geohash.encode/decode/prefix` with published vectors; `SessionSplitter`; `localDate()`
   helpers per `docs/rules/date-time.md`. `commonTest` only.
 - **Out of scope:** repositories, use cases, stats.
 - **Ships safely because:** `:domain` is referenced by no runtime code yet.
 - **Cleanup owed:** none.
 
 ### Slice 4 — Room database and repositories
-- **In scope:** entities and DAOs for both tables, `CatsDatabase` with `BundledSQLiteDriver` and the
+- **In scope:** entities and DAOs for both tables (including the nullable `coat` column, so the first
+  schema already carries it), `CatsDatabase` with `BundledSQLiteDriver` and the
   `RoomDatabaseConstructor` expect/actual, type converters, entity ↔ domain mappers, `EncounterRepository`
   and `PlaceCellRepository` interfaces (`:domain`) + implementations, Robolectric DAO tests (soft-delete
   filtering, digest lookup, cell upsert), exported schema.
@@ -204,6 +206,15 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** additive resources.
 - **Cleanup owed:** none.
 
+### Slice 22 — Cat coat
+- **In scope:** `CatCoat` enum already in `:domain` (slice 3) gets its swatch colours and labels in
+  `:ui`; `SetCoat(encounterId, coat?)` use case; coat strip shown with the Undo chip on Counter after a
+  tally or a photo, bound to the latest encounter; coat row on `EncounterDetail` with set/clear;
+  `StatsCalculator` "By coat" rows and their block on Statistics; Store and mapper tests.
+- **Out of scope:** coat on the widget; coat filter on the map (Map epic).
+- **Ships safely because:** additive UI on screens that already exist; `coat` stays null until used.
+- **Cleanup owed:** none.
+
 ## Decision log
 - 2026-09-22: slice 1 built. AGP 9.4 requires Gradle ≥ 9.6 (wrapper 9.7.1); Compose 1.12 requires
   `compileSdk 37`, so compile/target SDK are 37. Modules other than `:app` ship without placeholder
@@ -212,6 +223,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   the rest of the tuning stays in slice 2. The owner's new requirements (coat, map with route,
   personal heatmap, cats-per-km) are recorded for a spec v4 and a "Map" epic after v1; a coat
   column and its UI become a v1 slice (see next entry once the spec is amended).
+- 2026-09-22: spec v4 — owner's household wish-list. Coat becomes v1 (column in slice 3/4, UI as new
+  slice 22); map, route polyline, GPS-track walks, personal heatmap and cats-per-km form the Map epic
+  after v1 on MapLibre + OSM, so nothing here changes. `androidUnitTest` → `androidHostTest` in the
+  docs to match the AGP KMP plugin's source-set names.
 - 2026-09-22: slice 16 gains a device spike — scoped storage redacts EXIF GPS; Photo Picker URIs may not honour
   `setRequireOriginal`. Slice scope unchanged; outcome decides whether imports carry EXIF location.
 - 2026-09-21: initial map from spec v3. The 11 slices discussed in review were split to keep every PR under

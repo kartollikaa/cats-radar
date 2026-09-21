@@ -1,6 +1,6 @@
 # Cats Radar — design spec
 
-Date: 2026-09-21. Status: v3 — approved direction; architecture aligned with `docs/rules/`.
+Date: 2026-09-21. Status: v4 (2026-09-22) — coat in v1, Map epic defined for after v1.
 Research behind this spec: [docs/research/2026-09-21-competitor-scan.md](../../research/2026-09-21-competitor-scan.md).
 
 ## 1. Summary
@@ -22,9 +22,11 @@ country → city → area, and an encounter rate derived from automatically dete
 
 ### Non-goals (v1)
 
-- Cat heatmap / map view, social features, accounts, cloud sync (out of scope by owner).
+- Social features, accounts, cloud sync, and a *shared* heatmap (out of scope by owner).
+- Map view, outing route, personal heatmap, distance-based rates — the **Map epic** that follows v1
+  (§9); v1 only stores what that epic needs (coordinates, coat).
 - Quantity per encounter, unique-cat identity ("same cat as yesterday?"), breed identification.
-- Editing an encounter's time or location after the fact; captions/notes.
+- Editing an encounter's time or location after the fact; captions/notes. (Coat *is* editable.)
 - Manual outing start/stop; tablets/foldables layouts; wearables.
 - iOS target and the shared-UI decision (Compose Multiplatform vs SwiftUI) — deferred until the
   Android app is releasable.
@@ -47,18 +49,22 @@ country → city → area, and an encounter rate derived from automatically dete
 | Gamification | Day streak + milestone toasts in v1. |
 | Architecture | Layered modules `:domain` / `:data` / `:presentation` / `:ui` / `:app`; minimal MVI (`Store` with State/Intent/Effect). |
 | Quality gates | detekt + formatting + compose-rules, Android Lint, Konsist architecture tests; all in `./gradlew check` and CI. |
+| Coat (2026-09-22) | Optional cat coat from a fixed list of eleven, in v1: column in the first schema, picker after a tally or photo, editable in detail, statistics by coat. |
+| Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
 
 ## 2. Users and core flows
 
 Single user, on foot, phone in hand, often abroad, often without data.
 
 **F1 Tally.** Counter screen → tap the big button. Counter increments instantly, haptic tick. An
-"Undo" chip appears for `UNDO_VISIBLE` seconds and reverts that tap. No debounce — rapid taps are
-several cats. Location is attached in the background (§4.3).
+"Undo" chip and a horizontally scrolling strip of eleven coat swatches appear for `UNDO_VISIBLE`
+seconds; tapping a swatch sets `coat` on the encounter just created, Undo reverts the tap. No
+debounce — rapid taps are several cats; the strip always refers to the latest one. Location is
+attached in the background (§4.3).
 
 **F2 Photo.** Counter screen → tap camera → system camera. On return: original saved to the gallery
 (if enabled), compressed copy + thumbnail stored privately, encounter saved with EXIF location if
-present, else the background location chain.
+present, else the background location chain. The same coat strip as in F1 appears afterwards.
 
 **F3 Import.** Counter screen → long-press camera (or Settings → Import photos) → gallery
 multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress bar, then a
@@ -71,7 +77,8 @@ the same path as F1, without opening the app (§4.8).
 point. Regions drill down Country → City → Area → encounters in that area.
 
 **F6 Encounters.** Chronological list grouped by outing; photos as a grid; tap for detail; delete
-from detail (soft delete, undo snackbar).
+from detail (soft delete, undo snackbar); the detail screen shows the coat swatch and lets it be
+changed or cleared.
 
 **F7 Export / import backup.** Settings → Export creates a ZIP via the system file picker; Import
 merges a ZIP back (§4.7).
@@ -92,6 +99,7 @@ returns to Counter; back from Counter exits.
 | `tzOffsetMinutes` | Int | UTC offset at `occurredAt`. Keeps "today"/streaks stable when travelling. |
 | `kind` | enum `TALLY` \| `PHOTO` | |
 | `origin` | enum `APP` \| `WIDGET` \| `CAMERA` \| `GALLERY` | How it was logged. Drives import rules (§4.6) and debugging. |
+| `coat` | enum `CatCoat`? | `GINGER`, `GINGER_WHITE`, `WHITE`, `TRICOLOR_MOSTLY_WHITE`, `TRICOLOR_LITTLE_WHITE`, `BROWN`, `BROWN_WHITE`, `GREY`, `GREY_WHITE`, `BLACK`, `BLACK_WHITE`. Null = not specified. The only field editable after creation. |
 | `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null for TALLY. |
 | `thumbPath` | String? | Generated thumbnail. |
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
@@ -243,6 +251,7 @@ truncated to a day; `today` = the device's current local date.
 | Total | `|E|` |
 | Today / 7 days / 30 days | count by local date relative to `today` |
 | With photo | `|{e : kind = PHOTO}|` and share of total |
+| By coat | count per `CatCoat` value plus one "Not specified" row for `coat = null`, sorted by count desc; rows with zero are hidden |
 | Current streak | consecutive local dates with ≥ 1 encounter ending `today` or `today − 1`; 0 otherwise |
 | Longest streak | max run of consecutive local dates with ≥ 1 encounter |
 | Milestones | `MILESTONES = [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]`. When `Total` crosses a value greater than `lastSeenMilestone`, show a toast once and persist it. Statistics shows the next milestone and the distance to it. |
@@ -328,7 +337,7 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
   crossing exactly once; `LocationPolicy` each rung with fakes incl. `LAST_KNOWN_MAX_AGE` and
   backfill; `ImportRules` (`RECENT_PHOTO_WINDOW`, digest dedup, EXIF time with/without offset);
   backup merge rules (newer `updatedAt` wins, delete-vs-live).
-- **androidUnitTest** (Robolectric, in-memory Room): DAO filters soft-deleted rows; digest lookup;
+- **androidHostTest** (Robolectric, in-memory Room): DAO filters soft-deleted rows; digest lookup;
   place-cell upsert; migration tests from exported schemas.
 - **Store tests** (`:presentation` commonTest, `runTest` + turbine + fakes): tally increments
   immediately, undo chip, photo with and without EXIF, import summary, region drill-down; every
@@ -362,10 +371,19 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 1. iOS target: add `iosArm64`/`iosSimulatorArm64` to `shared`, implement the platform interfaces,
    then choose Compose Multiplatform (nav3 multiplatform port exists) vs SwiftUI over the shared
    ViewModels.
-2. Heatmap and social layer — needs the sync layer the schema anticipates; backup ZIP is the seed.
-3. Manual outing start/stop overriding auto-sessions; quantity per encounter; captions; editing
-   time/location; 30-day cats-per-day chart.
-4. Offline GeoNames fallback if geocoder coverage proves poor.
+2. **Map epic** (first after v1), on MapLibre with OpenStreetMap tiles so no API key or billing is
+   needed and the same map component can later serve iOS through Compose Multiplatform:
+   1. map screen with encounter markers coloured by coat, tap → detail;
+   2. outing route as a polyline through that outing's encounter points, selectable from the
+      Encounters list;
+   3. explicit "walk" mode — start/stop button, foreground service recording a GPS track, outing
+      bound to the walk, distance → cats per km alongside cats per hour;
+   4. personal heatmap layer by encounter frequency with a coat filter.
+   The shared/social heatmap stays out of scope.
+3. Sync and social layer — needs the sync layer the schema anticipates; backup ZIP is the seed.
+4. Manual outing start/stop overriding auto-sessions (subsumed by the walk mode above); quantity per
+   encounter; captions; editing time/location; 30-day cats-per-day chart.
+5. Offline GeoNames fallback if geocoder coverage proves poor.
 
 ## 10. Open items
 
