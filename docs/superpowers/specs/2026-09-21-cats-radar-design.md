@@ -1,6 +1,6 @@
 # Cats Radar — design spec
 
-Date: 2026-09-21. Status: v2 after owner review, awaiting sign-off.
+Date: 2026-09-21. Status: v3 — approved direction; architecture aligned with `docs/rules/`.
 Research behind this spec: [docs/research/2026-09-21-competitor-scan.md](../../research/2026-09-21-competitor-scan.md).
 
 ## 1. Summary
@@ -17,8 +17,8 @@ country → city → area, and an encounter rate derived from automatically dete
 3. Statistics work fully offline; place names fill in when the network allows.
 4. Your data is yours: photos also land in the phone gallery, and a ZIP export/import exists.
 5. Data model is ready for a later sync/social layer without a migration of user data.
-6. Android ships first on Compose + Navigation 3 + Room + coroutines; domain, data, and
-   ViewModels live in a Kotlin Multiplatform module so iOS can be added without rewriting them.
+6. Android ships first on Compose + Navigation 3 + Room + coroutines; `:domain`, `:data`, and
+   `:presentation` are Kotlin Multiplatform modules so iOS can be added without rewriting them.
 
 ### Non-goals (v1)
 
@@ -45,6 +45,8 @@ country → city → area, and an encounter rate derived from automatically dete
 | Widget | Home-screen "+1" widget in v1. |
 | Regions UX | Drill-down Country → City → Area; unresolved areas never show a raw geohash. |
 | Gamification | Day streak + milestone toasts in v1. |
+| Architecture | Layered modules `:domain` / `:data` / `:presentation` / `:ui` / `:app`; minimal MVI (`Store` with State/Intent/Effect). |
+| Quality gates | detekt + formatting + compose-rules, Android Lint, Konsist architecture tests; all in `./gradlew check` and CI. |
 
 ## 2. Users and core flows
 
@@ -259,65 +261,51 @@ reads in a few ms (tens of thousands).
 
 ## 6. Architecture
 
-### 6.1 Modules
+Binding detail lives in `docs/rules/` — [module-structure.md](../../rules/module-structure.md),
+[mvi-architecture.md](../../rules/mvi-architecture.md), [compose-patterns.md](../../rules/compose-patterns.md),
+[date-time.md](../../rules/date-time.md), [static-analysis.md](../../rules/static-analysis.md). This section
+maps the spec onto those modules.
 
-```
-Cats Radar/
-  shared/            Kotlin Multiplatform library (targets: android now; ios* later)
-    commonMain/      domain, data (Room), platform interfaces, StatsCalculator, Geohash, ViewModels
-    commonTest/      pure-Kotlin tests (kotlin.test)
-    androidMain/     Room builder actual, Android platform impls (location, EXIF, geocoder,
-                     photo store, media store, digest)
-    androidUnitTest/ Room DAO + migration tests on Robolectric
-  androidApp/        Compose UI, Navigation 3, Koin wiring, WorkManager workers, Glance widget,
-                     FileProvider, SAF/MediaStore glue
-```
+### 6.1 Modules and what goes where
 
-Rule: `commonMain` imports nothing from `android.*`. Platform capabilities are Kotlin interfaces in
-`commonMain` with Android implementations in `androidMain`; `commonTest` runs with fakes; an iOS
-target later only adds implementations.
+| Module | Kind | Holds |
+|---|---|---|
+| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`); platform interfaces (`LocationProvider`, `PhotoStore`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
+| `:data` | KMP | Room `CatsDatabase`, `EncounterDao`, `PlaceCellDao` (`BundledSQLiteDriver`, `RoomDatabaseConstructor` expect/actual, KSP); DataStore Preferences; repository implementations; entity ↔ domain mappers; backup ZIP (de)serialisation with `kotlinx.serialization`. `androidMain`: FusedLocationProvider, ExifInterface, `Geocoder`, MediaStore saver, SHA-256, bitmap resize. |
+| `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`; `DateTimeFormatter` interface. |
+| `:ui` | Android | `CatsRadarTheme`, `@ThemePreviews`, components, one file per screen, previews. Compose Multiplatform-ready: no Android imports beyond Compose. |
+| `:app` | Android app | Navigation 3 host, Koin modules, workers (`AttachLocationWorker`, `GeocodePendingCellsWorker`, `PurgeDeletedWorker`, `ImportPhotosWorker`, `ExportWorker`, `ImportBackupWorker`), Glance widget, `FileProvider`, activity result contracts, string resources (EN, RU). |
+| `:build-logic` | Gradle | Convention plugins: `catsradar.kmp.library`, `catsradar.android.library`, `catsradar.android.application`, `catsradar.compose`, `catsradar.detekt`. |
 
-### 6.2 Layers inside `shared`
+### 6.2 Navigation (`:app`)
 
-- **domain** — models `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`; pure functions
-  `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`; repository
-  interfaces; use cases `LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`,
-  `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`,
-  `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`.
-- **data** — Room `CatsDatabase`, `EncounterDao`, `PlaceCellDao`, mappers, repository impls. Room
-  KMP with `BundledSQLiteDriver`, `RoomDatabaseConstructor` expect/actual, KSP 2. DataStore
-  Preferences for settings (KMP artifact). Backup (de)serialisation with `kotlinx.serialization`.
-- **platform** (interfaces) — `LocationProvider`, `PhotoStore`, `GallerySaver`, `ExifReader`,
-  `ImageResizer`, `Digest`, `ReverseGeocoder`, `Clock` (kotlinx-datetime), `IdGenerator`,
-  `DeviceIdProvider`, `Haptics`.
-- **presentation** — `ViewModel`s (`androidx.lifecycle:lifecycle-viewmodel`, KMP) exposing
-  `StateFlow<UiState>` per screen. Lives in `shared` so a Compose Multiplatform iOS path reuses
-  them and a SwiftUI path wraps them.
+`NavDisplay` over `rememberNavBackStack(Counter)`; `@Serializable NavKey`s `Counter`, `Encounters`,
+`EncounterDetail(id)`, `Statistics`, `Regions(level, parentKey)`, `RegionEncounters(areaKey)`,
+`Settings`; `entryProvider` DSL; `rememberViewModelStoreNavEntryDecorator` +
+`rememberSavedStateNavEntryDecorator`. Bottom bar keeps `Counter` as the root: selecting another tab
+makes the stack `[Counter, Tab]`; back pops to Counter. No `Scene` strategies in v1.
 
-### 6.3 `androidApp`
+### 6.3 Dependency injection
 
-- **Navigation 3**: `NavDisplay` over `rememberNavBackStack(Counter)`; `@Serializable NavKey`s
-  (`Counter`, `Encounters`, `EncounterDetail(id)`, `Statistics`, `Regions(level, parentKey)`,
-  `RegionEncounters(areaKey)`, `Settings`); `entryProvider` DSL;
-  `rememberViewModelStoreNavEntryDecorator` + `rememberSavedStateNavEntryDecorator`. Bottom bar
-  keeps `Counter` as the root: selecting another tab makes the stack `[Counter, Tab]`; back pops to
-  Counter. No `Scene` strategies in v1.
-- **DI**: Koin — `sharedModule` in `shared/androidMain`, `appModule` (Context-bound impls,
-  workers) in `androidApp`; `koinViewModel()` in composables; `KoinWorkerFactory` for workers.
-- **Workers**: `AttachLocationWorker`, `GeocodePendingCellsWorker`, `PurgeDeletedWorker`,
-  `ImportPhotosWorker`, `ExportWorker`, `ImportBackupWorker`.
-- **Widget**: Glance `CatsRadarWidget` + `CatsRadarWidgetReceiver`.
-- **Libraries**: Coil 3 (images), `play-services-location` + `kotlinx-coroutines-play-services`,
-  `androidx.exifinterface`, `androidx.activity` result contracts (`TakePicture`,
-  `PickMultipleVisualMedia`, `CreateDocument`, `OpenDocument`), `androidx.glance`, `androidx.work`.
+Koin. `:app` owns every module definition: `domainModule` (use cases), `dataModule` (Room, DataStore,
+repositories, platform implementations), `presentationModule` (Stores, mappers, `DateTimeFormatter`),
+`workerModule` (`KoinWorkerFactory`). Other modules expose constructors only.
 
 ### 6.4 Concurrency
 
 Coroutines throughout; Room `Flow` drives every list and counter; anything that must outlive the
-screen or the process (location attach, geocoding, import, export, purge) is a WorkManager worker.
-File I/O on `Dispatchers.IO`. No `runBlocking` outside tests.
+screen or the process (location attach, geocoding, import, export, purge) is a WorkManager worker in
+`:app` calling a `:domain` use case. File I/O on `Dispatchers.IO`. No `runBlocking` outside tests.
 
-### 6.5 Error handling
+### 6.5 Libraries
+
+Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP), DataStore (KMP),
+`kotlinx-datetime`, `kotlinx-serialization`, `kotlinx-collections-immutable`, Koin, Coil 3,
+`play-services-location` + `kotlinx-coroutines-play-services`, `androidx.exifinterface`,
+`androidx.glance`, `androidx.work`, `androidx.activity` result contracts. Versions only in
+`gradle/libs.versions.toml`.
+
+### 6.6 Error handling
 
 | Failure | Behaviour |
 |---|---|
@@ -329,7 +317,7 @@ File I/O on `Dispatchers.IO`. No `runBlocking` outside tests.
 | Import photo unreadable | counted as failed in the summary; the batch continues |
 | Backup ZIP invalid / newer format | import refused with a message; nothing written |
 | Disk full | photo/import/export step fails with a toast; tally path has no disk-heavy step |
-| DB migration | schemas exported to `shared/schemas`; auto-migrations where possible; every bump adds a migration test |
+| DB migration | schemas exported to `data/schemas`; auto-migrations where possible; every bump adds a migration test |
 
 ## 7. Testing
 
@@ -342,8 +330,12 @@ File I/O on `Dispatchers.IO`. No `runBlocking` outside tests.
   backup merge rules (newer `updatedAt` wins, delete-vs-live).
 - **androidUnitTest** (Robolectric, in-memory Room): DAO filters soft-deleted rows; digest lookup;
   place-cell upsert; migration tests from exported schemas.
-- **ViewModel tests** (commonTest with fakes): tally increments immediately, undo chip, photo with
-  and without EXIF, import summary, region drill-down.
+- **Store tests** (`:presentation` commonTest, `runTest` + turbine + fakes): tally increments
+  immediately, undo chip, photo with and without EXIF, import summary, region drill-down; every
+  `*StateMapper` asserted on the whole `State`.
+- **Architecture tests** (Konsist, `:app`): layer boundaries and naming from
+  `docs/rules/module-structure.md`.
+- **Static analysis** in `./gradlew check`: detekt (+ formatting, compose-rules), Android Lint.
 - **Instrumented smoke** (one test): tap counter → count shows 1.
 - Backup round-trip test: export → wipe → import → identical `Stats`.
 - Acceptance criteria per slice are frozen before code (acceptance plugin) and audited
@@ -352,7 +344,8 @@ File I/O on `Dispatchers.IO`. No `runBlocking` outside tests.
 ## 8. Repository conventions
 
 - Gradle Kotlin DSL; `gradle/libs.versions.toml` is the single source of library versions — this
-  spec names libraries, not versions. `minSdk 29`, `targetSdk` = latest stable.
+  spec names libraries, not versions. `minSdk 29`, `targetSdk` = latest stable. Every module applies
+  a `build-logic` convention plugin.
 - Package root `dev.catsradar`; `applicationId = dev.catsradar` (placeholder until the owner confirms).
 - Strings in EN and RU.
 - Branches `feature/ | fix/ | tech/`, one PR per task, merge commits.
