@@ -18,12 +18,21 @@ Multiplatform libraries with only the Android target configured today. `:ui` and
                 compose, detekt. Modules apply plugins, never configure Gradle themselves.
 ```
 
-Rules, enforced by a Konsist test in `:app`:
+Rules, enforced by a Konsist test in `:app` (`app/src/test/kotlin/dev/catsradar/app/architecture/`):
 
-- `:domain` imports nothing from `android.*`, `androidx.*`, or any other module.
-- `:presentation` does not import `androidx.compose.*` or `:data`.
-- `:ui` does not import `:data` or `:domain` use cases — it sees `:presentation` types only.
-- `:data` does not import `:presentation` or `:ui`.
+- `:domain` files do not import `android.*` or `androidx.*` (any depth).
+- `:presentation` files do not import `androidx.compose.*` or `dev.catsradar.data`.
+- `:ui` files do not import `dev.catsradar.data`.
+- `:data` files do not import `dev.catsradar.presentation` or `dev.catsradar.ui`.
+- Each module's physical files declare that module's package (`dev.catsradar.<module>` or a
+  subpackage) — otherwise the four rules above, which key on the declared package rather than the
+  physical module, would silently stop covering a mis-packaged file.
+
+`:domain` depending on nothing but `kotlinx`, and `:ui` never depending on `:domain`, are
+guaranteed by the Gradle module graph today — no `implementation(projects.domain)` declares that
+edge from `:ui`, and `:domain`'s `build.gradle.kts` declares no project dependency at all — rather
+than by a Konsist test. A future dependency edit could add either without a test catching it.
+
 - Only `:app` knows Koin modules exist; the other modules expose constructors.
 
 Source-set convention inside a KMP module: `commonMain` is the default home; `androidMain` holds
