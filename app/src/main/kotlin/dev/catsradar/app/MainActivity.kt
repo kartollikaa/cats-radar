@@ -25,8 +25,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun Placeholder() {
     MaterialTheme {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Box(contentAlignment = Alignment.Center) {
+        Surface {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = stringResource(R.string.app_name))
             }
         }

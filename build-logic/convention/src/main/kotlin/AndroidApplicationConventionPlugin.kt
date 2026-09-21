@@ -19,8 +19,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             defaultConfig {
                 applicationId = "dev.catsradar"
                 targetSdk = libs.version("android-targetSdk").toInt()
-                versionCode = 1
-                versionName = "0.1.0"
+                versionCode = libs.version("app-versionCode").toInt()
+                versionName = libs.version("app-versionName")
             }
         }
     }

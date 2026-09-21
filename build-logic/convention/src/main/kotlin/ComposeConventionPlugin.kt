@@ -11,14 +11,16 @@ class ComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply(libs.pluginId("kotlin-compose"))
 
-        extensions.getByType<CommonExtension>().buildFeatures.compose = true
+        pluginManager.withPlugin("com.android.base") {
+            extensions.getByType<CommonExtension>().buildFeatures.compose = true
 
-        dependencies {
-            add("implementation", platform(libs.library("compose-bom")))
-            add("implementation", libs.library("compose-ui"))
-            add("implementation", libs.library("compose-ui-tooling-preview"))
-            add("implementation", libs.library("compose-material3"))
-            add("debugImplementation", libs.library("compose-ui-tooling"))
+            dependencies {
+                add("implementation", platform(libs.library("compose-bom")))
+                add("implementation", libs.library("compose-ui"))
+                add("implementation", libs.library("compose-ui-tooling-preview"))
+                add("implementation", libs.library("compose-material3"))
+                add("debugImplementation", libs.library("compose-ui-tooling"))
+            }
         }
     }
 }
