@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
+import dev.catsradar.buildlogic.configureBaseline
 import dev.catsradar.buildlogic.library
 import dev.catsradar.buildlogic.libs
 import dev.catsradar.buildlogic.moduleNamespace
@@ -26,6 +27,9 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 minSdk = libs.version("android-minSdk").toInt()
                 withHostTestBuilder {}.configure { isIncludeAndroidResources = true }
                 compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+                lint {
+                    configureBaseline()
+                }
             }
             compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
             sourceSets.getByName("commonTest").dependencies {
