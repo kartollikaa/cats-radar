@@ -14,7 +14,13 @@ class DetektConventionPlugin : Plugin<Project> {
         extensions.configure<DetektExtension> {
             buildUponDefaultConfig = true
             parallel = true
-            config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+            val configFiles = mutableListOf(rootProject.file("config/detekt/detekt.yml"))
+            // Merged only for :ui, so its deviations apply to this module alone, however broad
+            // their own glob is.
+            if (target.name == "ui") {
+                configFiles += rootProject.file("config/detekt/detekt-ui.yml")
+            }
+            config.setFrom(configFiles)
             source.setFrom(files("src"))
         }
 

@@ -10,8 +10,6 @@ naming:
     privatePropertyPattern: '_?[A-Za-z][A-Za-z0-9]*' # same rule, private top-level vals
 
 style:
-  MagicNumber:
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/ui/**']
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview', 'ThemePreviews'] # preview functions are invoked by tooling, not by call sites (compose-preview-patterns.md §1)
 
