@@ -11,4 +11,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+
+    testImplementation(libs.konsist)
+    testImplementation(libs.junit)
 }
