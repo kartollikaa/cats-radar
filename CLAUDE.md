@@ -24,8 +24,9 @@ Personal cat-encounter counter. Android-first Kotlin Multiplatform; design spec 
   `.ui`, `.app`.
 - Tests first (`commonTest` with fakes; Robolectric only for Room). `./gradlew check` must be green
   before a PR.
-- Branches `feature/ | fix/ | tech/`; one PR per slice; merge commits. Plans live in
-  `docs/superpowers/plans/` and are archived when the slice ships.
+- Branches `feature/ | fix/ | tech/`; one PR per slice; merge commits. The PR decomposition map is
+  `docs/tbd/decompositions/`; slice plans live in `docs/superpowers/plans/` and are archived when the
+  slice ships.
 - Comments: default none. Re-read every comment you add against the tests in
   `docs/rules/code-commenting-standards.md` before committing.
 - Strings: EN and RU resources; no hard-coded user-facing text.
