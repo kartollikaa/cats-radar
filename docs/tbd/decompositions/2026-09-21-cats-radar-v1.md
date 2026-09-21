@@ -14,7 +14,7 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | merged |
-| 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | planned |
+| 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | in-review |
 | 3 | Domain core: models, Tuning, Geohash, SessionSplitter | Pure domain types and the two geometric/temporal primitives, fully unit-tested. | safe | ~500 | 1 | planned |
 | 4 | Room database and repositories | Encounter and PlaceCell entities, DAOs, `CatsDatabase` (KMP driver), repository implementations, Robolectric tests. | safe | ~600 | 3 | planned |
 | 5 | App shell: theme, Navigation 3 host, Koin, MVI Store | `CatsRadarTheme`, `@ThemePreviews`, `Store` base, `NavDisplay` with a single `Counter` entry showing a placeholder, Koin bootstrap. | safe | ~400 | 2 | planned |
@@ -51,6 +51,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice 2 — Quality gates
+- **Reality check (2026-09-22):** AGP 9.4.1's KMP library plugin creates no lint task, so Lint is
+  enforced on `:app` and `:ui` only; the DSL is set on the KMP modules and activates when AGP adds it.
+  compose-rules is pinned to the 0.4.x line, which is what supports detekt 1.23.x.
 - **In scope:** `config/detekt/detekt.yml` (overrides on top of the default config), `detekt-formatting` and
   `compose-rules` wired in `catsradar.detekt`; `lint.xml` + `warningsAsErrors`; Konsist tests in `:app`
   encoding `docs/rules/module-structure.md` (layer imports, `*Store`/`*State`/`*Intent`/`*Effect` naming,
