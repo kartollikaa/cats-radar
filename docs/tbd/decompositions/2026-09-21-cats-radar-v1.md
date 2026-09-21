@@ -163,8 +163,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ### Slice 16 — Gallery import
 - **In scope:** `ImportRules` + tests, `ImportPhotos` use case (digest skip, EXIF time, `RECENT_PHOTO_WINDOW`),
-  `ImportPhotosWorker` with progress notification and `IMPORT_BATCH_MAX`, `PickMultipleVisualMedia` on
-  long-press camera, summary dialog with undo.
+  `ImportPhotosWorker` with progress notification and `IMPORT_BATCH_MAX` (≤ `getPickImagesMaxLimit()`),
+  `PickMultipleVisualMedia` on long-press camera, summary dialog with undo; `ACCESS_MEDIA_LOCATION` +
+  `setRequireOriginal` spike on a real device first — result recorded in the decision log.
 - **Out of scope:** Settings entry point (slice 18 adds the second entry).
 - **Ships safely because:** complete behaviour; historical photos never get today's location by construction.
 - **Cleanup owed:** none.
@@ -204,6 +205,8 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+- 2026-09-22: slice 16 gains a device spike — scoped storage redacts EXIF GPS; Photo Picker URIs may not honour
+  `setRequireOriginal`. Slice scope unchanged; outcome decides whether imports carry EXIF location.
 - 2026-09-21: initial map from spec v3. The 11 slices discussed in review were split to keep every PR under
   the 600-line target: scaffold → 1+2, tally → 5+6, encounters → 8+9, photos → 10+11, statistics → 12+13,
   regions → 14+15, backup → 17+18; empty states moved into each screen's slice instead of a final polish PR.

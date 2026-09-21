@@ -370,4 +370,7 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 ## 10. Open items
 
 - `applicationId` / package name placeholder `dev.catsradar` until confirmed.
-- No remote repository yet; GitHub remote to be created by the owner.
+- **EXIF GPS from gallery photos is redacted under scoped storage.** Reading it needs the
+  `ACCESS_MEDIA_LOCATION` runtime permission plus `MediaStore.setRequireOriginal(uri)`; whether that
+  works on Photo Picker URIs must be verified on device in the gallery-import slice. If it does not,
+  import falls back to `NONE` for location (dates still come from EXIF) and the spec is amended.
