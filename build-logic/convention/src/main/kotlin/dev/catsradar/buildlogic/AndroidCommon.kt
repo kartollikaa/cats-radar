@@ -14,7 +14,7 @@ internal fun Project.configureAndroid(extension: CommonExtension) {
     }
 }
 
-internal fun Lint.configureBaseline() {
+internal fun Lint.configureLintSeverity() {
     warningsAsErrors = true
     abortOnError = true
     disable += "GradleDependency" // the catalog is updated deliberately, not on lint's schedule
