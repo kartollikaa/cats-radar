@@ -13,7 +13,7 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | planned |
+| 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | in-review |
 | 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | planned |
 | 3 | Domain core: models, Tuning, Geohash, SessionSplitter | Pure domain types and the two geometric/temporal primitives, fully unit-tested. | safe | ~500 | 1 | planned |
 | 4 | Room database and repositories | Encounter and PlaceCell entities, DAOs, `CatsDatabase` (KMP driver), repository implementations, Robolectric tests. | safe | ~600 | 3 | planned |
@@ -205,6 +205,13 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+- 2026-09-22: slice 1 built. AGP 9.4 requires Gradle ≥ 9.6 (wrapper 9.7.1); Compose 1.12 requires
+  `compileSdk 37`, so compile/target SDK are 37. Modules other than `:app` ship without placeholder
+  sources — an empty KMP/Android module compiles. `detekt.yml` carries one early override
+  (`FunctionNaming.ignoreAnnotated: [Composable]`) because the default rule rejects every composable;
+  the rest of the tuning stays in slice 2. The owner's new requirements (coat, map with route,
+  personal heatmap, cats-per-km) are recorded for a spec v4 and a "Map" epic after v1; a coat
+  column and its UI become a v1 slice (see next entry once the spec is amended).
 - 2026-09-22: slice 16 gains a device spike — scoped storage redacts EXIF GPS; Photo Picker URIs may not honour
   `setRequireOriginal`. Slice scope unchanged; outcome decides whether imports carry EXIF location.
 - 2026-09-21: initial map from spec v3. The 11 slices discussed in review were split to keep every PR under
