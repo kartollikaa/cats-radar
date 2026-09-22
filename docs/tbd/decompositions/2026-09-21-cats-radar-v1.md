@@ -26,8 +26,9 @@
 | 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStorage` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | merged |
 | 11 | Photo capture flow | `LogPhoto` use case, camera button + `TakePicture`, `origin`/EXIF rules, thumbnails in list and detail via Coil, `saveOriginalsToGallery` setting in DataStore (default on, no UI yet). | safe | ~400 | 7, 9, 10 | merged |
 | 11b | Photo thumbnails on screen | Coil 3, thumbnails in the Encounters list and the full copy on the detail, placeholder when `thumbPath` is null. | safe | ~250 | 11 | merged |
-| 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | in-progress |
-| 13 | Statistics screen and current outing | `ObserveStats`, `StatisticsStore`/`Screen` (headline, streak, rate block, outings, next milestone), current-outing block on Counter, milestone toast with `lastSeenMilestone`. | safe | ~500 | 8, 12 | planned |
+| 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | merged |
+| 13 | Statistics screen | `ObserveStats`, `StatisticsStore`/`Screen`: headline, milestone, day windows, streaks, outings and rates. | safe | ~350 | 8, 12 | in-progress |
+| 13b | Current outing and milestone toast | Current-outing block on the Counter with a live ticker, milestone toast with `lastSeenMilestone` persisted. | safe | ~300 | 13 | planned |
 | 14 | Reverse geocoding of place cells | `ReverseGeocoder` (Android `Geocoder`), PlaceCell creation on location attach, `ResolvePendingPlaces` use case, connected-network worker with backoff, region tree builder + tests. | safe | ~550 | 7, 12 | planned |
 | 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | planned |
 | 16 | Gallery import | `ImportRules` (recent-photo window, digest dedup, EXIF time offset) + tests, `ImportPhotos` use case, worker with progress notification, long-press entry, summary with undo. | safe | ~600 | 11 | planned |
