@@ -1,33 +1,24 @@
 package dev.catsradar.presentation
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
-import java.util.Locale
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
+@RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "en-rUS")
 class AndroidDateTimeFormatterTest {
 
-    private val formatter = AndroidDateTimeFormatter()
-    private lateinit var originalLocale: Locale
-
-    // Both dayHeader (MEDIUM date style) and time (SHORT time style) go through
-    // Locale.getDefault(); fixed here so the exact-string assertions below are deterministic.
-    @BeforeTest
-    fun fixLocale() {
-        originalLocale = Locale.getDefault()
-        Locale.setDefault(Locale.US)
-    }
-
-    @AfterTest
-    fun restoreLocale() {
-        Locale.setDefault(originalLocale)
-    }
+    private val formatter = AndroidDateTimeFormatter(ApplicationProvider.getApplicationContext<Context>())
 
     @Test
     fun dayHeaderLabelsTheSameDateAsToday() {
@@ -67,6 +58,16 @@ class AndroidDateTimeFormatterTest {
     }
 
     @Test
+    fun durationUnderAnHourLeavesOutTheHourPart() {
+        assertEquals("45 min", formatter.duration(MINUTES_UNDER_AN_HOUR.minutes))
+    }
+
+    @Test
+    fun durationOverAnHourCarriesBothParts() {
+        assertEquals("1 h 20 min", formatter.duration(MINUTES_OVER_AN_HOUR.minutes))
+    }
+
+    @Test
     fun timeRendersTheLocalHourAndMinuteAPositiveOffsetProduces() {
         // 2026-09-22T01:15:00Z at UTC+02:00 is 2026-09-22T03:15 local.
         val label = formatter.time(Instant.parse("2026-09-22T01:15:00Z"), UtcOffset(minutes = POSITIVE_OFFSET_MINUTES))
@@ -94,5 +95,7 @@ class AndroidDateTimeFormatterTest {
     private companion object {
         const val POSITIVE_OFFSET_MINUTES = 120
         const val NEGATIVE_OFFSET_MINUTES = -180
+        const val MINUTES_UNDER_AN_HOUR = 45
+        const val MINUTES_OVER_AN_HOUR = 80
     }
 }

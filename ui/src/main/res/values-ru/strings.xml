@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="tab_counter">Счётчик</string>
+    <string name="tab_encounters">Котики</string>
+    <string name="tab_statistics">Статистика</string>
+
+    <string name="counter_camera">Фото</string>
+    <string name="counter_tap_burst">+%1$d</string>
+    <string name="counter_undo">Отменить</string>
+    <string name="counter_photo_not_saved">Фото не сохранилось</string>
+    <string name="counter_location_hint">Без доступа к геолокации котики будут без места</string>
+    <string name="counter_location_grant">Разрешить</string>
+    <string name="counter_location_dismiss">Не надо</string>
+
+    <string name="encounters_empty">Пока ни одного котика</string>
+    <string name="encounters_photo_description">Фото этого котика</string>
+
+    <string name="location_from_photo">С фото</string>
+    <string name="location_current">Текущее место</string>
+    <string name="location_last_known">Последнее известное место</string>
+    <string name="location_from_outing">Из этой вылазки</string>
+    <string name="location_none">Места пока нет</string>
+
+    <string name="detail_coordinates">Координаты</string>
+    <string name="detail_photo_description">Фото этого котика</string>
+    <string name="detail_accuracy">±%1$d м</string>
+    <string name="detail_delete">Удалить</string>
+    <string name="detail_deleted">Котик удалён</string>
+    <string name="detail_undo">Вернуть</string>
+    <string name="detail_missing">Этого котика больше нет</string>
+
+    <string name="statistics_empty">Отметьте котика — и появятся цифры</string>
+    <string name="statistics_next_milestone">ещё %1$s до %2$s</string>
+    <string name="statistics_when">Когда</string>
+    <string name="statistics_today">Сегодня</string>
+    <string name="statistics_week">За 7 дней</string>
+    <string name="statistics_month">За 30 дней</string>
+    <string name="statistics_with_photo">С фото</string>
+    <string name="statistics_streaks">Серии</string>
+    <string name="statistics_current_streak">Текущая</string>
+    <string name="statistics_longest_streak">Самая длинная</string>
+    <string name="statistics_outings">Вылазки</string>
+    <string name="statistics_outing_count">Вылазок</string>
+    <string name="statistics_active_time">Время на улице</string>
+    <string name="statistics_overall_rate">Котиков в час</string>
+    <string name="statistics_best_outing">Лучшая вылазка</string>
+    <string name="statistics_best_outing_rate">Её темп</string>
+    <string name="statistics_rate_per_hour">%1$s / ч</string>
+    <string name="statistics_rate_per_minute">%1$s / мин</string>
+    <string name="statistics_rate_unavailable">—</string>
+    <string name="statistics_places">Места</string>
+
+    <string name="regions_empty">Мест пока нет</string>
+    <string name="regions_unresolved">Пока без названия</string>
+    <string name="regions_no_location">Без места</string>
+    <string name="regions_area_at">Рядом с %1$s</string>
+
+    <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
+    <plurals name="statistics_total" tools:ignore="ImpliedQuantity">
+        <item quantity="one">котик встречен</item>
+        <item quantity="few">котика встречено</item>
+        <item quantity="many">котиков встречено</item>
+        <item quantity="other">котика встречено</item>
+    </plurals>
+    <plurals name="statistics_best_outing_value">
+        <item quantity="one">%1$d котик за %2$s</item>
+        <item quantity="few">%1$d котика за %2$s</item>
+        <item quantity="many">%1$d котиков за %2$s</item>
+        <item quantity="other">%1$d котика за %2$s</item>
+    </plurals>
+    <plurals name="counter_outing_now">
+        <item quantity="one">%1$d котик · %2$s</item>
+        <item quantity="few">%1$d котика · %2$s</item>
+        <item quantity="many">%1$d котиков · %2$s</item>
+        <item quantity="other">%1$d котика · %2$s</item>
+    </plurals>
+    <plurals name="counter_milestone">
+        <item quantity="one">%1$d котик!</item>
+        <item quantity="few">%1$d котика!</item>
+        <item quantity="many">%1$d котиков!</item>
+        <item quantity="other">%1$d котика!</item>
+    </plurals>
+
+    <string name="coat_ginger">Рыжий</string>
+    <string name="coat_ginger_white">Рыжий с белым</string>
+    <string name="coat_white">Белый</string>
+    <string name="coat_tricolor_mostly_white">Трёхцветный, больше белого</string>
+    <string name="coat_tricolor_little_white">Трёхцветный, мало белого</string>
+    <string name="coat_brown">Коричневый</string>
+    <string name="coat_brown_white">Коричневый с белым</string>
+    <string name="coat_grey">Серый</string>
+    <string name="coat_grey_white">Серый с белым</string>
+    <string name="coat_black">Чёрный</string>
+    <string name="coat_black_white">Чёрный с белым</string>
+    <string name="coat_not_specified">Не указан</string>
+    <string name="statistics_by_coat">По окрасу</string>
+    <string name="statistics_coat_share">%1$s · %2$s%%</string>
+    <string name="detail_coat">Окрас</string>
+
+    <string name="tab_settings">Настройки</string>
+    <string name="settings_save_originals">Сохранять фото в галерею</string>
+    <string name="settings_save_originals_explained">Своя копия всегда остаётся в приложении</string>
+</resources>

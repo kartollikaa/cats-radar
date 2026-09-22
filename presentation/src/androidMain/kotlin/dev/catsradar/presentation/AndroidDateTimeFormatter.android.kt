@@ -1,5 +1,6 @@
 package dev.catsradar.presentation
 
+import android.content.Context
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -14,11 +15,11 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 import java.time.format.DateTimeFormatter as JavaDateTimeFormatter
 
-class AndroidDateTimeFormatter : DateTimeFormatter {
+class AndroidDateTimeFormatter(private val context: Context) : DateTimeFormatter {
 
     override fun dayHeader(date: LocalDate, today: LocalDate): String = when (date) {
-        today -> "Today"
-        today.minus(1, DateTimeUnit.DAY) -> "Yesterday"
+        today -> context.getString(R.string.day_today)
+        today.minus(1, DateTimeUnit.DAY) -> context.getString(R.string.day_yesterday)
         else -> JavaDateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
             .withLocale(Locale.getDefault())
             .format(date.toJavaLocalDate())
@@ -30,6 +31,10 @@ class AndroidDateTimeFormatter : DateTimeFormatter {
             .format(instant.toLocalDateTime(offset.asTimeZone()).toJavaLocalDateTime())
 
     override fun duration(duration: Duration): String = duration.toComponents { hours, minutes, _, _ ->
-        if (hours > 0) "$hours h $minutes min" else "$minutes min"
+        if (hours > 0) {
+            context.getString(R.string.duration_hours_minutes, hours, minutes)
+        } else {
+            context.getString(R.string.duration_minutes, minutes)
+        }
     }
 }

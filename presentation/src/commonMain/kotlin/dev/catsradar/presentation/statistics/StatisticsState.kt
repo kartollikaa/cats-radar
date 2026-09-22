@@ -5,7 +5,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 data class StatisticsState(
-    val totalLabel: String = "0",
+    /** The count itself, not a label: only the platform knows the plural form for it. */
+    val total: Int = 0,
     val hasAnyCats: Boolean = false,
     val todayLabel: String = "0",
     val weekLabel: String = "0",
@@ -32,4 +33,5 @@ data class RateState(val value: String, val unit: RateUnit)
 
 enum class RateUnit { PER_HOUR, PER_MINUTE }
 
-data class BestOutingState(val countLabel: String, val durationLabel: String, val rate: RateState)
+/** [count] is the count itself, not a label: only the platform knows the plural form for it. */
+data class BestOutingState(val count: Int, val durationLabel: String, val rate: RateState)

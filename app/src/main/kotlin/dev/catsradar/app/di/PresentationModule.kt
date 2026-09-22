@@ -13,13 +13,14 @@ import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.statistics.StatisticsStateMapper
 import dev.catsradar.presentation.statistics.StatisticsStore
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val presentationModule = module {
-    single<DateTimeFormatter> { AndroidDateTimeFormatter() }
+    single<DateTimeFormatter> { AndroidDateTimeFormatter(androidContext()) }
     factoryOf(::CounterStateMapper)
     viewModelOf(::CounterStore)
     factoryOf(::EncountersStateMapper)

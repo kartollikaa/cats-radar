@@ -48,6 +48,11 @@ class StatisticsStateMapperTest {
     }
 
     @Test
+    fun `the headline total reaches the screen as a count, not a label`() {
+        assertEquals(21, mapper.map(stats(total = 21)).total)
+    }
+
+    @Test
     fun `a rate below one a minute reads per hour`() {
         val state = mapper.map(stats(total = 1, overallRate = Rate(perHour = 42.0)))
 
@@ -105,7 +110,7 @@ class StatisticsStateMapperTest {
 
         assertEquals(
             BestOutingState(
-                countLabel = "9",
+                count = 9,
                 durationLabel = 42.minutes.toString(),
                 rate = RateState(value = "1.3", unit = RateUnit.PER_MINUTE),
             ),

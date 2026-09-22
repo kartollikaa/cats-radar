@@ -10,7 +10,7 @@ import kotlin.math.round
 class StatisticsStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
 
     fun map(stats: Stats): StatisticsState = StatisticsState(
-        totalLabel = stats.total.toString(),
+        total = stats.total,
         hasAnyCats = stats.total > 0,
         todayLabel = stats.today.toString(),
         weekLabel = stats.lastSevenDays.toString(),
@@ -33,7 +33,7 @@ class StatisticsStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         overallRate = stats.overallRate?.toRateState(),
         bestOuting = stats.bestOuting?.let {
             BestOutingState(
-                countLabel = it.session.count.toString(),
+                count = it.session.count,
                 durationLabel = dateTimeFormatter.duration(it.session.duration),
                 rate = it.rate.toRateState(),
             )
