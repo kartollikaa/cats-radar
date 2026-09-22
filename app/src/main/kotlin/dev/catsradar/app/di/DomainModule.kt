@@ -8,6 +8,7 @@ import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
@@ -27,6 +28,7 @@ val domainModule = module {
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factoryOf(::AttachLocation)
+    factoryOf(::ResolvePendingPlaces)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)

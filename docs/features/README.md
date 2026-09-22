@@ -27,5 +27,7 @@ a document nobody updates is worse than none.
   the pixel tests need Robolectric's native graphics.
 - `statistics.md` — what every number means: day windows, streaks, milestones, and why the
   overall rate pools cats and time instead of averaging outings.
+- `places.md` — how coordinates become a country, city and area: place cells, the geocoding
+  worker, and what happens on a device with no geocoder.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

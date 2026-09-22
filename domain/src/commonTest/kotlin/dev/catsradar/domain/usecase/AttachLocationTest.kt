@@ -4,10 +4,12 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeLocationProvider
+import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.HangingLocationProvider
 import dev.catsradar.domain.testing.MisbehavingLocationProvider
 import dev.catsradar.domain.testing.encounterFixture
@@ -26,14 +28,59 @@ private val Now = Instant.parse("2026-09-22T10:00:00Z")
 private val Fix = LocationFix(lat = 55.7558, lon = 37.6173, accuracyMeters = 12f, fixedAt = Now - 2.minutes)
 
 class AttachLocationTest {
+
+    private val placeCells = FakePlaceCellRepository()
     private suspend fun encounter(repository: FakeEncounterRepository, id: String) =
         repository.observeById(id).first()!!
+
+    @Test
+    fun `attaching a fix remembers its place cell as pending, for the geocoder to name later`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
+
+        attachLocation("target")
+
+        val cell = placeCells.upserted.single()
+        assertEquals(PlaceStatus.PENDING, cell.status)
+        assertEquals(0, cell.attempts)
+    }
+
+    @Test
+    fun `a second cat in the same cell does not queue it for naming twice`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        // A separate outing on purpose: within one, the first attach backfills the second
+        // encounter, so it would never reach the place-cell code and the test would pass blind.
+        repository.insert(encounterFixture(id = "second", occurredAt = Now + Tuning.SESSION_GAP * 2))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
+
+        attachLocation("target")
+        attachLocation("second")
+
+        assertEquals(1, placeCells.upserted.size)
+    }
 
     @Test
     fun `stamps the target encounter with the fix, using the fix's own timestamp, not occurredAt`() = runTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -49,7 +96,12 @@ class AttachLocationTest {
     fun `geohash and placeCellId use their own distinct precisions`() = runTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -66,7 +118,12 @@ class AttachLocationTest {
         repository.insert(encounterFixture(id = "prevOuting", occurredAt = Now - 45.minutes))
         repository.insert(encounterFixture(id = "sameOuting", occurredAt = Now - 10.minutes))
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -93,7 +150,12 @@ class AttachLocationTest {
             ),
         )
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -108,7 +170,12 @@ class AttachLocationTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "sameOuting", occurredAt = Now - 10.minutes))
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(lastKnownFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(lastKnownFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -120,7 +187,7 @@ class AttachLocationTest {
     fun `nothing available leaves the target as NONE`() = runTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(), FakeClock(Now))
+        val attachLocation = AttachLocation(repository, placeCells, FakeLocationProvider(), FakeClock(Now))
 
         attachLocation("target")
 
@@ -142,7 +209,7 @@ class AttachLocationTest {
 
             override suspend fun lastKnown(): LocationFix? = null
         }
-        val attachLocation = AttachLocation(repository, locationProvider, FakeClock(Now))
+        val attachLocation = AttachLocation(repository, placeCells, locationProvider, FakeClock(Now))
 
         attachLocation("target")
 
@@ -162,7 +229,12 @@ class AttachLocationTest {
         repository.insert(encounterFixture(id = "deletedInOuting", occurredAt = Now - 10.minutes))
         repository.softDelete("deletedInOuting", Now - 5.minutes)
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -182,7 +254,12 @@ class AttachLocationTest {
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
         // 45 min after the target, past SESSION_GAP: a separate, later outing.
         repository.insert(encounterFixture(id = "laterOuting", occurredAt = Now + 45.minutes))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -204,7 +281,12 @@ class AttachLocationTest {
             ),
         )
         repository.insert(encounterFixture(id = "sameOuting", occurredAt = Now - 10.minutes))
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+        val attachLocation = AttachLocation(
+            repository,
+            placeCells,
+            FakeLocationProvider(currentFix = Fix),
+            FakeClock(Now)
+        )
 
         attachLocation("target")
 
@@ -221,7 +303,7 @@ class AttachLocationTest {
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
         val lastKnownFix = Fix.copy(fixedAt = Now - 1.hours)
         val locationProvider = HangingLocationProvider(lastKnownFix = lastKnownFix)
-        val attachLocation = AttachLocation(repository, locationProvider, FakeClock(Now))
+        val attachLocation = AttachLocation(repository, placeCells, locationProvider, FakeClock(Now))
 
         attachLocation("target")
 
@@ -236,7 +318,7 @@ class AttachLocationTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
         val locationProvider = HangingLocationProvider(lastKnownFix = null)
-        val attachLocation = AttachLocation(repository, locationProvider, FakeClock(Now))
+        val attachLocation = AttachLocation(repository, placeCells, locationProvider, FakeClock(Now))
 
         attachLocation("target")
 
@@ -250,7 +332,7 @@ class AttachLocationTest {
     fun `a provider that ignores its own timeout is still bounded by AttachLocation's own backstop`() = runTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        val attachLocation = AttachLocation(repository, MisbehavingLocationProvider(), FakeClock(Now))
+        val attachLocation = AttachLocation(repository, placeCells, MisbehavingLocationProvider(), FakeClock(Now))
 
         attachLocation("target")
 

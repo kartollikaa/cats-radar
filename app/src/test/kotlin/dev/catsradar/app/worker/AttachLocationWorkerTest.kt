@@ -12,8 +12,10 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.usecase.AttachLocation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,13 @@ import kotlin.time.Instant
 
 private val Now = Instant.parse("2026-09-22T10:00:00Z")
 private val Fix = LocationFix(lat = 55.7558, lon = 37.6173, accuracyMeters = 12f, fixedAt = Now)
+
+private class FakePlaceCellRepository : PlaceCellRepository {
+    override fun observeAll(): Flow<List<PlaceCell>> = MutableStateFlow(emptyList())
+    override suspend fun upsert(cell: PlaceCell) = Unit
+    override suspend fun loadById(cellId: String): PlaceCell? = null
+    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> = emptyList()
+}
 
 private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
     private val encounters = MutableStateFlow(listOf(seed))
@@ -113,7 +122,7 @@ class AttachLocationWorkerTest {
         val clock = object : Clock {
             override fun now(): Instant = Now
         }
-        val attachLocation = AttachLocation(repository, FakeLocationProvider(), clock)
+        val attachLocation = AttachLocation(repository, FakePlaceCellRepository(), FakeLocationProvider(), clock)
         val koin = koinApplication { modules(module { single { attachLocation } }) }.koin
 
         val worker = TestListenableWorkerBuilder<AttachLocationWorker>(context)
