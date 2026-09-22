@@ -9,6 +9,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.platform.LocationProvider
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
@@ -24,18 +25,18 @@ class FusedLocationProvider(context: Context) : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? {
         if (!hasPermission()) return null
         val cancellationSource = CancellationTokenSource()
-        val location = runCatching {
+        val location = awaitOrNull {
             withTimeoutOrNull(timeout) {
                 client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancellationSource.token).await()
             }
-        }.getOrNull()
+        }
         if (location == null) cancellationSource.cancel()
         return location?.toFix()
     }
 
     override suspend fun lastKnown(): LocationFix? {
         if (!hasPermission()) return null
-        return runCatching { client.lastLocation.await() }.getOrNull()?.toFix()
+        return awaitOrNull { client.lastLocation.await() }?.toFix()
     }
 
     private fun hasPermission(): Boolean {
@@ -51,3 +52,15 @@ class FusedLocationProvider(context: Context) : LocationProvider {
         fixedAt = Instant.fromEpochMilliseconds(time),
     )
 }
+
+// Cancellation must propagate to the caller; only a genuine Play Services failure (a missing
+// module, a SecurityException on a permission revoked mid-call, ...) falls through to null.
+@Suppress("TooGenericExceptionCaught", "SwallowedException")
+private suspend fun <T> awaitOrNull(block: suspend () -> T): T? =
+    try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
+    }
