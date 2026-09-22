@@ -21,6 +21,10 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
         }
+        getByName("androidMain").dependencies {
+            implementation(libs.play.services.location)
+            implementation(libs.kotlinx.coroutines.play.services)
+        }
         getByName("androidHostTest").dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
