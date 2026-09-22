@@ -13,9 +13,8 @@ import org.koin.test.verify.verifyAll
 
 class KoinModulesTest {
 
-    // verifyAll checks each module against its own definitions plus extraTypes; it does not
-    // itself cross-reference sibling modules, so every type resolved from another module is
-    // listed here.
+    // verifyAll checks each module only against its own definitions plus extraTypes, so every
+    // type resolved from a sibling module must be listed here.
     private val crossModuleTypes = listOf(
         EncounterRepository::class,
         IdGenerator::class,
