@@ -26,4 +26,10 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(platform(libs.koin.bom))
     testImplementation(libs.koin.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.ext.junit)
+    // Robolectric runs on the host JVM, not a device; BundledSQLiteDriver needs the host-native
+    // artifact, same as :data's androidHostTest (see its build.gradle.kts for why).
+    testImplementation(libs.androidx.sqlite.bundled.jvm)
 }
