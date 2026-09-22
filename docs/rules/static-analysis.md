@@ -62,3 +62,10 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
 `@Suppress("RuleName")` is allowed only with the reason on the same line, and only when the rule is
 wrong for that spot — never to silence a real finding. A suppression that needs a paragraph is a
 refactor.
+
+## What these tools do not see
+
+Native code inside a dependency. A green `check` says nothing about whether the `.so` files an
+AndroidX AAR ships are 16 KB page compatible, and `GradleDependency` is disabled, so a version bump
+that reintroduces the problem passes every gate here. The app has to be launched on a 16 KB device
+to find out — see [docs/reference/16kb-page-size.md](../reference/16kb-page-size.md).
