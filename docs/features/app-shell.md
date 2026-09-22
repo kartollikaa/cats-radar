@@ -21,6 +21,25 @@ permission request). There are no separate reducer/actor classes and no shared m
 screen's Store is self-contained, registered with Koin as a `viewModelOf`, and created once per
 Navigation 3 entry via `rememberViewModelStoreNavEntryDecorator`.
 
+## System bars and insets
+
+The app draws **edge to edge**: the window background and the app's own surface reach under the
+status and navigation bars, and only the content is inset. `MainActivity` calls `enableEdgeToEdge()`
+and fills the window; the `Scaffold` supplies the insets, each screen applies them through its own
+`contentPadding`, and the bottom bar pads itself so its colour runs to the bottom of the screen with
+the gesture indicator over it.
+
+Two things this replaced, both wrong:
+
+- `safeDrawingPadding()` on the root surface, which inset the *whole* app, so the app's colour never
+  reached the bars and the window background showed through instead.
+- `contentWindowInsets = WindowInsets(0)` on the `Scaffold`, which then had to be compensated for
+  screen by screen.
+
+The window background is a colour with a `values-night` variant rather than a theme parent: the
+platform has no `Theme.Material.DayNight`, so a light parent would keep showing a light strip behind
+the bars under a dark app, and a light flash before the first Compose frame.
+
 ## At the edges
 
 No key can appear on the back stack twice. `NavEntry.contentKey` defaults to the key itself and
