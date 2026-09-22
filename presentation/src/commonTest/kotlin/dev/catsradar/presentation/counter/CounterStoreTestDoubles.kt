@@ -78,6 +78,8 @@ internal class FakeEncounterRepository : EncounterRepository {
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = null) else it } }
     }
 
+    override suspend fun loadEvery(): List<Encounter> = encounters.value
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
 
     // Mirrors the DAO: this is the only read that can see soft-deleted rows.

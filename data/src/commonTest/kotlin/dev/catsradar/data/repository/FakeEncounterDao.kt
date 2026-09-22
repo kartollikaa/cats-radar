@@ -26,6 +26,7 @@ internal class FakeEncounterDao : EncounterDao {
     var findBySourceDigestResult: EncounterEntity? = null
     var purgeDeletedBeforeResult: Int = 0
     var loadDeletedBeforeResult: List<EncounterEntity> = emptyList()
+    var loadEveryResult: List<EncounterEntity> = emptyList()
 
     val inserted = mutableListOf<EncounterEntity>()
     val updated = mutableListOf<EncounterEntity>()
@@ -83,6 +84,8 @@ internal class FakeEncounterDao : EncounterDao {
         findBySourceDigestCall = sourceDigest
         return findBySourceDigestResult
     }
+    override suspend fun loadEvery(): List<EncounterEntity> = loadEveryResult
+
     override suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterEntity> {
         loadDeletedBeforeCall = cutoff
         return loadDeletedBeforeResult

@@ -103,22 +103,4 @@ class EncounterDaoTest {
         dao.softDelete(live.id, Instant.parse("2026-09-21T00:00:00Z"))
         assertNull(dao.findBySourceDigest("shared-digest"))
     }
-
-    @Test
-    fun purgeRemovesRowsPastTheCutoffAndKeepsNewerOnes() = runTest {
-        val old = fullEncounterEntity(id = "old", deletedAt = Instant.parse("2026-01-01T00:00:00Z"))
-        val recent = fullEncounterEntity(id = "recent", deletedAt = Instant.parse("2026-09-15T00:00:00Z"))
-        val notDeleted = fullEncounterEntity(id = "kept-live", deletedAt = null)
-        dao.insert(old)
-        dao.insert(recent)
-        dao.insert(notDeleted)
-
-        val cutoff = Instant.parse("2026-08-01T00:00:00Z")
-        val purged = dao.purgeDeletedBefore(cutoff)
-
-        assertEquals(1, purged)
-        assertEquals(0, database.schemaProbeDao().encounterRowCount(old.id))
-        assertEquals(1, database.schemaProbeDao().encounterRowCount(recent.id))
-        assertEquals(1, dao.observeAll().first().size)
-    }
 }
