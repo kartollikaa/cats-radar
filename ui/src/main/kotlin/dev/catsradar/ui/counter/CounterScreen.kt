@@ -3,13 +3,14 @@ package dev.catsradar.ui.counter
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,6 +18,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -53,15 +55,14 @@ fun CounterScreen(
             totalLabel = state.totalLabel,
             count = state.count,
             tapBurst = state.tapBurst,
+            undoVisible = state.undoVisible,
             modifier = Modifier.weight(1f).fillMaxWidth(),
             onClick = onTallyClick,
+            onUndoClick = onUndoClick,
         )
-        state.currentOuting?.let { CurrentOuting(it) }
+        CurrentOutingLine(state.currentOuting)
         WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
         CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-        if (state.undoVisible) {
-            AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
-        }
         CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
         state.importProgress?.let { ImportProgress(it) }
         state.importSummary?.let {
@@ -102,6 +103,16 @@ private fun CameraButton(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
+    }
+}
+
+// Holds one line of height with or without an outing, so the first cat of an outing, and the last
+// cat's outing closing, do not shift everything below it.
+@Composable
+private fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = Modifier) {
+    val lineHeight = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.lineHeight.toDp() }
+    Box(modifier = modifier.fillMaxWidth().heightIn(min = lineHeight), contentAlignment = Alignment.Center) {
+        state?.let { CurrentOuting(it) }
     }
 }
 

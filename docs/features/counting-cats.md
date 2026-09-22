@@ -26,6 +26,12 @@ the right way. The roll follows the database, so it lands a moment after the bur
 the finger, the roll answers the write. The springs are tuned stiff enough that the roll starts on
 the frame the new number arrives rather than easing into motion.
 
+**Nothing on the screen moves when something appears.** The Undo chip is drawn inside the count
+block, at its bottom edge, rather than in the column under it: it comes and goes every few seconds,
+and in the column it pushed the outing line, the walk chip and the coat grid up and back down again
+each time. The outing line likewise holds one line of height when no outing is open, so the first
+cat of an outing does not shift everything below it either.
+
 ## The outing in progress
 
 While an outing is open the counter shows how many cats it holds and how long it has been running,

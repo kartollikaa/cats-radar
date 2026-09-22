@@ -8,6 +8,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -19,6 +21,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,8 +62,10 @@ internal fun TallyBlock(
     totalLabel: String,
     count: Int,
     tapBurst: Int?,
+    undoVisible: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
+    onUndoClick: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
@@ -82,6 +88,13 @@ internal fun TallyBlock(
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             RollingCount(shown = ShownCount(totalLabel, count))
             TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopCenter).padding(top = 32.dp))
+            // Inside the block rather than under it: appearing and fading every few seconds, it must
+            // not move anything else on the screen.
+            UndoChip(
+                visible = undoVisible,
+                onClick = onUndoClick,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp),
+            )
         }
     }
 }
@@ -102,6 +115,24 @@ private fun RollingCount(shown: ShownCount, modifier: Modifier = Modifier) {
         Text(
             text = target.label,
             style = MaterialTheme.typography.displayLarge.copy(fontSize = 112.sp, lineHeight = 112.sp),
+        )
+    }
+}
+
+@Composable
+private fun UndoChip(visible: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + scaleIn(initialScale = 0.8f),
+        exit = fadeOut() + scaleOut(targetScale = 0.8f),
+        modifier = modifier,
+    ) {
+        AssistChip(
+            onClick = onClick,
+            label = { Text(text = stringResource(R.string.counter_undo)) },
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ),
         )
     }
 }
@@ -129,6 +160,12 @@ private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
 @Composable
 private fun TallyBlockPreview() {
     CatsRadarTheme {
-        TallyBlock(totalLabel = "42", count = 42, tapBurst = 3, modifier = Modifier.fillMaxWidth().height(320.dp))
+        TallyBlock(
+            totalLabel = "42",
+            count = 42,
+            tapBurst = 3,
+            undoVisible = true,
+            modifier = Modifier.fillMaxWidth().height(320.dp),
+        )
     }
 }
