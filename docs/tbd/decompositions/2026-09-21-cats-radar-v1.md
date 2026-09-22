@@ -32,7 +32,8 @@
 | 14 | Reverse geocoding of place cells | `ReverseGeocoder` (Android `Geocoder`), PlaceCell creation on location attach, `ResolvePendingPlaces` use case, connected-network worker with backoff, region tree builder + tests. | safe | ~450 | 7, 12 | merged |
 | 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | merged |
 | 16 | Import rules and the import use case | `ImportRules` (recent-photo window, digest dedup, EXIF time and offset) + tests, `ImportPhotos` use case, digest lookup in the repository, file-date fallback. Nothing calls it yet. | safe | ~450 | 11 | planned |
-| 16b | Gallery import on screen | `ImportPhotosWorker` with progress notification, `PickMultipleVisualMedia` on long-press camera, summary with undo, `ACCESS_MEDIA_LOCATION` + `setRequireOriginal` spike. | safe | ~450 | 16 | planned |
+| 16b | Gallery import on screen | `ImportPhotosWorker`, `PickMultipleVisualMedia` on long-press camera, in-app progress, summary with undo; EXIF-redaction spike resolved. | safe | ~450 | 16 | in-review |
+| 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS`, `getForegroundInfo` and the foreground-service type, so an import the user walks away from still reports. | safe | ~250 | 16b | planned |
 | 17 | Backup format and merge rules | Serializable export models, ZIP writer/reader, `manifest.json` versioning, merge rules (newer `updatedAt`, delete-vs-live) with tests, `ExportBackup`/`ImportBackup` use cases. | safe | ~500 | 11, 14 | planned |
 | 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers with progress, gallery toggle UI (backup export/import still to come). | safe | ~200 | 11 | merged |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
@@ -232,6 +233,20 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-22: **spike result — the photo picker redacts location, not dates.** Run on an emulator
+  (API 37) through the real import flow, with the picked photo identified by its accessibility label
+  rather than by position in the grid. A fixture carrying GPS 41.39864/2.17842 and a known
+  DateTimeOriginal came back with the date read correctly and the coordinates gone; the bytes
+  received hash differently from the file on disk, so the picker serves a redacted re-encode. Dedup
+  is unaffected because that redaction is deterministic. Spec open item 10 is resolved in favour of
+  its own fallback: imports carry no location, and the spec's "dates still come from EXIF" holds.
+  `ACCESS_MEDIA_LOCATION` + `setRequireOriginal` deliberately not added — another permission dialog
+  for an unevidenced benefit.
+- 2026-09-22: slice 16b ships **without the progress notification** the spec lists. Expedited work
+  needs no notification to run on API 31+, so the in-app progress row covers the common case; the
+  channel, `POST_NOTIFICATIONS` and the foreground-service type are a slice of their own for the
+  walk-away case.
 
 - 2026-09-22: slice 16 split. Rules, the use case and the digest lookup are one reviewable unit that
   nothing calls yet; the worker, the picker, the summary and the EXIF-GPS spike are another. Together
