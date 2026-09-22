@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.presentation.DateTimeFormatter
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -53,4 +54,12 @@ internal class FakeDateTimeFormatter : DateTimeFormatter {
     override fun time(instant: Instant, offset: UtcOffset): String = instant.toString()
 
     override fun duration(duration: Duration): String = duration.toString()
+}
+
+// Mirrors AndroidPhotoStorage's contract: a stored path is relative, and resolving prefixes it with
+// the app's own photo directory.
+internal class FakePhotoStorage(private val root: String = "/data/photos") : PhotoStorage {
+    override fun resolve(relativePath: String): String = "$root/$relativePath"
+
+    override suspend fun delete(relativePath: String) = Unit
 }

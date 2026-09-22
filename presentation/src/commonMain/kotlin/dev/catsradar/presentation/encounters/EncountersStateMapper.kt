@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
@@ -8,7 +9,10 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
 
-class EncountersStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
+class EncountersStateMapper(
+    private val dateTimeFormatter: DateTimeFormatter,
+    private val photoStorage: PhotoStorage,
+) {
 
     fun map(encounters: List<Encounter>, today: LocalDate): EncountersState {
         val rows = SessionSplitter.groupByOuting(encounters)
@@ -33,6 +37,7 @@ class EncountersStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         id = encounter.id,
         timeLabel = encounter.timeLabel(),
         location = encounter.locationSource.toLocationLabel(),
+        thumbnailPath = encounter.thumbPath?.let(photoStorage::resolve),
     )
 
     private fun Encounter.timeLabel(): String =

@@ -1,5 +1,6 @@
 package dev.catsradar.ui.encounters
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -16,8 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import dev.catsradar.presentation.encounters.EncounterListItem
 import dev.catsradar.presentation.encounters.EncountersState
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -25,6 +30,8 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
+
+private val ThumbnailSize = 48.dp
 
 @Composable
 fun EncountersScreen(
@@ -62,9 +69,27 @@ private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifi
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            EncounterThumbnail(path = row.thumbnailPath)
+            Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)
+        }
         Text(text = stringResource(row.location.labelRes()), style = MaterialTheme.typography.bodySmall)
     }
+}
+
+@Composable
+private fun EncounterThumbnail(path: String?, modifier: Modifier = Modifier) {
+    val shape = MaterialTheme.shapes.small
+    if (path == null) {
+        Box(modifier = modifier.size(ThumbnailSize).clip(shape).background(MaterialTheme.colorScheme.surfaceVariant))
+        return
+    }
+    AsyncImage(
+        model = path,
+        contentDescription = stringResource(R.string.encounters_photo_description),
+        modifier = modifier.size(ThumbnailSize).clip(shape),
+        contentScale = ContentScale.Crop,
+    )
 }
 
 @Composable

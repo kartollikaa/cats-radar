@@ -35,7 +35,7 @@ class EncountersStoreTest {
 
     private fun newStore(repository: FakeEncounterRepository): EncountersStore = EncountersStore(
         observeEncounters = ObserveEncounters(repository),
-        stateMapper = EncountersStateMapper(FakeDateTimeFormatter()),
+        stateMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = FakeClock(Instant.parse("2026-09-22T12:00:00Z")),
         timeZone = TimeZone.UTC,
     )

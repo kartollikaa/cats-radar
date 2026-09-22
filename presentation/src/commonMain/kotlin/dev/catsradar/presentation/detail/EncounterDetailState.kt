@@ -12,6 +12,8 @@ sealed interface EncounterDetailState {
         val location: LocationLabel,
         val coordinatesLabel: String?,
         val accuracyMeters: Int?,
+        /** Absolute path of the app's copy, or null when this cat was a tally. */
+        val photoPath: String? = null,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */

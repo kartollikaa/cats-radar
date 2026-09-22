@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.encounters.toLocationLabel
@@ -11,7 +12,10 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-class EncounterDetailStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
+class EncounterDetailStateMapper(
+    private val dateTimeFormatter: DateTimeFormatter,
+    private val photoStorage: PhotoStorage,
+) {
 
     fun map(encounter: Encounter, today: LocalDate): EncounterDetailState.Loaded {
         val lat = encounter.lat
@@ -26,6 +30,7 @@ class EncounterDetailStateMapper(private val dateTimeFormatter: DateTimeFormatte
                 null
             },
             accuracyMeters = encounter.accuracyMeters?.roundToInt(),
+            photoPath = encounter.photoPath?.let(photoStorage::resolve),
         )
     }
 }

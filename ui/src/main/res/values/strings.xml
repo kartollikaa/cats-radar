@@ -11,6 +11,7 @@
     <string name="counter_location_dismiss">Dismiss</string>
 
     <string name="encounters_empty">No cats logged yet</string>
+    <string name="encounters_photo_description">Photo of this cat</string>
 
     <string name="location_from_photo">From photo</string>
     <string name="location_current">Current location</string>
@@ -19,6 +20,7 @@
     <string name="location_none">No location yet</string>
 
     <string name="detail_coordinates">Coordinates</string>
+    <string name="detail_photo_description">Photo of this cat</string>
     <string name="detail_accuracy">±%1$d m</string>
     <string name="detail_delete">Delete</string>
     <string name="detail_deleted">Cat removed</string>

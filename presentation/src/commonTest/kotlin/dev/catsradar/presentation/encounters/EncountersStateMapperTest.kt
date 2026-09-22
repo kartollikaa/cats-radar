@@ -14,7 +14,7 @@ import kotlin.time.Instant
 class EncountersStateMapperTest {
 
     private val formatter = FakeDateTimeFormatter()
-    private val mapper = EncountersStateMapper(formatter)
+    private val mapper = EncountersStateMapper(formatter, FakePhotoStorage())
     private val today = LocalDate(2026, 9, 22)
 
     @Test
@@ -47,6 +47,28 @@ class EncountersStateMapperTest {
             labels,
         )
         assertEquals(sources.size, labels.values.toSet().size, "two sources share one label")
+    }
+
+    @Test
+    fun `a photo row carries its thumbnail resolved to a full path, a tally row carries none`() {
+        val tally = encounterFixture("tally", BASE)
+        val photo = encounterFixture("photo", BASE + 5.minutes).copy(thumbPath = "photo_thumb.jpg")
+
+        val rows = mapper.map(listOf(tally, photo), today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.thumbnailPath }
+
+        assertEquals(mapOf("tally" to null, "photo" to "/data/photos/photo_thumb.jpg"), rows)
+    }
+
+    @Test
+    fun `a photo whose thumbnail failed to write carries none, so the row falls back to a placeholder`() {
+        val photo = encounterFixture("photo", BASE).copy(photoPath = "photo.jpg", thumbPath = null)
+
+        val row = mapper.map(listOf(photo), today).rows.filterIsInstance<EncounterListItem.Row>().single()
+
+        assertEquals(null, row.thumbnailPath)
     }
 
     @Test
