@@ -23,7 +23,7 @@
 | 8 | Encounters list and bottom navigation | `ObserveEncounters`, grouping by outing, `DateTimeFormatter`, `EncountersStore`/`Screen` with outing headers and empty state, bottom bar Counter · Encounters with root-stack back rule. | safe | ~500 | 6 | merged |
 | 8a | String resources | Move every user-facing literal in `:ui` and `:presentation` into `ui/res/values/strings.xml`; mapper-chosen labels become presentation tokens resolved by the composable. Establishes the pattern slices 9–20 follow and shrinks slice 21 to `values-ru` alone. | safe | ~150 | 8 | merged |
 | 9 | Encounter detail with delete and undo | `EncounterDetail` key/store/screen, soft delete from detail, undo on the detail screen for `UNDO_VISIBLE`, then back to the list. | safe | ~300 | 8 | in-progress |
-| 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStore` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | planned |
+| 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStorage` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | planned |
 | 11 | Photo capture flow | `LogPhoto` use case, camera button + `TakePicture`, `origin`/EXIF rules, thumbnails in list and detail via Coil, `saveOriginalsToGallery` setting in DataStore (default on, no UI yet). | safe | ~500 | 7, 9, 10 | planned |
 | 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | planned |
 | 13 | Statistics screen and current outing | `ObserveStats`, `StatisticsStore`/`Screen` (headline, streak, rate block, outings, next milestone), current-outing block on Counter, milestone toast with `lastSeenMilestone`. | safe | ~500 | 8, 12 | planned |
@@ -123,7 +123,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 ### Slice 10 — Photo pipeline in data
 - **In scope:** `ExifReader` (GPS, `DateTimeOriginal`, `OffsetTimeOriginal`), `ImageResizer` (`PHOTO_MAX_SIDE`,
   `PHOTO_QUALITY`, `THUMB_SIZE`), `Digest` (SHA-256), `GallerySaver` (MediaStore `Pictures/Cats Radar`),
-  `PhotoStore` (private files) — interfaces in `:domain`, Android impls in `:data`, Robolectric tests with
+  `PhotoStorage` (private files) — interfaces in `:domain`, Android impls in `:data`, Robolectric tests with
   small fixture JPEGs.
 - **Out of scope:** any UI or use case.
 - **Ships safely because:** unreferenced until slice 11.
