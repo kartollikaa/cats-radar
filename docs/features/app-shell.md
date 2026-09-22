@@ -40,6 +40,30 @@ The window background is a colour with a `values-night` variant rather than a th
 platform has no `Theme.Material.DayNight`, so a light parent would keep showing a light strip behind
 the bars under a dark app, and a light flash before the first Compose frame.
 
+## Look
+
+**Colour.** Light and dark schemes are written out in full in `CatsRadarColors.kt`, on Material 3's
+tones, seeded from the launcher icon's teal (`#4CAF93`) with a coral tertiary. Dynamic colour is off:
+previews stay deterministic, and the home-screen widget reads the same two schemes rather than the
+wallpaper's. The values were produced once by a tonal-palette script (tone as CIELAB L\*, chroma
+capped near white where Material's own colour space would soften it); regenerating them means
+re-running that recipe, not hand-editing one role.
+
+`CatsRadarColorsTest` holds the palette to two things: every text colour reads at WCAG AA against
+the surface it is meant for, in both themes, and the primary is still teal. Both checks have been
+broken on purpose and caught.
+
+**Shape and type.** Corners are rounder than Material's defaults at every size, and display and
+headline styles are heavier. The font is the platform's; nothing is bundled.
+
+**Navigation.** The bottom bar is `ShortNavigationBar` with Material Symbols Rounded icons
+(Apache 2.0), outlined when idle and filled when selected. The label is always shown and names the
+tab, so the icons carry no content description of their own.
+
+**Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
+are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
+wants springy motion gives its own animation a spring spec.
+
 ## At the edges
 
 No key can appear on the back stack twice. `NavEntry.contentKey` defaults to the key itself and
@@ -86,12 +110,13 @@ run.
   `CounterEffectHandler.kt`
 - `app/src/main/kotlin/dev/catsradar/app/di/DomainModule.kt`, `DataModule.kt`,
   `PresentationModule.kt`, `WorkerModule.kt`
-- `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/navigation/CatsRadarBottomBar.kt`,
+  `ui/src/main/res/drawable/ic_nav_*.xml`
 
 ## Not handled yet
 
-`Counter` and `Encounters` are the only two `NavKey`s behind the bottom `NavigationBar`; the
-root-stack back rule it enforces is covered in `browsing-cats.md`. The other five screens the
-design spec lists (`EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`)
-don't exist yet. `CatsRadarTheme` sets only a light/dark `colorScheme`; it has no custom typography
-or shapes, unlike the fuller theme surface `docs/rules/compose-patterns.md` §3 describes.
+The theme is the foundation of a design pass that is not finished: coats drawn as cat faces, the
+Counter as the screen's centrepiece with spring motion on tally and undo, and the rhythm of the list,
+detail and statistics screens are still to come. Until then, those screens wear the new colours on
+their old layouts. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
