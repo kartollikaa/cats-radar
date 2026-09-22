@@ -12,6 +12,7 @@ class NamingConventionTest {
     fun `classes named Store reside in dev catsradar presentation`() {
         Konsist.scopeFromProject()
             .classes()
+            .excludingGeneratedSources()
             .withNameEndingWith("Store")
             .assertTrue(testName = "classes named *Store reside in dev.catsradar.presentation") {
                 it.resideInPackage("dev.catsradar.presentation..")
@@ -22,6 +23,7 @@ class NamingConventionTest {
     fun `classes named State have no function typed properties`() {
         Konsist.scopeFromProject()
             .classes()
+            .excludingGeneratedSources()
             .withNameEndingWith("State")
             .assertTrue(testName = "classes named *State have no function-typed properties") { clazz ->
                 clazz.properties().none { it.type.isBehaviorType() }

@@ -45,6 +45,7 @@ class ModulePackageMappingTest {
         val expectedPackage = "dev.catsradar.$module"
         Konsist.scopeFromProject()
             .files
+            .excludingGeneratedSources()
             .filter { it.path.contains("/$module/src/") }
             .assertTrue(testName = "files physically under $module declare package $expectedPackage") { file ->
                 file.declaresPackage(expectedPackage)
@@ -55,6 +56,7 @@ class ModulePackageMappingTest {
         val expectedPackage = "dev.catsradar.$module"
         Konsist.scopeFromProject()
             .files
+            .excludingGeneratedSources()
             .filter { it.declaresPackage(expectedPackage) }
             .assertTrue(testName = "files declaring package $expectedPackage are physically under $module") { file ->
                 file.path.contains("/$module/src/")
