@@ -27,6 +27,11 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
         if (entries.last() != target) entries.add(target)
     }
 
+    /** Pushes [key] unless it is already on the stack, in which case nothing changes. */
+    fun push(key: NavKey) {
+        if (key !in entries) entries.add(key)
+    }
+
     /** Pops the top entry unless only the root remains; returns whether it popped. */
     fun popOrNull(): Boolean {
         if (entries.size <= 1) return false

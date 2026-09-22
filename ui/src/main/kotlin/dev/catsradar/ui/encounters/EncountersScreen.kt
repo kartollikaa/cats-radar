@@ -1,6 +1,6 @@
 package dev.catsradar.ui.encounters
 
-import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +31,7 @@ fun EncountersScreen(
     state: EncountersState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onRowClick: (String) -> Unit = {},
 ) {
     if (state.isEmpty) {
         EmptyEncounters(modifier = modifier.fillMaxSize().padding(contentPadding))
@@ -40,7 +41,7 @@ fun EncountersScreen(
         items(items = state.rows, key = { it.key }) { row ->
             when (row) {
                 is EncounterListItem.OutingHeader -> OutingHeaderRow(row)
-                is EncounterListItem.Row -> EncounterRow(row)
+                is EncounterListItem.Row -> EncounterRow(row, onClick = { onRowClick(row.id) })
             }
         }
     }
@@ -56,23 +57,14 @@ private fun OutingHeaderRow(header: EncounterListItem.OutingHeader, modifier: Mo
 }
 
 @Composable
-private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifier) {
+private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)
         Text(text = stringResource(row.location.labelRes()), style = MaterialTheme.typography.bodySmall)
     }
-}
-
-@StringRes
-private fun LocationLabel.labelRes(): Int = when (this) {
-    LocationLabel.FROM_PHOTO -> R.string.location_from_photo
-    LocationLabel.CURRENT -> R.string.location_current
-    LocationLabel.LAST_KNOWN -> R.string.location_last_known
-    LocationLabel.FROM_OUTING -> R.string.location_from_outing
-    LocationLabel.NONE -> R.string.location_none
 }
 
 @Composable

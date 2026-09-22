@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -22,13 +23,18 @@ import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
+import dev.catsradar.presentation.detail.EncounterDetailEffect
+import dev.catsradar.presentation.detail.EncounterDetailIntent
+import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStore
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.LocationHintAction
+import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun CatsRadarNavHost(modifier: Modifier = Modifier) {
@@ -53,7 +59,19 @@ fun CatsRadarNavHost(modifier: Modifier = Modifier) {
             ),
             entryProvider = entryProvider {
                 entry<Counter> { CounterDestination(contentPadding = innerPadding) }
-                entry<Encounters> { EncountersDestination(contentPadding = innerPadding) }
+                entry<Encounters> {
+                    EncountersDestination(
+                        contentPadding = innerPadding,
+                        onRowClick = { id -> backStack.push(EncounterDetail(id)) },
+                    )
+                }
+                entry<EncounterDetail> { key ->
+                    EncounterDetailDestination(
+                        key = key,
+                        contentPadding = innerPadding,
+                        onNavigateBack = { backStack.popOrNull() },
+                    )
+                }
             },
         )
     }
@@ -101,8 +119,38 @@ private fun LocationHintAction.toCounterIntent(): CounterIntent = when (this) {
 }
 
 @Composable
-private fun EncountersDestination(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+private fun EncountersDestination(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    onRowClick: (String) -> Unit = {},
+) {
     val store = koinViewModel<EncountersStore>()
     val state by store.state.collectAsStateWithLifecycle()
-    EncountersScreen(state = state, modifier = modifier, contentPadding = contentPadding)
+    EncountersScreen(state = state, modifier = modifier, contentPadding = contentPadding, onRowClick = onRowClick)
+}
+
+@Composable
+private fun EncounterDetailDestination(
+    key: EncounterDetail,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit = {},
+) {
+    val store = koinViewModel<EncounterDetailStore> { parametersOf(key.id) }
+    val state by store.state.collectAsStateWithLifecycle()
+    val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
+    LaunchedEffect(store) {
+        store.effects.collect { effect ->
+            when (effect) {
+                EncounterDetailEffect.NavigateBack -> currentOnNavigateBack()
+            }
+        }
+    }
+    EncounterDetailScreen(
+        state = state,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
+        onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
+    )
 }
