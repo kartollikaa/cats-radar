@@ -5,7 +5,7 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
 
 | Tool | What it catches | Config |
 |---|---|---|
-| **detekt** with `detekt-formatting` and `compose-rules` | Style and complexity; ktlint-equivalent formatting; Compose-specific rules (modifier order and defaults, unstable collection parameters, `remember` misuse, preview naming, lambda parameters in composables) | `config/detekt/detekt.yml`; **no baseline file** — `config/detekt/baseline.xml` is never created, a finding on existing code is fixed, not suppressed |
+| **detekt** with `detekt-formatting` and `compose-rules` | Style and complexity; ktlint-equivalent formatting; Compose-specific rules (modifier order and defaults, unstable collection parameters, `remember` misuse, preview naming) | `config/detekt/detekt.yml`; **no baseline file** — `config/detekt/baseline.xml` is never created, a finding on existing code is fixed, not suppressed |
 | **Android Lint** | Manifest, resource, API-level and Compose runtime issues, **`:app` and `:ui` only** — AGP's Kotlin Multiplatform Android Library plugin has no lint-report task, so `:domain`/`:data`/`:presentation` are configured but not actually checked | Gradle DSL only (`lint { }` in the convention plugins); no root `lint.xml` — the DSL covers everything needed; `warningsAsErrors = true`, `abortOnError = true` |
 | **Konsist** | The four import-boundary rules and the composable-Modifier, `*Store`, `*State` naming rules below — **not** `*Intent`/`*Effect`/`*StateMapper` naming, which has no test | Plain unit tests under `app/src/test/…/architecture` |
 
@@ -31,6 +31,12 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
   [compose-preview-patterns.md](./compose-preview-patterns.md) §1).
 - compose-rules' `Material2` is on — the project renders with Material3 only, so any Material2
   import is flagged (opt-in rule, off by default in compose-rules).
+- compose-rules' `PreviewNaming` is on — enforces the preview naming strategy, matching our
+  `*Preview` suffix convention from [compose-preview-patterns.md](./compose-preview-patterns.md) §5
+  (opt-in rule, off by default in compose-rules).
+- compose-rules' `UnstableCollections` is on — a composable or class parameter typed as a plain
+  `List`/`Set`/`Map` is flagged, matching the `Immutable*` collections rule for State from
+  [compose-patterns.md](./compose-patterns.md) §2 (opt-in rule, off by default in compose-rules).
 - compose-rules' `PreviewAnnotationNaming` is off — it requires a multipreview annotation name
   prefixed with `Preview`, which contradicts the fixed name `ThemePreviews` from
   [compose-preview-patterns.md](./compose-preview-patterns.md) §1.
@@ -42,6 +48,11 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
   overridden.
 - Formatting violations are auto-fixed with `./gradlew detekt --auto-correct`; commit the result,
   don't suppress.
+
+## Android Lint conventions
+
+- `disable += "GradleDependency"` (`AndroidCommon.kt`) — the version catalog is updated
+  deliberately, not on lint's schedule.
 
 ## Suppressions
 
