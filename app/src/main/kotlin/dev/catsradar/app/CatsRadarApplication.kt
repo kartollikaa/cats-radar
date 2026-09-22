@@ -8,6 +8,7 @@ import dev.catsradar.app.di.domainModule
 import dev.catsradar.app.di.presentationModule
 import dev.catsradar.app.di.workerModule
 import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
 import dev.catsradar.app.worker.PurgeWorkScheduler
@@ -30,6 +31,7 @@ class CatsRadarApplication : Application() {
             Configuration.Builder().setWorkerFactory(KoinWorkerFactory(koin)).build(),
         )
         koin.get<ImportNotifier>().ensureChannel()
+        koin.get<WalkingNotifier>().ensureChannel()
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

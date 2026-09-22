@@ -26,6 +26,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Not exported: only this app's own notification actions may reach it. -->
+        <receiver
+            android:name=".notification.WalkingActionReceiver"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

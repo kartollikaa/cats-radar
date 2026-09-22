@@ -24,10 +24,20 @@ class EncounterTest {
         assertEquals(listOf(EncounterKind.TALLY, EncounterKind.PHOTO), EncounterKind.entries)
     }
 
+    // NOTIFICATION is this project's addition to the spec's four: walking mode logs a cat from the
+    // lock screen, which is neither the app nor the widget. Safe to add because the Room converter
+    // maps an unrecognised name back to APP, so an older build reading a newer row degrades rather
+    // than throwing.
     @Test
-    fun `EncounterOrigin has exactly four entries in spec order`() {
+    fun `EncounterOrigin has exactly five entries in spec order`() {
         assertEquals(
-            listOf(EncounterOrigin.APP, EncounterOrigin.WIDGET, EncounterOrigin.CAMERA, EncounterOrigin.GALLERY),
+            listOf(
+                EncounterOrigin.APP,
+                EncounterOrigin.WIDGET,
+                EncounterOrigin.NOTIFICATION,
+                EncounterOrigin.CAMERA,
+                EncounterOrigin.GALLERY,
+            ),
             EncounterOrigin.entries,
         )
     }

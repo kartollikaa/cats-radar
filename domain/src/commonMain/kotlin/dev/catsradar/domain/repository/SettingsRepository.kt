@@ -8,6 +8,11 @@ interface SettingsRepository {
 
     suspend fun setSaveOriginalsToGallery(enabled: Boolean)
 
+    /** Whether the walking notification is up. Off until asked for; survives the app being killed. */
+    fun walkingMode(): Flow<Boolean>
+
+    suspend fun setWalkingMode(enabled: Boolean)
+
     /** The highest milestone already celebrated, so each one is announced once and only once. */
     fun lastSeenMilestone(): Flow<Int>
 

@@ -120,4 +120,14 @@
     <string name="settings_backup_unreadable">That file is not a Cats Radar backup</string>
     <string name="notification_channel_import">Importing photos</string>
     <string name="notification_import_title">Importing photos</string>
+    <string name="notification_channel_walking">Walking mode</string>
+    <string name="notification_walking_title">Out looking for cats</string>
+    <string name="notification_walking_tally">Cat!</string>
+    <string name="notification_walking_stop">Done</string>
+    <plurals name="notification_walking_count">
+        <item quantity="one">%1$d cat this outing</item>
+        <item quantity="other">%1$d cats this outing</item>
+    </plurals>
+    <string name="settings_walking">Walking mode</string>
+    <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
 </resources>

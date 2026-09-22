@@ -35,5 +35,7 @@ a document nobody updates is worse than none.
   a shape, and the by-coat statistics.
 - `backup.md` — the archive: what it carries, and how importing one merges with what is
   already here instead of replacing it.
+- `walking-mode.md` — the lock-screen tally: one tap from the notification, and why it does
+  not define an outing.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

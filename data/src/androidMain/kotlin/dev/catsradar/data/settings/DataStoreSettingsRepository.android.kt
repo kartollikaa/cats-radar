@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 
 private val SaveOriginalsToGallery = booleanPreferencesKey("save_originals_to_gallery")
 private val LastSeenMilestone = intPreferencesKey("last_seen_milestone")
+private val WalkingMode = booleanPreferencesKey("walking_mode")
 
 class DataStoreSettingsRepository(
     private val dataStore: DataStore<Preferences>,
@@ -21,6 +22,12 @@ class DataStoreSettingsRepository(
 
     override suspend fun setSaveOriginalsToGallery(enabled: Boolean) {
         dataStore.edit { it[SaveOriginalsToGallery] = enabled }
+    }
+
+    override fun walkingMode(): Flow<Boolean> = dataStore.data.map { it[WalkingMode] ?: false }
+
+    override suspend fun setWalkingMode(enabled: Boolean) {
+        dataStore.edit { it[WalkingMode] = enabled }
     }
 
     override fun lastSeenMilestone(): Flow<Int> = dataStore.data.map { it[LastSeenMilestone] ?: 0 }
