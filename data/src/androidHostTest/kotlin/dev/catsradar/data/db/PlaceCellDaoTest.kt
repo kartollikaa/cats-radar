@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class PlaceCellDaoTest {
-    private lateinit var database: CatsDatabase
+    private lateinit var database: TestCatsDatabase
     private lateinit var dao: PlaceCellDao
 
     @Before
@@ -56,5 +56,18 @@ class PlaceCellDaoTest {
         val page = dao.loadPage(PlaceStatus.PENDING, limit = 10, offset = 0)
 
         assertEquals(setOf("pending-1", "pending-2"), page.map { it.cellId }.toSet())
+    }
+
+    @Test
+    fun loadPageOrdersByCellIdSoConsecutivePagesNeitherSkipNorRepeat() = runTest {
+        dao.upsert(pendingPlaceCellEntity("charlie"))
+        dao.upsert(pendingPlaceCellEntity("alpha"))
+        dao.upsert(pendingPlaceCellEntity("bravo"))
+
+        val firstPage = dao.loadPage(PlaceStatus.PENDING, limit = 2, offset = 0)
+        val secondPage = dao.loadPage(PlaceStatus.PENDING, limit = 2, offset = 2)
+
+        assertEquals(listOf("alpha", "bravo"), firstPage.map { it.cellId })
+        assertEquals(listOf("charlie"), secondPage.map { it.cellId })
     }
 }

@@ -17,6 +17,8 @@ interface PlaceCellDao {
     @Query("SELECT * FROM place_cells WHERE cellId = :cellId")
     suspend fun loadById(cellId: String): PlaceCellEntity?
 
-    @Query("SELECT * FROM place_cells WHERE status = :status LIMIT :limit OFFSET :offset")
+    // ORDER BY is load-bearing: the geocode worker mutates status between pages, so an unordered
+    // paged SELECT can skip or repeat rows across calls.
+    @Query("SELECT * FROM place_cells WHERE status = :status ORDER BY cellId LIMIT :limit OFFSET :offset")
     suspend fun loadPage(status: PlaceStatus, limit: Int, offset: Int): List<PlaceCellEntity>
 }
