@@ -106,8 +106,8 @@
     <string name="coat_ginger">Рыжий</string>
     <string name="coat_ginger_white">Рыжий с белым</string>
     <string name="coat_white">Белый</string>
-    <string name="coat_tricolor_mostly_white">Трёхцветный, больше белого</string>
-    <string name="coat_tricolor_little_white">Трёхцветный, мало белого</string>
+    <string name="coat_tricolor_mostly_white">Калико, больше белого</string>
+    <string name="coat_tricolor_little_white">Калико, мало белого</string>
     <string name="coat_brown">Коричневый</string>
     <string name="coat_brown_white">Коричневый с белым</string>
     <string name="coat_grey">Серый</string>
