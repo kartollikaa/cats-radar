@@ -135,14 +135,15 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `a failed insert is swallowed instead of crashing the store`() = runTest(mainDispatcher) {
-        val repository = FakeEncounterRepository().apply { insertShouldThrow = IllegalStateException("disk full") }
-        val (store, _) = newStore(encounterRepository = repository)
+    fun `a failed insert is swallowed instead of crashing the store, but the tap still ticks`() =
+        runTest(mainDispatcher) {
+            val repository = FakeEncounterRepository().apply { insertShouldThrow = IllegalStateException("disk full") }
+            val (store, _) = newStore(encounterRepository = repository)
 
-        store.dispatch(CounterIntent.TallyClicked)
-        runCurrent()
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
 
-        assertEquals(CounterState(totalLabel = "0", undoVisible = false), store.state.value)
-        store.effects.test { expectNoEvents() }
-    }
+            assertEquals(CounterState(totalLabel = "0", undoVisible = false), store.state.value)
+            store.effects.test { assertEquals(CounterEffect.HapticTick, awaitItem()) }
+        }
 }

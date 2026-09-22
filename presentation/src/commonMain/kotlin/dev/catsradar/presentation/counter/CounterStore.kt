@@ -40,6 +40,8 @@ class CounterStore(
 
     private suspend fun onTallyClicked() {
         val sequence = ++tapSequence
+        // The tap must feel instant: the tick fires before the write, not after it succeeds.
+        emit(CounterEffect.HapticTick)
         runWriteIgnoringFailure {
             val encounter = logTally()
             // Captured before suspending, not completion order: a later tap's insert can resume
@@ -50,7 +52,6 @@ class CounterStore(
                 setState { copy(undoVisible = true) }
                 restartUndoTimer()
             }
-            emit(CounterEffect.HapticTick)
         }
     }
 
