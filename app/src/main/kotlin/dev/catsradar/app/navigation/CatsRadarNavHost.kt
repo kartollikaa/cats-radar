@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -27,6 +28,9 @@ fun CatsRadarNavHost() {
             entry<Counter> {
                 val store = koinViewModel<CounterStore>()
                 val state by store.state.collectAsStateWithLifecycle()
+                LaunchedEffect(store) {
+                    store.effects.collect {}
+                }
                 CounterScreen(state = state)
             }
         },
