@@ -6,9 +6,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-// Tuning is the single named home for these literals (spec §8); MagicNumber's job of keeping
-// numbers out of call sites is exactly what declaring them here already does.
-@Suppress("MagicNumber")
+@Suppress("MagicNumber") // every literal below is already a named constant, not one scattered at a call site
 object Tuning {
     val SESSION_GAP: Duration = 30.minutes
     val MIN_RATE_DURATION: Duration = 5.minutes
@@ -18,6 +16,7 @@ object Tuning {
     val UNDO_VISIBLE: Duration = 5.seconds
     val PURGE_AFTER: Duration = 30.days
 
+    const val GEOHASH_PRECISION: Int = 8
     const val PLACE_CELL_PRECISION: Int = 6
     const val AREA_PRECISION: Int = 5
     const val PHOTO_MAX_SIDE: Int = 2048

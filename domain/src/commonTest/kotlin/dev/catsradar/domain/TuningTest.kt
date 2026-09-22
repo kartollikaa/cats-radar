@@ -20,6 +20,7 @@ class TuningTest {
 
     @Test
     fun `precision and size constants match the spec`() {
+        assertEquals(8, Tuning.GEOHASH_PRECISION)
         assertEquals(6, Tuning.PLACE_CELL_PRECISION)
         assertEquals(5, Tuning.AREA_PRECISION)
         assertEquals(2048, Tuning.PHOTO_MAX_SIDE)
