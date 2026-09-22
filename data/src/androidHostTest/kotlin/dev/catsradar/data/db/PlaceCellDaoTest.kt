@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class PlaceCellDaoTest {
@@ -45,6 +46,21 @@ class PlaceCellDaoTest {
         assertEquals(1, rows.size)
         assertEquals(resolved, rows.single())
         assertEquals("RESOLVED", database.schemaProbeDao().rawPlaceCellStatus(cellId))
+    }
+
+    @Test
+    fun upsertPreservesLastAttemptAtAndResolvedAtThroughTheDatabase() = runTest {
+        val cellId = "resolved-with-timestamps"
+        val resolved = pendingPlaceCellEntity(cellId).copy(
+            status = PlaceStatus.RESOLVED,
+            attempts = 1,
+            lastAttemptAt = Instant.parse("2026-09-20T08:00:00Z"),
+            resolvedAt = Instant.parse("2026-09-20T08:05:00Z"),
+        )
+
+        dao.upsert(resolved)
+
+        assertEquals(resolved, dao.loadById(cellId))
     }
 
     @Test
