@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -46,10 +47,17 @@ fun CatsRadarNavHost() {
                         results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
                     store.dispatch(CounterIntent.LocationPermissionResult(granted))
                 }
-                val locationPermissionRequester = LocationPermissionRequester {
-                    permissionLauncher.launch(
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                    )
+                // A fresh lambda's identity would change every recomposition (every tap), which
+                // would restart the effect collector below and could drop an in-flight effect.
+                val locationPermissionRequester = remember(permissionLauncher) {
+                    LocationPermissionRequester {
+                        permissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            ),
+                        )
+                    }
                 }
                 LaunchedEffect(store, haptics, locationAttachScheduler, locationPermissionRequester) {
                     store.effects.collect { effect ->
