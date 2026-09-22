@@ -1,9 +1,6 @@
 package dev.catsradar.domain.time
 
-import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.EncounterKind
-import dev.catsradar.domain.model.EncounterOrigin
-import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.testing.encounterAt
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlin.test.Test
@@ -32,28 +29,4 @@ class LocalDateExtensionsTest {
 
         assertEquals(LocalDate.parse("2026-01-01"), fixedClock.today(TimeZone.UTC))
     }
-
-    private fun encounterAt(instant: Instant, tzOffsetMinutes: Int): Encounter = Encounter(
-        id = "id",
-        occurredAt = instant,
-        tzOffsetMinutes = tzOffsetMinutes,
-        kind = EncounterKind.TALLY,
-        origin = EncounterOrigin.APP,
-        coat = null,
-        photoPath = null,
-        thumbPath = null,
-        galleryUri = null,
-        sourceDigest = null,
-        lat = null,
-        lon = null,
-        accuracyMeters = null,
-        locationSource = LocationSource.NONE,
-        locationFixedAt = null,
-        geohash = null,
-        placeCellId = null,
-        deviceId = "device",
-        createdAt = instant,
-        updatedAt = instant,
-        deletedAt = null,
-    )
 }

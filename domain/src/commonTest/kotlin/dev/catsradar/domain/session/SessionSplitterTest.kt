@@ -1,10 +1,7 @@
 package dev.catsradar.domain.session
 
 import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.EncounterKind
-import dev.catsradar.domain.model.EncounterOrigin
-import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.testing.encounterAt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration
@@ -49,30 +46,6 @@ class SessionSplitterTest {
 
         assertEquals(SessionSplitter.split(sorted), SessionSplitter.split(shuffled))
     }
-
-    private fun encounterAt(instant: Instant): Encounter = Encounter(
-        id = "id",
-        occurredAt = instant,
-        tzOffsetMinutes = 0,
-        kind = EncounterKind.TALLY,
-        origin = EncounterOrigin.APP,
-        coat = null,
-        photoPath = null,
-        thumbPath = null,
-        galleryUri = null,
-        sourceDigest = null,
-        lat = null,
-        lon = null,
-        accuracyMeters = null,
-        locationSource = LocationSource.NONE,
-        locationFixedAt = null,
-        geohash = null,
-        placeCellId = null,
-        deviceId = "device",
-        createdAt = instant,
-        updatedAt = instant,
-        deletedAt = null,
-    )
 
     private companion object {
         val BASE = Instant.parse("2026-09-21T10:00:00Z")
