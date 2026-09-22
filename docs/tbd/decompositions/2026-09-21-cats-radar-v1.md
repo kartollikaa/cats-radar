@@ -23,8 +23,9 @@
 | 8 | Encounters list and bottom navigation | `ObserveEncounters`, grouping by outing, `DateTimeFormatter`, `EncountersStore`/`Screen` with outing headers and empty state, bottom bar Counter · Encounters with root-stack back rule. | safe | ~500 | 6 | merged |
 | 8a | String resources | Move every user-facing literal in `:ui` and `:presentation` into `ui/res/values/strings.xml`; mapper-chosen labels become presentation tokens resolved by the composable. Establishes the pattern slices 9–20 follow and shrinks slice 21 to `values-ru` alone. | safe | ~150 | 8 | merged |
 | 9 | Encounter detail with delete and undo | `EncounterDetail` key/store/screen, soft delete from detail, undo on the detail screen for `UNDO_VISIBLE`, then back to the list. | safe | ~300 | 8 | merged |
-| 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStorage` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | in-progress |
-| 11 | Photo capture flow | `LogPhoto` use case, camera button + `TakePicture`, `origin`/EXIF rules, thumbnails in list and detail via Coil, `saveOriginalsToGallery` setting in DataStore (default on, no UI yet). | safe | ~500 | 7, 9, 10 | planned |
+| 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStorage` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | merged |
+| 11 | Photo capture flow | `LogPhoto` use case, camera button + `TakePicture`, `origin`/EXIF rules, thumbnails in list and detail via Coil, `saveOriginalsToGallery` setting in DataStore (default on, no UI yet). | safe | ~400 | 7, 9, 10 | in-progress |
+| 11b | Photo thumbnails on screen | Coil 3, thumbnails in the Encounters list and the full copy on the detail, placeholder when `thumbPath` is null. | safe | ~250 | 11 | planned |
 | 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | planned |
 | 13 | Statistics screen and current outing | `ObserveStats`, `StatisticsStore`/`Screen` (headline, streak, rate block, outings, next milestone), current-outing block on Counter, milestone toast with `lastSeenMilestone`. | safe | ~500 | 8, 12 | planned |
 | 14 | Reverse geocoding of place cells | `ReverseGeocoder` (Android `Geocoder`), PlaceCell creation on location attach, `ResolvePendingPlaces` use case, connected-network worker with backoff, region tree builder + tests. | safe | ~550 | 7, 12 | planned |
@@ -35,6 +36,7 @@
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | planned |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | planned |
+| 23 | Visual design pass | Research comparable apps and published Android UI work, then a deliberate visual language: type scale, colour, the counter as the centrepiece, list and detail rhythm, empty states, motion on tally and undo. Last slice, after every behaviour exists. | safe | ~500 | 22 | planned |
 | 22 | Cat coat | `CatCoat` picker strip after tally/photo, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -231,6 +233,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   slice 22); map, route polyline, GPS-track walks, personal heatmap and cats-per-km form the Map epic
   after v1 on MapLibre + OSM, so nothing here changes. `androidUnitTest` → `androidHostTest` in the
   docs to match the AGP KMP plugin's source-set names.
+- 2026-09-22: slice 11 split. The mapped slice carried the capture path *and* Coil thumbnails in two
+  screens — together roughly double the budget, and two different responsibilities ("a photo reaches
+  the database" and "a photo is visible"). Capture is slice 11; thumbnails are slice 11b.
+- 2026-09-22: slice 23 added at the owner's request — a visual design pass as the final slice, once
+  every behaviour exists, informed by comparable apps and published Android UI work.
 - 2026-09-22: slice 10 renames `PhotoStore` to `PhotoStorage` — Konsist reserves the `*Store` suffix
   for MVI stores in `:presentation`, and one suffix meaning two things is what that rule prevents.
   The spec's §6 name is superseded. `MagicNumber` is exempted in `androidHostTest` (detekt's own

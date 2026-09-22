@@ -90,6 +90,9 @@ class CounterStore(
                     if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
                 PhotoResult.Unreadable -> emit(CounterEffect.PhotoNotSaved)
             }
+            // Whatever the outcome, the full-size original has served its purpose; leaving it
+            // would grow the cache by one photo per cat.
+            emit(CounterEffect.DiscardCapture(uri))
         }
     }
 

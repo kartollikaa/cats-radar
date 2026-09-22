@@ -3,6 +3,7 @@ package dev.catsradar.app.photo
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import java.io.File
 
 private const val CAPTURES_DIRECTORY = "captures"
@@ -24,5 +25,9 @@ object CaptureTarget {
     /** Removes originals the camera wrote; a cancelled capture leaves one nothing will ever read. */
     fun clear(context: Context) {
         File(context.cacheDir, CAPTURES_DIRECTORY).listFiles()?.forEach { it.delete() }
+    }
+
+    fun discard(context: Context, uri: String) {
+        runCatching { context.contentResolver.delete(uri.toUri(), null, null) }
     }
 }

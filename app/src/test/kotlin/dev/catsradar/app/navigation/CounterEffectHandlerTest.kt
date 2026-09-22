@@ -47,6 +47,14 @@ private class CountingCameraLauncher : CameraLauncher {
     }
 }
 
+private class RecordingCaptureDiscarder : CaptureDiscarder {
+    val discarded = mutableListOf<String>()
+
+    override fun discard(uri: String) {
+        discarded += uri
+    }
+}
+
 private class CountingPhotoFailureReporter : PhotoFailureReporter {
     var reportCount = 0
         private set
@@ -62,6 +70,7 @@ class CounterEffectHandlerTest {
     private val locationPermissionRequester = FakeLocationPermissionRequester()
     private val cameraLauncher = CountingCameraLauncher()
     private val photoFailureReporter = CountingPhotoFailureReporter()
+    private val captureDiscarder = RecordingCaptureDiscarder()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -70,6 +79,7 @@ class CounterEffectHandlerTest {
         locationPermissionRequester,
         cameraLauncher,
         photoFailureReporter,
+        captureDiscarder,
     )
 
     @Test
@@ -111,6 +121,7 @@ class CounterEffectHandlerPhotoTest {
     private val locationPermissionRequester = FakeLocationPermissionRequester()
     private val cameraLauncher = CountingCameraLauncher()
     private val photoFailureReporter = CountingPhotoFailureReporter()
+    private val captureDiscarder = RecordingCaptureDiscarder()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -119,6 +130,7 @@ class CounterEffectHandlerPhotoTest {
         locationPermissionRequester,
         cameraLauncher,
         photoFailureReporter,
+        captureDiscarder,
     )
 
     @Test
@@ -137,5 +149,12 @@ class CounterEffectHandlerPhotoTest {
 
         assertEquals(1, photoFailureReporter.reportCount)
         assertEquals(0, cameraLauncher.launchCount)
+    }
+
+    @Test
+    fun `DiscardCapture deletes exactly the original it names`() {
+        handle(CounterEffect.DiscardCapture("content://capture/1"))
+
+        assertEquals(listOf("content://capture/1"), captureDiscarder.discarded)
     }
 }

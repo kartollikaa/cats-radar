@@ -1,12 +1,43 @@
 # Photos
 
-The pieces a photo encounter needs, with nothing calling them yet: reading a photo's own metadata,
-making the app's copies, hashing the original, and putting it in the device gallery. The capture
-flow that uses them is its own slice.
+Taking a photo of a cat logs the cat. The pieces behind it: reading a photo's own metadata, making
+the app's copies, hashing the original, and putting it in the device gallery.
 
 Interfaces live in `:domain` and know nothing about Android; the implementations are in
 `:data/androidMain`. Every one of them degrades rather than throwing — a photo is worth saving even
 when something about it cannot be read.
+
+## Taking one
+
+The Photo button on the counter opens the system camera, which writes its original to a
+`FileProvider` URI under the cache directory. On the way back `LogPhoto` reads the EXIF, stores the
+app's copies, hands the original to the gallery if the setting allows, and saves one encounter with
+`kind = PHOTO`, `origin = CAMERA` and the original's digest.
+
+The order matters and is deliberate: **the app's own copy is written first**. A gallery item for an
+encounter that does not exist would be worse than no gallery item, so an unreadable photo produces
+neither (`LogPhotoTest`, *an unreadable photo is never copied to the gallery either*).
+
+A photo that already carries EXIF coordinates keeps them, with `locationSource = EXIF`, and asks for
+no fix — the photo knows better than the phone does a minute later. One without goes to the same
+background attach a tally uses.
+
+Once `LogPhoto` returns, the original is discarded whatever the outcome. Without that the cache
+would grow by one full-size photo per cat; it was found on a device rather than in a test, and now
+has both.
+
+### At the edges
+
+- **Cancelled camera** — no encounter, and the file the camera was given is deleted.
+- **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
+- **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
+
+## The gallery setting
+
+`saveOriginalsToGallery` lives in DataStore and is **on unless turned off**, so a fresh install keeps
+the user's photos where they expect them. There is no UI for it yet; the settings screen is its own
+slice. DataStore stays inside `:data` behind `createSettingsRepository` — `:app` never names the
+type, which also keeps the dependency off `:app`'s classpath.
 
 ## Reading a photo's metadata
 
@@ -86,8 +117,7 @@ unchanged and could not tell a correct resize from a broken one.
 
 ## Not built yet
 
-Nothing takes or imports a photo: no camera button, no `LogPhoto`, no gallery import, no thumbnails
-in the list, and no setting to turn gallery saving off. Originals are never deleted by the app
-because nothing creates them yet. `PhotoStorage` is named that, not `PhotoStore` as the design spec
-had it, because the `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test
-enforces it.
+No gallery import, and no thumbnails on screen — the list and the detail still show only time and
+location, so a photo encounter is currently indistinguishable from a tally in the UI. That is the
+next slice. `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
+`*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.

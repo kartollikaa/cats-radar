@@ -16,6 +16,10 @@ internal fun interface PhotoFailureReporter {
     fun report()
 }
 
+internal fun interface CaptureDiscarder {
+    fun discard(uri: String)
+}
+
 @Suppress("LongParameterList") // one collaborator per effect the screen has to carry out
 internal fun handleCounterEffect(
     effect: CounterEffect,
@@ -24,6 +28,7 @@ internal fun handleCounterEffect(
     locationPermissionRequester: LocationPermissionRequester,
     cameraLauncher: CameraLauncher,
     photoFailureReporter: PhotoFailureReporter,
+    captureDiscarder: CaptureDiscarder,
 ) {
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
@@ -32,5 +37,6 @@ internal fun handleCounterEffect(
         CounterEffect.RequestLocationPermission -> locationPermissionRequester.request()
         CounterEffect.OpenCamera -> cameraLauncher.launch()
         CounterEffect.PhotoNotSaved -> photoFailureReporter.report()
+        is CounterEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
     }
 }

@@ -113,6 +113,7 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
             Toast.makeText(context, R.string.counter_photo_not_saved, Toast.LENGTH_SHORT).show()
         }
     }
+    val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
     LaunchedEffect(
         store,
         haptics,
@@ -128,6 +129,7 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
                 locationPermissionRequester,
                 cameraLauncher,
                 photoFailureReporter,
+                captureDiscarder,
             )
         }
     }

@@ -99,6 +99,37 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `a stored photo's original is discarded, so the cache does not grow by one photo per cat`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+
+            store.effects.test {
+                store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
+                runCurrent()
+
+                val effects = buildList { repeat(2) { add(awaitItem()) } }
+                assertEquals(
+                    listOf(CounterEffect.DiscardCapture(SOURCE)),
+                    effects.filterIsInstance<CounterEffect.DiscardCapture>()
+                )
+            }
+        }
+
+    @Test
+    fun `an unreadable photo's original is discarded too`() = runTest(mainDispatcher) {
+        imageResizer.result = null
+        val (store, _) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
+            runCurrent()
+
+            assertEquals(CounterEffect.PhotoNotSaved, awaitItem())
+            assertEquals(CounterEffect.DiscardCapture(SOURCE), awaitItem())
+        }
+    }
+
+    @Test
     fun `a cancelled camera creates nothing`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
 
@@ -118,6 +149,7 @@ class CounterStoreTest {
             runCurrent()
 
             assertEquals(CounterEffect.PhotoNotSaved, awaitItem())
+            assertEquals(CounterEffect.DiscardCapture(SOURCE), awaitItem())
             expectNoEvents()
         }
         assertEquals(emptyList(), repository.insertedIds)
@@ -133,6 +165,7 @@ class CounterStoreTest {
                 runCurrent()
 
                 assertIs<CounterEffect.AttachLocation>(awaitItem())
+                assertEquals(CounterEffect.DiscardCapture(SOURCE), awaitItem())
             }
         }
 
@@ -146,6 +179,7 @@ class CounterStoreTest {
                 store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
                 runCurrent()
 
+                assertEquals(CounterEffect.DiscardCapture(SOURCE), awaitItem())
                 expectNoEvents()
             }
         }
