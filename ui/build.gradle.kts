@@ -6,4 +6,6 @@ plugins {
 dependencies {
     api(projects.presentation)
     implementation(libs.coil.compose)
+
+    testImplementation(libs.junit)
 }
