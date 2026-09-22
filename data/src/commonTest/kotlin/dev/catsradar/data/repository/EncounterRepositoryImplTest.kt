@@ -47,6 +47,28 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
+    fun attachLocationForwardsEveryStampFieldToTheDao() = runTest {
+        val stamp = distinctLocationStamp()
+
+        repository.attachLocation("id-1", stamp)
+
+        assertEquals(
+            AttachLocationCall(
+                id = "id-1",
+                lat = stamp.lat,
+                lon = stamp.lon,
+                accuracyMeters = stamp.accuracyMeters,
+                locationSource = stamp.locationSource,
+                locationFixedAt = stamp.locationFixedAt,
+                geohash = stamp.geohash,
+                placeCellId = stamp.placeCellId,
+                updatedAt = stamp.updatedAt,
+            ),
+            dao.attachLocationCall,
+        )
+    }
+
+    @Test
     fun softDeleteDelegatesWithTheSameArguments() = runTest {
         val deletedAt = Instant.parse("2026-02-01T00:00:00Z")
 

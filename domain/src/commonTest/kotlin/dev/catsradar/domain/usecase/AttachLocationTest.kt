@@ -4,6 +4,7 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeLocationProvider
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -121,5 +124,91 @@ class AttachLocationTest {
         val updated = encounter(repository, "target")
         assertEquals(LocationSource.NONE, updated.locationSource)
         assertNull(updated.lat)
+    }
+
+    @Test
+    fun `a fix that resolves after the target was undone does not resurrect it`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        // Simulates the undo landing while the up-to-LOCATION_TIMEOUT fetch is still in flight.
+        val locationProvider = object : LocationProvider {
+            override suspend fun getCurrentFix(timeout: Duration): LocationFix? {
+                repository.softDelete("target", Now)
+                return Fix
+            }
+
+            override suspend fun lastKnown(): LocationFix? = null
+        }
+        val attachLocation = AttachLocation(repository, locationProvider, FakeClock(Now))
+
+        attachLocation("target")
+
+        val target = encounter(repository, "target")
+        assertEquals(Now, target.deletedAt)
+        assertEquals(LocationSource.NONE, target.locationSource)
+        assertNull(target.lat)
+    }
+
+    @Test
+    fun `a soft-deleted encounter inside the outing is never backfilled`() = runTest {
+        val repository = FakeEncounterRepository()
+        // Its own timestamp falls inside the outing that "liveInOuting" and "target" form, even
+        // though SessionSplitter never sees it (it filters deletedAt itself): only the candidate
+        // list's own filter stands between it and a backfill attempt.
+        repository.insert(encounterFixture(id = "liveInOuting", occurredAt = Now - 15.minutes))
+        repository.insert(encounterFixture(id = "deletedInOuting", occurredAt = Now - 10.minutes))
+        repository.softDelete("deletedInOuting", Now - 5.minutes)
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+
+        attachLocation("target")
+
+        assertFalse("deletedInOuting" in repository.attachLocationCalls)
+        val deleted = encounter(repository, "deletedInOuting")
+        assertEquals(LocationSource.NONE, deleted.locationSource)
+        assertNull(deleted.lat)
+
+        // Positive control: the outing itself was computed and a real candidate in it was backfilled.
+        assertEquals(LocationSource.BACKFILLED, encounter(repository, "liveInOuting").locationSource)
+    }
+
+    @Test
+    fun `an encounter from a later outing is never backfilled`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "sameOuting", occurredAt = Now - 10.minutes))
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        // 45 min after the target, past SESSION_GAP: a separate, later outing.
+        repository.insert(encounterFixture(id = "laterOuting", occurredAt = Now + 45.minutes))
+        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+
+        attachLocation("target")
+
+        val later = encounter(repository, "laterOuting")
+        assertEquals(LocationSource.NONE, later.locationSource)
+        assertNull(later.lat)
+    }
+
+    @Test
+    fun `an already-located target is left untouched and never re-triggers backfill`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(
+            encounterFixture(
+                id = "target",
+                occurredAt = Now,
+                locationSource = LocationSource.CURRENT_FIX,
+                lat = 1.0,
+                lon = 1.0,
+            ),
+        )
+        repository.insert(encounterFixture(id = "sameOuting", occurredAt = Now - 10.minutes))
+        val attachLocation = AttachLocation(repository, FakeLocationProvider(currentFix = Fix), FakeClock(Now))
+
+        attachLocation("target")
+
+        val target = encounter(repository, "target")
+        assertEquals(1.0, target.lat)
+        assertEquals(1.0, target.lon)
+        val sameOuting = encounter(repository, "sameOuting")
+        assertEquals(LocationSource.NONE, sameOuting.locationSource)
     }
 }
