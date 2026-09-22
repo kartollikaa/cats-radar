@@ -3,6 +3,7 @@ package dev.catsradar.domain.geo
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class GeohashTest {
@@ -22,6 +23,18 @@ class GeohashTest {
     fun `encodes a vector with negative latitude and negative longitude`() {
         // Rio de Janeiro, BR; cross-checked against chrisveness/latlon-geohash.
         assertEquals("75cm9tfqn", Geohash.encode(-22.9068, -43.1729, 9))
+    }
+
+    @Test
+    fun `a point exactly on a bisection midpoint rounds to the upper half`() {
+        assertEquals("s", Geohash.encode(0.0, 0.0, 1))
+        assertEquals("v", Geohash.encode(45.0, 45.0, 1))
+    }
+
+    @Test
+    fun `a cell does not contain its neighbour's shared corner`() {
+        assertTrue(Geohash.decode("v").contains(45.0, 45.0))
+        assertFalse(Geohash.decode("s").contains(45.0, 45.0))
     }
 
     @Test
@@ -68,6 +81,16 @@ class GeohashTest {
     fun `rejects an invalid character on decode`() {
         assertFailsWith<IllegalArgumentException> { Geohash.decode("u4pra") }
         assertFailsWith<IllegalArgumentException> { Geohash.decode("") }
+    }
+
+    @Test
+    fun `rejects a hash longer than the maximum precision on decode`() {
+        assertFailsWith<IllegalArgumentException> { Geohash.decode("u4pruydqqvjkm") }
+    }
+
+    @Test
+    fun `decode accepts uppercase the same as lowercase`() {
+        assertEquals(Geohash.decode("u4pruydqqvj"), Geohash.decode("U4PRUYDQQVJ"))
     }
 
     private companion object {

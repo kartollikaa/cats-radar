@@ -5,11 +5,10 @@ private const val BITS_PER_CHAR = 5
 private const val MIN_PRECISION = 1
 private const val MAX_PRECISION = 12
 private const val MIN_LATITUDE = -90.0
-private const val MAX_LATITUDE = 90.0
+internal const val MAX_LATITUDE = 90.0
 private const val MIN_LONGITUDE = -180.0
-private const val MAX_LONGITUDE = 180.0
+internal const val MAX_LONGITUDE = 180.0
 
-/** Standard geohash: base-32 encoding of a bit-interleaved lat/lon bisection. */
 object Geohash {
     fun encode(lat: Double, lon: Double, precision: Int): String {
         require(precision in MIN_PRECISION..MAX_PRECISION) {
@@ -60,6 +59,7 @@ object Geohash {
 
     fun decode(hash: String): BoundingBox {
         require(hash.isNotEmpty()) { "geohash must not be empty" }
+        require(hash.length <= MAX_PRECISION) { "geohash length must be <= $MAX_PRECISION, was ${hash.length}" }
 
         var latMin = MIN_LATITUDE
         var latMax = MAX_LATITUDE
@@ -67,7 +67,9 @@ object Geohash {
         var lonMax = MAX_LONGITUDE
         var isLongitudeBit = true
 
-        for (char in hash) {
+        // Accept mixed-case input like other geohash implementations do; this app only ever
+        // writes lowercase, but a hash pasted in from elsewhere may not be.
+        for (char in hash.lowercase()) {
             val charIndex = BASE32_ALPHABET.indexOf(char)
             require(charIndex >= 0) { "invalid geohash character '$char'" }
             for (bit in BITS_PER_CHAR - 1 downTo 0) {
