@@ -1,0 +1,244 @@
+package dev.catsradar.domain.stats
+
+import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterKind
+import dev.catsradar.domain.testing.encounterFixture
+import kotlinx.datetime.LocalDate
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+
+class StatsCalculatorTest {
+
+    private fun stats(encounters: List<Encounter>, now: Instant = NOW, today: LocalDate = TODAY) =
+        StatsCalculator.calculate(encounters, today = today, now = now)
+
+    private fun at(instant: Instant, id: String = "e-$instant", kind: EncounterKind = EncounterKind.TALLY) =
+        encounterFixture(id, instant).copy(kind = kind)
+
+    @Test
+    fun `no encounters gives zeroes, no rate and no current outing`() {
+        val stats = stats(emptyList())
+
+        assertEquals(0, stats.total)
+        assertEquals(0, stats.outings)
+        assertEquals(0, stats.currentStreak)
+        assertNull(stats.overallRate)
+        assertNull(stats.bestOuting)
+        assertNull(stats.currentOuting)
+    }
+
+    @Test
+    fun `soft-deleted encounters count for nothing`() {
+        val deleted = encounterFixture("gone", NOON).copy(deletedAt = NOW)
+
+        val stats = stats(listOf(at(NOON), deleted))
+
+        assertEquals(1, stats.total)
+    }
+
+    @Test
+    fun `today counts only the device's today, and the day windows include today itself`() {
+        val encounters = listOf(
+            at(NOON),
+            at(NOON - 1.days),
+            at(NOON - 6.days),
+            at(NOON - 7.days),
+            at(NOON - 29.days),
+            at(NOON - 30.days),
+        )
+
+        val stats = stats(encounters)
+
+        assertEquals(1, stats.today)
+        // Today plus the six before it, not today plus seven.
+        assertEquals(3, stats.lastSevenDays)
+        assertEquals(5, stats.lastThirtyDays)
+    }
+
+    @Test
+    fun `photos are counted apart from tallies`() {
+        val stats = stats(listOf(at(NOON), at(NOON - 1.hours, kind = EncounterKind.PHOTO)))
+
+        assertEquals(2, stats.total)
+        assertEquals(1, stats.withPhoto)
+    }
+
+    @Test
+    fun `a streak ending today counts, and so does one ending yesterday`() {
+        val endingToday = stats(listOf(at(NOON), at(NOON - 1.days), at(NOON - 2.days)))
+        assertEquals(3, endingToday.currentStreak)
+
+        val endingYesterday = stats(listOf(at(NOON - 1.days), at(NOON - 2.days)))
+        assertEquals(2, endingYesterday.currentStreak)
+    }
+
+    @Test
+    fun `a streak that ended before yesterday is not current`() {
+        val stats = stats(listOf(at(NOON - 2.days), at(NOON - 3.days)))
+
+        assertEquals(0, stats.currentStreak)
+        assertEquals(2, stats.longestStreak)
+    }
+
+    @Test
+    fun `the longest streak is the longest run anywhere, not the most recent one`() {
+        val old = listOf(10, 11, 12, 13).map { at(NOON - it.days) }
+        val recent = listOf(0, 1).map { at(NOON - it.days) }
+
+        val stats = stats(old + recent)
+
+        assertEquals(4, stats.longestStreak)
+        assertEquals(2, stats.currentStreak)
+    }
+
+    @Test
+    fun `several cats on one day do not lengthen a streak`() {
+        val stats = stats(listOf(at(NOON), at(NOON - 1.hours), at(NOON - 2.hours)))
+
+        assertEquals(1, stats.currentStreak)
+        assertEquals(1, stats.longestStreak)
+    }
+
+    @Test
+    fun `the next milestone is the first one above the total, with the distance to it`() {
+        assertEquals(Milestone(1, 1), stats(emptyList()).nextMilestone)
+        assertEquals(Milestone(10, 9), stats(listOf(at(NOON))).nextMilestone)
+    }
+
+    @Test
+    fun `a total sitting exactly on a milestone points at the next one, never at itself`() {
+        val ten = (1..10).map { at(NOON - (it * 2).hours, id = "e$it") }
+
+        val milestone = assertNotNull(stats(ten).nextMilestone)
+
+        assertEquals(25, milestone.value)
+        assertTrue(milestone.remaining > 0)
+    }
+
+    @Test
+    fun `past the last milestone there is nothing left to reach`() {
+        val total = Tuning.MILESTONES.last()
+        val encounters = (1..total).map { at(NOON - (it * 2).hours, id = "e$it") }
+
+        assertNull(stats(encounters).nextMilestone)
+    }
+
+    @Test
+    fun `an outing too short to measure produces no rate at all`() {
+        val start = NOON - 2.hours
+        val brief = listOf(at(start, "a"), at(start + Tuning.MIN_RATE_DURATION - 1.milliseconds, "b"))
+
+        val stats = stats(brief)
+
+        assertEquals(1, stats.outings)
+        assertNull(stats.overallRate)
+        assertNull(stats.bestOuting)
+    }
+
+    @Test
+    fun `a single cat is never a rate however long ago it was`() {
+        val stats = stats(listOf(at(NOON - 5.hours)))
+
+        assertNull(stats.overallRate)
+    }
+
+    @Test
+    fun `an eligible outing's rate is its cats over its own span`() {
+        val start = NOON - 3.hours
+        // Six cats, first to last exactly one hour.
+        val encounters = (0..5).map { at(start + (it * 12).minutes, "e$it") }
+
+        val rate = assertNotNull(stats(encounters).overallRate)
+
+        assertEquals(6.0, rate.perHour, 1e-9)
+        assertEquals(0.1, rate.perMinute, 1e-9)
+    }
+
+    @Test
+    fun `the overall rate pools cats and time, rather than averaging the outings' rates`() {
+        // 2 cats over half an hour (4/h) and 10 over 18 minutes (33.3/h): pooled is 12 cats over
+        // 48 minutes = 15/h, while the mean of the two rates would be 18.67/h.
+        val slow = (0..1).map { at(NOON - 10.hours + (it * 30).minutes, "slow$it") }
+        val fast = (0..9).map { at(NOON - 5.hours + (it * 2).minutes, "fast$it") }
+
+        val rate = assertNotNull(stats(slow + fast).overallRate)
+
+        assertEquals(15.0, rate.perHour, 1e-9)
+    }
+
+    @Test
+    fun `the best outing is the fastest eligible one, not the biggest`() {
+        val big = (0..9).map { at(NOON - 20.hours + (it * 30).minutes, "big$it") } // 10 cats in 4.5 h
+        val fast = (0..2).map { at(NOON - 10.hours + (it * 5).minutes, "fast$it") } // 3 cats in 10 min
+
+        val best = assertNotNull(stats(big + fast).bestOuting)
+
+        assertEquals(3, best.session.count)
+        assertTrue(best.rate.perHour > 10.0, "expected the fast outing, got ${best.rate.perHour}/h")
+    }
+
+    @Test
+    fun `outings and active time cover every outing, including ones too short to rate`() {
+        val first = listOf(at(NOON - 10.hours, "a"), at(NOON - 10.hours + 10.minutes, "b"))
+        val second = listOf(at(NOON - 5.hours, "c"))
+
+        val stats = stats(first + second)
+
+        assertEquals(2, stats.outings)
+        // The lone cat's outing adds nothing to the time but still counts as an outing.
+        assertEquals(10.minutes, stats.activeTime)
+    }
+
+    @Test
+    fun `the current outing is open while another cat would still join it`() {
+        val start = NOW - 20.minutes
+        val encounters = listOf(at(start, "a"), at(NOW - 1.minutes, "b"))
+
+        val current = assertNotNull(stats(encounters).currentOuting)
+
+        assertEquals(2, current.count)
+        assertEquals(20.minutes, current.elapsed)
+        assertNotNull(current.rate)
+    }
+
+    @Test
+    fun `the current outing closes once the gap has passed`() {
+        val lastSeen = NOW - Tuning.SESSION_GAP - 1.milliseconds
+
+        assertNull(stats(listOf(at(lastSeen - 30.minutes, "a"), at(lastSeen, "b"))).currentOuting)
+    }
+
+    @Test
+    fun `the current outing's elapsed time runs to now, not to its last cat`() {
+        val current = assertNotNull(
+            stats(listOf(at(NOW - 40.minutes, "a"), at(NOW - 20.minutes, "b"))).currentOuting,
+        )
+
+        assertEquals(40.minutes, current.elapsed)
+    }
+
+    @Test
+    fun `a current outing too young to measure reports its count but no rate`() {
+        val current = assertNotNull(
+            stats(listOf(at(NOW - 2.minutes, "a"), at(NOW - 1.minutes, "b"))).currentOuting,
+        )
+
+        assertEquals(2, current.count)
+        assertNull(current.rate)
+    }
+
+    private companion object {
+        val NOW = Instant.parse("2026-09-22T18:00:00Z")
+        val NOON = Instant.parse("2026-09-22T12:00:00Z")
+        val TODAY = LocalDate(2026, 9, 22)
+    }
+}
