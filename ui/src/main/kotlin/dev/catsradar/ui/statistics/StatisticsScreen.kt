@@ -1,6 +1,7 @@
 package dev.catsradar.ui.statistics
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ fun StatisticsScreen(
     state: StatisticsState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onPlacesClick: () -> Unit = {},
 ) {
     if (!state.hasAnyCats) {
         Box(
@@ -62,6 +64,13 @@ fun StatisticsScreen(
         Section(R.string.statistics_streaks) {
             StatRow(R.string.statistics_current_streak, state.currentStreakLabel)
             StatRow(R.string.statistics_longest_streak, state.longestStreakLabel)
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onPlacesClick).padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(text = stringResource(R.string.statistics_places), style = MaterialTheme.typography.titleMedium)
+            Text(text = "›", style = MaterialTheme.typography.titleMedium)
         }
         Section(R.string.statistics_outings) {
             StatRow(R.string.statistics_outing_count, state.outingsLabel)

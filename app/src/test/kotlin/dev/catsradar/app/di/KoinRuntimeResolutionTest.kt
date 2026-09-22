@@ -14,8 +14,10 @@ import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.presentation.detail.EncounterDetailStore
+import dev.catsradar.presentation.regions.RegionsStore
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -64,5 +66,8 @@ class KoinRuntimeResolutionTest {
         // reflection still tries to inject it; only actually building the object catches that.
         assertNotNull(koin.get<ObserveStats>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
+        // Both the root (null parent) and a drilled-in level, because they take different paths.
+        assertNotNull(koin.get<RegionsStore> { parametersOf(null) })
+        assertNotNull(koin.get<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
     }
 }

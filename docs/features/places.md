@@ -49,8 +49,25 @@ geohash and needs no network — keeps working. Only country and city names are 
 - `data/…/androidMain/platform/AndroidReverseGeocoder.android.kt` — the `Geocoder` call
 - `app/…/worker/GeocodePendingCellsWorker.kt`, `GeocodeWorkScheduler.kt`
 
+## Browsing them
+
+**Statistics → Places** opens the drill-down: countries, then cities, then areas, then the cats
+themselves. Every level is sorted busiest first.
+
+Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
+
+- **Not named yet** — cats with coordinates whose cell has no name (pending, failed, or no
+  geocoder). It drills into areas like any country would.
+- **No location** — cats with no coordinates at all. It drills straight to the cats.
+
+Their counts are what make the tree honest: **the counts of every sibling add up to the number of
+cats**, so a drill-down never quietly loses one. That invariant has its own test.
+
+An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
+geohash, so they work with no network and even for cells that were never named. An area whose cells
+disagree takes the name most of them agree on.
+
 ## Not built yet
 
-Nothing displays place names: the region tree and its drill-down screens are the next slice, so the
-cells fill in quietly and nothing reads them. The `Geocoder` call uses the deprecated blocking
-overload because the listener-based one is API 33+ and this app supports 29.
+No map. The `Geocoder` call uses the deprecated blocking overload because the listener-based one is
+API 33+ and this app supports 29.

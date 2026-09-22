@@ -50,6 +50,12 @@
     <string name="statistics_rate_per_hour">%1$s / h</string>
     <string name="statistics_rate_per_minute">%1$s / min</string>
     <string name="statistics_rate_unavailable">—</string>
+    <string name="statistics_places">Places</string>
+
+    <string name="regions_empty">No places yet</string>
+    <string name="regions_unresolved">Not named yet</string>
+    <string name="regions_no_location">No location</string>
+    <string name="regions_area_at">Around %1$s</string>
 
     <plurals name="counter_outing_now">
         <item quantity="one">%1$d cat · %2$s</item>

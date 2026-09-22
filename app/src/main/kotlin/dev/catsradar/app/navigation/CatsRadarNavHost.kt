@@ -33,6 +33,8 @@ import dev.catsradar.presentation.detail.EncounterDetailEffect
 import dev.catsradar.presentation.detail.EncounterDetailIntent
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.regions.RegionRowKey
+import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.statistics.StatisticsStore
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
@@ -40,6 +42,7 @@ import dev.catsradar.ui.counter.LocationHintAction
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
+import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.statistics.StatisticsScreen
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -73,7 +76,19 @@ fun CatsRadarNavHost(modifier: Modifier = Modifier) {
                         onRowClick = { id -> backStack.push(EncounterDetail(id)) },
                     )
                 }
-                entry<Statistics> { StatisticsDestination(contentPadding = innerPadding) }
+                entry<Statistics> {
+                    StatisticsDestination(
+                        contentPadding = innerPadding,
+                        onPlacesClick = { backStack.push(Regions()) },
+                    )
+                }
+                entry<Regions> { key ->
+                    RegionsDestination(
+                        key = key,
+                        contentPadding = innerPadding,
+                        onRegionClick = { row -> backStack.push(row.toNavKey()) },
+                    )
+                }
                 entry<EncounterDetail> { key ->
                     EncounterDetailDestination(
                         key = key,
@@ -202,10 +217,36 @@ private fun EncountersDestination(
 }
 
 @Composable
-private fun StatisticsDestination(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+private fun StatisticsDestination(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    onPlacesClick: () -> Unit = {},
+) {
     val store = koinViewModel<StatisticsStore>()
     val state by store.state.collectAsStateWithLifecycle()
-    StatisticsScreen(state = state, modifier = modifier, contentPadding = contentPadding)
+    StatisticsScreen(
+        state = state,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        onPlacesClick = onPlacesClick,
+    )
+}
+
+@Composable
+private fun RegionsDestination(
+    key: Regions,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    onRegionClick: (RegionRowKey) -> Unit = {},
+) {
+    val store = koinViewModel<RegionsStore> { parametersOf(key.toRegionKey()) }
+    val state by store.state.collectAsStateWithLifecycle()
+    RegionsScreen(
+        state = state,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        onRegionClick = onRegionClick,
+    )
 }
 
 @Composable
