@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.LogPhoto
@@ -10,6 +11,8 @@ import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.coat.toCatCoat
+import dev.catsradar.presentation.coat.toOption
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -45,6 +48,7 @@ class CounterStore(
                         locationPermissionHintVisible = locationPermissionHintVisible,
                         currentOuting = stats.currentOuting,
                         tapBurst = tapBurst,
+                        lastCoat = lastCoat,
                     )
                 }
                 announceMilestone(stats.total)
@@ -67,13 +71,14 @@ class CounterStore(
             CounterIntent.CameraClicked -> emit(CounterEffect.OpenCamera)
             is CounterIntent.PhotoCaptured -> onPhotoCaptured(intent.uri)
             CounterIntent.UndoClicked -> onUndoClicked()
+            is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.LocationPermissionResult -> onLocationPermissionResult(intent.granted)
             CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
             CounterIntent.LocationPermissionHintDismissed -> setState { copy(locationPermissionHintVisible = false) }
         }
     }
 
-    private suspend fun onTallyClicked() {
+    private suspend fun onTallyClicked(coat: CatCoat? = null) {
         val sequence = ++tapSequence
         // The tap must feel instant: the tick and the "+N" land before the write, not after it
         // succeeds, so holding the button down still counts up smoothly.
@@ -86,14 +91,14 @@ class CounterStore(
             emit(CounterEffect.RequestLocationPermission)
         }
         runWriteIgnoringFailure {
-            val encounter = logTally()
+            val encounter = logTally(coat)
             emit(CounterEffect.AttachLocation(encounter.id))
             // Captured before suspending, not completion order: a later tap's insert can resume
             // before an earlier one's, so only a higher sequence may overwrite the undo target.
             if (sequence > undoTargetSequence) {
                 undoTargetSequence = sequence
                 undoTargetId = encounter.id
-                setState { copy(undoVisible = true) }
+                setState { copy(undoVisible = true, lastCoat = coat?.toOption()) }
                 restartUndoTimer()
             }
         }
@@ -132,7 +137,7 @@ class CounterStore(
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
             undoTargetId = null
-            setState { copy(undoVisible = false) }
+            setState { copy(undoVisible = false, lastCoat = null) }
         }
     }
 
@@ -142,7 +147,7 @@ class CounterStore(
         val id = undoTargetId ?: return
         undoTargetId = null
         undoTimeoutJob?.cancel()
-        setState { copy(undoVisible = false) }
+        setState { copy(undoVisible = false, lastCoat = null) }
         emit(CounterEffect.CancelLocationAttach(id))
         runWriteIgnoringFailure { undoLastTally(id) }
     }

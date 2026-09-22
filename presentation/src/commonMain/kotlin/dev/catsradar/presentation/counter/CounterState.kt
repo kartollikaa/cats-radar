@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.RateState
 
 data class CounterState(
@@ -10,6 +11,8 @@ data class CounterState(
     val currentOuting: CurrentOutingState? = null,
     /** How many cats the current run of taps has added; null once the burst has faded. */
     val tapBurst: Int? = null,
+    /** The coat of the cat the undo window belongs to, so the grid can show which one it was. */
+    val lastCoat: CoatOption? = null,
 )
 
 /** [rate] is null until the outing is long enough and busy enough to measure. */

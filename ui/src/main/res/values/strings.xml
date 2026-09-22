@@ -65,4 +65,20 @@
         <item quantity="one">%1$d cat!</item>
         <item quantity="other">%1$d cats!</item>
     </plurals>
+
+    <string name="coat_ginger">Ginger</string>
+    <string name="coat_ginger_white">Ginger &amp; white</string>
+    <string name="coat_white">White</string>
+    <string name="coat_tricolor_mostly_white">Tricolour, mostly white</string>
+    <string name="coat_tricolor_little_white">Tricolour, little white</string>
+    <string name="coat_brown">Brown</string>
+    <string name="coat_brown_white">Brown &amp; white</string>
+    <string name="coat_grey">Grey</string>
+    <string name="coat_grey_white">Grey &amp; white</string>
+    <string name="coat_black">Black</string>
+    <string name="coat_black_white">Black &amp; white</string>
+    <string name="coat_not_specified">Not specified</string>
+    <string name="statistics_by_coat">By coat</string>
+    <string name="statistics_coat_share">%1$s · %2$s%%</string>
+    <string name="detail_coat">Coat</string>
 </resources>

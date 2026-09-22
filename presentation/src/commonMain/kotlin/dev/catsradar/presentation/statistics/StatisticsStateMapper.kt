@@ -3,6 +3,8 @@ package dev.catsradar.presentation.statistics
 import dev.catsradar.domain.stats.Rate
 import dev.catsradar.domain.stats.Stats
 import dev.catsradar.presentation.DateTimeFormatter
+import dev.catsradar.presentation.coat.toOption
+import kotlinx.collections.immutable.toPersistentList
 import kotlin.math.round
 
 class StatisticsStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
@@ -14,6 +16,13 @@ class StatisticsStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         weekLabel = stats.lastSevenDays.toString(),
         monthLabel = stats.lastThirtyDays.toString(),
         withPhotoLabel = stats.withPhoto.toString(),
+        byCoat = stats.byCoat.map { count ->
+            CoatShareState(
+                coat = count.coat?.toOption(),
+                countLabel = count.count.toString(),
+                sharePercentLabel = round(count.shareOfTotal * PERCENT).toInt().toString(),
+            )
+        }.toPersistentList(),
         currentStreakLabel = stats.currentStreak.toString(),
         longestStreakLabel = stats.longestStreak.toString(),
         nextMilestone = stats.nextMilestone?.let {
@@ -43,6 +52,7 @@ internal fun Rate.toRateState(): RateState = if (perMinute >= 1.0) {
 }
 
 private const val TENTHS = 10.0
+private const val PERCENT = 100
 
 private fun Double.oneDecimal(): String {
     val rounded = round(this * TENTHS) / TENTHS

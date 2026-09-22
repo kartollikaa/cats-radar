@@ -6,8 +6,11 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.coat.toCatCoat
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,6 +26,7 @@ class EncounterDetailStore(
     observeEncounter: ObserveEncounter,
     private val deleteEncounter: DeleteEncounter,
     private val undoDelete: UndoDelete,
+    private val setCoat: SetCoat,
     private val stateMapper: EncounterDetailStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -52,6 +56,7 @@ class EncounterDetailStore(
         when (intent) {
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
+            is EncounterDetailIntent.CoatPicked -> onCoatPicked(intent.coat)
         }
     }
 
@@ -81,6 +86,11 @@ class EncounterDetailStore(
             undoDelete(encounterId)
             deletedHere = false
         }
+    }
+
+    private suspend fun onCoatPicked(coat: CoatOption?) {
+        // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
+        runWrite(onFailure = {}) { setCoat(encounterId, coat?.toCatCoat()) }
     }
 
     private fun restoreAfterFailedDelete() {

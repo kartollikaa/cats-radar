@@ -2,21 +2,25 @@ package dev.catsradar.presentation.counter
 
 import dev.catsradar.domain.stats.CurrentOuting
 import dev.catsradar.presentation.DateTimeFormatter
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.toRateState
 
 class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
+    @Suppress("LongParameterList") // one parameter per thing the Counter shows
     fun map(
         count: Int,
         undoVisible: Boolean,
         locationPermissionHintVisible: Boolean = false,
         currentOuting: CurrentOuting? = null,
         tapBurst: Int? = null,
+        lastCoat: CoatOption? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         undoVisible = undoVisible,
         locationPermissionHintVisible = locationPermissionHintVisible,
         currentOuting = currentOuting?.toState(),
         tapBurst = tapBurst,
+        lastCoat = lastCoat,
     )
 
     private fun CurrentOuting.toState(): CurrentOutingState = CurrentOutingState(

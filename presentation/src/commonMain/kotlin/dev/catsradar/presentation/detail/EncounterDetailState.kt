@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.detail
 
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.LocationLabel
 
 sealed interface EncounterDetailState {
@@ -14,6 +15,7 @@ sealed interface EncounterDetailState {
         val accuracyMeters: Int?,
         /** Absolute path of the app's copy, or null when this cat was a tally. */
         val photoPath: String? = null,
+        val coat: CoatOption? = null,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */

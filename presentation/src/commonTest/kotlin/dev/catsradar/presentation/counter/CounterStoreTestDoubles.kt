@@ -30,6 +30,8 @@ internal class FakeEncounterRepository : EncounterRepository {
     var insertShouldThrow: Throwable? = null
     var softDeleteShouldThrow: Throwable? = null
 
+    fun encounters(): List<Encounter> = encounters.value
+
     override fun observeAll(): Flow<List<Encounter>> = encounters
     override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
     override fun observeById(id: String): Flow<Encounter?> =

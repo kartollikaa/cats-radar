@@ -22,13 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.statistics.BestOutingState
+import dev.catsradar.presentation.statistics.CoatShareState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.presentation.statistics.StatisticsState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.coat.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun StatisticsScreen(
@@ -61,6 +64,7 @@ fun StatisticsScreen(
             StatRow(R.string.statistics_month, state.monthLabel)
             StatRow(R.string.statistics_with_photo, state.withPhotoLabel)
         }
+        ByCoatSection(state.byCoat)
         Section(R.string.statistics_streaks) {
             StatRow(R.string.statistics_current_streak, state.currentStreakLabel)
             StatRow(R.string.statistics_longest_streak, state.longestStreakLabel)
@@ -83,6 +87,19 @@ fun StatisticsScreen(
                 )
                 StatRow(R.string.statistics_best_outing_rate, best.rate.label())
             }
+        }
+    }
+}
+
+@Composable
+private fun ByCoatSection(shares: ImmutableList<CoatShareState>, modifier: Modifier = Modifier) {
+    if (shares.isEmpty()) return
+    Section(R.string.statistics_by_coat, modifier = modifier) {
+        shares.forEach { share ->
+            StatRow(
+                labelRes = share.coat?.labelRes() ?: R.string.coat_not_specified,
+                value = stringResource(R.string.statistics_coat_share, share.countLabel, share.sharePercentLabel),
+            )
         }
     }
 }

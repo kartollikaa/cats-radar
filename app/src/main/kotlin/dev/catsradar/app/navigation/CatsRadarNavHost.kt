@@ -155,6 +155,7 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
         onUndoClick = { store.dispatch(CounterIntent.UndoClicked) },
         onLocationHintAction = { action -> store.dispatch(action.toCounterIntent()) },
         onCameraClick = { store.dispatch(CounterIntent.CameraClicked) },
+        onCoatTallyClick = { coat -> store.dispatch(CounterIntent.CoatTallyClicked(coat)) },
     )
 }
 
@@ -272,5 +273,6 @@ private fun EncounterDetailDestination(
         contentPadding = contentPadding,
         onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
+        onCoatClick = { coat -> store.dispatch(EncounterDetailIntent.CoatPicked(coat)) },
     )
 }

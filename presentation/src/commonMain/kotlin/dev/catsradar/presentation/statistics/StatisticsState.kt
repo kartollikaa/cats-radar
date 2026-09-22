@@ -1,5 +1,9 @@
 package dev.catsradar.presentation.statistics
 
+import dev.catsradar.presentation.coat.CoatOption
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
 data class StatisticsState(
     val totalLabel: String = "0",
     val hasAnyCats: Boolean = false,
@@ -7,6 +11,7 @@ data class StatisticsState(
     val weekLabel: String = "0",
     val monthLabel: String = "0",
     val withPhotoLabel: String = "0",
+    val byCoat: ImmutableList<CoatShareState> = persistentListOf(),
     val currentStreakLabel: String = "0",
     val longestStreakLabel: String = "0",
     val nextMilestone: MilestoneState? = null,
@@ -16,6 +21,9 @@ data class StatisticsState(
     val overallRate: RateState? = null,
     val bestOuting: BestOutingState? = null,
 )
+
+/** [coat] of null is the "not specified" row. */
+data class CoatShareState(val coat: CoatOption?, val countLabel: String, val sharePercentLabel: String)
 
 data class MilestoneState(val valueLabel: String, val remainingLabel: String)
 

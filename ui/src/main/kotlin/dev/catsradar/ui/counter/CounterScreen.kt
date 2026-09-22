@@ -25,11 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.R
+import dev.catsradar.ui.coat.CoatGrid
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -41,6 +43,7 @@ fun CounterScreen(
     onUndoClick: () -> Unit = {},
     onLocationHintAction: (LocationHintAction) -> Unit = {},
     onCameraClick: () -> Unit = {},
+    onCoatTallyClick: (CoatOption) -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -59,6 +62,7 @@ fun CounterScreen(
             }
         }
         state.currentOuting?.let { CurrentOuting(it) }
+        CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
         if (state.undoVisible) {
             AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
         }

@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
+import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.encounters.toLocationLabel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -31,6 +32,7 @@ class EncounterDetailStateMapper(
             },
             accuracyMeters = encounter.accuracyMeters?.roundToInt(),
             photoPath = encounter.photoPath?.let(photoStorage::resolve),
+            coat = encounter.coat?.toOption(),
         )
     }
 }
