@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ fun CounterScreen(
     onTallyClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onLocationHintAction: (LocationHintAction) -> Unit = {},
+    onCameraClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -48,6 +50,9 @@ fun CounterScreen(
         }
         if (state.undoVisible) {
             AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
+        }
+        Button(onClick = onCameraClick, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.counter_camera))
         }
         if (state.locationPermissionHintVisible) {
             LocationPermissionHint(onAction = onLocationHintAction)

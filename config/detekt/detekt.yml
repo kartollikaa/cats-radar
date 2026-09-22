@@ -1,6 +1,12 @@
 # buildUponDefaultConfig = true (DetektConventionPlugin) merges this on top of every ruleset's
 # shipped defaults, including compose-rules' own — only real deviations belong here.
 
+complexity:
+  LongParameterList:
+    # compose-patterns.md §5 requires one explicit lambda per user action, so a screen's parameter
+    # count tracks how many things the user can do on it, not how tangled it is.
+    ignoreAnnotated: ['Composable']
+
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable'] # the default pattern rejects PascalCase, which every composable uses

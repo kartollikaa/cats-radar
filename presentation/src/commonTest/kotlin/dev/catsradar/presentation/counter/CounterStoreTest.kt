@@ -2,6 +2,8 @@ package dev.catsradar.presentation.counter
 
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.platform.ExifData
+import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.UndoLastTally
@@ -20,6 +22,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -39,6 +42,11 @@ class CounterStoreTest {
         Dispatchers.resetMain()
     }
 
+    private val settings = FakeSettingsRepository()
+    private val exifReader = FakeExifReader()
+    private val imageResizer = FakeImageResizer()
+    private val gallerySaver = FakeGallerySaver()
+
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
         locationPermissionRequestState: FakeLocationPermissionRequestState = FakeLocationPermissionRequestState(),
@@ -46,6 +54,18 @@ class CounterStoreTest {
         val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
         val store = CounterStore(
             logTally = LogTally(encounterRepository, FakeIdGenerator(), FakeDeviceIdProvider(), clock, TimeZone.UTC),
+            logPhoto = LogPhoto(
+                encounterRepository = encounterRepository,
+                settingsRepository = settings,
+                exifReader = exifReader,
+                imageResizer = imageResizer,
+                digest = FakeDigest(),
+                gallerySaver = gallerySaver,
+                idGenerator = FakeIdGenerator(),
+                deviceIdProvider = FakeDeviceIdProvider(),
+                clock = clock,
+                timeZone = TimeZone.UTC,
+            ),
             undoLastTally = UndoLastTally(encounterRepository, clock),
             observeEncounterCount = ObserveEncounterCount(encounterRepository),
             stateMapper = CounterStateMapper(),
@@ -54,6 +74,81 @@ class CounterStoreTest {
         runCurrent()
         return store to encounterRepository
     }
+
+    @Test
+    fun `tapping the camera button asks the screen to open the camera`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.CameraClicked)
+            runCurrent()
+
+            assertEquals(CounterEffect.OpenCamera, awaitItem())
+        }
+        assertEquals(emptyList(), repository.insertedIds)
+    }
+
+    @Test
+    fun `a captured photo becomes an encounter`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
+        runCurrent()
+
+        assertEquals(1, repository.insertedIds.size)
+    }
+
+    @Test
+    fun `a cancelled camera creates nothing`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.dispatch(CounterIntent.PhotoCaptured(null))
+        runCurrent()
+
+        assertEquals(emptyList(), repository.insertedIds)
+    }
+
+    @Test
+    fun `an unreadable photo creates nothing and says so exactly once`() = runTest(mainDispatcher) {
+        imageResizer.result = null
+        val (store, repository) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
+            runCurrent()
+
+            assertEquals(CounterEffect.PhotoNotSaved, awaitItem())
+            expectNoEvents()
+        }
+        assertEquals(emptyList(), repository.insertedIds)
+    }
+
+    @Test
+    fun `a photo without EXIF coordinates is handed to the background location attach`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+
+            store.effects.test {
+                store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
+                runCurrent()
+
+                assertIs<CounterEffect.AttachLocation>(awaitItem())
+            }
+        }
+
+    @Test
+    fun `a photo that already carries EXIF coordinates does not ask for a location fix`() =
+        runTest(mainDispatcher) {
+            exifReader.data = ExifData(lat = 41.39864, lon = 2.17842)
+            val (store, _) = newStore()
+
+            store.effects.test {
+                store.dispatch(CounterIntent.PhotoCaptured(SOURCE))
+                runCurrent()
+
+                expectNoEvents()
+            }
+        }
 
     @Test
     fun `initial state has zero total and no undo chip`() = runTest(mainDispatcher) {
@@ -254,4 +349,8 @@ class CounterStoreTest {
                 assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
             }
         }
+
+    private companion object {
+        const val SOURCE = "file:///cache/capture.jpg"
+    }
 }
