@@ -8,5 +8,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             api(libs.kotlinx.datetime)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }

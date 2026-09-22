@@ -7,6 +7,10 @@ import kotlin.time.Instant
 interface EncounterRepository {
     fun observeAll(): Flow<List<Encounter>>
 
+    // A dedicated SQL COUNT, not observeAll().map { it.size }: the counter must not load every
+    // row into memory just to display a number.
+    fun observeActiveCount(): Flow<Int>
+
     fun observeById(id: String): Flow<Encounter?>
 
     suspend fun insert(encounter: Encounter)
