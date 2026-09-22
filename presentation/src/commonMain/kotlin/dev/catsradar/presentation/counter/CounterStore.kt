@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.UndoLastTally
@@ -18,13 +19,13 @@ class CounterStore(
     private val undoLastTally: UndoLastTally,
     observeEncounterCount: ObserveEncounterCount,
     private val stateMapper: CounterStateMapper,
+    private val locationPermissionRequestState: LocationPermissionRequestState,
 ) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.map(count = 0, undoVisible = false)) {
 
     private var tapSequence = 0
     private var undoTargetSequence = -1
     private var undoTargetId: String? = null
     private var undoTimeoutJob: Job? = null
-    private var locationPermissionRequested = false
 
     init {
         observeEncounterCount()
@@ -55,9 +56,9 @@ class CounterStore(
         // The tap must feel instant: the tick fires before the write, not after it succeeds.
         emit(CounterEffect.HapticTick)
         // Only the very first tally ever opens the system dialog; a denial must not re-prompt on
-        // every later tap.
-        if (!locationPermissionRequested) {
-            locationPermissionRequested = true
+        // every later tap, even across a process death (the flag is persisted, not in-memory).
+        if (!locationPermissionRequestState.alreadyRequested) {
+            locationPermissionRequestState.markRequested()
             emit(CounterEffect.RequestLocationPermission)
         }
         runWriteIgnoringFailure {

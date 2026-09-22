@@ -41,6 +41,7 @@ class CounterStoreTest {
 
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
+        locationPermissionRequestState: FakeLocationPermissionRequestState = FakeLocationPermissionRequestState(),
     ): Pair<CounterStore, FakeEncounterRepository> {
         val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
         val store = CounterStore(
@@ -48,6 +49,7 @@ class CounterStoreTest {
             undoLastTally = UndoLastTally(encounterRepository, clock),
             observeEncounterCount = ObserveEncounterCount(encounterRepository),
             stateMapper = CounterStateMapper(),
+            locationPermissionRequestState = locationPermissionRequestState,
         )
         runCurrent()
         return store to encounterRepository
@@ -99,6 +101,22 @@ class CounterStoreTest {
             expectNoEvents()
         }
     }
+
+    @Test
+    fun `a fresh Store after process death does not re-request an already-requested permission`() =
+        runTest(mainDispatcher) {
+            // Simulates a killed-and-relaunched process: a brand new Store, but the persisted
+            // flag survived.
+            val (store, _) = newStore(locationPermissionRequestState = FakeLocationPermissionRequestState(true))
+
+            store.effects.test {
+                store.dispatch(CounterIntent.TallyClicked)
+                runCurrent()
+                assertEquals(CounterEffect.HapticTick, awaitItem())
+                assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
+                expectNoEvents()
+            }
+        }
 
     @Test
     fun `a denied permission result shows the hint, a granted one hides it`() = runTest(mainDispatcher) {
