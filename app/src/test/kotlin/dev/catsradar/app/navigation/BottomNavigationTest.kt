@@ -72,6 +72,28 @@ class BottomNavigationTest {
     }
 
     @Test
+    fun `a stack built with a repeated key keeps that key once`() {
+        val backStack = newStack(Counter, Encounters, Encounters)
+
+        assertEquals(listOf<NavKey>(Counter, Encounters), backStack.toList())
+    }
+
+    @Test
+    fun `deduplication keeps Counter as the root`() {
+        val backStack = newStack(Counter, Encounters, Counter)
+
+        assertEquals(Counter, backStack.first())
+        assertEquals(listOf<NavKey>(Counter, Encounters), backStack.toList())
+    }
+
+    @Test
+    fun `an empty stack falls back to the Counter root rather than rendering nothing`() {
+        val backStack = newStack()
+
+        assertEquals(listOf<NavKey>(Counter), backStack.toList())
+    }
+
+    @Test
     fun `popOrNull removes the top entry and reports it popped when more than the root remains`() {
         val backStack = newStack(Counter, Encounters)
 

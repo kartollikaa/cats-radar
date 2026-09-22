@@ -31,8 +31,8 @@ completion. What actually stops the encounter from being wrongly resurrected is 
 soft-deleted, a fix that resolves afterward writes nothing (*a fix that resolves after the target
 was undone does not resurrect it*).
 
-Backfill only widens within a single outing. An encounter 45 minutes before or after the target —
-past the 30-minute `SESSION_GAP` — belongs to a different outing and is left at `NONE` even though
+Backfill only widens within a single outing. An encounter far enough before or after the
+target to be past `SESSION_GAP` belongs to a different outing, and is left at `NONE` even though
 a current fix was just obtained (*a current fix backfills NONE encounters in the same outing but
 not an earlier one*; *an encounter from a later outing is never backfilled*). It also never
 overwrites an encounter that already carries any non-`NONE` location, including one from an

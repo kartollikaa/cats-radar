@@ -2,7 +2,7 @@
 
 `:app` hosts a single-activity Compose UI. `MainActivity` wraps one `CatsRadarNavHost()` in
 `CatsRadarTheme` inside a full-screen `Surface`; the nav host owns a Navigation 3 `NavDisplay` over
-a back stack that starts at — and today only ever contains — the `Counter` entry.
+a back stack rooted at `Counter`, with the selected bottom-navigation tab above it.
 `CatsRadarApplication.onCreate()` starts Koin with four modules (`domainModule`, `dataModule`,
 `presentationModule`, `workerModule`) and then initializes `WorkManager` by hand with a
 Koin-backed `WorkerFactory`, because the manifest disables WorkManager's own default initializer —
@@ -19,6 +19,16 @@ screen's Store is self-contained, registered with Koin as a `viewModelOf`, and c
 Navigation 3 entry via `rememberViewModelStoreNavEntryDecorator`.
 
 ## At the edges
+
+No key can appear on the back stack twice. `NavEntry.contentKey` defaults to the key itself and
+navigation3-runtime has no uniqueness guard, so two entries sharing a key would silently share one
+`ViewModelStore` — two tabs, one Store, state bleeding between them. `BottomNavBackStack` enforces
+distinctness when it is constructed, which covers a restored stack as well as a freshly built one,
+and keeps `Counter` as the root when it drops a repeat. It also exposes `List`, never
+`MutableList`, so a bare push is not expressible. Because a host could still ignore the type
+altogether, an architecture test asserts that `CatsRadarNavHost` takes its stack from
+`rememberBottomNavBackStack()` and that no other `:app` source builds or remembers a raw
+`NavBackStack` (`NavBackStackUsageTest`).
 
 State updates are atomic under concurrent writers: `setState` goes through
 `MutableStateFlow.update`, and 8 concurrent coroutines issuing 2,000 increments each land all

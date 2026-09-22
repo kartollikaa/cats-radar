@@ -2,7 +2,7 @@
 
 An "outing" (the design spec calls it a "Session", §3.5) is never stored — it's recomputed on
 demand by `SessionSplitter` from whatever non-deleted encounters exist. Sort by `occurredAt`; a gap
-strictly greater than `Tuning.SESSION_GAP` (30 minutes) between two consecutive encounters starts a
+strictly greater than `Tuning.SESSION_GAP` between two consecutive encounters starts a
 new outing. `groupByOuting()` is where that boundary is actually computed — it returns each
 outing's own encounters (oldest first within each outing); `split()` is defined in terms of it,
 mapping each group to a `Session` (`count`, `start` — first encounter's time, `end` — last
