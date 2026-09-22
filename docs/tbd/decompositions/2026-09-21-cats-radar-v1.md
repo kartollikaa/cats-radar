@@ -38,7 +38,7 @@
 | 17b | Backup archive format | `kotlinx.serialization` models, ZIP writer/reader, `manifest.json` with `formatVersion`, photo files, round-trip test. | safe | ~450 | 17 | in-review |
 | 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers, gallery toggle UI. | safe | ~450 | 11, 17b | in-review |
 | 24 | Walking mode | An ongoing notification with a tally action, so a cat is logged from the lock screen without opening the app. No foreground service. Settings switch. Does not define an outing. | safe | ~450 | 6 | in-review |
-| 24c | Walking mode on the Counter | A one-tap entry point where a walk actually starts, instead of Settings. | safe | ~150 | 24 | planned |
+| 24c | Walking mode on the Counter | A one-tap entry point where a walk actually starts, instead of Settings. | safe | ~150 | 24 | in-review |
 | 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | planned |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | merged |

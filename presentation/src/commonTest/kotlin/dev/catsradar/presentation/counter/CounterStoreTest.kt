@@ -15,6 +15,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -649,5 +650,55 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(ImportProgressState(done = 1, total = 2), store.state.value.importProgress)
+    }
+
+    @Test
+    fun `tapping the chip stores the flag`() = runTest(mainDispatcher) {
+        val settings = FakeSettingsRepository()
+        val (store, _) = newStore(settingsRepository = settings)
+
+        store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+        runCurrent()
+
+        assertEquals(true, settings.walkingMode().first())
+        assertEquals(true, store.state.value.walkingMode)
+    }
+
+    @Test
+    fun `the chip follows a walk stopped from the notification, with no intent of its own`() =
+        runTest(mainDispatcher) {
+            val settings = FakeSettingsRepository()
+            val (store, _) = newStore(settingsRepository = settings)
+            store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+            runCurrent()
+
+            settings.setWalkingMode(false)
+            runCurrent()
+
+            assertEquals(false, store.state.value.walkingMode)
+        }
+
+    @Test
+    fun `a chip tap the store cannot write leaves it off rather than crashing`() =
+        runTest(mainDispatcher) {
+            val settings = FakeSettingsRepository(writesFail = true)
+            val (store, _) = newStore(settingsRepository = settings)
+
+            store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+            runCurrent()
+
+            assertEquals(false, store.state.value.walkingMode)
+        }
+
+    @Test
+    fun `walking mode survives the stats flow rebuilding the whole state`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+        runCurrent()
+
+        repository.insert(externalEncounter(id = "a-cat"))
+        runCurrent()
+
+        assertEquals(true, store.state.value.walkingMode)
     }
 }

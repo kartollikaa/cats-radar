@@ -10,6 +10,7 @@ sealed interface CounterIntent {
     /** [uri] is null when the camera was cancelled or produced nothing. */
     data class PhotoCaptured(val uri: String?) : CounterIntent
     data object UndoClicked : CounterIntent
+    data class WalkingModeToggled(val enabled: Boolean) : CounterIntent
 
     /** Importing from the gallery: a sub-flow of the Counter, not a screen of its own. */
     sealed interface Import : CounterIntent {

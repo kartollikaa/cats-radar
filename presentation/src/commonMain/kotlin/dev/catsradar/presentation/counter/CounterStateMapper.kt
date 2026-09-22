@@ -14,6 +14,7 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         currentOuting: CurrentOuting? = null,
         tapBurst: Int? = null,
         lastCoat: CoatOption? = null,
+        walkingMode: Boolean = false,
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
     ): CounterState = CounterState(
@@ -23,6 +24,7 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         currentOuting = currentOuting?.toState(),
         tapBurst = tapBurst,
         lastCoat = lastCoat,
+        walkingMode = walkingMode,
         importProgress = importProgress,
         importSummary = importSummary,
     )

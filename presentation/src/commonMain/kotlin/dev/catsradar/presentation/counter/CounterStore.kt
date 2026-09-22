@@ -54,12 +54,16 @@ class CounterStore(
                         currentOuting = stats.currentOuting,
                         tapBurst = tapBurst,
                         lastCoat = lastCoat,
+                        walkingMode = walkingMode,
                         importProgress = importProgress,
                         importSummary = importSummary,
                     )
                 }
                 announceMilestone(stats.total)
             }
+            .launchIn(viewModelScope)
+        settingsRepository.walkingMode()
+            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
             .launchIn(viewModelScope)
     }
 
@@ -78,6 +82,9 @@ class CounterStore(
             CounterIntent.CameraClicked -> emit(CounterEffect.OpenCamera)
             is CounterIntent.PhotoCaptured -> onPhotoCaptured(intent.uri)
             CounterIntent.UndoClicked -> onUndoClicked()
+            // Only the flag is written; the notification follows it from outside the screen.
+            is CounterIntent.WalkingModeToggled ->
+                runWriteIgnoringFailure { settingsRepository.setWalkingMode(intent.enabled) }
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.LocationPermissionResult ->

@@ -48,6 +48,7 @@ fun CounterScreen(
     onImportClick: () -> Unit = {},
     onUndoImportClick: () -> Unit = {},
     onImportSummaryDismiss: () -> Unit = {},
+    onWalkingModeChange: (Boolean) -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -66,6 +67,7 @@ fun CounterScreen(
             }
         }
         state.currentOuting?.let { CurrentOuting(it) }
+        WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
         CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
         if (state.undoVisible) {
             AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
