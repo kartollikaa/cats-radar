@@ -38,11 +38,21 @@ the wall-clock time go through `java.time` with the device locale, which needs n
 
 ## Counting things
 
-A phrase with a number in it is a `<plurals>`, never a `<string>` with `%d` spliced in.
-`counter_outing_now` and `counter_milestone` are the two today. English needs two categories,
-Russian four (`one` / `few` / `many` / `other`) — "1 котик", "2 котика", "5 котиков" — so a
-Russian-only category is not optional padding, it is the difference between correct and wrong text
-for most counts.
+A phrase with a number in it is a `<plurals>`, never a `<string>` with `%d` spliced in. English
+needs two categories, Russian four (`one` / `few` / `many` / `other`) — "1 котик", "2 котика",
+"5 котиков" — so a Russian-only category is not optional padding, it is the difference between
+correct and wrong text for most counts.
+
+That holds even when the number is not *inside* the phrase. The statistics headline draws the total
+at display size with a caption under it, and the caption still has to agree: "21 котик встречен",
+"22 котика встречено". Lint's `ImpliedQuantity` flags a numberless Russian `one`, which is right in
+general and wrong here, so that one plural carries a `tools:ignore` and a note saying where the
+number is.
+
+State carries such a count as an `Int`, never a formatted label — `StatisticsState.total`,
+`BestOutingState.count`, `CurrentOutingState.count`. Only the platform knows which form a number
+takes, so the composable resolves it with `pluralStringResource`, the same sanctioned exception to
+*No mapping in composables* that `stringResource` already is.
 
 ## At the edges
 

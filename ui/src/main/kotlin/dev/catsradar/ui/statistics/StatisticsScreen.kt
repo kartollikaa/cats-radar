@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.statistics.BestOutingState
@@ -83,7 +84,12 @@ fun StatisticsScreen(
             state.bestOuting?.let { best ->
                 StatRow(
                     R.string.statistics_best_outing,
-                    stringResource(R.string.statistics_best_outing_value, best.countLabel, best.durationLabel),
+                    pluralStringResource(
+                        R.plurals.statistics_best_outing_value,
+                        best.count,
+                        best.count,
+                        best.durationLabel,
+                    ),
                 )
                 StatRow(R.string.statistics_best_outing_rate, best.rate.label())
             }
@@ -107,8 +113,11 @@ private fun ByCoatSection(shares: ImmutableList<CoatShareState>, modifier: Modif
 @Composable
 private fun Headline(state: StatisticsState, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
-        Text(text = stringResource(R.string.statistics_total), style = MaterialTheme.typography.bodyMedium)
+        Text(text = state.total.toString(), style = MaterialTheme.typography.displayLarge)
+        Text(
+            text = pluralStringResource(R.plurals.statistics_total, state.total),
+            style = MaterialTheme.typography.bodyMedium,
+        )
         state.nextMilestone?.let { MilestoneLine(it, modifier = Modifier.padding(top = 8.dp)) }
     }
 }
@@ -163,7 +172,7 @@ private fun StatisticsScreenEmptyPreview() {
 }
 
 private val sampleStatistics = StatisticsState(
-    totalLabel = "147",
+    total = 147,
     hasAnyCats = true,
     todayLabel = "3",
     weekLabel = "19",
@@ -176,7 +185,7 @@ private val sampleStatistics = StatisticsState(
     activeTimeLabel = "14 h 20 min",
     overallRate = RateState(value = "4.2", unit = RateUnit.PER_HOUR),
     bestOuting = BestOutingState(
-        countLabel = "9",
+        count = 9,
         durationLabel = "42 min",
         rate = RateState(value = "1.3", unit = RateUnit.PER_MINUTE),
     ),

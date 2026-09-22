@@ -45,9 +45,11 @@ reaches the composable as a `String` in State. Never format in a composable, nev
   One call per line — detekt's `NoSemicolons` rejects the single-line form.
 - **Locale-aware output** — month names, weekday names, "today"/"yesterday", relative time,
   durations like "1 h 20 min" — goes through the `DateTimeFormatter` interface in `:presentation`.
-  Its Android implementation in `androidMain` uses `java.time.format.DateTimeFormatter` /
-  `DateUtils` with the device locale; iOS will use `NSDateFormatter`. Mappers take it as a
-  constructor dependency.
+  Its Android implementation in `androidMain` formats dates and times with
+  `java.time.format.DateTimeFormatter` at the device locale, and reads the handful of words that
+  are not a date — "today", "yesterday", the hour and minute units — from its own Android string
+  resources, which is why it takes a `Context`. iOS will use `NSDateFormatter`. Mappers take the
+  interface as a constructor dependency.
   ```kotlin
   interface DateTimeFormatter {
     fun dayHeader(date: LocalDate, today: LocalDate): String

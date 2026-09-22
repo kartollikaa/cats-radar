@@ -8,7 +8,8 @@ Multiplatform libraries with only the Android target configured today. `:ui` and
                 FileProvider, MediaStore/SAF glue, string resources.
   └─ :ui        Compose: CatsRadarTheme, components, screens, previews. Renders State; builds nothing.
        └─ :presentation   MVI: Store base, one Store per screen, State/Intent/Effect, StateMappers,
-                          DateTimeFormatter interface. No Compose, no Android.
+                          DateTimeFormatter interface. No Compose; androidMain holds the formatter's
+                          Android implementation and the four date words it cannot get from java.time.
             └─ :domain    Models, Tuning, pure functions (Geohash, SessionSplitter, StatsCalculator,
                           LocationPolicy, ImportRules), repository + platform interfaces, use cases.
                           Depends on kotlinx only.
