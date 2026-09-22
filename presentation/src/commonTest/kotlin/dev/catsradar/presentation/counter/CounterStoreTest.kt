@@ -192,6 +192,27 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `undo emits CancelLocationAttach for the target id, but a second undo does not`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            assertEquals(CounterEffect.CancelLocationAttach("id-1"), awaitItem())
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `a second tap restarts the undo window, which then expires and disables undo`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         val margin = 1.seconds

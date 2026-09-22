@@ -95,6 +95,7 @@ class CounterStore(
         undoTargetId = null
         undoTimeoutJob?.cancel()
         setState { copy(undoVisible = false) }
+        emit(CounterEffect.CancelLocationAttach(id))
         runWriteIgnoringFailure { undoLastTally(id) }
     }
 

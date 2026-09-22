@@ -16,6 +16,7 @@ internal fun handleCounterEffect(
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
         is CounterEffect.AttachLocation -> locationAttachScheduler.schedule(effect.encounterId)
+        is CounterEffect.CancelLocationAttach -> locationAttachScheduler.cancel(effect.encounterId)
         CounterEffect.RequestLocationPermission -> locationPermissionRequester.request()
     }
 }

@@ -18,9 +18,14 @@ private class FakeHaptics : Haptics {
 
 private class FakeLocationAttachScheduler : LocationAttachScheduler {
     val scheduledIds = mutableListOf<String>()
+    val cancelledIds = mutableListOf<String>()
 
     override fun schedule(encounterId: String) {
         scheduledIds += encounterId
+    }
+
+    override fun cancel(encounterId: String) {
+        cancelledIds += encounterId
     }
 }
 
@@ -58,6 +63,19 @@ class CounterEffectHandlerTest {
 
         assertEquals(listOf("encounter-42"), locationAttachScheduler.scheduledIds)
         assertEquals(0, haptics.tickCount)
+    }
+
+    @Test
+    fun `CancelLocationAttach cancels the worker for exactly that encounter id`() {
+        handleCounterEffect(
+            CounterEffect.CancelLocationAttach("encounter-42"),
+            haptics,
+            locationAttachScheduler,
+            locationPermissionRequester,
+        )
+
+        assertEquals(listOf("encounter-42"), locationAttachScheduler.cancelledIds)
+        assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
     }
 
     @Test

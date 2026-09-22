@@ -1,5 +1,6 @@
 package dev.catsradar.app.worker
 
-fun interface LocationAttachScheduler {
+interface LocationAttachScheduler {
     fun schedule(encounterId: String)
+    fun cancel(encounterId: String)
 }
