@@ -46,6 +46,10 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
             .setOngoing(true)
             .setSilent(true)
+            // Android 16 promotes an ongoing notification it accepts to the status-bar chip and the
+            // always-on display; older versions get the same notification, unpromoted.
+            .setRequestPromotedOngoing(true)
+            .setShortCriticalText(count.toString())
             // Visible on the lock screen: tallying without unlocking is the whole point.
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(
