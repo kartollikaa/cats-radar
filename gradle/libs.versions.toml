@@ -16,6 +16,9 @@ compose-bom = "2026.09.00"
 androidx-activity = "1.13.0"
 androidx-core = "1.19.0"
 kotlinx-coroutines = "1.11.0"
+# The "-0.6.x-compat" suffix ships kotlinx.datetime.Instant/Clock as type aliases to
+# kotlin.time.Instant/Clock (docs/rules/date-time.md); the plain 0.8.0 artifact omits them.
+kotlinx-datetime = "0.8.0-0.6.x-compat"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -26,6 +29,7 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "compose-rules-detekt" }
