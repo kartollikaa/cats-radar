@@ -2,6 +2,7 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.datetime.LocalDate
@@ -11,7 +12,7 @@ import kotlin.time.Instant
 
 class EncounterDetailStateMapperTest {
 
-    private val mapper = EncounterDetailStateMapper(FakeDateTimeFormatter())
+    private val mapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
     private val today = LocalDate(2026, 9, 22)
 
     @Test
@@ -45,10 +46,27 @@ class EncounterDetailStateMapperTest {
     }
 
     @Test
+    fun `a photo encounter carries the app's own copy, resolved to a full path`() {
+        val encounter = encounterFixture("e1", OCCURRED).copy(photoPath = "e1.jpg", thumbPath = "e1_thumb.jpg")
+
+        val state = mapper.map(encounter, today)
+
+        // The full copy, not the thumbnail: the detail screen has the room for it.
+        assertEquals("/data/photos/e1.jpg", state.photoPath)
+    }
+
+    @Test
+    fun `a tally carries no photo at all`() {
+        val state = mapper.map(encounterFixture("e1", OCCURRED), today)
+
+        assertEquals(null, state.photoPath)
+    }
+
+    @Test
     fun `the day comes from the encounter's own offset, not the device zone`() {
         val justAfterMidnightUtc = Instant.parse("2026-09-22T00:10:00Z")
         val formatter = FakeDateTimeFormatter()
-        val offsetMapper = EncounterDetailStateMapper(formatter)
+        val offsetMapper = EncounterDetailStateMapper(formatter, FakePhotoStorage())
 
         offsetMapper.map(encounterFixture("west", justAfterMidnightUtc, tzOffsetMinutes = -60), today)
 

@@ -5,4 +5,5 @@ plugins {
 
 dependencies {
     api(projects.presentation)
+    implementation(libs.coil.compose)
 }

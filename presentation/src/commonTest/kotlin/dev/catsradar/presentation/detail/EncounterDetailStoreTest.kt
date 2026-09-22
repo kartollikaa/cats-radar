@@ -9,6 +9,7 @@ import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -209,7 +210,7 @@ class EncounterDetailStoreTest {
         observeEncounter = ObserveEncounter(repository),
         deleteEncounter = DeleteEncounter(repository, clock),
         undoDelete = UndoDelete(repository),
-        stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter()),
+        stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,
     )
