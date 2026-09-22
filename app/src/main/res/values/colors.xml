@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Matches Material 3's light surface, so the window shows the app's own colour before the
+    <!-- Must equal the app theme's surface, so the window shows the app's own colour before the
          first frame and behind the system bars. -->
-    <color name="window_background">#FFFBFE</color>
+    <color name="window_background">#F0FCF8</color>
 </resources>

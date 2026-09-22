@@ -43,12 +43,12 @@ private fun BottomNavTab.labelRes(): Int = when (this) {
     BottomNavTab.SETTINGS -> R.string.tab_settings
 }
 
+// Only the gear has a filled form in Material Symbols; the other three glyphs are already solid.
 @DrawableRes
 private fun BottomNavTab.iconRes(selected: Boolean): Int = when (this) {
-    BottomNavTab.COUNTER -> if (selected) R.drawable.ic_nav_pets_filled else R.drawable.ic_nav_pets
-    BottomNavTab.ENCOUNTERS ->
-        if (selected) R.drawable.ic_nav_format_list_bulleted_filled else R.drawable.ic_nav_format_list_bulleted
-    BottomNavTab.STATISTICS -> if (selected) R.drawable.ic_nav_bar_chart_filled else R.drawable.ic_nav_bar_chart
+    BottomNavTab.COUNTER -> R.drawable.ic_nav_pets
+    BottomNavTab.ENCOUNTERS -> R.drawable.ic_nav_format_list_bulleted
+    BottomNavTab.STATISTICS -> R.drawable.ic_nav_bar_chart
     BottomNavTab.SETTINGS -> if (selected) R.drawable.ic_nav_settings_filled else R.drawable.ic_nav_settings
 }
 

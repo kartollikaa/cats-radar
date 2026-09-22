@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 
 private val BaseTypography = Typography()
 
-// Heavier than Material's defaults, so numbers and titles carry the screen without a custom font.
 private val CatsRadarTypography = BaseTypography.copy(
     displayLarge = BaseTypography.displayLarge.copy(fontWeight = FontWeight.Bold),
     displayMedium = BaseTypography.displayMedium.copy(fontWeight = FontWeight.Bold),

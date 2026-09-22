@@ -1,19 +1,22 @@
 package dev.catsradar.ui.theme
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import dev.catsradar.ui.testing.MIN_TEXT_CONTRAST
 import dev.catsradar.ui.testing.contrast
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
+private const val MIN_TEAL_CHROMA = 0.25f
+
 private val TextOnSurface: List<Triple<String, (ColorScheme) -> Color, (ColorScheme) -> Color>> = listOf(
     Triple("onPrimary on primary", { it.onPrimary }, { it.primary }),
     Triple("onPrimaryContainer on primaryContainer", { it.onPrimaryContainer }, { it.primaryContainer }),
+    Triple("onSecondary on secondary", { it.onSecondary }, { it.secondary }),
     Triple("onSecondaryContainer on secondaryContainer", { it.onSecondaryContainer }, { it.secondaryContainer }),
     Triple("onTertiary on tertiary", { it.onTertiary }, { it.tertiary }),
     Triple("onTertiaryContainer on tertiaryContainer", { it.onTertiaryContainer }, { it.tertiaryContainer }),
@@ -23,14 +26,25 @@ private val TextOnSurface: List<Triple<String, (ColorScheme) -> Color, (ColorSch
     Triple("onSurfaceVariant on surface", { it.onSurfaceVariant }, { it.surface }),
     Triple("onSurface on surfaceContainerHighest", { it.onSurface }, { it.surfaceContainerHighest }),
     Triple("onSurfaceVariant on surfaceContainerHighest", { it.onSurfaceVariant }, { it.surfaceContainerHighest }),
+    Triple("inverseOnSurface on inverseSurface", { it.inverseOnSurface }, { it.inverseSurface }),
+    Triple("onPrimaryFixed on primaryFixed", { it.onPrimaryFixed }, { it.primaryFixed }),
+    Triple("onSecondaryFixed on secondaryFixed", { it.onSecondaryFixed }, { it.secondaryFixed }),
+    Triple("onTertiaryFixed on tertiaryFixed", { it.onTertiaryFixed }, { it.tertiaryFixed }),
+    // Drawn as text by components: the selected navigation label, and the Counter's tap burst.
+    Triple("secondary on surfaceContainer", { it.secondary }, { it.surfaceContainer }),
+    Triple("primary on primaryContainer", { it.primary }, { it.primaryContainer }),
+)
+
+private val Schemes = listOf(
+    Triple("light", CatsRadarLightColors, lightColorScheme()),
+    Triple("dark", CatsRadarDarkColors, darkColorScheme()),
 )
 
 class CatsRadarColorsTest {
 
     @Test
     fun everyTextColourReadsOnTheSurfaceItIsMeantForInBothThemes() {
-        val schemes = listOf("light" to CatsRadarLightColors, "dark" to CatsRadarDarkColors)
-        val failures = schemes.flatMap { (name, scheme) ->
+        val failures = Schemes.flatMap { (name, scheme, _) ->
             TextOnSurface.mapNotNull { (pair, text, surface) ->
                 val ratio = contrast(text(scheme), surface(scheme))
                 "$name: $pair is ${"%.2f".format(ratio)}:1".takeIf { ratio < MIN_TEXT_CONTRAST }
@@ -40,17 +54,39 @@ class CatsRadarColorsTest {
         assertTrue(failures.joinToString("\n"), failures.isEmpty())
     }
 
+    // Every role the scheme has, found by reflection, so a role this file never heard of still counts.
+    // Pure white and black are the same in any palette and are allowed to match.
     @Test
-    fun thePrimaryIsTheIconsTealNotMaterialsDefaultPurple() {
-        assertNotEquals(lightColorScheme().primary, CatsRadarLightColors.primary)
+    fun noRoleIsLeftAtMaterialsDefaultColour() {
+        val leftovers = Schemes.flatMap { (name, scheme, baseline) ->
+            val defaults = roles(baseline)
+            roles(scheme)
+                .filter { (role, colour) -> colour == defaults.getValue(role) }
+                .filter { (_, colour) -> colour != Color.White && colour != Color.Black }
+                .map { (role, _) -> "$name.$role" }
+        }
+
+        assertTrue("still Material's default: $leftovers", leftovers.isEmpty())
+    }
+
+    @Test
+    fun thePrimaryIsTheIconsTeal() {
         listOf(CatsRadarLightColors.primary, CatsRadarDarkColors.primary).forEach { primary ->
             val hue = hueDegrees(primary)
             assertTrue("hue $hue is not teal", hue in 150.0..185.0)
+            assertTrue("$primary is too grey to be teal", chroma(primary) >= MIN_TEAL_CHROMA)
         }
     }
 
-    // The hue of the colour in the sRGB-derived opponent plane; coarse, but it only has to tell teal
-    // from purple.
+    private fun roles(scheme: ColorScheme): Map<String, Color> =
+        ColorScheme::class.java.methods
+            .filter { it.parameterCount == 0 && it.returnType == Long::class.javaPrimitiveType }
+            .filter { it.name.startsWith("get") }
+            .associate { it.name.substringBefore('-') to Color((it.invoke(scheme) as Long).toULong()) }
+
+    private fun chroma(color: Color): Float =
+        maxOf(color.red, color.green, color.blue) - minOf(color.red, color.green, color.blue)
+
     private fun hueDegrees(color: Color): Double {
         val alpha = color.red - (color.green + color.blue) / 2
         val beta = sqrt(3.0).toFloat() / 2 * (color.green - color.blue)
