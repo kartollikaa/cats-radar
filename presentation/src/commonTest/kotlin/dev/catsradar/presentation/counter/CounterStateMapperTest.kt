@@ -1,11 +1,12 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CounterStateMapperTest {
 
-    private val mapper = CounterStateMapper()
+    private val mapper = CounterStateMapper(FakeDateTimeFormatter())
 
     @Test
     fun `maps a zero count with the undo chip hidden`() {

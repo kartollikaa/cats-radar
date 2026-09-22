@@ -55,6 +55,14 @@ private class RecordingCaptureDiscarder : CaptureDiscarder {
     }
 }
 
+private class RecordingMilestoneAnnouncer : MilestoneAnnouncer {
+    val announced = mutableListOf<Int>()
+
+    override fun announce(value: Int) {
+        announced += value
+    }
+}
+
 private class CountingPhotoFailureReporter : PhotoFailureReporter {
     var reportCount = 0
         private set
@@ -71,6 +79,7 @@ class CounterEffectHandlerTest {
     private val cameraLauncher = CountingCameraLauncher()
     private val photoFailureReporter = CountingPhotoFailureReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
+    private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -80,6 +89,7 @@ class CounterEffectHandlerTest {
         cameraLauncher,
         photoFailureReporter,
         captureDiscarder,
+        milestoneAnnouncer,
     )
 
     @Test
@@ -122,6 +132,7 @@ class CounterEffectHandlerPhotoTest {
     private val cameraLauncher = CountingCameraLauncher()
     private val photoFailureReporter = CountingPhotoFailureReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
+    private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -131,6 +142,7 @@ class CounterEffectHandlerPhotoTest {
         cameraLauncher,
         photoFailureReporter,
         captureDiscarder,
+        milestoneAnnouncer,
     )
 
     @Test
@@ -149,6 +161,13 @@ class CounterEffectHandlerPhotoTest {
 
         assertEquals(1, photoFailureReporter.reportCount)
         assertEquals(0, cameraLauncher.launchCount)
+    }
+
+    @Test
+    fun `MilestoneReached announces exactly the milestone it names`() {
+        handle(CounterEffect.MilestoneReached(100))
+
+        assertEquals(listOf(100), milestoneAnnouncer.announced)
     }
 
     @Test

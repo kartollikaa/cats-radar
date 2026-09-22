@@ -14,6 +14,7 @@ import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import org.junit.After
 import org.junit.Test
@@ -59,6 +60,9 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<Digest>())
         assertNotNull(koin.get<GallerySaver>())
         assertNotNull(koin.get<PhotoStorage>())
+        // verify() treats a constructor parameter with a default as satisfied, but factoryOf's
+        // reflection still tries to inject it; only actually building the object catches that.
+        assertNotNull(koin.get<ObserveStats>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
     }
 }

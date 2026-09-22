@@ -3,6 +3,7 @@ package dev.catsradar.domain
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -14,6 +15,9 @@ object Tuning {
     val LAST_KNOWN_MAX_AGE: Duration = 6.hours
     val RECENT_PHOTO_WINDOW: Duration = 1.hours
     val UNDO_VISIBLE: Duration = 5.seconds
+
+    /** How long the "+N" burst stays up after the last tap; long enough to read, short enough not to linger. */
+    val TAP_BURST_VISIBLE: Duration = 1200.milliseconds
     val PURGE_AFTER: Duration = 30.days
 
     const val GEOHASH_PRECISION: Int = 8

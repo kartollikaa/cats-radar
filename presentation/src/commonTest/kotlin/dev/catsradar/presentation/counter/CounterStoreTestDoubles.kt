@@ -156,12 +156,19 @@ internal class FakeGallerySaver : GallerySaver {
     }
 }
 
-internal class FakeSettingsRepository(saveOriginals: Boolean = true) : SettingsRepository {
+internal class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int = 0) : SettingsRepository {
     private val state = MutableStateFlow(saveOriginals)
+    private val milestone = MutableStateFlow(lastMilestone)
 
     override fun saveOriginalsToGallery(): Flow<Boolean> = state
 
     override suspend fun setSaveOriginalsToGallery(enabled: Boolean) {
         state.value = enabled
+    }
+
+    override fun lastSeenMilestone(): Flow<Int> = milestone
+
+    override suspend fun setLastSeenMilestone(value: Int) {
+        milestone.value = value
     }
 }

@@ -23,7 +23,9 @@ val domainModule = module {
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounterCount)
     factoryOf(::ObserveEncounters)
-    factoryOf(::ObserveStats)
+    // Constructed by hand, not factoryOf: reflection injects every constructor parameter
+    // including ones with defaults, and the ticker default has no binding to resolve.
+    factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factoryOf(::AttachLocation)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)

@@ -18,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -111,12 +112,9 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
     }
     val context = LocalContext.current
     val cameraLauncher = rememberCameraLauncher(store)
-    val photoFailureReporter = remember(context) {
-        PhotoFailureReporter {
-            Toast.makeText(context, R.string.counter_photo_not_saved, Toast.LENGTH_SHORT).show()
-        }
-    }
+    val photoFailureReporter = rememberPhotoFailureReporter()
     val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
+    val milestoneAnnouncer = rememberMilestoneAnnouncer()
     LaunchedEffect(
         store,
         haptics,
@@ -133,6 +131,7 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
                 cameraLauncher,
                 photoFailureReporter,
                 captureDiscarder,
+                milestoneAnnouncer,
             )
         }
     }
@@ -144,6 +143,28 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
         onLocationHintAction = { action -> store.dispatch(action.toCounterIntent()) },
         onCameraClick = { store.dispatch(CounterIntent.CameraClicked) },
     )
+}
+
+@Composable
+private fun rememberPhotoFailureReporter(): PhotoFailureReporter {
+    val context = LocalContext.current
+    return remember(context) {
+        PhotoFailureReporter {
+            Toast.makeText(context, R.string.counter_photo_not_saved, Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+@Composable
+private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    return remember(context, resources) {
+        MilestoneAnnouncer { value ->
+            val text = resources.getQuantityString(R.plurals.counter_milestone, value, value)
+            Toast.makeText(context, text, Toast.LENGTH_LONG).show()
+        }
+    }
 }
 
 @Composable
