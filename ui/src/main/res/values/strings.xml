@@ -15,4 +15,11 @@
     <string name="location_last_known">Last known location</string>
     <string name="location_from_outing">From this outing</string>
     <string name="location_none">No location yet</string>
+
+    <string name="detail_coordinates">Coordinates</string>
+    <string name="detail_accuracy">±%1$d m</string>
+    <string name="detail_delete">Delete</string>
+    <string name="detail_deleted">Cat removed</string>
+    <string name="detail_undo">Undo</string>
+    <string name="detail_missing">This cat is no longer here</string>
 </resources>

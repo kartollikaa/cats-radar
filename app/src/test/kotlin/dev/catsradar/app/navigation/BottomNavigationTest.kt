@@ -94,6 +94,51 @@ class BottomNavigationTest {
     }
 
     @Test
+    fun `push adds a key above the current tab`() {
+        val backStack = newStack(Counter, Encounters)
+
+        backStack.push(EncounterDetail("cat-1"))
+
+        assertEquals(listOf<NavKey>(Counter, Encounters, EncounterDetail("cat-1")), backStack.toList())
+    }
+
+    @Test
+    fun `pushing a key already on the stack leaves the stack unchanged`() {
+        val backStack = newStack(Counter, Encounters)
+
+        backStack.push(EncounterDetail("cat-1"))
+        backStack.push(EncounterDetail("cat-1"))
+
+        assertEquals(1, backStack.count { it == EncounterDetail("cat-1") })
+        assertEquals(3, backStack.size)
+    }
+
+    @Test
+    fun `a detail on top still reports the Encounters tab as selected`() {
+        val backStack = newStack(Counter, Encounters, EncounterDetail("cat-1"))
+
+        assertEquals(BottomNavTab.ENCOUNTERS, backStack.selectedTab)
+    }
+
+    @Test
+    fun `selecting the Encounters tab from a detail returns to the list, not to a second copy of it`() {
+        val backStack = newStack(Counter, Encounters, EncounterDetail("cat-1"))
+
+        backStack.selectTab(BottomNavTab.ENCOUNTERS)
+
+        assertEquals(listOf<NavKey>(Counter, Encounters), backStack.toList())
+    }
+
+    @Test
+    fun `popOrNull from a detail lands on the list`() {
+        val backStack = newStack(Counter, Encounters, EncounterDetail("cat-1"))
+
+        assertTrue(backStack.popOrNull())
+
+        assertEquals(listOf<NavKey>(Counter, Encounters), backStack.toList())
+    }
+
+    @Test
     fun `popOrNull removes the top entry and reports it popped when more than the root remains`() {
         val backStack = newStack(Counter, Encounters)
 

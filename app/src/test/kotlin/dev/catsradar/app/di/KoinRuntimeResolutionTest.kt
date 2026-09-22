@@ -9,12 +9,14 @@ import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.LocationProvider
+import dev.catsradar.presentation.detail.EncounterDetailStore
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.core.parameter.parametersOf
 import org.robolectric.annotation.Config
 import kotlin.test.assertNotNull
 
@@ -47,5 +49,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<Haptics>())
         assertNotNull(koin.get<LocationProvider>())
         assertNotNull(koin.get<LocationAttachScheduler>())
+        assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
     }
 }

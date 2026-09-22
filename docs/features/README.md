@@ -18,6 +18,8 @@ a document nobody updates is worse than none.
   stored.
 - `browsing-cats.md` — the Encounters list grouped by outing, and the bottom nav's root-stack
   back rule.
+- `encounter-detail.md` — one cat's screen: what it shows, soft delete with a bounded undo, and
+  what a missing or already-deleted id renders as.
 - `app-shell.md` — theme, navigation, the MVI `Store` contract, and dependency injection.
 - `strings.md` — where user-facing text lives, and how a data-driven label gets from a mapper to
   a translatable resource.

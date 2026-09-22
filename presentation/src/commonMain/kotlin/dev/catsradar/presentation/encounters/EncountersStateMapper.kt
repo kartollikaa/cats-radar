@@ -1,7 +1,6 @@
 package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
@@ -38,12 +37,4 @@ class EncountersStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
 
     private fun Encounter.timeLabel(): String =
         dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
-
-    private fun LocationSource.toLocationLabel(): LocationLabel = when (this) {
-        LocationSource.EXIF -> LocationLabel.FROM_PHOTO
-        LocationSource.CURRENT_FIX -> LocationLabel.CURRENT
-        LocationSource.LAST_KNOWN -> LocationLabel.LAST_KNOWN
-        LocationSource.BACKFILLED -> LocationLabel.FROM_OUTING
-        LocationSource.NONE -> LocationLabel.NONE
-    }
 }

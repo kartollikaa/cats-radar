@@ -21,10 +21,12 @@ internal class FakeEncounterRepository : EncounterRepository {
     val insertedIds = mutableListOf<String>()
     val softDeletedIds = mutableListOf<String>()
     var insertShouldThrow: Throwable? = null
+    var softDeleteShouldThrow: Throwable? = null
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
     override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
-    override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
+    override fun observeById(id: String): Flow<Encounter?> =
+        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
 
     override suspend fun insert(encounter: Encounter) {
         insertShouldThrow?.let { throw it }
@@ -58,6 +60,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
+        softDeleteShouldThrow?.let { throw it }
         softDeletedIds += id
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
     }
