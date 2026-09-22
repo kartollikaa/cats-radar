@@ -80,9 +80,7 @@ internal class FakeIdGenerator : IdGenerator {
     override fun newId(): String = "id-${++counter}"
 }
 
-internal class FakeDeviceIdProvider(private val id: String = "device-1") : DeviceIdProvider {
-    override suspend fun deviceId(): String = id
-}
+internal class FakeDeviceIdProvider(override val deviceId: String = "device-1") : DeviceIdProvider
 
 internal class FakeClock(private val instant: Instant) : Clock {
     override fun now(): Instant = instant

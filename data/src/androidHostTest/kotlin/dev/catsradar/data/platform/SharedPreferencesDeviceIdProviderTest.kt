@@ -17,8 +17,8 @@ private class SequentialIdGenerator : IdGenerator {
     override fun newId(): String = "generated-${++counter}"
 }
 
-// Widens the check-then-act window a real device's first-run race can hit: several taps calling
-// deviceId() before any of them has persisted one.
+// Widens the check-then-act window a real device's first-run race can hit: several instances
+// racing construction before any of them has persisted an id.
 private class SlowSequentialIdGenerator : IdGenerator {
     private var counter = 0
     override fun newId(): String {
@@ -28,29 +28,31 @@ private class SlowSequentialIdGenerator : IdGenerator {
 }
 
 private const val SLOW_GENERATE_MILLIS = 50L
-private const val CONCURRENT_CALLS = 8
+private const val CONCURRENT_CONSTRUCTIONS = 8
 
 @RunWith(AndroidJUnit4::class)
 class SharedPreferencesDeviceIdProviderTest {
     @Test
-    fun deviceIdIsGeneratedOnceAndPersistsAcrossInstances() = runTest {
+    fun deviceIdIsGeneratedOnceAndPersistsAcrossInstances() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val idGenerator = SequentialIdGenerator()
 
-        val first = SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId()
-        val second = SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId()
+        val first = SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId
+        val second = SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId
 
         assertEquals("generated-1", first)
         assertEquals(first, second)
     }
 
     @Test
-    fun concurrentFirstCallsAllSeeTheSameGeneratedId() = runTest {
+    fun concurrentConstructionAllConvergesOnTheSameGeneratedId() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val provider = SharedPreferencesDeviceIdProvider(context, SlowSequentialIdGenerator())
+        val idGenerator = SlowSequentialIdGenerator()
 
-        val results = List(CONCURRENT_CALLS) { async(Dispatchers.IO) { provider.deviceId() } }.awaitAll()
+        val ids = List(CONCURRENT_CONSTRUCTIONS) {
+            async(Dispatchers.IO) { SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId }
+        }.awaitAll()
 
-        assertEquals(1, results.toSet().size)
+        assertEquals(1, ids.toSet().size)
     }
 }

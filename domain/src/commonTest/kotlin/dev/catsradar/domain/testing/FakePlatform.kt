@@ -8,6 +8,4 @@ class FakeIdGenerator : IdGenerator {
     override fun newId(): String = "id-${++counter}"
 }
 
-class FakeDeviceIdProvider(private val id: String = "device-1") : DeviceIdProvider {
-    override suspend fun deviceId(): String = id
-}
+class FakeDeviceIdProvider(override val deviceId: String = "device-1") : DeviceIdProvider

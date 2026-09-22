@@ -19,6 +19,8 @@ val dataModule = module {
     single<EncounterDao> { get<CatsDatabase>().encounterDao() }
     single<EncounterRepository> { EncounterRepositoryImpl(get()) }
     factory<IdGenerator> { RandomIdGenerator() }
-    single<DeviceIdProvider> { SharedPreferencesDeviceIdProvider(androidContext(), get()) }
+    // createdAtStart: the one-time SharedPreferences read must land at app start, not on the
+    // first tap that resolves LogTally.
+    single<DeviceIdProvider>(createdAtStart = true) { SharedPreferencesDeviceIdProvider(androidContext(), get()) }
     single<Haptics> { VibratorHaptics(androidContext()) }
 }

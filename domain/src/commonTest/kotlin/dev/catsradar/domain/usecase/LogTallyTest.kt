@@ -7,6 +7,8 @@ import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeIdGenerator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
@@ -93,5 +95,17 @@ class LogTallyTest {
         val second = logTally()
 
         assertNotEquals(first.id, second.id)
+    }
+
+    @Test
+    fun `invoke reaches insert with no suspension before it`() = runTest {
+        val logTally = LogTally(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(now), TimeZone.UTC)
+
+        // Dispatchers.Unconfined runs eagerly to the first real suspension point; if invoke()
+        // awaited anything (the device id, in particular) before insert(), the repository would
+        // still be empty here.
+        launch(Dispatchers.Unconfined) { logTally() }
+
+        assertEquals(1, repository.inserted.size)
     }
 }

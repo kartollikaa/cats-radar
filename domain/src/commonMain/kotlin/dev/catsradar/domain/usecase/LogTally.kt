@@ -40,7 +40,7 @@ class LogTally(
             locationFixedAt = null,
             geohash = null,
             placeCellId = null,
-            deviceId = deviceIdProvider.deviceId(),
+            deviceId = deviceIdProvider.deviceId,
             createdAt = now,
             updatedAt = now,
             deletedAt = null,
