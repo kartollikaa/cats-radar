@@ -16,8 +16,8 @@
 | 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | merged |
 | 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | merged |
 | 3 | Domain core: models, Tuning, Geohash, SessionSplitter | Pure domain types and the two geometric/temporal primitives, fully unit-tested. | safe | ~500 | 1 | merged |
-| 4 | Room database and repositories | Encounter and PlaceCell entities, DAOs, `CatsDatabase` (KMP driver), repository implementations, Robolectric tests. | safe | ~600 | 3 | in-progress |
-| 5 | App shell: theme, Navigation 3 host, Koin, MVI Store | `CatsRadarTheme`, `@ThemePreviews`, `Store` base, `NavDisplay` with a single `Counter` entry showing a placeholder, Koin bootstrap. | safe | ~400 | 2 | planned |
+| 4 | Room database and repositories | Encounter and PlaceCell entities, DAOs, `CatsDatabase` (KMP driver), repository implementations, Robolectric tests. | safe | ~600 | 3 | merged |
+| 5 | App shell: theme, Navigation 3 host, Koin, MVI Store | `CatsRadarTheme`, `@ThemePreviews`, `Store` base, `NavDisplay` with a single `Counter` entry showing a placeholder, Koin bootstrap. | safe | ~400 | 2 | in-progress |
 | 6 | Tally: log a cat and undo | `LogTally`/`UndoLastTally` use cases, `CounterStore`, `CounterScreen` with big button, undo chip, haptic; count from Room `Flow`. | safe | ~450 | 4, 5 | planned |
 | 7 | Location attach | `LocationProvider` (Fused), `LocationPolicy` with `LAST_KNOWN_MAX_AGE` and backfill, `AttachLocation` use case, expedited worker, permission request on first tally + hint. | safe | ~600 | 6 | planned |
 | 8 | Encounters list and bottom navigation | `ObserveEncounters`, grouping by outing, `DateTimeFormatter`, `EncountersStore`/`Screen` with day headers and empty state, bottom bar Counter · Encounters with root-stack back rule. | safe | ~500 | 6 | planned |
