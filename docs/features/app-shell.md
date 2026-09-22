@@ -42,23 +42,28 @@ the bars under a dark app, and a light flash before the first Compose frame.
 
 ## Look
 
-**Colour.** Light and dark schemes are written out in full in `CatsRadarColors.kt`, on Material 3's
+**Colour.** Light and dark schemes set every colour role in `CatsRadarColors.kt`, on Material 3's
 tones, seeded from the launcher icon's teal (`#4CAF93`) with a coral tertiary. Dynamic colour is off:
 previews stay deterministic, and the home-screen widget reads the same two schemes rather than the
-wallpaper's. The values were produced once by a tonal-palette script (tone as CIELAB L\*, chroma
-capped near white where Material's own colour space would soften it); regenerating them means
-re-running that recipe, not hand-editing one role.
+wallpaper's. The values come from `tools/make-palette.py`, which prints both schemes as Kotlin and
+refuses to print one whose text would fall under WCAG AA; changing the palette means changing the
+recipe and re-running it, not hand-editing one role.
 
-`CatsRadarColorsTest` holds the palette to two things: every text colour reads at WCAG AA against
-the surface it is meant for, in both themes, and the primary is still teal. Both checks have been
-broken on purpose and caught.
+`CatsRadarColorsTest` holds the palette to three things, in both themes: every text colour reads at
+WCAG AA against the surface it is meant for; no role is left at Material's default, found by
+reflection so a role added in a later Material version is caught too; and the primary is still a
+saturated teal. Each check has been broken on purpose and caught.
+
+The **window background** is the theme's surface in both modes, because the window is painted
+before Compose draws its first frame; `WindowBackgroundTest` fails if the two drift apart.
 
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
 
 **Navigation.** The bottom bar is `ShortNavigationBar` with Material Symbols Rounded icons
-(Apache 2.0), outlined when idle and filled when selected. The label is always shown and names the
-tab, so the icons carry no content description of their own.
+(Apache 2.0). The selected tab is marked by the bar's indicator pill; only the settings gear also
+changes to its filled form, because the other three glyphs have no separate filled version. The
+label is always shown and names the tab, so the icons carry no content description of their own.
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
@@ -110,7 +115,8 @@ run.
   `CounterEffectHandler.kt`
 - `app/src/main/kotlin/dev/catsradar/app/di/DomainModule.kt`, `DataModule.kt`,
   `PresentationModule.kt`, `WorkerModule.kt`
-- `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`,
+  `tools/make-palette.py`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/CatsRadarBottomBar.kt`,
   `ui/src/main/res/drawable/ic_nav_*.xml`
 
