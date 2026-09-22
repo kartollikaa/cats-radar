@@ -6,8 +6,11 @@ import dev.catsradar.domain.location.LocationPolicy
 import dev.catsradar.domain.location.LocationResult
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.session.SessionSplitter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -16,6 +19,7 @@ import kotlin.time.Instant
 
 class AttachLocation(
     private val encounterRepository: EncounterRepository,
+    private val placeCellRepository: PlaceCellRepository,
     private val locationProvider: LocationProvider,
     private val clock: Clock,
 ) {
@@ -46,10 +50,33 @@ class AttachLocation(
         // above (getCurrentFix can take up to LOCATION_TIMEOUT) is never resurrected by this
         // write - see EncounterDao.attachLocation.
         encounterRepository.attachLocation(encounterId, stamp)
+        rememberPlaceCell(placeCellId)
 
         if (result.source == LocationSource.CURRENT_FIX) {
             backfillOuting(target.occurredAt, encounterId, stamp)
         }
+    }
+
+    /** A cell is created once, PENDING; resolving it is the geocoding worker's job, not this one's. */
+    private suspend fun rememberPlaceCell(cellId: String) {
+        if (placeCellRepository.loadById(cellId) != null) return
+        val bounds = Geohash.decode(cellId)
+        placeCellRepository.upsert(
+            PlaceCell(
+                cellId = cellId,
+                centerLat = (bounds.south + bounds.north) / 2,
+                centerLon = (bounds.west + bounds.east) / 2,
+                countryCode = null,
+                countryName = null,
+                adminArea = null,
+                locality = null,
+                subLocality = null,
+                status = PlaceStatus.PENDING,
+                attempts = 0,
+                lastAttemptAt = null,
+                resolvedAt = null,
+            ),
+        )
     }
 
     // A backstop, not the primary bound: getCurrentFix already owns LOCATION_TIMEOUT. Double it
