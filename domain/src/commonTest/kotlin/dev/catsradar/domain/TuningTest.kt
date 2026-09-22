@@ -15,6 +15,7 @@ class TuningTest {
         assertEquals(8.seconds, Tuning.LOCATION_TIMEOUT)
         assertEquals(6.hours, Tuning.LAST_KNOWN_MAX_AGE)
         assertEquals(1.hours, Tuning.RECENT_PHOTO_WINDOW)
+        assertEquals(5.seconds, Tuning.UNDO_VISIBLE)
         assertEquals(30.days, Tuning.PURGE_AFTER)
     }
 
@@ -26,6 +27,9 @@ class TuningTest {
         assertEquals(2048, Tuning.PHOTO_MAX_SIDE)
         assertEquals(85, Tuning.PHOTO_QUALITY)
         assertEquals(256, Tuning.THUMB_SIZE)
+        assertEquals(20, Tuning.GEOCODE_BATCH)
+        assertEquals(5, Tuning.MAX_GEOCODE_ATTEMPTS)
+        assertEquals(100, Tuning.IMPORT_BATCH_MAX)
     }
 
     @Test
