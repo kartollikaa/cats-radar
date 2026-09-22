@@ -8,6 +8,8 @@ import dev.catsradar.presentation.detail.EncounterDetailStateMapper
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.regions.RegionsStateMapper
+import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.statistics.StatisticsStateMapper
 import dev.catsradar.presentation.statistics.StatisticsStore
 import org.koin.core.module.dsl.factoryOf
@@ -24,6 +26,10 @@ val presentationModule = module {
     factoryOf(::EncounterDetailStateMapper)
     factoryOf(::StatisticsStateMapper)
     viewModelOf(::StatisticsStore)
+    factoryOf(::RegionsStateMapper)
+    viewModel { (parent: dev.catsradar.domain.region.RegionKey?) ->
+        RegionsStore(parent = parent, observeRegion = get(), stateMapper = get(), clock = get(), timeZone = get())
+    }
     viewModel { (encounterId: String) ->
         EncounterDetailStore(
             encounterId = encounterId,
