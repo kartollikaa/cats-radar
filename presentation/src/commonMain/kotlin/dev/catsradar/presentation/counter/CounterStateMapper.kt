@@ -19,6 +19,7 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         importSummary: ImportSummaryState? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
+        count = count,
         undoVisible = undoVisible,
         locationPermissionHintVisible = locationPermissionHintVisible,
         currentOuting = currentOuting?.toState(),

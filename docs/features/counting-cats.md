@@ -19,6 +19,13 @@ it lands before the write rather than after it succeeds, so holding the button d
 smoothly. If the write then fails the total does not move: the burst is feedback for the *tap*, and
 the number is read back from the database.
 
+The count sits in a large block that **is** the button. It squashes under a press and springs back,
+and the number **rolls up** when a cat is added and **down** when one is undone — the screen compares
+the number it had with the one it now has, so an undo, an import or a delete made elsewhere all roll
+the right way. The roll follows the database, so it lands a moment after the burst: the burst answers
+the finger, the roll answers the write. The springs are tuned stiff enough that the roll starts on
+the frame the new number arrives rather than easing into motion.
+
 ## The outing in progress
 
 While an outing is open the counter shows how many cats it holds and how long it has been running,
@@ -71,7 +78,8 @@ the tap still ticks*).
   `ObserveEncounterCount.kt`
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/counter/` — `CounterState`,
   `CounterIntent`, `CounterEffect`, `CounterStore`, `CounterStateMapper`
-- `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count, its
+  press and its roll)
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`
 - `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterDao.kt` (`observeActiveCount`)
@@ -79,8 +87,6 @@ the tap still ticks*).
 ## Not handled yet
 
 Logging more than one cat per tap is an explicit non-goal of v1 — several cats means several taps
-or several photos. The photo path (F2), the coat picker strip the design spec has appearing after
-a tally (F1), gallery import (F3), and the home-screen widget (F4) are all specified in
-`docs/superpowers/specs/2026-09-21-cats-radar-design.md` but none exist in the code yet:
-`CounterState` carries no coat field, and `EncounterOrigin.WIDGET` and `CatCoat` are unused
-outside the domain model and its own tests.
+or several photos. The other ways a cat is logged have their own documents: by coat (`coat.md`),
+by photo and from the gallery (`photos.md`, `import.md`), from the lock screen (`walking-mode.md`)
+and from the home screen (`widget.md`).

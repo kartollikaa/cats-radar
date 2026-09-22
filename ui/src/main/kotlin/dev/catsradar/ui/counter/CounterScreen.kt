@@ -1,26 +1,20 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -55,17 +49,13 @@ fun CounterScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Surface(
-            onClick = onTallyClick,
+        TallyBlock(
+            totalLabel = state.totalLabel,
+            count = state.count,
+            tapBurst = state.tapBurst,
             modifier = Modifier.weight(1f).fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.primaryContainer,
-        ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
-                TapBurst(count = state.tapBurst, modifier = Modifier.align(Alignment.TopCenter).padding(top = 32.dp))
-            }
-        }
+            onClick = onTallyClick,
+        )
         state.currentOuting?.let { CurrentOuting(it) }
         WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
         CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
@@ -98,7 +88,7 @@ private fun CameraButton(
             onLongClick = onLongClick,
             onLongClickLabel = stringResource(R.string.counter_import),
         ),
-        shape = MaterialTheme.shapes.large,
+        shape = CircleShape,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
@@ -112,25 +102,6 @@ private fun CameraButton(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-    }
-}
-
-@Composable
-private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
-    AnimatedVisibility(
-        visible = count != null,
-        enter = fadeIn() + slideInVertically { it / 2 },
-        exit = fadeOut(),
-        modifier = modifier,
-    ) {
-        // Held after the state clears so the exit animation has something to fade out.
-        val lastShown = remember { mutableIntStateOf(1) }
-        count?.let { lastShown.intValue = it }
-        Text(
-            text = stringResource(R.string.counter_tap_burst, lastShown.intValue),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
     }
 }
 
@@ -208,12 +179,13 @@ private fun CounterScreenLocationHintVisiblePreview() {
     }
 }
 
-private val sampleCounterStateEmpty = CounterState(totalLabel = "0", undoVisible = false)
-private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", undoVisible = true)
+private val sampleCounterStateEmpty = CounterState(totalLabel = "0", count = 0, undoVisible = false)
+private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", count = 3, undoVisible = true)
 private val sampleCounterStateLocationHintVisible =
-    CounterState(totalLabel = "3", undoVisible = false, locationPermissionHintVisible = true)
+    CounterState(totalLabel = "3", count = 3, undoVisible = false, locationPermissionHintVisible = true)
 private val sampleCounterStateOutingInProgress = CounterState(
     totalLabel = "12",
+    count = 12,
     undoVisible = false,
     currentOuting = CurrentOutingState(
         count = 4,

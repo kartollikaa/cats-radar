@@ -209,7 +209,7 @@ class CounterStoreTest {
     fun `initial state has zero total and no undo chip`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
 
-        assertEquals(CounterState(totalLabel = "0", undoVisible = false), store.state.value)
+        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
     }
 
     @Test
@@ -533,7 +533,7 @@ class CounterStoreTest {
             // The burst and the tick are feedback for the tap itself, so they land either way;
             // the total comes from the database and stays put because nothing was written.
             assertEquals(
-                CounterState(totalLabel = "0", undoVisible = false, tapBurst = 1),
+                CounterState(totalLabel = "0", count = 0, undoVisible = false, tapBurst = 1),
                 store.state.value,
             )
             store.effects.test {
