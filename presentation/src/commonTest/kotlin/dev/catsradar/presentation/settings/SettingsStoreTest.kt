@@ -56,12 +56,18 @@ class SettingsStoreTest {
     @Test
     fun `dismissing the file picker starts nothing`() = runTest(mainDispatcher) {
         val store = newStore()
-        store.dispatch(SettingsIntent.Backup.ExportTargetChosen(null))
-        store.dispatch(SettingsIntent.Backup.ImportSourceChosen(null))
-        runCurrent()
+        store.effects.test {
+            store.dispatch(SettingsIntent.Backup.ExportTargetChosen(null))
+            store.dispatch(SettingsIntent.Backup.ImportSourceChosen(null))
+            runCurrent()
 
-        assertEquals(false, store.state.value.backupRunning)
-        assertNull(store.state.value.backupOutcome)
+            // Asserted on the effects, not only the state: a run started with an empty uri would
+            // leave the state alone and still hand a worker a file it cannot open.
+            expectNoEvents()
+            assertEquals(false, store.state.value.backupRunning)
+            assertNull(store.state.value.backupOutcome)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
