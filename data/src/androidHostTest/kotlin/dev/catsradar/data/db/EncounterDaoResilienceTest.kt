@@ -74,7 +74,8 @@ class EncounterDaoResilienceTest {
             tzOffsetMinutes = 0,
             kind = "SOME_FUTURE_KIND",
         )
-        dao.insert(fullEncounterEntity(id = "healthy"))
+        val healthyEntity = fullEncounterEntity(id = "healthy")
+        dao.insert(healthyEntity)
 
         // Goes through the repository, not the raw DAO: that's where toDomain() -- and the
         // Encounter.init guard the reviewer's crash came from -- actually runs.
@@ -83,5 +84,16 @@ class EncounterDaoResilienceTest {
         assertEquals(setOf("corrupt-tz", "corrupt-kind", "healthy"), encounters.keys)
         assertEquals(MAX_TZ_OFFSET_MINUTES, encounters.getValue("corrupt-tz").tzOffsetMinutes)
         assertEquals(EncounterKind.TALLY, encounters.getValue("corrupt-kind").kind)
+
+        val healthy = encounters.getValue("healthy")
+        assertEquals(healthyEntity.occurredAt, healthy.occurredAt)
+        assertEquals(healthyEntity.tzOffsetMinutes, healthy.tzOffsetMinutes)
+        assertEquals(healthyEntity.kind, healthy.kind)
+        assertEquals(healthyEntity.coat, healthy.coat)
+        assertEquals(healthyEntity.deviceId, healthy.deviceId)
+        assertEquals(healthyEntity.lat, healthy.lat)
+        assertEquals(healthyEntity.lon, healthy.lon)
+        assertEquals(healthyEntity.createdAt, healthy.createdAt)
+        assertEquals(healthyEntity.updatedAt, healthy.updatedAt)
     }
 }
