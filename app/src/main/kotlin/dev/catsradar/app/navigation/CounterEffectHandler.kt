@@ -1,5 +1,6 @@
 package dev.catsradar.app.navigation
 
+import dev.catsradar.app.notification.WalkingNotifications
 import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
@@ -41,6 +42,7 @@ internal fun handleCounterEffect(
     milestoneAnnouncer: MilestoneAnnouncer,
     photoPickerLauncher: PhotoPickerLauncher,
     importScheduler: ImportScheduler,
+    walkingNotifier: WalkingNotifications,
 ) {
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
@@ -53,5 +55,7 @@ internal fun handleCounterEffect(
         is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)
         CounterEffect.PickPhotos -> photoPickerLauncher.launch()
         is CounterEffect.StartImport -> importScheduler.start(effect.uris)
+        is CounterEffect.WalkingMode ->
+            if (effect.enabled) walkingNotifier.show(count = 0) else walkingNotifier.clear()
     }
 }

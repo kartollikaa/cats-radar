@@ -4,7 +4,11 @@ A cat seen on a walk should cost one tap. Walking mode puts an ongoing notificat
 with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and goes back — no
 unlock, no app launch, no hunting for the right screen.
 
-Turned on and off from **Settings → Walking mode**. The switch follows the stored value, so it is
+Started from the **Counter** — a chip that reads *Start a walk*, then *On a walk* — because that is
+the screen someone is on when they set out. The same switch is in **Settings → Walking mode** for
+finding it again later.
+
+Both read the same stored flag rather than their own state, so they cannot disagree, and the mode is
 still on when the app is reopened mid-walk.
 
 ## It does not define an outing
@@ -54,6 +58,6 @@ and gets promoted where the platform allows.
 
 ## Not built yet
 
-No entry point on the Counter — Settings is the only way in, which is one screen too far for
-something you turn on as you leave the house. No Live Update promotion. No automatic stop, so a mode
-left on stays on until it is turned off.
+No Live Update promotion. No automatic stop, so a mode left on stays on until it is turned off —
+there is no rule yet for what "the walk ended" would mean that the gap-based outing does not already
+answer.

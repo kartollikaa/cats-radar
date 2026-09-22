@@ -24,7 +24,7 @@ private const val NOTIFICATION_ID = 2
  * foreground on its own, and the action's broadcast starts the process again if it has gone — a
  * service would buy nothing here but permissions.
  */
-class WalkingNotifier(private val context: Context) {
+class WalkingNotifier(private val context: Context) : WalkingNotifications {
 
     private val manager = NotificationManagerCompat.from(context)
 
@@ -39,8 +39,7 @@ class WalkingNotifier(private val context: Context) {
         )
     }
 
-    /** [count] is how many cats this outing has so far, so the walk reads back at a glance. */
-    fun show(count: Int) {
+    override fun show(count: Int) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_myplaces)
             .setContentTitle(context.getString(R.string.notification_walking_title))
@@ -63,7 +62,7 @@ class WalkingNotifier(private val context: Context) {
         post(notification)
     }
 
-    fun clear() {
+    override fun clear() {
         manager.cancel(NOTIFICATION_ID)
     }
 

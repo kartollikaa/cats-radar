@@ -130,4 +130,6 @@
     </plurals>
     <string name="settings_walking">Walking mode</string>
     <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
+    <string name="counter_walking_off">Start a walk</string>
+    <string name="counter_walking_on">On a walk</string>
 </resources>

@@ -16,7 +16,7 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.notification.WalkingNotifications
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.toSettingsIntent
 import dev.catsradar.presentation.detail.EncounterDetailEffect
@@ -96,7 +96,7 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
     val store = koinViewModel<SettingsStore>()
     val state by store.state.collectAsStateWithLifecycle()
     val backupScheduler = koinInject<BackupScheduler>()
-    val walkingNotifier = koinInject<WalkingNotifier>()
+    val walkingNotifier = koinInject<WalkingNotifications>()
     val exportLauncher = rememberLauncherForActivityResult(CreateDocument(BACKUP_MIME_TYPE)) { uri ->
         store.dispatch(SettingsIntent.Backup.ExportTargetChosen(uri?.toString()))
     }

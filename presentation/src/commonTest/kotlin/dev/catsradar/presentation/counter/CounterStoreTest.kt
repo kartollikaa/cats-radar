@@ -15,6 +15,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -649,5 +650,43 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(ImportProgressState(done = 1, total = 2), store.state.value.importProgress)
+    }
+
+    @Test
+    fun `starting a walk asks the screen to put the notification up`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.effects.test {
+            store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+            runCurrent()
+
+            assertEquals(CounterEffect.WalkingMode(enabled = true), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the chip follows the stored value, not the tap`() = runTest(mainDispatcher) {
+        val settings = FakeSettingsRepository()
+        val (store, _) = newStore(settingsRepository = settings)
+
+        store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+        runCurrent()
+
+        // Stored first, read back second: a failed write cannot leave the chip and the
+        // notification disagreeing, and Settings shows the same flag.
+        assertEquals(true, store.state.value.walkingMode)
+        assertEquals(true, settings.walkingMode().first())
+    }
+
+    @Test
+    fun `walking mode survives the stats flow rebuilding the whole state`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+        runCurrent()
+
+        repository.insert(externalEncounter(id = "a-cat"))
+        runCurrent()
+
+        assertEquals(true, store.state.value.walkingMode)
     }
 }

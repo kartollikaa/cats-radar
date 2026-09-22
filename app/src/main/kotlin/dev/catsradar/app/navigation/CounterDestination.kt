@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.catsradar.app.notification.WalkingNotifications
 import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.worker.ImportScheduler
@@ -49,6 +50,7 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
     val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val importScheduler = koinInject<ImportScheduler>()
+    val walkingNotifier = koinInject<WalkingNotifications>()
     val photoPickerLauncher = rememberPhotoPickerLauncher(store)
     ObserveImportWork(store, importScheduler)
     LaunchedEffect(
@@ -71,6 +73,7 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
                 milestoneAnnouncer,
                 photoPickerLauncher,
                 importScheduler,
+                walkingNotifier,
             )
         }
     }
@@ -85,6 +88,7 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
         onImportClick = { store.dispatch(CounterIntent.Import.Requested) },
         onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
         onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
+        onWalkingModeChange = { store.dispatch(CounterIntent.WalkingModeToggled(it)) },
     )
 }
 

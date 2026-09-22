@@ -13,6 +13,8 @@ data class CounterState(
     val tapBurst: Int? = null,
     /** The coat of the cat the undo window belongs to, so the grid can show which one it was. */
     val lastCoat: CoatOption? = null,
+    /** Whether the walking notification is up, so the Counter and Settings never disagree. */
+    val walkingMode: Boolean = false,
     /** Null unless an import is running. */
     val importProgress: ImportProgressState? = null,
     /** Null until an import finishes, and again once it is dismissed. */

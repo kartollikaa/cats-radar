@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import androidx.work.WorkInfo
+import dev.catsradar.app.notification.WalkingNotifications
 import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
@@ -79,6 +80,20 @@ private class RecordingImportScheduler : ImportScheduler {
     override fun observe(): Flow<WorkInfo?> = emptyFlow()
 }
 
+private class RecordingWalkingNotifications : WalkingNotifications {
+    val shown = mutableListOf<Int>()
+    var cleared = 0
+        private set
+
+    override fun show(count: Int) {
+        shown += count
+    }
+
+    override fun clear() {
+        cleared++
+    }
+}
+
 private class RecordingMilestoneAnnouncer : MilestoneAnnouncer {
     val announced = mutableListOf<Int>()
 
@@ -106,6 +121,7 @@ class CounterEffectHandlerTest {
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
     private val importScheduler = RecordingImportScheduler()
+    private val walkingNotifications = RecordingWalkingNotifications()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -118,6 +134,7 @@ class CounterEffectHandlerTest {
         milestoneAnnouncer,
         photoPickerLauncher,
         importScheduler,
+        walkingNotifications,
     )
 
     @Test
@@ -163,6 +180,7 @@ class CounterEffectHandlerPhotoTest {
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
     private val importScheduler = RecordingImportScheduler()
+    private val walkingNotifications = RecordingWalkingNotifications()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -175,6 +193,7 @@ class CounterEffectHandlerPhotoTest {
         milestoneAnnouncer,
         photoPickerLauncher,
         importScheduler,
+        walkingNotifications,
     )
 
     @Test
@@ -223,5 +242,21 @@ class CounterEffectHandlerPhotoTest {
 
         assertEquals(listOf(listOf("content://a", "content://b")), importScheduler.startedBatches)
         assertEquals(0, photoPickerLauncher.launchCount)
+    }
+
+    @Test
+    fun `turning walking mode on puts the notification up, starting from no cats`() {
+        handle(CounterEffect.WalkingMode(enabled = true))
+
+        assertEquals(listOf(0), walkingNotifications.shown)
+        assertEquals(0, walkingNotifications.cleared)
+    }
+
+    @Test
+    fun `turning walking mode off takes the notification away`() {
+        handle(CounterEffect.WalkingMode(enabled = false))
+
+        assertEquals(emptyList<Int>(), walkingNotifications.shown)
+        assertEquals(1, walkingNotifications.cleared)
     }
 }
