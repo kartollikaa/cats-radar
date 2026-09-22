@@ -7,4 +7,9 @@ interface SettingsRepository {
     fun saveOriginalsToGallery(): Flow<Boolean>
 
     suspend fun setSaveOriginalsToGallery(enabled: Boolean)
+
+    /** The highest milestone already celebrated, so each one is announced once and only once. */
+    fun lastSeenMilestone(): Flow<Int>
+
+    suspend fun setLastSeenMilestone(value: Int)
 }

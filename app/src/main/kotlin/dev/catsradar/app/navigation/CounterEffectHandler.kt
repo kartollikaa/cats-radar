@@ -20,6 +20,10 @@ internal fun interface CaptureDiscarder {
     fun discard(uri: String)
 }
 
+internal fun interface MilestoneAnnouncer {
+    fun announce(value: Int)
+}
+
 @Suppress("LongParameterList") // one collaborator per effect the screen has to carry out
 internal fun handleCounterEffect(
     effect: CounterEffect,
@@ -29,6 +33,7 @@ internal fun handleCounterEffect(
     cameraLauncher: CameraLauncher,
     photoFailureReporter: PhotoFailureReporter,
     captureDiscarder: CaptureDiscarder,
+    milestoneAnnouncer: MilestoneAnnouncer,
 ) {
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
@@ -38,5 +43,6 @@ internal fun handleCounterEffect(
         CounterEffect.OpenCamera -> cameraLauncher.launch()
         CounterEffect.PhotoNotSaved -> photoFailureReporter.report()
         is CounterEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
+        is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)
     }
 }

@@ -27,8 +27,8 @@
 | 11 | Photo capture flow | `LogPhoto` use case, camera button + `TakePicture`, `origin`/EXIF rules, thumbnails in list and detail via Coil, `saveOriginalsToGallery` setting in DataStore (default on, no UI yet). | safe | ~400 | 7, 9, 10 | merged |
 | 11b | Photo thumbnails on screen | Coil 3, thumbnails in the Encounters list and the full copy on the detail, placeholder when `thumbPath` is null. | safe | ~250 | 11 | merged |
 | 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | merged |
-| 13 | Statistics screen | `ObserveStats`, `StatisticsStore`/`Screen`: headline, milestone, day windows, streaks, outings and rates. | safe | ~350 | 8, 12 | in-progress |
-| 13b | Current outing and milestone toast | Current-outing block on the Counter with a live ticker, milestone toast with `lastSeenMilestone` persisted. | safe | ~300 | 13 | planned |
+| 13 | Statistics screen | `ObserveStats`, `StatisticsStore`/`Screen`: headline, milestone, day windows, streaks, outings and rates. | safe | ~350 | 8, 12 | merged |
+| 13b | Current outing and milestone toast | Current-outing block on the Counter with a live ticker, milestone toast with `lastSeenMilestone` persisted, and a "+N" burst on each tap. | safe | ~350 | 13 | in-progress |
 | 14 | Reverse geocoding of place cells | `ReverseGeocoder` (Android `Geocoder`), PlaceCell creation on location attach, `ResolvePendingPlaces` use case, connected-network worker with backoff, region tree builder + tests. | safe | ~550 | 7, 12 | planned |
 | 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | planned |
 | 16 | Gallery import | `ImportRules` (recent-photo window, digest dedup, EXIF time offset) + tests, `ImportPhotos` use case, worker with progress notification, long-press entry, summary with undo. | safe | ~600 | 11 | planned |
@@ -234,6 +234,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   slice 22); map, route polyline, GPS-track walks, personal heatmap and cats-per-km form the Map epic
   after v1 on MapLibre + OSM, so nothing here changes. `androidUnitTest` → `androidHostTest` in the
   docs to match the AGP KMP plugin's source-set names.
+- 2026-09-22: owner asked for a "+N" burst on the tally button — it appears on a tap, grows while
+  tapping continues, and fades shortly after the last one. Folded into slice 13b, which already owns
+  the Counter's feedback surface.
 - 2026-09-22: slice 11 split. The mapped slice carried the capture path *and* Coil thumbnails in two
   screens — together roughly double the budget, and two different responsibilities ("a photo reaches
   the database" and "a photo is visible"). Capture is slice 11; thumbnails are slice 11b.

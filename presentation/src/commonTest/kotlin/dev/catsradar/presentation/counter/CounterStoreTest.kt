@@ -1,14 +1,17 @@
 package dev.catsradar.presentation.counter
 
+import app.cash.turbine.Event
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
-import dev.catsradar.domain.usecase.ObserveEncounterCount
+import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.UndoLastTally
+import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -23,7 +26,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -42,21 +47,29 @@ class CounterStoreTest {
         Dispatchers.resetMain()
     }
 
-    private val settings = FakeSettingsRepository()
+    // Milestones are silenced by default so a test about undo or photos is not also a test about
+    // celebrating the first cat; the milestone tests pass their own starting point.
+    private val settings = FakeSettingsRepository(lastMilestone = Tuning.MILESTONES.last())
     private val exifReader = FakeExifReader()
     private val imageResizer = FakeImageResizer()
     private val gallerySaver = FakeGallerySaver()
 
+    private fun milestonesIn(events: List<Event<CounterEffect>>): List<CounterEffect.MilestoneReached> =
+        events.filterIsInstance<Event.Item<CounterEffect>>()
+            .map { it.value }
+            .filterIsInstance<CounterEffect.MilestoneReached>()
+
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
         locationPermissionRequestState: FakeLocationPermissionRequestState = FakeLocationPermissionRequestState(),
+        settingsRepository: FakeSettingsRepository = settings,
     ): Pair<CounterStore, FakeEncounterRepository> {
         val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
         val store = CounterStore(
             logTally = LogTally(encounterRepository, FakeIdGenerator(), FakeDeviceIdProvider(), clock, TimeZone.UTC),
             logPhoto = LogPhoto(
                 encounterRepository = encounterRepository,
-                settingsRepository = settings,
+                settingsRepository = settingsRepository,
                 exifReader = exifReader,
                 imageResizer = imageResizer,
                 digest = FakeDigest(),
@@ -67,8 +80,9 @@ class CounterStoreTest {
                 timeZone = TimeZone.UTC,
             ),
             undoLastTally = UndoLastTally(encounterRepository, clock),
-            observeEncounterCount = ObserveEncounterCount(encounterRepository),
-            stateMapper = CounterStateMapper(),
+            observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = flowOf(Unit)),
+            settingsRepository = settingsRepository,
+            stateMapper = CounterStateMapper(FakeDateTimeFormatter()),
             locationPermissionRequestState = locationPermissionRequestState,
         )
         runCurrent()
@@ -369,6 +383,90 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `tapping shows a plus-one that grows with each tap in the same run`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        assertEquals(1, store.state.value.tapBurst)
+
+        store.dispatch(CounterIntent.TallyClicked)
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        assertEquals(3, store.state.value.tapBurst)
+    }
+
+    @Test
+    fun `the burst fades once tapping stops, and the window restarts on every tap`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            advanceTimeBy(Tuning.TAP_BURST_VISIBLE - 1.milliseconds)
+            runCurrent()
+            assertEquals(1, store.state.value.tapBurst, "faded before the window closed")
+
+            // A second tap here restarts the window rather than inheriting the first tap's.
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            advanceTimeBy(Tuning.TAP_BURST_VISIBLE - 1.milliseconds)
+            runCurrent()
+            assertEquals(2, store.state.value.tapBurst)
+
+            advanceTimeBy(1.milliseconds)
+            runCurrent()
+            assertNull(store.state.value.tapBurst)
+        }
+
+    @Test
+    fun `a new run of taps starts counting from one again`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        advanceTimeBy(Tuning.TAP_BURST_VISIBLE + 1.milliseconds)
+        runCurrent()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+
+        assertEquals(1, store.state.value.tapBurst)
+    }
+
+    @Test
+    fun `the first cat is celebrated once and never again`() = runTest(mainDispatcher) {
+        val celebrating = FakeSettingsRepository(lastMilestone = 0)
+        val (store, _) = newStore(settingsRepository = celebrating)
+
+        store.effects.test {
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+
+            assertEquals(listOf(CounterEffect.MilestoneReached(1)), milestonesIn(cancelAndConsumeRemainingEvents()))
+        }
+
+        // A second Store over the same settings is the next launch: the milestone is spent.
+        val (next, _) = newStore(settingsRepository = celebrating)
+        next.effects.test {
+            runCurrent()
+            assertEquals(emptyList(), milestonesIn(cancelAndConsumeRemainingEvents()))
+        }
+    }
+
+    @Test
+    fun `a milestone already celebrated stays quiet`() = runTest(mainDispatcher) {
+        val (store, _) = newStore(settingsRepository = FakeSettingsRepository(lastMilestone = 1))
+
+        store.effects.test {
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+
+            assertEquals(emptyList(), milestonesIn(cancelAndConsumeRemainingEvents()))
+        }
+    }
+
+    @Test
     fun `a failed insert is swallowed instead of crashing the store, but the tap still ticks`() =
         runTest(mainDispatcher) {
             val repository = FakeEncounterRepository().apply { insertShouldThrow = IllegalStateException("disk full") }
@@ -377,7 +475,12 @@ class CounterStoreTest {
             store.dispatch(CounterIntent.TallyClicked)
             runCurrent()
 
-            assertEquals(CounterState(totalLabel = "0", undoVisible = false), store.state.value)
+            // The burst and the tick are feedback for the tap itself, so they land either way;
+            // the total comes from the database and stays put because nothing was written.
+            assertEquals(
+                CounterState(totalLabel = "0", undoVisible = false, tapBurst = 1),
+                store.state.value,
+            )
             store.effects.test {
                 assertEquals(CounterEffect.HapticTick, awaitItem())
                 assertEquals(CounterEffect.RequestLocationPermission, awaitItem())

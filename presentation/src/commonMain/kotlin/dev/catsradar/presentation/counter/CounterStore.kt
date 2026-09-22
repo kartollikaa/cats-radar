@@ -3,15 +3,17 @@ package dev.catsradar.presentation.counter
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.LocationPermissionRequestState
+import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
-import dev.catsradar.domain.usecase.ObserveEncounterCount
+import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -21,7 +23,8 @@ class CounterStore(
     private val logTally: LogTally,
     private val logPhoto: LogPhoto,
     private val undoLastTally: UndoLastTally,
-    observeEncounterCount: ObserveEncounterCount,
+    observeStats: ObserveStats,
+    private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
 ) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.map(count = 0, undoVisible = false)) {
@@ -30,19 +33,32 @@ class CounterStore(
     private var undoTargetSequence = -1
     private var undoTargetId: String? = null
     private var undoTimeoutJob: Job? = null
+    private var burstJob: Job? = null
 
     init {
-        observeEncounterCount()
-            .onEach { count ->
+        observeStats()
+            .onEach { stats ->
                 setState {
                     stateMapper.map(
-                        count = count,
+                        count = stats.total,
                         undoVisible = undoVisible,
                         locationPermissionHintVisible = locationPermissionHintVisible,
+                        currentOuting = stats.currentOuting,
+                        tapBurst = tapBurst,
                     )
                 }
+                announceMilestone(stats.total)
             }
             .launchIn(viewModelScope)
+    }
+
+    private suspend fun announceMilestone(total: Int) {
+        val reached = Tuning.MILESTONES.filter { it <= total }.maxOrNull() ?: return
+        if (reached <= settingsRepository.lastSeenMilestone().first()) return
+        // Persisted before the effect: a process death between the two would otherwise celebrate
+        // the same milestone again on the next launch.
+        settingsRepository.setLastSeenMilestone(reached)
+        emit(CounterEffect.MilestoneReached(reached))
     }
 
     override suspend fun handle(intent: CounterIntent) {
@@ -59,8 +75,10 @@ class CounterStore(
 
     private suspend fun onTallyClicked() {
         val sequence = ++tapSequence
-        // The tap must feel instant: the tick fires before the write, not after it succeeds.
+        // The tap must feel instant: the tick and the "+N" land before the write, not after it
+        // succeeds, so holding the button down still counts up smoothly.
         emit(CounterEffect.HapticTick)
+        showBurst()
         // Only the very first tally ever opens the system dialog; a denial must not re-prompt on
         // every later tap, even across a process death (the flag is persisted, not in-memory).
         if (!locationPermissionRequestState.alreadyRequested) {
@@ -98,6 +116,15 @@ class CounterStore(
 
     private fun onLocationPermissionResult(granted: Boolean) {
         setState { copy(locationPermissionHintVisible = !granted) }
+    }
+
+    private fun showBurst() {
+        setState { copy(tapBurst = (tapBurst ?: 0) + 1) }
+        burstJob?.cancel()
+        burstJob = viewModelScope.launch {
+            delay(Tuning.TAP_BURST_VISIBLE)
+            setState { copy(tapBurst = null) }
+        }
     }
 
     private fun restartUndoTimer() {

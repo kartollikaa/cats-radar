@@ -79,13 +79,12 @@ its count immediately and its rate only once it is eligible.
 - `ui/…/statistics/StatisticsScreen.kt`
 - `domain/…/usecase/ObserveStats.kt`
 
-The numbers recompute whenever the encounter list changes. "Now" is read at that moment, so the
-current outing's elapsed time advances when a cat is logged rather than ticking on its own — a
-live ticker belongs with the Counter's current-outing block, which is its own slice.
+The numbers recompute whenever the encounter list changes **and on a ticker**, because the outing in
+progress is measured against "now" and goes stale on its own between cats. `ObserveStats` takes the
+ticker as a constructor parameter so a test can drive it instead of waiting.
 
 ## Not built yet
 
 By-coat counts wait for the coat picker and per-region counts for reverse geocoding, so neither
-block is on the screen. The current outing is computed but not shown anywhere, and the milestone
-toast with its `lastSeenMilestone` is the next slice. Everything is computed from the full list in
-memory; the spec puts the revisit point at tens of thousands of encounters.
+block is on the screen. Everything is computed from the full list in memory; the spec puts the
+revisit point at tens of thousands of encounters.

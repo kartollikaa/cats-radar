@@ -10,6 +10,28 @@ that tap created. The very first tally the app ever sees also fires a system loc
 request; a later denial surfaces as a dismissible one-line hint on the counter screen with its own
 "Grant" button.
 
+## Feedback for the tap
+
+Each tap raises a **"+N"** above the counter that grows while you keep tapping and fades
+`Tuning.TAP_BURST_VISIBLE` after the last one — the window restarts on every tap, so a run of taps
+is one burst rather than a flicker per tap, and a later run starts again from one. Like the haptic,
+it lands before the write rather than after it succeeds, so holding the button down still counts up
+smoothly. If the write then fails the total does not move: the burst is feedback for the *tap*, and
+the number is read back from the database.
+
+## The outing in progress
+
+While an outing is open the counter shows how many cats it holds and how long it has been running,
+with its rate once there is enough to measure one. It is derived, not tracked: see
+[statistics.md](./statistics.md). The numbers advance on a ticker as well as on each cat, so the
+elapsed time moves while nothing is being logged.
+
+## Milestones
+
+Crossing a milestone raises a toast, once. The milestone reached is persisted **before** the toast
+is emitted, so a process death between the two does not celebrate the same milestone again on the
+next launch. The first cat is a milestone — it is the one most worth marking.
+
 ## At the edges
 
 Tapping rapidly logs one encounter per tap, with no debounce — three fast taps produce three rows

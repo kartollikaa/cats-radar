@@ -4,18 +4,34 @@ import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.stats.Stats
 import dev.catsradar.domain.stats.StatsCalculator
 import dev.catsradar.domain.time.today
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+private val TickPeriod = 10.seconds
 
 class ObserveStats(
     private val encounterRepository: EncounterRepository,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    // The outing in progress is measured against "now", so it goes stale on its own between cats;
+    // ticking is what makes its elapsed time and rate move while nothing is being logged.
+    private val ticks: Flow<Unit> = ticker(TickPeriod),
 ) {
-    operator fun invoke(): Flow<Stats> = encounterRepository.observeAll().map { encounters ->
-        val now = clock.now()
-        StatsCalculator.calculate(encounters, today = clock.today(timeZone), now = now)
+    operator fun invoke(): Flow<Stats> =
+        combine(encounterRepository.observeAll(), ticks) { encounters, _ ->
+            StatsCalculator.calculate(encounters, today = clock.today(timeZone), now = clock.now())
+        }
+}
+
+private fun ticker(period: Duration): Flow<Unit> = flow {
+    while (true) {
+        emit(Unit)
+        delay(period)
     }
 }
