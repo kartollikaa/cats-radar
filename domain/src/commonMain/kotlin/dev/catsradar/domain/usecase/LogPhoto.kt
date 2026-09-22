@@ -12,7 +12,9 @@ import dev.catsradar.domain.platform.ExifReader
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
+import dev.catsradar.domain.region.PlaceCells
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
@@ -32,6 +34,7 @@ sealed interface PhotoResult {
 @Suppress("LongParameterList") // one parameter per collaborator; a holder would exist only to lower the count
 class LogPhoto(
     private val encounterRepository: EncounterRepository,
+    private val placeCellRepository: PlaceCellRepository,
     private val settingsRepository: SettingsRepository,
     private val exifReader: ExifReader,
     private val imageResizer: ImageResizer,
@@ -57,6 +60,11 @@ class LogPhoto(
 
         val now = clock.now()
         val hasExifLocation = exif.lat != null && exif.lon != null
+        val geohash = if (hasExifLocation) {
+            Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
+        } else {
+            null
+        }
         val encounter = Encounter(
             id = id,
             occurredAt = now,
@@ -73,12 +81,8 @@ class LogPhoto(
             accuracyMeters = null,
             locationSource = if (hasExifLocation) LocationSource.EXIF else LocationSource.NONE,
             locationFixedAt = if (hasExifLocation) now else null,
-            geohash = if (hasExifLocation) {
-                Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
-            } else {
-                null
-            },
-            placeCellId = null,
+            geohash = geohash,
+            placeCellId = geohash?.let { PlaceCells.remember(placeCellRepository, it) },
             deviceId = deviceIdProvider.deviceId,
             createdAt = now,
             updatedAt = now,

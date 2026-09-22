@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifData
@@ -15,6 +16,7 @@ import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -113,6 +115,20 @@ internal fun externalEncounter(id: String, occurredAt: Instant = Instant.parse("
         updatedAt = occurredAt,
         deletedAt = null,
     )
+
+internal class FakePlaceCellRepository : PlaceCellRepository {
+    private val cells = MutableStateFlow<List<PlaceCell>>(emptyList())
+
+    override fun observeAll(): Flow<List<PlaceCell>> = cells
+
+    override suspend fun upsert(cell: PlaceCell) {
+        cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }
+    }
+
+    override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
+
+    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> = emptyList()
+}
 
 internal class FakeIdGenerator : IdGenerator {
     private var counter = 0

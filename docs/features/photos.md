@@ -19,8 +19,10 @@ encounter that does not exist would be worse than no gallery item, so an unreada
 neither (`LogPhotoTest`, *an unreadable photo is never copied to the gallery either*).
 
 A photo that already carries EXIF coordinates keeps them, with `locationSource = EXIF`, and asks for
-no fix — the photo knows better than the phone does a minute later. One without goes to the same
-background attach a tally uses.
+no fix — the photo knows better than the phone does a minute later. The place cell they fall in is
+created in the same breath, because the background attach only runs for a photo that asked for a fix:
+nothing else would ever create it, and the cat would read as "no location" in Places despite knowing
+exactly where it was. One without coordinates goes to the same background attach a tally uses.
 
 Once `LogPhoto` returns, the original is discarded whatever the outcome. Without that the cache
 would grow by one full-size photo per cat; it was found on a device rather than in a test, and now

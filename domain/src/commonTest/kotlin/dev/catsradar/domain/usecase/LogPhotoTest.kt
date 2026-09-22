@@ -3,6 +3,7 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
@@ -12,6 +13,7 @@ import dev.catsradar.domain.testing.FakeExifReader
 import dev.catsradar.domain.testing.FakeGallerySaver
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
+import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.FakeSettingsRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
@@ -26,6 +28,7 @@ import kotlin.time.Instant
 class LogPhotoTest {
 
     private val encounters = FakeEncounterRepository()
+    private val placeCells = FakePlaceCellRepository()
     private val settings = FakeSettingsRepository()
     private val exif = FakeExifReader()
     private val resizer = FakeImageResizer()
@@ -34,6 +37,7 @@ class LogPhotoTest {
 
     private fun logPhoto() = LogPhoto(
         encounterRepository = encounters,
+        placeCellRepository = placeCells,
         settingsRepository = settings,
         exifReader = exif,
         imageResizer = resizer,
@@ -79,6 +83,24 @@ class LogPhotoTest {
         assertNull(logged.encounter.geohash)
         assertEquals(LocationSource.NONE, logged.encounter.locationSource)
         assertTrue(logged.needsLocation)
+    }
+
+    @Test
+    fun `a camera photo's EXIF coordinates create the place cell that can name them`() = runTest {
+        exif.data = ExifData(lat = 41.39864, lon = 2.17842)
+
+        val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
+
+        assertEquals("sp3e98", logged.encounter.placeCellId)
+        assertEquals(PlaceStatus.PENDING, placeCells.loadById("sp3e98")?.status)
+    }
+
+    @Test
+    fun `a photo with no coordinates creates no place cell`() = runTest {
+        val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
+
+        assertNull(logged.encounter.placeCellId)
+        assertEquals(emptyList(), placeCells.upserted)
     }
 
     @Test
