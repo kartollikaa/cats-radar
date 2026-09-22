@@ -90,7 +90,9 @@ object StatsCalculator {
         // Open only while another cat would still join it; past the gap the outing is history.
         val open = latest?.takeIf { it.isNotEmpty() && now - it.last().occurredAt <= gap } ?: return null
 
-        val elapsed = now - open.first().occurredAt
+        // An encounter can be dated ahead of now — a photo's own EXIF, or any clock that runs fast —
+        // and an outing cannot have lasted a negative length of time.
+        val elapsed = (now - open.first().occurredAt).coerceAtLeast(Duration.ZERO)
         val eligible = open.size >= MIN_RATE_COUNT && elapsed >= minRateDuration
         return CurrentOuting(
             count = open.size,

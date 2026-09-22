@@ -67,6 +67,16 @@ more than `Tuning.SESSION_GAP` old. Its **elapsed time runs to now**, not to its
 where nothing has happened for ten minutes shows a falling rate rather than a frozen one. It reports
 its count immediately and its rate only once it is eligible.
 
+**Elapsed time never goes below zero.** An encounter can be dated *ahead* of now — a photo carries
+its own EXIF timestamp, and the device that wrote it may have had a clock running fast — and an
+outing that began in the future would otherwise report a negative length, which is what "1 cat ·
+-26 min" on the Counter was. It reads as zero instead, which also keeps it below the minimum
+duration, so no rate is computed over no time.
+
+Only this one figure needs the guard. Every other duration comes from a `Session`, whose start and
+end are the first and last of a list the splitter has already sorted, so its span cannot be
+negative however wrong the clock was.
+
 ## Where the code lives
 
 - `domain/…/stats/StatsCalculator.kt` — the calculation
