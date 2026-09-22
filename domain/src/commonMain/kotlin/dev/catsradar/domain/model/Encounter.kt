@@ -2,6 +2,9 @@ package dev.catsradar.domain.model
 
 import kotlin.time.Instant
 
+// UtcOffset tops out at +-18:00 (kotlinx-datetime); reject beyond it here, not deep inside localDate().
+private const val MAX_TZ_OFFSET_MINUTES = 18 * 60
+
 data class Encounter(
     val id: String,
     val occurredAt: Instant,
@@ -24,7 +27,13 @@ data class Encounter(
     val createdAt: Instant,
     val updatedAt: Instant,
     val deletedAt: Instant?,
-)
+) {
+    init {
+        require(tzOffsetMinutes in -MAX_TZ_OFFSET_MINUTES..MAX_TZ_OFFSET_MINUTES) {
+            "tzOffsetMinutes must be in [-$MAX_TZ_OFFSET_MINUTES, $MAX_TZ_OFFSET_MINUTES], was $tzOffsetMinutes"
+        }
+    }
+}
 
 enum class EncounterKind { TALLY, PHOTO }
 
