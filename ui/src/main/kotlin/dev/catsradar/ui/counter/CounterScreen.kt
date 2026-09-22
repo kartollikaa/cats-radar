@@ -15,9 +15,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CounterStateMapper
+import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -45,7 +47,7 @@ fun CounterScreen(
             }
         }
         if (state.undoVisible) {
-            AssistChip(onClick = onUndoClick, label = { Text(text = "Undo") })
+            AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
         }
         if (state.locationPermissionHintVisible) {
             LocationPermissionHint(onAction = onLocationHintAction)
@@ -59,10 +61,17 @@ private fun LocationPermissionHint(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = "Location permission needed for cat spots", style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = stringResource(R.string.counter_location_hint),
+            style = MaterialTheme.typography.bodySmall,
+        )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = { onAction(LocationHintAction.GRANT) }) { Text(text = "Grant") }
-            TextButton(onClick = { onAction(LocationHintAction.DISMISS) }) { Text(text = "Dismiss") }
+            TextButton(onClick = { onAction(LocationHintAction.GRANT) }) {
+                Text(text = stringResource(R.string.counter_location_grant))
+            }
+            TextButton(onClick = { onAction(LocationHintAction.DISMISS) }) {
+                Text(text = stringResource(R.string.counter_location_dismiss))
+            }
         }
     }
 }

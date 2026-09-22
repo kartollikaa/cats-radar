@@ -33,17 +33,17 @@ class EncountersStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
     private fun toRowItem(encounter: Encounter): EncounterListItem.Row = EncounterListItem.Row(
         id = encounter.id,
         timeLabel = encounter.timeLabel(),
-        locationLabel = encounter.locationSource.toLocationLabel(),
+        location = encounter.locationSource.toLocationLabel(),
     )
 
     private fun Encounter.timeLabel(): String =
         dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
 
-    private fun LocationSource.toLocationLabel(): String = when (this) {
-        LocationSource.EXIF -> "From photo"
-        LocationSource.CURRENT_FIX -> "Current location"
-        LocationSource.LAST_KNOWN -> "Last known location"
-        LocationSource.BACKFILLED -> "From this outing"
-        LocationSource.NONE -> "No location yet"
+    private fun LocationSource.toLocationLabel(): LocationLabel = when (this) {
+        LocationSource.EXIF -> LocationLabel.FROM_PHOTO
+        LocationSource.CURRENT_FIX -> LocationLabel.CURRENT
+        LocationSource.LAST_KNOWN -> LocationLabel.LAST_KNOWN
+        LocationSource.BACKFILLED -> LocationLabel.FROM_OUTING
+        LocationSource.NONE -> LocationLabel.NONE
     }
 }

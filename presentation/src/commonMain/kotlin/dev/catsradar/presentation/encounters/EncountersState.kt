@@ -12,7 +12,7 @@ sealed interface EncounterListItem {
 
     data class OutingHeader(override val key: String, val label: String) : EncounterListItem
 
-    data class Row(val id: String, val timeLabel: String, val locationLabel: String) : EncounterListItem {
+    data class Row(val id: String, val timeLabel: String, val location: LocationLabel) : EncounterListItem {
         override val key: String get() = id
     }
 }
