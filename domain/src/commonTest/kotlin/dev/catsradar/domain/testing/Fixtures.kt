@@ -29,3 +29,11 @@ fun encounterAt(occurredAt: Instant, tzOffsetMinutes: Int = 0, deletedAt: Instan
     updatedAt = occurredAt,
     deletedAt = deletedAt,
 )
+
+fun encounterFixture(
+    id: String,
+    occurredAt: Instant,
+    locationSource: LocationSource = LocationSource.NONE,
+    lat: Double? = null,
+    lon: Double? = null,
+): Encounter = encounterAt(occurredAt).copy(id = id, lat = lat, lon = lon, locationSource = locationSource)
