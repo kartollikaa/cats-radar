@@ -15,6 +15,7 @@ class ModuleBoundaryTest {
     fun `domain files do not import android or androidx`() {
         Konsist.scopeFromPackage("dev.catsradar.domain..")
             .files
+            .excludingGeneratedSources()
             .assertFalse(testName = "domain files do not import android or androidx") { file ->
                 file.hasImport { it.name.startsWith("android.") || it.name.startsWith("androidx.") }
             }
@@ -24,6 +25,7 @@ class ModuleBoundaryTest {
     fun `presentation files do not import androidx compose or dev catsradar data`() {
         Konsist.scopeFromPackage("dev.catsradar.presentation..")
             .files
+            .excludingGeneratedSources()
             .assertFalse(testName = "presentation files do not import androidx.compose or dev.catsradar.data") { file ->
                 file.hasImport {
                     it.name.startsWith("androidx.compose.") || it.name.startsWith("dev.catsradar.data")
@@ -35,6 +37,7 @@ class ModuleBoundaryTest {
     fun `ui files do not import dev catsradar data`() {
         Konsist.scopeFromPackage("dev.catsradar.ui..")
             .files
+            .excludingGeneratedSources()
             .assertFalse(testName = "ui files do not import dev.catsradar.data") { file ->
                 file.hasImport { it.name.startsWith("dev.catsradar.data") }
             }
@@ -44,6 +47,7 @@ class ModuleBoundaryTest {
     fun `data files do not import dev catsradar presentation or dev catsradar ui`() {
         Konsist.scopeFromPackage("dev.catsradar.data..")
             .files
+            .excludingGeneratedSources()
             .assertFalse(testName = "data files do not import dev.catsradar.presentation or dev.catsradar.ui") { file ->
                 file.hasImport {
                     it.name.startsWith("dev.catsradar.presentation") || it.name.startsWith("dev.catsradar.ui")
