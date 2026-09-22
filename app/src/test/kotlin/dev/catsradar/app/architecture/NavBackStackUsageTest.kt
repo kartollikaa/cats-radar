@@ -44,8 +44,7 @@ class NavBackStackUsageTest {
     private companion object {
         const val BACK_STACK_FILE = "BottomNavBackStack.kt"
 
-        // The leading boundary is what keeps rememberBottomNavBackStack() - the sanctioned entry
-        // point, whose name ends in the same characters - from matching as a raw use.
-        val RAW_BACK_STACK = Regex("""(^|[^A-Za-z])(remember)?NavBackStack\(""", RegexOption.MULTILINE)
+        // The leading boundary is what stops the sanctioned rememberBottomNavBackStack() matching.
+        val RAW_BACK_STACK = Regex("""(^|[^A-Za-z])(remember)?NavBackStack\s*[(<]""", RegexOption.MULTILINE)
     }
 }
