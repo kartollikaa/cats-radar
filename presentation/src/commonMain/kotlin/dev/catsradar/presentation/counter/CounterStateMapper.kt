@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
 class CounterStateMapper {
-    fun map(count: Int): CounterState = CounterState(totalLabel = count.toString())
+    fun map(count: Int, undoVisible: Boolean): CounterState =
+        CounterState(totalLabel = count.toString(), undoVisible = undoVisible)
 }
