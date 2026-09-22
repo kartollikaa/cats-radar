@@ -25,5 +25,7 @@ a document nobody updates is worse than none.
   a translatable resource.
 - `photos.md` — reading a photo's metadata, the app's own copies, hashing, the gallery, and why
   the pixel tests need Robolectric's native graphics.
+- `statistics.md` — what every number means: day windows, streaks, milestones, and why the
+  overall rate pools cats and time instead of averaging outings.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.
