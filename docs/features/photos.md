@@ -115,9 +115,18 @@ unchanged and could not tell a correct resize from a broken one.
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
 - `tools/make-photo-fixtures.py`, `data/src/androidHostTest/resources/photos/`
 
+## Seeing one
+
+A photo encounter shows its thumbnail in the Encounters list and the app's full copy on the detail
+screen, both loaded from app-private storage with Coil. The mapper resolves the stored **relative**
+path into an absolute one — the row carries a path Coil can open, not the path the database happens
+to hold.
+
+A row with no path renders a placeholder of the same size, covering both a tally, which never had a
+photo, and a photo whose thumbnail failed to write while the copy succeeded. The list keeps its
+rhythm either way rather than shifting when a thumbnail is missing.
+
 ## Not built yet
 
-No gallery import, and no thumbnails on screen — the list and the detail still show only time and
-location, so a photo encounter is currently indistinguishable from a tally in the UI. That is the
-next slice. `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
+No gallery import. `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.
