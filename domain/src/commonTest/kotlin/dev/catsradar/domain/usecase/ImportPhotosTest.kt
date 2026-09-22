@@ -3,6 +3,7 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
@@ -11,6 +12,7 @@ import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeExifReader
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
+import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.FakeSourceFileTime
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.test.runTest
@@ -25,6 +27,7 @@ import kotlin.time.Instant
 class ImportPhotosTest {
 
     private val repository = FakeEncounterRepository()
+    private val placeCells = FakePlaceCellRepository()
     private val exifReader = FakeExifReader()
     private val imageResizer = FakeImageResizer()
     private val digest = FakeDigest()
@@ -32,6 +35,7 @@ class ImportPhotosTest {
 
     private fun importPhotos(timeZone: TimeZone = TimeZone.UTC) = ImportPhotos(
         encounterRepository = repository,
+        placeCellRepository = placeCells,
         exifReader = exifReader,
         imageResizer = imageResizer,
         digest = digest,
@@ -68,6 +72,28 @@ class ImportPhotosTest {
         assertEquals(55.75, inserted.lat)
         assertEquals(LAST_MONTH, inserted.locationFixedAt)
         assertEquals("ucfv0hfp", inserted.geohash)
+    }
+
+    @Test
+    fun `an imported photo's coordinates create the place cell that can name them`() = runTest {
+        exifReader.data = ExifData(lat = 55.75, lon = 37.62, takenAt = LAST_MONTH)
+
+        importPhotos()(listOf("content://picked/1"))
+
+        // Without the cell the photo has coordinates nothing can resolve, so it reads as
+        // "no location" in Places despite knowing exactly where it was taken.
+        assertEquals("ucfv0h", repository.inserted.single().placeCellId)
+        assertEquals(PlaceStatus.PENDING, placeCells.loadById("ucfv0h")?.status)
+    }
+
+    @Test
+    fun `a photo with no coordinates creates no place cell`() = runTest {
+        exifReader.data = ExifData(takenAt = LAST_MONTH)
+
+        importPhotos()(listOf("content://picked/1"))
+
+        assertNull(repository.inserted.single().placeCellId)
+        assertNull(placeCells.loadById("ucfv0h"))
     }
 
     @Test

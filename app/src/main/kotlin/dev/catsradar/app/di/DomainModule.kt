@@ -29,6 +29,7 @@ val domainModule = module {
     factory {
         ImportPhotos(
             encounterRepository = get(),
+            placeCellRepository = get(),
             exifReader = get(),
             imageResizer = get(),
             digest = get(),

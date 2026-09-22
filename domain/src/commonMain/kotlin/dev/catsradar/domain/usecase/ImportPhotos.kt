@@ -16,7 +16,9 @@ import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.platform.StoredPhoto
+import dev.catsradar.domain.region.PlaceCells
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
@@ -43,6 +45,7 @@ private sealed interface PhotoOutcome {
 @Suppress("LongParameterList") // one parameter per collaborator; a holder would exist only to lower the count
 class ImportPhotos(
     private val encounterRepository: EncounterRepository,
+    private val placeCellRepository: PlaceCellRepository,
     private val exifReader: ExifReader,
     private val imageResizer: ImageResizer,
     private val digest: Digest,
@@ -95,12 +98,17 @@ class ImportPhotos(
         val now = clock.now()
         val captured = ImportRules.captureTime(
             exif = exif,
-            fileDate = sourceFileTime.createdAt(uri),
+            fileDate = if (exif.takenAt == null) sourceFileTime.createdAt(uri) else null,
             now = now,
             timeZone = timeZone,
         )
         val location = ImportRules.location(exif = exif, occurredAt = captured.occurredAt, now = now)
         val carriesExifLocation = location == ImportLocation.EXIF
+        val geohash = if (carriesExifLocation) {
+            Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
+        } else {
+            null
+        }
         encounterRepository.insert(
             Encounter(
                 id = id,
@@ -119,12 +127,8 @@ class ImportPhotos(
                 accuracyMeters = null,
                 locationSource = if (carriesExifLocation) LocationSource.EXIF else LocationSource.NONE,
                 locationFixedAt = captured.occurredAt.takeIf { carriesExifLocation },
-                geohash = if (carriesExifLocation) {
-                    Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
-                } else {
-                    null
-                },
-                placeCellId = null,
+                geohash = geohash,
+                placeCellId = geohash?.let { PlaceCells.remember(placeCellRepository, it) },
                 deviceId = deviceIdProvider.deviceId,
                 createdAt = now,
                 updatedAt = now,

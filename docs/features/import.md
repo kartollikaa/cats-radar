@@ -30,7 +30,9 @@ describes a timestamp we do not have says nothing about the file's date.
 ## Where it happened
 
 - Coordinates in the photo's own EXIF → they become the encounter's, geohashed, with
-  `locationFixedAt` set to when the photo was taken rather than when it was imported.
+  `locationFixedAt` set to when the photo was taken rather than when it was imported. The place cell
+  they fall in is created at the same moment, so the photo can be named like any other located cat —
+  no worker runs for these, and nothing else would create it.
 - No coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
   where the phone is standing, so it is worth asking for a fix.
 - Otherwise → no location, ever. **A historical photo never receives today's location**; that is the
@@ -64,6 +66,7 @@ deliberate act, and refusing it would leave the user unable to undo their own de
 
 - `domain/…/photo/ImportRules.kt` — the two decisions, as pure functions
 - `domain/…/usecase/ImportPhotos.kt` — the run, and what it reports
+- `domain/…/region/PlaceCells.kt` — shared with `AttachLocation`: coordinates always get a cell
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
 
 ## Not built yet
