@@ -14,6 +14,7 @@ class FakeEncounterRepository : EncounterRepository {
     val inserted = mutableListOf<Encounter>()
     val softDeleteCalls = mutableListOf<Pair<String, Instant>>()
     val attachLocationCalls = mutableListOf<String>()
+    val purgeCalls = mutableListOf<Instant>()
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
     override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
@@ -63,5 +64,14 @@ class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
 
-    override suspend fun purgeDeletedBefore(cutoff: Instant): Int = 0
+    // Mirrors the DAO: this is the only read that can see soft-deleted rows.
+    override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
+        encounters.value.filter { it.deletedAt != null && it.deletedAt!! < cutoff }
+
+    override suspend fun purgeDeletedBefore(cutoff: Instant): Int {
+        purgeCalls += cutoff
+        val doomed = encounters.value.filter { it.deletedAt != null && it.deletedAt!! < cutoff }
+        encounters.update { list -> list - doomed.toSet() }
+        return doomed.size
+    }
 }

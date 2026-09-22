@@ -76,6 +76,11 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
+
+    // Mirrors the DAO: this is the only read that can see soft-deleted rows.
+    override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
+        encounters.value.filter { it.deletedAt != null && it.deletedAt!! < cutoff }
+
     override suspend fun purgeDeletedBefore(cutoff: Instant): Int = 0
 
     fun current(id: String): Encounter = encounters.value.first { it.id == id }

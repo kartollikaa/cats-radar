@@ -66,3 +66,16 @@ itself works — there is no v2 yet, so no actual migration path exists to test.
 `app/di/DataModule.kt`, and no use case calls `PlaceCellRepository.upsert`. Photo-related fields
 (`photoPath`, `thumbPath`, `galleryUri`, `sourceDigest`) and backup export/import (§3.1, §4.7 of
 the design spec) are specified but unbuilt.
+
+## Purging
+
+A soft-deleted cat is not kept forever. `PurgeDeletedWorker` runs daily, **while the device is
+idle**, and removes rows whose `deletedAt` is older than `Tuning.PURGE_AFTER`, along with their
+photo files.
+
+The files go **before** the rows: a row deleted first would leave photos nothing points at, and
+nothing would ever look for them again.
+
+This needed its own query. `observeAll()` filters soft-deleted rows out — correctly, for every other
+caller — so the purge cannot find its own targets through it. `loadDeletedBefore` is the one read
+that can see them; without it the rows would vanish and the photos would stay on disk forever.

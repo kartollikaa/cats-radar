@@ -9,6 +9,7 @@ import dev.catsradar.app.di.presentationModule
 import dev.catsradar.app.di.workerModule
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
+import dev.catsradar.app.worker.PurgeWorkScheduler
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -28,5 +29,6 @@ class CatsRadarApplication : Application() {
             Configuration.Builder().setWorkerFactory(KoinWorkerFactory(koin)).build(),
         )
         GeocodeWorkScheduler.schedule(this)
+        PurgeWorkScheduler.schedule(this)
     }
 }
