@@ -14,8 +14,8 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | 1 | Gradle skeleton and convention plugins | Buildable multi-module project with `build-logic`, version catalog, empty modules, CI running `./gradlew check`. | safe | ~550 | — | merged |
-| 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | in-review |
-| 3 | Domain core: models, Tuning, Geohash, SessionSplitter | Pure domain types and the two geometric/temporal primitives, fully unit-tested. | safe | ~500 | 1 | planned |
+| 2 | Quality gates: detekt, Lint, Konsist | Static analysis and architecture tests wired into `check`, failing on purpose once then passing. | safe | ~300 | 1 | merged |
+| 3 | Domain core: models, Tuning, Geohash, SessionSplitter | Pure domain types and the two geometric/temporal primitives, fully unit-tested. | safe | ~500 | 1 | in-progress |
 | 4 | Room database and repositories | Encounter and PlaceCell entities, DAOs, `CatsDatabase` (KMP driver), repository implementations, Robolectric tests. | safe | ~600 | 3 | planned |
 | 5 | App shell: theme, Navigation 3 host, Koin, MVI Store | `CatsRadarTheme`, `@ThemePreviews`, `Store` base, `NavDisplay` with a single `Counter` entry showing a placeholder, Koin bootstrap. | safe | ~400 | 2 | planned |
 | 6 | Tally: log a cat and undo | `LogTally`/`UndoLastTally` use cases, `CounterStore`, `CounterScreen` with big button, undo chip, haptic; count from Room `Flow`. | safe | ~450 | 4, 5 | planned |
