@@ -34,6 +34,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onSaveOriginalsChange: (Boolean) -> Unit = {},
+    onWalkingModeChange: (Boolean) -> Unit = {},
     onExportClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
     onBackupOutcomeDismiss: () -> Unit = {},
@@ -42,23 +43,18 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize().padding(contentPadding).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.padding(end = 16.dp)) {
-                Text(
-                    text = stringResource(R.string.settings_save_originals),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Text(
-                    text = stringResource(R.string.settings_save_originals_explained),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Switch(checked = state.saveOriginalsToGallery, onCheckedChange = onSaveOriginalsChange)
-        }
+        SettingRow(
+            title = R.string.settings_save_originals,
+            explanation = R.string.settings_save_originals_explained,
+            checked = state.saveOriginalsToGallery,
+            onCheckedChange = onSaveOriginalsChange,
+        )
+        SettingRow(
+            title = R.string.settings_walking,
+            explanation = R.string.settings_walking_explained,
+            checked = state.walkingMode,
+            onCheckedChange = onWalkingModeChange,
+        )
         HorizontalDivider()
         Text(text = stringResource(R.string.settings_backup), style = MaterialTheme.typography.titleMedium)
         Text(
@@ -92,6 +88,27 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SettingRow(
+    @StringRes title: Int,
+    @StringRes explanation: Int,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onCheckedChange: (Boolean) -> Unit = {},
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.padding(end = 16.dp)) {
+            Text(text = stringResource(title), style = MaterialTheme.typography.bodyLarge)
+            Text(text = stringResource(explanation), style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

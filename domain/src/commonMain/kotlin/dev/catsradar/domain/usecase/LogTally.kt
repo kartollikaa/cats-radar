@@ -21,14 +21,17 @@ class LogTally(
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
-    suspend operator fun invoke(coat: CatCoat? = null): Encounter {
+    suspend operator fun invoke(
+        coat: CatCoat? = null,
+        origin: EncounterOrigin = EncounterOrigin.APP,
+    ): Encounter {
         val now = clock.now()
         val encounter = Encounter(
             id = idGenerator.newId(),
             occurredAt = now,
             tzOffsetMinutes = timeZone.offsetAt(now).totalSeconds / SECONDS_PER_MINUTE,
             kind = EncounterKind.TALLY,
-            origin = EncounterOrigin.APP,
+            origin = origin,
             coat = coat,
             photoPath = null,
             thumbPath = null,

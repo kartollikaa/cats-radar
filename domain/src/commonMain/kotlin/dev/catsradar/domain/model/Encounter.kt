@@ -37,6 +37,6 @@ data class Encounter(
 
 enum class EncounterKind { TALLY, PHOTO }
 
-enum class EncounterOrigin { APP, WIDGET, CAMERA, GALLERY }
+enum class EncounterOrigin { APP, WIDGET, NOTIFICATION, CAMERA, GALLERY }
 
 enum class LocationSource { EXIF, CURRENT_FIX, LAST_KNOWN, BACKFILLED, NONE }

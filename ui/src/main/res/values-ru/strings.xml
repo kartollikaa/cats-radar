@@ -134,4 +134,16 @@
     <string name="settings_backup_unreadable">Это не резервная копия Cats Radar</string>
     <string name="notification_channel_import">Импорт фото</string>
     <string name="notification_import_title">Импорт фото</string>
+    <string name="notification_channel_walking">Режим прогулки</string>
+    <string name="notification_walking_title">На прогулке за котиками</string>
+    <string name="notification_walking_tally">Котик!</string>
+    <string name="notification_walking_stop">Хватит</string>
+    <plurals name="notification_walking_count">
+        <item quantity="one">%1$d котик за прогулку</item>
+        <item quantity="few">%1$d котика за прогулку</item>
+        <item quantity="many">%1$d котиков за прогулку</item>
+        <item quantity="other">%1$d котика за прогулку</item>
+    </plurals>
+    <string name="settings_walking">Режим прогулки</string>
+    <string name="settings_walking_explained">Уведомление, из которого котик отмечается без разблокировки</string>
 </resources>

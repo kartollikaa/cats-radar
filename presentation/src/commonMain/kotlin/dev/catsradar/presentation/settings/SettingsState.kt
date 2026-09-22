@@ -2,6 +2,7 @@ package dev.catsradar.presentation.settings
 
 data class SettingsState(
     val saveOriginalsToGallery: Boolean = true,
+    val walkingMode: Boolean = false,
     /** True while an export or import is running; neither button is available meanwhile. */
     val backupRunning: Boolean = false,
     /** Null until a run finishes, and again once its message is dismissed. */

@@ -14,6 +14,9 @@ class SettingsStore(
         settingsRepository.saveOriginalsToGallery()
             .onEach { enabled -> setState { copy(saveOriginalsToGallery = enabled) } }
             .launchIn(viewModelScope)
+        settingsRepository.walkingMode()
+            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
+            .launchIn(viewModelScope)
     }
 
     override suspend fun handle(intent: SettingsIntent) {
@@ -22,6 +25,10 @@ class SettingsStore(
             // than its own optimistic state, so a failed write cannot leave them disagreeing.
             is SettingsIntent.SaveOriginalsToggled ->
                 settingsRepository.setSaveOriginalsToGallery(intent.enabled)
+            is SettingsIntent.WalkingModeToggled -> {
+                settingsRepository.setWalkingMode(intent.enabled)
+                emit(SettingsEffect.WalkingMode(intent.enabled))
+            }
             is SettingsIntent.Backup -> handleBackup(intent)
         }
     }
