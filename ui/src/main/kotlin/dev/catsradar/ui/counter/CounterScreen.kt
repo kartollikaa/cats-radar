@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.catsradar.presentation.counter.CounterState
+import dev.catsradar.presentation.counter.CounterStateMapper
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -24,7 +25,7 @@ fun CounterScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(text = "Cats Radar", style = MaterialTheme.typography.headlineMedium)
-        Text(text = state.count.toString(), style = MaterialTheme.typography.displayLarge)
+        Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
     }
 }
 
@@ -36,4 +37,13 @@ private fun CounterScreenPreview() {
     }
 }
 
-private val sampleCounterState = CounterState(count = 0)
+@ThemePreviews
+@Composable
+private fun CounterScreenFreshPreview() {
+    CatsRadarTheme {
+        Surface { CounterScreen(state = sampleFreshCounterState) }
+    }
+}
+
+private val sampleCounterState = CounterStateMapper().map(count = 42)
+private val sampleFreshCounterState = CounterStateMapper().map(count = 0)
