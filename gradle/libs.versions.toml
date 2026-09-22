@@ -19,7 +19,8 @@ kotlinx-coroutines = "1.11.0"
 # The "-0.6.x-compat" suffix ships kotlinx.datetime.Instant/Clock as type aliases to
 # kotlin.time.Instant/Clock (docs/rules/date-time.md); the plain 0.8.0 artifact omits them.
 kotlinx-datetime = "0.8.0-0.6.x-compat"
-# Room's current stable major ships under the androidx.room3 group; androidx.room stayed at 2.x.
+# Room's current stable major renamed its group/plugin id to androidx.room3 (room3-runtime,
+# room3-compiler, plugin id "androidx.room3"); the pre-rename androidx.room artifacts stayed at 2.x.
 room = "3.0.3"
 androidx-sqlite = "2.7.1"
 ksp = "2.3.12"

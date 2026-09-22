@@ -12,6 +12,8 @@ internal const val DATABASE_FILE_NAME = "cats_radar.db"
     entities = [EncounterEntity::class, PlaceCellEntity::class],
     version = 1,
 )
+// @ColumnTypeConverter(s), not Room 2.x's @TypeConverter(s): the old names compile but fail KSP
+// with an opaque [MissingType] error on CatsDatabase that never mentions converters.
 @ColumnTypeConverters(InstantConverters::class, EnumConverters::class)
 @ConstructedBy(CatsDatabaseConstructor::class)
 abstract class CatsDatabase : RoomDatabase() {
