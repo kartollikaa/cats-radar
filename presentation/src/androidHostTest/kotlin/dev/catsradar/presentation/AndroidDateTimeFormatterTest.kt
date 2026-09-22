@@ -59,12 +59,12 @@ class AndroidDateTimeFormatterTest {
 
     @Test
     fun durationUnderAnHourLeavesOutTheHourPart() {
-        assertEquals("45 min", formatter.duration(FORTY_FIVE.minutes))
+        assertEquals("45 min", formatter.duration(MINUTES_UNDER_AN_HOUR.minutes))
     }
 
     @Test
     fun durationOverAnHourCarriesBothParts() {
-        assertEquals("1 h 20 min", formatter.duration(HOUR_AND_TWENTY.minutes))
+        assertEquals("1 h 20 min", formatter.duration(MINUTES_OVER_AN_HOUR.minutes))
     }
 
     @Test
@@ -95,7 +95,7 @@ class AndroidDateTimeFormatterTest {
     private companion object {
         const val POSITIVE_OFFSET_MINUTES = 120
         const val NEGATIVE_OFFSET_MINUTES = -180
-        const val FORTY_FIVE = 45
-        const val HOUR_AND_TWENTY = 80
+        const val MINUTES_UNDER_AN_HOUR = 45
+        const val MINUTES_OVER_AN_HOUR = 80
     }
 }

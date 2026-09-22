@@ -26,12 +26,12 @@ class AndroidDateTimeFormatterRussianTest {
 
     @Test
     fun durationCarriesItsUnitsInTheDeviceLanguage() {
-        assertEquals("20 мин", formatter.duration(TWENTY.minutes))
-        assertEquals("1 ч 20 мин", formatter.duration(HOUR_AND_TWENTY.minutes))
+        assertEquals("20 мин", formatter.duration(MINUTES_UNDER_AN_HOUR.minutes))
+        assertEquals("1 ч 20 мин", formatter.duration(MINUTES_OVER_AN_HOUR.minutes))
     }
 
     private companion object {
-        const val TWENTY = 20
-        const val HOUR_AND_TWENTY = 80
+        const val MINUTES_UNDER_AN_HOUR = 20
+        const val MINUTES_OVER_AN_HOUR = 80
     }
 }
