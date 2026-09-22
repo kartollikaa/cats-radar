@@ -9,6 +9,7 @@ import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
@@ -32,6 +33,8 @@ val domainModule = module {
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factoryOf(::AttachLocation)
     factoryOf(::ResolvePendingPlaces)
+    // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
+    factory { PurgeDeleted(encounterRepository = get(), photoStorage = get(), clock = get()) }
     factoryOf(::SetCoat)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 
+@Suppress("TooManyFunctions") // mirrors EncounterRepository one for one
 class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterRepository {
     override fun observeAll(): Flow<List<Encounter>> =
         dao.observeAll().map { entities -> entities.map { it.toDomain() } }
@@ -38,6 +39,9 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
         dao.findBySourceDigest(sourceDigest)?.toDomain()
+
+    override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
+        dao.loadDeletedBefore(cutoff).map { it.toDomain() }
 
     override suspend fun purgeDeletedBefore(cutoff: Instant): Int = dao.purgeDeletedBefore(cutoff)
 }

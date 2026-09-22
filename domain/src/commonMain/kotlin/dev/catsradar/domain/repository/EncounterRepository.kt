@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.LocationStamp
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
+@Suppress("TooManyFunctions") // one function per operation on one aggregate
 interface EncounterRepository {
     fun observeAll(): Flow<List<Encounter>>
 
@@ -24,6 +25,9 @@ interface EncounterRepository {
     suspend fun undoDelete(id: String)
 
     suspend fun findBySourceDigest(sourceDigest: String): Encounter?
+
+    /** Soft-deleted rows older than [cutoff]; the only read that can see them. */
+    suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter>
 
     suspend fun purgeDeletedBefore(cutoff: Instant): Int
 }

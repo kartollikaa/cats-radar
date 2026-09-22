@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 @Dao
+@Suppress("TooManyFunctions") // one function per query; splitting a DAO by count would help nobody
 interface EncounterDao {
     @Query("SELECT * FROM encounters WHERE deletedAt IS NULL ORDER BY occurredAt DESC")
     fun observeAll(): Flow<List<EncounterEntity>>
@@ -62,6 +63,11 @@ interface EncounterDao {
 
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?
+
+    // observeAll() hides soft-deleted rows, so the purge needs its own way to see them: without
+    // this, their photo files would be orphaned and nothing would ever look for them again.
+    @Query("SELECT * FROM encounters WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")
+    suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterEntity>
 
     @Query("DELETE FROM encounters WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")
     suspend fun purgeDeletedBefore(cutoff: Instant): Int

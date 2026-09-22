@@ -25,6 +25,7 @@ internal class FakeEncounterDao : EncounterDao {
     var observeByIdResult: EncounterEntity? = null
     var findBySourceDigestResult: EncounterEntity? = null
     var purgeDeletedBeforeResult: Int = 0
+    var loadDeletedBeforeResult: List<EncounterEntity> = emptyList()
 
     val inserted = mutableListOf<EncounterEntity>()
     val updated = mutableListOf<EncounterEntity>()
@@ -34,6 +35,7 @@ internal class FakeEncounterDao : EncounterDao {
     var attachLocationCall: AttachLocationCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
+    var loadDeletedBeforeCall: Instant? = null
 
     override fun observeAll(): Flow<List<EncounterEntity>> = flowOf(observeAllResult)
 
@@ -80,6 +82,10 @@ internal class FakeEncounterDao : EncounterDao {
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {
         findBySourceDigestCall = sourceDigest
         return findBySourceDigestResult
+    }
+    override suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterEntity> {
+        loadDeletedBeforeCall = cutoff
+        return loadDeletedBeforeResult
     }
 
     override suspend fun purgeDeletedBefore(cutoff: Instant): Int {
