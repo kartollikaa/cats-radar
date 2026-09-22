@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -234,6 +235,38 @@ class StatsCalculatorTest {
 
         assertEquals(2, current.count)
         assertNull(current.rate)
+    }
+
+    @Test
+    fun `a cat dated ahead of now has not been seen for a negative length of time`() {
+        // A photo imported from a device whose clock runs fast, or any clock skew at all: the
+        // encounter is real and belongs to the current outing, but it cannot have lasted -26 min.
+        val current = assertNotNull(stats(listOf(at(NOW + 26.minutes, "ahead"))).currentOuting)
+
+        assertEquals(1, current.count)
+        assertEquals(Duration.ZERO, current.elapsed)
+    }
+
+    @Test
+    fun `an outing that starts ahead of now reports no rate rather than an impossible one`() {
+        val encounters = listOf(at(NOW + 26.minutes, "ahead"), at(NOW + 30.minutes, "later"))
+
+        val current = assertNotNull(stats(encounters).currentOuting)
+
+        // Zero elapsed is below the minimum duration, so the rate stays absent; a rate computed
+        // over zero time would be infinite.
+        assertNull(current.rate)
+    }
+
+    @Test
+    fun `a cat dated ahead of now still leaves the stored durations non-negative`() {
+        val stats = stats(listOf(at(NOW + 26.minutes, "ahead"), at(NOW + 30.minutes, "later")))
+
+        assertTrue(stats.activeTime >= Duration.ZERO, "activeTime was ${stats.activeTime}")
+        assertTrue(
+            stats.bestOuting == null || stats.bestOuting.session.duration >= Duration.ZERO,
+            "best outing duration was ${stats.bestOuting?.session?.duration}",
+        )
     }
 
     private companion object {
