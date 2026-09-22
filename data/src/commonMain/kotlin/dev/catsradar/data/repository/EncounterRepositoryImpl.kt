@@ -40,6 +40,8 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
         dao.findBySourceDigest(sourceDigest)?.toDomain()
 
+    override suspend fun loadEvery(): List<Encounter> = dao.loadEvery().map { it.toDomain() }
+
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
         dao.loadDeletedBefore(cutoff).map { it.toDomain() }
 

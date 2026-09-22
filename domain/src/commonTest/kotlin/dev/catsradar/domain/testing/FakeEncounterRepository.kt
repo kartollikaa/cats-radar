@@ -16,7 +16,10 @@ class FakeEncounterRepository : EncounterRepository {
     val attachLocationCalls = mutableListOf<String>()
     val purgeCalls = mutableListOf<Instant>()
 
-    override fun observeAll(): Flow<List<Encounter>> = encounters
+    // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
+    // hide every bug about what a read is allowed to see.
+    override fun observeAll(): Flow<List<Encounter>> =
+        encounters.map { list -> list.filter { it.deletedAt == null } }
     override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
 
@@ -65,6 +68,8 @@ class FakeEncounterRepository : EncounterRepository {
     // Mirrors the DAO: a soft-deleted row does not block a re-import of the same bytes.
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
         encounters.value.firstOrNull { it.sourceDigest == sourceDigest && it.deletedAt == null }
+
+    override suspend fun loadEvery(): List<Encounter> = encounters.value
 
     // Mirrors the DAO: this is the only read that can see soft-deleted rows.
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =

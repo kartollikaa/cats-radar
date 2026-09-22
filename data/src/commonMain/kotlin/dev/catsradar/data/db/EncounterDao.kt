@@ -64,6 +64,11 @@ interface EncounterDao {
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?
 
+    // Deleted rows included: a merge has to know that a row it is being offered was deleted here,
+    // which observeAll() cannot tell it.
+    @Query("SELECT * FROM encounters ORDER BY occurredAt DESC")
+    suspend fun loadEvery(): List<EncounterEntity>
+
     // observeAll() hides soft-deleted rows, so the purge needs its own way to see them: without
     // this, their photo files would be orphaned and nothing would ever look for them again.
     @Query("SELECT * FROM encounters WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")

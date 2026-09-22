@@ -26,7 +26,10 @@ interface EncounterRepository {
 
     suspend fun findBySourceDigest(sourceDigest: String): Encounter?
 
-    /** Soft-deleted rows older than [cutoff]; the only read that can see them. */
+    /** Every row, soft-deleted ones included — what a backup merge has to reconcile against. */
+    suspend fun loadEvery(): List<Encounter>
+
+    /** Soft-deleted rows older than [cutoff]. */
     suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter>
 
     suspend fun purgeDeletedBefore(cutoff: Instant): Int

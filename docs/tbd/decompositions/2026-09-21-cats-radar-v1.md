@@ -34,8 +34,11 @@
 | 16 | Import rules and the import use case | `ImportRules` (recent-photo window, digest dedup, EXIF time and offset) + tests, `ImportPhotos` use case, digest lookup in the repository, file-date fallback. Nothing calls it yet. | safe | ~450 | 11 | planned |
 | 16b | Gallery import on screen | `ImportPhotosWorker`, `PickMultipleVisualMedia` on long-press camera, in-app progress, summary with undo; EXIF-redaction spike resolved. | safe | ~450 | 16 | in-review |
 | 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS`, `getForegroundInfo` and the foreground-service type, so an import the user walks away from still reports. | safe | ~250 | 16b | planned |
-| 17 | Backup format and merge rules | Serializable export models, ZIP writer/reader, `manifest.json` versioning, merge rules (newer `updatedAt`, delete-vs-live) with tests, `ExportBackup`/`ImportBackup` use cases. | safe | ~500 | 11, 14 | planned |
+| 17 | Backup merge rules and use cases | `BackupMerge` (newer `updatedAt`, delete-vs-live, RESOLVED-wins cells) + tests, `ExportBackup`/`ImportBackup` over a reader/writer seam, `loadEvery`. Nothing calls it yet. | safe | ~450 | 11, 14 | in-review |
+| 17b | Backup archive format | `kotlinx.serialization` models, ZIP writer/reader, `manifest.json` with `formatVersion`, photo files, round-trip test. | safe | ~450 | 17 | planned |
 | 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers with progress, gallery toggle UI (backup export/import still to come). | safe | ~200 | 11 | merged |
+| 24 | Walking mode | An ongoing notification with a tally action, so a cat is logged from the lockscreen without opening the app. Foreground service, channel, `POST_NOTIFICATIONS`. Does not define an outing. | safe | ~450 | 6 | planned |
+| 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | planned |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | merged |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | merged |
@@ -189,12 +192,20 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** complete behaviour; historical photos never get today's location by construction.
 - **Cleanup owed:** none.
 
-### Slice 17 — Backup format and merge rules
-- **In scope:** `kotlinx.serialization` models, ZIP writer/reader (`manifest.json`, `encounters.json`,
-  `placecells.json`, `photos/`), `formatVersion` check, merge rules + tests, `ExportBackup`/`ImportBackup`
-  use cases over a `BackupSink`/`BackupSource` abstraction.
-- **Out of scope:** UI, SAF (slice 18).
-- **Ships safely because:** unreferenced until slice 18.
+### Slice 17 — Backup merge rules and use cases
+- **In scope:** `BackupContents`/`MergeResult`, `BackupMerge` + tests, `ExportBackup`/`ImportBackup`
+  over the `BackupWriter`/`BackupReader` seam, `EncounterRepository.loadEvery` (the one read that
+  sees soft-deleted rows, which the merge needs).
+- **Out of scope:** the archive format itself (17b), UI and SAF (18).
+- **Ships safely because:** nothing constructs a reader or writer yet.
+- **Cleanup owed:** none.
+
+### Slice 17b — Backup archive format
+- **In scope:** `kotlinx.serialization` models in `:data`, ZIP writer/reader (`manifest.json`,
+  `encounters.json`, `placecells.json`, `photos/`), `formatVersion` check mapping to
+  `BackupRejection`, photo files, a round-trip test.
+- **Out of scope:** UI and SAF (18).
+- **Ships safely because:** still unreferenced until 18 wires the buttons.
 - **Cleanup owed:** none.
 
 ### Slice 18 — Settings screen
@@ -233,6 +244,17 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-22: **walking mode ruled to not define an outing.** Owner asked for a mode that keeps a
+  live notification up so a cat can be tallied from the lockscreen without opening the app. Outings
+  stay derived by `SessionSplitter` exactly as they are; walking mode is a convenience surface over
+  the same tally. Making it authoritative would give "am I on an outing" two sources of truth and
+  turn a derived concept into stored state, which is a data-model change with its own migration.
+  Mapped as slices 24/24b, ahead of the widget (19) — a lockscreen tap beats one that needs the home
+  screen, and the two share the same insert-then-enqueue path.
+- 2026-09-22: slice 17 split. Merge rules and the two use cases are one reviewable unit that nothing
+  calls; the serialization models, the ZIP and the photo files are another. Together they were past
+  the 600 target, and the merge rules are where all the thinking is.
 
 - 2026-09-22: **spike result — the photo picker redacts location, not dates.** Run on an emulator
   (API 37) through the real import flow, with the picked photo identified by its accessibility label

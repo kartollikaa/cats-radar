@@ -33,5 +33,7 @@ a document nobody updates is worse than none.
   worker, and what happens on a device with no geocoder.
 - `coat.md` — the eleven coats: logging a cat by tapping one, why the swatches carry a name and
   a shape, and the by-coat statistics.
+- `backup.md` — the archive: what it carries, and how importing one merges with what is
+  already here instead of replacing it.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.
