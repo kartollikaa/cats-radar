@@ -10,6 +10,7 @@ import dev.catsradar.app.di.workerModule
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
 import dev.catsradar.app.worker.PurgeWorkScheduler
@@ -36,8 +37,10 @@ class CatsRadarApplication : Application() {
         )
         koin.get<ImportNotifier>().ensureChannel()
         koin.get<WalkingNotifier>().ensureChannel()
+        val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         // Every process start re-asserts it, including one a lock-screen tap woke up.
-        koin.get<WalkingNotificationSync>().start(CoroutineScope(SupervisorJob() + Dispatchers.Default))
+        koin.get<WalkingNotificationSync>().start(appScope)
+        koin.get<WidgetRefresh>().start(appScope)
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

@@ -37,5 +37,7 @@ a document nobody updates is worse than none.
   already here instead of replacing it.
 - `walking-mode.md` — the lock-screen tally: one tap from the notification, and why it does
   not define an outing.
+- `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
+  things that redraw it.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.
