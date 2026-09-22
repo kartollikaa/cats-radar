@@ -139,11 +139,10 @@ class StoreTest {
     fun `emitting without a collector attached does not suspend`() = runTest {
         val store = FakeStore()
 
-        // No collector on store.effects. Under the Unconfined main dispatcher, dispatch()'s
-        // launch runs handle() synchronously to completion unless it actually suspends — so
-        // pingHandled flips to true only if emit() returned without blocking on a receiver.
+        // No collector on store.effects; Unconfined runs dispatch() to completion unless it suspends.
         store.dispatch(FakeIntent.EmitPing)
+        val emitReturnedWithoutSuspending = store.pingHandled
 
-        assertTrue(store.pingHandled)
+        assertTrue(emitReturnedWithoutSuspending)
     }
 }
