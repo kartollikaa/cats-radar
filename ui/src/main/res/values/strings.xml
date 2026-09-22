@@ -118,4 +118,6 @@
     <string name="settings_backup_imported">Backup merged with what was already here</string>
     <string name="settings_backup_too_new">That backup is from a newer version of the app</string>
     <string name="settings_backup_unreadable">That file is not a Cats Radar backup</string>
+    <string name="notification_channel_import">Importing photos</string>
+    <string name="notification_import_title">Importing photos</string>
 </resources>

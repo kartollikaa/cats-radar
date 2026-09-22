@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
@@ -24,7 +25,12 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
         AttachLocationWorker::class.java.name ->
             AttachLocationWorker(appContext, workerParameters, koin.get<AttachLocation>())
         ImportPhotosWorker::class.java.name ->
-            ImportPhotosWorker(appContext, workerParameters, koin.get<ImportPhotos>())
+            ImportPhotosWorker(
+                appContext,
+                workerParameters,
+                koin.get<ImportPhotos>(),
+                koin.get<ImportNotifier>(),
+            )
         ExportBackupWorker::class.java.name ->
             ExportBackupWorker(appContext, workerParameters, koin.get<ExportBackup>())
         ImportBackupWorker::class.java.name ->
