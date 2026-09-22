@@ -26,6 +26,9 @@ Personal cat-encounter counter. Android-first Kotlin Multiplatform; design spec 
   before a PR.
 - Every slice ends with an independent code review (`/code-review` on the PR) and the acceptance
   gate against its frozen criteria; findings are fixed before the PR is marked ready.
+- **Every change to a feature's behaviour updates that feature's document in `docs/features/` in the
+  same PR.** The documents are the human-readable account of what the app does and how it behaves at
+  the edges; a stale one is worse than none. See `docs/features/README.md`.
 - Branches `feature/ | fix/ | tech/`; one PR per slice; merge commits. The PR decomposition map is
   `docs/tbd/decompositions/`; slice plans live in `docs/superpowers/plans/` and are archived when the
   slice ships.
