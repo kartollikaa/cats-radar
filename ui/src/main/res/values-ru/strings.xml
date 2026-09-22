@@ -122,4 +122,14 @@
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>
     <string name="settings_save_originals_explained">Своя копия всегда остаётся в приложении</string>
+    <string name="settings_backup">Резервная копия</string>
+    <string name="settings_backup_explained">Один файл со всеми котиками, фото и местами</string>
+    <string name="settings_export">Сохранить</string>
+    <string name="settings_import">Загрузить</string>
+    <string name="settings_backup_ok">Понятно</string>
+    <string name="settings_backup_exported">Копия сохранена</string>
+    <string name="settings_backup_export_failed">Копию сохранить не удалось</string>
+    <string name="settings_backup_imported">Копия объединена с тем, что уже было</string>
+    <string name="settings_backup_too_new">Эта копия из более новой версии приложения</string>
+    <string name="settings_backup_unreadable">Это не резервная копия Cats Radar</string>
 </resources>

@@ -36,7 +36,7 @@
 | 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS`, `getForegroundInfo` and the foreground-service type, so an import the user walks away from still reports. | safe | ~250 | 16b | planned |
 | 17 | Backup merge rules and use cases | `BackupMerge` (newer `updatedAt`, delete-vs-live, RESOLVED-wins cells) + tests, `ExportBackup`/`ImportBackup` over a reader/writer seam, `loadEvery`. Nothing calls it yet. | safe | ~450 | 11, 14 | in-review |
 | 17b | Backup archive format | `kotlinx.serialization` models, ZIP writer/reader, `manifest.json` with `formatVersion`, photo files, round-trip test. | safe | ~450 | 17 | in-review |
-| 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers with progress, gallery toggle UI (backup export/import still to come). | safe | ~200 | 11 | merged |
+| 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers, gallery toggle UI. | safe | ~450 | 11, 17b | in-review |
 | 24 | Walking mode | An ongoing notification with a tally action, so a cat is logged from the lockscreen without opening the app. Foreground service, channel, `POST_NOTIFICATIONS`. Does not define an outing. | safe | ~450 | 6 | planned |
 | 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | planned |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
