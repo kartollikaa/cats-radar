@@ -144,12 +144,18 @@ class ZipBackupArchiveTest {
     }
 
     @Test
-    fun aRowWhosePhotoWentMissingStillExports() = runTest {
+    fun aRowWhosePhotoWentMissingExportsWithoutLeavingAnEmptyOneBehind() = runTest {
         val path = target()
 
         val ok = writer().write(path, BackupContents(encounters = listOf(encounter("a", "never-written.jpg"))))
 
         assertTrue(ok)
         assertIs<BackupReadResult.Readable>(reader().read(path))
+        // Skipped, not written empty: an entry opened for a file that cannot be read would restore
+        // as a zero-byte photo, which renders as a broken image rather than the placeholder.
+        assertTrue(
+            !photoStorage.fileFor("never-written.jpg").exists(),
+            "an empty photo was restored from the archive",
+        )
     }
 }
