@@ -1,12 +1,15 @@
 package dev.catsradar.ui.navigation
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -18,12 +21,15 @@ fun CatsRadarBottomBar(
     modifier: Modifier = Modifier,
     onTabSelect: (BottomNavTab) -> Unit = {},
 ) {
-    NavigationBar(modifier = modifier) {
+    ShortNavigationBar(modifier = modifier) {
         BottomNavTab.entries.forEach { tab ->
-            NavigationBarItem(
-                selected = tab == selectedTab,
+            val selected = tab == selectedTab
+            ShortNavigationBarItem(
+                selected = selected,
                 onClick = { onTabSelect(tab) },
-                icon = { Text(text = stringResource(tab.labelRes())) },
+                // The label is always shown and names the tab, so the icon itself is decorative.
+                icon = { Icon(painter = painterResource(tab.iconRes(selected)), contentDescription = null) },
+                label = { Text(text = stringResource(tab.labelRes())) },
             )
         }
     }
@@ -35,6 +41,15 @@ private fun BottomNavTab.labelRes(): Int = when (this) {
     BottomNavTab.ENCOUNTERS -> R.string.tab_encounters
     BottomNavTab.STATISTICS -> R.string.tab_statistics
     BottomNavTab.SETTINGS -> R.string.tab_settings
+}
+
+// Only the gear has a filled form in Material Symbols; the other three glyphs are already solid.
+@DrawableRes
+private fun BottomNavTab.iconRes(selected: Boolean): Int = when (this) {
+    BottomNavTab.COUNTER -> R.drawable.ic_nav_pets
+    BottomNavTab.ENCOUNTERS -> R.drawable.ic_nav_format_list_bulleted
+    BottomNavTab.STATISTICS -> R.drawable.ic_nav_bar_chart
+    BottomNavTab.SETTINGS -> if (selected) R.drawable.ic_nav_settings_filled else R.drawable.ic_nav_settings
 }
 
 @ThemePreviews

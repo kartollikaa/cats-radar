@@ -40,10 +40,13 @@
 | 24 | Walking mode | An ongoing notification with a tally action, so a cat is logged from the lock screen without opening the app. No foreground service. Settings switch. Does not define an outing. | safe | ~450 | 6 | merged |
 | 24c | Walking mode on the Counter | A one-tap entry point where a walk actually starts, instead of Settings. | safe | ~150 | 24 | merged |
 | 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36.1+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | in-review |
-| 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | in-review |
+| 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | merged |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | merged |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | merged |
-| 23 | Visual design pass | Research comparable apps and published Android UI work, then a deliberate visual language: type scale, colour, the counter as the centrepiece, list and detail rhythm, empty states, motion on tally and undo. Last slice, after every behaviour exists. | safe | ~500 | 22 | planned |
+| 23a | Design foundation | Explicit teal light/dark schemes from the launcher icon, rounder shapes, heavier display type, icons in the bottom bar; a palette contrast test. | safe | ~300 | 22 | in-review |
+| 23b | Coats as cat faces | Each coat drawn as a cat face carrying its real markings — white muzzle and blaze, tricolour ear patches, yellow eyes on black cats — legible on both themes; the chosen coat gets a ring. | safe | ~300 | 23a | planned |
+| 23c | The Counter as centrepiece | The count in a large expressive container, spring motion on tally and undo, the walk chip and photo button restyled. | safe | ~350 | 23b | planned |
+| 23d | List, detail and stats rhythm | Encounters list and detail, statistics, settings, and empty states on the new tokens. | safe | ~450 | 23c | planned |
 | 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -246,6 +249,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-23: **design direction C (expressive), with coats as cat faces.** The owner compared three directions (radar instrument, field notebook, expressive), then three more drawn from scrn.gallery references (Arc Search, Drinkit, Revolut, Pool, Craft, Headspace, Tolan, Hero's Journey), and chose C, keeping some of B's editorial touches in view. Coats become cat faces coloured by their real markings rather than flat swatches. Slice 23 split into 23a–23d: a whole-app restyle is well past one review-sized PR. `MaterialExpressiveTheme` and `MotionScheme` turned out to be internal in the stable material3 1.4.0, so the pass stays on stable APIs and writes its spring motion by hand rather than taking a 1.5 alpha.
 - 2026-09-22: **walking mode ruled to not define an outing.** Owner asked for a mode that keeps a
   live notification up so a cat can be tallied from the lockscreen without opening the app. Outings
   stay derived by `SessionSplitter` exactly as they are; walking mode is a convenience surface over
