@@ -7,6 +7,8 @@ import kotlin.time.Instant
 interface EncounterRepository {
     fun observeAll(): Flow<List<Encounter>>
 
+    fun observeActiveCount(): Flow<Int>
+
     fun observeById(id: String): Flow<Encounter?>
 
     suspend fun insert(encounter: Encounter)

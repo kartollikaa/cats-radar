@@ -1,14 +1,19 @@
 package dev.catsradar.ui.counter
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CounterStateMapper
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -18,32 +23,45 @@ import dev.catsradar.ui.theme.ThemePreviews
 fun CounterScreen(
     state: CounterState,
     modifier: Modifier = Modifier,
+    onTallyClick: () -> Unit = {},
+    onUndoClick: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = "Cats Radar", style = MaterialTheme.typography.headlineMedium)
-        Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
+        Surface(
+            onClick = onTallyClick,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.primaryContainer,
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
+            }
+        }
+        if (state.undoVisible) {
+            AssistChip(onClick = onUndoClick, label = { Text(text = "Undo") })
+        }
     }
 }
 
 @ThemePreviews
 @Composable
-private fun CounterScreenPreview() {
+private fun CounterScreenEmptyPreview() {
     CatsRadarTheme {
-        Surface { CounterScreen(state = sampleCounterState) }
+        Surface { CounterScreen(state = sampleCounterStateEmpty) }
     }
 }
 
 @ThemePreviews
 @Composable
-private fun CounterScreenFreshPreview() {
+private fun CounterScreenUndoVisiblePreview() {
     CatsRadarTheme {
-        Surface { CounterScreen(state = sampleFreshCounterState) }
+        Surface { CounterScreen(state = sampleCounterStateUndoVisible) }
     }
 }
 
-private val sampleCounterState = CounterStateMapper().map(count = 42)
-private val sampleFreshCounterState = CounterStateMapper().map(count = 0)
+private val sampleCounterStateEmpty = CounterStateMapper().map(count = 0, undoVisible = false)
+private val sampleCounterStateUndoVisible = CounterStateMapper().map(count = 3, undoVisible = true)

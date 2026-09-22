@@ -72,6 +72,14 @@ class EncounterDaoTest {
     }
 
     @Test
+    fun observeActiveCountCountsOnlyNonDeletedRows() = runTest {
+        dao.insert(fullEncounterEntity(id = "active"))
+        dao.insert(fullEncounterEntity(id = "deleted", deletedAt = Instant.parse("2026-09-21T00:00:00Z")))
+
+        assertEquals(1, dao.observeActiveCount().first())
+    }
+
+    @Test
     fun observeAllReEmitsWhenTheTableChanges() = runTest {
         val emissions = Channel<Int>(Channel.UNLIMITED)
         val job = launch {
