@@ -3,8 +3,10 @@ package dev.catsradar.presentation.counter
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.LocationPermissionRequestState
+import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
+import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.CancellationException
@@ -14,8 +16,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+@Suppress("LongParameterList") // one parameter per collaborator
 class CounterStore(
     private val logTally: LogTally,
+    private val logPhoto: LogPhoto,
     private val undoLastTally: UndoLastTally,
     observeEncounterCount: ObserveEncounterCount,
     private val stateMapper: CounterStateMapper,
@@ -44,6 +48,8 @@ class CounterStore(
     override suspend fun handle(intent: CounterIntent) {
         when (intent) {
             CounterIntent.TallyClicked -> onTallyClicked()
+            CounterIntent.CameraClicked -> emit(CounterEffect.OpenCamera)
+            is CounterIntent.PhotoCaptured -> onPhotoCaptured(intent.uri)
             CounterIntent.UndoClicked -> onUndoClicked()
             is CounterIntent.LocationPermissionResult -> onLocationPermissionResult(intent.granted)
             CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
@@ -72,6 +78,21 @@ class CounterStore(
                 setState { copy(undoVisible = true) }
                 restartUndoTimer()
             }
+        }
+    }
+
+    private suspend fun onPhotoCaptured(uri: String?) {
+        // A cancelled camera is not a failure and must leave nothing behind.
+        if (uri == null) return
+        runWriteIgnoringFailure {
+            when (val result = logPhoto(uri)) {
+                is PhotoResult.Logged ->
+                    if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
+                PhotoResult.Unreadable -> emit(CounterEffect.PhotoNotSaved)
+            }
+            // Whatever the outcome, the full-size original has served its purpose; leaving it
+            // would grow the cache by one photo per cat.
+            emit(CounterEffect.DiscardCapture(uri))
         }
     }
 

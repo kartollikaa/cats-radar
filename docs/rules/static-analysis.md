@@ -11,6 +11,9 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
 
 ## detekt conventions
 
+- `LongParameterList` ignores `@Composable` functions — [compose-patterns.md](./compose-patterns.md) §5
+  requires one explicit lambda per user action, so a screen's parameter count measures how much the
+  user can do there, not how tangled the function is. Non-composable functions keep the default.
 - `FunctionNaming` ignores `@Composable` functions — the default pattern is lowerCamelCase, which
   every composable violates by Compose convention (PascalCase).
 - `TopLevelPropertyNaming.constantPattern` accepts `PascalCase` in addition to `UPPER_SNAKE`, so

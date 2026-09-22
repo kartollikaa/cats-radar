@@ -43,10 +43,10 @@ class AndroidExifReader(
         }.getOrNull() ?: return@withContext ExifData()
 
         val offset = exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL)?.toUtcOffsetOrNull()
-        val coordinates = FloatArray(2).takeIf { exif.getLatLong(it) }
+        val coordinates = exif.latLong
         ExifData(
-            lat = coordinates?.get(0)?.toDouble(),
-            lon = coordinates?.get(1)?.toDouble(),
+            lat = coordinates?.get(0),
+            lon = coordinates?.get(1),
             takenAt = exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
                 ?.toInstantOrNull(offset?.asTimeZone() ?: deviceZone()),
             tzOffsetMinutes = offset?.totalSeconds?.div(SECONDS_PER_MINUTE),

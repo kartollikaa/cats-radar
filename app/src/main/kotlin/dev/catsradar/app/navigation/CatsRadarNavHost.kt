@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import android.Manifest
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,15 +11,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.permission.LocationPermissionRequester
+import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterIntent
@@ -27,6 +33,7 @@ import dev.catsradar.presentation.detail.EncounterDetailEffect
 import dev.catsradar.presentation.detail.EncounterDetailIntent
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.LocationHintAction
 import dev.catsradar.ui.detail.EncounterDetailScreen
@@ -99,9 +106,31 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
             )
         }
     }
-    LaunchedEffect(store, haptics, locationAttachScheduler, locationPermissionRequester) {
+    val context = LocalContext.current
+    val cameraLauncher = rememberCameraLauncher(store)
+    val photoFailureReporter = remember(context) {
+        PhotoFailureReporter {
+            Toast.makeText(context, R.string.counter_photo_not_saved, Toast.LENGTH_SHORT).show()
+        }
+    }
+    val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
+    LaunchedEffect(
+        store,
+        haptics,
+        locationAttachScheduler,
+        locationPermissionRequester,
+        cameraLauncher,
+    ) {
         store.effects.collect { effect ->
-            handleCounterEffect(effect, haptics, locationAttachScheduler, locationPermissionRequester)
+            handleCounterEffect(
+                effect,
+                haptics,
+                locationAttachScheduler,
+                locationPermissionRequester,
+                cameraLauncher,
+                photoFailureReporter,
+                captureDiscarder,
+            )
         }
     }
     CounterScreen(
@@ -110,7 +139,28 @@ private fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier
         onTallyClick = { store.dispatch(CounterIntent.TallyClicked) },
         onUndoClick = { store.dispatch(CounterIntent.UndoClicked) },
         onLocationHintAction = { action -> store.dispatch(action.toCounterIntent()) },
+        onCameraClick = { store.dispatch(CounterIntent.CameraClicked) },
     )
+}
+
+@Composable
+private fun rememberCameraLauncher(store: CounterStore): CameraLauncher {
+    val context = LocalContext.current
+    // rememberSaveable: the process can die while the camera app is in front, and the result
+    // arrives with nothing but this URI to say where the original was written.
+    var captureUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
+        store.dispatch(CounterIntent.PhotoCaptured(captureUri.takeIf { saved }))
+        captureUri = null
+        if (!saved) CaptureTarget.clear(context)
+    }
+    return remember(resultLauncher, context) {
+        CameraLauncher {
+            val target = CaptureTarget.newUri(context)
+            captureUri = target.toString()
+            resultLauncher.launch(target)
+        }
+    }
 }
 
 private fun LocationHintAction.toCounterIntent(): CounterIntent = when (this) {

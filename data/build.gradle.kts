@@ -22,6 +22,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         getByName("androidMain").dependencies {
+            implementation(libs.androidx.datastore.preferences)
             implementation(libs.androidx.exifinterface)
             implementation(libs.play.services.location)
             implementation(libs.kotlinx.coroutines.play.services)

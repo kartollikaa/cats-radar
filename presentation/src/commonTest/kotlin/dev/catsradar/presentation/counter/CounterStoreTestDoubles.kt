@@ -6,9 +6,16 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.platform.DeviceIdProvider
+import dev.catsradar.domain.platform.Digest
+import dev.catsradar.domain.platform.ExifData
+import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.IdGenerator
+import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationPermissionRequestState
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -120,5 +127,41 @@ internal class FakeLocationPermissionRequestState(
 
     override fun markRequested() {
         alreadyRequested = true
+    }
+}
+
+// :domain's own fakes live in its commonTest, which a sibling module cannot see; these are the
+// smallest stand-ins the Counter's photo path needs.
+internal class FakeExifReader(var data: ExifData = ExifData()) : ExifReader {
+    override suspend fun read(uri: String): ExifData = data
+}
+
+internal class FakeImageResizer(
+    var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
+) : ImageResizer {
+    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? = result
+}
+
+internal class FakeDigest : Digest {
+    override suspend fun sha256(uri: String): String? = "digest"
+}
+
+internal class FakeGallerySaver : GallerySaver {
+    var calls = 0
+        private set
+
+    override suspend fun save(sourceUri: String, displayName: String): String? {
+        calls++
+        return "content://gallery/1"
+    }
+}
+
+internal class FakeSettingsRepository(saveOriginals: Boolean = true) : SettingsRepository {
+    private val state = MutableStateFlow(saveOriginals)
+
+    override fun saveOriginalsToGallery(): Flow<Boolean> = state
+
+    override suspend fun setSaveOriginalsToGallery(enabled: Boolean) {
+        state.value = enabled
     }
 }

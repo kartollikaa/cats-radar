@@ -38,14 +38,53 @@ private class FakeLocationPermissionRequester : LocationPermissionRequester {
     }
 }
 
+private class CountingCameraLauncher : CameraLauncher {
+    var launchCount = 0
+        private set
+
+    override fun launch() {
+        launchCount++
+    }
+}
+
+private class RecordingCaptureDiscarder : CaptureDiscarder {
+    val discarded = mutableListOf<String>()
+
+    override fun discard(uri: String) {
+        discarded += uri
+    }
+}
+
+private class CountingPhotoFailureReporter : PhotoFailureReporter {
+    var reportCount = 0
+        private set
+
+    override fun report() {
+        reportCount++
+    }
+}
+
 class CounterEffectHandlerTest {
     private val haptics = FakeHaptics()
     private val locationAttachScheduler = FakeLocationAttachScheduler()
     private val locationPermissionRequester = FakeLocationPermissionRequester()
+    private val cameraLauncher = CountingCameraLauncher()
+    private val photoFailureReporter = CountingPhotoFailureReporter()
+    private val captureDiscarder = RecordingCaptureDiscarder()
+
+    private fun handle(effect: CounterEffect) = handleCounterEffect(
+        effect,
+        haptics,
+        locationAttachScheduler,
+        locationPermissionRequester,
+        cameraLauncher,
+        photoFailureReporter,
+        captureDiscarder,
+    )
 
     @Test
     fun `HapticTick calls Haptics tick and nothing else`() {
-        handleCounterEffect(CounterEffect.HapticTick, haptics, locationAttachScheduler, locationPermissionRequester)
+        handle(CounterEffect.HapticTick)
 
         assertEquals(1, haptics.tickCount)
         assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
@@ -54,12 +93,7 @@ class CounterEffectHandlerTest {
 
     @Test
     fun `AttachLocation schedules the worker for exactly that encounter id`() {
-        handleCounterEffect(
-            CounterEffect.AttachLocation("encounter-42"),
-            haptics,
-            locationAttachScheduler,
-            locationPermissionRequester,
-        )
+        handle(CounterEffect.AttachLocation("encounter-42"))
 
         assertEquals(listOf("encounter-42"), locationAttachScheduler.scheduledIds)
         assertEquals(0, haptics.tickCount)
@@ -67,12 +101,7 @@ class CounterEffectHandlerTest {
 
     @Test
     fun `CancelLocationAttach cancels the worker for exactly that encounter id`() {
-        handleCounterEffect(
-            CounterEffect.CancelLocationAttach("encounter-42"),
-            haptics,
-            locationAttachScheduler,
-            locationPermissionRequester,
-        )
+        handle(CounterEffect.CancelLocationAttach("encounter-42"))
 
         assertEquals(listOf("encounter-42"), locationAttachScheduler.cancelledIds)
         assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
@@ -80,13 +109,52 @@ class CounterEffectHandlerTest {
 
     @Test
     fun `RequestLocationPermission asks the requester`() {
-        handleCounterEffect(
-            CounterEffect.RequestLocationPermission,
-            haptics,
-            locationAttachScheduler,
-            locationPermissionRequester,
-        )
+        handle(CounterEffect.RequestLocationPermission)
 
         assertEquals(1, locationPermissionRequester.requestCount)
+    }
+}
+
+class CounterEffectHandlerPhotoTest {
+    private val haptics = FakeHaptics()
+    private val locationAttachScheduler = FakeLocationAttachScheduler()
+    private val locationPermissionRequester = FakeLocationPermissionRequester()
+    private val cameraLauncher = CountingCameraLauncher()
+    private val photoFailureReporter = CountingPhotoFailureReporter()
+    private val captureDiscarder = RecordingCaptureDiscarder()
+
+    private fun handle(effect: CounterEffect) = handleCounterEffect(
+        effect,
+        haptics,
+        locationAttachScheduler,
+        locationPermissionRequester,
+        cameraLauncher,
+        photoFailureReporter,
+        captureDiscarder,
+    )
+
+    @Test
+    fun `OpenCamera launches the camera and nothing else`() {
+        handle(CounterEffect.OpenCamera)
+
+        assertEquals(1, cameraLauncher.launchCount)
+        assertEquals(0, photoFailureReporter.reportCount)
+        assertEquals(0, haptics.tickCount)
+        assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
+    }
+
+    @Test
+    fun `PhotoNotSaved reports the failure and does not reopen the camera`() {
+        handle(CounterEffect.PhotoNotSaved)
+
+        assertEquals(1, photoFailureReporter.reportCount)
+        assertEquals(0, cameraLauncher.launchCount)
+    }
+
+    @Test
+    fun `DiscardCapture deletes exactly the original it names`() {
+        handle(CounterEffect.DiscardCapture("content://capture/1"))
+
+        assertEquals(listOf("content://capture/1"), captureDiscarder.discarded)
     }
 }

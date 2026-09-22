@@ -14,6 +14,7 @@ import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
 import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestState
 import dev.catsradar.data.platform.VibratorHaptics
 import dev.catsradar.data.repository.EncounterRepositoryImpl
+import dev.catsradar.data.settings.createSettingsRepository
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
@@ -25,6 +26,7 @@ import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.SettingsRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -46,4 +48,5 @@ val dataModule = module {
     single<ImageResizer> { AndroidImageResizer(androidContext(), get()) }
     single<Digest> { Sha256Digest(androidContext()) }
     single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
+    single<SettingsRepository> { createSettingsRepository(androidContext()) }
 }
