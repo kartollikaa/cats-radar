@@ -18,8 +18,8 @@ a walk stopped from the shade, the outing closing on its own — moves the notif
 screen being involved.
 
 A screen that posted it itself would leave the shade empty while the flag still read on: after a
-reboot, after a force-stop, or after the notification was swiped away. The control would say *On a
-walk* and the **Cat!** button would not exist.
+reboot, or after a force-stop. The control would say *On a walk* and the **Cat!** button would not
+exist. (A swipe away is no longer one of those cases — it ends the walk outright, below.)
 
 ## It needs permission to post
 
@@ -45,12 +45,44 @@ broadcast starts the process again if it has been killed. A foreground service w
 `FOREGROUND_SERVICE`, a service type, and on newer Android a written justification for it — and buy
 nothing the notification does not already do for a walk.
 
-## Not a Live Update
+## A Live Update, from API 36.1
 
-Android 16's Live Updates — a promoted ongoing notification with a status-bar chip and a place on the
-always-on display — need API 36, and `minSdk` here is 29. The tally works identically without them:
-promotion is prominence, not capability. It is its own slice, so the feature works everywhere first
-and gets promoted where the platform allows.
+The notification asks to be promoted, and where the platform agrees it becomes a **Live Update**: a
+chip beside the clock carrying the count, and a place on the always-on display. Glancing at the
+status bar then answers "how many so far" without unlocking anything.
+
+**API 36.1, not 36.** `setShortCriticalText` exists in Android 16.0, but
+`setRequestPromotedOngoing`, the extra it writes, and the permission below all arrive in 16 QPR1.
+A phone on plain 16.0 gets the same notification as one on 29 — posted, never promoted, nothing
+thrown.
+
+Two things are required for promotion to happen at all:
+
+- `setRequestPromotedOngoing(true)` on the ongoing notification;
+- `POST_PROMOTED_NOTIFICATIONS` in the manifest. It is `normal|appop`, so it is granted on install
+  and the user can revoke it under **Live Updates**.
+
+`setShortCriticalText` is not one of them — it decides what the chip *says*. Without it the
+notification is promoted just the same and the chip carries only the icon, which is why the count
+goes in as a bare number rather than a sentence.
+
+Channel importance is not one of them either. The obvious suspect was `IMPORTANCE_LOW`; raising the
+channel changed nothing, so it stays low and a walk still never makes a sound.
+
+Promotion is prominence, not capability — which is why it could be a separate slice from the feature
+itself.
+
+### It does not come back after it is dismissed
+
+Swiping the notification away ends the walk: its delete intent is the same **Done** action the
+button uses, so the flag goes off, the Counter chip follows, and nothing reposts. Putting a Live
+Update back after someone has just swiped it away is how an app gets its Live Updates permission
+revoked — and it would also re-open the gap this feature exists to close, where the shade is empty
+while the chip still reads *On a walk*.
+
+Demotion is a different gesture, and the platform offers no callback for it. A user who demotes the
+chip but leaves the notification up will see the chip return on the next tally; whether the system
+honours a renewed request after a demotion is its decision, not something the app can read.
 
 ## At the edges
 
@@ -65,6 +97,10 @@ and gets promoted where the platform allows.
 - **The receiver is not exported.** Only this app's own notification actions reach it; an `adb`
   broadcast from the shell is refused, which is the point of the flag.
 - **The pending intent is immutable.** Nothing may rewrite where a lock-screen tap ends up.
+- **A revoked Live Updates permission costs the chip, not the notification.** The post still
+  succeeds, unpromoted. The app could ask — `canPostPromotedNotifications()` answers it from API 36
+  — but nothing is done with the answer: there is no degraded mode to fall back to and nothing
+  useful to say about a setting the user just chose.
 - **The notification is `VISIBILITY_PUBLIC`** — its text shows on the lock screen, because tallying
   without unlocking is the whole feature. It says how many cats this outing, and nothing more.
 - **A tally from here is `origin = NOTIFICATION`**, distinct from the app, the widget and the two
@@ -83,7 +119,8 @@ and gets promoted where the platform allows.
 
 ## Not built yet
 
-No Live Update promotion. No automatic stop, so a mode left on stays on until it is turned off —
+The chip's icon is the same placeholder the notification uses; it gets a real one in the design
+pass. No automatic stop, so a mode left on stays on until it is turned off —
 there is no rule yet for what "the walk ended" would mean that the gap-based outing does not already
 answer. A reboot leaves the flag on but the shade empty until something starts the app again;
 nothing listens for `BOOT_COMPLETED`.
