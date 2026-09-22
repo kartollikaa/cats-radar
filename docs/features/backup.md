@@ -3,8 +3,9 @@
 Your cats are yours: an archive you can write somewhere of your choosing and read back, on this
 device or another one. No account, no server, no sync.
 
-**Nothing reaches this yet.** The archive and the merge rules exist and are wired into the object
-graph; the Settings buttons that call them are the next slice, so today no tap can export or import.
+**Settings → Backup** has an Export and an Import button. Both run in a worker, so leaving the
+screen mid-run cannot leave a half-written archive or a half-merged database, and the screen
+reads the run's state back rather than remembering it.
 
 ## What goes in
 
@@ -74,7 +75,19 @@ has been rendering, and an archive should not quietly replace it.
 - `data/…/backup/BackupRecords.kt` — the serialized shape and its mappers
 - `data/…/androidMain/backup/ZipBackupArchive.android.kt` — the ZIP itself
 
+## At the edges, on screen
+
+- **Export and import share one work name**, so they cannot run at once: importing while an export
+  is still reading would archive a half-merged database.
+- **Neither worker retries.** The file picker's grant dies with the process, so a retry would write
+  nothing and report success for an archive that does not exist.
+- **Both buttons are unavailable while a run is in progress**, and a finished run replaces the
+  progress bar with what happened — including *which* thing happened, read back from the worker's
+  own tag so an outcome never says "exported" about an import.
+- **The suggested filename carries the date**, which is what stops a second export silently offering
+  to overwrite the first.
+
 ## Not built yet
 
-The Settings entry points and their system file picker, and the workers that would run an export or
-import in the background with progress. Today both use cases run wherever they are called.
+Per-row progress. A backup of a personal cat counter is small enough that the bar is indeterminate;
+if archives ever grow enough to need a count, the worker already has the shape for it.
