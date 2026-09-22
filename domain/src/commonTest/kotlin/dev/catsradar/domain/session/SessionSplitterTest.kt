@@ -1,6 +1,7 @@
 package dev.catsradar.domain.session
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.Session
 import dev.catsradar.domain.testing.encounterAt
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,31 +21,53 @@ class SessionSplitterTest {
     fun `a single encounter is one session with zero duration`() {
         val sessions = SessionSplitter.split(listOf(encounterAt(BASE)))
 
-        assertEquals(1, sessions.size)
-        assertEquals(1, sessions.single().count)
-        assertEquals(Duration.ZERO, sessions.single().duration)
+        assertEquals(listOf(Session(1, BASE, BASE, Duration.ZERO)), sessions)
     }
 
     @Test
     fun `a gap exactly equal to SESSION_GAP stays one session`() {
-        val encounters = listOf(encounterAt(BASE), encounterAt(BASE + Tuning.SESSION_GAP))
+        val end = BASE + Tuning.SESSION_GAP
+        val sessions = SessionSplitter.split(listOf(encounterAt(BASE), encounterAt(end)))
 
-        assertEquals(1, SessionSplitter.split(encounters).size)
+        assertEquals(listOf(Session(2, BASE, end, Tuning.SESSION_GAP)), sessions)
     }
 
     @Test
     fun `a gap one millisecond over SESSION_GAP starts a new session`() {
-        val encounters = listOf(encounterAt(BASE), encounterAt(BASE + Tuning.SESSION_GAP + 1.milliseconds))
+        val secondStart = BASE + Tuning.SESSION_GAP + 1.milliseconds
+        val sessions = SessionSplitter.split(listOf(encounterAt(BASE), encounterAt(secondStart)))
 
-        assertEquals(2, SessionSplitter.split(encounters).size)
+        assertEquals(
+            listOf(
+                Session(1, BASE, BASE, Duration.ZERO),
+                Session(1, secondStart, secondStart, Duration.ZERO),
+            ),
+            sessions,
+        )
     }
 
     @Test
     fun `unsorted input yields the same sessions as sorted input`() {
-        val sorted = listOf(encounterAt(BASE), encounterAt(BASE + 10.minutes), encounterAt(BASE + 1.hours))
-        val shuffled = listOf(sorted[2], sorted[0], sorted[1])
+        val first = encounterAt(BASE)
+        val second = encounterAt(BASE + 10.minutes)
+        val third = encounterAt(BASE + 1.hours) // 50 min after `second`, past SESSION_GAP
+        val expected = listOf(
+            Session(2, BASE, BASE + 10.minutes, 10.minutes),
+            Session(1, BASE + 1.hours, BASE + 1.hours, Duration.ZERO),
+        )
 
-        assertEquals(SessionSplitter.split(sorted), SessionSplitter.split(shuffled))
+        assertEquals(expected, SessionSplitter.split(listOf(first, second, third)))
+        assertEquals(expected, SessionSplitter.split(listOf(third, first, second)))
+    }
+
+    @Test
+    fun `a soft-deleted encounter is excluded from count and duration`() {
+        val kept = encounterAt(BASE)
+        val deleted = encounterAt(BASE + 15.minutes, deletedAt = BASE + 1.hours)
+
+        val sessions = SessionSplitter.split(listOf(kept, deleted))
+
+        assertEquals(listOf(Session(1, BASE, BASE, Duration.ZERO)), sessions)
     }
 
     private companion object {
