@@ -4,28 +4,42 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarDarkColors
@@ -37,10 +51,20 @@ import org.koin.core.component.inject
 // Given explicitly: without it Glance paints the widget in wallpaper colours on Android 12+.
 private val WidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
 
-/** The whole widget is the button: a cat on a walk should not cost aim. */
+private val Compact = DpSize(57.dp, 57.dp)
+private val Wide = DpSize(110.dp, 57.dp)
+private val Tall = DpSize(57.dp, 110.dp)
+private val Large = DpSize(110.dp, 110.dp)
+
+private val TileGap = 4.dp
+private val TileCorner = 16.dp
+
+/** The count is the button: a cat on a walk should not cost aim. */
 class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
 
     private val observeTodayCount: ObserveTodayCount by inject()
+
+    override val sizeMode = SizeMode.Responsive(setOf(Compact, Wide, Tall, Large))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Glance publishes a session's first frame before a flow answers, so a placeholder there
@@ -50,20 +74,37 @@ class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
         provideContent {
             val today by counts.collectAsState(initial = current)
             GlanceTheme(colors = WidgetColors) {
-                TodayCount(today)
+                WidgetContent(today)
             }
         }
     }
 }
 
 @Composable
-private fun TodayCount(count: Int) {
+internal fun WidgetContent(count: Int) {
+    val size = LocalSize.current
+    when {
+        size.height >= Tall.height -> Column(modifier = GlanceModifier.fillMaxSize()) {
+            CountTile(count, GlanceModifier.fillMaxWidth().defaultWeight())
+            Spacer(GlanceModifier.height(TileGap))
+            PhotoTile(GlanceModifier.fillMaxWidth().defaultWeight())
+        }
+        size.width >= Wide.width -> Row(modifier = GlanceModifier.fillMaxSize()) {
+            CountTile(count, GlanceModifier.fillMaxHeight().defaultWeight())
+            Spacer(GlanceModifier.width(TileGap))
+            PhotoTile(GlanceModifier.fillMaxHeight().defaultWeight())
+        }
+        else -> CountTile(count, GlanceModifier.fillMaxSize())
+    }
+}
+
+@Composable
+private fun CountTile(count: Int, modifier: GlanceModifier = GlanceModifier) {
     val context = LocalContext.current
     Column(
-        modifier = GlanceModifier
-            .fillMaxSize()
+        modifier = modifier
             .background(GlanceTheme.colors.primaryContainer)
-            .cornerRadius(16.dp)
+            .cornerRadius(TileCorner)
             .padding(8.dp)
             .clickable(actionRunCallback<TallyAction>())
             .semantics { contentDescription = context.getString(R.string.widget_tally) },
@@ -81,6 +122,30 @@ private fun TodayCount(count: Int) {
         Text(
             text = context.resources.getQuantityString(R.plurals.widget_today, count, count),
             style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onPrimaryContainer),
+        )
+    }
+}
+
+@Composable
+private fun PhotoTile(modifier: GlanceModifier = GlanceModifier) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .background(GlanceTheme.colors.primary)
+            .cornerRadius(TileCorner)
+            .padding(8.dp)
+            .clickable(actionStartActivity(TakePhotoShortcut.intent(context))),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_photo_camera),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimary),
+        )
+        Text(
+            text = context.getString(R.string.widget_photo),
+            style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onPrimary),
         )
     }
 }

@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
+import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
@@ -38,7 +39,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+internal fun CounterDestination(
+    contentPadding: PaddingValues,
+    cameraRequest: CameraRequest,
+    modifier: Modifier = Modifier,
+) {
     val store = koinViewModel<CounterStore>()
     val state by store.state.collectAsStateWithLifecycle()
     val haptics = koinInject<Haptics>()
@@ -55,6 +60,9 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
         store.dispatch(CounterIntent.WalkingModeToggled(enabled))
     }
     ObserveImportWork(store, importScheduler)
+    LaunchedEffect(store, cameraRequest.isPending) {
+        if (cameraRequest.consume()) store.dispatch(CounterIntent.CameraClicked)
+    }
     LaunchedEffect(
         store,
         haptics,

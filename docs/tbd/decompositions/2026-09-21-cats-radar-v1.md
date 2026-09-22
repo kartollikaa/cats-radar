@@ -41,6 +41,7 @@
 | 24c | Walking mode on the Counter | A one-tap entry point where a walk actually starts, instead of Settings. | safe | ~150 | 24 | merged |
 | 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36.1+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | in-review |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | merged |
+| 19b | Photo from the widget | A Photo tile beside the count once the widget is two cells, opening the app on the Counter straight into the camera. | safe | ~250 | 19 | in-review |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | merged |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | merged |
 | 23a | Design foundation | Explicit teal light/dark schemes from the launcher icon, rounder shapes, heavier display type, icons in the bottom bar; a palette contrast test. | safe | ~300 | 22 | merged |
@@ -227,6 +228,15 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** complete behaviour; widget is opt-in by the user.
 - **Cleanup owed:** none.
 
+### Slice 19b — Photo from the widget
+- **In scope:** responsive widget layout (count alone at one cell, Photo beside or below it from two),
+  a launch action that `MainActivity` turns into one camera request, the Counter carrying it out
+  through its own Photo path.
+- **Out of scope:** taking a photo without the app opening — the camera returns its result to an
+  activity.
+- **Ships safely because:** additive; the one-cell widget is unchanged.
+- **Cleanup owed:** none.
+
 ### Slice 20 — Purge soft-deleted encounters
 - **In scope:** `PurgeDeleted` use case, `PurgeDeletedWorker` (periodic), scheduling at app start, test that
   files and rows older than `PURGE_AFTER` go and newer stay.
@@ -249,6 +259,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-23: owner asked for a **Photo button on the widget** that opens the app in camera mode. Mapped as 19b rather than folded into the design pass: it is behaviour, not styling. The widget is now placed two cells wide so the button is there by default; one cell keeps the count alone.
 - 2026-09-23: **design direction C (expressive), with coats as cat faces.** The owner compared three directions (radar instrument, field notebook, expressive), then three more drawn from scrn.gallery references (Arc Search, Drinkit, Revolut, Pool, Craft, Headspace, Tolan, Hero's Journey), and chose C, keeping some of B's editorial touches in view. Coats become cat faces coloured by their real markings rather than flat swatches. Slice 23 split into 23a–23d: a whole-app restyle is well past one review-sized PR. `MaterialExpressiveTheme` and `MotionScheme` turned out to be internal in the stable material3 1.4.0, so the pass stays on stable APIs and writes its spring motion by hand rather than taking a 1.5 alpha.
 - 2026-09-22: **walking mode ruled to not define an outing.** Owner asked for a mode that keeps a
   live notification up so a cat can be tallied from the lockscreen without opening the app. Outings

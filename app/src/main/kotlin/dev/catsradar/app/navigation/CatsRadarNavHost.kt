@@ -17,6 +17,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.permission.rememberWalkingModeRequest
+import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.toSettingsIntent
 import dev.catsradar.presentation.detail.EncounterDetailEffect
@@ -28,6 +29,7 @@ import dev.catsradar.presentation.settings.SettingsEffect
 import dev.catsradar.presentation.settings.SettingsIntent
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.ui.detail.EncounterDetailScreen
+import dev.catsradar.ui.navigation.BottomNavTab
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.settings.SettingsScreen
@@ -38,8 +40,11 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun CatsRadarNavHost(modifier: Modifier = Modifier) {
+fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier) {
     val backStack = rememberBottomNavBackStack()
+    LaunchedEffect(cameraRequest.isPending) {
+        if (cameraRequest.isPending) backStack.selectTab(BottomNavTab.COUNTER)
+    }
 
     Scaffold(
         modifier = modifier,
@@ -58,7 +63,7 @@ fun CatsRadarNavHost(modifier: Modifier = Modifier) {
                 rememberViewModelStoreNavEntryDecorator(),
             ),
             entryProvider = entryProvider {
-                entry<Counter> { CounterDestination(contentPadding = innerPadding) }
+                entry<Counter> { CounterDestination(contentPadding = innerPadding, cameraRequest = cameraRequest) }
                 entry<Encounters> {
                     EncountersDestination(
                         contentPadding = innerPadding,

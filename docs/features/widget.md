@@ -1,8 +1,12 @@
 # Home-screen widget
 
-A 1×1 widget reading **6 cats today**. Tapping it anywhere logs a cat — the phone does not have to be
-unlocked into the app, and there is no button to aim at, because the whole widget is the button.
-TalkBack announces it as **Log a cat**.
+A widget reading **6 cats today**, with a **Photo** tile beside it. Tapping the count logs a cat
+without opening the app, and there is nothing smaller to aim at, because the whole tile is the button.
+TalkBack announces it as **Log a cat**. Tapping Photo opens the app straight into the camera.
+
+It is placed two cells wide. Shrunk to a single cell it drops the Photo tile and becomes the count
+alone, since two targets in one cell are two targets too small; made two cells tall instead of wide,
+the Photo tile goes under the count.
 
 ## What a tap does
 
@@ -15,6 +19,18 @@ location is handed to a worker and never waited for.
 
 **No undo.** The undo window belongs to the Counter, where there is a chip to show and a screen to
 show it on; a mis-tap on the widget is undone by opening the app.
+
+## What Photo does
+
+It opens the app on the **Counter** — whichever tab was showing, and whatever was open above it — and
+the camera straight after. From there it is the Counter's own Photo button: the same capture, the
+same `origin = CAMERA`, the same "Photo not saved" if the picture cannot be read. Cancelling the
+camera leaves the app open on the Counter with nothing logged.
+
+The request reaches an app that is already running rather than starting a second copy of it, so Back
+from the Counter still leaves the app instead of stepping into an older one. Tapping Photo while a
+camera the app opened earlier is still up closes that camera, which counts as cancelled, and opens a
+fresh one.
 
 ## Staying in step with the app
 
@@ -67,6 +83,11 @@ for it in every process the app runs in.
   flying across zones mid-trip does not leave "today" pinned to the old one.
 - **A cat deleted or undone after it was counted comes off the count** on the next redraw, because
   the count reads the same filtered query everything else does.
+- **Reopening the app from recents never opens the camera.** A task started by Photo keeps Photo's
+  intent, and Android hands it back when the app is reopened from recents; that launch is told apart
+  and ignored, and so is the same intent after a rotation or a process restart.
+- **After a force stop the first tap is lost**, on either tile. Force-stopping cancels everything the
+  widget had armed, so that tap only wakes the app and redraws the widget; the next one works.
 - **The receiver is exported**, unlike the walking-mode one: the launcher hosts the widget and
   `AppWidgetManager` is what sends it `APPWIDGET_UPDATE`.
 - **The caption is a plural, and carries no number.** The count is drawn above it in its own text, so
@@ -75,8 +96,9 @@ for it in every process the app runs in.
 
 ## Where the code lives
 
-- `app/…/widget/CatsRadarWidget.kt` — what it draws
-- `app/…/widget/TallyAction.kt` — what a tap does
+- `app/…/widget/CatsRadarWidget.kt` — what it draws, at each size
+- `app/…/widget/TallyAction.kt` — what a tap on the count does
+- `app/…/photo/TakePhotoShortcut.kt`, `CameraRequest.kt` — how Photo reaches the Counter's camera
 - `app/…/widget/WidgetRefresh.kt` — redrawing it when the app changes the count
 - `app/…/widget/CatsRadarWidgetReceiver.kt`, `res/xml/cats_radar_widget_info.xml` — how the launcher
   finds it
@@ -84,6 +106,6 @@ for it in every process the app runs in.
 
 ## Not built yet
 
-No resizing behaviour beyond what the launcher does on its own: the layout is one number and one
-caption at every size. No coat choice from the widget — that grid needs a screen. The preview in the
+No coat choice from the widget — that grid needs a screen. A photo from the widget cannot be taken
+without the app opening, because the camera returns its picture to an activity. The preview in the
 widget picker is the app icon rather than a rendering of the widget.
