@@ -13,6 +13,7 @@ import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.time.Instant
 
@@ -82,5 +83,15 @@ class LogTallyTest {
         val encounter = logTally()
 
         assertEquals(listOf(encounter), repository.inserted)
+    }
+
+    @Test
+    fun `each invocation gets a fresh id`() = runTest {
+        val logTally = LogTally(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(now), TimeZone.UTC)
+
+        val first = logTally()
+        val second = logTally()
+
+        assertNotEquals(first.id, second.id)
     }
 }
