@@ -51,6 +51,14 @@ class EncounterDaoTest {
     }
 
     @Test
+    fun observeByIdHidesASoftDeletedRow() = runTest {
+        val entity = fullEncounterEntity(id = "soft-deleted", deletedAt = Instant.parse("2026-09-21T00:00:00Z"))
+        dao.insert(entity)
+
+        assertNull(dao.observeById(entity.id).first())
+    }
+
+    @Test
     fun softDeleteHidesARowFromObserveAllAndUndoBringsItBack() = runTest {
         val entity = fullEncounterEntity(id = "to-delete")
         dao.insert(entity)
