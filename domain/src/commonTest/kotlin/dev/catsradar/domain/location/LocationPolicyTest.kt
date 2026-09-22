@@ -23,11 +23,30 @@ class LocationPolicyTest {
         val result = LocationPolicy.resolve(
             now = Now,
             currentFix = { currentFixValue },
-            lastKnown = lastKnownValue,
+            lastKnown = { lastKnownValue },
             lastKnownMaxAge = MaxAge,
         )
 
         assertEquals(LocationResult(currentFixValue, LocationSource.CURRENT_FIX), result)
+    }
+
+    @Test
+    fun `a successful current fix never touches the last-known provider`() = runTest {
+        val currentFixValue = fixAt(Now)
+        var lastKnownCalls = 0
+
+        val result = LocationPolicy.resolve(
+            now = Now,
+            currentFix = { currentFixValue },
+            lastKnown = {
+                lastKnownCalls++
+                fixAt(Now)
+            },
+            lastKnownMaxAge = MaxAge,
+        )
+
+        assertEquals(0, lastKnownCalls)
+        assertEquals(LocationSource.CURRENT_FIX, result.source)
     }
 
     @Test
@@ -37,7 +56,7 @@ class LocationPolicyTest {
         val result = LocationPolicy.resolve(
             now = Now,
             currentFix = { null },
-            lastKnown = lastKnownValue,
+            lastKnown = { lastKnownValue },
             lastKnownMaxAge = MaxAge,
         )
 
@@ -51,7 +70,7 @@ class LocationPolicyTest {
         val result = LocationPolicy.resolve(
             now = Now,
             currentFix = { null },
-            lastKnown = lastKnownValue,
+            lastKnown = { lastKnownValue },
             lastKnownMaxAge = MaxAge,
         )
 
@@ -65,7 +84,7 @@ class LocationPolicyTest {
         val result = LocationPolicy.resolve(
             now = Now,
             currentFix = { null },
-            lastKnown = lastKnownValue,
+            lastKnown = { lastKnownValue },
             lastKnownMaxAge = MaxAge,
         )
 
@@ -75,7 +94,7 @@ class LocationPolicyTest {
     @Test
     fun `nothing available resolves to NONE`() = runTest {
         val result =
-            LocationPolicy.resolve(now = Now, currentFix = { null }, lastKnown = null, lastKnownMaxAge = MaxAge)
+            LocationPolicy.resolve(now = Now, currentFix = { null }, lastKnown = { null }, lastKnownMaxAge = MaxAge)
 
         assertEquals(LocationResult(null, LocationSource.NONE), result)
     }

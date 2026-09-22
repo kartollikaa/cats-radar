@@ -10,21 +10,27 @@ data class LocationResult(val fix: LocationFix?, val source: LocationSource)
 /**
  * Resolves the best available location: a fresh fix first, a recent last-known fix otherwise,
  * nothing when neither is usable. No permission handling and no platform I/O of its own —
- * [currentFix] and [lastKnown] already encapsulate that.
+ * [currentFix] and [lastKnown] already encapsulate that. [lastKnown] is only invoked when
+ * [currentFix] comes back empty, so a successful fix never pays for the extra round trip.
  */
 object LocationPolicy {
     suspend fun resolve(
         now: Instant,
         currentFix: suspend () -> LocationFix?,
-        lastKnown: LocationFix?,
+        lastKnown: suspend () -> LocationFix?,
         lastKnownMaxAge: Duration = Tuning.LAST_KNOWN_MAX_AGE,
     ): LocationResult {
         val fix = currentFix()
-        val lastKnownIsFresh = lastKnown != null && now - lastKnown.fixedAt <= lastKnownMaxAge
-        return when {
-            fix != null -> LocationResult(fix, LocationSource.CURRENT_FIX)
-            lastKnownIsFresh -> LocationResult(lastKnown, LocationSource.LAST_KNOWN)
-            else -> LocationResult(null, LocationSource.NONE)
+        return if (fix != null) {
+            LocationResult(fix, LocationSource.CURRENT_FIX)
+        } else {
+            val recent = lastKnown()
+            val lastKnownIsFresh = recent != null && now - recent.fixedAt <= lastKnownMaxAge
+            if (lastKnownIsFresh) {
+                LocationResult(recent, LocationSource.LAST_KNOWN)
+            } else {
+                LocationResult(null, LocationSource.NONE)
+            }
         }
     }
 }
