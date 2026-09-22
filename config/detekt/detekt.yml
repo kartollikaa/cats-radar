@@ -10,6 +10,19 @@ naming:
     privatePropertyPattern: '_?[A-Za-z][A-Za-z0-9]*' # same rule, private top-level vals
 
 style:
+  MagicNumber:
+    # detekt's own default list, plus androidHostTest: AGP's KMP plugin renamed androidUnitTest,
+    # and a fixture's real dimensions are the point of the assertion, not a number to name.
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+      - '**/commonTest/**'
+      - '**/jvmTest/**'
+      - '**/androidUnitTest/**'
+      - '**/androidHostTest/**'
+      - '**/androidInstrumentedTest/**'
+      - '**/jsTest/**'
+      - '**/iosTest/**'
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview', 'ThemePreviews'] # preview functions are invoked by tooling, not by call sites (compose-preview-patterns.md §1)
 

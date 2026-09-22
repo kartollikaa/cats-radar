@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Regenerates the JPEG fixtures used by the photo-pipeline tests.
+
+Run from the repository root:  python3 tools/make-photo-fixtures.py
+
+Needs Pillow (`pip install pillow`). Pillow is deliberately a different implementation from
+androidx.exifinterface, which is what reads these files back in the tests: a fixture written and
+read by the same library would only prove that library is self-consistent.
+
+GPS components must be IFDRational. Plain tuples raise "TypeError: bad operand type for abs()".
+
+After changing anything here, update the expected SHA-256 values in DigestTest — they are taken
+from `shasum -a 256`, outside Kotlin, so the digest test does not check an implementation against
+itself.
+"""
+
+import os
+
+from PIL import ExifTags, Image
+from PIL.TiffImagePlugin import IFDRational as R
+
+OUT = "data/src/androidHostTest/resources/photos"
+
+# Barcelona, to five decimals: 41.39864, 2.17842
+LAT_DMS = (R(41, 1), R(23, 1), R(5512, 100))
+LON_DMS = (R(2, 1), R(10, 1), R(4231, 100))
+
+
+def gradient(size):
+    """A flat fill survives any resampling unchanged, so it could not tell a correct resize from
+    a broken one. A gradient can."""
+    image = Image.new("RGB", size)
+    pixels = image.load()
+    width, height = size
+    for y in range(0, height, 8):
+        for x in range(0, width, 8):
+            color = ((x * 255) // width, (y * 255) // height, 128)
+            for dy in range(min(8, height - y)):
+                for dx in range(min(8, width - x)):
+                    pixels[x + dx, y + dy] = color
+    return image
+
+
+def landscape_with_gps(path):
+    image = gradient((3000, 2250))
+    exif = image.getexif()
+    ifd = exif.get_ifd(ExifTags.IFD.Exif)
+    ifd[ExifTags.Base.DateTimeOriginal] = "2026:07:14 09:31:12"
+    ifd[ExifTags.Base.OffsetTimeOriginal] = "+02:00"
+    gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
+    gps[ExifTags.GPS.GPSLatitudeRef] = "N"
+    gps[ExifTags.GPS.GPSLatitude] = LAT_DMS
+    gps[ExifTags.GPS.GPSLongitudeRef] = "E"
+    gps[ExifTags.GPS.GPSLongitude] = LON_DMS
+    image.save(path, exif=exif, quality=45)
+
+
+def portrait_no_gps(path):
+    image = gradient((1200, 1600))
+    exif = image.getexif()
+    exif.get_ifd(ExifTags.IFD.Exif)[ExifTags.Base.DateTimeOriginal] = "2025:12:31 23:59:01"
+    image.save(path, exif=exif, quality=45)
+
+
+def small_no_exif(path):
+    gradient((800, 600)).save(path, quality=45)
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    landscape_with_gps(f"{OUT}/landscape_with_gps.jpg")
+    portrait_no_gps(f"{OUT}/portrait_no_gps.jpg")
+    small_no_exif(f"{OUT}/small_no_exif.jpg")
+    with open(f"{OUT}/landscape_with_gps.jpg", "rb") as source:
+        head = source.read(400)
+    with open(f"{OUT}/truncated.jpg", "wb") as truncated:
+        truncated.write(head)
+    open(f"{OUT}/empty.jpg", "wb").close()
+    for name in sorted(os.listdir(OUT)):
+        print(name, os.path.getsize(f"{OUT}/{name}"))
+
+
+if __name__ == "__main__":
+    main()

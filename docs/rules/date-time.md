@@ -36,8 +36,13 @@ reaches the composable as a `String` in State. Never format in a composable, nev
 - **Fixed, locale-independent patterns** (`HH:mm`, ISO dates in export files): the kotlinx-datetime
   `Format` builder, declared once as a top-level `val` next to its use.
   ```kotlin
-  private val HourMinute = LocalTime.Format { hour(); char(':'); minute() }
+  private val HourMinute = LocalTime.Format {
+      hour()
+      char(':')
+      minute()
+  }
   ```
+  One call per line — detekt's `NoSemicolons` rejects the single-line form.
 - **Locale-aware output** — month names, weekday names, "today"/"yesterday", relative time,
   durations like "1 h 20 min" — goes through the `DateTimeFormatter` interface in `:presentation`.
   Its Android implementation in `androidMain` uses `java.time.format.DateTimeFormatter` /

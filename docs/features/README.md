@@ -23,5 +23,7 @@ a document nobody updates is worse than none.
 - `app-shell.md` — theme, navigation, the MVI `Store` contract, and dependency injection.
 - `strings.md` — where user-facing text lives, and how a data-driven label gets from a mapper to
   a translatable resource.
+- `photos.md` — reading a photo's metadata, the app's own copies, hashing, the gallery, and why
+  the pixel tests need Robolectric's native graphics.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

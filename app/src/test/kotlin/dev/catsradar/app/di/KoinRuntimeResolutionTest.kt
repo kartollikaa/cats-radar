@@ -7,8 +7,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
+import dev.catsradar.domain.platform.Digest
+import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.Haptics
+import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationProvider
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import org.junit.After
 import org.junit.Test
@@ -49,6 +54,11 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<Haptics>())
         assertNotNull(koin.get<LocationProvider>())
         assertNotNull(koin.get<LocationAttachScheduler>())
+        assertNotNull(koin.get<ExifReader>())
+        assertNotNull(koin.get<ImageResizer>())
+        assertNotNull(koin.get<Digest>())
+        assertNotNull(koin.get<GallerySaver>())
+        assertNotNull(koin.get<PhotoStorage>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
     }
 }

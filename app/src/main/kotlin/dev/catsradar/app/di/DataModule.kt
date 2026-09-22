@@ -3,17 +3,27 @@ package dev.catsradar.app.di
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.createCatsDatabase
+import dev.catsradar.data.platform.AndroidExifReader
+import dev.catsradar.data.platform.AndroidImageResizer
+import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.platform.FusedLocationProvider
+import dev.catsradar.data.platform.MediaStoreGallerySaver
 import dev.catsradar.data.platform.RandomIdGenerator
+import dev.catsradar.data.platform.Sha256Digest
 import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
 import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestState
 import dev.catsradar.data.platform.VibratorHaptics
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.domain.platform.DeviceIdProvider
+import dev.catsradar.domain.platform.Digest
+import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.IdGenerator
+import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.LocationProvider
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.repository.EncounterRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -29,4 +39,11 @@ val dataModule = module {
     single<Haptics> { VibratorHaptics(androidContext()) }
     single<LocationProvider> { FusedLocationProvider(androidContext()) }
     single<LocationPermissionRequestState> { SharedPreferencesLocationPermissionRequestState(androidContext()) }
+    single { AndroidPhotoStorage(androidContext()) }
+    // The resizer needs the concrete store: it writes through it, which the interface does not expose.
+    single<PhotoStorage> { get<AndroidPhotoStorage>() }
+    single<ExifReader> { AndroidExifReader(androidContext()) }
+    single<ImageResizer> { AndroidImageResizer(androidContext(), get()) }
+    single<Digest> { Sha256Digest(androidContext()) }
+    single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
 }
