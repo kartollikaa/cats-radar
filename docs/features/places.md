@@ -10,9 +10,14 @@ Every located encounter belongs to a **place cell** — its geohash truncated to
 encounters: a street's worth of cats share one lookup instead of one each, and the cell is stored
 once no matter how many cats fall in it.
 
-`AttachLocation` creates the cell as `PENDING` the first time a cat lands in it and never touches it
-again — resolving it is the worker's job. A second cat in the same cell does **not** queue it a
-second time.
+`PlaceCells.remember` creates the cell as `PENDING` the first time a cat lands in it and never
+touches it again — resolving it is the worker's job. A second cat in the same cell does **not** queue
+it a second time.
+
+Every path that gives an encounter a geohash goes through it, whatever produced the coordinates:
+a location fix (`AttachLocation`) or a photo's own EXIF (`ImportPhotos`). Coordinates without a cell
+would be a cat that knows exactly where it was and still reads as "no location" in this screen —
+which is what a photo imported with GPS used to be.
 
 ## Naming them
 

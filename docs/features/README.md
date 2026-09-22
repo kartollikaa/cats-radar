@@ -25,6 +25,8 @@ a document nobody updates is worse than none.
   a translatable resource.
 - `photos.md` — reading a photo's metadata, the app's own copies, hashing, the gallery, and why
   the pixel tests need Robolectric's native graphics.
+- `import.md` — turning gallery photos into encounters: where their date and their location
+  come from, and why a historical photo never gets today's.
 - `statistics.md` — what every number means: day windows, streaks, milestones, and why the
   overall rate pools cats and time instead of averaging outings.
 - `places.md` — how coordinates become a country, city and area: place cells, the geocoding

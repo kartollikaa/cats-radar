@@ -28,15 +28,16 @@
 | 11b | Photo thumbnails on screen | Coil 3, thumbnails in the Encounters list and the full copy on the detail, placeholder when `thumbPath` is null. | safe | ~250 | 11 | merged |
 | 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | merged |
 | 13 | Statistics screen | `ObserveStats`, `StatisticsStore`/`Screen`: headline, milestone, day windows, streaks, outings and rates. | safe | ~350 | 8, 12 | merged |
-| 13b | Current outing and milestone toast | Current-outing block on the Counter with a live ticker, milestone toast with `lastSeenMilestone` persisted, and a "+N" burst on each tap. | safe | ~350 | 13 | in-progress |
+| 13b | Current outing and milestone toast | Current-outing block on the Counter with a live ticker, milestone toast with `lastSeenMilestone` persisted, and a "+N" burst on each tap. | safe | ~350 | 13 | merged |
 | 14 | Reverse geocoding of place cells | `ReverseGeocoder` (Android `Geocoder`), PlaceCell creation on location attach, `ResolvePendingPlaces` use case, connected-network worker with backoff, region tree builder + tests. | safe | ~450 | 7, 12 | merged |
-| 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | in-progress |
-| 16 | Gallery import | `ImportRules` (recent-photo window, digest dedup, EXIF time offset) + tests, `ImportPhotos` use case, worker with progress notification, long-press entry, summary with undo. | safe | ~600 | 11 | planned |
+| 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | merged |
+| 16 | Import rules and the import use case | `ImportRules` (recent-photo window, digest dedup, EXIF time and offset) + tests, `ImportPhotos` use case, digest lookup in the repository, file-date fallback. Nothing calls it yet. | safe | ~450 | 11 | planned |
+| 16b | Gallery import on screen | `ImportPhotosWorker` with progress notification, `PickMultipleVisualMedia` on long-press camera, summary with undo, `ACCESS_MEDIA_LOCATION` + `setRequireOriginal` spike. | safe | ~450 | 16 | planned |
 | 17 | Backup format and merge rules | Serializable export models, ZIP writer/reader, `manifest.json` versioning, merge rules (newer `updatedAt`, delete-vs-live) with tests, `ExportBackup`/`ImportBackup` use cases. | safe | ~500 | 11, 14 | planned |
-| 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers with progress, gallery toggle UI (backup export/import still to come). | safe | ~200 | 11 | in-progress |
+| 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers with progress, gallery toggle UI (backup export/import still to come). | safe | ~200 | 11 | merged |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | merged |
-| 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | planned |
+| 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | merged |
 | 23 | Visual design pass | Research comparable apps and published Android UI work, then a deliberate visual language: type scale, colour, the counter as the centrepiece, list and detail rhythm, empty states, motion on tally and undo. Last slice, after every behaviour exists. | safe | ~500 | 22 | planned |
 | 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | merged |
 
@@ -170,11 +171,19 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** reads only what slice 14 produced.
 - **Cleanup owed:** none.
 
-### Slice 16 — Gallery import
-- **In scope:** `ImportRules` + tests, `ImportPhotos` use case (digest skip, EXIF time, `RECENT_PHOTO_WINDOW`),
-  `ImportPhotosWorker` with progress notification and `IMPORT_BATCH_MAX` (≤ `getPickImagesMaxLimit()`),
-  `PickMultipleVisualMedia` on long-press camera, summary dialog with undo; `ACCESS_MEDIA_LOCATION` +
-  `setRequireOriginal` spike on a real device first — result recorded in the decision log.
+### Slice 16 — Import rules and the import use case
+- **In scope:** `ImportRules` + tests (digest skip, EXIF time with and without an offset, file-date
+  fallback, `RECENT_PHOTO_WINDOW`), `ImportPhotos` use case reporting added/skipped/failed per photo,
+  `EncounterRepository.findByDigest`, a platform reader for a source file's own date.
+- **Out of scope:** the worker, the picker, the summary UI, the EXIF-GPS spike — all slice 16b.
+- **Ships safely because:** nothing calls the use case yet; the module graph is the only thing that
+  changes at runtime.
+- **Cleanup owed:** none.
+
+### Slice 16b — Gallery import on screen
+- **In scope:** `ImportPhotosWorker` with progress notification and `IMPORT_BATCH_MAX`
+  (≤ `getPickImagesMaxLimit()`), `PickMultipleVisualMedia` on long-press camera, summary with undo;
+  `ACCESS_MEDIA_LOCATION` + `setRequireOriginal` spike — result recorded in the decision log.
 - **Out of scope:** Settings entry point (slice 18 adds the second entry).
 - **Ships safely because:** complete behaviour; historical photos never get today's location by construction.
 - **Cleanup owed:** none.
@@ -223,6 +232,12 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-22: slice 16 split. Rules, the use case and the digest lookup are one reviewable unit that
+  nothing calls yet; the worker, the picker, the summary and the EXIF-GPS spike are another. Together
+  they were roughly 900 reviewable lines against a 600 target. The spike goes with 16b because that is
+  where a Photo Picker URI first exists — the rules behave identically whether or not GPS survives
+  redaction, only the observed outcome differs.
 - 2026-09-22: slice 1 built. AGP 9.4 requires Gradle ≥ 9.6 (wrapper 9.7.1); Compose 1.12 requires
   `compileSdk 37`, so compile/target SDK are 37. Modules other than `:app` ship without placeholder
   sources — an empty KMP/Android module compiles. `detekt.yml` carries one early override

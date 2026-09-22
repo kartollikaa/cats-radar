@@ -131,5 +131,6 @@ rhythm either way rather than shifting when a thumbnail is missing.
 
 ## Not built yet
 
-No gallery import. `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
+The gallery-import rules exist but nothing can reach them yet — see `import.md`.
+`PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.
