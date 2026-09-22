@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
@@ -29,6 +30,9 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.androidx.work.testing)
+    testImplementation(libs.androidx.room.legacy.runtime)
+    testImplementation(libs.kotlinx.coroutines.test)
     // Robolectric runs on the host JVM, not a device; BundledSQLiteDriver needs the host-native
     // artifact, same as :data's androidHostTest (see its build.gradle.kts for why).
     testImplementation(libs.androidx.sqlite.bundled.jvm)

@@ -4,8 +4,10 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.IdGenerator
+import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,27 @@ internal class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun update(encounter: Encounter) {
         encounters.update { list -> list.map { if (it.id == encounter.id) encounter else it } }
+    }
+
+    override suspend fun attachLocation(id: String, stamp: LocationStamp) {
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null) {
+                    encounter.copy(
+                        lat = stamp.lat,
+                        lon = stamp.lon,
+                        accuracyMeters = stamp.accuracyMeters,
+                        locationSource = stamp.locationSource,
+                        locationFixedAt = stamp.locationFixedAt,
+                        geohash = stamp.geohash,
+                        placeCellId = stamp.placeCellId,
+                        updatedAt = stamp.updatedAt,
+                    )
+                } else {
+                    encounter
+                }
+            }
+        }
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
@@ -84,4 +107,15 @@ internal class FakeDeviceIdProvider(override val deviceId: String = "device-1") 
 
 internal class FakeClock(private val instant: Instant) : Clock {
     override fun now(): Instant = instant
+}
+
+internal class FakeLocationPermissionRequestState(
+    initiallyRequested: Boolean = false,
+) : LocationPermissionRequestState {
+    override var alreadyRequested: Boolean = initiallyRequested
+        private set
+
+    override fun markRequested() {
+        alreadyRequested = true
+    }
 }

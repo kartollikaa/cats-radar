@@ -35,6 +35,12 @@ androidx-navigation3 = "1.2.0-rc01"
 kotlinx-serialization = "1.10.0"
 koin-bom = "4.2.2"
 turbine = "1.2.1"
+play-services-location = "21.4.0"
+androidx-work = "2.11.2"
+# WorkManager 2.11.2's internal WorkDatabase still extends the pre-rename androidx.room
+# RoomDatabase (runtime-scoped in its POM, so Gradle omits it from the compile classpath);
+# work-testing tests that reach WorkManagerImpl.workDatabase need it added explicitly to resolve.
+androidx-room-legacy = "2.7.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -71,6 +77,11 @@ koin-android = { module = "io.insert-koin:koin-android" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
 koin-test = { module = "io.insert-koin:koin-test" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
+androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
+androidx-room-legacy-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room-legacy" }
 
 # build-logic classpath
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }

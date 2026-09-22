@@ -30,6 +30,16 @@ internal interface SchemaProbeDao {
     @Query("SELECT COUNT(*) FROM encounters WHERE id = :id")
     suspend fun encounterRowCount(id: String): Int
 
+    // Bypasses EncounterDao's own "deletedAt IS NULL" read filters, to inspect a soft-deleted row.
+    @Query("SELECT lat FROM encounters WHERE id = :id")
+    suspend fun rawEncounterLat(id: String): Double?
+
+    @Query("SELECT locationSource FROM encounters WHERE id = :id")
+    suspend fun rawEncounterLocationSource(id: String): String
+
+    @Query("SELECT deletedAt FROM encounters WHERE id = :id")
+    suspend fun rawEncounterDeletedAt(id: String): Long?
+
     // Bypasses EnumConverters/entity validation entirely, to simulate a row written by a future
     // app version or a hand-edited database. origin/locationSource/deviceId are fixed valid
     // literals: only tzOffsetMinutes and kind are the fields under test.

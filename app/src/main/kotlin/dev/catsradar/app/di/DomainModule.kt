@@ -1,5 +1,6 @@
 package dev.catsradar.app.di
 
+import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.UndoLastTally
@@ -14,4 +15,5 @@ val domainModule = module {
     factoryOf(::LogTally)
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounterCount)
+    factoryOf(::AttachLocation)
 }

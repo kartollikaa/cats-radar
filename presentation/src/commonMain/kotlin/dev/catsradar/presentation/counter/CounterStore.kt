@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.UndoLastTally
@@ -18,6 +19,7 @@ class CounterStore(
     private val undoLastTally: UndoLastTally,
     observeEncounterCount: ObserveEncounterCount,
     private val stateMapper: CounterStateMapper,
+    private val locationPermissionRequestState: LocationPermissionRequestState,
 ) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.map(count = 0, undoVisible = false)) {
 
     private var tapSequence = 0
@@ -27,7 +29,15 @@ class CounterStore(
 
     init {
         observeEncounterCount()
-            .onEach { count -> setState { stateMapper.map(count = count, undoVisible = undoVisible) } }
+            .onEach { count ->
+                setState {
+                    stateMapper.map(
+                        count = count,
+                        undoVisible = undoVisible,
+                        locationPermissionHintVisible = locationPermissionHintVisible,
+                    )
+                }
+            }
             .launchIn(viewModelScope)
     }
 
@@ -35,6 +45,9 @@ class CounterStore(
         when (intent) {
             CounterIntent.TallyClicked -> onTallyClicked()
             CounterIntent.UndoClicked -> onUndoClicked()
+            is CounterIntent.LocationPermissionResult -> onLocationPermissionResult(intent.granted)
+            CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
+            CounterIntent.LocationPermissionHintDismissed -> setState { copy(locationPermissionHintVisible = false) }
         }
     }
 
@@ -42,8 +55,15 @@ class CounterStore(
         val sequence = ++tapSequence
         // The tap must feel instant: the tick fires before the write, not after it succeeds.
         emit(CounterEffect.HapticTick)
+        // Only the very first tally ever opens the system dialog; a denial must not re-prompt on
+        // every later tap, even across a process death (the flag is persisted, not in-memory).
+        if (!locationPermissionRequestState.alreadyRequested) {
+            locationPermissionRequestState.markRequested()
+            emit(CounterEffect.RequestLocationPermission)
+        }
         runWriteIgnoringFailure {
             val encounter = logTally()
+            emit(CounterEffect.AttachLocation(encounter.id))
             // Captured before suspending, not completion order: a later tap's insert can resume
             // before an earlier one's, so only a higher sequence may overwrite the undo target.
             if (sequence > undoTargetSequence) {
@@ -53,6 +73,10 @@ class CounterStore(
                 restartUndoTimer()
             }
         }
+    }
+
+    private fun onLocationPermissionResult(granted: Boolean) {
+        setState { copy(locationPermissionHintVisible = !granted) }
     }
 
     private fun restartUndoTimer() {
@@ -71,6 +95,7 @@ class CounterStore(
         undoTargetId = null
         undoTimeoutJob?.cancel()
         setState { copy(undoVisible = false) }
+        emit(CounterEffect.CancelLocationAttach(id))
         runWriteIgnoringFailure { undoLastTally(id) }
     }
 

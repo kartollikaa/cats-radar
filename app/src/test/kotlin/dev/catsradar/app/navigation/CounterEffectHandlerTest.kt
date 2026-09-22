@@ -1,5 +1,7 @@
 package dev.catsradar.app.navigation
 
+import dev.catsradar.app.permission.LocationPermissionRequester
+import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterEffect
 import org.junit.Test
@@ -14,13 +16,77 @@ private class FakeHaptics : Haptics {
     }
 }
 
-class CounterEffectHandlerTest {
-    @Test
-    fun `HapticTick calls Haptics tick`() {
-        val haptics = FakeHaptics()
+private class FakeLocationAttachScheduler : LocationAttachScheduler {
+    val scheduledIds = mutableListOf<String>()
+    val cancelledIds = mutableListOf<String>()
 
-        handleCounterEffect(CounterEffect.HapticTick, haptics)
+    override fun schedule(encounterId: String) {
+        scheduledIds += encounterId
+    }
+
+    override fun cancel(encounterId: String) {
+        cancelledIds += encounterId
+    }
+}
+
+private class FakeLocationPermissionRequester : LocationPermissionRequester {
+    var requestCount = 0
+        private set
+
+    override fun request() {
+        requestCount++
+    }
+}
+
+class CounterEffectHandlerTest {
+    private val haptics = FakeHaptics()
+    private val locationAttachScheduler = FakeLocationAttachScheduler()
+    private val locationPermissionRequester = FakeLocationPermissionRequester()
+
+    @Test
+    fun `HapticTick calls Haptics tick and nothing else`() {
+        handleCounterEffect(CounterEffect.HapticTick, haptics, locationAttachScheduler, locationPermissionRequester)
 
         assertEquals(1, haptics.tickCount)
+        assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
+        assertEquals(0, locationPermissionRequester.requestCount)
+    }
+
+    @Test
+    fun `AttachLocation schedules the worker for exactly that encounter id`() {
+        handleCounterEffect(
+            CounterEffect.AttachLocation("encounter-42"),
+            haptics,
+            locationAttachScheduler,
+            locationPermissionRequester,
+        )
+
+        assertEquals(listOf("encounter-42"), locationAttachScheduler.scheduledIds)
+        assertEquals(0, haptics.tickCount)
+    }
+
+    @Test
+    fun `CancelLocationAttach cancels the worker for exactly that encounter id`() {
+        handleCounterEffect(
+            CounterEffect.CancelLocationAttach("encounter-42"),
+            haptics,
+            locationAttachScheduler,
+            locationPermissionRequester,
+        )
+
+        assertEquals(listOf("encounter-42"), locationAttachScheduler.cancelledIds)
+        assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
+    }
+
+    @Test
+    fun `RequestLocationPermission asks the requester`() {
+        handleCounterEffect(
+            CounterEffect.RequestLocationPermission,
+            haptics,
+            locationAttachScheduler,
+            locationPermissionRequester,
+        )
+
+        assertEquals(1, locationPermissionRequester.requestCount)
     }
 }

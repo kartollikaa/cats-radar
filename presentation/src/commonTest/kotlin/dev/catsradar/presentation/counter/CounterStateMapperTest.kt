@@ -22,4 +22,12 @@ class CounterStateMapperTest {
             mapper.map(count = 42, undoVisible = true),
         )
     }
+
+    @Test
+    fun `maps the location permission hint visibility through unchanged`() {
+        assertEquals(
+            CounterState(totalLabel = "0", undoVisible = false, locationPermissionHintVisible = true),
+            mapper.map(count = 0, undoVisible = false, locationPermissionHintVisible = true),
+        )
+    }
 }

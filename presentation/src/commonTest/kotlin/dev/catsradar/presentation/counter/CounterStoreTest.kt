@@ -41,6 +41,7 @@ class CounterStoreTest {
 
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
+        locationPermissionRequestState: FakeLocationPermissionRequestState = FakeLocationPermissionRequestState(),
     ): Pair<CounterStore, FakeEncounterRepository> {
         val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
         val store = CounterStore(
@@ -48,6 +49,7 @@ class CounterStoreTest {
             undoLastTally = UndoLastTally(encounterRepository, clock),
             observeEncounterCount = ObserveEncounterCount(encounterRepository),
             stateMapper = CounterStateMapper(),
+            locationPermissionRequestState = locationPermissionRequestState,
         )
         runCurrent()
         return store to encounterRepository
@@ -71,11 +73,93 @@ class CounterStoreTest {
         assertTrue(store.state.value.undoVisible)
         store.effects.test {
             assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
             assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-2"), awaitItem())
             assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-3"), awaitItem())
             expectNoEvents()
         }
     }
+
+    @Test
+    fun `only the first tally ever requests location permission`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+
+        store.effects.test {
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-2"), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a fresh Store after process death does not re-request an already-requested permission`() =
+        runTest(mainDispatcher) {
+            // Simulates a killed-and-relaunched process: a brand new Store, but the persisted
+            // flag survived.
+            val (store, _) = newStore(locationPermissionRequestState = FakeLocationPermissionRequestState(true))
+
+            store.effects.test {
+                store.dispatch(CounterIntent.TallyClicked)
+                runCurrent()
+                assertEquals(CounterEffect.HapticTick, awaitItem())
+                assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `a denied permission result shows the hint, a granted one hides it`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.dispatch(CounterIntent.LocationPermissionResult(granted = false))
+        runCurrent()
+        assertTrue(store.state.value.locationPermissionHintVisible)
+
+        store.dispatch(CounterIntent.LocationPermissionResult(granted = true))
+        runCurrent()
+        assertFalse(store.state.value.locationPermissionHintVisible)
+    }
+
+    @Test
+    fun `dismissing the hint hides it without touching permission state`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.LocationPermissionResult(granted = false))
+        runCurrent()
+
+        store.dispatch(CounterIntent.LocationPermissionHintDismissed)
+        runCurrent()
+
+        assertFalse(store.state.value.locationPermissionHintVisible)
+    }
+
+    @Test
+    fun `the grant action re-requests permission even after the first tally already asked once`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+
+            store.effects.test {
+                store.dispatch(CounterIntent.TallyClicked)
+                runCurrent()
+                assertEquals(CounterEffect.HapticTick, awaitItem())
+                assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+                assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
+
+                store.dispatch(CounterIntent.GrantLocationClicked)
+                runCurrent()
+                assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+            }
+        }
 
     @Test
     fun `the total tracks the repository flow rather than a store-local counter`() = runTest(mainDispatcher) {
@@ -105,6 +189,27 @@ class CounterStoreTest {
 
         assertEquals(listOf(newestId), repository.softDeletedIds)
         assertEquals("1", store.state.value.totalLabel)
+    }
+
+    @Test
+    fun `undo emits CancelLocationAttach for the target id, but a second undo does not`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+            assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            assertEquals(CounterEffect.CancelLocationAttach("id-1"), awaitItem())
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
     }
 
     @Test
@@ -144,6 +249,9 @@ class CounterStoreTest {
             runCurrent()
 
             assertEquals(CounterState(totalLabel = "0", undoVisible = false), store.state.value)
-            store.effects.test { assertEquals(CounterEffect.HapticTick, awaitItem()) }
+            store.effects.test {
+                assertEquals(CounterEffect.HapticTick, awaitItem())
+                assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
+            }
         }
 }
