@@ -113,6 +113,16 @@ class LogPhotoTest {
     }
 
     @Test
+    fun `an unreadable photo creates no place cell either`() = runTest {
+        exif.data = ExifData(lat = 41.39864, lon = 2.17842)
+        resizer.result = null
+
+        assertEquals(PhotoResult.Unreadable, logPhoto()(SOURCE))
+
+        assertEquals(emptyList(), placeCells.upserted)
+    }
+
+    @Test
     fun `an unreadable photo is never copied to the gallery either`() = runTest {
         resizer.result = null
 

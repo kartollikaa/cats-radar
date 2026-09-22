@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifData
@@ -116,20 +117,6 @@ internal fun externalEncounter(id: String, occurredAt: Instant = Instant.parse("
         deletedAt = null,
     )
 
-internal class FakePlaceCellRepository : PlaceCellRepository {
-    private val cells = MutableStateFlow<List<PlaceCell>>(emptyList())
-
-    override fun observeAll(): Flow<List<PlaceCell>> = cells
-
-    override suspend fun upsert(cell: PlaceCell) {
-        cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }
-    }
-
-    override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
-
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> = emptyList()
-}
-
 internal class FakeIdGenerator : IdGenerator {
     private var counter = 0
     override fun newId(): String = "id-${++counter}"
@@ -166,6 +153,21 @@ internal class FakeImageResizer(
 
 internal class FakeDigest : Digest {
     override suspend fun sha256(uri: String): String? = "digest"
+}
+
+internal class FakePlaceCellRepository : PlaceCellRepository {
+    private val cells = MutableStateFlow<List<PlaceCell>>(emptyList())
+
+    override fun observeAll(): Flow<List<PlaceCell>> = cells
+
+    override suspend fun upsert(cell: PlaceCell) {
+        cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }
+    }
+
+    override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
+
+    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
+        cells.value.filter { it.status == PlaceStatus.PENDING }.drop(offset).take(limit)
 }
 
 internal class FakeGallerySaver : GallerySaver {

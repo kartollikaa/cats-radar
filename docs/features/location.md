@@ -51,8 +51,8 @@ location error.
 ## Fields stamped
 
 `locationSource` records which rung produced the value: `CURRENT_FIX`, `LAST_KNOWN`,
-`BACKFILLED`, or `NONE` from this code path (`EXIF` exists in the domain enum for the photo flow,
-which isn't built yet, so nothing currently writes it). `locationFixedAt` is the fix's own
+`BACKFILLED`, or `NONE` from this code path; `EXIF` belongs to the photo flow, where a photo's own
+metadata beats anything the phone could measure later. `locationFixedAt` is the fix's own
 timestamp — when GPS actually produced the reading — and is deliberately separate from
 `occurredAt`, the tally's own timestamp; the two diverge whenever a fix resolves late or is
 backfilled from a different tap's fix. `geohash` is encoded at `Tuning.GEOHASH_PRECISION`
@@ -71,10 +71,9 @@ placeCellId use their own distinct precisions*).
 - `app/src/main/kotlin/dev/catsradar/app/worker/AttachLocationWorker.kt`,
   `WorkManagerLocationAttachScheduler.kt`
 
-## Not handled yet
+## Turning it into a place name
 
-Nothing yet creates or resolves a `PlaceCell` from an attached location — the model, its Room
-entity/DAO, and `PlaceCellRepository` all exist and are unit-tested, but they are not bound in
-`app/di/DataModule.kt` and no use case calls `upsert`. Reverse geocoding (§4.4 of the design spec)
-and the region hierarchy built on it are entirely unbuilt. EXIF-derived location, part of the
-photo flow, is likewise not implemented.
+A fix is coordinates, and coordinates are not a place. `AttachLocation` hands its geohash to
+`PlaceCells.remember`, which creates the cell the point falls in so a geocoder can name it later —
+see `places.md`. Every other path that produces coordinates does the same, so the fix is not special
+here.
