@@ -58,9 +58,8 @@ run.
 
 ## Not handled yet
 
-Bottom navigation and the other five screens the design spec lists (`Encounters`,
-`EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`) don't exist — `Counter`
-is the only `NavKey`, so the back-stack rules the spec describes (§2, bottom bar keeping `Counter`
-as the root) have nothing to apply to yet. `CatsRadarTheme` sets only a light/dark `colorScheme`;
-it has no custom typography or shapes, unlike the fuller theme surface
-`docs/rules/compose-patterns.md` §3 describes.
+`Counter` and `Encounters` are the only two `NavKey`s behind the bottom `NavigationBar`; the
+root-stack back rule it enforces is covered in `browsing-cats.md`. The other four screens the
+design spec lists (`EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`)
+don't exist yet. `CatsRadarTheme` sets only a light/dark `colorScheme`; it has no custom typography
+or shapes, unlike the fuller theme surface `docs/rules/compose-patterns.md` §3 describes.
