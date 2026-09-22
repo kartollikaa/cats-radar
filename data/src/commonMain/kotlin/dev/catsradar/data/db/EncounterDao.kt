@@ -12,6 +12,9 @@ interface EncounterDao {
     @Query("SELECT * FROM encounters WHERE deletedAt IS NULL ORDER BY occurredAt DESC")
     fun observeAll(): Flow<List<EncounterEntity>>
 
+    @Query("SELECT COUNT(*) FROM encounters WHERE deletedAt IS NULL")
+    fun observeActiveCount(): Flow<Int>
+
     @Query("SELECT * FROM encounters WHERE id = :id AND deletedAt IS NULL")
     fun observeById(id: String): Flow<EncounterEntity?>
 

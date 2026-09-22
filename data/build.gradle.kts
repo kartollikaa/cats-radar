@@ -13,7 +13,9 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.domain)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.room.runtime)
+            // api: :app's Koin wiring holds a CatsDatabase reference directly, which needs
+            // RoomDatabase (room-runtime) resolvable on its own classpath.
+            api(libs.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
         }
         commonTest.dependencies {
