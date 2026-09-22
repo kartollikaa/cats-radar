@@ -9,6 +9,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
 import dev.catsradar.ui.counter.CounterScreen
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,7 +32,11 @@ fun CatsRadarNavHost() {
                 LaunchedEffect(store) {
                     store.effects.collect {}
                 }
-                CounterScreen(state = state)
+                CounterScreen(
+                    state = state,
+                    onTallyClick = { store.dispatch(CounterIntent.TallyClicked) },
+                    onUndoClick = { store.dispatch(CounterIntent.UndoClicked) },
+                )
             }
         },
     )

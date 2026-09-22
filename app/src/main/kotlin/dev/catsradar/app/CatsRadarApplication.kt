@@ -1,6 +1,8 @@
 package dev.catsradar.app
 
 import android.app.Application
+import dev.catsradar.app.di.dataModule
+import dev.catsradar.app.di.domainModule
 import dev.catsradar.app.di.presentationModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -12,7 +14,7 @@ class CatsRadarApplication : Application() {
         startKoin {
             androidLogger()
             androidContext(this@CatsRadarApplication)
-            modules(presentationModule)
+            modules(domainModule, dataModule, presentationModule)
         }
     }
 }
