@@ -3,11 +3,13 @@ package dev.catsradar.presentation.counter
 import app.cash.turbine.Event
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.UndoLastTally
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -464,6 +466,54 @@ class CounterStoreTest {
 
             assertEquals(emptyList(), milestonesIn(cancelAndConsumeRemainingEvents()))
         }
+    }
+
+    @Test
+    fun `tapping a coat logs a cat of that coat, without a second tap`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.dispatch(CounterIntent.CoatTallyClicked(CoatOption.GREY_WHITE))
+        runCurrent()
+
+        val logged = repository.encounters().single()
+        assertEquals(CatCoat.GREY_WHITE, logged.coat)
+        assertEquals("1", store.state.value.totalLabel)
+    }
+
+    @Test
+    fun `the big button still logs a cat whose coat nobody noted`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+
+        assertNull(repository.encounters().single().coat)
+    }
+
+    @Test
+    fun `the grid shows which coat the undoable cat had, and forgets it once undone`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+
+            store.dispatch(CounterIntent.CoatTallyClicked(CoatOption.BLACK))
+            runCurrent()
+            assertEquals(CoatOption.BLACK, store.state.value.lastCoat)
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            assertNull(store.state.value.lastCoat)
+        }
+
+    @Test
+    fun `a coat tap is undoable like any other cat`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.dispatch(CounterIntent.CoatTallyClicked(CoatOption.GINGER))
+        runCurrent()
+        store.dispatch(CounterIntent.UndoClicked)
+        runCurrent()
+
+        assertEquals(1, repository.softDeletedIds.size)
     }
 
     @Test

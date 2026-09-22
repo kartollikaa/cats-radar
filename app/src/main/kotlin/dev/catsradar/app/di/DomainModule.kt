@@ -10,6 +10,7 @@ import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
+import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
@@ -31,6 +32,7 @@ val domainModule = module {
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factoryOf(::AttachLocation)
     factoryOf(::ResolvePendingPlaces)
+    factoryOf(::SetCoat)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)

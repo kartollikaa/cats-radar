@@ -1,5 +1,6 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -20,7 +21,7 @@ class LogTally(
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
-    suspend operator fun invoke(): Encounter {
+    suspend operator fun invoke(coat: CatCoat? = null): Encounter {
         val now = clock.now()
         val encounter = Encounter(
             id = idGenerator.newId(),
@@ -28,7 +29,7 @@ class LogTally(
             tzOffsetMinutes = timeZone.offsetAt(now).totalSeconds / SECONDS_PER_MINUTE,
             kind = EncounterKind.TALLY,
             origin = EncounterOrigin.APP,
-            coat = null,
+            coat = coat,
             photoPath = null,
             thumbPath = null,
             galleryUri = null,

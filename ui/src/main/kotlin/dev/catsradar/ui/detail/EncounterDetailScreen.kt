@@ -22,9 +22,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
+import dev.catsradar.ui.coat.CoatPicker
 import dev.catsradar.ui.encounters.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -36,11 +38,16 @@ fun EncounterDetailScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onDeleteClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
+    onCoatClick: (CoatOption?) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize().padding(contentPadding).padding(24.dp)) {
         when (state) {
             EncounterDetailState.Loading -> Unit
-            is EncounterDetailState.Loaded -> LoadedDetail(state, onDeleteClick = onDeleteClick)
+            is EncounterDetailState.Loaded -> LoadedDetail(
+                state,
+                onDeleteClick = onDeleteClick,
+                onCoatClick = onCoatClick
+            )
             is EncounterDetailState.Deleted -> DeletedDetail(state, onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing)
         }
@@ -52,6 +59,7 @@ private fun LoadedDetail(
     state: EncounterDetailState.Loaded,
     modifier: Modifier = Modifier,
     onDeleteClick: () -> Unit = {},
+    onCoatClick: (CoatOption?) -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         val photoPath = state.photoPath
@@ -80,6 +88,8 @@ private fun LoadedDetail(
                 }
             }
         }
+        Text(text = stringResource(R.string.detail_coat), style = MaterialTheme.typography.labelMedium)
+        CoatPicker(selected = state.coat, onCoatClick = onCoatClick)
         Button(onClick = onDeleteClick, modifier = Modifier.padding(top = 16.dp)) {
             Text(text = stringResource(R.string.detail_delete))
         }

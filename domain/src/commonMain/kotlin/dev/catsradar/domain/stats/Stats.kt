@@ -1,5 +1,6 @@
 package dev.catsradar.domain.stats
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Session
 import kotlin.time.Duration
 
@@ -9,6 +10,8 @@ data class Stats(
     val lastSevenDays: Int,
     val lastThirtyDays: Int,
     val withPhoto: Int,
+    /** Busiest coat first; "not specified" last. Coats nobody has seen are absent. */
+    val byCoat: List<CoatCount>,
     val currentStreak: Int,
     val longestStreak: Int,
     val nextMilestone: Milestone?,
@@ -19,6 +22,9 @@ data class Stats(
     val bestOuting: RatedOuting?,
     val currentOuting: CurrentOuting?,
 )
+
+/** [coat] of null is the "not specified" row. */
+data class CoatCount(val coat: CatCoat?, val count: Int, val shareOfTotal: Double)
 
 /** [remaining] is how many more cats reach [value]; never zero, because a reached milestone is past. */
 data class Milestone(val value: Int, val remaining: Int)

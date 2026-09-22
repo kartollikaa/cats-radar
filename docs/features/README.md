@@ -29,5 +29,7 @@ a document nobody updates is worse than none.
   overall rate pools cats and time instead of averaging outings.
 - `places.md` — how coordinates become a country, city and area: place cells, the geocoding
   worker, and what happens on a device with no geocoder.
+- `coat.md` — the eleven coats: logging a cat by tapping one, why the swatches carry a name and
+  a shape, and the by-coat statistics.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

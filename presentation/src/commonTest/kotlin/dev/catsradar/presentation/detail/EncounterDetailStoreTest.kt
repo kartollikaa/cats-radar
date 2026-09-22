@@ -5,6 +5,7 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
@@ -210,6 +211,7 @@ class EncounterDetailStoreTest {
         observeEncounter = ObserveEncounter(repository),
         deleteEncounter = DeleteEncounter(repository, clock),
         undoDelete = UndoDelete(repository),
+        setCoat = SetCoat(repository, clock),
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,

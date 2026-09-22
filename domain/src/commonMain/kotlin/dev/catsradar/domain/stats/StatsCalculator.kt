@@ -37,6 +37,7 @@ object StatsCalculator {
             lastSevenDays = days.countWithin(today, WEEK_DAYS),
             lastThirtyDays = days.countWithin(today, MONTH_DAYS),
             withPhoto = live.count { it.kind == EncounterKind.PHOTO },
+            byCoat = byCoat(live),
             currentStreak = Streaks.current(days.toSet(), today),
             longestStreak = Streaks.longest(days.toSet()),
             nextMilestone = nextMilestone(live.size),
@@ -59,6 +60,15 @@ object StatsCalculator {
     private fun List<LocalDate>.countWithin(today: LocalDate, days: Int): Int {
         val earliest = today.minus(DatePeriod(days = days - 1))
         return count { it >= earliest && it <= today }
+    }
+
+    private fun byCoat(live: List<Encounter>): List<CoatCount> {
+        if (live.isEmpty()) return emptyList()
+        return live.groupingBy { it.coat }
+            .eachCount()
+            .map { (coat, count) -> CoatCount(coat, count, count.toDouble() / live.size) }
+            // Named coats busiest first; the "not specified" row always last, however big it is.
+            .sortedWith(compareBy({ it.coat == null }, { -it.count }))
     }
 
     private fun nextMilestone(total: Int): Milestone? =

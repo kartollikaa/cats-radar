@@ -30,6 +30,7 @@ class StatisticsStateMapperTest {
         lastSevenDays = 0,
         lastThirtyDays = 0,
         withPhoto = 0,
+        byCoat = emptyList(),
         currentStreak = 0,
         longestStreak = 0,
         nextMilestone = nextMilestone,

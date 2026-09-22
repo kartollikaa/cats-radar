@@ -38,7 +38,7 @@
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | planned |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | planned |
 | 23 | Visual design pass | Research comparable apps and published Android UI work, then a deliberate visual language: type scale, colour, the counter as the centrepiece, list and detail rhythm, empty states, motion on tally and undo. Last slice, after every behaviour exists. | safe | ~500 | 22 | planned |
-| 22 | Cat coat | `CatCoat` picker strip after tally/photo, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | planned |
+| 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | in-progress |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -237,6 +237,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - 2026-09-22: owner asked for a "+N" burst on the tally button — it appears on a tap, grows while
   tapping continues, and fades shortly after the last one. Folded into slice 13b, which already owns
   the Counter's feedback surface.
+- 2026-09-22: owner changed the coat interaction — a **grid on the Counter that logs a cat of that
+  coat in one tap**, replacing the spec's post-tally coat strip. Two coat controls on one screen (one
+  to log, one to amend) is one too many; amending lives on the detail screen. Spec §2 F1 superseded.
 - 2026-09-22: slice 11 split. The mapped slice carried the capture path *and* Coil thumbnails in two
   screens — together roughly double the budget, and two different responsibilities ("a photo reaches
   the database" and "a photo is visible"). Capture is slice 11; thumbnails are slice 11b.
