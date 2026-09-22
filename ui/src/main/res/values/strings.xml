@@ -132,4 +132,11 @@
     <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
     <string name="counter_walking_off">Start a walk</string>
     <string name="counter_walking_on">On a walk</string>
+    <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
+    <plurals name="widget_today" tools:ignore="ImpliedQuantity">
+        <item quantity="one">cat today</item>
+        <item quantity="other">cats today</item>
+    </plurals>
+    <string name="widget_tally">Log a cat</string>
+    <string name="widget_description">Today\'s cats, and one tap to add another</string>
 </resources>

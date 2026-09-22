@@ -12,6 +12,7 @@ import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
@@ -50,6 +51,7 @@ val domainModule = module {
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
+    factory { ObserveTodayCount(encounterRepository = get(), clock = get(), timeZone = get()) }
     factoryOf(::AttachLocation)
     factoryOf(::ResolvePendingPlaces)
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
