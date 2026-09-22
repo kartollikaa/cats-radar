@@ -18,10 +18,15 @@ detail screen.
 
 ## Telling them apart
 
+Every swatch is a cat's head — an oval face with an ear rising from each top corner — filled in that
+coat's colour. The head is one contour, the ears unioned into the face, so the outline stroke traces
+only the silhouette instead of drawing where the ears cross it. That stroke is what keeps a white cat
+visible on a light surface.
+
 Several coats are near-identical as colours: grey, grey and white, black, black and white. A swatch
 that differed only in fill would be unusable, which the design brief called out explicitly. So every
-swatch carries **both** a name and a shape: the "& white" coats are drawn as a half-white circle,
-not a lighter shade of the same colour.
+swatch carries **both** a name and a shape: the "& white" coats are drawn with the right half of the
+face white, not as a lighter shade of the same colour.
 
 ## Changing it later
 
