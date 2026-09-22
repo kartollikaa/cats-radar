@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
@@ -40,7 +41,6 @@ class CounterStoreTest {
 
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
-        haptics: FakeHaptics = FakeHaptics(),
     ): Pair<CounterStore, FakeEncounterRepository> {
         val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
         val store = CounterStore(
@@ -48,7 +48,6 @@ class CounterStoreTest {
             undoLastTally = UndoLastTally(encounterRepository, clock),
             observeEncounterCount = ObserveEncounterCount(encounterRepository),
             stateMapper = CounterStateMapper(),
-            haptics = haptics,
         )
         runCurrent()
         return store to encounterRepository
@@ -62,16 +61,20 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `three rapid taps log three cats with no debounce, each with a haptic tick`() = runTest(mainDispatcher) {
-        val haptics = FakeHaptics()
-        val (store, _) = newStore(haptics = haptics)
+    fun `three rapid taps log three cats with no debounce, one haptic tick each`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
 
         repeat(3) { store.dispatch(CounterIntent.TallyClicked) }
         runCurrent()
 
         assertEquals("3", store.state.value.totalLabel)
         assertTrue(store.state.value.undoVisible)
-        assertEquals(3, haptics.tickCount)
+        store.effects.test {
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            assertEquals(CounterEffect.HapticTick, awaitItem())
+            expectNoEvents()
+        }
     }
 
     @Test
@@ -129,5 +132,17 @@ class CounterStoreTest {
         store.dispatch(CounterIntent.UndoClicked)
         runCurrent()
         assertEquals(emptyList<String>(), repository.softDeletedIds)
+    }
+
+    @Test
+    fun `a failed insert is swallowed instead of crashing the store`() = runTest(mainDispatcher) {
+        val repository = FakeEncounterRepository().apply { insertShouldThrow = IllegalStateException("disk full") }
+        val (store, _) = newStore(encounterRepository = repository)
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+
+        assertEquals(CounterState(totalLabel = "0", undoVisible = false), store.state.value)
+        store.effects.test { expectNoEvents() }
     }
 }

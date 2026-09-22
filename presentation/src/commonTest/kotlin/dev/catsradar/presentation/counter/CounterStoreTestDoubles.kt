@@ -5,7 +5,6 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.DeviceIdProvider
-import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
@@ -19,12 +18,14 @@ internal class FakeEncounterRepository : EncounterRepository {
     private val encounters = MutableStateFlow<List<Encounter>>(emptyList())
     val insertedIds = mutableListOf<String>()
     val softDeletedIds = mutableListOf<String>()
+    var insertShouldThrow: Throwable? = null
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
     override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
 
     override suspend fun insert(encounter: Encounter) {
+        insertShouldThrow?.let { throw it }
         insertedIds += encounter.id
         encounters.update { it + encounter }
     }
@@ -81,15 +82,6 @@ internal class FakeIdGenerator : IdGenerator {
 
 internal class FakeDeviceIdProvider(private val id: String = "device-1") : DeviceIdProvider {
     override suspend fun deviceId(): String = id
-}
-
-internal class FakeHaptics : Haptics {
-    var tickCount = 0
-        private set
-
-    override fun tick() {
-        tickCount++
-    }
 }
 
 internal class FakeClock(private val instant: Instant) : Clock {
