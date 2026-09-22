@@ -6,6 +6,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -28,11 +30,16 @@ private data object FakeEffect
 
 private class FakeStore : Store<FakeState, FakeIntent, FakeEffect>(FakeState()) {
     val cancelled = CompletableDeferred<Unit>()
+    var pingHandled = false
+        private set
 
     override suspend fun handle(intent: FakeIntent) {
         when (intent) {
             FakeIntent.Increment -> setState { copy(count = count + 1) }
-            FakeIntent.EmitPing -> emit(FakeEffect)
+            FakeIntent.EmitPing -> {
+                emit(FakeEffect)
+                pingHandled = true
+            }
             FakeIntent.BlockUntilCancelled -> {
                 try {
                     awaitCancellation()
@@ -42,14 +49,25 @@ private class FakeStore : Store<FakeState, FakeIntent, FakeEffect>(FakeState()) 
             }
         }
     }
+
+    // Calls the protected setState directly from real threads, bypassing dispatch()'s
+    // single-threaded viewModelScope, so setState's own atomicity is what's under test.
+    suspend fun incrementConcurrently(workers: Int, incrementsPerWorker: Int) = coroutineScope {
+        repeat(workers) {
+            launch(Dispatchers.Default) {
+                repeat(incrementsPerWorker) {
+                    setState { copy(count = count + 1) }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StoreTest {
 
-    // viewModelScope resolves to Dispatchers.Main.immediate; a JVM test has no real Main
-    // dispatcher unless one is installed, and Unconfined runs dispatch()'s launch eagerly so
-    // assertions right after dispatch() see its effect without pumping a scheduler.
+    // A JVM test has no real Main dispatcher; Unconfined also runs dispatch()'s launch
+    // synchronously, so assertions right after dispatch() see the result immediately.
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -104,5 +122,28 @@ class StoreTest {
         viewModelStore.clear()
 
         assertTrue(store.cancelled.isCompleted)
+    }
+
+    @Test
+    fun `concurrent setState calls do not lose updates`() = runTest {
+        val store = FakeStore()
+        val workers = 8
+        val incrementsPerWorker = 2_000
+
+        store.incrementConcurrently(workers, incrementsPerWorker)
+
+        assertEquals(workers * incrementsPerWorker, store.state.value.count)
+    }
+
+    @Test
+    fun `emitting without a collector attached does not suspend`() = runTest {
+        val store = FakeStore()
+
+        // No collector on store.effects. Under the Unconfined main dispatcher, dispatch()'s
+        // launch runs handle() synchronously to completion unless it actually suspends — so
+        // pingHandled flips to true only if emit() returned without blocking on a receiver.
+        store.dispatch(FakeIntent.EmitPing)
+
+        assertTrue(store.pingHandled)
     }
 }
