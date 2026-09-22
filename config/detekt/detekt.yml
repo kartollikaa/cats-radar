@@ -1,6 +1,26 @@
-build:
-  maxIssues: 0
+# buildUponDefaultConfig = true (DetektConventionPlugin) merges this on top of every ruleset's
+# shipped defaults, including compose-rules' own — only real deviations belong here.
 
 naming:
   FunctionNaming:
-    ignoreAnnotated: ['Composable']
+    ignoreAnnotated: ['Composable'] # the default pattern rejects PascalCase, which every composable uses
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*|[A-Z][a-zA-Z0-9]*' # UI-token constants may be PascalCase (compose-patterns.md §7)
+    propertyPattern: '[A-Za-z][A-Za-z0-9]*' # top-level vals may not contain underscores (compose-patterns.md §7)
+    privatePropertyPattern: '_?[A-Za-z][A-Za-z0-9]*' # same rule, private top-level vals
+
+style:
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview', 'ThemePreviews'] # preview functions are invoked by tooling, not by call sites (compose-preview-patterns.md §1)
+
+# compose-rules ships its own default config, already active for every rule below except
+# these three opt-ins; only the deviations from that default need to be listed here.
+Compose:
+  Material2:
+    active: true # project renders with Material3 only; flag any Material2 usage
+  PreviewNaming:
+    active: true # our @Preview functions use the *Preview suffix (compose-patterns.md §9)
+  UnstableCollections:
+    active: true # State collections must be Immutable* (compose-patterns.md §2)
+  PreviewAnnotationNaming:
+    active: false # requires a Preview-prefixed name; contradicts the fixed name ThemePreviews (compose-preview-patterns.md §1)

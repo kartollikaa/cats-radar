@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.LibraryExtension
 import dev.catsradar.buildlogic.configureAndroid
+import dev.catsradar.buildlogic.configureLintSeverity
 import dev.catsradar.buildlogic.libs
 import dev.catsradar.buildlogic.moduleNamespace
 import dev.catsradar.buildlogic.pluginId
@@ -15,6 +16,9 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         extensions.configure<LibraryExtension> {
             configureAndroid(this)
             namespace = moduleNamespace()
+            lint {
+                configureLintSeverity()
+            }
         }
     }
 }

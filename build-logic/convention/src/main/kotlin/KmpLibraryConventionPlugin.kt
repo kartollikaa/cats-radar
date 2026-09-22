@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
+import dev.catsradar.buildlogic.configureLintSeverity
 import dev.catsradar.buildlogic.library
 import dev.catsradar.buildlogic.libs
 import dev.catsradar.buildlogic.moduleNamespace
@@ -26,11 +27,21 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 minSdk = libs.version("android-minSdk").toInt()
                 withHostTestBuilder {}.configure { isIncludeAndroidResources = true }
                 compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+                // AGP 9.4.1's KMP Android library plugin creates lint *analysis* tasks
+                // (lintAnalyzeAndroidHostTest) but no report/abort task, so this severity policy
+                // is inert: findings are computed and never surfaced, in or out of `check`.
+                lint {
+                    configureLintSeverity()
+                }
             }
             compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
             sourceSets.getByName("commonTest").dependencies {
                 implementation(libs.library("kotlin-test"))
             }
         }
+
+        // The analysis above has nothing to report to, so disable it rather than pay for it on
+        // every `check` — see the comment on lint {} above.
+        tasks.matching { it.name == "lintAnalyzeAndroidHostTest" }.configureEach { enabled = false }
     }
 }

@@ -1,0 +1,6 @@
+# Merged only when configuring :ui (DetektConventionPlugin), so this exclusion cannot silence
+# MagicNumber in a "ui"-named path anywhere else in the project.
+
+style:
+  MagicNumber:
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/ui/**']

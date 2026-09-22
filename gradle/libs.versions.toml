@@ -9,6 +9,9 @@ android-targetSdk = "37"
 agp = "9.4.1"
 kotlin = "2.4.20"
 detekt = "1.23.8"
+compose-rules-detekt = "0.4.28" # 0.5.0+ requires detekt 2.0.0-alpha, we're still on 1.23.8
+konsist = "0.17.3"
+junit = "4.13.2"
 compose-bom = "2026.09.00"
 androidx-activity = "1.13.0"
 androidx-core = "1.19.0"
@@ -25,6 +28,9 @@ compose-material3 = { module = "androidx.compose.material3:material3" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "compose-rules-detekt" }
+konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
+junit = { module = "junit:junit", version.ref = "junit" }
 
 # build-logic classpath
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }

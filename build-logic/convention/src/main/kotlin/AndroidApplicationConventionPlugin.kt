@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import dev.catsradar.buildlogic.configureAndroid
+import dev.catsradar.buildlogic.configureLintSeverity
 import dev.catsradar.buildlogic.libs
 import dev.catsradar.buildlogic.moduleNamespace
 import dev.catsradar.buildlogic.pluginId
@@ -21,6 +22,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 targetSdk = libs.version("android-targetSdk").toInt()
                 versionCode = libs.version("app-versionCode").toInt()
                 versionName = libs.version("app-versionName")
+            }
+            lint {
+                configureLintSeverity()
+                checkDependencies = true
             }
         }
     }
