@@ -19,11 +19,15 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
         dropDuplicateKeys()
     }
 
-    val selectedTab: BottomNavTab get() = if (last() == Counter) BottomNavTab.COUNTER else BottomNavTab.ENCOUNTERS
+    // Reading the tab back out of the stack rather than storing it: a detail pushed above a tab
+    // must still report the tab it belongs to.
+    val selectedTab: BottomNavTab
+        get() = BottomNavTab.entries.firstOrNull { it != BottomNavTab.COUNTER && it.key() in entries }
+            ?: BottomNavTab.COUNTER
 
     fun selectTab(tab: BottomNavTab) {
         while (entries.size > 1) entries.removeAt(entries.lastIndex)
-        val target = if (tab == BottomNavTab.COUNTER) Counter else Encounters
+        val target = tab.key()
         if (entries.last() != target) entries.add(target)
     }
 
@@ -37,6 +41,13 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
         if (entries.size <= 1) return false
         entries.removeAt(entries.lastIndex)
         return true
+    }
+
+    // Exhaustive on purpose: a new tab will not compile until it has a destination here.
+    private fun BottomNavTab.key(): NavKey = when (this) {
+        BottomNavTab.COUNTER -> Counter
+        BottomNavTab.ENCOUNTERS -> Encounters
+        BottomNavTab.STATISTICS -> Statistics
     }
 
     private fun dropDuplicateKeys() {

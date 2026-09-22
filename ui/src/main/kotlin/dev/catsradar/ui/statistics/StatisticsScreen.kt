@@ -1,0 +1,157 @@
+package dev.catsradar.ui.statistics
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.statistics.BestOutingState
+import dev.catsradar.presentation.statistics.MilestoneState
+import dev.catsradar.presentation.statistics.RateState
+import dev.catsradar.presentation.statistics.RateUnit
+import dev.catsradar.presentation.statistics.StatisticsState
+import dev.catsradar.ui.R
+import dev.catsradar.ui.theme.CatsRadarTheme
+import dev.catsradar.ui.theme.ThemePreviews
+
+@Composable
+fun StatisticsScreen(
+    state: StatisticsState,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+) {
+    if (!state.hasAnyCats) {
+        Box(
+            modifier = modifier.fillMaxSize().padding(contentPadding),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = stringResource(R.string.statistics_empty), style = MaterialTheme.typography.bodyLarge)
+        }
+        return
+    }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Headline(state)
+        Section(R.string.statistics_when) {
+            StatRow(R.string.statistics_today, state.todayLabel)
+            StatRow(R.string.statistics_week, state.weekLabel)
+            StatRow(R.string.statistics_month, state.monthLabel)
+            StatRow(R.string.statistics_with_photo, state.withPhotoLabel)
+        }
+        Section(R.string.statistics_streaks) {
+            StatRow(R.string.statistics_current_streak, state.currentStreakLabel)
+            StatRow(R.string.statistics_longest_streak, state.longestStreakLabel)
+        }
+        Section(R.string.statistics_outings) {
+            StatRow(R.string.statistics_outing_count, state.outingsLabel)
+            StatRow(R.string.statistics_active_time, state.activeTimeLabel)
+            StatRow(R.string.statistics_overall_rate, state.overallRate.label())
+            state.bestOuting?.let { best ->
+                StatRow(
+                    R.string.statistics_best_outing,
+                    stringResource(R.string.statistics_best_outing_value, best.countLabel, best.durationLabel),
+                )
+                StatRow(R.string.statistics_best_outing_rate, best.rate.label())
+            }
+        }
+    }
+}
+
+@Composable
+private fun Headline(state: StatisticsState, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
+        Text(text = stringResource(R.string.statistics_total), style = MaterialTheme.typography.bodyMedium)
+        state.nextMilestone?.let { MilestoneLine(it, modifier = Modifier.padding(top = 8.dp)) }
+    }
+}
+
+@Composable
+private fun MilestoneLine(milestone: MilestoneState, modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.statistics_next_milestone, milestone.remainingLabel, milestone.valueLabel),
+        style = MaterialTheme.typography.bodySmall,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun Section(@StringRes titleRes: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = stringResource(titleRes), style = MaterialTheme.typography.titleMedium)
+        HorizontalDivider()
+        content()
+    }
+}
+
+@Composable
+private fun StatRow(@StringRes labelRes: Int, value: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(text = stringResource(labelRes), style = MaterialTheme.typography.bodyMedium)
+        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun RateState?.label(): String = when {
+    this == null -> stringResource(R.string.statistics_rate_unavailable)
+    unit == RateUnit.PER_MINUTE -> stringResource(R.string.statistics_rate_per_minute, value)
+    else -> stringResource(R.string.statistics_rate_per_hour, value)
+}
+
+@ThemePreviews
+@Composable
+private fun StatisticsScreenPreview() {
+    CatsRadarTheme {
+        Surface { StatisticsScreen(state = sampleStatistics) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun StatisticsScreenEmptyPreview() {
+    CatsRadarTheme {
+        Surface { StatisticsScreen(state = StatisticsState()) }
+    }
+}
+
+private val sampleStatistics = StatisticsState(
+    totalLabel = "147",
+    hasAnyCats = true,
+    todayLabel = "3",
+    weekLabel = "19",
+    monthLabel = "64",
+    withPhotoLabel = "41",
+    currentStreakLabel = "6",
+    longestStreakLabel = "23",
+    nextMilestone = MilestoneState(valueLabel = "250", remainingLabel = "103"),
+    outingsLabel = "38",
+    activeTimeLabel = "14 h 20 min",
+    overallRate = RateState(value = "4.2", unit = RateUnit.PER_HOUR),
+    bestOuting = BestOutingState(
+        countLabel = "9",
+        durationLabel = "42 min",
+        rate = RateState(value = "1.3", unit = RateUnit.PER_MINUTE),
+    ),
+)

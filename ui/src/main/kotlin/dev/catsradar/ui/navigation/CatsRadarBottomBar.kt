@@ -33,6 +33,7 @@ fun CatsRadarBottomBar(
 private fun BottomNavTab.labelRes(): Int = when (this) {
     BottomNavTab.COUNTER -> R.string.tab_counter
     BottomNavTab.ENCOUNTERS -> R.string.tab_encounters
+    BottomNavTab.STATISTICS -> R.string.tab_statistics
 }
 
 @ThemePreviews

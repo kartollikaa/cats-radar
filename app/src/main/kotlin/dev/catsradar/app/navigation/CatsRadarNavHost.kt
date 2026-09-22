@@ -33,12 +33,14 @@ import dev.catsradar.presentation.detail.EncounterDetailEffect
 import dev.catsradar.presentation.detail.EncounterDetailIntent
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.statistics.StatisticsStore
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.LocationHintAction
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
+import dev.catsradar.ui.statistics.StatisticsScreen
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -72,6 +74,7 @@ fun CatsRadarNavHost(modifier: Modifier = Modifier) {
                         onRowClick = { id -> backStack.push(EncounterDetail(id)) },
                     )
                 }
+                entry<Statistics> { StatisticsDestination(contentPadding = innerPadding) }
                 entry<EncounterDetail> { key ->
                     EncounterDetailDestination(
                         key = key,
@@ -177,6 +180,13 @@ private fun EncountersDestination(
     val store = koinViewModel<EncountersStore>()
     val state by store.state.collectAsStateWithLifecycle()
     EncountersScreen(state = state, modifier = modifier, contentPadding = contentPadding, onRowClick = onRowClick)
+}
+
+@Composable
+private fun StatisticsDestination(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+    val store = koinViewModel<StatisticsStore>()
+    val state by store.state.collectAsStateWithLifecycle()
+    StatisticsScreen(state = state, modifier = modifier, contentPadding = contentPadding)
 }
 
 @Composable

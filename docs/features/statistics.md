@@ -4,8 +4,11 @@ Every number the app will show about your cats, computed in one pure function fr
 list. Nothing is stored and nothing is aggregated in SQL: `StatsCalculator.calculate` takes the
 non-deleted encounters, today's date and the current instant, and returns a `Stats`.
 
-There is no screen yet. This document describes what the numbers **mean**, because that is the part
-that is easy to get subtly wrong and expensive to discover later.
+The **Stats** tab shows them. This document describes what the numbers **mean**, because that is the
+part that is easy to get subtly wrong and expensive to discover later.
+
+Before the first cat the tab shows a single line inviting one, rather than a wall of zeroes: a
+screen full of "0" reads like a broken app, not an empty one.
 
 ## The counts
 
@@ -47,7 +50,10 @@ dominate a long ordinary one. Two cats over half an hour and ten over eighteen m
 15/h, where the mean of the two rates would claim 18.67/h.
 
 A `Rate` is kept as cats per hour and can give cats per minute; which one to *show* is a
-presentation decision, not a domain one.
+presentation decision, not a domain one. The screen switches at exactly one a minute: above it
+"73 cats/h" is hard to read, below it "0.2 cats/min" is worse, and the boundary itself belongs to
+the minute side. Values are rounded to one decimal. With no measurable rate the row shows "—"
+rather than a zero, because none-measured and zero-cats-an-hour are different claims.
 
 The **best outing** is the fastest eligible one, not the one with the most cats.
 
@@ -67,9 +73,19 @@ its count immediately and its rate only once it is eligible.
 - `domain/…/stats/Streaks.kt` — runs of consecutive days
 - `domain/…/stats/Stats.kt` — `Stats`, `Rate`, `Milestone`, `RatedOuting`, `CurrentOuting`
 
+## Where the screen lives
+
+- `presentation/…/statistics/` — `StatisticsState`, `StatisticsStateMapper`, `StatisticsStore`
+- `ui/…/statistics/StatisticsScreen.kt`
+- `domain/…/usecase/ObserveStats.kt`
+
+The numbers recompute whenever the encounter list changes. "Now" is read at that moment, so the
+current outing's elapsed time advances when a cat is logged rather than ticking on its own — a
+live ticker belongs with the Counter's current-outing block, which is its own slice.
+
 ## Not built yet
 
-No screen, so none of this is visible. By-coat counts wait for the coat picker, and per-region
-counts for reverse geocoding. The milestone toast and its `lastSeenMilestone` are the statistics
-screen's slice. Everything here is computed from the full list in memory; the spec puts the
-revisit point at tens of thousands of encounters.
+By-coat counts wait for the coat picker and per-region counts for reverse geocoding, so neither
+block is on the screen. The current outing is computed but not shown anywhere, and the milestone
+toast with its `lastSeenMilestone` is the next slice. Everything is computed from the full list in
+memory; the spec puts the revisit point at tens of thousands of encounters.
