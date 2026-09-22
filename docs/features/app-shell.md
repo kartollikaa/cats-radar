@@ -122,7 +122,7 @@ run.
 
 ## Not handled yet
 
-The theme is the foundation of a design pass that is not finished: coats drawn as cat faces, the
-Counter as the screen's centrepiece with spring motion on tally and undo, and the rhythm of the list,
-detail and statistics screens are still to come. Until then, those screens wear the new colours on
+The theme is the foundation of a design pass that is not finished: coats are now drawn as cat faces
+(`coat.md`), but the Counter as the screen's centrepiece with spring motion on tally and undo, and the
+rhythm of the list, detail and statistics screens, are still to come. Until then, those screens wear the new colours on
 their old layouts. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.

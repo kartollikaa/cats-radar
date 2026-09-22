@@ -4,14 +4,13 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
+import dev.catsradar.ui.testing.MIN_TEXT_CONTRAST
+import dev.catsradar.ui.testing.contrast
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
-// WCAG AA for body text.
-private const val MIN_TEXT_CONTRAST = 4.5f
 private const val MIN_TEAL_CHROMA = 0.25f
 
 private val TextOnSurface: List<Triple<String, (ColorScheme) -> Color, (ColorScheme) -> Color>> = listOf(
@@ -84,11 +83,6 @@ class CatsRadarColorsTest {
             .filter { it.parameterCount == 0 && it.returnType == Long::class.javaPrimitiveType }
             .filter { it.name.startsWith("get") }
             .associate { it.name.substringBefore('-') to Color((it.invoke(scheme) as Long).toULong()) }
-
-    private fun contrast(a: Color, b: Color): Float {
-        val (lighter, darker) = listOf(a.luminance(), b.luminance()).sortedDescending()
-        return (lighter + 0.05f) / (darker + 0.05f)
-    }
 
     private fun chroma(color: Color): Float =
         maxOf(color.red, color.green, color.blue) - minOf(color.red, color.green, color.blue)

@@ -1,8 +1,7 @@
 package dev.catsradar.ui.coat
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,22 +13,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathOperation
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,7 +30,6 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 private val SwatchSize = 40.dp
 private val FaceSize = 34.dp
-private val FaceOutline = 1.dp
 private val SwatchColumnWidth = 68.dp
 private const val CoatsPerRow = 4
 
@@ -118,80 +107,15 @@ private fun CoatColumn(
 
 @Composable
 private fun Swatch(coat: CoatOption, selected: Boolean, modifier: Modifier = Modifier) {
-    val outline = MaterialTheme.colorScheme.outlineVariant
-    val base = coat.baseColor()
-    val hasWhite = coat.hasWhite()
-    val selectionBackground = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+    val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     Box(
         modifier = modifier
             .size(SwatchSize)
-            .clip(CircleShape)
-            .background(selectionBackground),
+            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.size(FaceSize)) {
-            val face = catFacePath(size)
-            clipPath(face) {
-                drawRect(color = base)
-                if (hasWhite) {
-                    // A white half, not a lighter shade: "grey" and "grey and white" have to be
-                    // distinguishable at a glance, and two similar fills are not.
-                    drawRect(
-                        color = Color.White,
-                        topLeft = Offset(size.width / 2f, 0f),
-                        size = Size(size.width / 2f, size.height),
-                    )
-                }
-            }
-            // Without it a white cat on a light surface is an invisible cat.
-            drawPath(face, color = outline, style = Stroke(width = FaceOutline.toPx()))
-        }
+        CatFace(coat = coat, modifier = Modifier.size(FaceSize))
     }
-}
-
-/**
- * A cat's head in [size]: an oval face with a triangular ear rising from each top corner, unioned
- * into one contour so stroking the outline does not also draw where the ears cross the face.
- */
-private fun catFacePath(size: Size): Path {
-    fun x(fraction: Float) = size.width * fraction
-    fun y(fraction: Float) = size.height * fraction
-
-    val head = Path().apply {
-        addOval(Rect(left = x(0.05f), top = y(0.24f), right = x(0.95f), bottom = y(0.99f)))
-    }
-    val ears = Path().apply {
-        moveTo(x(0.09f), y(0.01f))
-        lineTo(x(0.44f), y(0.30f))
-        lineTo(x(0.13f), y(0.56f))
-        close()
-
-        moveTo(x(0.91f), y(0.01f))
-        lineTo(x(0.56f), y(0.30f))
-        lineTo(x(0.87f), y(0.56f))
-        close()
-    }
-    return Path().apply { op(head, ears, PathOperation.Union) }
-}
-
-private fun CoatOption.hasWhite(): Boolean = when (this) {
-    CoatOption.GINGER_WHITE,
-    CoatOption.BROWN_WHITE,
-    CoatOption.GREY_WHITE,
-    CoatOption.BLACK_WHITE,
-    CoatOption.TRICOLOR_MOSTLY_WHITE,
-    CoatOption.TRICOLOR_LITTLE_WHITE,
-    -> true
-    else -> false
-}
-
-private fun CoatOption.baseColor(): Color = when (this) {
-    CoatOption.GINGER, CoatOption.GINGER_WHITE -> Color(0xFFE8833A)
-    CoatOption.WHITE -> Color(0xFFF5F5F5)
-    CoatOption.TRICOLOR_MOSTLY_WHITE, CoatOption.TRICOLOR_LITTLE_WHITE -> Color(0xFF8D6E4A)
-    CoatOption.BROWN, CoatOption.BROWN_WHITE -> Color(0xFF6D4C2F)
-    CoatOption.GREY, CoatOption.GREY_WHITE -> Color(0xFF9E9E9E)
-    CoatOption.BLACK, CoatOption.BLACK_WHITE -> Color(0xFF2B2B2B)
 }
 
 @StringRes
