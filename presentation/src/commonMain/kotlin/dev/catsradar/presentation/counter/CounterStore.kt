@@ -24,10 +24,19 @@ class CounterStore(
     private var undoTargetSequence = -1
     private var undoTargetId: String? = null
     private var undoTimeoutJob: Job? = null
+    private var locationPermissionRequested = false
 
     init {
         observeEncounterCount()
-            .onEach { count -> setState { stateMapper.map(count = count, undoVisible = undoVisible) } }
+            .onEach { count ->
+                setState {
+                    stateMapper.map(
+                        count = count,
+                        undoVisible = undoVisible,
+                        locationPermissionHintVisible = locationPermissionHintVisible,
+                    )
+                }
+            }
             .launchIn(viewModelScope)
     }
 
@@ -35,6 +44,9 @@ class CounterStore(
         when (intent) {
             CounterIntent.TallyClicked -> onTallyClicked()
             CounterIntent.UndoClicked -> onUndoClicked()
+            is CounterIntent.LocationPermissionResult -> onLocationPermissionResult(intent.granted)
+            CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
+            CounterIntent.LocationPermissionHintDismissed -> setState { copy(locationPermissionHintVisible = false) }
         }
     }
 
@@ -42,8 +54,15 @@ class CounterStore(
         val sequence = ++tapSequence
         // The tap must feel instant: the tick fires before the write, not after it succeeds.
         emit(CounterEffect.HapticTick)
+        // Only the very first tally ever opens the system dialog; a denial must not re-prompt on
+        // every later tap.
+        if (!locationPermissionRequested) {
+            locationPermissionRequested = true
+            emit(CounterEffect.RequestLocationPermission)
+        }
         runWriteIgnoringFailure {
             val encounter = logTally()
+            emit(CounterEffect.AttachLocation(encounter.id))
             // Captured before suspending, not completion order: a later tap's insert can resume
             // before an earlier one's, so only a higher sequence may overwrite the undo target.
             if (sequence > undoTargetSequence) {
@@ -53,6 +72,10 @@ class CounterStore(
                 restartUndoTimer()
             }
         }
+    }
+
+    private fun onLocationPermissionResult(granted: Boolean) {
+        setState { copy(locationPermissionHintVisible = !granted) }
     }
 
     private fun restartUndoTimer() {
