@@ -33,7 +33,7 @@
 | 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | merged |
 | 16 | Import rules and the import use case | `ImportRules` (recent-photo window, digest dedup, EXIF time and offset) + tests, `ImportPhotos` use case, digest lookup in the repository, file-date fallback. Nothing calls it yet. | safe | ~450 | 11 | planned |
 | 16b | Gallery import on screen | `ImportPhotosWorker`, `PickMultipleVisualMedia` on long-press camera, in-app progress, summary with undo; EXIF-redaction spike resolved. | safe | ~450 | 16 | in-review |
-| 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS`, `getForegroundInfo` and the foreground-service type, so an import the user walks away from still reports. | safe | ~250 | 16b | planned |
+| 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS` asked for after the pick, one ongoing notification updated in place. No foreground service — expedited work needs none. | safe | ~250 | 16b | in-review |
 | 17 | Backup merge rules and use cases | `BackupMerge` (newer `updatedAt`, delete-vs-live, RESOLVED-wins cells) + tests, `ExportBackup`/`ImportBackup` over a reader/writer seam, `loadEvery`. Nothing calls it yet. | safe | ~450 | 11, 14 | in-review |
 | 17b | Backup archive format | `kotlinx.serialization` models, ZIP writer/reader, `manifest.json` with `formatVersion`, photo files, round-trip test. | safe | ~450 | 17 | in-review |
 | 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers, gallery toggle UI. | safe | ~450 | 11, 17b | in-review |

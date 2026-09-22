@@ -79,12 +79,21 @@ deliberate act, and refusing it would leave the user unable to undo their own de
 - `domain/…/region/PlaceCells.kt` — shared with `AttachLocation`: coordinates always get a cell
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
 
-## Not built yet
+## Walking away mid-import
 
-**No progress notification.** Expedited work needs none to run, so an import that finishes while the
-app is open is fully covered; an import the user walks away from currently reports only when they
-come back. The notification — channel, `POST_NOTIFICATIONS`, a foreground service type — is its own
-slice.
+The worker posts one ongoing notification and updates it in place as photos land, so an import the
+user leaves is still legible. It is cleared in a `finally`: an ongoing notification left behind is
+one the user cannot swipe away.
+
+Posting is best-effort. `POST_NOTIFICATIONS` is asked for **after** the pick, not before — a run the
+user has actually started is the only moment a progress bar is worth a dialog — and a refusal still
+imports, just without the commentary. `NotificationManagerCompat.notify` raises without the
+permission rather than doing nothing, so the check guards the call itself.
+
+There is no foreground service. Expedited work does not need one to run, and a service type would
+buy a notification that the OS, rather than the app, keeps alive — for a job that takes seconds.
+
+## Not built yet
 
 **No Settings entry point** — the long-press is the only way in today.
 

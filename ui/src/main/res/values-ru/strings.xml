@@ -132,4 +132,6 @@
     <string name="settings_backup_imported">Копия объединена с тем, что уже было</string>
     <string name="settings_backup_too_new">Эта копия из более новой версии приложения</string>
     <string name="settings_backup_unreadable">Это не резервная копия Cats Radar</string>
+    <string name="notification_channel_import">Импорт фото</string>
+    <string name="notification_import_title">Импорт фото</string>
 </resources>

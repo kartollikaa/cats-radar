@@ -26,6 +26,9 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             // A backup's manifest records the version that wrote it, which is the only thing that
             // could ever explain a file a later build cannot read.
             buildFeatures { buildConfig = true }
+            // Robolectric tests here read strings out of :ui; without this they see no resources
+            // at all and fail on the first lookup.
+            testOptions { unitTests.isIncludeAndroidResources = true }
             lint {
                 configureLintSeverity()
                 checkDependencies = true

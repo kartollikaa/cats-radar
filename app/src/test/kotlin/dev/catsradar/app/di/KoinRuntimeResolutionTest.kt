@@ -1,6 +1,5 @@
 package dev.catsradar.app.di
 
-import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -29,13 +28,9 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.parameter.parametersOf
-import org.robolectric.annotation.Config
 import kotlin.test.assertNotNull
 
-// @Config forces a plain Application rather than the manifest's CatsRadarApplication, whose own
-// onCreate() would start Koin itself and collide with the startKoin() below.
 @RunWith(AndroidJUnit4::class)
-@Config(application = Application::class)
 class KoinRuntimeResolutionTest {
 
     @After
