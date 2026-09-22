@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -44,6 +45,9 @@ fun CounterScreen(
     onLocationHintAction: (LocationHintAction) -> Unit = {},
     onCameraClick: () -> Unit = {},
     onCoatTallyClick: (CoatOption) -> Unit = {},
+    onImportClick: () -> Unit = {},
+    onUndoImportClick: () -> Unit = {},
+    onImportSummaryDismiss: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -66,11 +70,45 @@ fun CounterScreen(
         if (state.undoVisible) {
             AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
         }
-        Button(onClick = onCameraClick, modifier = Modifier.fillMaxWidth()) {
-            Text(text = stringResource(R.string.counter_camera))
+        CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
+        state.importProgress?.let { ImportProgress(it) }
+        state.importSummary?.let {
+            ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
         }
         if (state.locationPermissionHintVisible) {
             LocationPermissionHint(onAction = onLocationHintAction)
+        }
+    }
+}
+
+// A long press is the only entry to import, so the button says so out loud: a gesture nothing
+// hints at is a gesture nobody finds.
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CameraButton(
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.combinedClickable(
+            onClick = onClick,
+            onLongClick = onLongClick,
+            onLongClickLabel = stringResource(R.string.counter_import),
+        ),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(text = stringResource(R.string.counter_camera), style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = stringResource(R.string.counter_import_hint),
+                style = MaterialTheme.typography.labelSmall,
+            )
         }
     }
 }

@@ -14,6 +14,8 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         currentOuting: CurrentOuting? = null,
         tapBurst: Int? = null,
         lastCoat: CoatOption? = null,
+        importProgress: ImportProgressState? = null,
+        importSummary: ImportSummaryState? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         undoVisible = undoVisible,
@@ -21,6 +23,15 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         currentOuting = currentOuting?.toState(),
         tapBurst = tapBurst,
         lastCoat = lastCoat,
+        importProgress = importProgress,
+        importSummary = importSummary,
+    )
+
+    fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
+        added = addedCount,
+        skipped = skipped.takeIf { it > 0 },
+        failed = failed.takeIf { it > 0 },
+        undoable = addedCount > 0,
     )
 
     private fun CurrentOuting.toState(): CurrentOutingState = CurrentOutingState(

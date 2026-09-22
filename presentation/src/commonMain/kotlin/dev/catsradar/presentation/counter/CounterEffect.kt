@@ -1,5 +1,7 @@
 package dev.catsradar.presentation.counter
 
+import kotlinx.collections.immutable.ImmutableList
+
 sealed interface CounterEffect {
     data object HapticTick : CounterEffect
     data class AttachLocation(val encounterId: String) : CounterEffect
@@ -7,6 +9,8 @@ sealed interface CounterEffect {
     data object RequestLocationPermission : CounterEffect
 
     data object OpenCamera : CounterEffect
+    data object PickPhotos : CounterEffect
+    data class StartImport(val uris: ImmutableList<String>) : CounterEffect
     data object PhotoNotSaved : CounterEffect
 
     data class MilestoneReached(val value: Int) : CounterEffect

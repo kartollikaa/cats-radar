@@ -4,8 +4,9 @@ A cat you photographed before the app existed, or on a walk where you forgot to 
 cat. Import turns picked photos into encounters that sit in the history at the time they were taken,
 not at the time you imported them.
 
-**Nothing reaches this yet.** The rules and the use case exist; the picker, the worker and the
-summary are the next slice, so today no tap can start an import.
+**Long-press the camera button** on the Counter to pick photos. The run happens in a worker, so it
+survives leaving the screen; the Counter shows how far it has got, and at the end what was added,
+skipped and failed, with one undo for the whole batch.
 
 ## What an imported photo becomes
 
@@ -32,7 +33,8 @@ describes a timestamp we do not have says nothing about the file's date.
 - Coordinates in the photo's own EXIF → they become the encounter's, geohashed, with
   `locationFixedAt` set to when the photo was taken rather than when it was imported. The place cell
   they fall in is created at the same moment, so the photo can be named like any other located cat —
-  no worker runs for these, and nothing else would create it.
+  no worker runs for these, and nothing else would create it. **In practice this branch is never
+  taken from the photo picker** — see below — but it is what an unredacted source would get.
 - No coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
   where the phone is standing, so it is worth asking for a fix.
 - Otherwise → no location, ever. **A historical photo never receives today's location**; that is the
@@ -56,6 +58,14 @@ deliberate act, and refusing it would leave the user unable to undo their own de
 
 ## At the edges
 
+- **The photo picker hands over a redacted copy, not the file on disk.** Verified on a device: the
+  bytes received hash differently from the original, and the GPS tags are gone, so an imported photo
+  gets no location however carefully the original recorded one. The **date survives** — an imported
+  photo lands on the day it was taken, which is what matters most here.
+- Because the bytes are re-encoded, `sourceDigest` is the digest of the *redacted* copy. That is
+  fine for dedup because the redaction is deterministic: picking the same photo twice produces the
+  same digest and the second one is skipped. It does mean a digest never matches the same photo
+  imported through some other path.
 - **A Photo Picker URI serves a narrow projection** and throws on columns it does not recognise, so
   each date column is asked for on its own and a refusal reads as "no date" rather than a failed
   import. `DATE_TAKEN` is milliseconds; `DATE_ADDED` and `DATE_MODIFIED` are seconds.
@@ -71,7 +81,14 @@ deliberate act, and refusing it would leave the user unable to undo their own de
 
 ## Not built yet
 
-The entry point, the worker with its progress notification, the summary and its undo, and the
-location fix for photos that asked for one. Whether EXIF GPS survives scoped storage on a Photo
-Picker URI is unverified — the design spec flags it as an open item, and the answer decides whether
-the EXIF branch above is ever taken in practice.
+**No progress notification.** Expedited work needs none to run, so an import that finishes while the
+app is open is fully covered; an import the user walks away from currently reports only when they
+come back. The notification — channel, `POST_NOTIFICATIONS`, a foreground service type — is its own
+slice.
+
+**No Settings entry point** — the long-press is the only way in today.
+
+**`ACCESS_MEDIA_LOCATION` is not requested.** It plus `MediaStore.setRequireOriginal` is the
+documented way to ask for unredacted EXIF, and it would cost the user another permission dialog for
+a benefit we have no evidence the picker will grant. Worth revisiting only if location on imported
+photos turns out to matter.

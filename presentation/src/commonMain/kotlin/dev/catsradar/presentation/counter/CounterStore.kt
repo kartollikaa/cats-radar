@@ -9,6 +9,7 @@ import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.PhotoResult
+import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.toCatCoat
@@ -26,6 +27,7 @@ class CounterStore(
     private val logTally: LogTally,
     private val logPhoto: LogPhoto,
     private val undoLastTally: UndoLastTally,
+    private val undoImport: UndoImport,
     observeStats: ObserveStats,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
@@ -38,6 +40,9 @@ class CounterStore(
     private var undoTimeoutJob: Job? = null
     private var burstJob: Job? = null
 
+    // Not in State: the screen shows how many were added, never which ones.
+    private var importedIds: List<String> = emptyList()
+
     init {
         observeStats()
             .onEach { stats ->
@@ -49,6 +54,8 @@ class CounterStore(
                         currentOuting = stats.currentOuting,
                         tapBurst = tapBurst,
                         lastCoat = lastCoat,
+                        importProgress = importProgress,
+                        importSummary = importSummary,
                     )
                 }
                 announceMilestone(stats.total)
@@ -71,8 +78,10 @@ class CounterStore(
             CounterIntent.CameraClicked -> emit(CounterEffect.OpenCamera)
             is CounterIntent.PhotoCaptured -> onPhotoCaptured(intent.uri)
             CounterIntent.UndoClicked -> onUndoClicked()
+            is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
-            is CounterIntent.LocationPermissionResult -> onLocationPermissionResult(intent.granted)
+            is CounterIntent.LocationPermissionResult ->
+                setState { copy(locationPermissionHintVisible = !intent.granted) }
             CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
             CounterIntent.LocationPermissionHintDismissed -> setState { copy(locationPermissionHintVisible = false) }
         }
@@ -119,8 +128,48 @@ class CounterStore(
         }
     }
 
-    private fun onLocationPermissionResult(granted: Boolean) {
-        setState { copy(locationPermissionHintVisible = !granted) }
+    private suspend fun handleImport(intent: CounterIntent.Import) {
+        when (intent) {
+            CounterIntent.Import.Requested -> emit(CounterEffect.PickPhotos)
+            // A dismissed picker is not an import: no progress row, no summary, nothing to undo.
+            is CounterIntent.Import.PhotosPicked -> if (intent.uris.isNotEmpty()) {
+                setState {
+                    copy(
+                        importProgress = ImportProgressState(done = 0, total = intent.uris.size),
+                        importSummary = null,
+                    )
+                }
+                emit(CounterEffect.StartImport(intent.uris))
+            }
+            is CounterIntent.Import.Progressed -> setState {
+                copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
+            }
+            is CounterIntent.Import.Finished -> {
+                importedIds = intent.addedIds
+                setState {
+                    copy(
+                        importProgress = null,
+                        importSummary = stateMapper.importSummary(
+                            addedCount = intent.addedIds.size,
+                            skipped = intent.skipped,
+                            failed = intent.failed,
+                        ),
+                    )
+                }
+            }
+            CounterIntent.Import.UndoClicked -> onUndoImportClicked()
+            CounterIntent.Import.SummaryDismissed -> setState { copy(importSummary = null) }
+        }
+    }
+
+    private suspend fun onUndoImportClicked() {
+        // Read-and-clear first: a second tap finds nothing and no-ops, so the same cats are
+        // never soft-deleted twice.
+        val ids = importedIds
+        if (ids.isEmpty()) return
+        importedIds = emptyList()
+        setState { copy(importSummary = importSummary?.copy(undoable = false)) }
+        runWriteIgnoringFailure { undoImport(ids) }
     }
 
     private fun showBurst() {

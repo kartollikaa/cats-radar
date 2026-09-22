@@ -1,9 +1,14 @@
 package dev.catsradar.app.navigation
 
+import androidx.work.WorkInfo
 import dev.catsradar.app.permission.LocationPermissionRequester
+import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterEffect
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -55,6 +60,25 @@ private class RecordingCaptureDiscarder : CaptureDiscarder {
     }
 }
 
+private class CountingPhotoPickerLauncher : PhotoPickerLauncher {
+    var launchCount = 0
+        private set
+
+    override fun launch() {
+        launchCount++
+    }
+}
+
+private class RecordingImportScheduler : ImportScheduler {
+    val startedBatches = mutableListOf<List<String>>()
+
+    override fun start(uris: List<String>) {
+        startedBatches += uris
+    }
+
+    override fun observe(): Flow<WorkInfo?> = emptyFlow()
+}
+
 private class RecordingMilestoneAnnouncer : MilestoneAnnouncer {
     val announced = mutableListOf<Int>()
 
@@ -80,6 +104,8 @@ class CounterEffectHandlerTest {
     private val photoFailureReporter = CountingPhotoFailureReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
+    private val photoPickerLauncher = CountingPhotoPickerLauncher()
+    private val importScheduler = RecordingImportScheduler()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -90,6 +116,8 @@ class CounterEffectHandlerTest {
         photoFailureReporter,
         captureDiscarder,
         milestoneAnnouncer,
+        photoPickerLauncher,
+        importScheduler,
     )
 
     @Test
@@ -133,6 +161,8 @@ class CounterEffectHandlerPhotoTest {
     private val photoFailureReporter = CountingPhotoFailureReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
+    private val photoPickerLauncher = CountingPhotoPickerLauncher()
+    private val importScheduler = RecordingImportScheduler()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -143,6 +173,8 @@ class CounterEffectHandlerPhotoTest {
         photoFailureReporter,
         captureDiscarder,
         milestoneAnnouncer,
+        photoPickerLauncher,
+        importScheduler,
     )
 
     @Test
@@ -175,5 +207,21 @@ class CounterEffectHandlerPhotoTest {
         handle(CounterEffect.DiscardCapture("content://capture/1"))
 
         assertEquals(listOf("content://capture/1"), captureDiscarder.discarded)
+    }
+
+    @Test
+    fun `PickPhotos opens the picker and starts no import of its own`() {
+        handle(CounterEffect.PickPhotos)
+
+        assertEquals(1, photoPickerLauncher.launchCount)
+        assertEquals(emptyList<List<String>>(), importScheduler.startedBatches)
+    }
+
+    @Test
+    fun `StartImport hands the picked uris to the scheduler, in pick order`() {
+        handle(CounterEffect.StartImport(persistentListOf("content://a", "content://b")))
+
+        assertEquals(listOf(listOf("content://a", "content://b")), importScheduler.startedBatches)
+        assertEquals(0, photoPickerLauncher.launchCount)
     }
 }

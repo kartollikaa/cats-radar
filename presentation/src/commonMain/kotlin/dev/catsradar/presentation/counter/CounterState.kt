@@ -13,6 +13,24 @@ data class CounterState(
     val tapBurst: Int? = null,
     /** The coat of the cat the undo window belongs to, so the grid can show which one it was. */
     val lastCoat: CoatOption? = null,
+    /** Null unless an import is running. */
+    val importProgress: ImportProgressState? = null,
+    /** Null until an import finishes, and again once it is dismissed. */
+    val importSummary: ImportSummaryState? = null,
+)
+
+data class ImportProgressState(val done: Int, val total: Int)
+
+/**
+ * [skipped] and [failed] are null when there were none — a run where everything worked should not
+ * read as a report card. [undoable] is false once the added cats have been undone, or when none
+ * were added.
+ */
+data class ImportSummaryState(
+    val added: Int,
+    val skipped: Int?,
+    val failed: Int?,
+    val undoable: Boolean,
 )
 
 /** [rate] is null until the outing is long enough and busy enough to measure. */
