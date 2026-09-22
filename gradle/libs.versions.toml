@@ -45,6 +45,7 @@ konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 junit = { module = "junit:junit", version.ref = "junit" }
 room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
+room-testing = { module = "androidx.room3:room3-testing", version.ref = "room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 androidx-sqlite-bundled-jvm = { module = "androidx.sqlite:sqlite-bundled-jvm", version.ref = "androidx-sqlite" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
