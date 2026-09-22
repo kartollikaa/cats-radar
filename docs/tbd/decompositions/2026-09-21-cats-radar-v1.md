@@ -35,10 +35,10 @@
 | 17 | Backup format and merge rules | Serializable export models, ZIP writer/reader, `manifest.json` versioning, merge rules (newer `updatedAt`, delete-vs-live) with tests, `ExportBackup`/`ImportBackup` use cases. | safe | ~500 | 11, 14 | planned |
 | 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers with progress, gallery toggle UI, round-trip test. | safe | ~450 | 17 | planned |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | planned |
-| 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | planned |
+| 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | in-progress |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | planned |
 | 23 | Visual design pass | Research comparable apps and published Android UI work, then a deliberate visual language: type scale, colour, the counter as the centrepiece, list and detail rhythm, empty states, motion on tally and undo. Last slice, after every behaviour exists. | safe | ~500 | 22 | planned |
-| 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | in-progress |
+| 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
