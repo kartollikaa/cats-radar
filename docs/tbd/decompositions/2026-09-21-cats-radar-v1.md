@@ -22,8 +22,8 @@
 | 7 | Location attach | `LocationProvider` (Fused), `LocationPolicy` with `LAST_KNOWN_MAX_AGE` and backfill, `AttachLocation` use case, expedited worker, permission request on first tally + hint. | safe | ~600 | 6 | merged |
 | 8 | Encounters list and bottom navigation | `ObserveEncounters`, grouping by outing, `DateTimeFormatter`, `EncountersStore`/`Screen` with outing headers and empty state, bottom bar Counter · Encounters with root-stack back rule. | safe | ~500 | 6 | merged |
 | 8a | String resources | Move every user-facing literal in `:ui` and `:presentation` into `ui/res/values/strings.xml`; mapper-chosen labels become presentation tokens resolved by the composable. Establishes the pattern slices 9–20 follow and shrinks slice 21 to `values-ru` alone. | safe | ~150 | 8 | merged |
-| 9 | Encounter detail with delete and undo | `EncounterDetail` key/store/screen, soft delete from detail, undo on the detail screen for `UNDO_VISIBLE`, then back to the list. | safe | ~300 | 8 | in-progress |
-| 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStorage` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | planned |
+| 9 | Encounter detail with delete and undo | `EncounterDetail` key/store/screen, soft delete from detail, undo on the detail screen for `UNDO_VISIBLE`, then back to the list. | safe | ~300 | 8 | merged |
+| 10 | Photo pipeline in data | `ExifReader`, `ImageResizer`, `Digest`, `GallerySaver` (MediaStore), `PhotoStorage` interfaces + Android implementations, unit tests with fixture JPEGs. | safe | ~450 | 4 | in-progress |
 | 11 | Photo capture flow | `LogPhoto` use case, camera button + `TakePicture`, `origin`/EXIF rules, thumbnails in list and detail via Coil, `saveOriginalsToGallery` setting in DataStore (default on, no UI yet). | safe | ~500 | 7, 9, 10 | planned |
 | 12 | StatsCalculator | Totals, period counts, streaks, milestones, sessions, rate eligibility and auto-scaled rate, all as pure functions with exhaustive tests. | safe | ~550 | 3 | planned |
 | 13 | Statistics screen and current outing | `ObserveStats`, `StatisticsStore`/`Screen` (headline, streak, rate block, outings, next milestone), current-outing block on Counter, milestone toast with `lastSeenMilestone`. | safe | ~500 | 8, 12 | planned |
@@ -231,6 +231,12 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   slice 22); map, route polyline, GPS-track walks, personal heatmap and cats-per-km form the Map epic
   after v1 on MapLibre + OSM, so nothing here changes. `androidUnitTest` → `androidHostTest` in the
   docs to match the AGP KMP plugin's source-set names.
+- 2026-09-22: slice 10 renames `PhotoStore` to `PhotoStorage` — Konsist reserves the `*Store` suffix
+  for MVI stores in `:presentation`, and one suffix meaning two things is what that rule prevents.
+  The spec's §6 name is superseded. `MagicNumber` is exempted in `androidHostTest` (detekt's own
+  default list covers every other test source set; AGP's KMP plugin renamed `androidUnitTest`).
+  Exempting `FunctionNaming` there was considered and dropped: it would force renaming every
+  existing `androidHostTest` test, which is mechanical churn that does not belong in a feature slice.
 - 2026-09-22: slice 8a inserted. Slices 6–8 shipped with hard-coded English in `:ui` and one
   mapper, against `CLAUDE.md`'s "no hard-coded user-facing text", and no review caught it. Fixed now,
   while it is twelve strings, rather than after thirteen more slices; slice 21 becomes translation
