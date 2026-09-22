@@ -16,5 +16,5 @@ fun createCatsDatabase(context: Context): CatsDatabase {
         .build()
 }
 
-internal fun RoomDatabase.Builder<CatsDatabase>.withBundledDriver(): RoomDatabase.Builder<CatsDatabase> =
+internal fun <T : RoomDatabase> RoomDatabase.Builder<T>.withBundledDriver(): RoomDatabase.Builder<T> =
     setDriver(BundledSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO)

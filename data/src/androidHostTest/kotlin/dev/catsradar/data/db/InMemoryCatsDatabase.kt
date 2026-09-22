@@ -3,5 +3,5 @@ package dev.catsradar.data.db
 import android.content.Context
 import androidx.room3.Room
 
-fun buildInMemoryCatsDatabase(context: Context): CatsDatabase =
-    Room.inMemoryDatabaseBuilder<CatsDatabase>(context).withBundledDriver().build()
+internal fun buildInMemoryCatsDatabase(context: Context): TestCatsDatabase =
+    Room.inMemoryDatabaseBuilder<TestCatsDatabase>(context).withBundledDriver().build()

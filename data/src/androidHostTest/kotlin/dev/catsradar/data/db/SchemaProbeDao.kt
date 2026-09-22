@@ -5,7 +5,7 @@ import androidx.room3.Query
 import androidx.room3.RawQuery
 import androidx.room3.RoomRawQuery
 
-/** Raw schema introspection for migration/schema tests; not part of the app's data access. */
+/** Raw schema introspection and row-corruption injection for tests; not part of the app's data access. */
 @Dao
 internal interface SchemaProbeDao {
     @Query(
@@ -29,6 +29,17 @@ internal interface SchemaProbeDao {
 
     @Query("SELECT COUNT(*) FROM encounters WHERE id = :id")
     suspend fun encounterRowCount(id: String): Int
+
+    // Bypasses EnumConverters/entity validation entirely, to simulate a row written by a future
+    // app version or a hand-edited database. origin/locationSource/deviceId are fixed valid
+    // literals: only tzOffsetMinutes and kind are the fields under test.
+    @Query(
+        "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, kind, origin, locationSource, " +
+            "deviceId, createdAt, updatedAt) VALUES " +
+            "(:id, :occurredAt, :tzOffsetMinutes, :kind, 'APP', 'NONE', 'device-1', " +
+            ":occurredAt, :occurredAt)",
+    )
+    suspend fun insertRawEncounter(id: String, occurredAt: Long, tzOffsetMinutes: Int, kind: String)
 }
 
 internal data class PragmaColumn(

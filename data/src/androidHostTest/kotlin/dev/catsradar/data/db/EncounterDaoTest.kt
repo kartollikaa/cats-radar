@@ -17,7 +17,7 @@ import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class EncounterDaoTest {
-    private lateinit var database: CatsDatabase
+    private lateinit var database: TestCatsDatabase
     private lateinit var dao: EncounterDao
 
     @Before

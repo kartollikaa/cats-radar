@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class DatabaseSchemaTest {
-    private lateinit var database: CatsDatabase
+    private lateinit var database: TestCatsDatabase
 
     @Before
     fun createDatabase() {

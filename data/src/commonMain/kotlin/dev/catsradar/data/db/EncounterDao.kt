@@ -21,7 +21,9 @@ interface EncounterDao {
     @Update
     suspend fun update(encounter: EncounterEntity)
 
-    @Query("UPDATE encounters SET deletedAt = :deletedAt WHERE id = :id")
+    // The deletedAt IS NULL guard stops a repeat soft-delete (e.g. "Undo import") from restarting
+    // an already-deleted row's purge clock.
+    @Query("UPDATE encounters SET deletedAt = :deletedAt WHERE id = :id AND deletedAt IS NULL")
     suspend fun softDelete(id: String, deletedAt: Instant)
 
     @Query("UPDATE encounters SET deletedAt = NULL WHERE id = :id")
