@@ -7,6 +7,7 @@ import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.ObserveEncounters
+import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
@@ -22,6 +23,7 @@ val domainModule = module {
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounterCount)
     factoryOf(::ObserveEncounters)
+    factoryOf(::ObserveStats)
     factoryOf(::AttachLocation)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)

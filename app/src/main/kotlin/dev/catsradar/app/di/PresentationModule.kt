@@ -8,6 +8,8 @@ import dev.catsradar.presentation.detail.EncounterDetailStateMapper
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.statistics.StatisticsStateMapper
+import dev.catsradar.presentation.statistics.StatisticsStore
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -20,6 +22,8 @@ val presentationModule = module {
     factoryOf(::EncountersStateMapper)
     viewModelOf(::EncountersStore)
     factoryOf(::EncounterDetailStateMapper)
+    factoryOf(::StatisticsStateMapper)
+    viewModelOf(::StatisticsStore)
     viewModel { (encounterId: String) ->
         EncounterDetailStore(
             encounterId = encounterId,
