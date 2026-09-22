@@ -30,7 +30,6 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 private val SwatchSize = 40.dp
 private val FaceSize = 34.dp
-private val SelectionRing = 2.dp
 private val SwatchColumnWidth = 68.dp
 private const val CoatsPerRow = 4
 
@@ -112,7 +111,7 @@ private fun Swatch(coat: CoatOption, selected: Boolean, modifier: Modifier = Mod
     Box(
         modifier = modifier
             .size(SwatchSize)
-            .border(width = SelectionRing, color = ring, shape = MaterialTheme.shapes.small),
+            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small),
         contentAlignment = Alignment.Center,
     ) {
         CatFace(coat = coat, modifier = Modifier.size(FaceSize))

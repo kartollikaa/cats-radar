@@ -23,22 +23,24 @@ Every coat is drawn as a **cat's face in that coat's real markings**, with its n
 - a **solid** coat is one colour all over;
 - an **"& white"** coat has a white muzzle and a blaze running up between the eyes;
 - **Calico, mostly white** is a white face with a ginger patch over one ear and a black patch over the
-  other; **Calico, little white** is ginger with a black patch and only the white muzzle.
+  other; **Calico, little white** is ginger with a black patch and only the white muzzle;
+- the **brown** coats are tabbies, with dark stripes on the forehead.
 
-Several coats are near-identical as colours: grey, grey and white, black, black and white. A face
-that differed only in fill would be unusable, so the markings carry the difference, and the name
-carries it again for anyone who cannot see the colours.
+Some coats are close as colours. The muzzle separates each coat from its "& white" twin, and the
+stripes separate brown from black, whose furs are only a shade apart. Ginger and grey differ by hue
+alone; the name under every face carries that difference, and every other one, for anyone who cannot
+see the colours.
 
 **Every face is visible on both themes.** A white cat on the light surface and a black one on the
 dark surface have almost no contrast with what is behind them, so each face has a line around it in
-the theme's `outline` colour, and dark-furred cats have amber eyes so their faces do not read as a
-blank shape. `CoatLookTest` holds this: the line reaches 3:1 against the surface in both themes, and
-every coat's eyes reach 3:1 against its own fur. The line the grid used before, `outlineVariant`,
-reached less than 2:1 — which is why the Black cat used to vanish in dark mode — and the test fails
-if it is put back.
+the theme's `outline` colour. Dark-furred cats have amber eyes, and each coat's nose is pink or dark,
+whichever shows against what it sits on. `CoatLookTest` holds all three to the contrast a meaningful
+shape needs: the line against the surface in both themes, the eyes against the fur, and the nose
+against the muzzle or the fur. The rim test fails if the line goes back to `outlineVariant`, which is
+not enough.
 
-The shapes are one set of paths on a 40-unit square, scaled to whatever size a face is drawn at, so
-the grid, the picker and anything later draw the same cat.
+The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
+the picker and anything later draw the same cat.
 
 The labels say **calico**. The stored values are still `TRICOLOR_*`: the database and backup
 archives hold those names, and renaming what nobody sees would need a migration for nothing.
