@@ -1,8 +1,10 @@
 package dev.catsradar.app.navigation
 
 import android.Manifest
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -19,7 +21,10 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.photo.CaptureTarget
+import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
+import dev.catsradar.app.worker.toCounterIntent
+import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
@@ -30,6 +35,7 @@ import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.LocationHintAction
 import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.statistics.StatisticsScreen
+import kotlinx.collections.immutable.toImmutableList
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -39,33 +45,22 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
     val state by store.state.collectAsStateWithLifecycle()
     val haptics = koinInject<Haptics>()
     val locationAttachScheduler = koinInject<LocationAttachScheduler>()
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { results ->
-        val granted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        store.dispatch(CounterIntent.LocationPermissionResult(granted))
-    }
-    // A fresh lambda's identity would change every recomposition (every tap), which would restart
-    // the effect collector below and could drop an in-flight effect.
-    val locationPermissionRequester = remember(permissionLauncher) {
-        LocationPermissionRequester {
-            permissionLauncher.launch(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            )
-        }
-    }
+    val locationPermissionRequester = rememberLocationPermissionRequester(store)
     val context = LocalContext.current
     val cameraLauncher = rememberCameraLauncher(store)
     val photoFailureReporter = rememberPhotoFailureReporter()
     val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
+    val importScheduler = koinInject<ImportScheduler>()
+    val photoPickerLauncher = rememberPhotoPickerLauncher(store)
+    ObserveImportWork(store, importScheduler)
     LaunchedEffect(
         store,
         haptics,
         locationAttachScheduler,
         locationPermissionRequester,
         cameraLauncher,
+        photoPickerLauncher,
     ) {
         store.effects.collect { effect ->
             handleCounterEffect(
@@ -77,6 +72,8 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
                 photoFailureReporter,
                 captureDiscarder,
                 milestoneAnnouncer,
+                photoPickerLauncher,
+                importScheduler,
             )
         }
     }
@@ -88,7 +85,57 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
         onLocationHintAction = { action -> store.dispatch(action.toCounterIntent()) },
         onCameraClick = { store.dispatch(CounterIntent.CameraClicked) },
         onCoatTallyClick = { coat -> store.dispatch(CounterIntent.CoatTallyClicked(coat)) },
+        onImportClick = { store.dispatch(CounterIntent.Import.Requested) },
+        onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
+        onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
     )
+}
+
+// The worker outlives this screen, so its state is read back rather than remembered: coming
+// back mid-import shows the progress it has actually reached.
+@Composable
+private fun ObserveImportWork(store: CounterStore, importScheduler: ImportScheduler) {
+    LaunchedEffect(store, importScheduler) {
+        importScheduler.observe().collect { info ->
+            info?.toCounterIntent()?.let(store::dispatch)
+        }
+    }
+}
+
+@Composable
+private fun rememberLocationPermissionRequester(store: CounterStore): LocationPermissionRequester {
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { results ->
+        val granted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        store.dispatch(CounterIntent.LocationPermissionResult(granted))
+    }
+    // A fresh lambda's identity would change every recomposition (every tap), which would restart
+    // the effect collector and could drop an in-flight effect.
+    return remember(permissionLauncher) {
+        LocationPermissionRequester {
+            permissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            )
+        }
+    }
+}
+
+@Composable
+private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLauncher {
+    val resultLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(Tuning.IMPORT_BATCH_MAX),
+    ) { uris ->
+        store.dispatch(CounterIntent.Import.PhotosPicked(uris.map(Uri::toString).toImmutableList()))
+    }
+    return remember(resultLauncher) {
+        PhotoPickerLauncher {
+            resultLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+            )
+        }
+    }
 }
 
 @Composable

@@ -8,9 +8,11 @@ import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -82,6 +84,7 @@ class CounterStoreTest {
                 timeZone = TimeZone.UTC,
             ),
             undoLastTally = UndoLastTally(encounterRepository, clock),
+            undoImport = UndoImport(encounterRepository, clock),
             observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = flowOf(Unit)),
             settingsRepository = settingsRepository,
             stateMapper = CounterStateMapper(FakeDateTimeFormatter()),
@@ -539,5 +542,111 @@ class CounterStoreTest {
 
     private companion object {
         const val SOURCE = "file:///cache/capture.jpg"
+    }
+
+    @Test
+    fun `picking photos shows a progress row and asks the screen to start the import`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+            store.effects.test {
+                store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a", "content://b")))
+                runCurrent()
+
+                assertEquals(ImportProgressState(done = 0, total = 2), store.state.value.importProgress)
+                assertEquals(CounterEffect.StartImport(persistentListOf("content://a", "content://b")), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `dismissing the picker starts nothing and leaves the screen as it was`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf()))
+        runCurrent()
+
+        assertNull(store.state.value.importProgress)
+        assertNull(store.state.value.importSummary)
+    }
+
+    @Test
+    fun `a finished import replaces the progress row with a summary`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a")))
+        runCurrent()
+
+        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1", "id-2"), skipped = 3, failed = 1))
+        runCurrent()
+
+        assertNull(store.state.value.importProgress)
+        assertEquals(
+            ImportSummaryState(added = 2, skipped = 3, failed = 1, undoable = true),
+            store.state.value.importSummary,
+        )
+    }
+
+    @Test
+    fun `a run where nothing went wrong says so by omission, not with zeroes`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1"), skipped = 0, failed = 0))
+        runCurrent()
+
+        assertEquals(
+            ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+            store.state.value.importSummary,
+        )
+    }
+
+    @Test
+    fun `an import that added nothing offers no undo`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.Finished(persistentListOf(), skipped = 2, failed = 0))
+        runCurrent()
+
+        assertEquals(false, store.state.value.importSummary?.undoable)
+    }
+
+    @Test
+    fun `undoing an import soft-deletes every cat it added`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter(id = "id-1"))
+        repository.insert(externalEncounter(id = "id-2"))
+        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1", "id-2"), skipped = 0, failed = 0))
+        runCurrent()
+
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        assertEquals(listOf("id-1", "id-2"), repository.softDeletedIds)
+        assertEquals(false, store.state.value.importSummary?.undoable)
+    }
+
+    @Test
+    fun `undoing an import twice deletes each cat only once`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter(id = "id-1"))
+        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1"), skipped = 0, failed = 0))
+        runCurrent()
+
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        assertEquals(listOf("id-1"), repository.softDeletedIds)
+    }
+
+    @Test
+    fun `progress survives the stats flow re-emitting as each photo lands`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a", "content://b")))
+        runCurrent()
+        store.dispatch(CounterIntent.Import.Progressed(done = 1, total = 2))
+        runCurrent()
+
+        // Every insert re-emits stats, which rebuilds the whole state through the mapper.
+        repository.insert(externalEncounter(id = "imported"))
+        runCurrent()
+
+        assertEquals(ImportProgressState(done = 1, total = 2), store.state.value.importProgress)
     }
 }

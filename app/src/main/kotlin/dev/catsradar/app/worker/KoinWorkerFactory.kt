@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import dev.catsradar.domain.usecase.AttachLocation
+import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import org.koin.core.Koin
@@ -20,6 +21,8 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
     ): ListenableWorker? = when (workerClassName) {
         AttachLocationWorker::class.java.name ->
             AttachLocationWorker(appContext, workerParameters, koin.get<AttachLocation>())
+        ImportPhotosWorker::class.java.name ->
+            ImportPhotosWorker(appContext, workerParameters, koin.get<ImportPhotos>())
         GeocodePendingCellsWorker::class.java.name ->
             GeocodePendingCellsWorker(appContext, workerParameters, koin.get<ResolvePendingPlaces>())
         PurgeDeletedWorker::class.java.name ->

@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import dev.catsradar.app.permission.LocationPermissionRequester
+import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterEffect
@@ -24,6 +25,10 @@ internal fun interface MilestoneAnnouncer {
     fun announce(value: Int)
 }
 
+internal fun interface PhotoPickerLauncher {
+    fun launch()
+}
+
 @Suppress("LongParameterList") // one collaborator per effect the screen has to carry out
 internal fun handleCounterEffect(
     effect: CounterEffect,
@@ -34,6 +39,8 @@ internal fun handleCounterEffect(
     photoFailureReporter: PhotoFailureReporter,
     captureDiscarder: CaptureDiscarder,
     milestoneAnnouncer: MilestoneAnnouncer,
+    photoPickerLauncher: PhotoPickerLauncher,
+    importScheduler: ImportScheduler,
 ) {
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
@@ -44,5 +51,7 @@ internal fun handleCounterEffect(
         CounterEffect.PhotoNotSaved -> photoFailureReporter.report()
         is CounterEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
         is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)
+        CounterEffect.PickPhotos -> photoPickerLauncher.launch()
+        is CounterEffect.StartImport -> importScheduler.start(effect.uris)
     }
 }

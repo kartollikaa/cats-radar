@@ -14,6 +14,7 @@ import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
+import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
@@ -55,4 +56,5 @@ val domainModule = module {
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)
+    factoryOf(::UndoImport)
 }

@@ -7,6 +7,28 @@
     <string name="counter_camera">Фото</string>
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
+    <string name="counter_import">Импорт из галереи</string>
+    <string name="counter_import_hint">удерживайте — импорт из галереи</string>
+    <string name="counter_import_progress">%1$d из %2$d</string>
+    <string name="counter_import_ok">Понятно</string>
+    <plurals name="counter_import_added">
+        <item quantity="one">%1$d котик добавлен</item>
+        <item quantity="few">%1$d котика добавлено</item>
+        <item quantity="many">%1$d котиков добавлено</item>
+        <item quantity="other">%1$d котика добавлено</item>
+    </plurals>
+    <plurals name="counter_import_skipped">
+        <item quantity="one">%1$d уже был</item>
+        <item quantity="few">%1$d уже были</item>
+        <item quantity="many">%1$d уже были</item>
+        <item quantity="other">%1$d уже были</item>
+    </plurals>
+    <plurals name="counter_import_failed">
+        <item quantity="one">%1$d не удалось прочитать</item>
+        <item quantity="few">%1$d не удалось прочитать</item>
+        <item quantity="many">%1$d не удалось прочитать</item>
+        <item quantity="other">%1$d не удалось прочитать</item>
+    </plurals>
     <string name="counter_photo_not_saved">Фото не сохранилось</string>
     <string name="counter_location_hint">Без доступа к геолокации котики будут без места</string>
     <string name="counter_location_grant">Разрешить</string>
