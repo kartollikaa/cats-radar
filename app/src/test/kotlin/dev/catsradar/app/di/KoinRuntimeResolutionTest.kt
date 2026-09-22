@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.platform.Haptics
+import dev.catsradar.domain.platform.LocationProvider
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,12 +38,14 @@ class KoinRuntimeResolutionTest {
     fun `types resolved outside constructor injection are bound`() {
         val koin = startKoin {
             androidContext(ApplicationProvider.getApplicationContext<Context>())
-            modules(domainModule, dataModule, presentationModule)
+            modules(domainModule, dataModule, presentationModule, workerModule)
         }.koin
 
         assertNotNull(koin.get<Context>())
         assertNotNull(koin.get<CatsDatabase>())
         assertNotNull(koin.get<EncounterDao>())
         assertNotNull(koin.get<Haptics>())
+        assertNotNull(koin.get<LocationProvider>())
+        assertNotNull(koin.get<LocationAttachScheduler>())
     }
 }

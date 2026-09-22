@@ -13,8 +13,8 @@ class KoinModulesTest {
     // definitions -- a binding present in a sibling module would be invisible to it.
     @OptIn(KoinExperimentalAPI::class)
     @Test
-    fun `domain, data and presentation modules resolve together`() {
-        module { includes(domainModule, dataModule, presentationModule) }
+    fun `domain, data, presentation and worker modules resolve together`() {
+        module { includes(domainModule, dataModule, presentationModule, workerModule) }
             .verify(extraTypes = listOf(Context::class))
     }
 }
