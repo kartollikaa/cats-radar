@@ -34,19 +34,19 @@ class WidgetRefreshTest {
                 clock = object : Clock {
                     override fun now(): Instant = Now
                 },
-                timeZone = TimeZone.UTC,
-            ),
+            ) { TimeZone.UTC },
             widgetRedraw = { redraws++ },
         ).start(backgroundScope)
     }
 
-    // Starting is not news: the home screen already shows whatever was drawn last.
+    // A process can start after midnight, or because a lock-screen tap just wrote a row: in both the
+    // widget is showing an older number than the first one read here.
     @Test
-    fun startingDoesNotRedrawOnItsOwn() = runTest(UnconfinedTestDispatcher()) {
+    fun startingRedrawsOnceWithWhatIsTrueNow() = runTest(UnconfinedTestDispatcher()) {
         encounters.add(id = "a", at = Now)
         startRefresh()
 
-        assertEquals(0, redraws)
+        assertEquals(1, redraws)
     }
 
     @Test
@@ -55,17 +55,26 @@ class WidgetRefreshTest {
 
         encounters.add(id = "a", at = Now)
 
-        assertEquals(1, redraws)
+        assertEquals(2, redraws)
     }
 
-    // The widget shows today only, so a row that does not move that number must not cost a redraw.
+    @Test
+    fun aCatUndoneElsewhereRedrawsTheWidget() = runTest(UnconfinedTestDispatcher()) {
+        encounters.add(id = "a", at = Now)
+        startRefresh()
+
+        encounters.softDelete("a", deletedAt = Now)
+
+        assertEquals(2, redraws)
+    }
+
     @Test
     fun aCatOnAnotherDayLeavesTheWidgetAlone() = runTest(UnconfinedTestDispatcher()) {
         startRefresh()
 
         encounters.add(id = "old", at = Instant.parse("2026-09-20T12:00:00Z"))
 
-        assertEquals(0, redraws)
+        assertEquals(1, redraws)
     }
 }
 
@@ -78,14 +87,15 @@ private class FakeTodayRepository : EncounterRepository {
 
     override fun observeAll(): Flow<List<Encounter>> = rows.map { list -> list.filter { it.deletedAt == null } }
 
+    override suspend fun softDelete(id: String, deletedAt: Instant) {
+        rows.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
+    }
+
     override fun observeActiveCount(): Flow<Int> = throw NotImplementedError("unused by this test")
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")

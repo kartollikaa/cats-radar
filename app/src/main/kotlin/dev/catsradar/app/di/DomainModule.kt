@@ -51,7 +51,8 @@ val domainModule = module {
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
-    factory { ObserveTodayCount(encounterRepository = get(), clock = get(), timeZone = get()) }
+    // No zone passed: this one outlives a trip across time zones, so it reads the zone each time.
+    factory { ObserveTodayCount(encounterRepository = get(), clock = get()) }
     factoryOf(::AttachLocation)
     factoryOf(::ResolvePendingPlaces)
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.

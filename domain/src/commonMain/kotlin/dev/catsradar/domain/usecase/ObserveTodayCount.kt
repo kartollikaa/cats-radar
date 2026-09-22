@@ -18,11 +18,14 @@ import kotlin.time.Clock
 class ObserveTodayCount(
     private val encounterRepository: EncounterRepository,
     private val clock: Clock,
-    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+    private val timeZone: () -> TimeZone = TimeZone::currentSystemDefault,
 ) {
     operator fun invoke(): Flow<Int> =
         encounterRepository.observeAll()
-            // Each encounter's own day, in the offset it was captured at, against the device's today.
-            .map { encounters -> encounters.count { it.localDate() == clock.today(timeZone) } }
+            .map { encounters ->
+                val today = clock.today(timeZone())
+                today to encounters.count { it.localDate() == today }
+            }
             .distinctUntilChanged()
+            .map { (_, count) -> count }
 }

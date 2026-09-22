@@ -20,15 +20,22 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
+import androidx.glance.material3.ColorProviders
+import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
-import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.ui.R
+import dev.catsradar.ui.theme.CatsRadarDarkColors
+import dev.catsradar.ui.theme.CatsRadarLightColors
+import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+
+// Given explicitly: without it Glance paints the widget in wallpaper colours on Android 12+.
+private val WidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
 
 /** The whole widget is the button: a cat on a walk should not cost aim. */
 class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
@@ -36,9 +43,13 @@ class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
     private val observeTodayCount: ObserveTodayCount by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        // Glance publishes a session's first frame before a flow answers, so a placeholder there
+        // would flash on the home screen; the real count is read before the session starts.
+        val counts = observeTodayCount()
+        val current = counts.first()
         provideContent {
-            val today by observeTodayCount().collectAsState(initial = 0)
-            GlanceTheme {
+            val today by counts.collectAsState(initial = current)
+            GlanceTheme(colors = WidgetColors) {
                 TodayCount(today)
             }
         }
@@ -55,7 +66,7 @@ private fun TodayCount(count: Int) {
             .cornerRadius(16.dp)
             .padding(8.dp)
             .clickable(actionRunCallback<TallyAction>())
-            .semantics { testTag = context.getString(R.string.widget_tally) },
+            .semantics { contentDescription = context.getString(R.string.widget_tally) },
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

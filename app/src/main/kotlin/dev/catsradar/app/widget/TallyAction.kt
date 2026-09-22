@@ -15,8 +15,9 @@ import org.koin.core.component.inject
 /**
  * A tap on the widget.
  *
- * Glance kills a callback that takes more than a few seconds, so this does the insert and hands the
- * location off to a worker — the same two steps a tap in the app takes, in the same order.
+ * It runs inside a broadcast, which Android allows only a short window, so the location fix is handed
+ * to a worker rather than waited for. The redraw here is the one that is sure to happen before the
+ * process can go away.
  */
 class TallyAction : ActionCallback, KoinComponent {
 
