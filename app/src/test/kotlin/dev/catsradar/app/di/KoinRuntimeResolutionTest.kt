@@ -16,6 +16,7 @@ import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.usecase.ImportPhotos
+import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.regions.RegionsStore
@@ -67,6 +68,7 @@ class KoinRuntimeResolutionTest {
         // verify() treats a constructor parameter with a default as satisfied, but factoryOf's
         // reflection still tries to inject it; only actually building the object catches that.
         assertNotNull(koin.get<ObserveStats>())
+        assertNotNull(koin.get<LogPhoto>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
         // Both the root (null parent) and a drilled-in level, because they take different paths.
         assertNotNull(koin.get<RegionsStore> { parametersOf(null) })

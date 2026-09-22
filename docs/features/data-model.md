@@ -62,10 +62,8 @@ itself works — there is no v2 yet, so no actual migration path exists to test.
 
 ## Not handled yet
 
-`PlaceCell` is fully modeled, mapped, and DAO-tested but nothing writes one: it isn't bound in
-`app/di/DataModule.kt`, and no use case calls `PlaceCellRepository.upsert`. Photo-related fields
-(`photoPath`, `thumbPath`, `galleryUri`, `sourceDigest`) and backup export/import (§3.1, §4.7 of
-the design spec) are specified but unbuilt.
+Backup export and import (§3.1, §4.7 of the design spec) are specified but unbuilt; nothing reads
+or writes an `Encounter` outside the app's own database yet.
 
 ## Purging
 

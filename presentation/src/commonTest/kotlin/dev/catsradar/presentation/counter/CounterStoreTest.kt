@@ -73,6 +73,7 @@ class CounterStoreTest {
             logTally = LogTally(encounterRepository, FakeIdGenerator(), FakeDeviceIdProvider(), clock, TimeZone.UTC),
             logPhoto = LogPhoto(
                 encounterRepository = encounterRepository,
+                placeCellRepository = FakePlaceCellRepository(),
                 settingsRepository = settingsRepository,
                 exifReader = exifReader,
                 imageResizer = imageResizer,
