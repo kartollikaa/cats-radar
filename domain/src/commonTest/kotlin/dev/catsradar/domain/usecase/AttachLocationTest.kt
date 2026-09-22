@@ -55,7 +55,9 @@ class AttachLocationTest {
     fun `a second cat in the same cell does not queue it for naming twice`() = runTest {
         val repository = FakeEncounterRepository()
         repository.insert(encounterFixture(id = "target", occurredAt = Now))
-        repository.insert(encounterFixture(id = "second", occurredAt = Now + 1.minutes))
+        // A separate outing on purpose: within one, the first attach backfills the second
+        // encounter, so it would never reach the place-cell code and the test would pass blind.
+        repository.insert(encounterFixture(id = "second", occurredAt = Now + Tuning.SESSION_GAP * 2))
         val attachLocation = AttachLocation(
             repository,
             placeCells,
