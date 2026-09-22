@@ -6,6 +6,7 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -29,22 +30,33 @@ class WalkingNotifierTest {
             .grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    // Asking for promotion is an API 36 call. This runs well below that, which is the only place
-    // the request could throw rather than being ignored.
-    @Test
-    fun aWalkPostsAnOngoingNotificationOnVersionsTooOldToPromoteIt() {
+    private fun showAndRead(count: Int): Notification {
         grantNotifications()
         notifier.ensureChannel()
+        notifier.show(count)
+        return assertNotNull(shadowManager.allNotifications.firstOrNull())
+    }
 
-        notifier.show(count = 3)
+    @Test
+    fun aWalkPostsAnOngoingNotificationWithBothActions() {
+        val posted = showAndRead(count = 3)
 
-        val posted = assertNotNull(shadowManager.allNotifications.firstOrNull())
         assertTrue(posted.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertEquals(2, posted.actions.size)
     }
 
+    // Both values travel in the notification's extras, which is where androidx puts them below the
+    // version that reads them — so what was asked for is checkable without a device that can grant it.
     @Test
-    fun anUpdatedCountReplacesTheNotificationRatherThanAddingOne() {
+    fun aWalkAsksToBePromotedAndOffersTheCountForTheChip() {
+        val posted = showAndRead(count = 3)
+
+        assertTrue(NotificationCompat.isRequestPromotedOngoing(posted))
+        assertEquals("3", NotificationCompat.getShortCriticalText(posted))
+    }
+
+    @Test
+    fun anUpdatedCountReplacesTheNotificationAndItsChipText() {
         grantNotifications()
         notifier.ensureChannel()
 
@@ -52,10 +64,22 @@ class WalkingNotifierTest {
         notifier.show(count = 4)
 
         assertEquals(1, shadowManager.size())
+        val posted = assertNotNull(shadowManager.allNotifications.firstOrNull())
+        assertEquals("4", NotificationCompat.getShortCriticalText(posted))
     }
 
-    // Without it the notification still posts, and the status-bar chip simply never appears — a
-    // failure with no error anywhere. Nothing else in the build would notice its removal.
+    @Test
+    fun swipingTheNotificationAwayEndsTheWalkRatherThanLeavingItRunning() {
+        val posted = showAndRead(count = 3)
+
+        val onDismiss = assertNotNull(posted.deleteIntent)
+        assertEquals(
+            WalkingAction.STOP,
+            shadowOf(onDismiss).savedIntent.action,
+        )
+    }
+
+    // Without it the notification still posts and the chip simply never appears, with no error.
     @Test
     fun theManifestAsksForPermissionToBePromoted() {
         val info = context.packageManager.getPackageInfo(

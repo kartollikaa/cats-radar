@@ -46,10 +46,14 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
             .setOngoing(true)
             .setSilent(true)
-            // Android 16 promotes an ongoing notification it accepts to the status-bar chip and the
-            // always-on display; older versions get the same notification, unpromoted.
+            // API 36.1 and up may promote an ongoing notification to the status-bar chip and the
+            // always-on display; below that the same notification posts, unpromoted.
             .setRequestPromotedOngoing(true)
+            // What the chip shows. A promoted notification without it gets a chip with only an icon.
             .setShortCriticalText(count.toString())
+            // Swiping it away ends the walk. Reposting something the user has just dismissed is
+            // what makes people turn Live Updates off for an app.
+            .setDeleteIntent(broadcast(WalkingAction.STOP))
             // Visible on the lock screen: tallying without unlocking is the whole point.
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(
