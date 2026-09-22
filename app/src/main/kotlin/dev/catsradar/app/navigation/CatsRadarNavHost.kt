@@ -9,9 +9,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import dev.catsradar.domain.platform.Haptics
+import dev.catsradar.presentation.counter.CounterEffect
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
 import dev.catsradar.ui.counter.CounterScreen
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -29,8 +32,13 @@ fun CatsRadarNavHost() {
             entry<Counter> {
                 val store = koinViewModel<CounterStore>()
                 val state by store.state.collectAsStateWithLifecycle()
-                LaunchedEffect(store) {
-                    store.effects.collect {}
+                val haptics = koinInject<Haptics>()
+                LaunchedEffect(store, haptics) {
+                    store.effects.collect { effect ->
+                        when (effect) {
+                            CounterEffect.HapticTick -> haptics.tick()
+                        }
+                    }
                 }
                 CounterScreen(
                     state = state,
