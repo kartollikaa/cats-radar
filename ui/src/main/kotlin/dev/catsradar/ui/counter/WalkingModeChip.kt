@@ -13,10 +13,6 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/**
- * Starts and stops the walking notification. It lives on the Counter because that is the screen
- * someone is on when they set out; Settings is a place you visit once.
- */
 @Composable
 internal fun WalkingModeChip(
     checked: Boolean,

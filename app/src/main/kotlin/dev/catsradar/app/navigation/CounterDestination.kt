@@ -2,7 +2,6 @@ package dev.catsradar.app.navigation
 
 import android.Manifest
 import android.net.Uri
-import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,8 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.catsradar.app.notification.WalkingNotifications
 import dev.catsradar.app.permission.LocationPermissionRequester
+import dev.catsradar.app.permission.rememberNotificationPermissionRequest
+import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
@@ -50,8 +50,10 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
     val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val importScheduler = koinInject<ImportScheduler>()
-    val walkingNotifier = koinInject<WalkingNotifications>()
     val photoPickerLauncher = rememberPhotoPickerLauncher(store)
+    val onWalkingModeChange = rememberWalkingModeRequest { enabled ->
+        store.dispatch(CounterIntent.WalkingModeToggled(enabled))
+    }
     ObserveImportWork(store, importScheduler)
     LaunchedEffect(
         store,
@@ -73,7 +75,6 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
                 milestoneAnnouncer,
                 photoPickerLauncher,
                 importScheduler,
-                walkingNotifier,
             )
         }
     }
@@ -88,7 +89,7 @@ internal fun CounterDestination(contentPadding: PaddingValues, modifier: Modifie
         onImportClick = { store.dispatch(CounterIntent.Import.Requested) },
         onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
         onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
-        onWalkingModeChange = { store.dispatch(CounterIntent.WalkingModeToggled(it)) },
+        onWalkingModeChange = onWalkingModeChange,
     )
 }
 
@@ -141,14 +142,6 @@ private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLaunche
             )
         }
     }
-}
-
-@Composable
-private fun rememberNotificationPermissionRequest(): () -> Unit {
-    // POST_NOTIFICATIONS does not exist before API 33; there is nothing to ask for.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return remember { {} }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-    return remember(launcher) { { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) } }
 }
 
 @Composable

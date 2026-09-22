@@ -182,7 +182,11 @@ internal class FakeGallerySaver : GallerySaver {
     }
 }
 
-internal class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int = 0) : SettingsRepository {
+internal class FakeSettingsRepository(
+    saveOriginals: Boolean = true,
+    lastMilestone: Int = 0,
+    private val writesFail: Boolean = false,
+) : SettingsRepository {
     private val state = MutableStateFlow(saveOriginals)
     private val milestone = MutableStateFlow(lastMilestone)
 
@@ -197,6 +201,7 @@ internal class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilesto
     override fun walkingMode(): Flow<Boolean> = walking
 
     override suspend fun setWalkingMode(enabled: Boolean) {
+        check(!writesFail) { "preferences unwritable" }
         walking.value = enabled
     }
 

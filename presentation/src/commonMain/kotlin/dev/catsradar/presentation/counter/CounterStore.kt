@@ -82,10 +82,9 @@ class CounterStore(
             CounterIntent.CameraClicked -> emit(CounterEffect.OpenCamera)
             is CounterIntent.PhotoCaptured -> onPhotoCaptured(intent.uri)
             CounterIntent.UndoClicked -> onUndoClicked()
-            is CounterIntent.WalkingModeToggled -> {
-                settingsRepository.setWalkingMode(intent.enabled)
-                emit(CounterEffect.WalkingMode(intent.enabled))
-            }
+            // Only the flag is written; the notification follows it from outside the screen.
+            is CounterIntent.WalkingModeToggled ->
+                runWriteIgnoringFailure { settingsRepository.setWalkingMode(intent.enabled) }
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.LocationPermissionResult ->

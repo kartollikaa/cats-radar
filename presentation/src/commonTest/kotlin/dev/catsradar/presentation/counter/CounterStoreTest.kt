@@ -653,30 +653,42 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `starting a walk asks the screen to put the notification up`() = runTest(mainDispatcher) {
-        val (store, _) = newStore()
-        store.effects.test {
-            store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
-            runCurrent()
-
-            assertEquals(CounterEffect.WalkingMode(enabled = true), awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `the chip follows the stored value, not the tap`() = runTest(mainDispatcher) {
+    fun `tapping the chip stores the flag`() = runTest(mainDispatcher) {
         val settings = FakeSettingsRepository()
         val (store, _) = newStore(settingsRepository = settings)
 
         store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
         runCurrent()
 
-        // Stored first, read back second: a failed write cannot leave the chip and the
-        // notification disagreeing, and Settings shows the same flag.
-        assertEquals(true, store.state.value.walkingMode)
         assertEquals(true, settings.walkingMode().first())
+        assertEquals(true, store.state.value.walkingMode)
     }
+
+    @Test
+    fun `the chip follows a walk stopped from the notification, with no intent of its own`() =
+        runTest(mainDispatcher) {
+            val settings = FakeSettingsRepository()
+            val (store, _) = newStore(settingsRepository = settings)
+            store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+            runCurrent()
+
+            settings.setWalkingMode(false)
+            runCurrent()
+
+            assertEquals(false, store.state.value.walkingMode)
+        }
+
+    @Test
+    fun `a chip tap the store cannot write leaves it off rather than crashing`() =
+        runTest(mainDispatcher) {
+            val settings = FakeSettingsRepository(writesFail = true)
+            val (store, _) = newStore(settingsRepository = settings)
+
+            store.dispatch(CounterIntent.WalkingModeToggled(enabled = true))
+            runCurrent()
+
+            assertEquals(false, store.state.value.walkingMode)
+        }
 
     @Test
     fun `walking mode survives the stats flow rebuilding the whole state`() = runTest(mainDispatcher) {

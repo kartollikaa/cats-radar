@@ -8,8 +8,25 @@ Started from the **Counter** — a chip that reads *Start a walk*, then *On a wa
 the screen someone is on when they set out. The same switch is in **Settings → Walking mode** for
 finding it again later.
 
-Both read the same stored flag rather than their own state, so they cannot disagree, and the mode is
-still on when the app is reopened mid-walk.
+## One flag, one owner
+
+Both controls do exactly one thing: write a stored flag. Neither posts the notification.
+
+The notification is kept equal to that flag, and to the outing it is counting, by a single collector
+that runs for as long as the process does. Anything that changes either — a cat tallied in the app,
+a walk stopped from the shade, the outing closing on its own — moves the notification without a
+screen being involved.
+
+A screen that posted it itself would leave the shade empty while the flag still read on: after a
+reboot, after a force-stop, or after the notification was swiped away. The control would say *On a
+walk* and the **Cat!** button would not exist.
+
+## It needs permission to post
+
+Turning the mode on asks for `POST_NOTIFICATIONS` and, if refused, does not turn on. The
+notification *is* the feature; a control reading *On a walk* over an empty shade would be a lie, and
+a refusal that Android remembers is answered without a dialog, so the control simply will not
+engage until notifications are allowed in system settings.
 
 ## It does not define an outing
 
@@ -39,6 +56,12 @@ and gets promoted where the platform allows.
 
 - **The count is re-read, never remembered.** The process may have died between taps, and the outing
   is derived from the rows anyway, so each tap asks the statistics rather than keeping its own tally.
+- **A walk started mid-outing shows the cats already logged**, not zero — it joins the outing in
+  progress rather than pretending to begin one.
+- **A process that starts with the mode off clears the notification.** That is how a stale one,
+  left in the shade by a process that was killed, goes away.
+- **Nothing observes the encounters while the mode is off**, which is nearly always: the statistics
+  are only subscribed to for the length of a walk.
 - **The receiver is not exported.** Only this app's own notification actions reach it; an `adb`
   broadcast from the shell is refused, which is the point of the flag.
 - **The pending intent is immutable.** Nothing may rewrite where a lock-screen tap ends up.
@@ -53,11 +76,14 @@ and gets promoted where the platform allows.
 ## Where the code lives
 
 - `app/…/notification/WalkingNotifier.kt` — the notification and its actions
+- `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
+- `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use
 - `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the switch survives a restart
 
 ## Not built yet
 
 No Live Update promotion. No automatic stop, so a mode left on stays on until it is turned off —
 there is no rule yet for what "the walk ended" would mean that the gap-based outing does not already
-answer.
+answer. A reboot leaves the flag on but the shade empty until something starts the app again;
+nothing listens for `BOOT_COMPLETED`.

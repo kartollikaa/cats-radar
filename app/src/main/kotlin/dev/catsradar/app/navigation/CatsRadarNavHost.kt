@@ -16,7 +16,7 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import dev.catsradar.app.notification.WalkingNotifications
+import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.toSettingsIntent
 import dev.catsradar.presentation.detail.EncounterDetailEffect
@@ -96,7 +96,9 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
     val store = koinViewModel<SettingsStore>()
     val state by store.state.collectAsStateWithLifecycle()
     val backupScheduler = koinInject<BackupScheduler>()
-    val walkingNotifier = koinInject<WalkingNotifications>()
+    val onWalkingModeChange = rememberWalkingModeRequest { enabled ->
+        store.dispatch(SettingsIntent.WalkingModeToggled(enabled))
+    }
     val exportLauncher = rememberLauncherForActivityResult(CreateDocument(BACKUP_MIME_TYPE)) { uri ->
         store.dispatch(SettingsIntent.Backup.ExportTargetChosen(uri?.toString()))
     }
@@ -107,15 +109,13 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
     LaunchedEffect(store, backupScheduler) {
         backupScheduler.observe().collect { info -> info?.toSettingsIntent()?.let(store::dispatch) }
     }
-    LaunchedEffect(store, backupScheduler, walkingNotifier, exportLauncher, importLauncher) {
+    LaunchedEffect(store, backupScheduler, exportLauncher, importLauncher) {
         store.effects.collect { effect ->
             when (effect) {
                 SettingsEffect.PickExportTarget -> exportLauncher.launch(defaultBackupName())
                 SettingsEffect.PickImportSource -> importLauncher.launch(arrayOf(BACKUP_MIME_TYPE))
                 is SettingsEffect.StartExport -> backupScheduler.export(effect.target)
                 is SettingsEffect.StartImport -> backupScheduler.import(effect.source)
-                is SettingsEffect.WalkingMode ->
-                    if (effect.enabled) walkingNotifier.show(count = 0) else walkingNotifier.clear()
             }
         }
     }
@@ -124,7 +124,7 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
         modifier = modifier,
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
-        onWalkingModeChange = { store.dispatch(SettingsIntent.WalkingModeToggled(it)) },
+        onWalkingModeChange = onWalkingModeChange,
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
         onBackupOutcomeDismiss = { store.dispatch(SettingsIntent.Backup.OutcomeDismissed) },
