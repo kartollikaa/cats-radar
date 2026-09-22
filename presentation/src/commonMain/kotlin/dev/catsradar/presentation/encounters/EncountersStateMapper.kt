@@ -16,25 +16,28 @@ class EncountersStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
             .asReversed()
             .flatMap { outing -> outingToItems(outing, today) }
             .toPersistentList()
-        return EncountersState(rows = rows, isEmpty = rows.isEmpty())
+        return EncountersState(rows = rows)
     }
 
-    // The header carries the outing's start date (its earliest encounter, per outings.md), even
-    // when the outing runs past midnight - it never gains a second header partway through.
+    // Keyed to the outing's earliest encounter (its "start", per outings.md), so a midnight-
+    // crossing outing keeps one header; the start time tells same-day outings apart.
     private fun outingToItems(outing: List<Encounter>, today: LocalDate): List<EncounterListItem> {
         val earliest = outing.first()
-        val header = EncounterListItem.DayHeader(
+        val header = EncounterListItem.OutingHeader(
             key = "header-${earliest.id}",
-            dayLabel = dateTimeFormatter.dayHeader(earliest.localDate(), today),
+            label = "${dateTimeFormatter.dayHeader(earliest.localDate(), today)}, ${earliest.timeLabel()}",
         )
         return listOf(header) + outing.asReversed().map(::toRowItem)
     }
 
     private fun toRowItem(encounter: Encounter): EncounterListItem.Row = EncounterListItem.Row(
         id = encounter.id,
-        timeLabel = dateTimeFormatter.time(encounter.occurredAt, UtcOffset(minutes = encounter.tzOffsetMinutes)),
+        timeLabel = encounter.timeLabel(),
         locationLabel = encounter.locationSource.toLocationLabel(),
     )
+
+    private fun Encounter.timeLabel(): String =
+        dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
 
     private fun LocationSource.toLocationLabel(): String = when (this) {
         LocationSource.EXIF -> "From photo"

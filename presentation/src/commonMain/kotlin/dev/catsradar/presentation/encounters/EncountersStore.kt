@@ -22,7 +22,7 @@ class EncountersStore(
             .launchIn(viewModelScope)
     }
 
-    @Suppress("EmptyFunctionBlock") // EncountersIntent has no cases yet; nothing to handle
+    @Suppress("EmptyFunctionBlock") // EncountersIntent has no members: this screen dispatches none
     override suspend fun handle(intent: EncountersIntent) {
     }
 }

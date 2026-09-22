@@ -35,7 +35,7 @@ fun EncountersScreen(
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
         items(items = state.rows, key = { it.key }) { row ->
             when (row) {
-                is EncounterListItem.DayHeader -> DayHeaderRow(row)
+                is EncounterListItem.OutingHeader -> OutingHeaderRow(row)
                 is EncounterListItem.Row -> EncounterRow(row)
             }
         }
@@ -43,9 +43,9 @@ fun EncountersScreen(
 }
 
 @Composable
-private fun DayHeaderRow(header: EncounterListItem.DayHeader, modifier: Modifier = Modifier) {
+private fun OutingHeaderRow(header: EncounterListItem.OutingHeader, modifier: Modifier = Modifier) {
     Text(
-        text = header.dayLabel,
+        text = header.label,
         style = MaterialTheme.typography.titleSmall,
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
     )
@@ -87,13 +87,13 @@ private fun EncountersScreenPopulatedPreview() {
 
 private val sampleEncountersStateEmpty = EncountersState()
 
+// Two outings on the same day, so the preview also shows how their headers tell them apart.
 private val sampleEncountersStatePopulated = EncountersState(
-    isEmpty = false,
     rows = persistentListOf(
-        EncounterListItem.DayHeader(key = "header-1", dayLabel = "Today"),
+        EncounterListItem.OutingHeader(key = "header-1", label = "Today, 14:10"),
         EncounterListItem.Row(id = "1", timeLabel = "14:32", locationLabel = "Current location"),
         EncounterListItem.Row(id = "2", timeLabel = "14:10", locationLabel = "From this outing"),
-        EncounterListItem.DayHeader(key = "header-3", dayLabel = "Yesterday"),
+        EncounterListItem.OutingHeader(key = "header-3", label = "Today, 09:05"),
         EncounterListItem.Row(id = "3", timeLabel = "09:05", locationLabel = "No location yet"),
     ),
 )

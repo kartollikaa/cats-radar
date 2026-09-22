@@ -41,7 +41,7 @@ class EncountersStateMapperTest {
             listOf(encounterFixture("a1", BASE), encounterFixture("a2", BASE + Tuning.SESSION_GAP)),
             today,
         )
-        assertEquals(1, sameOuting.rows.count { it is EncounterListItem.DayHeader })
+        assertEquals(1, sameOuting.rows.count { it is EncounterListItem.OutingHeader })
         assertEquals(2, sameOuting.rows.count { it is EncounterListItem.Row })
 
         val split = mapper.map(
@@ -51,8 +51,20 @@ class EncountersStateMapperTest {
             ),
             today,
         )
-        assertEquals(2, split.rows.count { it is EncounterListItem.DayHeader })
+        assertEquals(2, split.rows.count { it is EncounterListItem.OutingHeader })
         assertEquals(2, split.rows.count { it is EncounterListItem.Row })
+    }
+
+    @Test
+    fun `two outings on the same day get distinct header labels`() {
+        val morning = encounterFixture("morning", BASE)
+        val evening = encounterFixture("evening", BASE + 8.hours) // past SESSION_GAP: a separate outing
+
+        val state = mapper.map(listOf(morning, evening), today)
+
+        val headerLabels = state.rows.filterIsInstance<EncounterListItem.OutingHeader>().map { it.label }
+        assertEquals(2, headerLabels.size)
+        assertNotEquals(headerLabels[0], headerLabels[1])
     }
 
     @Test
@@ -63,7 +75,7 @@ class EncountersStateMapperTest {
         val state = mapper.map(listOf(kept, deleted), today)
 
         assertEquals(listOf("kept"), state.rows.filterIsInstance<EncounterListItem.Row>().map { it.id })
-        assertEquals(1, state.rows.count { it is EncounterListItem.DayHeader })
+        assertEquals(1, state.rows.count { it is EncounterListItem.OutingHeader })
     }
 
     @Test
