@@ -3,12 +3,14 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.location.LocationPolicy
+import dev.catsradar.domain.location.LocationResult
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.session.SessionSplitter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -24,11 +26,7 @@ class AttachLocation(
             ?.takeIf { it.locationSource == LocationSource.NONE }
             ?: return
 
-        val result = LocationPolicy.resolve(
-            now = clock.now(),
-            currentFix = { locationProvider.getCurrentFix(Tuning.LOCATION_TIMEOUT) },
-            lastKnown = { locationProvider.lastKnown() },
-        )
+        val result = resolveLocation()
         val fix = result.fix ?: return
 
         val geohash = Geohash.encode(fix.lat, fix.lon, Tuning.GEOHASH_PRECISION)
@@ -53,6 +51,19 @@ class AttachLocation(
             backfillOuting(target.occurredAt, encounterId, stamp)
         }
     }
+
+    // A backstop, not the primary bound: getCurrentFix already owns LOCATION_TIMEOUT. Double it
+    // here so a well-behaved provider's own timeout always resolves first; this only protects the
+    // worker if a platform LocationProvider implementation ever stops honouring its own bound -
+    // timing out here is equivalent to nothing being available.
+    private suspend fun resolveLocation(): LocationResult =
+        withTimeoutOrNull(Tuning.LOCATION_TIMEOUT * 2) {
+            LocationPolicy.resolve(
+                now = clock.now(),
+                currentFix = { locationProvider.getCurrentFix(Tuning.LOCATION_TIMEOUT) },
+                lastKnown = { locationProvider.lastKnown() },
+            )
+        } ?: LocationResult(null, LocationSource.NONE)
 
     private suspend fun backfillOuting(targetOccurredAt: Instant, targetId: String, stamp: LocationStamp) {
         val candidates = encounterRepository.observeAll().first().filter { it.deletedAt == null }

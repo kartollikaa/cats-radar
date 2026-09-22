@@ -8,6 +8,8 @@ import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeLocationProvider
+import dev.catsradar.domain.testing.HangingLocationProvider
+import dev.catsradar.domain.testing.MisbehavingLocationProvider
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -16,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -210,5 +213,49 @@ class AttachLocationTest {
         assertEquals(1.0, target.lon)
         val sameOuting = encounter(repository, "sameOuting")
         assertEquals(LocationSource.NONE, sameOuting.locationSource)
+    }
+
+    @Test
+    fun `a current fix that never arrives times out and falls through to a fresh last known`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        val lastKnownFix = Fix.copy(fixedAt = Now - 1.hours)
+        val locationProvider = HangingLocationProvider(lastKnownFix = lastKnownFix)
+        val attachLocation = AttachLocation(repository, locationProvider, FakeClock(Now))
+
+        attachLocation("target")
+
+        assertEquals(Tuning.LOCATION_TIMEOUT, locationProvider.recordedTimeout)
+        val updated = encounter(repository, "target")
+        assertEquals(LocationSource.LAST_KNOWN, updated.locationSource)
+        assertEquals(lastKnownFix.lat, updated.lat)
+    }
+
+    @Test
+    fun `a current fix that never arrives times out and falls through to NONE without a last known`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        val locationProvider = HangingLocationProvider(lastKnownFix = null)
+        val attachLocation = AttachLocation(repository, locationProvider, FakeClock(Now))
+
+        attachLocation("target")
+
+        assertEquals(Tuning.LOCATION_TIMEOUT, locationProvider.recordedTimeout)
+        val updated = encounter(repository, "target")
+        assertEquals(LocationSource.NONE, updated.locationSource)
+        assertNull(updated.lat)
+    }
+
+    @Test
+    fun `a provider that ignores its own timeout is still bounded by AttachLocation's own backstop`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        val attachLocation = AttachLocation(repository, MisbehavingLocationProvider(), FakeClock(Now))
+
+        attachLocation("target")
+
+        val updated = encounter(repository, "target")
+        assertEquals(LocationSource.NONE, updated.locationSource)
+        assertNull(updated.lat)
     }
 }
