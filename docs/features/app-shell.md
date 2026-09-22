@@ -59,7 +59,7 @@ run.
 ## Not handled yet
 
 `Counter` and `Encounters` are the only two `NavKey`s behind the bottom `NavigationBar`; the
-root-stack back rule it enforces is covered in `browsing-cats.md`. The other four screens the
+root-stack back rule it enforces is covered in `browsing-cats.md`. The other five screens the
 design spec lists (`EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`)
 don't exist yet. `CatsRadarTheme` sets only a light/dark `colorScheme`; it has no custom typography
 or shapes, unlike the fuller theme surface `docs/rules/compose-patterns.md` §3 describes.
