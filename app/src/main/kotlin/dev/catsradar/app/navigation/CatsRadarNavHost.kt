@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.permission.LocationPermissionRequester
@@ -33,21 +32,21 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CatsRadarNavHost(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Counter)
+    val backStack = rememberBottomNavBackStack()
 
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             CatsRadarBottomBar(
-                selectedTab = backStack.last().toBottomNavTab(),
-                onTabSelect = { tab -> backStack.selectBottomNavTab(tab) },
+                selectedTab = backStack.selectedTab,
+                onTabSelect = { tab -> backStack.selectTab(tab) },
             )
         },
     ) { innerPadding ->
         NavDisplay(
             backStack = backStack,
-            onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+            onBack = { backStack.popOrNull() },
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
