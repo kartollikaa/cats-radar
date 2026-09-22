@@ -1,5 +1,8 @@
 package dev.catsradar.app.di
 
+import dev.catsradar.app.BuildConfig
+import dev.catsradar.data.backup.ZipBackupReader
+import dev.catsradar.data.backup.ZipBackupWriter
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.PlaceCellDao
@@ -19,6 +22,8 @@ import dev.catsradar.data.platform.VibratorHaptics
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
+import dev.catsradar.domain.platform.BackupReader
+import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
@@ -58,6 +63,16 @@ val dataModule = module {
     single<Digest> { Sha256Digest(androidContext()) }
     single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
     single<SourceFileTime> { MediaStoreSourceFileTime(androidContext()) }
+    single<BackupWriter> {
+        ZipBackupWriter(
+            context = androidContext(),
+            photoStorage = get<AndroidPhotoStorage>(),
+            deviceIdProvider = get(),
+            clock = get(),
+            appVersion = BuildConfig.VERSION_NAME,
+        )
+    }
+    single<BackupReader> { ZipBackupReader(androidContext(), get<AndroidPhotoStorage>()) }
     single<ReverseGeocoder> { AndroidReverseGeocoder(androidContext()) }
     single<SettingsRepository> { createSettingsRepository(androidContext()) }
 }

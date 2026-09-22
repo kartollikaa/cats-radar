@@ -2,6 +2,8 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ExportBackup
+import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
@@ -57,4 +59,6 @@ val domainModule = module {
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)
     factoryOf(::UndoImport)
+    factoryOf(::ExportBackup)
+    factoryOf(::ImportBackup)
 }

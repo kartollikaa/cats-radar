@@ -23,6 +23,9 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 versionCode = libs.version("app-versionCode").toInt()
                 versionName = libs.version("app-versionName")
             }
+            // A backup's manifest records the version that wrote it, which is the only thing that
+            // could ever explain a file a later build cannot read.
+            buildFeatures { buildConfig = true }
             lint {
                 configureLintSeverity()
                 checkDependencies = true

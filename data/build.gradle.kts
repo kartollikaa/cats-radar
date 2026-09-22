@@ -2,6 +2,7 @@ plugins {
     id("catsradar.kmp.library")
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 room3 {
@@ -17,6 +18,7 @@ kotlin {
             // RoomDatabase (room-runtime) resolvable on its own classpath.
             api(libs.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

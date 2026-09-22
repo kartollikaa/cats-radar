@@ -15,6 +15,8 @@ import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.RegionKey
+import dev.catsradar.domain.usecase.ExportBackup
+import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.ObserveStats
@@ -61,6 +63,8 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<LocationAttachScheduler>())
         assertNotNull(koin.get<ExifReader>())
         assertNotNull(koin.get<ImportPhotos>())
+        assertNotNull(koin.get<ExportBackup>())
+        assertNotNull(koin.get<ImportBackup>())
         assertNotNull(koin.get<ImageResizer>())
         assertNotNull(koin.get<Digest>())
         assertNotNull(koin.get<GallerySaver>())
