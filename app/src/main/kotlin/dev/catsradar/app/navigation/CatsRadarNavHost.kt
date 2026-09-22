@@ -10,7 +10,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.domain.platform.Haptics
-import dev.catsradar.presentation.counter.CounterEffect
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
 import dev.catsradar.ui.counter.CounterScreen
@@ -34,11 +33,7 @@ fun CatsRadarNavHost() {
                 val state by store.state.collectAsStateWithLifecycle()
                 val haptics = koinInject<Haptics>()
                 LaunchedEffect(store, haptics) {
-                    store.effects.collect { effect ->
-                        when (effect) {
-                            CounterEffect.HapticTick -> haptics.tick()
-                        }
-                    }
+                    store.effects.collect { effect -> handleCounterEffect(effect, haptics) }
                 }
                 CounterScreen(
                     state = state,
