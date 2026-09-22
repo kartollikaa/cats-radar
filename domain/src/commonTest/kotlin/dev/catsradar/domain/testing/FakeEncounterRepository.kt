@@ -62,7 +62,9 @@ class FakeEncounterRepository : EncounterRepository {
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = null) else it } }
     }
 
-    override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
+    // Mirrors the DAO: a soft-deleted row does not block a re-import of the same bytes.
+    override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
+        encounters.value.firstOrNull { it.sourceDigest == sourceDigest && it.deletedAt == null }
 
     // Mirrors the DAO: this is the only read that can see soft-deleted rows.
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =

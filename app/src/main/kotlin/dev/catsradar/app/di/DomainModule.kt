@@ -2,6 +2,7 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
@@ -24,6 +25,20 @@ val domainModule = module {
     single { TimeZone.currentSystemDefault() }
     factoryOf(::LogTally)
     factoryOf(::LogPhoto)
+    // Constructed by hand: timeZone has a default, which factoryOf would try to inject.
+    factory {
+        ImportPhotos(
+            encounterRepository = get(),
+            exifReader = get(),
+            imageResizer = get(),
+            digest = get(),
+            sourceFileTime = get(),
+            idGenerator = get(),
+            deviceIdProvider = get(),
+            clock = get(),
+            timeZone = get(),
+        )
+    }
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounterCount)
     factoryOf(::ObserveEncounters)

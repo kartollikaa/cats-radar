@@ -10,6 +10,7 @@ import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.platform.AndroidReverseGeocoder
 import dev.catsradar.data.platform.FusedLocationProvider
 import dev.catsradar.data.platform.MediaStoreGallerySaver
+import dev.catsradar.data.platform.MediaStoreSourceFileTime
 import dev.catsradar.data.platform.RandomIdGenerator
 import dev.catsradar.data.platform.Sha256Digest
 import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
@@ -29,6 +30,7 @@ import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.ReverseGeocoder
+import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
@@ -55,6 +57,7 @@ val dataModule = module {
     single<ImageResizer> { AndroidImageResizer(androidContext(), get()) }
     single<Digest> { Sha256Digest(androidContext()) }
     single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
+    single<SourceFileTime> { MediaStoreSourceFileTime(androidContext()) }
     single<ReverseGeocoder> { AndroidReverseGeocoder(androidContext()) }
     single<SettingsRepository> { createSettingsRepository(androidContext()) }
 }

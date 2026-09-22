@@ -5,13 +5,22 @@ import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.platform.ExifReader
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.ImageResizer
+import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.time.Instant
 
 class FakeExifReader(var data: ExifData = ExifData()) : ExifReader {
-    override suspend fun read(uri: String): ExifData = data
+    /** Per-uri overrides win over [data], for a run whose photos differ from each other. */
+    val perUri = mutableMapOf<String, ExifData>()
+
+    override suspend fun read(uri: String): ExifData = perUri[uri] ?: data
+}
+
+class FakeSourceFileTime(var fileDate: Instant? = null) : SourceFileTime {
+    override suspend fun createdAt(uri: String): Instant? = fileDate
 }
 
 class FakeImageResizer(
@@ -20,9 +29,12 @@ class FakeImageResizer(
     var calls = 0
         private set
 
+    /** Sources that cannot be decoded, however [result] is set. */
+    val undecodable = mutableSetOf<String>()
+
     override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? {
         calls++
-        return result
+        return result.takeIf { sourceUri !in undecodable }
     }
 
     companion object {
@@ -32,7 +44,10 @@ class FakeImageResizer(
 }
 
 class FakeDigest(var result: String? = SHA) : Digest {
-    override suspend fun sha256(uri: String): String? = result
+    /** Per-uri overrides win over [result], for a batch whose photos are not all the same. */
+    val perUri = mutableMapOf<String, String?>()
+
+    override suspend fun sha256(uri: String): String? = if (uri in perUri) perUri[uri] else result
 
     companion object {
         const val SHA = "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f"
