@@ -34,6 +34,7 @@ private fun BottomNavTab.labelRes(): Int = when (this) {
     BottomNavTab.COUNTER -> R.string.tab_counter
     BottomNavTab.ENCOUNTERS -> R.string.tab_encounters
     BottomNavTab.STATISTICS -> R.string.tab_statistics
+    BottomNavTab.SETTINGS -> R.string.tab_settings
 }
 
 @ThemePreviews

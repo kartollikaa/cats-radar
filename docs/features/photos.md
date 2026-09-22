@@ -35,9 +35,12 @@ has both.
 ## The gallery setting
 
 `saveOriginalsToGallery` lives in DataStore and is **on unless turned off**, so a fresh install keeps
-the user's photos where they expect them. There is no UI for it yet; the settings screen is its own
-slice. DataStore stays inside `:data` behind `createSettingsRepository` — `:app` never names the
-type, which also keeps the dependency off `:app`'s classpath.
+the user's photos where they expect them. The **Settings** tab has the switch. DataStore stays
+inside `:data` behind `createSettingsRepository` — `:app` never names the type, which also keeps the
+dependency off `:app`'s classpath.
+
+The switch renders what is *stored*, not what was last tapped: it follows the settings flow rather
+than keeping its own optimistic state, so a failed write cannot leave the two disagreeing.
 
 ## Reading a photo's metadata
 

@@ -48,6 +48,7 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
         BottomNavTab.COUNTER -> Counter
         BottomNavTab.ENCOUNTERS -> Encounters
         BottomNavTab.STATISTICS -> Statistics
+        BottomNavTab.SETTINGS -> Settings
     }
 
     private fun dropDuplicateKeys() {
