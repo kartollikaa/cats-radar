@@ -70,6 +70,27 @@ class SessionSplitterTest {
         assertEquals(listOf(Session(1, BASE, BASE, Duration.ZERO)), sessions)
     }
 
+    @Test
+    fun `groupByOuting returns each outing's own encounters, not just their aggregate`() {
+        val first = encounterAt(BASE)
+        val second = encounterAt(BASE + 10.minutes)
+        val third = encounterAt(BASE + 1.hours) // past SESSION_GAP from `second`
+
+        val outings = SessionSplitter.groupByOuting(listOf(third, first, second))
+
+        assertEquals(listOf(listOf(first, second), listOf(third)), outings)
+    }
+
+    @Test
+    fun `groupByOuting excludes a soft-deleted encounter from its outing`() {
+        val kept = encounterAt(BASE)
+        val deleted = encounterAt(BASE + 15.minutes, deletedAt = BASE + 1.hours)
+
+        val outings = SessionSplitter.groupByOuting(listOf(kept, deleted))
+
+        assertEquals(listOf(listOf(kept)), outings)
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-21T10:00:00Z")
     }

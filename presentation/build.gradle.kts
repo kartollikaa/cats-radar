@@ -8,6 +8,7 @@ kotlin {
             implementation(projects.domain)
             implementation(libs.kotlinx.coroutines.core)
             api(libs.androidx.lifecycle.viewmodel)
+            api(libs.kotlinx.collections.immutable)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

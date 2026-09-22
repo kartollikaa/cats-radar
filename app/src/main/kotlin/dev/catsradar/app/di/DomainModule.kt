@@ -3,6 +3,7 @@ package dev.catsradar.app.di
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounterCount
+import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
@@ -15,5 +16,6 @@ val domainModule = module {
     factoryOf(::LogTally)
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounterCount)
+    factoryOf(::ObserveEncounters)
     factoryOf(::AttachLocation)
 }

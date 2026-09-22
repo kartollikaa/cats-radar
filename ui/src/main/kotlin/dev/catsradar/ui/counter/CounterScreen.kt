@@ -58,13 +58,9 @@ private fun LocationPermissionHint(
     onAction: (LocationHintAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(text = "Location permission needed for cat spots", style = MaterialTheme.typography.bodySmall)
-        Row {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = { onAction(LocationHintAction.GRANT) }) { Text(text = "Grant") }
             TextButton(onClick = { onAction(LocationHintAction.DISMISS) }) { Text(text = "Dismiss") }
         }

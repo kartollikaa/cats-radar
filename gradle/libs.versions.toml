@@ -19,6 +19,7 @@ kotlinx-coroutines = "1.11.0"
 # The "-0.6.x-compat" suffix ships kotlinx.datetime.Instant/Clock as type aliases to
 # kotlin.time.Instant/Clock (docs/rules/date-time.md); the plain 0.8.0 artifact omits them.
 kotlinx-datetime = "0.8.0-0.6.x-compat"
+kotlinx-collections-immutable = "0.5.1"
 # Room's current stable major renamed its group/plugin id to androidx.room3 (room3-runtime,
 # room3-compiler, plugin id "androidx.room3"); the pre-rename androidx.room artifacts stayed at 2.x.
 room = "3.0.3"
@@ -52,6 +53,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-material3 = { module = "androidx.compose.material3:material3" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "compose-rules-detekt" }
