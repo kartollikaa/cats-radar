@@ -1,5 +1,6 @@
 package dev.catsradar.ui.encounters
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,9 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.encounters.EncounterListItem
 import dev.catsradar.presentation.encounters.EncountersState
+import dev.catsradar.presentation.encounters.LocationLabel
+import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
@@ -58,14 +62,23 @@ private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifi
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)
-        Text(text = row.locationLabel, style = MaterialTheme.typography.bodySmall)
+        Text(text = stringResource(row.location.labelRes()), style = MaterialTheme.typography.bodySmall)
     }
+}
+
+@StringRes
+private fun LocationLabel.labelRes(): Int = when (this) {
+    LocationLabel.FROM_PHOTO -> R.string.location_from_photo
+    LocationLabel.CURRENT -> R.string.location_current
+    LocationLabel.LAST_KNOWN -> R.string.location_last_known
+    LocationLabel.FROM_OUTING -> R.string.location_from_outing
+    LocationLabel.NONE -> R.string.location_none
 }
 
 @Composable
 private fun EmptyEncounters(modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Text(text = "No cats logged yet", style = MaterialTheme.typography.bodyLarge)
+        Text(text = stringResource(R.string.encounters_empty), style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -91,9 +104,9 @@ private val sampleEncountersStateEmpty = EncountersState()
 private val sampleEncountersStatePopulated = EncountersState(
     rows = persistentListOf(
         EncounterListItem.OutingHeader(key = "header-1", label = "Today, 14:10"),
-        EncounterListItem.Row(id = "1", timeLabel = "14:32", locationLabel = "Current location"),
-        EncounterListItem.Row(id = "2", timeLabel = "14:10", locationLabel = "From this outing"),
+        EncounterListItem.Row(id = "1", timeLabel = "14:32", location = LocationLabel.CURRENT),
+        EncounterListItem.Row(id = "2", timeLabel = "14:10", location = LocationLabel.FROM_OUTING),
         EncounterListItem.OutingHeader(key = "header-3", label = "Today, 09:05"),
-        EncounterListItem.Row(id = "3", timeLabel = "09:05", locationLabel = "No location yet"),
+        EncounterListItem.Row(id = "3", timeLabel = "09:05", location = LocationLabel.NONE),
     ),
 )

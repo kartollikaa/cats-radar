@@ -85,6 +85,31 @@ Text(state.rateLabel)
 `testTag`, a `Modifier`/theme choice derived from a state flag, `stringResource` lookups for static
 labels.
 
+### User-facing text: a token in State, the words in resources
+
+No user-facing string is written in `:presentation` or `:ui` source. State never carries an English
+sentence, because a sentence cannot be translated later without rewriting the mapper and its tests.
+
+The mapper decides *which* label applies and puts a `:presentation` enum in State; the composable
+resolves that enum to `stringResource`. That keeps the decision where it can be unit-tested and the
+words where `values-ru` can translate them. `:ui` cannot see `:domain`, so the token is a
+presentation type, never the domain enum itself.
+
+```kotlin
+// ❌ the mapper writes the words
+LocationSource.LAST_KNOWN -> "Last known location"
+
+// ✅ the mapper picks the case; strings.xml holds the words
+LocationSource.LAST_KNOWN -> LocationLabel.LAST_KNOWN
+```
+
+A `when` over such a token inside a composable is the sanctioned exception to *No mapping in
+composables* above: it resolves a token to text and decides nothing. Anything else in that `when` —
+visibility, ordering, a second branch on another field — means the decision leaked into the view.
+
+Cover the mapper's token choice with a test that asserts every case **and** that no two cases
+collapse onto one token; a `when` arm pointing at the wrong token is otherwise invisible.
+
 ---
 
 ## 3. Theming

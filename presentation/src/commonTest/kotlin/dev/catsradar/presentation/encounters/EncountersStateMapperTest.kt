@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.LocationSource
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,6 +22,31 @@ class EncountersStateMapperTest {
         val state = mapper.map(emptyList(), today)
 
         assertEquals(EncountersState(), state)
+    }
+
+    @Test
+    fun `every location source maps to its own label, so none of them can collapse onto another`() {
+        val sources = LocationSource.entries
+        val encounters = sources.mapIndexed { index, source ->
+            encounterFixture("e$index", BASE + (index * 2).hours, locationSource = source)
+        }
+
+        val labels = mapper.map(encounters, today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.location }
+
+        assertEquals(
+            mapOf(
+                "e0" to LocationLabel.FROM_PHOTO,
+                "e1" to LocationLabel.CURRENT,
+                "e2" to LocationLabel.LAST_KNOWN,
+                "e3" to LocationLabel.FROM_OUTING,
+                "e4" to LocationLabel.NONE,
+            ),
+            labels,
+        )
+        assertEquals(sources.size, labels.values.toSet().size, "two sources share one label")
     }
 
     @Test
