@@ -192,8 +192,9 @@ Duration is first-cat-to-last-cat, so rates are optimistic; manual outings (road
 A cat with no photo — a tally from any origin — can be given one on its detail screen, from the
 camera or picked from the gallery (one photo).
 
-1. The app copy and thumbnail as §4.2 step 4, keyed by the encounter's id. Decode failure → the cat
-   is unchanged, toast "Photo not attached". Cancelled camera or picker → nothing.
+1. The app copy and thumbnail as §4.2 step 4, under a name fresh to this attempt rather than the
+   encounter's id, so an attempt that loses the row to another removes only its own files. Decode
+   failure → the cat is unchanged, toast "Photo not attached". Cancelled camera or picker → nothing.
 2. From the camera the original goes to the gallery under §4.2 step 3's setting; from the gallery it
    does not (`galleryUri = null`, as in §4.6).
 3. The write sets only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`, and
