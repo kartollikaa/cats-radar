@@ -153,28 +153,29 @@ class CounterStoreUndoTest {
     @Test
     fun `each undo restarts the window for the cats still left in the run`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
-        val margin = 1.seconds
-        repeat(2) {
+        val justShort = Tuning.UNDO_VISIBLE - 1.milliseconds
+        repeat(3) {
             store.dispatch(CounterIntent.TallyClicked)
             runCurrent()
         }
 
-        advanceTimeBy((Tuning.UNDO_VISIBLE - margin).inWholeMilliseconds)
-        runCurrent()
-        store.dispatch(CounterIntent.UndoClicked)
-        runCurrent()
-
-        // Past the last tap's deadline: still up only because the undo restarted the window.
-        advanceTimeBy((margin + margin).inWholeMilliseconds)
+        repeat(2) {
+            advanceTimeBy(justShort.inWholeMilliseconds)
+            runCurrent()
+            assertTrue(store.state.value.undoVisible)
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+        }
+        advanceTimeBy(justShort.inWholeMilliseconds)
         runCurrent()
         assertTrue(store.state.value.undoVisible)
 
-        advanceTimeBy(Tuning.UNDO_VISIBLE.inWholeMilliseconds)
+        advanceTimeBy(1.milliseconds.inWholeMilliseconds)
         runCurrent()
         assertFalse(store.state.value.undoVisible)
         store.dispatch(CounterIntent.UndoClicked)
         runCurrent()
-        assertEquals(listOf("id-2"), repository.softDeletedIds)
+        assertEquals(listOf("id-3", "id-2"), repository.softDeletedIds)
     }
 
     @Test

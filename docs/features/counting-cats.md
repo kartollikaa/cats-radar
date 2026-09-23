@@ -58,7 +58,8 @@ its location attach, and restarts the window again. So five mistaken taps come b
 Undos, and the chip stays up until the last of them is gone. A tap after an Undo joins the same run.
 Once the window runs out with nothing pressed, the run is closed: the chip goes, and nothing brings
 it back except a fresh tap. The coat grid's ring follows the run as well — after an Undo it rings the
-coat of the newest cat still in it (`coat.md`).
+coat of the newest cat still in it (`coat.md`). The cases below that concern undo are in
+`CounterStoreUndoTest`.
 
 ## The outing in progress
 
