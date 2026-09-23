@@ -1,8 +1,8 @@
 # Walking mode
 
-A cat seen on a walk should cost one tap. Walking mode puts an ongoing notification in the shade
-with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and goes back — no
-unlock, no app launch, no hunting for the right screen.
+A cat seen on a walk should cost one tap. Walking mode puts an ongoing notification in the shade and
+on the lock screen with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and
+goes back — no unlock, no app launch, no hunting for the right screen.
 
 Started from the **Counter** — a chip that reads *Start a walk*, then *On a walk* — because that is
 the screen someone is on when they set out. The same switch is in **Settings → Walking mode** for
@@ -66,8 +66,7 @@ Two things are required for promotion to happen at all:
 notification is promoted just the same and the chip carries only the icon, which is why the count
 goes in as a bare number rather than a sentence.
 
-Channel importance is not one of them either. The obvious suspect was `IMPORTANCE_LOW`; raising the
-channel changed nothing, so it stays low and a walk still never makes a sound.
+Channel importance is not one of them either; it matters for the lock screen instead (below).
 
 Promotion is prominence, not capability — which is why it could be a separate slice from the feature
 itself.
@@ -84,6 +83,38 @@ Demotion is a different gesture, and the platform offers no callback for it. A u
 chip but leaves the notification up will see the chip return on the next tally; whether the system
 honours a renewed request after a demotion is its decision, not something the app can read.
 
+## It shows on the lock screen
+
+Android's lock screen leaves out *silent* notifications unless the user turns **Show silent
+notifications** on (older versions offer the same choice as *Hide silent conversations and
+notifications*), and a channel below `IMPORTANCE_DEFAULT` is what makes a notification silent. On a
+Low channel the **Cat!** button existed only after an unlock.
+
+So the channel is Default, with no sound and no vibration, and every post is still `setSilent`: the
+notification sits among the alerting ones, which the lock screen keeps, and a walk never makes a
+sound. A user who demotes the channel to Silent in system settings hides it again, by their choice.
+
+Android lets an app lower a channel's importance but never raise it, so the raised channel has a new
+id and the old `walking` channel, created Low, is deleted on start. Settings may count it among
+deleted categories; that is the platform's bookkeeping, not a leftover.
+
+## Tapping it opens the app
+
+A tap on the notification itself, rather than on a button, opens the app the way its icon does: a
+running app comes forward on the screen it was on, and one that is not running starts on the Counter.
+The intent is the launcher's own — same action, category and activity — because Android brings a
+running task forward only for the intent that started it; a bare intent for the activity stacks a
+second copy of the app on top. When Photo started the app, that second copy closes itself exactly as it
+does for a tap on the icon ([widget.md](./widget.md#what-photo-does)). From a locked phone the
+unlock comes first.
+
+## Photo
+
+The third button, between **Cat!** and **Done**, is the widget's Photo: it opens the app on the
+Counter with the camera straight away, with the same `origin = CAMERA` and the same handling of an
+app already running — see [widget.md](./widget.md#what-photo-does). Unlike **Cat!**, it launches an
+activity, so from a locked phone Android asks for the unlock first and the camera opens after it.
+
 ## At the edges
 
 - **The count is re-read, never remembered.** The process may have died between taps, and the outing
@@ -96,13 +127,15 @@ honours a renewed request after a demotion is its decision, not something the ap
   are only subscribed to for the length of a walk.
 - **The receiver is not exported.** Only this app's own notification actions reach it; an `adb`
   broadcast from the shell is refused, which is the point of the flag.
-- **The pending intent is immutable.** Nothing may rewrite where a lock-screen tap ends up.
+- **Every pending intent is immutable.** Nothing may rewrite where a lock-screen tap ends up.
 - **A revoked Live Updates permission costs the chip, not the notification.** The post still
   succeeds, unpromoted. The app could ask — `canPostPromotedNotifications()` answers it from API 36
   — but nothing is done with the answer: there is no degraded mode to fall back to and nothing
   useful to say about a setting the user just chose.
 - **The notification is `VISIBILITY_PUBLIC`** — its text shows on the lock screen, because tallying
-  without unlocking is the whole feature. It says how many cats this outing, and nothing more.
+  without unlocking is the whole feature. It says how many cats this outing, and nothing more. The
+  visibility is set on the notification, not the channel: Android discards `VISIBILITY_PUBLIC` on a
+  channel an app creates.
 - **A tally from here is `origin = NOTIFICATION`**, distinct from the app, the widget and the two
   photo paths. An older build reading such a row falls back to `APP` rather than failing, because the
   Room converter maps an unknown name that way.
@@ -111,7 +144,8 @@ honours a renewed request after a demotion is its decision, not something the ap
 
 ## Where the code lives
 
-- `app/…/notification/WalkingNotifier.kt` — the notification and its actions
+- `app/…/notification/WalkingNotifier.kt` — the notification, its channel and its actions
+- `app/…/photo/TakePhotoShortcut.kt` — the Photo intent, shared with the widget
 - `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use

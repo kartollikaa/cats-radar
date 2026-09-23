@@ -12,9 +12,13 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import dev.catsradar.app.MainActivity
+import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.ui.R
 
-private const val CHANNEL_ID = "walking"
+// Android lets an app lower a channel's importance but never raise it; a raised one needs a new id.
+private const val CHANNEL_ID = "walking_lock_screen"
+private const val RETIRED_CHANNEL_ID = "walking"
 private const val NOTIFICATION_ID = 2
 
 /**
@@ -29,13 +33,17 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
     private val manager = NotificationManagerCompat.from(context)
 
     fun ensureChannel() {
+        manager.deleteNotificationChannel(RETIRED_CHANNEL_ID)
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
                 context.getString(R.string.notification_channel_walking),
-                // Low: it sits in the shade for a whole walk and must never make a sound.
-                NotificationManager.IMPORTANCE_LOW,
-            ),
+                // Below Default a notification counts as silent, and lock screens hide silent ones by default.
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                setSound(null, null)
+                enableVibration(false)
+            },
         )
     }
 
@@ -54,12 +62,18 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
             // Swiping it away ends the walk. Reposting something the user has just dismissed is
             // what makes people turn Live Updates off for an app.
             .setDeleteIntent(broadcast(WalkingAction.STOP))
+            .setContentIntent(openApp())
             // Visible on the lock screen: tallying without unlocking is the whole point.
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(
                 android.R.drawable.ic_input_add,
                 context.getString(R.string.notification_walking_tally),
                 broadcast(WalkingAction.TALLY),
+            )
+            .addAction(
+                android.R.drawable.ic_menu_camera,
+                context.getString(R.string.notification_walking_photo),
+                takePhoto(),
             )
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
@@ -79,6 +93,24 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         action.hashCode(),
         Intent(context, WalkingActionReceiver::class.java).setAction(action),
         // Immutable: nothing may rewrite where a lock-screen tap ends up.
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    // Equal to the launcher's intent, so a running app comes forward instead of stacking a second copy.
+    private fun openApp(): PendingIntent = PendingIntent.getActivity(
+        context,
+        0,
+        Intent(context, MainActivity::class.java)
+            .setAction(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_LAUNCHER)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    private fun takePhoto(): PendingIntent = PendingIntent.getActivity(
+        context,
+        0,
+        TakePhotoShortcut.intent(context),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
