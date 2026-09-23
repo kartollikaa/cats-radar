@@ -57,6 +57,23 @@ class MapStateMapperTest {
         assertTrue(abs((area.east + area.west) / 2 - 2.17) < 1e-9)
     }
 
+    @Test
+    fun `cats along one east-west street widen only the side that is too narrow`() {
+        val state =
+            assertIs<MapState.Located>(mapper.map(listOf(located("west", 41.39, 2.10), located("east", 41.39, 2.20))))
+
+        assertEquals(2.10, state.area.west)
+        assertEquals(2.20, state.area.east)
+        assertTrue(abs((state.area.north - state.area.south) - 0.01) < 1e-9)
+    }
+
+    @Test
+    fun `a cat by a pole never opens on an area past it`() {
+        val state = assertIs<MapState.Located>(mapper.map(listOf(located("polar", 89.999, 10.0))))
+
+        assertEquals(90.0, state.area.north)
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
     }

@@ -21,7 +21,7 @@ class MapStore(
             .launchIn(viewModelScope)
     }
 
-    @Suppress("EmptyFunctionBlock") // MapIntent has no members: this screen dispatches none yet
+    @Suppress("EmptyFunctionBlock") // MapIntent has no members: this screen dispatches none
     override suspend fun handle(intent: MapIntent) {
     }
 }

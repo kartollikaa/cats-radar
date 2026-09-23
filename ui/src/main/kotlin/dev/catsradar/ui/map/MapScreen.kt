@@ -1,6 +1,5 @@
 package dev.catsradar.ui.map
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,13 +13,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.map.MapArea
@@ -39,6 +46,7 @@ import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.map.MapEvent
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
 import org.maplibre.compose.sources.GeoJsonData
@@ -55,6 +63,7 @@ private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
 private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
 private const val CAT_COLOR = "color"
+private const val HALF_LUMINANCE = 0.5f
 
 @Composable
 fun MapScreen(
@@ -79,7 +88,10 @@ private fun CatsMap(state: MapState.Located, contentPadding: PaddingValues, modi
     // The coat faces' own rim: a white cat's dot would otherwise vanish into a light street.
     val rim = MaterialTheme.colorScheme.faceRim()
     val cats = remember(state.points, unnoted) { state.points.toFeatures(unnoted) }
-    val mapState = rememberMapState(baseStyle = BaseStyle.Uri(if (isSystemInDarkTheme()) DarkStyle else LightStyle)) {
+    // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
+    val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
+    val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)
+    val mapState = rememberMapState(baseStyle = style) {
         CircleLayer(
             id = "cats",
             source = rememberGeoJsonSource(GeoJsonData.Features(cats)),
@@ -89,12 +101,56 @@ private fun CatsMap(state: MapState.Located, contentPadding: PaddingValues, modi
             strokeWidth = const(1.5.dp),
         )
     }
-    // Fitted once, on opening: a cat located while the map is up must not pull the view off where it was panned.
-    val openingArea = remember { state.area }
+    // Fitted once per map, saved across recreation: the map restores its own camera, and a cat located
+    // while it is up must not pull the view off where it was panned.
+    var fitted by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(mapState) {
-        mapState.fitCameraToBounds(openingArea.toBoundingBox(), padding = PaddingValues(48.dp))
+        if (!fitted) {
+            mapState.fitCameraToBounds(state.area.toBoundingBox(), padding = PaddingValues(48.dp))
+            fitted = true
+        }
     }
-    MaplibreMap(modifier = modifier, state = mapState, cameraPadding = contentPadding)
+    var styleFailed by remember { mutableStateOf(false) }
+    LaunchedEffect(mapState) {
+        mapState.events.collect { event ->
+            when (event) {
+                is MapEvent.StyleLoadFailed -> styleFailed = true
+                is MapEvent.StyleLoaded -> styleFailed = false
+                else -> Unit
+            }
+        }
+    }
+    val summary = pluralStringResource(R.plurals.map_summary, state.points.size, state.points.size)
+    Box(modifier = modifier.semantics { contentDescription = summary }) {
+        MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
+        if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
+    }
+}
+
+// The dots are a layer on the style, so without the style there is nothing to draw them on.
+@Composable
+private fun MapUnavailable(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.padding(32.dp), contentAlignment = Alignment.Center) {
+        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(R.string.map_unavailable),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = stringResource(R.string.map_unavailable_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
 }
 
 private fun ImmutableList<MapPoint>.toFeatures(unnoted: Color): FeatureCollection<Point, JsonObject> =
