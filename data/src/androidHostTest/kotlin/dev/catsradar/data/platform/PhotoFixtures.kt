@@ -13,6 +13,9 @@ internal object PhotoFixtures {
     const val TRUNCATED = "truncated.jpg"
     const val EMPTY = "empty.jpg"
 
+    /** 300x400 and [Quadrant.entries] in reading order, once turned the way its EXIF Orientation says. */
+    fun oriented(orientation: Int) = "orientation_$orientation.jpg"
+
     /** Copied out of the jar because ExifInterface and BitmapFactory want a real file. */
     fun copyTo(directory: File, name: String): File {
         val target = File(directory, name)
@@ -22,4 +25,11 @@ internal object PhotoFixtures {
         resource.use { input -> target.outputStream().use(input::copyTo) }
         return target
     }
+}
+
+internal enum class Quadrant(val red: Int, val green: Int, val blue: Int) {
+    RED(red = 255, green = 0, blue = 0),
+    GREEN(red = 0, green = 255, blue = 0),
+    BLUE(red = 0, green = 0, blue = 255),
+    YELLOW(red = 255, green = 255, blue = 0),
 }

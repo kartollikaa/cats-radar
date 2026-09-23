@@ -16,7 +16,7 @@ itself.
 
 import os
 
-from PIL import ExifTags, Image
+from PIL import ExifTags, Image, ImageOps
 from PIL.TiffImagePlugin import IFDRational as R
 
 OUT = "data/src/androidHostTest/resources/photos"
@@ -66,11 +66,58 @@ def small_no_exif(path):
     gradient((800, 600)).save(path, quality=45)
 
 
+UPRIGHT_QUADRANTS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+
+# How a camera lays out the pixels for each EXIF orientation, given the picture as it should be seen.
+SENSOR_LAYOUT = {
+    2: Image.Transpose.FLIP_LEFT_RIGHT,
+    3: Image.Transpose.ROTATE_180,
+    4: Image.Transpose.FLIP_TOP_BOTTOM,
+    5: Image.Transpose.TRANSPOSE,
+    6: Image.Transpose.ROTATE_90,
+    7: Image.Transpose.TRANSVERSE,
+    8: Image.Transpose.ROTATE_270,
+}
+
+
+def upright_quadrants(size):
+    """Four distinct corners, so each of the eight orientations lands them in a different order."""
+    image = Image.new("RGB", size)
+    width, height = size
+    for index, color in enumerate(UPRIGHT_QUADRANTS):
+        left, top = (index % 2) * width // 2, (index // 2) * height // 2
+        image.paste(color, (left, top, left + width // 2, top + height // 2))
+    return image
+
+
+def quadrant_centres(image):
+    width, height = image.size
+    return [image.getpixel((x * width // 4, y * height // 4)) for y in (1, 3) for x in (1, 3)]
+
+
+def nearest(color):
+    return min(UPRIGHT_QUADRANTS, key=lambda c: sum((a - b) ** 2 for a, b in zip(c, color)))
+
+
+def oriented(path, orientation):
+    upright = upright_quadrants((300, 400))
+    sensor = upright.transpose(SENSOR_LAYOUT[orientation]) if orientation in SENSOR_LAYOUT else upright
+    exif = sensor.getexif()
+    exif[ExifTags.Base.Orientation] = orientation
+    sensor.save(path, exif=exif, quality=90)
+    # Pillow's own reading of the tag must give back the upright picture, or the fixture is wrong.
+    shown = ImageOps.exif_transpose(Image.open(path))
+    assert shown.size == upright.size, (orientation, shown.size)
+    assert [nearest(c) for c in quadrant_centres(shown)] == UPRIGHT_QUADRANTS, orientation
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     landscape_with_gps(f"{OUT}/landscape_with_gps.jpg")
     portrait_no_gps(f"{OUT}/portrait_no_gps.jpg")
     small_no_exif(f"{OUT}/small_no_exif.jpg")
+    for orientation in range(1, 9):
+        oriented(f"{OUT}/orientation_{orientation}.jpg", orientation)
     with open(f"{OUT}/landscape_with_gps.jpg", "rb") as source:
         head = source.read(400)
     with open(f"{OUT}/truncated.jpg", "wb") as truncated:
