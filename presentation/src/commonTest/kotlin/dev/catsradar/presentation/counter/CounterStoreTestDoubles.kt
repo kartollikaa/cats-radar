@@ -19,6 +19,7 @@ import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,11 @@ internal class FakeEncounterRepository : EncounterRepository {
     val softDeletedIds = mutableListOf<String>()
     var insertShouldThrow: Throwable? = null
     var softDeleteShouldThrow: Throwable? = null
+    val softDeleteAllCalls = mutableListOf<List<String>>()
+    var softDeleteAllShouldThrow: Throwable? = null
+    var softDeleteAllGate: CompletableDeferred<Unit>? = null
+    var undoDeleteAllShouldThrow: Throwable? = null
+    var undoDeleteAllGate: CompletableDeferred<Unit>? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -86,6 +92,23 @@ internal class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun undoDelete(id: String) {
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = null) else it } }
+    }
+
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant) {
+        softDeleteAllCalls += ids
+        softDeleteAllGate?.await()
+        softDeleteAllShouldThrow?.let { throw it }
+        encounters.update { list ->
+            list.map { if (it.id in ids && it.deletedAt == null) it.copy(deletedAt = deletedAt) else it }
+        }
+    }
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) {
+        undoDeleteAllGate?.await()
+        undoDeleteAllShouldThrow?.let { throw it }
+        encounters.update { list ->
+            list.map { if (it.id in ids && it.deletedAt == deletedAt) it.copy(deletedAt = null) else it }
+        }
     }
 
     override suspend fun loadEvery(): List<Encounter> = encounters.value

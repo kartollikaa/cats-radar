@@ -15,7 +15,7 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.coat.toOption
-import kotlinx.coroutines.CancellationException
+import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -85,7 +85,7 @@ class CounterStore(
             CounterIntent.UndoClicked -> onUndoClicked()
             // Only the flag is written; the notification follows it from outside the screen.
             is CounterIntent.WalkingModeToggled ->
-                runWriteIgnoringFailure { settingsRepository.setWalkingMode(intent.enabled) }
+                runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.LocationPermissionResult ->
@@ -107,7 +107,7 @@ class CounterStore(
             locationPermissionRequestState.markRequested()
             emit(CounterEffect.RequestLocationPermission)
         }
-        runWriteIgnoringFailure {
+        runStorageWrite {
             val encounter = logTally(coat)
             emit(CounterEffect.AttachLocation(encounter.id))
             // A slow write from a run that has already expired must not reopen the window.
@@ -124,7 +124,7 @@ class CounterStore(
     private suspend fun onPhotoCaptured(uri: String?) {
         // A cancelled camera is not a failure and must leave nothing behind.
         if (uri == null) return
-        runWriteIgnoringFailure {
+        runStorageWrite {
             when (val result = logPhoto(uri)) {
                 is PhotoResult.Logged ->
                     if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
@@ -177,7 +177,7 @@ class CounterStore(
         if (ids.isEmpty()) return
         importedIds = emptyList()
         setState { copy(importSummary = importSummary?.copy(undoable = false)) }
-        runWriteIgnoringFailure { undoImport(ids) }
+        runStorageWrite { undoImport(ids) }
     }
 
     private fun showBurst() {
@@ -211,18 +211,7 @@ class CounterStore(
         val undone = undoableRun.removeLastOrNull() ?: return
         showNewestUndoable()
         emit(CounterEffect.CancelLocationAttach(undone.encounterId))
-        runWriteIgnoringFailure { undoLastTally(undone.encounterId) }
-    }
-
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // no user-visible error handling this slice
-    private suspend fun runWriteIgnoringFailure(block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // A failed insert or delete must not crash the app.
-        }
+        runStorageWrite { undoLastTally(undone.encounterId) }
     }
 
     private class UndoableTally(val sequence: Int, val encounterId: String, val coat: CoatOption?)

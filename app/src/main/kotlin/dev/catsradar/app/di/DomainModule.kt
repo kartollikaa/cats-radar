@@ -2,6 +2,7 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.EndWalk
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
@@ -20,6 +21,7 @@ import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.StartWalk
 import dev.catsradar.domain.usecase.UndoDelete
+import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
@@ -68,6 +70,8 @@ val domainModule = module {
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)
+    factoryOf(::DeleteEncounters)
+    factoryOf(::UndoDeleteEncounters)
     factoryOf(::UndoImport)
     factoryOf(::ExportBackup)
     factoryOf(::ImportBackup)

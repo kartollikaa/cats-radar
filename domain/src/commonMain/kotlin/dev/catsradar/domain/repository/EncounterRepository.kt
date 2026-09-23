@@ -22,6 +22,12 @@ interface EncounterRepository {
 
     suspend fun undoDelete(id: String)
 
+    /** All of [ids] or none; a row that is already deleted keeps its own `deletedAt`. */
+    suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant)
+
+    /** Restores those of [ids] deleted at exactly [deletedAt]; a row deleted at another time stays deleted. */
+    suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant)
+
     suspend fun findBySourceDigest(sourceDigest: String): Encounter?
 
     /** Every row, soft-deleted ones included — what a backup merge has to reconcile against. */
