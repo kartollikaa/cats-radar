@@ -13,13 +13,15 @@ private val OCCURRED = Instant.parse("2026-09-10T08:00:00Z")
 private val FIXED = Instant.parse("2026-09-10T08:00:05Z")
 private val EDITED = Instant.parse("2026-09-12T19:30:00Z")
 
-private val locatedPhoto = encounterAt(OCCURRED).copy(
+private val locatedPhoto = encounterAt(OCCURRED, tzOffsetMinutes = 180).copy(
     id = "cat",
     kind = EncounterKind.PHOTO,
     origin = EncounterOrigin.CAMERA,
     coat = CatCoat.GINGER,
     photoPath = "2026/09/cat.jpg",
     thumbPath = "2026/09/cat_thumb.jpg",
+    galleryUri = "content://media/external/images/media/4211",
+    sourceDigest = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     lat = 55.7558,
     lon = 37.6173,
     accuracyMeters = 12f,
