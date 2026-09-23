@@ -4,10 +4,6 @@ private const val BASE32_ALPHABET = "0123456789bcdefghjkmnpqrstuvwxyz"
 private const val BITS_PER_CHAR = 5
 private const val MIN_PRECISION = 1
 private const val MAX_PRECISION = 12
-private const val MIN_LATITUDE = -90.0
-internal const val MAX_LATITUDE = 90.0
-private const val MIN_LONGITUDE = -180.0
-internal const val MAX_LONGITUDE = 180.0
 
 object Geohash {
     fun encode(lat: Double, lon: Double, precision: Int): String {
@@ -92,6 +88,14 @@ object Geohash {
     private fun narrow(min: Double, max: Double, bitValue: Int): Pair<Double, Double> {
         val mid = (min + max) / 2
         return if (bitValue == 1) mid to max else min to mid
+    }
+
+    /** Whether [encode] could have written [hash] at [precision] — lowercase only, unlike what [decode] accepts. */
+    fun isWellFormed(hash: String, precision: Int): Boolean {
+        require(precision in MIN_PRECISION..MAX_PRECISION) {
+            "precision must be in $MIN_PRECISION..$MAX_PRECISION, was $precision"
+        }
+        return hash.length == precision && hash.all { it in BASE32_ALPHABET }
     }
 
     // A geohash's prefix is itself a valid geohash at that precision - no re-encoding needed.

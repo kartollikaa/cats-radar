@@ -73,19 +73,12 @@ fun CounterScreen(
         },
         below = {
             CurrentOutingLine(state.currentOuting)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Weighted so Undo is measured first: a long walk label gives way instead of squeezing it.
-                WalkingModeChip(
-                    checked = state.walkingMode,
-                    modifier = Modifier.weight(1f, fill = false),
-                    onCheckedChange = onWalkingModeChange,
-                )
-                UndoChip(visible = state.undoVisible, onClick = onUndoClick)
-            }
+            WalkRow(
+                walkingMode = state.walkingMode,
+                undoVisible = state.undoVisible,
+                onWalkingModeChange = onWalkingModeChange,
+                onUndoClick = onUndoClick,
+            )
             CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
             CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
         },

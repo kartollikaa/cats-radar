@@ -154,6 +154,112 @@ class BackupMergeTest {
     }
 
     @Test
+    fun `a cat the archive lists twice is added once, as its later edit`() {
+        val later = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(encounter("cat", MIDDLE), later)),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later), added = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive lists twice keeps its later edit when that one is listed first`() {
+        val later = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(later, encounter("cat", MIDDLE))),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later), added = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive lists three times keeps its latest edit wherever it is listed`() {
+        val latest = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(encounter("cat", EARLY), latest, encounter("cat", MIDDLE))),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(latest), added = 1), merged)
+    }
+
+    @Test
+    fun `a deletion written into an archive row does not decide between two of its rows`() {
+        val laterEdit = encounter("cat", MIDDLE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(encounter("cat", EARLY, deletedAt = LATE), laterEdit)),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(laterEdit), added = 1), merged)
+    }
+
+    @Test
+    fun `two rows for one cat edited at the same moment keep the one listed first`() {
+        val first = encounter("cat", MIDDLE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(first, encounter("cat", MIDDLE, coatless = false))),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(first), added = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive lists twice is weighed against the one here by its later edit listed first`() {
+        val later = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", EARLY))),
+            imported = BackupContents(encounters = listOf(later, encounter("cat", MIDDLE))),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later), updated = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive lists twice is weighed against the one here by its later edit listed last`() {
+        val later = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", EARLY))),
+            imported = BackupContents(encounters = listOf(encounter("cat", MIDDLE), later)),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later), updated = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive lists twice, both older than the one here, is unchanged once`() {
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", LATE))),
+            imported = BackupContents(encounters = listOf(encounter("cat", EARLY), encounter("cat", MIDDLE))),
+        )
+
+        assertEquals(MergeResult(unchanged = 1), merged)
+    }
+
+    @Test
+    fun `a cat deleted here comes back when the later of its two archived edits post-dates the deletion`() {
+        val later = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", EARLY, deletedAt = MIDDLE))),
+            imported = BackupContents(encounters = listOf(encounter("cat", EARLY), later)),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later), updated = 1), merged)
+    }
+
+    @Test
     fun `a named cell beats one that is still pending`() {
         val merged = BackupMerge.merge(
             local = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING, attempts = 3))),
@@ -205,7 +311,6 @@ class BackupMergeTest {
 
     @Test
     fun `an unnamed imported cell leaves the local attempt count alone`() {
-        // The geocoding worker paces its retries by attempts; importing must not reset that.
         val merged = BackupMerge.merge(
             local = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING, attempts = 4))),
             imported = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING, attempts = 0))),
@@ -215,13 +320,109 @@ class BackupMergeTest {
     }
 
     @Test
-    fun `a cell the device has never seen is taken as it comes`() {
+    fun `a cell the device has never seen is added`() {
         val merged = BackupMerge.merge(
             local = BackupContents(),
             imported = BackupContents(placeCells = listOf(cell(id = "u4pruy", status = PlaceStatus.PENDING))),
         )
 
         assertEquals(listOf("u4pruy"), merged.placeCells.map { it.cellId })
+    }
+
+    @Test
+    fun `a name the archive gives a cell survives a later row for it that has none`() {
+        val named = cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Moscow")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(placeCells = listOf(named, cell(status = PlaceStatus.PENDING))),
+        )
+
+        assertEquals(listOf(named), merged.placeCells)
+    }
+
+    @Test
+    fun `a name the archive gives a cell beats an earlier row for it that has none`() {
+        val named = cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Moscow")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING), named)),
+        )
+
+        assertEquals(listOf(named), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell, the fresher is weighed against the one here`() {
+        val fresher = cell(status = PlaceStatus.RESOLVED, resolvedAt = LATE, locality = "New name")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(
+                placeCells = listOf(cell(status = PlaceStatus.RESOLVED, resolvedAt = EARLY, locality = "Old name")),
+            ),
+            imported = BackupContents(
+                placeCells = listOf(
+                    fresher,
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Middle name"),
+                ),
+            ),
+        )
+
+        assertEquals(listOf(fresher), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell, the fresher listed second is weighed against the one here`() {
+        val fresher = cell(status = PlaceStatus.RESOLVED, resolvedAt = LATE, locality = "New name")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(
+                placeCells = listOf(cell(status = PlaceStatus.RESOLVED, resolvedAt = EARLY, locality = "Old name")),
+            ),
+            imported = BackupContents(
+                placeCells = listOf(
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Middle name"),
+                    fresher,
+                ),
+            ),
+        )
+
+        assertEquals(listOf(fresher), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell, neither replaces a fresher one here`() {
+        val merged = BackupMerge.merge(
+            local = BackupContents(
+                placeCells = listOf(cell(status = PlaceStatus.RESOLVED, resolvedAt = LATE, locality = "Here")),
+            ),
+            imported = BackupContents(
+                placeCells = listOf(
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = EARLY, locality = "Oldest"),
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Older"),
+                ),
+            ),
+        )
+
+        assertEquals(emptyList(), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell from the same moment, the first is kept`() {
+        val first = cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "First")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(
+                placeCells = listOf(
+                    first,
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Second"),
+                ),
+            ),
+        )
+
+        assertEquals(listOf(first), merged.placeCells)
     }
 
     @Test

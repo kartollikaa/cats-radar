@@ -10,5 +10,6 @@ interface PlaceCellRepository {
 
     suspend fun loadById(cellId: String): PlaceCell?
 
-    suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell>
+    /** Pending cells ordered by id, starting after [afterCellId], or from the first when it is null. */
+    suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell>
 }

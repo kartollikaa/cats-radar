@@ -1,5 +1,6 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GeocodeResult
@@ -40,6 +41,8 @@ class ResolvePendingPlacesTest {
         lastAttemptAt = null,
         resolvedAt = null,
     )
+
+    private fun pagedId(index: Int) = "cell-${index.toString().padStart(3, '0')}"
 
     private fun resolver(repository: FakePlaceCellRepository, geocoder: ReverseGeocoder) =
         ResolvePendingPlaces(repository, geocoder, FakeClock(NOW))
@@ -104,6 +107,71 @@ class ResolvePendingPlacesTest {
     }
 
     @Test
+    fun `cells past the first page are attempted even though earlier ones stop being pending`() = runTest {
+        val repository = FakePlaceCellRepository(List(MORE_THAN_A_PAGE) { pending(pagedId(it)) })
+        val geocoder = ScriptedGeocoder(GeocodeResult.Resolved(PlaceName(countryCode = "ES")))
+
+        resolver(repository, geocoder)()
+
+        assertEquals(MORE_THAN_A_PAGE, geocoder.calls)
+    }
+
+    @Test
+    fun `cells past the first page are attempted even though earlier ones stay pending`() = runTest {
+        val repository = FakePlaceCellRepository(List(MORE_THAN_A_PAGE) { pending(pagedId(it)) })
+        val geocoder = ScriptedGeocoder(GeocodeResult.Failed)
+
+        resolver(repository, geocoder)()
+
+        assertEquals(MORE_THAN_A_PAGE, geocoder.calls)
+    }
+
+    @Test
+    fun `the untried pass names a cell nobody has looked up yet`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("fresh")))
+
+        resolver(repository, ScriptedGeocoder(GeocodeResult.Resolved(PlaceName(countryCode = "ES"))))
+            .resolveUntried()
+
+        assertEquals(PlaceStatus.RESOLVED, assertNotNull(repository.loadById("fresh")).status)
+    }
+
+    @Test
+    fun `the untried pass leaves a cell that already failed for the scheduled retry`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("tried", attempts = 2)))
+        val geocoder = ScriptedGeocoder(GeocodeResult.Failed)
+
+        resolver(repository, geocoder).resolveUntried()
+
+        assertEquals(0, geocoder.calls)
+        assertEquals(2, assertNotNull(repository.loadById("tried")).attempts)
+    }
+
+    @Test
+    fun `the untried pass reports a missing geocoder like the full one`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("fresh")))
+
+        assertFalse(resolver(repository, ScriptedGeocoder(GeocodeResult.Unavailable)).resolveUntried())
+    }
+
+    @Test
+    fun `a cell another pass named while this lookup ran keeps that name`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("cell-1")))
+        val namedMeanwhile =
+            pending("cell-1").copy(status = PlaceStatus.RESOLVED, locality = "Barcelona", attempts = 1)
+        val geocoder = object : ReverseGeocoder {
+            override suspend fun resolve(lat: Double, lon: Double): GeocodeResult {
+                repository.upsert(namedMeanwhile)
+                return GeocodeResult.Failed
+            }
+        }
+
+        resolver(repository, geocoder)()
+
+        assertEquals(namedMeanwhile, repository.loadById("cell-1"))
+    }
+
+    @Test
     fun `an already resolved cell is never looked up again`() = runTest {
         val resolved = pending("done").copy(status = PlaceStatus.RESOLVED, countryCode = "ES")
         val repository = FakePlaceCellRepository(listOf(resolved))
@@ -125,5 +193,6 @@ class ResolvePendingPlacesTest {
 
     private companion object {
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
+        const val MORE_THAN_A_PAGE = Tuning.GEOCODE_BATCH + 5
     }
 }

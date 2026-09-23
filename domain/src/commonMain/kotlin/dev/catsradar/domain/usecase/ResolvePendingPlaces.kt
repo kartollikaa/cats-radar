@@ -1,5 +1,6 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GeocodeResult
@@ -10,24 +11,30 @@ import kotlin.time.Clock
 /** How many failures a cell is given before it stops being retried. */
 const val MAX_GEOCODE_ATTEMPTS = 5
 
-private const val PAGE_SIZE = 20
-
 class ResolvePendingPlaces(
     private val placeCellRepository: PlaceCellRepository,
     private val reverseGeocoder: ReverseGeocoder,
     private val clock: Clock,
 ) {
     /** Returns false when the device has no geocoder, so the caller can stop rescheduling. */
-    suspend operator fun invoke(): Boolean {
-        var offset = 0
+    suspend operator fun invoke(): Boolean = resolveEach { true }
+
+    /**
+     * Only cells never looked up; one that already failed is left alone, so calling this often never
+     * spends its attempts. Returns false as [invoke] does.
+     */
+    suspend fun resolveUntried(): Boolean = resolveEach { it.isUntried }
+
+    private suspend fun resolveEach(isDue: (PlaceCell) -> Boolean): Boolean {
+        var afterCellId: String? = null
         while (true) {
-            val page = placeCellRepository.loadPendingPage(limit = PAGE_SIZE, offset = offset)
+            val page = placeCellRepository.loadPendingPage(afterCellId = afterCellId, limit = Tuning.GEOCODE_BATCH)
             if (page.isEmpty()) return true
 
             for (cell in page) {
-                if (!resolve(cell)) return false
+                if (isDue(cell) && !resolve(cell)) return false
             }
-            offset += page.size
+            afterCellId = page.last().cellId
         }
     }
 
@@ -59,7 +66,8 @@ class ResolvePendingPlaces(
                 lastAttemptAt = now,
             )
         }
-        placeCellRepository.upsert(updated)
+        // Another pass or an import may have written the cell while the lookup ran; theirs stands.
+        if (placeCellRepository.loadById(cell.cellId) == cell) placeCellRepository.upsert(updated)
         return result != GeocodeResult.Unavailable
     }
 }

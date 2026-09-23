@@ -10,7 +10,9 @@ immediately**: one tap, not tap-then-choose. The big button above it logs a cat 
 noted. Both paths are the same tally — same undo, same location attach, same burst.
 
 After a tap the grid rings the coat just used — a line in the theme's primary colour around that
-face — so a run of the same cat down the same street reads back at a glance. The ring clears when the undo window closes or the cat is undone.
+face — so a run of the same cat down the same street reads back at a glance. An Undo moves the ring
+back to the coat of the newest cat still undoable, and it clears when the undo window closes or the
+last of those cats is undone.
 
 This replaced an earlier design where a coat strip appeared *after* a tap. Two coat controls on one
 screen — one to log, one to amend — is one too many, and the amend case already has a home on the
@@ -40,7 +42,8 @@ against the muzzle or the fur. The rim test fails if the line goes back to `outl
 not enough.
 
 The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
-the picker and anything later draw the same cat.
+the picker and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn
+with those paths (see [app-shell.md](./app-shell.md)).
 
 The labels say **calico**. The stored values are still `TRICOLOR_*`: the database and backup
 archives hold those names, and renaming what nobody sees would need a migration for nothing.

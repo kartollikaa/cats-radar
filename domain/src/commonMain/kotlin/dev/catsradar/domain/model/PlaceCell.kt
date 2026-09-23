@@ -15,6 +15,8 @@ data class PlaceCell(
     val attempts: Int,
     val lastAttemptAt: Instant?,
     val resolvedAt: Instant?,
-)
+) {
+    val isUntried: Boolean get() = status == PlaceStatus.PENDING && attempts == 0
+}
 
 enum class PlaceStatus { PENDING, RESOLVED, FAILED, UNAVAILABLE }
