@@ -1,11 +1,15 @@
 package dev.catsradar.presentation.statistics
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Session
+import dev.catsradar.domain.stats.CoatCount
 import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.domain.stats.Rate
 import dev.catsradar.domain.stats.RatedOuting
 import dev.catsradar.domain.stats.Stats
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import kotlinx.collections.immutable.persistentListOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -17,6 +21,13 @@ import kotlin.time.Instant
 class StatisticsStateMapperTest {
 
     private val mapper = StatisticsStateMapper(FakeDateTimeFormatter())
+
+    private val bestSession = Session(
+        count = 9,
+        start = Instant.parse("2026-09-22T10:00:00Z"),
+        end = Instant.parse("2026-09-22T10:42:00Z"),
+        duration = 42.minutes,
+    )
 
     private fun stats(
         total: Int = 0,
@@ -98,14 +109,8 @@ class StatisticsStateMapperTest {
 
     @Test
     fun `the best outing carries its count, its duration and its own rate`() {
-        val session = Session(
-            count = 9,
-            start = Instant.parse("2026-09-22T10:00:00Z"),
-            end = Instant.parse("2026-09-22T10:42:00Z"),
-            duration = 42.minutes,
-        )
         val state = mapper.map(
-            stats(total = 9, bestOuting = RatedOuting(session, Rate(perHour = 78.0))),
+            stats(total = 9, bestOuting = RatedOuting(bestSession, Rate(perHour = 78.0))),
         )
 
         assertEquals(
@@ -123,5 +128,72 @@ class StatisticsStateMapperTest {
         val state = mapper.map(stats(total = 1, activeTime = 3.hours))
 
         assertEquals(3.hours.toString(), state.activeTimeLabel)
+    }
+
+    @Test
+    fun `every coat keeps an option of its own, and the unnoted row has none`() {
+        val coats: List<CatCoat?> = CatCoat.entries + null
+        val rows = coats.map { CoatCount(it, count = 1, shareOfTotal = 1.0 / coats.size) }
+
+        val options = mapper.map(stats(total = coats.size).copy(byCoat = rows)).byCoat.map { it.coat }
+
+        assertEquals(coats.map { it?.name }, options.map { it?.name })
+        assertEquals(options.size, options.toSet().size)
+    }
+
+    @Test
+    fun `a coat's share reads as the nearest whole percent`() {
+        val rows = listOf(CoatCount(CatCoat.BLACK, 2, 2.0 / 3), CoatCount(CatCoat.GINGER, 1, 1.0 / 3))
+
+        val shares = mapper.map(stats(total = 3).copy(byCoat = rows)).byCoat.map { it.sharePercentLabel }
+
+        assertEquals(listOf("67", "33"), shares)
+    }
+
+    @Test
+    fun `every number reaches the screen in its own field`() {
+        val stats = Stats(
+            total = 21,
+            today = 2,
+            lastSevenDays = 5,
+            lastThirtyDays = 13,
+            withPhoto = 4,
+            byCoat = listOf(CoatCount(CatCoat.GINGER, 12, 12.0 / 21), CoatCount(null, 9, 9.0 / 21)),
+            currentStreak = 3,
+            longestStreak = 8,
+            nextMilestone = Milestone(value = 25, remaining = 4),
+            outings = 6,
+            activeTime = 3.hours,
+            overallRate = Rate(perHour = 42.0),
+            bestOuting = RatedOuting(bestSession, Rate(perHour = 78.0)),
+            currentOuting = null,
+        )
+
+        assertEquals(
+            StatisticsState(
+                total = 21,
+                hasAnyCats = true,
+                todayLabel = "2",
+                weekLabel = "5",
+                monthLabel = "13",
+                withPhotoLabel = "4",
+                byCoat = persistentListOf(
+                    CoatShareState(CoatOption.GINGER, countLabel = "12", sharePercentLabel = "57"),
+                    CoatShareState(coat = null, countLabel = "9", sharePercentLabel = "43"),
+                ),
+                currentStreakLabel = "3",
+                longestStreakLabel = "8",
+                nextMilestone = MilestoneState(valueLabel = "25", remainingLabel = "4"),
+                outingsLabel = "6",
+                activeTimeLabel = 3.hours.toString(),
+                overallRate = RateState(value = "42.0", unit = RateUnit.PER_HOUR),
+                bestOuting = BestOutingState(
+                    count = 9,
+                    durationLabel = 42.minutes.toString(),
+                    rate = RateState(value = "1.3", unit = RateUnit.PER_MINUTE),
+                ),
+            ),
+            mapper.map(stats),
+        )
     }
 }
