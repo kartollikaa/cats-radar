@@ -81,6 +81,13 @@ left alone — enlarging costs bytes and quality and adds no detail.
 
 Neither copy carries the original's metadata. The app republishes nobody's GPS.
 
+Both copies are stored the way the photo is meant to be seen. A phone camera usually saves the
+sensor's pixels as they came off it plus an EXIF Orientation tag saying how to turn them — for a
+phone held upright, a quarter turn. The decoder ignores that tag, and the copies have no EXIF to
+pass it on, so the resizer applies the turn, or the mirroring, to the pixels itself. Without it a
+portrait photo lies on its side in the app while the gallery, which keeps the original, shows it
+upright.
+
 The arithmetic — which side is longest, what the other becomes, when to do nothing — is
 `scaleToFit` in `:domain`, a pure function with its own tests. That split is deliberate: see
 *Testing the pixels* below.
@@ -102,6 +109,7 @@ the user's gallery invisible and undeletable.
   be wrong — a `../` in a corrupt or imported row would otherwise reach the database file next door
   (`AndroidPhotoStorageTest`, *a path trying to climb out of the photo directory is refused*).
 - **An undecodable source stores nothing** and says so, rather than leaving a half-written file.
+- **A photo with no orientation tag is stored as decoded.**
 - **A missing thumbnail is not a missing photo.** The copy failing fails the call; the thumbnail
   failing leaves the copy in place with no thumbnail, for the UI to render a placeholder.
 - **Deleting a file that is not there is not an error**, so a retry after a partial failure is safe.
@@ -121,6 +129,13 @@ implementation from the `androidx.exifinterface` that reads them back, so agreem
 is evidence rather than tautology. Expected digests come from `shasum -a 256`, outside Kotlin, for
 the same reason. They are gradients rather than flat colours: a flat image survives any resampling
 unchanged and could not tell a correct resize from a broken one.
+
+The orientation fixtures are the exception: one portrait picture in four coloured quadrants, saved
+once per EXIF orientation with its pixels laid out the way a camera would lay them out for that tag.
+Four distinct corners put each of the eight orientations in a different order, which a gradient's
+corners after JPEG and resampling tell apart less reliably. The generator checks every one with
+Pillow's `ImageOps.exif_transpose` before keeping it, so the answer `AndroidImageResizerOrientationTest` expects
+never comes from the code under test.
 
 ## Where the code lives
 

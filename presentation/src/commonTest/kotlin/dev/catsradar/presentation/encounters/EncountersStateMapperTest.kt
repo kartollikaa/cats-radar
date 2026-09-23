@@ -418,6 +418,30 @@ class EncountersStateMapperTest {
         assertEquals(persistentSetOf("live"), state.selectedIds)
     }
 
+    @Test
+    fun `an outing offers the map, by its first cat, only when one of its cats has a location`() {
+        val first = encounterFixture("first", BASE)
+        val located = encounterFixture("located", BASE + 5.minutes).copy(lat = 41.39, lon = 2.17)
+        val unlocatedOuting = encounterFixture("later", BASE + 3.hours)
+
+        val headers = mapper.map(listOf(located, unlocatedOuting, first), today, grid = true)
+            .rows
+            .filterIsInstance<OutingHeader>()
+
+        assertEquals(listOf(null, "first"), headers.map { it.mapOutingId })
+    }
+
+    @Test
+    fun `an outing whose only coordinates are off the globe offers no map`() {
+        val offGlobe = encounterFixture("off", BASE).copy(lat = 123.4, lon = 2.17)
+
+        val header = mapper.map(listOf(offGlobe), today, grid = true).rows
+            .filterIsInstance<OutingHeader>()
+            .single()
+
+        assertEquals(null, header.mapOutingId)
+    }
+
     private fun EncountersState.cells(): List<CellView> = rows.flatMap { row ->
         when (row) {
             is OutingHeader -> emptyList()

@@ -64,6 +64,12 @@ row counts stop being trivial to read and group on every emission.
   (`BottomNavBackStack`), `CatsRadarNavHost.kt`, `Destinations.kt` (`EncountersDestination`, which
   owns the `BackHandler` that ends a selection)
 
+## Showing an outing on the map
+
+An outing's header ends in "On the map" when at least one of its cats has a location. The mapper
+decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
+that outing alone (`map.md`).
+
 ## What the grid shows
 
 Under each outing header, `EncounterGridPacker` lays the outing's cats out newest first, never

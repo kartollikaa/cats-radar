@@ -7,11 +7,24 @@
     <string name="map_empty_hint">Котик появится здесь, как только у него будет место</string>
     <string name="map_unavailable">Карта не загрузилась</string>
     <string name="map_unavailable_hint">Ей нужен интернет, когда она впервые показывает место. Котики в безопасности на телефоне.</string>
+    <string name="map_focus_label">Вылазка · %1$s</string>
+    <string name="map_focus_close">Показать всех котиков</string>
+    <string name="map_heat">Тепловая карта</string>
+    <string name="map_coats">Окрасы</string>
+    <string name="map_coats_title">Показать котиков по окрасу</string>
+    <string name="map_coats_all">Все окрасы</string>
+    <string name="map_filter_none">На карте нет котиков этих окрасов</string>
     <plurals name="map_summary">
         <item quantity="one">Карта: %d котик</item>
         <item quantity="few">Карта: %d котика</item>
         <item quantity="many">Карта: %d котиков</item>
         <item quantity="other">Карта: %d котика</item>
+    </plurals>
+    <plurals name="map_spot_title">
+        <item quantity="one">%d котик на этом месте</item>
+        <item quantity="few">%d котика на этом месте</item>
+        <item quantity="many">%d котиков на этом месте</item>
+        <item quantity="other">%d котика на этом месте</item>
     </plurals>
     <string name="tab_statistics">Итоги</string>
 
@@ -48,6 +61,8 @@
 
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
+    <string name="encounters_outing_on_map">На карте</string>
+    <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_paw_description">Котик</string>
     <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>

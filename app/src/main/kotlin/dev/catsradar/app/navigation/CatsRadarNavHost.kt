@@ -8,11 +8,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
@@ -42,6 +46,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier) {
     val backStack = rememberBottomNavBackStack()
+    val mapFocus = remember { MapFocusRequest() }
     LaunchedEffect(cameraRequest.isPending) {
         if (cameraRequest.isPending) backStack.selectTab(BottomNavTab.COUNTER)
     }
@@ -55,44 +60,80 @@ fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier
             )
         },
     ) { innerPadding ->
-        NavDisplay(
+        CatsRadarNavDisplay(
             backStack = backStack,
-            onBack = { backStack.popOrNull() },
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-            entryProvider = entryProvider {
-                entry<Counter> { CounterDestination(contentPadding = innerPadding, cameraRequest = cameraRequest) }
-                entry<Encounters> {
-                    EncountersDestination(
-                        contentPadding = innerPadding,
-                        onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
-                    )
-                }
-                entry<CatsMap> { MapDestination(contentPadding = innerPadding) }
-                entry<Statistics> {
-                    StatisticsDestination(
-                        contentPadding = innerPadding,
-                        onPlacesClick = { backStack.push(Regions()) },
-                    )
-                }
-                entry<Settings> { SettingsDestination(contentPadding = innerPadding) }
-                entry<Regions> { key ->
-                    RegionsDestination(
-                        key = key,
-                        contentPadding = innerPadding,
-                        onRegionClick = { row -> backStack.push(row.toNavKey()) },
-                    )
-                }
-                entry<EncounterDetail> { key ->
-                    EncounterDetailDestination(
-                        key = key,
-                        contentPadding = innerPadding,
-                        onNavigateBack = { backStack.popOrNull() },
-                    )
-                }
+            entryProvider = catsRadarEntries(backStack, innerPadding, cameraRequest, mapFocus),
+        )
+    }
+}
+
+@Composable
+internal fun CatsRadarNavDisplay(
+    backStack: BottomNavBackStack,
+    entryProvider: (NavKey) -> NavEntry<NavKey>,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    NavDisplay(
+        backStack = backStack,
+        modifier = modifier,
+        onBack = { backStack.popOrNull() },
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator(),
+        ),
+        transitionSpec = { navTransition(density) },
+        popTransitionSpec = { navTransition(density) },
+        predictivePopTransitionSpec = { swipeEdge -> predictivePopTransition(swipeEdge) },
+        entryProvider = entryProvider,
+    )
+}
+
+internal fun catsRadarEntries(
+    backStack: BottomNavBackStack,
+    contentPadding: PaddingValues,
+    cameraRequest: CameraRequest,
+    mapFocus: MapFocusRequest,
+): (NavKey) -> NavEntry<NavKey> = entryProvider {
+    entry<Counter>(metadata = tabRootMetadata()) {
+        CounterDestination(contentPadding = contentPadding, cameraRequest = cameraRequest)
+    }
+    entry<Encounters>(metadata = tabRootMetadata()) {
+        EncountersDestination(
+            contentPadding = contentPadding,
+            onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
+            onOutingMapClick = { id ->
+                mapFocus.post(id)
+                backStack.selectTab(BottomNavTab.MAP)
             },
+        )
+    }
+    entry<CatsMap>(metadata = tabRootMetadata()) {
+        MapDestination(
+            contentPadding = contentPadding,
+            focusRequest = mapFocus,
+            onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
+        )
+    }
+    entry<Statistics>(metadata = tabRootMetadata()) {
+        StatisticsDestination(
+            contentPadding = contentPadding,
+            onPlacesClick = { backStack.push(Regions()) },
+        )
+    }
+    entry<Settings>(metadata = tabRootMetadata()) { SettingsDestination(contentPadding = contentPadding) }
+    entry<Regions> { key ->
+        RegionsDestination(
+            key = key,
+            contentPadding = contentPadding,
+            onRegionClick = { row -> backStack.push(row.toNavKey()) },
+        )
+    }
+    entry<EncounterDetail> { key ->
+        EncounterDetailDestination(
+            key = key,
+            contentPadding = contentPadding,
+            onNavigateBack = { backStack.popOrNull() },
         )
     }
 }
