@@ -100,12 +100,19 @@ need two Stores to talk. Here the list's own Store made it.
   row on the list is never reported as selected.
 - **A failed write** leaves the selection as it was and shows no undo. A failed undo reopens the
   window rather than stranding the cats (*a failed undo keeps the undo bar and a fresh window to try
-  again*).
+  again*), unless another batch was deleted while it ran: that batch owns the bar then, and the
+  failed one stays deleted (*a failed undo leaves a batch deleted meanwhile as the one to undo*).
 - **Delete tapped twice** while the write is in flight writes once.
+- **A tap while selecting costs no re-mapping.** The mapper's `select` re-marks the rows already on
+  screen; only a new emission from the database groups and formats the list again.
 - **Rows coming back above the screen.** A keyed `LazyColumn` keeps its first visible row in place
   when rows are inserted above it, so undoing the delete of the top outing would bring it back out
-  of sight. A list resting at the very top asks to stay at the top on every change, so the restored
-  outing is what the user sees.
+  of sight. A list resting at the very top, and not being scrolled, asks to stay at the top on every
+  change, so the restored outing is what the user sees; a drag that has just started is left alone.
+- **Screen readers** hear the removed count when the bar appears and the selected count as it
+  changes; a row's actions are read as Select or Deselect while selecting.
+- **The bar covers the bottom of the list** for its window, as a Material snackbar does; the list
+  gains no extra padding under it.
 - **Leaving the tab during the window** takes the undo with it and the deletion stands, the same
   trade the detail screen makes. A selection does not survive a tab switch either: both live in the
   Store, which is scoped to the tab's entry.

@@ -85,7 +85,7 @@ fun EncountersScreen(
     val listState = rememberLazyListState()
     // A keyed list keeps its first visible row in place when rows land above it, so an undone
     // outing would come back out of sight; a list resting at the top moves up to show them.
-    SideEffect { if (!listState.canScrollBackward) listState.requestScrollToItem(0) }
+    SideEffect { listState.run { if (!canScrollBackward && !isScrollInProgress) requestScrollToItem(0) } }
     Column(modifier = modifier.fillMaxSize()) {
         if (state.isSelecting) {
             SelectionBar(
@@ -153,6 +153,7 @@ private fun EncounterRow(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
 ) {
+    val selectionLabel = stringResource(if (row.selected) R.string.encounters_deselect else R.string.encounters_select)
     val background = if (row.selected) {
         MaterialTheme.colorScheme.secondaryContainer
     } else {
@@ -166,9 +167,10 @@ private fun EncounterRow(
             .background(background)
             .then(if (selecting) Modifier.semantics { selected = row.selected } else Modifier)
             .combinedClickable(
+                onClickLabel = if (selecting) selectionLabel else null,
                 onClick = onClick,
+                onLongClickLabel = selectionLabel,
                 onLongClick = onLongClick,
-                onLongClickLabel = stringResource(R.string.encounters_select),
             )
             .padding(horizontal = RowInnerInset, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),

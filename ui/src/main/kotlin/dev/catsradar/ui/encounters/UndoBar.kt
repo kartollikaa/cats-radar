@@ -10,6 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -18,7 +21,7 @@ import dev.catsradar.ui.theme.ThemePreviews
 @Composable
 internal fun UndoBar(removedCount: Int, modifier: Modifier = Modifier, onUndoClick: () -> Unit = {}) {
     Snackbar(
-        modifier = modifier,
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
         action = {
             TextButton(
                 onClick = onUndoClick,

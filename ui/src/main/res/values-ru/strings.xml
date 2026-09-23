@@ -39,6 +39,7 @@
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_select">Выбрать</string>
+    <string name="encounters_deselect">Снять выбор</string>
     <string name="encounters_selection_close">Отменить выбор</string>
     <string name="encounters_delete_selected">Удалить выбранных</string>
     <string name="encounters_undo">Вернуть</string>

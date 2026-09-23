@@ -244,6 +244,22 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `re-marking a selection gives the same state as mapping with it, without formatting again`() {
+        val encounters = listOf(
+            encounterFixture("a", BASE),
+            encounterFixture("b", BASE + 5.minutes),
+            encounterFixture("c", BASE + 5.hours),
+        )
+        val first = mapper.map(encounters, today, selectedIds = setOf("a"))
+        val headersFormatted = formatter.dayHeaderCalls.size
+
+        val reselected = mapper.select(first.rows, selectedIds = setOf("b", "c", "gone"))
+
+        assertEquals(headersFormatted, formatter.dayHeaderCalls.size, "select formatted a header again")
+        assertEquals(mapper.map(encounters, today, selectedIds = setOf("b", "c")), reselected)
+    }
+
+    @Test
     fun `a selected cat that has been deleted is no longer selected`() {
         val live = encounterFixture("live", BASE)
         val deleted = encounterFixture("deleted", BASE + 5.minutes, deletedAt = BASE + 1.hours)

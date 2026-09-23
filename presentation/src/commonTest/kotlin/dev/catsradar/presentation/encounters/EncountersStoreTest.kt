@@ -114,6 +114,21 @@ class EncountersStoreTest {
     }
 
     @Test
+    fun `a long press while selecting toggles the row, as a tap does`() = runTest(mainDispatcher) {
+        val store = storeWith("a", "b")
+        store.dispatch(EncountersIntent.RowLongPressed("a"))
+        runCurrent()
+
+        store.dispatch(EncountersIntent.RowLongPressed("b"))
+        runCurrent()
+        assertEquals(persistentSetOf("a", "b"), store.state.value.selectedIds)
+
+        store.dispatch(EncountersIntent.RowLongPressed("a"))
+        runCurrent()
+        assertEquals(persistentSetOf("b"), store.state.value.selectedIds)
+    }
+
+    @Test
     fun `deselecting the last selected row leaves selection mode`() = runTest(mainDispatcher) {
         val store = storeWith("a", "b")
         store.dispatch(EncountersIntent.RowLongPressed("a"))
@@ -290,6 +305,32 @@ class EncountersStoreTest {
         store.dispatch(EncountersIntent.UndoClicked)
         runCurrent()
         assertEquals(setOf("a", "b"), store.rowIds())
+    }
+
+    @Test
+    fun `a failed undo leaves a batch deleted meanwhile as the one to undo`() = runTest(mainDispatcher) {
+        val store = storeWith("a", "b", "c")
+        select(store, "a")
+        store.dispatch(EncountersIntent.DeleteSelectedClicked)
+        runCurrent()
+        val gate = CompletableDeferred<Unit>()
+        repository.undoDeleteAllGate = gate
+        repository.undoDeleteAllShouldThrow = IllegalStateException("disk full")
+        store.dispatch(EncountersIntent.UndoClicked)
+        runCurrent()
+
+        select(store, "b", "c")
+        store.dispatch(EncountersIntent.DeleteSelectedClicked)
+        runCurrent()
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(2, store.state.value.removedCount)
+
+        repository.undoDeleteAllGate = null
+        repository.undoDeleteAllShouldThrow = null
+        store.dispatch(EncountersIntent.UndoClicked)
+        runCurrent()
+        assertEquals(setOf("b", "c"), store.rowIds())
     }
 
     private fun newStore(): EncountersStore = EncountersStore(

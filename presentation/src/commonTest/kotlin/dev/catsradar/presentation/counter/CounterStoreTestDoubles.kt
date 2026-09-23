@@ -39,6 +39,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     var softDeleteAllShouldThrow: Throwable? = null
     var softDeleteAllGate: CompletableDeferred<Unit>? = null
     var undoDeleteAllShouldThrow: Throwable? = null
+    var undoDeleteAllGate: CompletableDeferred<Unit>? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -103,6 +104,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) {
+        undoDeleteAllGate?.await()
         undoDeleteAllShouldThrow?.let { throw it }
         encounters.update { list ->
             list.map { if (it.id in ids && it.deletedAt == deletedAt) it.copy(deletedAt = null) else it }

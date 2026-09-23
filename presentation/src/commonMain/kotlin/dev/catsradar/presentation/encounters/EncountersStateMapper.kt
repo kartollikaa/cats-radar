@@ -20,19 +20,22 @@ class EncountersStateMapper(
     fun map(encounters: List<Encounter>, today: LocalDate, selectedIds: Set<String> = emptySet()): EncountersState {
         val rows = SessionSplitter.groupByOuting(encounters)
             .asReversed()
-            .flatMap { outing -> outingToItems(outing, today, selectedIds) }
-            .toPersistentList()
-        val selectedOnList = rows.filterIsInstance<EncounterListItem.Row>().filter { it.selected }.map { it.id }
-        return EncountersState(rows = rows, selectedIds = selectedOnList.toPersistentSet())
+            .flatMap { outing -> outingToItems(outing, today) }
+        return select(rows, selectedIds)
+    }
+
+    /** Re-marks already mapped [rows] for [selectedIds], dropping ids that name no row. */
+    fun select(rows: List<EncounterListItem>, selectedIds: Set<String>): EncountersState {
+        val marked = rows.map { item ->
+            if (item is EncounterListItem.Row) item.copy(selected = item.id in selectedIds) else item
+        }
+        val selectedOnList = marked.filterIsInstance<EncounterListItem.Row>().filter { it.selected }.map { it.id }
+        return EncountersState(rows = marked.toPersistentList(), selectedIds = selectedOnList.toPersistentSet())
     }
 
     // Keyed to the outing's earliest encounter (its "start", per outings.md), so a midnight-
     // crossing outing keeps one header; the start time tells same-day outings apart.
-    private fun outingToItems(
-        outing: List<Encounter>,
-        today: LocalDate,
-        selectedIds: Set<String>,
-    ): List<EncounterListItem> {
+    private fun outingToItems(outing: List<Encounter>, today: LocalDate): List<EncounterListItem> {
         val earliest = outing.first()
         val header = EncounterListItem.OutingHeader(
             key = "header-${earliest.id}",
@@ -40,7 +43,7 @@ class EncountersStateMapper(
         )
         val rows = outing.asReversed()
         return listOf(header) + rows.mapIndexed { index, encounter ->
-            toRowItem(encounter, positionOf(index, rows.lastIndex), selected = encounter.id in selectedIds)
+            toRowItem(encounter, positionOf(index, rows.lastIndex))
         }
     }
 
@@ -51,14 +54,13 @@ class EncountersStateMapper(
         else -> GroupPosition.MIDDLE
     }
 
-    private fun toRowItem(encounter: Encounter, position: GroupPosition, selected: Boolean): EncounterListItem.Row =
+    private fun toRowItem(encounter: Encounter, position: GroupPosition): EncounterListItem.Row =
         EncounterListItem.Row(
             id = encounter.id,
             timeLabel = encounter.timeLabel(),
             location = encounter.locationSource.toLocationLabel(),
             lead = encounter.lead(),
             position = position,
-            selected = selected,
         )
 
     private fun Encounter.lead(): RowLead {

@@ -3,13 +3,12 @@ package dev.catsradar.presentation.encounters
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.DeletedBatch
-import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.presentation.Store
-import kotlinx.coroutines.CancellationException
+import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -27,28 +26,28 @@ class EncountersStore(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<EncountersState, EncountersIntent, EncountersEffect>(EncountersState()) {
 
-    private var encounters: List<Encounter> = emptyList()
     private var deleting = false
     private var undoable: DeletedBatch? = null
     private var undoTimeoutJob: Job? = null
 
     init {
         observeEncounters()
-            .onEach { observed ->
-                encounters = observed
-                setState { rebuild(selectedIds) }
+            .onEach { encounters ->
+                setState {
+                    stateMapper.map(encounters, clock.today(timeZone), selectedIds).copy(removedCount = removedCount)
+                }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun EncountersState.rebuild(selectedIds: Set<String>): EncountersState =
-        stateMapper.map(encounters, clock.today(timeZone), selectedIds).copy(removedCount = removedCount)
+    private fun EncountersState.reselect(selectedIds: Set<String>): EncountersState =
+        stateMapper.select(rows, selectedIds).copy(removedCount = removedCount)
 
     override suspend fun handle(intent: EncountersIntent) {
         when (intent) {
             is EncountersIntent.RowClicked -> onRowClicked(intent.id)
             is EncountersIntent.RowLongPressed -> toggle(intent.id)
-            EncountersIntent.SelectionDismissed -> setState { rebuild(emptySet()) }
+            EncountersIntent.SelectionDismissed -> setState { reselect(emptySet()) }
             EncountersIntent.DeleteSelectedClicked -> onDeleteSelectedClicked()
             EncountersIntent.UndoClicked -> onUndoClicked()
         }
@@ -59,7 +58,7 @@ class EncountersStore(
     }
 
     private fun toggle(id: String) {
-        setState { rebuild(if (id in selectedIds) selectedIds - id else selectedIds + id) }
+        setState { reselect(if (id in selectedIds) selectedIds - id else selectedIds + id) }
     }
 
     private suspend fun onDeleteSelectedClicked() {
@@ -68,9 +67,9 @@ class EncountersStore(
         if (deleting || ids.isEmpty()) return
         deleting = true
         try {
-            runWrite(onFailure = {}) {
+            runStorageWrite {
                 val batch = deleteEncounters(ids)
-                setState { rebuild(selectedIds - ids) }
+                setState { reselect(selectedIds - ids) }
                 offerUndo(batch)
             }
         } finally {
@@ -94,17 +93,7 @@ class EncountersStore(
         undoable = null
         undoTimeoutJob?.cancel()
         setState { copy(removedCount = null) }
-        runWrite(onFailure = { offerUndo(batch) }) { undoDeleteEncounters(batch) }
-    }
-
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // any storage failure degrades the same way
-    private suspend fun runWrite(onFailure: () -> Unit, block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            onFailure()
-        }
+        // A batch deleted while this write was in flight owns the bar now; a failure must not take it back.
+        runStorageWrite(onFailure = { if (undoable == null) offerUndo(batch) }) { undoDeleteEncounters(batch) }
     }
 }
