@@ -58,9 +58,10 @@ Single user, on foot, phone in hand, often abroad, often without data.
 
 **F1 Tally.** Counter screen → tap the big button. Counter increments instantly, haptic tick. An
 "Undo" chip and a horizontally scrolling strip of eleven coat swatches appear for `UNDO_VISIBLE`
-seconds; tapping a swatch sets `coat` on the encounter just created, Undo reverts the tap. No
-debounce — rapid taps are several cats; the strip always refers to the latest one. Location is
-attached in the background (§4.3).
+seconds; tapping a swatch sets `coat` on the encounter just created. Undo reverts the newest tap
+of the run: every tap and every Undo restarts the window, so a run of taps can be undone one by one
+down to nothing. No debounce — rapid taps are several cats; the strip always refers to the latest
+one. Location is attached in the background (§4.3).
 
 **F2 Photo.** Counter screen → tap camera → system camera. On return: original saved to the gallery
 (if enabled), compressed copy + thumbnail stored privately, encounter saved with EXIF location if

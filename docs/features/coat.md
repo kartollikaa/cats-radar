@@ -10,7 +10,9 @@ immediately**: one tap, not tap-then-choose. The big button above it logs a cat 
 noted. Both paths are the same tally — same undo, same location attach, same burst.
 
 After a tap the grid rings the coat just used — a line in the theme's primary colour around that
-face — so a run of the same cat down the same street reads back at a glance. The ring clears when the undo window closes or the cat is undone.
+face — so a run of the same cat down the same street reads back at a glance. An Undo moves the ring
+back to the coat of the newest cat still undoable, and it clears when the undo window closes or the
+last of those cats is undone.
 
 This replaced an earlier design where a coat strip appeared *after* a tap. Two coat controls on one
 screen — one to log, one to amend — is one too many, and the amend case already has a home on the

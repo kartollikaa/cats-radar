@@ -12,6 +12,7 @@ import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.coat.toOption
 import kotlinx.coroutines.CancellationException
@@ -35,8 +36,8 @@ class CounterStore(
 ) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.initial()) {
 
     private var tapSequence = 0
-    private var undoTargetSequence = -1
-    private var undoTargetId: String? = null
+    private val undoableRun = mutableListOf<UndoableTally>()
+    private var expiredThroughSequence = 0
     private var undoTimeoutJob: Job? = null
     private var burstJob: Job? = null
 
@@ -109,13 +110,13 @@ class CounterStore(
         runWriteIgnoringFailure {
             val encounter = logTally(coat)
             emit(CounterEffect.AttachLocation(encounter.id))
-            // Captured before suspending, not completion order: a later tap's insert can resume
-            // before an earlier one's, so only a higher sequence may overwrite the undo target.
-            if (sequence > undoTargetSequence) {
-                undoTargetSequence = sequence
-                undoTargetId = encounter.id
-                setState { copy(undoVisible = true, lastCoat = coat?.toOption()) }
-                restartUndoTimer()
+            // A slow write from a run that has already expired must not reopen the window.
+            if (sequence > expiredThroughSequence) {
+                val tally = UndoableTally(sequence, encounter.id, coat?.toOption())
+                undoableRun += tally
+                // By tap, not by completion: a later tap's insert can resume before an earlier one's.
+                undoableRun.sortBy { it.sequence }
+                if (undoableRun.last() === tally) showNewestUndoable()
             }
         }
     }
@@ -188,24 +189,29 @@ class CounterStore(
         }
     }
 
-    private fun restartUndoTimer() {
+    private fun showNewestUndoable() {
         undoTimeoutJob?.cancel()
+        val newest = undoableRun.lastOrNull()
+        if (newest == null) {
+            setState { copy(undoVisible = false, lastCoat = null) }
+            return
+        }
+        setState { copy(undoVisible = true, lastCoat = newest.coat) }
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
-            undoTargetId = null
+            expiredThroughSequence = newest.sequence
+            undoableRun.clear()
             setState { copy(undoVisible = false, lastCoat = null) }
         }
     }
 
     private suspend fun onUndoClicked() {
-        // Read-and-clear before the suspending call below, so a second dispatch sees null and
-        // no-ops: that ordering is what makes pressing undo twice delete only once.
-        val id = undoTargetId ?: return
-        undoTargetId = null
-        undoTimeoutJob?.cancel()
-        setState { copy(undoVisible = false, lastCoat = null) }
-        emit(CounterEffect.CancelLocationAttach(id))
-        runWriteIgnoringFailure { undoLastTally(id) }
+        // Taken off before the suspending calls below, so an undo dispatched right behind this one
+        // takes the next cat back rather than this one a second time.
+        val undone = undoableRun.removeLastOrNull() ?: return
+        showNewestUndoable()
+        emit(CounterEffect.CancelLocationAttach(undone.encounterId))
+        runWriteIgnoringFailure { undoLastTally(undone.encounterId) }
     }
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException") // no user-visible error handling this slice
@@ -218,4 +224,6 @@ class CounterStore(
             // A failed insert or delete must not crash the app.
         }
     }
+
+    private class UndoableTally(val sequence: Int, val encounterId: String, val coat: CoatOption?)
 }
