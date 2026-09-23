@@ -74,6 +74,24 @@ and each row reads as one item to TalkBack. A setting's whole row toggles it, no
 changes to its filled form, because the other three glyphs have no separate filled version. The
 label is always shown and names the tab, so the icons carry no content description of their own.
 
+**Motion.** Screens change the way Material's transition patterns describe, and every change is
+short. Moving between tabs *fades through*: the old tab fades out before the new one fades in and
+settles from slightly smaller, so two layouts never show on top of each other. Opening a detail — an
+encounter, a level of the places drill-down — moves along the *horizontal axis*: the new screen
+slides in from the right as the old one slides away to the left, and going back reverses it. Only a
+one-level step moves along the axis. Leaving a detail for another tab, or tapping a tab from two
+levels down its stack, fades through like any tab switch, although the stack underneath only pushed
+or popped. The motion is decided from the two screens alone: each tab's entry carries a tab-root
+marker in its Navigation 3 metadata, and a detail is recognised by what sits directly under it
+(`NavMotionTest`).
+
+**The back gesture** follows the finger. The current screen shrinks toward the side the finger is
+moving to and fades as it goes; the screen it returns to fades in over the second half of the
+gesture, so the two do not dissolve into each other. Releasing plays the rest; dragging back to the
+edge cancels and restores the screen. Navigation 3's own defaults, which this replaced, were a long
+cross-fade for every change and a back gesture that shrank the screen without fading it, leaving it
+fully opaque over the one coming in until it vanished at the end.
+
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
 wants springy motion gives its own animation a spring spec.
@@ -120,8 +138,8 @@ run.
 
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/Store.kt`
 - `app/src/main/kotlin/dev/catsradar/app/CatsRadarApplication.kt`, `MainActivity.kt`
-- `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`, `Counter.kt`,
-  `CounterEffectHandler.kt`
+- `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`, `NavTransitions.kt`,
+  `Counter.kt`, `CounterEffectHandler.kt`
 - `app/src/main/kotlin/dev/catsradar/app/di/DomainModule.kt`, `DataModule.kt`,
   `PresentationModule.kt`, `WorkerModule.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`,
