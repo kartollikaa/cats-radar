@@ -152,6 +152,33 @@ class MapStoreTest {
         assertEquals(spotOf(a), store.state.value.spot())
     }
 
+    @Test
+    fun `focusing an outing shows it alone and closes a spot, and clearing it shows every cat again`() =
+        runTest(mainDispatcher) {
+            val first = located("first", minute = 0)
+            val second = located("second", minute = 5).copy(lat = 41.40)
+            repository.insert(first)
+            repository.insert(second)
+            repository.insert(located("other outing", minute = 180).copy(lat = 41.45))
+            val store = newStore()
+            runCurrent()
+            store.dispatch(MapIntent.CatsTapped(listOf("first", "second")))
+            runCurrent()
+
+            store.dispatch(MapIntent.OutingFocused("second"))
+            runCurrent()
+            val focused = assertIs<MapState.Located>(store.state.value)
+            assertEquals("first", focused.focus?.outingId)
+            assertEquals(listOf("first", "second"), focused.points.map { it.id })
+            assertNull(focused.spot)
+
+            store.dispatch(MapIntent.FocusCleared)
+            runCurrent()
+            val everyCat = assertIs<MapState.Located>(store.state.value)
+            assertNull(everyCat.focus)
+            assertEquals(3, everyCat.points.size)
+        }
+
     // Floating-point padding: compare the area to a millionth of a degree.
     private fun MapState.roundedArea(): MapState = when (this) {
         is MapState.Located -> copy(area = area.run { MapArea(south.r(), west.r(), north.r(), east.r()) })

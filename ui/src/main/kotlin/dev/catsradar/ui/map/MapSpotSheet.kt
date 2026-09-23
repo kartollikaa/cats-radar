@@ -35,6 +35,7 @@ internal fun MapSpotSheet(
     spot: MapSpot,
     modifier: Modifier = Modifier,
     onCatClick: (String) -> Unit = {},
+    onOutingMapClick: (String) -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
     ModalBottomSheet(
@@ -42,12 +43,17 @@ internal fun MapSpotSheet(
         modifier = modifier,
         contentWindowInsets = { WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal) },
     ) {
-        MapSpotContent(spot = spot, onCatClick = onCatClick)
+        MapSpotContent(spot = spot, onCatClick = onCatClick, onOutingMapClick = onOutingMapClick)
     }
 }
 
 @Composable
-private fun MapSpotContent(spot: MapSpot, modifier: Modifier = Modifier, onCatClick: (String) -> Unit = {}) {
+private fun MapSpotContent(
+    spot: MapSpot,
+    modifier: Modifier = Modifier,
+    onCatClick: (String) -> Unit = {},
+    onOutingMapClick: (String) -> Unit = {},
+) {
     Column(modifier = modifier) {
         Text(
             text = pluralStringResource(R.plurals.map_spot_title, spot.catCount, spot.catCount),
@@ -59,6 +65,7 @@ private fun MapSpotContent(spot: MapSpot, modifier: Modifier = Modifier, onCatCl
             modifier = Modifier.weight(1f, fill = false),
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             onRowClick = onCatClick,
+            onOutingMapClick = onOutingMapClick,
         )
     }
 }

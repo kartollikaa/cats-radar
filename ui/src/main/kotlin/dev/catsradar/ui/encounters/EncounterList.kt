@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +60,7 @@ fun EncounterList(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onRowClick: (String) -> Unit = {},
+    onOutingMapClick: (String) -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier,
@@ -66,7 +69,7 @@ fun EncounterList(
     ) {
         items(items = rows, key = { it.key }) { row ->
             when (row) {
-                is EncounterListItem.OutingHeader -> OutingHeaderRow(row)
+                is EncounterListItem.OutingHeader -> OutingHeaderRow(row, onMapClick = onOutingMapClick)
                 is EncounterListItem.Row -> EncounterRow(row, onClick = { onRowClick(row.id) })
             }
         }
@@ -74,16 +77,39 @@ fun EncounterList(
 }
 
 @Composable
-private fun OutingHeaderRow(header: EncounterListItem.OutingHeader, modifier: Modifier = Modifier) {
-    Text(
-        text = header.label,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+private fun OutingHeaderRow(
+    header: EncounterListItem.OutingHeader,
+    modifier: Modifier = Modifier,
+    onMapClick: (String) -> Unit = {},
+) {
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = EncounterListContentInset)
-            .padding(top = 20.dp, bottom = 6.dp),
-    )
+            .heightIn(min = 40.dp)
+            .padding(start = EncounterListContentInset, end = RowOuterInset)
+            .padding(top = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = header.label,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        header.mapOutingId?.let { id ->
+            TextButton(onClick = { onMapClick(id) }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_nav_map),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = stringResource(R.string.encounters_outing_on_map),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -151,7 +177,7 @@ private fun EncounterListPreview() {
 }
 
 private val sampleRows = persistentListOf(
-    EncounterListItem.OutingHeader(key = "header-1", label = "Today, 14:10"),
+    EncounterListItem.OutingHeader(key = "header-1", label = "Today, 14:10", mapOutingId = "2"),
     EncounterListItem.Row(
         id = "1",
         timeLabel = "14:32",

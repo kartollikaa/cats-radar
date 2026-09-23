@@ -34,6 +34,7 @@ fun EncountersScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onRowClick: (String) -> Unit = {},
+    onOutingMapClick: (String) -> Unit = {},
 ) {
     if (state.isEmpty) {
         EmptyEncounters(modifier = modifier.fillMaxSize().padding(contentPadding))
@@ -44,6 +45,7 @@ fun EncountersScreen(
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
         onRowClick = onRowClick,
+        onOutingMapClick = onOutingMapClick,
     )
 }
 

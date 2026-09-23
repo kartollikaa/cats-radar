@@ -208,6 +208,19 @@ class EncountersStateMapperTest {
         assertEquals(mapOf("middle" to GroupPosition.FIRST, "oldest" to GroupPosition.LAST), positions)
     }
 
+    @Test
+    fun `an outing offers the map, by its first cat, only when one of its cats has a location`() {
+        val first = encounterFixture("first", BASE)
+        val located = encounterFixture("located", BASE + 5.minutes).copy(lat = 41.39, lon = 2.17)
+        val unlocatedOuting = encounterFixture("later", BASE + 3.hours)
+
+        val headers = mapper.map(listOf(located, unlocatedOuting, first), today)
+            .rows
+            .filterIsInstance<EncounterListItem.OutingHeader>()
+
+        assertEquals(listOf(null, "first"), headers.map { it.mapOutingId })
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
     }

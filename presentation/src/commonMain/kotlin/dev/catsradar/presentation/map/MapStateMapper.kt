@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import kotlinx.collections.immutable.toImmutableList
@@ -14,16 +15,27 @@ private const val MAX_LONGITUDE = 180.0
 
 class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
 
-    /** [spot] holds the ids of the cats the user opened together, if any. */
-    fun map(encounters: List<Encounter>, today: LocalDate, spot: Set<String>? = null): MapState {
-        val points = encounters.mapNotNull { it.toPoint() }
+    /**
+     * [spot] holds the ids of the cats the user opened together, and [focus] the id of a cat whose
+     * outing the map shows alone; each is ignored when it matches nothing.
+     */
+    fun map(encounters: List<Encounter>, today: LocalDate, spot: Set<String>? = null, focus: String? = null): MapState {
+        val outing = focus?.let { id -> focusedOuting(encounters, id) }
+        val shown = outing ?: encounters
+        val points = shown.mapNotNull { it.toPoint() }
         if (points.isEmpty()) return MapState.Empty
         return MapState.Located(
             points = points.toImmutableList(),
             area = areaAround(points),
-            spot = spot?.let { ids -> spotOf(encounters.filter { it.id in ids && it.deletedAt == null }, today) },
+            spot = spot?.let { ids -> spotOf(shown.filter { it.id in ids && it.deletedAt == null }, today) },
+            focus = outing?.let { MapFocus(outingId = it.first().id, label = encountersMapper.outingLabel(it, today)) },
         )
     }
+
+    private fun focusedOuting(encounters: List<Encounter>, id: String): List<Encounter>? =
+        SessionSplitter.groupByOuting(encounters)
+            .firstOrNull { outing -> outing.any { it.id == id } }
+            ?.takeIf { outing -> outing.any { it.toPoint() != null } }
 
     private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
         if (cats.isEmpty()) return null

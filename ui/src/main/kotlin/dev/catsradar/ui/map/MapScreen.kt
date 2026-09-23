@@ -4,10 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,6 +50,8 @@ private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
 private const val HALF_LUMINANCE = 0.5f
 
+private val FitPadding = PaddingValues(48.dp)
+
 @Composable
 fun MapScreen(
     state: MapState,
@@ -54,6 +59,8 @@ fun MapScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onCatsTap: (List<String>) -> Unit = {},
     onSpotDismiss: () -> Unit = {},
+    onOutingFocus: (String) -> Unit = {},
+    onFocusClear: () -> Unit = {},
 ) {
     when (state) {
         MapState.Loading -> Box(modifier = modifier.fillMaxSize())
@@ -64,9 +71,15 @@ fun MapScreen(
                 contentPadding = contentPadding,
                 modifier = modifier.fillMaxSize(),
                 onCatsTap = onCatsTap,
+                onFocusClear = onFocusClear,
             )
             state.spot?.let { spot ->
-                MapSpotSheet(spot = spot, onCatClick = { id -> onCatsTap(listOf(id)) }, onDismiss = onSpotDismiss)
+                MapSpotSheet(
+                    spot = spot,
+                    onCatClick = { id -> onCatsTap(listOf(id)) },
+                    onOutingMapClick = onOutingFocus,
+                    onDismiss = onSpotDismiss,
+                )
             }
         }
     }
@@ -78,31 +91,40 @@ private fun CatsMap(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onCatsTap: (List<String>) -> Unit = {},
+    onFocusClear: () -> Unit = {},
 ) {
     val colors = CatLayerColors(
         unnoted = MaterialTheme.colorScheme.primary,
         rim = MaterialTheme.colorScheme.faceRim(),
         cluster = MaterialTheme.colorScheme.primary,
         clusterCount = MaterialTheme.colorScheme.onPrimary,
+        route = MaterialTheme.colorScheme.primary,
     )
     val cats = remember(state.points, colors.unnoted) { catFeatures(state.points, colors.unnoted) }
+    val route = remember(state.points, state.focus) { state.focus?.let { routeLine(state.points) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
     val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)
     val tapCats by rememberUpdatedState(onCatsTap)
     var clusterTap by remember { mutableStateOf<ClusterTap?>(null) }
     val mapState = rememberMapState(baseStyle = style) {
-        CatLayers(cats = cats, colors = colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
+        CatLayers(cats, route, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
     }
-    // Fitted once per map, saved across recreation: the map restores its own camera, and a cat located
-    // while it is up must not pull the view off where it was panned.
+    // Fitted once per map and focus, saved across recreation: the map restores its own camera, and a
+    // cat located while it is up must not pull the view off where it was panned.
     var fitted by rememberSaveable { mutableStateOf(false) }
+    var fittedFocus by rememberSaveable { mutableStateOf<String?>(null) }
+    val focus = state.focus?.outingId
     val area by rememberUpdatedState(state.area)
-    LaunchedEffect(mapState) {
-        if (!fitted) {
-            mapState.fitCameraToBounds(area.toBoundingBox(), padding = PaddingValues(48.dp))
-            fitted = true
+    LaunchedEffect(mapState, focus) {
+        if (fitted && fittedFocus == focus) return@LaunchedEffect
+        if (fitted) {
+            mapState.animateCameraToBounds(area.toBoundingBox(), padding = FitPadding)
+        } else {
+            mapState.fitCameraToBounds(area.toBoundingBox(), padding = FitPadding)
         }
+        fitted = true
+        fittedFocus = focus
     }
     LaunchedEffect(clusterTap) {
         val tap = clusterTap ?: return@LaunchedEffect
@@ -114,6 +136,36 @@ private fun CatsMap(
     Box(modifier = modifier.semantics { contentDescription = summary }) {
         MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
+        state.focus?.let { focused ->
+            OutingFocusChip(
+                label = focused.label,
+                modifier = Modifier.align(Alignment.TopCenter).padding(contentPadding).padding(top = 12.dp),
+                onClose = onFocusClear,
+            )
+        }
+    }
+}
+
+@Composable
+private fun OutingFocusChip(label: String, modifier: Modifier = Modifier, onClose: () -> Unit = {}) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 3.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.map_focus_label, label), style = MaterialTheme.typography.labelLarge)
+            IconButton(onClick = onClose) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_close),
+                    contentDescription = stringResource(R.string.map_focus_close),
+                )
+            }
+        }
     }
 }
 
@@ -184,4 +236,10 @@ private fun MapScreenEmptyPreview() {
 @Composable
 private fun MapUnavailablePreview() {
     CatsRadarTheme { MapUnavailable() }
+}
+
+@ThemePreviews
+@Composable
+private fun OutingFocusChipPreview() {
+    CatsRadarTheme { OutingFocusChip(label = "Today, 14:10", modifier = Modifier.padding(16.dp)) }
 }

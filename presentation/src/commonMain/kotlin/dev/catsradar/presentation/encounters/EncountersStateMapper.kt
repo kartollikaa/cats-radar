@@ -29,12 +29,19 @@ class EncountersStateMapper(
         val earliest = outing.first()
         val header = EncounterListItem.OutingHeader(
             key = "header-${earliest.id}",
-            label = "${dateTimeFormatter.dayHeader(earliest.localDate(), today)}, ${earliest.timeLabel()}",
+            label = outingLabel(outing, today),
+            mapOutingId = earliest.id.takeIf { outing.any { it.lat != null && it.lon != null } },
         )
         val rows = outing.asReversed()
         return listOf(header) + rows.mapIndexed { index, encounter ->
             toRowItem(encounter, positionOf(index, rows.lastIndex))
         }
+    }
+
+    /** The label an outing's header carries: the day and time its first cat was seen. */
+    fun outingLabel(outing: List<Encounter>, today: LocalDate): String {
+        val earliest = outing.minBy { it.occurredAt }
+        return "${dateTimeFormatter.dayHeader(earliest.localDate(), today)}, ${earliest.timeLabel()}"
     }
 
     private fun positionOf(index: Int, lastIndex: Int): GroupPosition = when {

@@ -11,7 +11,12 @@ data class EncountersState(val rows: ImmutableList<EncounterListItem> = persiste
 sealed interface EncounterListItem {
     val key: String
 
-    data class OutingHeader(override val key: String, val label: String) : EncounterListItem
+    data class OutingHeader(
+        override val key: String,
+        val label: String,
+        /** The id the map focuses this outing by, when one of its cats has a location. */
+        val mapOutingId: String? = null,
+    ) : EncounterListItem
 
     data class Row(
         val id: String,

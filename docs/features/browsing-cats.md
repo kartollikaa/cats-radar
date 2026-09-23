@@ -56,6 +56,12 @@ row counts stop being trivial to read and group on every emission.
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
   (`BottomNavBackStack`), `CatsRadarNavHost.kt`
 
+## Showing an outing on the map
+
+An outing's header ends in "On the map" when at least one of its cats has a location. The mapper
+decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
+that outing alone (`map.md`).
+
 ## What a row shows
 
 Each outing reads as one card: its rows are cards of their own with a hairline gap, round at the
