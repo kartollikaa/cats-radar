@@ -21,7 +21,6 @@ import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
-import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.stats.StatsCalculator
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
@@ -38,21 +37,12 @@ import java.io.File
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 private val Morning = Instant.parse("2026-09-20T08:00:00Z")
 private val Now = Instant.parse("2026-09-22T12:00:00Z")
 private val Today = LocalDate(2026, 9, 22)
-
-private class ExportClock : Clock {
-    override fun now(): Instant = Now
-}
-
-private class PhoneA : DeviceIdProvider {
-    override val deviceId: String = "phone-a"
-}
 
 private data class Snapshot(
     val encounters: List<Encounter>,
@@ -88,7 +78,13 @@ class BackupRoundTripTest {
             encounterRepository = encounters,
             placeCellRepository = placeCells,
             walkRepository = walks,
-            backupWriter = ZipBackupWriter(context, photoStorage, PhoneA(), ExportClock(), appVersion = "1.1.0"),
+            backupWriter = ZipBackupWriter(
+                context = context,
+                photoStorage = photoStorage,
+                deviceIdProvider = StubDeviceId("phone-a"),
+                clock = FixedClock(Now),
+                appVersion = "1.1.0",
+            ),
         )(target)
 
         suspend fun import(source: String): ImportBackupResult = ImportBackup(
@@ -137,15 +133,16 @@ class BackupRoundTripTest {
         return photos
     }
 
-    private fun wipePhotos() {
-        File(context.filesDir, "photos").deleteRecursively()
+    private suspend fun wipe(photos: Map<String, ByteArray>) {
+        photos.keys.forEach { path -> photoStorage.delete(path) }
+        assertTrue(photos.keys.none { photoStorage.fileFor(it).exists() }, "the photos were not wiped")
     }
 
     @Test
     fun aBackupRestoredOnAnEmptyDeviceBringsBackEveryLiveRowAndEveryPhoto() = runTest {
         val photos = fillHere()
         assertTrue(here.export(archive))
-        wipePhotos()
+        wipe(photos)
 
         elsewhere.import(archive)
 
@@ -169,9 +166,9 @@ class BackupRoundTripTest {
 
     @Test
     fun aRestoredDeviceShowsTheSameStatistics() = runTest {
-        fillHere()
+        val photos = fillHere()
         assertTrue(here.export(archive))
-        wipePhotos()
+        wipe(photos)
 
         elsewhere.import(archive)
 
