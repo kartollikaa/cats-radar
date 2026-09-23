@@ -1,7 +1,5 @@
 package dev.catsradar.domain.usecase
 
-import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.testing.FakeEncounterRepository
@@ -9,6 +7,7 @@ import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.areaOf
 import dev.catsradar.domain.testing.encounterFixture
 import dev.catsradar.domain.testing.locatedFixture
+import dev.catsradar.domain.testing.placeCellFixture
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -17,14 +16,23 @@ import kotlin.time.Instant
 
 class ObserveRegionTest {
 
-    private val named = locatedFixture("named", BASE, 41.390, 2.170)
+    private val barcelona = locatedFixture("barcelona", BASE, 41.390, 2.170)
+    private val girona = locatedFixture("girona", BASE, 41.980, 2.820)
+    private val paris = locatedFixture("paris", BASE, 48.850, 2.350)
     private val pending = locatedFixture("pending", BASE, 41.600, 2.290)
     private val nowhere = encounterFixture("nowhere", BASE)
 
     private suspend fun view(parent: RegionKey?): RegionView {
         val encounters = FakeEncounterRepository()
-        listOf(named, pending, nowhere).forEach { encounters.insert(it) }
-        val cells = FakePlaceCellRepository(listOf(namedCell(named), pendingCell(pending)))
+        listOf(barcelona, girona, paris, pending, nowhere).forEach { encounters.insert(it) }
+        val cells = FakePlaceCellRepository(
+            listOf(
+                placeCellFixture(barcelona),
+                placeCellFixture(girona, locality = "Girona"),
+                placeCellFixture(paris, "FR", "France", "Paris"),
+                placeCellFixture(pending, null, null, locality = null, status = PlaceStatus.PENDING),
+            ),
+        )
         return ObserveRegion(encounters, cells)(parent).first()
     }
 
@@ -33,25 +41,28 @@ class ObserveRegionTest {
         val view = view(parent = null)
 
         assertEquals(
-            listOf(RegionKey.Country("ES"), RegionKey.Unresolved, RegionKey.NoLocation),
+            listOf(RegionKey.Country("ES"), RegionKey.Country("FR"), RegionKey.Unresolved, RegionKey.NoLocation),
             view.children.map { it.key },
         )
         assertEquals(emptyList(), view.encounters)
     }
 
     @Test
-    fun `a country opens its cities`() = runTest {
+    fun `a country opens its own cities`() = runTest {
         val view = view(RegionKey.Country("ES"))
 
-        assertEquals(listOf(RegionKey.City("ES", "Barcelona")), view.children.map { it.key })
+        assertEquals(
+            listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona")),
+            view.children.map { it.key },
+        )
         assertEquals(emptyList(), view.encounters)
     }
 
     @Test
-    fun `a city opens its areas`() = runTest {
+    fun `a city opens its own areas`() = runTest {
         val view = view(RegionKey.City("ES", "Barcelona"))
 
-        assertEquals(listOf(areaOf(named)), view.children.map { it.key })
+        assertEquals(listOf(areaOf(barcelona)), view.children.map { it.key })
         assertEquals(emptyList(), view.encounters)
     }
 
@@ -65,10 +76,10 @@ class ObserveRegionTest {
 
     @Test
     fun `an area opens its cats and no more rows`() = runTest {
-        val view = view(areaOf(named))
+        val view = view(areaOf(barcelona))
 
         assertEquals(emptyList(), view.children)
-        assertEquals(listOf(named), view.encounters)
+        assertEquals(listOf(barcelona), view.encounters)
     }
 
     @Test
@@ -78,24 +89,6 @@ class ObserveRegionTest {
         assertEquals(emptyList(), view.children)
         assertEquals(listOf(nowhere), view.encounters)
     }
-
-    private fun namedCell(encounter: Encounter) = PlaceCell(
-        cellId = encounter.placeCellId!!,
-        centerLat = encounter.lat!!,
-        centerLon = encounter.lon!!,
-        countryCode = "ES",
-        countryName = "Spain",
-        adminArea = null,
-        locality = "Barcelona",
-        subLocality = null,
-        status = PlaceStatus.RESOLVED,
-        attempts = 1,
-        lastAttemptAt = BASE,
-        resolvedAt = BASE,
-    )
-
-    private fun pendingCell(encounter: Encounter) = namedCell(encounter)
-        .copy(countryCode = null, countryName = null, locality = null, status = PlaceStatus.PENDING, resolvedAt = null)
 
     private companion object {
         val BASE = Instant.parse("2026-09-22T08:00:00Z")

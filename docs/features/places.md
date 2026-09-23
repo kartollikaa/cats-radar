@@ -101,7 +101,7 @@ Two pseudo-nodes always come **last**, after every real place, and only when the
 - **No location** — cats with no coordinates at all. It drills straight to the cats.
 
 Their counts are what make the tree honest: **the counts of every sibling add up to their
-parent**, so a drill-down does not quietly lose a cat, with the one exception below. The countries,
+parent**, so a drill-down does not quietly lose a cat, with the two exceptions below. The countries,
 a country's cities and a city's areas each have a test for it.
 
 An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
@@ -111,8 +111,9 @@ disagree takes the name most of them agree on.
 ## Not built yet
 
 A cat whose cell names a country but neither a locality nor an admin area counts toward its country
-and toward no city, so that country's cities add up to less than it — the one place the drill-down
-loses a cat.
+and toward no city, so that country's cities add up to less than it. And a cat with coordinates but
+no geohash counts toward its city or Not named yet and toward none of its areas; the app never
+writes such a row, but a hand-edited one can hold it.
 
 The `Geocoder` call uses the deprecated blocking overload because the listener-based one is API 33+
 and this app supports 29.

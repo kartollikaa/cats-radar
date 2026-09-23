@@ -6,6 +6,8 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.region.RegionKey
 import kotlin.time.Instant
 
@@ -49,3 +51,27 @@ fun locatedFixture(id: String, occurredAt: Instant, lat: Double, lon: Double): E
 
 fun areaOf(encounter: Encounter): RegionKey.Area =
     RegionKey.Area(Geohash.prefix(encounter.geohash!!, Tuning.AREA_PRECISION))
+
+@Suppress("LongParameterList") // a fixture builder: every parameter is one field of the row
+fun placeCellFixture(
+    encounter: Encounter,
+    countryCode: String? = "ES",
+    countryName: String? = "Spain",
+    locality: String? = "Barcelona",
+    subLocality: String? = null,
+    adminArea: String? = null,
+    status: PlaceStatus = PlaceStatus.RESOLVED,
+) = PlaceCell(
+    cellId = encounter.placeCellId!!,
+    centerLat = encounter.lat!!,
+    centerLon = encounter.lon!!,
+    countryCode = countryCode,
+    countryName = countryName,
+    adminArea = adminArea,
+    locality = locality,
+    subLocality = subLocality,
+    status = status,
+    attempts = 1,
+    lastAttemptAt = encounter.occurredAt,
+    resolvedAt = encounter.occurredAt.takeIf { status == PlaceStatus.RESOLVED },
+)
