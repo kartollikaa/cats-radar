@@ -42,6 +42,9 @@ Each cell ends in one of four states:
   and retrying them forever costs battery for a name that will never arrive.
 - **UNAVAILABLE** — there is no geocoder on this device at all.
 
+A state is this device's own verdict. A cell restored from a backup without a name arrives `PENDING`
+and untried, whatever the device that exported it concluded — see `backup.md`.
+
 ## No geocoder at all
 
 `Geocoder.isPresent()` is false on devices with no geocoding backend, typically ones without Google
