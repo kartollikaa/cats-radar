@@ -13,16 +13,17 @@ request; a later denial surfaces as a dismissible one-line hint on the counter s
 ## Feedback for the tap
 
 Each tap raises a **"+N"** badge in the count block's top corner that counts the cats of the current
-run of taps, the same run Undo walks back (below), and stays up exactly as long as that run is open.
+run of taps, the same run Undo walks back (below), and stays up for as long as that run is open.
 Every tap adds one and every Undo takes one off: three taps read "+3", an Undo turns it into "+2",
 and the Undo that takes back the run's last cat takes the badge with it. When the undo window runs
 out, the badge goes with the chip, and the next tap starts again from one. Like the haptic, a tap's
 one lands before the write rather than after it succeeds, so holding the button down still counts up
-smoothly; a tap whose write is still running counts even if the window closes around it, and it
-opens the next run when it lands. If the write fails, the tap takes its one back off: it added no
-cat, and the total, read back from the database, does not move either. It is a badge rather than
-bare text because a wide number in a short block reaches that corner; TalkBack reads the total as
-the block's own label, and before the total is known the block is named by what it does.
+smoothly. So a tap whose write is still running is on the badge before it is in the run: it keeps
+its one when an Undo or the window closing empties the run around it, and joins or opens a run when
+it lands. If the write fails, the tap takes its one back off: it added no cat, and the total, read
+back from the database, does not move either. It is a badge rather than bare text because a wide
+number in a short block reaches that corner; TalkBack reads the total as the block's own label, and
+before the total is known the block is named by what it does.
 
 The count sits in a large block that **is** the button. It squashes under a press and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen

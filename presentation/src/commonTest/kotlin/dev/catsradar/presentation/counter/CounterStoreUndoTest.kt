@@ -103,10 +103,12 @@ class CounterStoreUndoTest {
         advanceTimeBy((margin + margin).inWholeMilliseconds)
         runCurrent()
         assertTrue(store.state.value.undoVisible)
+        assertEquals(2, store.state.value.tapBurst)
 
         advanceTimeBy(Tuning.UNDO_VISIBLE.inWholeMilliseconds)
         runCurrent()
         assertFalse(store.state.value.undoVisible)
+        assertNull(store.state.value.tapBurst)
 
         store.dispatch(CounterIntent.UndoClicked)
         runCurrent()
