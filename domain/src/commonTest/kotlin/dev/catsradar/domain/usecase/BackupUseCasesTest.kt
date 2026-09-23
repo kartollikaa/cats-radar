@@ -3,12 +3,15 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
+import dev.catsradar.domain.model.TrackPoint
+import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
+import dev.catsradar.domain.testing.FakeWalkRepository
 import dev.catsradar.domain.testing.encounterAt
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -52,10 +55,15 @@ private fun cell(id: String, status: PlaceStatus = PlaceStatus.PENDING) = PlaceC
     resolvedAt = null,
 )
 
+private fun walk(id: String) = Walk(id, EARLY, LATE, "device", EARLY, LATE)
+
+private fun point(walkId: String) = TrackPoint(walkId, EARLY, 41.0, 2.0, 5f)
+
 class ExportBackupTest {
 
     private val encounters = FakeEncounterRepository()
     private val placeCells = FakePlaceCellRepository()
+    private val walks = FakeWalkRepository()
 
     @Test
     fun `an export carries the live cats and the cells that can name them`() = runTest {
@@ -63,7 +71,7 @@ class ExportBackupTest {
         placeCells.upsert(cell("ucfv0h"))
         val writer = RecordingWriter()
 
-        val ok = ExportBackup(encounters, placeCells, writer)("content://backup.zip")
+        val ok = ExportBackup(encounters, placeCells, walks, writer)("content://backup.zip")
 
         assertTrue(ok)
         assertEquals("content://backup.zip", writer.target)
@@ -77,14 +85,26 @@ class ExportBackupTest {
         encounters.insert(encounterAt(EARLY).copy(id = "gone", deletedAt = LATE))
         val writer = RecordingWriter()
 
-        ExportBackup(encounters, placeCells, writer)("content://backup.zip")
+        ExportBackup(encounters, placeCells, walks, writer)("content://backup.zip")
 
         assertEquals(listOf("live"), writer.written?.encounters?.map { it.id })
     }
 
     @Test
+    fun `an export carries every walk and every point of its route`() = runTest {
+        walks.upsert(walk("w"))
+        walks.appendPoints(listOf(point("w")))
+        val writer = RecordingWriter()
+
+        ExportBackup(encounters, placeCells, walks, writer)("content://backup.zip")
+
+        assertEquals(listOf(walk("w")), writer.written?.walks)
+        assertEquals(listOf(point("w")), writer.written?.trackPoints)
+    }
+
+    @Test
     fun `an archive that could not be written is reported as a failure`() = runTest {
-        val ok = ExportBackup(encounters, placeCells, RecordingWriter(succeeds = false))("content://x.zip")
+        val ok = ExportBackup(encounters, placeCells, walks, RecordingWriter(succeeds = false))("content://x.zip")
 
         assertEquals(false, ok)
     }
@@ -94,9 +114,21 @@ class ImportBackupTest {
 
     private val encounters = FakeEncounterRepository()
     private val placeCells = FakePlaceCellRepository()
+    private val walks = FakeWalkRepository()
 
     private fun importBackup(result: BackupReadResult) =
-        ImportBackup(encounters, placeCells, StubReader(result))
+        ImportBackup(encounters, placeCells, walks, StubReader(result))
+
+    @Test
+    fun `an archive's walks and routes are written, and importing them again writes nothing more`() = runTest {
+        val archive = BackupContents(walks = listOf(walk("w")), trackPoints = listOf(point("w")))
+
+        importBackup(BackupReadResult.Readable(archive))("content://in.zip")
+        importBackup(BackupReadResult.Readable(archive))("content://in.zip")
+
+        assertEquals(listOf(walk("w")), walks.walks())
+        assertEquals(listOf(point("w")), walks.points())
+    }
 
     @Test
     fun `an unknown cat is inserted and a known one updated in place`() = runTest {

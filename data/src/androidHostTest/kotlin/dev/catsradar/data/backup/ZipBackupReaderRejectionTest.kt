@@ -88,6 +88,18 @@ class ZipBackupReaderRejectionTest {
     }
 
     @Test
+    fun aFormatOneArchiveWithNoWalksStillReads() = runTest {
+        val path = target()
+        File(path).writeArchive(MANIFEST_ENTRY to VALID_MANIFEST, ENCOUNTERS_ENTRY to "[]")
+
+        val read = reader().read(path)
+
+        assertIs<BackupReadResult.Readable>(read)
+        assertEquals(emptyList(), read.contents.walks)
+        assertEquals(emptyList(), read.contents.trackPoints)
+    }
+
+    @Test
     fun anArchiveWithNoPlaceCellsFileStillReads() = runTest {
         val path = target()
         File(path).writeArchive(

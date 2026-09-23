@@ -58,6 +58,11 @@ class ZipBackupWriter(
                         PLACE_CELLS_ENTRY,
                         ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }),
                     )
+                    zip.putText(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
+                    zip.putText(
+                        TRACK_POINTS_ENTRY,
+                        ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }),
+                    )
                     contents.encounters.forEach { zip.putPhotos(it.photoPath, it.thumbPath) }
                 }
                 true
@@ -117,6 +122,8 @@ class ZipBackupReader(
         var manifest: BackupManifest? = null
         var encounters: List<EncounterRecord>? = null
         var placeCells: List<PlaceCellRecord> = emptyList()
+        var walks: List<WalkRecord> = emptyList()
+        var trackPoints: List<TrackPointRecord> = emptyList()
     }
 
     private fun readArchive(source: String): BackupReadResult {
@@ -130,6 +137,8 @@ class ZipBackupReader(
                 BackupContents(
                     encounters = encounters.map { it.toDomain() },
                     placeCells = parsed.placeCells.map { it.toDomain() },
+                    walks = parsed.walks.map { it.toDomain() },
+                    trackPoints = parsed.trackPoints.map { it.toDomain() },
                 ),
             )
         }
@@ -142,6 +151,9 @@ class ZipBackupReader(
                     entry.name == MANIFEST_ENTRY -> parsed.manifest = ArchiveJson.decodeFromString(zip.readText())
                     entry.name == ENCOUNTERS_ENTRY -> parsed.encounters = ArchiveJson.decodeFromString(zip.readText())
                     entry.name == PLACE_CELLS_ENTRY -> parsed.placeCells = ArchiveJson.decodeFromString(zip.readText())
+                    entry.name == WALKS_ENTRY -> parsed.walks = ArchiveJson.decodeFromString(zip.readText())
+                    entry.name == TRACK_POINTS_ENTRY ->
+                        parsed.trackPoints = ArchiveJson.decodeFromString(zip.readText())
                     entry.name.startsWith(PHOTOS_PREFIX) -> restorePhoto(entry.name.removePrefix(PHOTOS_PREFIX), zip)
                 }
             }
