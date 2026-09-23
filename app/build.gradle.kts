@@ -36,6 +36,8 @@ dependencies {
     testImplementation(libs.androidx.glance.appwidget.testing)
     testImplementation(libs.androidx.room.legacy.runtime)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     // Robolectric runs on the host JVM, not a device; BundledSQLiteDriver needs the host-native
     // artifact, same as :data's androidHostTest (see its build.gradle.kts for why).
     testImplementation(libs.androidx.sqlite.bundled.jvm)
