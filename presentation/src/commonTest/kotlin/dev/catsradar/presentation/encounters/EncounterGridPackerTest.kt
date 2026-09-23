@@ -83,7 +83,7 @@ class EncounterGridPackerTest {
                 if (run.any { it is PackedRow.Cards }) {
                     assertEquals(1, run.size, "a card row shares its run in $sequence")
                 } else {
-                    assertEquals(sizes.sortedDescending(), sizes, "a shorter tile row first in $sequence")
+                    assertEquals(sizes.sortedDescending(), sizes, "tile rows not longest first in $sequence")
                     assertTrue(sizes.max() - sizes.min() <= 1, "unbalanced tile rows $sizes in $sequence")
                 }
             }

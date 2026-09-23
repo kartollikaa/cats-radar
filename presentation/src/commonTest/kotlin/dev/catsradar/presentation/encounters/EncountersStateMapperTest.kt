@@ -105,6 +105,26 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `a lone photo in a tile row shows its thumbnail, not its full-size copy`() {
+        val older = encounterFixture("older", BASE)
+        val middle = encounterFixture("middle", BASE + 1.minutes)
+        val photo = photoFixture("photo", BASE + 2.minutes)
+
+        val rows = mapper.map(listOf(older, middle, photo), today).rows
+
+        assertEquals(
+            EncounterGridRow.Tiles(
+                persistentListOf(
+                    cell("photo", BASE + 2.minutes, CellLead.Photo("/data/photos/photo_thumb.jpg")),
+                    cell("middle", BASE + 1.minutes),
+                    cell("older", BASE),
+                ),
+            ),
+            rows.last(),
+        )
+    }
+
+    @Test
     fun `a pair cat without a full-size copy shows its thumbnail`() {
         val thumbOnly = photoFixture("thumbOnly", BASE).copy(photoPath = null)
         val full = photoFixture("full", BASE + 1.minutes)
