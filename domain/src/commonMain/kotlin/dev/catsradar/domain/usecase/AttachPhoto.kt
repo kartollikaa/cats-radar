@@ -68,7 +68,7 @@ class AttachPhoto(
                 sourceDigest = digest.sha256(sourceUri),
                 updatedAt = clock.now(),
             )
-            // Not cancellable: once the write lands, these files are the cat's.
+            // Once the write lands, these files are the cat's, so the write must not be cancelled.
             withContext(NonCancellable) { attached = encounterRepository.attachPhoto(encounterId, stamp) }
         } finally {
             if (!attached) withContext(NonCancellable) { discard(stored) }

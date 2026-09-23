@@ -9,6 +9,7 @@ import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 class SetCoatTest {
@@ -57,7 +58,7 @@ class SetCoatTest {
             thumbPath = "p_thumb.jpg",
             galleryUri = null,
             sourceDigest = "sha",
-            updatedAt = NOW,
+            updatedAt = NOW - 1.minutes,
         )
         encounters.beforeSetCoat = { encounters.attachPhoto(ID, stamp) }
 

@@ -72,10 +72,11 @@ class StatsCalculatorTest {
                 at(NOON),
                 at(NOON - 1.hours, kind = EncounterKind.PHOTO).copy(photoPath = "taken.jpg"),
                 at(NOON - 2.hours).copy(photoPath = "attached.jpg"),
+                at(NOON - 3.hours, kind = EncounterKind.PHOTO),
             ),
         )
 
-        assertEquals(3, stats.total)
+        assertEquals(4, stats.total)
         assertEquals(2, stats.withPhoto)
     }
 

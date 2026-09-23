@@ -21,7 +21,7 @@ class FakeEncounterRepository : EncounterRepository {
     val purgeCalls = mutableListOf<Instant>()
     var attachPhotoShouldThrow: Throwable? = null
 
-    /** Runs after a successful write, for what else happens to the cat in the meantime. */
+    /** Runs after a successful write, before the result returns. */
     var afterAttachPhoto: suspend () -> Unit = {}
 
     /** Runs before setCoat writes, for what else happens to the cat in the meantime. */
@@ -74,6 +74,7 @@ class FakeEncounterRepository : EncounterRepository {
         attachPhotoShouldThrow?.let { throw it }
         var attached = false
         encounters.update { list ->
+            attached = false
             list.map { encounter ->
                 if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
                     attached = true
@@ -93,7 +94,7 @@ class FakeEncounterRepository : EncounterRepository {
         return attached
     }
 
-    // beforeSetCoat runs first, so a change it makes (e.g. attaching a photo) survives the copy() below.
+    // Mirrors the DAO's WHERE deletedAt IS NULL guard, checked at write time.
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         beforeSetCoat()
         encounters.update { list ->

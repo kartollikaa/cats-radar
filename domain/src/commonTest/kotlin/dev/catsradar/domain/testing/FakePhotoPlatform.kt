@@ -67,7 +67,7 @@ class FakeGallerySaver(var result: String? = URI) : GallerySaver {
     var calls = 0
         private set
 
-    /** Runs at the start of the save, for what else happens to the cat in the meantime. */
+    /** Runs while the original is being copied to the gallery. */
     var duringSave: suspend () -> Unit = {}
 
     override suspend fun save(sourceUri: String, displayName: String): String? {

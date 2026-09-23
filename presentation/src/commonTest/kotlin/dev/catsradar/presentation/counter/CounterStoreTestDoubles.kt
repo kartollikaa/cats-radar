@@ -94,6 +94,7 @@ internal class FakeEncounterRepository : EncounterRepository {
         attachPhotoShouldThrow?.let { throw it }
         var attached = false
         encounters.update { list ->
+            attached = false
             list.map { encounter ->
                 if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
                     attached = true

@@ -48,7 +48,6 @@ internal class FakeEncounterDao : EncounterDao {
     var attachLocationCall: AttachLocationCall? = null
     var attachPhotoResult: Int = 1
     var attachPhotoCall: AttachPhotoCall? = null
-    var setCoatResult: Int = 1
     var setCoatCall: SetCoatCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
@@ -113,7 +112,7 @@ internal class FakeEncounterDao : EncounterDao {
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int {
         setCoatCall = SetCoatCall(id, coat, updatedAt)
-        return setCoatResult
+        return 1
     }
 
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {

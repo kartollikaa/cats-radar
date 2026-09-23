@@ -3,6 +3,7 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDigest
 import dev.catsradar.domain.testing.FakeEncounterRepository
@@ -155,6 +156,17 @@ class AttachPhotoTest {
 
         assertEquals(tally.copy(deletedAt = NOW), stored())
         assertEquals(listOf(FakeImageResizer.PHOTO_PATH, FakeImageResizer.THUMB_PATH), storage.deleted)
+    }
+
+    @Test
+    fun `a lost attempt without a thumbnail removes only its copy`() = runTest {
+        encounters.insert(tally)
+        resizer.result = StoredPhoto(photoPath = FakeImageResizer.PHOTO_PATH, thumbPath = null)
+        resizer.duringStore = { encounters.softDelete(ID, NOW) }
+
+        assertEquals(AttachResult.NotAttachable, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+
+        assertEquals(listOf(FakeImageResizer.PHOTO_PATH), storage.deleted)
     }
 
     @Test
