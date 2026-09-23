@@ -5,20 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -87,49 +79,6 @@ fun CounterScreen(
                 onImportClick = onImportClick,
                 modifier = Modifier.fillMaxWidth(),
             )
-        },
-    )
-}
-
-@Composable
-private fun PhotoButton(
-    onCameraClick: () -> Unit,
-    onImportClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val height = SplitButtonDefaults.MediumContainerHeight
-    SplitButtonLayout(
-        modifier = modifier,
-        leadingButton = {
-            SplitButtonDefaults.LeadingButton(
-                onClick = onCameraClick,
-                modifier = Modifier.fillMaxWidth().heightIn(min = height),
-                shapes = SplitButtonDefaults.leadingButtonShapesFor(height),
-                contentPadding = SplitButtonDefaults.leadingButtonContentPaddingFor(height),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_photo_camera),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(end = ButtonDefaults.iconSpacingFor(height))
-                        .size(SplitButtonDefaults.leadingButtonIconSizeFor(height)),
-                )
-                Text(text = stringResource(R.string.counter_camera), style = ButtonDefaults.textStyleFor(height))
-            }
-        },
-        trailingButton = {
-            SplitButtonDefaults.TrailingButton(
-                onClick = onImportClick,
-                modifier = Modifier.heightIn(min = height),
-                shapes = SplitButtonDefaults.trailingButtonShapesFor(height),
-                contentPadding = SplitButtonDefaults.trailingButtonContentPaddingFor(height),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_photo_library),
-                    contentDescription = stringResource(R.string.counter_import),
-                    modifier = Modifier.size(SplitButtonDefaults.trailingButtonIconSizeFor(height)),
-                )
-            }
         },
     )
 }

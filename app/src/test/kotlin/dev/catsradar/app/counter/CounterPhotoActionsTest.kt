@@ -1,6 +1,7 @@
 package dev.catsradar.app.counter
 
 import android.content.Context
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -67,6 +68,16 @@ class CounterPhotoActionsTest {
         compose.onNodeWithText(context.getString(R.string.counter_camera)).performTouchInput { longClick() }
 
         assertEquals(0, importClicks)
+    }
+
+    @Test
+    fun `holding the gallery half names it without starting an import`() {
+        val label = context.getString(R.string.counter_import)
+
+        compose.onNodeWithContentDescription(label).performTouchInput { longClick() }
+
+        compose.onNodeWithText(label).assertIsDisplayed()
+        assertEquals(Clicks(camera = 0, import = 0), clicks())
     }
 
     private fun clicks() = Clicks(camera = cameraClicks, import = importClicks)
