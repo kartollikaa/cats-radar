@@ -398,7 +398,8 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 ## 10. Open items
 
 - `applicationId` / package name placeholder `dev.catsradar` until confirmed.
-- **EXIF GPS from gallery photos is redacted under scoped storage.** Reading it needs the
-  `ACCESS_MEDIA_LOCATION` runtime permission plus `MediaStore.setRequireOriginal(uri)`; whether that
-  works on Photo Picker URIs must be verified on device in the gallery-import slice. If it does not,
-  import falls back to `NONE` for location (dates still come from EXIF) and the spec is amended.
+- ~~**EXIF GPS from gallery photos is redacted under scoped storage.**~~ Resolved with no runtime
+  permission: the Photo Picker hands GPS over when the launch intent carries
+  `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS` and the user agrees in the picker.
+  Declined, or on a picker without that extra, import falls back to `NONE` for location while dates
+  still come from EXIF — see `docs/features/import.md`.
