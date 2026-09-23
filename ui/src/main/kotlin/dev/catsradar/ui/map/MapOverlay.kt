@@ -48,7 +48,7 @@ internal fun MapOverlay(
                 MapChip(label = stringResource(R.string.map_heat), selected = state.heat, onClick = onHeatToggle)
                 MapChip(
                     label = stringResource(R.string.map_coats),
-                    selected = state.shownCoats.isNotEmpty(),
+                    selected = state.coatFilterActive,
                     onClick = onCoatsClick,
                 )
             }

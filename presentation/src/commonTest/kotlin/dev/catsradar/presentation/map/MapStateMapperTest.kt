@@ -124,11 +124,12 @@ class MapStateMapperTest {
         val header = encountersMapper.map(cats, TODAY).rows
             .filterIsInstance<EncounterListItem.OutingHeader>()
             .single { it.mapOutingId == "first" }
+        val route = persistentListOf(MapPoint("first", 41.37, 2.15, null), MapPoint("second", 41.39, 2.17, null))
         assertEquals(
             MapState.Located(
-                points = persistentListOf(MapPoint("first", 41.37, 2.15, null), MapPoint("second", 41.39, 2.17, null)),
+                points = route,
                 area = MapArea(south = 41.37, west = 2.15, north = 41.39, east = 2.17),
-                focus = MapFocus(outingId = "first", label = header.label),
+                focus = MapFocus(outingId = "first", label = header.label, route = route),
             ),
             state,
         )
@@ -172,7 +173,7 @@ class MapStateMapperTest {
     }
 
     @Test
-    fun `a focused outing filtered by coat keeps only its cats of that coat`() {
+    fun `a coat filter on a focused outing thins its dots, not its route`() {
         val ginger = located("ginger", 41.37, 2.15, CatCoat.GINGER)
         val black = located("black", 41.39, 2.17, CatCoat.BLACK).copy(occurredAt = BASE + 5.minutes)
         val otherGinger = located("other ginger", 41.45, 2.25, CatCoat.GINGER).copy(occurredAt = BASE + 3.hours)
@@ -182,6 +183,20 @@ class MapStateMapperTest {
         )
 
         assertEquals(listOf("ginger"), state.points.map { it.id })
+        assertEquals(listOf("ginger", "black"), state.focus?.route?.map { it.id })
+        assertEquals(true, state.coatFilterActive)
+    }
+
+    @Test
+    fun `an open spot lists only the cats the coat filter shows`() {
+        val ginger = located("ginger", 41.39, 2.17, CatCoat.GINGER)
+        val black = located("black", 41.39, 2.17, CatCoat.BLACK).copy(occurredAt = BASE + 5.minutes)
+
+        val state = assertIs<MapState.Located>(
+            map(listOf(ginger, black), spot = setOf("ginger", "black"), coats = setOf(CoatOption.GINGER)),
+        )
+
+        assertEquals(MapSpot(catCount = 1, rows = encountersMapper.map(listOf(ginger), TODAY).rows), state.spot)
     }
 
     @Test

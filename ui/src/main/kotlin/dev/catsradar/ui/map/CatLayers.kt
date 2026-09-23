@@ -79,7 +79,8 @@ internal fun CatLayers(
     onClusterTap: (ClusterTap) -> Unit,
     onCatsTap: (List<String>) -> Unit,
 ) {
-    CatHeat(cats = cats, visible = heat, colors = colors)
+    // Only while on, sparing a second parse of every cat; the dots it would sit under are hidden then.
+    if (heat) CatHeat(cats = cats, colors = colors)
     OutingRoute(route = route, colors = colors)
     CatDots(cats = cats, visible = !heat, colors = colors, onClusterTap = onClusterTap, onCatsTap = onCatsTap)
 }
@@ -100,12 +101,11 @@ internal fun catLayerColors(): CatLayerColors {
 }
 
 @Composable
-private fun CatHeat(cats: FeatureCollection<Point, JsonObject>, visible: Boolean, colors: CatLayerColors) {
+private fun CatHeat(cats: FeatureCollection<Point, JsonObject>, colors: CatLayerColors) {
     // Its own source, unclustered: over a clustered one, a cluster of ten would weigh as one cat.
     HeatmapLayer(
         id = "cat-heat",
         source = rememberGeoJsonSource(GeoJsonData.Features(cats)),
-        visible = visible,
         color = interpolate(
             linear(),
             heatmapDensity(),

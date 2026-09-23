@@ -21,15 +21,24 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
         val shown = outing ?: encounters
         val located = shown.mapNotNull { it.toPoint() }
         if (located.isEmpty()) return MapState.Empty
-        val points = if (choices.coats.isEmpty()) located else located.filter { it.coat in choices.coats }
+        val filtering = choices.coats.isNotEmpty()
+        val points = if (filtering) located.filter { it.coat in choices.coats } else located
+        val shownIds = points.mapTo(mutableSetOf()) { it.id }
         return MapState.Located(
             points = points.toImmutableList(),
             // Around every located cat, not only the shown ones: a coat filter does not change where the map opens.
             area = areaAround(located),
-            spot = choices.spot?.let { ids -> spotOf(shown.filter { it.id in ids && it.deletedAt == null }, today) },
-            focus = outing?.let { MapFocus(outingId = it.first().id, label = encountersMapper.outingLabel(it, today)) },
+            spot = choices.spot?.let { ids -> spotOf(shown.filter { it.id in ids && it.id in shownIds }, today) },
+            focus = outing?.let {
+                MapFocus(
+                    outingId = it.first().id,
+                    label = encountersMapper.outingLabel(it, today),
+                    route = located.toImmutableList(),
+                )
+            },
             heat = choices.heat,
             shownCoats = choices.coats.toImmutableSet(),
+            coatFilterActive = filtering,
             filterMatchesNone = points.isEmpty(),
         )
     }
