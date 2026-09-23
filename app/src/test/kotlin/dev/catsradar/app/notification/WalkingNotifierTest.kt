@@ -23,6 +23,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import dev.catsradar.app.R as AppR
 
 @RunWith(AndroidJUnit4::class)
 class WalkingNotifierTest {
@@ -63,6 +64,13 @@ class WalkingNotifierTest {
             ).map(context::getString),
             posted.actions.map { it.title.toString() },
         )
+    }
+
+    @Test
+    fun theStatusBarIconIsTheCatFace() {
+        val posted = showAndRead(count = 3)
+
+        assertEquals(AppR.drawable.ic_notification_cat, posted.smallIcon.resId)
     }
 
     @Test
