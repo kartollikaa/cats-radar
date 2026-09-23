@@ -12,13 +12,9 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-
-private const val VALID_MANIFEST = """{"formatVersion":1,"exportedAt":0,"deviceId":"d","appVersion":"1"}"""
 
 /** Every way an archive can be refused, and the one thing that still reads without it. */
 @RunWith(AndroidJUnit4::class)
@@ -100,6 +96,17 @@ class ZipBackupReaderRejectionTest {
     }
 
     @Test
+    fun aNewerArchiveWhoseRowsThisVersionCannotParseIsRefusedAsNewerWhereverItsManifestIs() = runTest {
+        val path = target()
+        File(path).writeArchive(
+            ENCOUNTERS_ENTRY to """[{"id":"a","occurredAt":"2026-09-20T08:00:00Z"}]""",
+            MANIFEST_ENTRY to NEWER_MANIFEST,
+        )
+
+        assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader().read(path))
+    }
+
+    @Test
     fun anArchiveWithNoPlaceCellsFileStillReads() = runTest {
         val path = target()
         File(path).writeArchive(
@@ -111,15 +118,5 @@ class ZipBackupReaderRejectionTest {
 
         assertIs<BackupReadResult.Readable>(read)
         assertEquals(emptyList(), read.contents.placeCells)
-    }
-}
-
-private fun File.writeArchive(vararg entries: Pair<String, String>) {
-    ZipOutputStream(outputStream()).use { zip ->
-        entries.forEach { (name, body) ->
-            zip.putNextEntry(ZipEntry(name))
-            zip.write(body.encodeToByteArray())
-            zip.closeEntry()
-        }
     }
 }
