@@ -46,8 +46,9 @@ outside the count block — inside the block, a follow-up tap on the same spot w
 take a cat away instead of adding one. The walk button sits in the middle of that row, and Undo
 appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
 a longer translation — does the button step aside toward the start, and past that it shortens its
-label: Undo is never squeezed. The button keeps one height whether it starts or stops a walk
-([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)), and the outing line keeps its line,
+label: Undo is never squeezed. A tap on the button starts a walk, but stopping one takes a press
+held until a fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)).
+The button keeps one height whether it starts or stops a walk, and the outing line keeps its line,
 empty when no outing is open, so a walk or an outing starting or ending leaves the block the same
 size. The location hint and the import progress and summary appear above the count and take their
 room from it, so the number shrinks and the walk button, the coat grid and the Photo button stay

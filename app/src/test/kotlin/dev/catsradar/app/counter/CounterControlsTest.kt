@@ -55,12 +55,30 @@ class CounterControlsTest {
 
         val count = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
         val walk = walkButton(walking = false).getUnclippedBoundsInRoot()
-        val photo = compose.onNodeWithText(string(R.string.counter_camera)).getUnclippedBoundsInRoot()
+        val coatGrid = compose.onNodeWithText(string(R.string.coat_ginger)).getUnclippedBoundsInRoot()
 
         assertTrue(walk.top >= count.bottom, "the walk button's top is ${walk.top}, the count's bottom ${count.bottom}")
-        assertTrue(walk.bottom <= photo.top, "the walk button's bottom is ${walk.bottom}, Photo's top ${photo.top}")
+        assertTrue(walk.bottom <= coatGrid.top, "walk bottom ${walk.bottom}, grid top ${coatGrid.top}")
         assertEquals(centre(count).value, centre(walk).value, absoluteTolerance = 1f)
         assertTrue(walk.width >= count.width / 2 - 1.dp, "the walk button is ${walk.width}, the count ${count.width}")
+    }
+
+    @Test
+    fun `the walk button is as tall stopping a walk as starting one`() {
+        var walking by mutableStateOf(false)
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = CounterState(totalLabel = "3", count = 3, undoVisible = false, walkingMode = walking),
+                )
+            }
+        }
+        val starting = walkButton(walking = false).getUnclippedBoundsInRoot().height
+
+        walking = true
+        compose.waitForIdle()
+
+        assertEquals(starting, walkButton(walking = true).getUnclippedBoundsInRoot().height)
     }
 
     @Test
