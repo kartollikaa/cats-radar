@@ -44,21 +44,27 @@ for the statistics to be wrong.
 
 ## Recording the route
 
-With location allowed, the walk's route is recorded. The notification is then carried by
+With precise location allowed, the walk's route is recorded. The notification is then carried by
 `WalkRecordingService`, a foreground service of type `location`, which asks for fixes for as long as
 it runs and offers each one to the walk; which of them the route keeps is in `data-model.md`.
 Without location permission there is no service, and the notification is the plain ongoing one it
 always was: it outlives the app leaving the screen on its own, and its buttons start the process
-again if it has been killed.
+again if it has been killed. Approximate location alone counts as none here: its fixes are too rough
+for any of them to join a route, so running a location service for it would record nothing.
 
 - **It starts only while the app is on screen.** Android gives a service location access only when
   it starts in front of the user; one already running keeps it after the app leaves. So recording
   starts when the mode is turned on in the app, or the next time the app is in front with the mode
   on, which is also how a walk started before location was allowed begins recording once it is. A
-  permission dialog over the app counts as leaving it, so allowing location from the prompt a tally
-  raises is seen the moment the dialog closes.
+  permission dialog that stays up for more than a moment counts as leaving the app, so allowing
+  location from the prompt a tally raises usually starts the recording as the dialog closes, and
+  otherwise with the next cat.
 - **Stopping the walk stops the service**, from the app, the **Done** button or a swipe, and takes
-  the notification away with it.
+  the notification away with it. The stop is sent to the service rather than done to it: a service
+  stopped from outside before it has gone foreground takes the app down with it.
+- **Done ends the walk there and then.** The walk otherwise follows the flag from inside the app's
+  process, and a process woken just to handle Done may be gone before that catches up, which would
+  end the walk only whenever the app next started.
 - **A recording cut off ends the walk.** Killed along with the app, or by a reboot, the service is
   not restarted: from the background it would get no location. The next start of the app ends the
   walk at its route's last point, or at its start when it has none, rather than at that moment, and

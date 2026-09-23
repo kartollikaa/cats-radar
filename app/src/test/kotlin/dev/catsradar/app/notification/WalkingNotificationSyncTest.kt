@@ -6,7 +6,6 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.repository.EncounterRepository
-import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -156,21 +155,6 @@ private class RecordingWalkingNotifications : WalkingNotifications {
     override fun clear() {
         actions += Posted.Clear
     }
-}
-
-private class FakeWalkingSettings : SettingsRepository {
-    val walking = MutableStateFlow(false)
-
-    override fun walkingMode(): Flow<Boolean> = walking
-
-    override suspend fun setWalkingMode(enabled: Boolean) {
-        walking.value = enabled
-    }
-
-    override fun saveOriginalsToGallery(): Flow<Boolean> = MutableStateFlow(true)
-    override suspend fun setSaveOriginalsToGallery(enabled: Boolean) = Unit
-    override fun lastSeenMilestone(): Flow<Int> = MutableStateFlow(Int.MAX_VALUE)
-    override suspend fun setLastSeenMilestone(value: Int) = Unit
 }
 
 private class FakeEncounterRepository : EncounterRepository {

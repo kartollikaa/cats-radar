@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import androidx.core.content.ContextCompat
 import dev.catsradar.domain.platform.WalkRecordingState
 import dev.catsradar.domain.usecase.RecordWalk
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,9 @@ class WalkRecordingService : Service(), KoinComponent {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val count = intent?.getIntExtra(EXTRA_COUNT, 0) ?: 0
-        if (!carryNotification(count)) {
+        if (intent?.action == ACTION_STOP) {
+            stopSelf()
+        } else if (!carryNotification(count)) {
             notifier.show(count, appOnScreen = false)
             stopSelf()
         } else if (recording == null) {
@@ -46,8 +49,7 @@ class WalkRecordingService : Service(), KoinComponent {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    // Refused when location was revoked, or the app left the screen, before this ran.
-    @Suppress("SwallowedException")
+    @Suppress("SwallowedException") // refused when the app left the screen, or location went, before this ran
     private fun carryNotification(count: Int): Boolean =
         try {
             notifier.carry(this, count)
@@ -60,8 +62,41 @@ class WalkRecordingService : Service(), KoinComponent {
 
     companion object {
         const val EXTRA_COUNT = "dev.catsradar.extra.WALK_COUNT"
+        const val ACTION_STOP = "dev.catsradar.action.STOP_RECORDING"
 
         fun intent(context: Context, count: Int): Intent =
             Intent(context, WalkRecordingService::class.java).putExtra(EXTRA_COUNT, count)
+
+        fun stopIntent(context: Context): Intent =
+            Intent(context, WalkRecordingService::class.java).setAction(ACTION_STOP)
+    }
+}
+
+/** Starts and stops [WalkRecordingService] on the walking notification's behalf. */
+internal class WalkRecordingControl(private val context: Context) {
+    @Volatile
+    private var started = false
+
+    @Suppress("SwallowedException") // refused when the app left the screen before the request reached the system
+    fun start(count: Int): Boolean =
+        try {
+            ContextCompat.startForegroundService(context, WalkRecordingService.intent(context, count))
+            started = true
+            true
+        } catch (e: IllegalStateException) {
+            false
+        }
+
+    // Queued behind a start still on its way: a service stopped from outside before it has gone
+    // foreground crashes the app.
+    @Suppress("SwallowedException") // refused only when no service is running, so there is nothing to stop
+    fun stop() {
+        if (!started) return
+        started = false
+        try {
+            context.startService(WalkRecordingService.stopIntent(context))
+        } catch (e: IllegalStateException) {
+            Unit
+        }
     }
 }

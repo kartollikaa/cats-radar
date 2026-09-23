@@ -7,6 +7,7 @@ import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.usecase.EndWalk
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,7 @@ class WalkingActionReceiver : BroadcastReceiver(), KoinComponent {
     private val locationAttachScheduler: LocationAttachScheduler by inject()
     private val notifier: WalkingNotifier by inject()
     private val haptics: Haptics by inject()
+    private val endWalk: EndWalk by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         // The receiver's own lifetime ends when onReceive returns, so the work is held open by a
@@ -57,6 +59,8 @@ class WalkingActionReceiver : BroadcastReceiver(), KoinComponent {
 
     private suspend fun stop() {
         settingsRepository.setWalkingMode(false)
+        // Ended here, not left to what follows the mode: a process woken for this may die once it returns.
+        endWalk()
         notifier.clear()
     }
 }

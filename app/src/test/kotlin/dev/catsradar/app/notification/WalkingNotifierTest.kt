@@ -200,15 +200,40 @@ class WalkingNotifierTest {
     }
 
     @Test
-    fun clearingStopsTheRecordingServiceAndTakesTheNotificationAway() {
+    fun withOnlyApproximateLocationNoRecordingStarts() {
+        grantNotifications()
+        shadowApplication.grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = true)
+
+        assertNull(shadowApplication.nextStartedService)
+        assertEquals(1, shadowManager.size())
+    }
+
+    @Test
+    fun clearingARecordingAsksTheServiceToStopBehindItsStart() {
+        grantNotifications()
+        grantLocation()
+        notifier.ensureChannel()
+        notifier.show(count = 3, appOnScreen = true)
+        shadowApplication.nextStartedService
+
+        notifier.clear()
+
+        assertEquals(WalkRecordingService.ACTION_STOP, shadowApplication.nextStartedService?.action)
+        assertNull(shadowApplication.nextStoppedService)
+    }
+
+    @Test
+    fun clearingWithNoRecordingTakesTheNotificationAwayAndStartsNothing() {
         grantNotifications()
         notifier.ensureChannel()
         notifier.show(count = 3, appOnScreen = false)
 
         notifier.clear()
 
-        val stopped = assertNotNull(shadowApplication.nextStoppedService)
-        assertEquals(ComponentName(context, WalkRecordingService::class.java), stopped.component)
+        assertNull(shadowApplication.nextStartedService)
         assertEquals(0, shadowManager.size())
     }
 }

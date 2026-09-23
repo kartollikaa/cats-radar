@@ -67,8 +67,7 @@ class FusedLocationProvider(context: Context, private val clock: Clock) : Locati
         awaitClose { client.removeLocationUpdates(callback) }
     }
 
-    // A permission revoked between the check and the call ends the fixes rather than the app.
-    @Suppress("SwallowedException")
+    @Suppress("SwallowedException") // a permission revoked between the check and the call ends the fixes, not the app
     private fun requestUpdates(request: LocationRequest, callback: LocationCallback): Boolean =
         try {
             client.requestLocationUpdates(request, callback, Looper.getMainLooper())

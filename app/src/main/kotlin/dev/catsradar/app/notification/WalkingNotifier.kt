@@ -33,6 +33,7 @@ private const val NOTIFICATION_ID = 2
 class WalkingNotifier(private val context: Context) : WalkingNotifications {
 
     private val manager = NotificationManagerCompat.from(context)
+    private val recording = WalkRecordingControl(context)
 
     fun ensureChannel() {
         manager.deleteNotificationChannel(RETIRED_CHANNEL_ID)
@@ -48,8 +49,8 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
 
     override fun show(count: Int, appOnScreen: Boolean) {
         // A service may only gain location access while the app is on screen; one running keeps it.
-        val recording = appOnScreen && context.hasLocationPermission() && startRecording(count)
-        if (!recording) post(build(count))
+        val recorded = appOnScreen && context.hasPreciseLocation() && recording.start(count)
+        if (!recorded) post(build(count))
     }
 
     /** Makes the notification [service]'s own, running it in the foreground with location access. */
@@ -63,19 +64,9 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
     }
 
     override fun clear() {
-        context.stopService(Intent(context, WalkRecordingService::class.java))
+        recording.stop()
         manager.cancel(NOTIFICATION_ID)
     }
-
-    // Refused when the app has already left the screen by the time the request reaches the system.
-    @Suppress("SwallowedException")
-    private fun startRecording(count: Int): Boolean =
-        try {
-            ContextCompat.startForegroundService(context, WalkRecordingService.intent(context, count))
-            true
-        } catch (e: IllegalStateException) {
-            false
-        }
 
     private fun build(count: Int): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
@@ -151,10 +142,10 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
     }
 }
 
-private fun Context.hasLocationPermission(): Boolean =
-    listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any {
-        ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
-    }
+// Approximate location alone gives fixes too rough for any of them to join a route.
+private fun Context.hasPreciseLocation(): Boolean =
+    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED
 
 internal object WalkingAction {
     const val TALLY = "dev.catsradar.action.WALKING_TALLY"
