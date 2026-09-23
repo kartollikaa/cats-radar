@@ -202,3 +202,9 @@ private fun MapScreenEmptyPreview() {
         Surface { MapScreen(state = MapState.Empty) }
     }
 }
+
+@ThemePreviews
+@Composable
+private fun MapUnavailablePreview() {
+    CatsRadarTheme { MapUnavailable() }
+}

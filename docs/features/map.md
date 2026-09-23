@@ -36,6 +36,8 @@ one, is not drawn, and the list keeps it as before.
   them on. An area already seen loads from the cache; a first look with no connection says the map
   could not load, rather than showing an empty canvas.
 - **TalkBack** hears how many cats the map shows; the dots themselves are not reachable yet.
+- **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
+  world: the fitted area runs west to east the long way round. Every dot is still on screen.
 - **White cats on a light street:** each dot has the same outline the coat faces carry, so a white
   cat's dot does not disappear into the map.
 
