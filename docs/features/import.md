@@ -57,6 +57,10 @@ Per photo: added, skipped, or failed.
 A soft-deleted twin does **not** block a re-import. Deleting a cat and picking its photo again is a
 deliberate act, and refusing it would leave the user unable to undo their own deletion.
 
+**Undo takes the whole run back in one write** (`softDeleteAll`): every cat of the run gets the same
+`deletedAt`, the run goes all or none, and the list and statistics redraw once rather than once per
+cat (`UndoImportTest`).
+
 ## At the edges
 
 - **The photo picker hands over a redacted copy, not the file on disk.** Verified on a device: the

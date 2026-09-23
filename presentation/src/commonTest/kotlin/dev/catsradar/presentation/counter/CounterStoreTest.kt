@@ -505,7 +505,8 @@ class CounterStoreTest {
         store.dispatch(CounterIntent.Import.UndoClicked)
         runCurrent()
 
-        assertEquals(listOf("id-1", "id-2"), repository.softDeletedIds)
+        assertEquals(listOf(listOf("id-1", "id-2")), repository.softDeleteAllCalls)
+        assertEquals(emptyList(), repository.encounters().filter { it.deletedAt == null })
         assertEquals(false, store.state.value.importSummary?.undoable)
     }
 
@@ -521,7 +522,7 @@ class CounterStoreTest {
         store.dispatch(CounterIntent.Import.UndoClicked)
         runCurrent()
 
-        assertEquals(listOf("id-1"), repository.softDeletedIds)
+        assertEquals(listOf(listOf("id-1")), repository.softDeleteAllCalls)
     }
 
     @Test
