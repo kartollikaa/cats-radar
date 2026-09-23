@@ -73,9 +73,9 @@ has been rendering, and an archive should not quietly replace it.
   archive**, so a hand-edited geohash cannot disagree with the point it claims to describe. A cell
   the archive does not carry is created pending, exactly as for a cat located on this device, and
   a cell it does carry keeps its name.
-- **Reading the local side uses `loadEvery`**, the one read that sees soft-deleted rows. Every other
-  read hides them, and a merge that could not see a deletion would let an old archive reinsert the
-  cat as if it were new.
+- **Reading the local side uses `loadEvery`**, which returns soft-deleted rows too. The live reads
+  hide them, and a merge that could not see a deletion would let an old archive reinsert the cat as
+  if it were new.
 
 ## Where the code lives
 

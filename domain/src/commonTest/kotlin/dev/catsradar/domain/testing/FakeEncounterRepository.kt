@@ -20,7 +20,6 @@ class FakeEncounterRepository : EncounterRepository {
     // hide every bug about what a read is allowed to see.
     override fun observeAll(): Flow<List<Encounter>> =
         encounters.map { list -> list.filter { it.deletedAt == null } }
-    override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
 
     override suspend fun insert(encounter: Encounter) {
@@ -71,7 +70,6 @@ class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun loadEvery(): List<Encounter> = encounters.value
 
-    // Mirrors the DAO: this is the only read that can see soft-deleted rows.
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
         encounters.value.filter { it.deletedAt != null && it.deletedAt!! < cutoff }
 

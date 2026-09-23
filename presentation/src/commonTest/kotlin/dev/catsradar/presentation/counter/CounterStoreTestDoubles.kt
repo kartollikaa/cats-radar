@@ -36,7 +36,6 @@ internal class FakeEncounterRepository : EncounterRepository {
     fun encounters(): List<Encounter> = encounters.value
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
-    override fun observeActiveCount(): Flow<Int> = encounters.map { list -> list.count { it.deletedAt == null } }
     override fun observeById(id: String): Flow<Encounter?> =
         encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
 
@@ -85,7 +84,6 @@ internal class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
 
-    // Mirrors the DAO: this is the only read that can see soft-deleted rows.
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
         encounters.value.filter { it.deletedAt != null && it.deletedAt!! < cutoff }
 
