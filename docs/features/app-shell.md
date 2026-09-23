@@ -59,15 +59,17 @@ saturated teal. Each check has been broken on purpose and caught.
 The **window background** is the theme's surface in both modes, because the window is painted
 before Compose draws its first frame; `WindowBackgroundTest` fails if the two drift apart.
 
-**Launcher icon.** A ginger-and-white cat on a dark teal radar. The cat is the face the coat picker
-draws, with the same paths and the ginger-and-white coat's colours. The rings and the sweep are the
-palette's seed teal, with a blip just behind the sweep line. The cat is the adaptive icon's
-foreground and the radar its background, so the launcher's parallax moves them apart. The themed
-(monochrome) layer is the head's silhouette with the eyes and nose cut out, plus the blip. A
-vector drawable cannot read a Kotlin constant, so the foreground and monochrome drawables carry
-their own copies of the face's paths. `LauncherIconTest` fails if either copy stops matching
-`CatFacePaths`, so a change to the face has to be copied into both. The outer ring stays inside the
-safe zone, so a launcher shape with inward curves never cuts it.
+**Launcher icon.** A ginger-and-white cat on a dark teal radar. The cat is the coat picker's face,
+with the same paths and the ginger-and-white coat's colours. It has no outline, because the dark
+background already gives it an edge. The rings and the sweep are the palette's seed teal, with a
+blip just behind the sweep line. The cat is the adaptive icon's foreground and the radar its
+background, so the launcher's parallax moves them apart. The themed (monochrome) layer is the head's
+silhouette with the eyes and nose cut out, plus the blip. A vector drawable cannot read a Kotlin
+constant, so the foreground and monochrome drawables carry their own copies of the face's paths.
+`LauncherIconTest` fails if either copy stops matching `CatFacePaths`, so a change to the face has
+to be copied into both. The two inner rings stay inside the safe zone, so a launcher shape with
+inward curves never cuts them. The third ring lies beyond the circle and shows only in the corners
+of squarer shapes.
 
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
