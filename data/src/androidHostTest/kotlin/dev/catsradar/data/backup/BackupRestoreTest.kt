@@ -53,7 +53,7 @@ private data class Snapshot(
 )
 
 @RunWith(AndroidJUnit4::class)
-class BackupRoundTripTest {
+class BackupRestoreTest {
 
     @get:Rule
     val temporaryFolder = TemporaryFolder()
