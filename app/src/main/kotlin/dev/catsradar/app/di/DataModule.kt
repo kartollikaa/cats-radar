@@ -20,6 +20,7 @@ import dev.catsradar.data.platform.RandomIdGenerator
 import dev.catsradar.data.platform.Sha256Digest
 import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
 import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestState
+import dev.catsradar.data.platform.SharedPreferencesWalkRecordingState
 import dev.catsradar.data.platform.VibratorHaptics
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
@@ -39,6 +40,7 @@ import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.ReverseGeocoder
 import dev.catsradar.domain.platform.SourceFileTime
+import dev.catsradar.domain.platform.WalkRecordingState
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
@@ -62,6 +64,7 @@ val dataModule = module {
     single<Haptics> { VibratorHaptics(androidContext()) }
     single<LocationProvider> { FusedLocationProvider(androidContext(), get()) }
     single<LocationPermissionRequestState> { SharedPreferencesLocationPermissionRequestState(androidContext()) }
+    single<WalkRecordingState> { SharedPreferencesWalkRecordingState(androidContext()) }
     single { AndroidPhotoStorage(androidContext()) }
     // The resizer needs the concrete store: it writes through it, which the interface does not expose.
     single<PhotoStorage> { get<AndroidPhotoStorage>() }

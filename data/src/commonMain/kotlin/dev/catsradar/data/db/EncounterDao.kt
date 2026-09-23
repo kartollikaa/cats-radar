@@ -48,7 +48,7 @@ interface EncounterDao {
         id: String,
         lat: Double,
         lon: Double,
-        accuracyMeters: Float,
+        accuracyMeters: Float?,
         locationSource: LocationSource,
         locationFixedAt: Instant,
         geohash: String,

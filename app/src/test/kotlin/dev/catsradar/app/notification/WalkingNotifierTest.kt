@@ -33,15 +33,20 @@ class WalkingNotifierTest {
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val shadowManager = shadowOf(manager)
 
+    private val shadowApplication = shadowOf(ApplicationProvider.getApplicationContext<Application>())
+
     private fun grantNotifications() {
-        shadowOf(ApplicationProvider.getApplicationContext<Application>())
-            .grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private fun grantLocation() {
+        shadowApplication.grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     private fun showAndRead(count: Int): Notification {
         grantNotifications()
         notifier.ensureChannel()
-        notifier.show(count)
+        notifier.show(count, appOnScreen = false)
         return assertNotNull(shadowManager.allNotifications.firstOrNull())
     }
 
@@ -116,8 +121,8 @@ class WalkingNotifierTest {
         grantNotifications()
         notifier.ensureChannel()
 
-        notifier.show(count = 3)
-        notifier.show(count = 4)
+        notifier.show(count = 3, appOnScreen = false)
+        notifier.show(count = 4, appOnScreen = false)
 
         assertEquals(1, shadowManager.size())
         val posted = assertNotNull(shadowManager.allNotifications.firstOrNull())
@@ -152,8 +157,58 @@ class WalkingNotifierTest {
     fun withoutPermissionToPostNothingReachesTheShade() {
         notifier.ensureChannel()
 
-        notifier.show(count = 1)
+        notifier.show(count = 1, appOnScreen = false)
 
+        assertEquals(0, shadowManager.size())
+    }
+
+    @Test
+    fun onScreenWithLocationAllowedTheRecordingServiceCarriesTheNotification() {
+        grantNotifications()
+        grantLocation()
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = true)
+
+        val started = assertNotNull(shadowApplication.nextStartedService)
+        assertEquals(ComponentName(context, WalkRecordingService::class.java), started.component)
+        assertEquals(3, started.getIntExtra(WalkRecordingService.EXTRA_COUNT, -1))
+        assertEquals(0, shadowManager.size())
+    }
+
+    @Test
+    fun withoutLocationTheNotificationPostsAsBeforeAndNoServiceStarts() {
+        grantNotifications()
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = true)
+
+        assertNull(shadowApplication.nextStartedService)
+        assertEquals(1, shadowManager.size())
+    }
+
+    @Test
+    fun offScreenNoRecordingStartsEvenWithLocationAllowed() {
+        grantNotifications()
+        grantLocation()
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = false)
+
+        assertNull(shadowApplication.nextStartedService)
+        assertEquals(1, shadowManager.size())
+    }
+
+    @Test
+    fun clearingStopsTheRecordingServiceAndTakesTheNotificationAway() {
+        grantNotifications()
+        notifier.ensureChannel()
+        notifier.show(count = 3, appOnScreen = false)
+
+        notifier.clear()
+
+        val stopped = assertNotNull(shadowApplication.nextStoppedService)
+        assertEquals(ComponentName(context, WalkRecordingService::class.java), stopped.component)
         assertEquals(0, shadowManager.size())
     }
 }

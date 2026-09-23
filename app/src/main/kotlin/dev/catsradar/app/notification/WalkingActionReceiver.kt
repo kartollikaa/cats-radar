@@ -52,7 +52,7 @@ class WalkingActionReceiver : BroadcastReceiver(), KoinComponent {
         locationAttachScheduler.schedule(encounter.id)
         // Re-read rather than counting locally: the process may have died since the last tap, and
         // the outing is derived from the rows anyway.
-        notifier.show(observeStats().first().currentOuting?.count ?: 1)
+        notifier.show(observeStats().first().currentOuting?.count ?: 1, appOnScreen = false)
     }
 
     private suspend fun stop() {

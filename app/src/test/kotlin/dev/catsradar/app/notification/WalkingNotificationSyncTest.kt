@@ -53,6 +53,7 @@ class WalkingNotificationSyncTest {
     private val settings = FakeWalkingSettings()
     private val notifications = RecordingWalkingNotifications()
     private val ticks = MutableSharedFlow<Unit>(replay = 1)
+    private val appOnScreen = MutableStateFlow(false)
 
     private fun TestScope.startSync() {
         ticks.tryEmit(Unit)
@@ -67,7 +68,7 @@ class WalkingNotificationSyncTest {
                 ticks = ticks,
             ),
             notifications = notifications,
-        ).start(backgroundScope)
+        ).start(backgroundScope, appOnScreen)
     }
 
     // Every test opens with Clear: a process starting with the mode off sweeps away a notification
@@ -115,6 +116,21 @@ class WalkingNotificationSyncTest {
         }
 
     @Test
+    fun `the app coming on screen during a walk reaches the notification, and leaving it too`() =
+        runTest(UnconfinedTestDispatcher()) {
+            startSync()
+            settings.walking.value = true
+
+            appOnScreen.value = true
+            appOnScreen.value = false
+
+            assertEquals(
+                listOf(Posted.Clear, Posted.Show(0), Posted.Show(0, appOnScreen = true), Posted.Show(0)),
+                notifications.actions,
+            )
+        }
+
+    @Test
     fun `stopping the walk takes the notification away`() = runTest(UnconfinedTestDispatcher()) {
         startSync()
         settings.walking.value = true
@@ -126,15 +142,15 @@ class WalkingNotificationSyncTest {
 }
 
 private sealed interface Posted {
-    data class Show(val count: Int) : Posted
+    data class Show(val count: Int, val appOnScreen: Boolean = false) : Posted
     data object Clear : Posted
 }
 
 private class RecordingWalkingNotifications : WalkingNotifications {
     val actions = mutableListOf<Posted>()
 
-    override fun show(count: Int) {
-        actions += Posted.Show(count)
+    override fun show(count: Int, appOnScreen: Boolean) {
+        actions += Posted.Show(count, appOnScreen)
     }
 
     override fun clear() {
