@@ -95,6 +95,5 @@ ticker as a constructor parameter so a test can drive it instead of waiting.
 
 ## Not built yet
 
-By-coat counts wait for the coat picker and per-region counts for reverse geocoding, so neither
-block is on the screen. Everything is computed from the full list in memory; the spec puts the
-revisit point at tens of thousands of encounters.
+Everything is computed from the full list in memory; the spec puts the revisit point at tens of
+thousands of encounters.

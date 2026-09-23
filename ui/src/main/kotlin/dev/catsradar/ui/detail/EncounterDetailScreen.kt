@@ -1,6 +1,7 @@
 package dev.catsradar.ui.detail
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,9 +10,12 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
@@ -27,6 +33,7 @@ import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatPicker
+import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.encounters.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -40,7 +47,7 @@ fun EncounterDetailScreen(
     onUndoClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
-    Box(modifier = modifier.fillMaxSize().padding(contentPadding).padding(24.dp)) {
+    Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
         when (state) {
             EncounterDetailState.Loading -> Unit
             is EncounterDetailState.Loaded -> LoadedDetail(
@@ -61,37 +68,72 @@ private fun LoadedDetail(
     onDeleteClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
         val photoPath = state.photoPath
         if (photoPath != null) {
             AsyncImage(
                 model = photoPath,
                 contentDescription = stringResource(R.string.detail_photo_description),
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.large),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.extraLarge),
                 contentScale = ContentScale.Crop,
             )
         }
-        Text(text = state.dayLabel, style = MaterialTheme.typography.headlineSmall)
-        Text(text = state.timeLabel, style = MaterialTheme.typography.displaySmall)
-        Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
-        val coordinates = state.coordinatesLabel
-        val accuracy = state.accuracyMeters
-        if (coordinates != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = stringResource(R.string.detail_coordinates), style = MaterialTheme.typography.labelMedium)
-                Text(text = coordinates, style = MaterialTheme.typography.bodyLarge)
-                if (accuracy != null) {
-                    Text(
-                        text = stringResource(R.string.detail_accuracy, accuracy),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
+        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+            Text(
+                text = state.dayLabel,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        Text(text = stringResource(R.string.detail_coat), style = MaterialTheme.typography.labelMedium)
-        CoatPicker(selected = state.coat, onCoatClick = onCoatClick)
-        Button(onClick = onDeleteClick, modifier = Modifier.padding(top = 16.dp)) {
+        WhereCard(state)
+        SectionCard(R.string.detail_coat) {
+            CoatPicker(
+                selected = state.coat,
+                modifier = Modifier.padding(vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                onCoatClick = onCoatClick,
+            )
+        }
+        OutlinedButton(
+            onClick = onDeleteClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+        ) {
             Text(text = stringResource(R.string.detail_delete))
+        }
+    }
+}
+
+@Composable
+private fun WhereCard(state: EncounterDetailState.Loaded, modifier: Modifier = Modifier) {
+    SectionCard(R.string.detail_where, modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) {}
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
+            state.coordinatesLabel?.let { coordinates ->
+                Text(
+                    text = coordinates,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            state.accuracyMeters?.let { accuracy ->
+                Text(
+                    text = stringResource(R.string.detail_accuracy, accuracy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -103,11 +145,15 @@ private fun DeletedDetail(
     onUndoClick: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
-        Text(text = stringResource(R.string.detail_deleted), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(R.string.detail_deleted),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
         if (state.undoVisible) {
             AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.detail_undo)) })
         }
@@ -116,8 +162,8 @@ private fun DeletedDetail(
 
 @Composable
 private fun CenteredMessage(@StringRes textRes: Int, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = stringResource(textRes), style = MaterialTheme.typography.bodyLarge)
+    Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text(text = stringResource(textRes), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
     }
 }
 

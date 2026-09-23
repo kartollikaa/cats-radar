@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -68,10 +69,12 @@ fun CoatGrid(
 fun CoatPicker(
     selected: CoatOption?,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
+        contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(items = CoatOption.entries, key = { it.name }) { coat ->

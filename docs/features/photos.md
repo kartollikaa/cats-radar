@@ -131,9 +131,10 @@ screen, both loaded from app-private storage with Coil. The mapper resolves the 
 path into an absolute one — the row carries a path Coil can open, not the path the database happens
 to hold.
 
-A row with no path renders a placeholder of the same size, covering both a tally, which never had a
-photo, and a photo whose thumbnail failed to write while the copy succeeded. The list keeps its
-rhythm either way rather than shifting when a thumbnail is missing.
+A row with no thumbnail leads with the cat's coat, or a paw when no coat was noted, in a tile the
+same size — covering both a tally, which never had a photo, and a photo whose thumbnail failed to
+write while the copy succeeded. The list keeps its rhythm either way rather than shifting when a
+thumbnail is missing.
 
 ## Not built yet
 

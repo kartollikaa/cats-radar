@@ -62,6 +62,13 @@ before Compose draws its first frame; `WindowBackgroundTest` fails if the two dr
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
 
+**Rhythm.** Screens that hold rows — Statistics, Settings, an encounter's detail — group them in
+titled cards (`SectionCard`) on the theme's low surface, with the title in the primary colour; a
+headline number sits in a primary-container card of its own. The Encounters list is the one place
+rows are cards individually, since each outing is one run of them. A value that does not fit beside
+its label moves under it, end-aligned, rather than squeezing the label; a card's title is a heading
+and each row reads as one item to TalkBack. A setting's whole row toggles it, not only its switch.
+
 **Navigation.** The bottom bar is `ShortNavigationBar` with Material Symbols Rounded icons
 (Apache 2.0). The selected tab is marked by the bar's indicator pill; only the settings gear also
 changes to its filled form, because the other three glyphs have no separate filled version. The

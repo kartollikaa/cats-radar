@@ -30,7 +30,7 @@ class EncounterDetailStateMapper(
             } else {
                 null
             },
-            accuracyMeters = encounter.accuracyMeters?.roundToInt(),
+            accuracyMeters = encounter.accuracyMeters?.takeIf { lat != null && lon != null }?.roundToInt(),
             photoPath = encounter.photoPath?.let(photoStorage::resolve),
             coat = encounter.coat?.toOption(),
         )

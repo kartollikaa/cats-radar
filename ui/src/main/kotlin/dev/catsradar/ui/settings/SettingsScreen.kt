@@ -3,13 +3,16 @@ package dev.catsradar.ui.settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -21,10 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.settings.BackupOutcome
 import dev.catsradar.presentation.settings.SettingsState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -40,53 +45,73 @@ fun SettingsScreen(
     onBackupOutcomeDismiss: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(contentPadding).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        SettingRow(
-            title = R.string.settings_save_originals,
-            explanation = R.string.settings_save_originals_explained,
-            checked = state.saveOriginalsToGallery,
-            onCheckedChange = onSaveOriginalsChange,
-        )
-        SettingRow(
-            title = R.string.settings_walking,
-            explanation = R.string.settings_walking_explained,
-            checked = state.walkingMode,
-            onCheckedChange = onWalkingModeChange,
-        )
-        HorizontalDivider()
-        Text(text = stringResource(R.string.settings_backup), style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = stringResource(R.string.settings_backup_explained),
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onExportClick, enabled = !state.backupRunning) {
-                Text(text = stringResource(R.string.settings_export))
-            }
-            OutlinedButton(onClick = onImportClick, enabled = !state.backupRunning) {
-                Text(text = stringResource(R.string.settings_import))
-            }
+        SectionCard(R.string.settings_section_logging) {
+            SettingRow(
+                title = R.string.settings_save_originals,
+                explanation = R.string.settings_save_originals_explained,
+                checked = state.saveOriginalsToGallery,
+                onCheckedChange = onSaveOriginalsChange,
+            )
+            SettingRow(
+                title = R.string.settings_walking,
+                explanation = R.string.settings_walking_explained,
+                checked = state.walkingMode,
+                onCheckedChange = onWalkingModeChange,
+            )
         }
-        if (state.backupRunning) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        }
-        state.backupOutcome?.let { outcome ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+        SectionCard(R.string.settings_backup) {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = stringResource(outcome.messageRes()),
+                    text = stringResource(R.string.settings_backup_explained),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(end = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TextButton(onClick = onBackupOutcomeDismiss) {
-                    Text(text = stringResource(R.string.settings_backup_ok))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(onClick = onExportClick, enabled = !state.backupRunning) {
+                        Text(text = stringResource(R.string.settings_export))
+                    }
+                    OutlinedButton(onClick = onImportClick, enabled = !state.backupRunning) {
+                        Text(text = stringResource(R.string.settings_import))
+                    }
+                }
+                if (state.backupRunning) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                state.backupOutcome?.let { outcome ->
+                    BackupOutcomeRow(outcome = outcome, onDismiss = onBackupOutcomeDismiss)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BackupOutcomeRow(outcome: BackupOutcome, modifier: Modifier = Modifier, onDismiss: () -> Unit = {}) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(outcome.messageRes()),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f).padding(end = 16.dp),
+        )
+        TextButton(onClick = onDismiss) {
+            Text(text = stringResource(R.string.settings_backup_ok))
         }
     }
 }
@@ -100,15 +125,22 @@ private fun SettingRow(
     onCheckedChange: (Boolean) -> Unit = {},
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.padding(end = 16.dp)) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = stringResource(title), style = MaterialTheme.typography.bodyLarge)
-            Text(text = stringResource(explanation), style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = stringResource(explanation),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 

@@ -56,10 +56,17 @@ row counts stop being trivial to read and group on every emission.
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
   (`BottomNavBackStack`), `CatsRadarNavHost.kt`
 
+## What a row shows
+
+Each outing reads as one card: its rows are cards of their own with a hairline gap, round at the
+outing's outer corners and tight where they meet — the mapper tells each row whether it is the
+first, a middle, the last or the only one of its outing, so the screen only picks a shape. The
+mapper also decides what a row leads with: the photo when there is one, else the cat's coat as its
+face, else a paw, so every row shows the most telling thing known about that cat; the face is
+announced by its coat's name, the paw is decorative. With nothing logged, the tab says so and points
+at the Counter.
+
 ## Not handled yet
 
-Tapping a row does nothing yet — `EncounterDetail` and delete-from-detail are slice 9. There are no
-photo thumbnails (the photo pipeline is slices 10–11), no Statistics tab (slice 13), and no paging:
-the list still reads the full non-deleted table on every change, acceptable at today's usage but
-not indefinitely, per the note above. Headers are inline, not sticky, since either satisfies this
-slice's requirement.
+There is no paging: the list still reads the full non-deleted table on every change, acceptable at
+today's usage but not indefinitely, per the note above. Headers are inline, not sticky.

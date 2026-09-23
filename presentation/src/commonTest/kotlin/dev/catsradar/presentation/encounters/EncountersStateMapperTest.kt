@@ -1,7 +1,9 @@
 package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,25 +52,29 @@ class EncountersStateMapperTest {
     }
 
     @Test
-    fun `a photo row carries its thumbnail resolved to a full path, a tally row carries none`() {
+    fun `a photo row leads with its thumbnail resolved to a full path, a tally with a paw`() {
         val tally = encounterFixture("tally", BASE)
         val photo = encounterFixture("photo", BASE + 5.minutes).copy(thumbPath = "photo_thumb.jpg")
 
-        val rows = mapper.map(listOf(tally, photo), today)
+        val leads = mapper.map(listOf(tally, photo), today)
             .rows
             .filterIsInstance<EncounterListItem.Row>()
-            .associate { it.id to it.thumbnailPath }
+            .associate { it.id to it.lead }
 
-        assertEquals(mapOf("tally" to null, "photo" to "/data/photos/photo_thumb.jpg"), rows)
+        assertEquals(mapOf("tally" to RowLead.Paw, "photo" to RowLead.Photo("/data/photos/photo_thumb.jpg")), leads)
     }
 
     @Test
-    fun `a photo whose thumbnail failed to write carries none, so the row falls back to a placeholder`() {
-        val photo = encounterFixture("photo", BASE).copy(photoPath = "photo.jpg", thumbPath = null)
+    fun `a photo whose thumbnail failed to write falls back to its coat, or to a paw`() {
+        val coated = encounterFixture("coated", BASE).copy(photoPath = "a.jpg", thumbPath = null, coat = CatCoat.GREY)
+        val bare = encounterFixture("bare", BASE + 5.minutes).copy(photoPath = "b.jpg", thumbPath = null)
 
-        val row = mapper.map(listOf(photo), today).rows.filterIsInstance<EncounterListItem.Row>().single()
+        val leads = mapper.map(listOf(coated, bare), today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.lead }
 
-        assertEquals(null, row.thumbnailPath)
+        assertEquals(mapOf("bare" to RowLead.Paw, "coated" to RowLead.Coat(CoatOption.GREY)), leads)
     }
 
     @Test
@@ -139,6 +145,67 @@ class EncountersStateMapperTest {
         assertEquals(LocalDate(2026, 9, 22), dateAtUtc)
         assertEquals(LocalDate(2026, 9, 21), dateAnHourWest)
         assertNotEquals(dateAtUtc, dateAnHourWest)
+    }
+
+    // Newest first within the outing, so the most recent cat opens the group.
+    @Test
+    fun `an outing's rows form one group, first to last, and a lone cat is a group of its own`() {
+        val outing = listOf(
+            encounterFixture("a", BASE),
+            encounterFixture("b", BASE + 5.minutes),
+            encounterFixture("c", BASE + 10.minutes),
+        )
+        val lone = encounterFixture("lone", BASE + 5.hours)
+
+        val positions = mapper.map(outing + lone, today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.position }
+
+        assertEquals(
+            mapOf(
+                "lone" to GroupPosition.ONLY,
+                "c" to GroupPosition.FIRST,
+                "b" to GroupPosition.MIDDLE,
+                "a" to GroupPosition.LAST,
+            ),
+            positions,
+        )
+    }
+
+    @Test
+    fun `a photo leads over a coat, and a coat over nothing`() {
+        val both = encounterFixture("both", BASE).copy(thumbPath = "both_thumb.jpg", coat = CatCoat.GINGER)
+        val coatOnly = encounterFixture("coatOnly", BASE + 5.minutes).copy(coat = CatCoat.GINGER)
+        val neither = encounterFixture("neither", BASE + 10.minutes)
+
+        val leads = mapper.map(listOf(both, coatOnly, neither), today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.lead }
+
+        assertEquals(
+            mapOf(
+                "neither" to RowLead.Paw,
+                "coatOnly" to RowLead.Coat(CoatOption.GINGER),
+                "both" to RowLead.Photo("/data/photos/both_thumb.jpg"),
+            ),
+            leads,
+        )
+    }
+
+    @Test
+    fun `a deleted cat leaves its outing's rows placed as if it had never been`() {
+        val oldest = encounterFixture("oldest", BASE)
+        val middle = encounterFixture("middle", BASE + 5.minutes)
+        val deleted = encounterFixture("deleted", BASE + 10.minutes, deletedAt = BASE + 1.hours)
+
+        val positions = mapper.map(listOf(oldest, middle, deleted), today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.position }
+
+        assertEquals(mapOf("middle" to GroupPosition.FIRST, "oldest" to GroupPosition.LAST), positions)
     }
 
     private companion object {

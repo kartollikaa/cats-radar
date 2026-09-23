@@ -5,6 +5,7 @@ import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
+import dev.catsradar.presentation.coat.toOption
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -30,15 +31,37 @@ class EncountersStateMapper(
             key = "header-${earliest.id}",
             label = "${dateTimeFormatter.dayHeader(earliest.localDate(), today)}, ${earliest.timeLabel()}",
         )
-        return listOf(header) + outing.asReversed().map(::toRowItem)
+        val rows = outing.asReversed()
+        return listOf(header) + rows.mapIndexed { index, encounter ->
+            toRowItem(encounter, positionOf(index, rows.lastIndex))
+        }
     }
 
-    private fun toRowItem(encounter: Encounter): EncounterListItem.Row = EncounterListItem.Row(
-        id = encounter.id,
-        timeLabel = encounter.timeLabel(),
-        location = encounter.locationSource.toLocationLabel(),
-        thumbnailPath = encounter.thumbPath?.let(photoStorage::resolve),
-    )
+    private fun positionOf(index: Int, lastIndex: Int): GroupPosition = when {
+        lastIndex == 0 -> GroupPosition.ONLY
+        index == 0 -> GroupPosition.FIRST
+        index == lastIndex -> GroupPosition.LAST
+        else -> GroupPosition.MIDDLE
+    }
+
+    private fun toRowItem(encounter: Encounter, position: GroupPosition): EncounterListItem.Row =
+        EncounterListItem.Row(
+            id = encounter.id,
+            timeLabel = encounter.timeLabel(),
+            location = encounter.locationSource.toLocationLabel(),
+            lead = encounter.lead(),
+            position = position,
+        )
+
+    private fun Encounter.lead(): RowLead {
+        val thumbnail = thumbPath?.let(photoStorage::resolve)
+        val coatOption = coat?.toOption()
+        return when {
+            thumbnail != null -> RowLead.Photo(thumbnail)
+            coatOption != null -> RowLead.Coat(coatOption)
+            else -> RowLead.Paw
+        }
+    }
 
     private fun Encounter.timeLabel(): String =
         dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
