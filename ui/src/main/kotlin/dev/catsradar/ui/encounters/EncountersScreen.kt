@@ -26,6 +26,7 @@ import dev.catsradar.presentation.encounters.EncounterCell
 import dev.catsradar.presentation.encounters.EncountersLayout
 import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.EncountersState
+import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.encounters.PhotoCell
@@ -119,7 +120,33 @@ private fun EncountersScreenPopulatedPreview() {
     }
 }
 
+@ThemePreviews
+@Composable
+private fun EncountersScreenListPreview() {
+    CatsRadarTheme {
+        Surface { EncountersScreen(state = sampleEncountersStateList) }
+    }
+}
+
 private val sampleEncountersStateEmpty = EncountersState()
+
+private val sampleEncountersStateList = EncountersState(
+    rows = persistentListOf(
+        OutingHeader(key = "header-1", label = "Today, 14:10"),
+        EncountersRow.Single(
+            EncounterCell("3", "14:28", LocationLabel.CURRENT, CellLead.Coat(CoatOption.GINGER)),
+            GroupPosition.FIRST,
+        ),
+        EncountersRow.Single(EncounterCell("2", "14:20", LocationLabel.FROM_OUTING), GroupPosition.MIDDLE),
+        EncountersRow.Single(
+            EncounterCell("1", "14:10", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.BLACK)),
+            GroupPosition.LAST,
+        ),
+        OutingHeader(key = "header-4", label = "Today, 09:05"),
+        EncountersRow.Single(EncounterCell("4", "09:05", LocationLabel.NONE), GroupPosition.ONLY),
+    ),
+    layout = EncountersLayout.LIST,
+)
 
 // Two outings on the same day, so the preview also shows how their headers tell them apart.
 private val sampleEncountersStatePopulated = EncountersState(

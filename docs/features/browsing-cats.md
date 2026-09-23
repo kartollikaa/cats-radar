@@ -5,13 +5,13 @@ reuses `SessionSplitter.groupByOuting()` — the same gap rule `outings.md` desc
 second entry point that returns each outing's own encounters instead of just the aggregate
 `Session` `split()` returns; `split()` is now defined in terms of it, so the boundary comparison
 still has exactly one implementation. `EncountersStateMapper` turns that grouping into a flat,
-already-formatted `ImmutableList<EncountersRow>` — an `OutingHeader` per outing followed by the
-grid rows its cats pack into (see *What the grid shows*), every label already localized by the
-`DateTimeFormatter` interface (Android implementation in `presentation/androidMain`) — so
-`EncountersScreen`'s `LazyColumn` only renders, never formats, groups or packs. Counter and
-Encounters sit behind a bottom `NavigationBar`; Counter is the back-stack root (spec §2): selecting
-a tab rewrites the stack to `[Counter]` or `[Counter, tab]`, back from a tab returns to Counter, and
-back from Counter exits.
+already-formatted `ImmutableList<EncountersRow>` — an `OutingHeader` per outing followed by its
+cats' rows, packed into a grid or one per row (see *What the grid shows* and *Grid or list*), every
+label already localized by the `DateTimeFormatter` interface (Android implementation in
+`presentation/androidMain`) — so `EncountersScreen`'s `LazyColumn` only renders, never formats,
+groups or packs. Counter and Encounters sit behind a bottom `NavigationBar`; Counter is the
+back-stack root (spec §2): selecting a tab rewrites the stack to `[Counter]` or `[Counter, tab]`,
+back from a tab returns to Counter, and back from Counter exits.
 
 ## At the edges
 

@@ -142,4 +142,17 @@ class SettingsStoreTest {
         assertEquals(false, repository.encountersGrid().first())
         assertEquals(false, store.state.value.encountersGrid)
     }
+
+    @Test
+    fun `turning the grid switch back on stores it`() = runTest(mainDispatcher) {
+        val repository = FakeSettingsRepository(encountersGrid = false)
+        val store = SettingsStore(repository)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.EncountersGridToggled(true))
+        runCurrent()
+
+        assertEquals(true, repository.encountersGrid().first())
+        assertEquals(true, store.state.value.encountersGrid)
+    }
 }
