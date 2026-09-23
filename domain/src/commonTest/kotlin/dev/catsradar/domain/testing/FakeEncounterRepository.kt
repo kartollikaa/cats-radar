@@ -13,6 +13,8 @@ class FakeEncounterRepository : EncounterRepository {
     private val encounters = MutableStateFlow<List<Encounter>>(emptyList())
     val inserted = mutableListOf<Encounter>()
     val softDeleteCalls = mutableListOf<Pair<String, Instant>>()
+    val softDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
+    val undoDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
     val attachLocationCalls = mutableListOf<String>()
     val purgeCalls = mutableListOf<Instant>()
 
@@ -64,6 +66,20 @@ class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun undoDelete(id: String) {
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = null) else it } }
+    }
+
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant) {
+        softDeleteAllCalls += ids to deletedAt
+        encounters.update { list ->
+            list.map { if (it.id in ids && it.deletedAt == null) it.copy(deletedAt = deletedAt) else it }
+        }
+    }
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) {
+        undoDeleteAllCalls += ids to deletedAt
+        encounters.update { list ->
+            list.map { if (it.id in ids && it.deletedAt == deletedAt) it.copy(deletedAt = null) else it }
+        }
     }
 
     // Mirrors the DAO: a soft-deleted row does not block a re-import of the same bytes.

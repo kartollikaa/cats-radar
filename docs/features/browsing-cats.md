@@ -47,18 +47,22 @@ row counts stop being trivial to read and group on every emission.
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/session/SessionSplitter.kt` (`groupByOuting`)
-- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveEncounters.kt`
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveEncounters.kt`,
+  `DeleteEncounters.kt`, `UndoDeleteEncounters.kt`; `domain/…/model/DeletedBatch.kt`
+- `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterDao.kt` (`softDeleteAll`,
+  `undoDeleteAll`)
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/DateTimeFormatter.kt`,
   `presentation/src/androidMain/kotlin/dev/catsradar/presentation/AndroidDateTimeFormatter.android.kt`
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/` — `EncountersState`
   (`EncountersRow`, and the `EncounterListItem` rows the Places area list uses),
   `EncounterGridPacker`, `EncountersIntent`, `EncountersEffect`, `EncountersStore`,
-  `EncountersStateMapper`
+  `EncountersStateMapper`, `EncountersSelection.kt` (`withSelection`)
 - `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`,
-  `EncounterSingleRow.kt`
+  `EncounterSingleRow.kt`, `CellSelection.kt`, `SelectionBar.kt`, `UndoBar.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/` — `BottomNavTab`, `CatsRadarBottomBar`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
-  (`BottomNavBackStack`), `CatsRadarNavHost.kt`
+  (`BottomNavBackStack`), `CatsRadarNavHost.kt`, `Destinations.kt` (`EncountersDestination`, which
+  owns the `BackHandler` that ends a selection)
 
 ## What the grid shows
 
@@ -93,7 +97,56 @@ they meet. The mapper marks each row as the first, a middle, the last or the onl
 header's inset. `EncountersStore` combines the setting with the encounters, so flipping the switch
 re-lays an open tab without waiting for a new cat. The Places area list is the same either way.
 
+## Selecting and deleting several
+
+A long press on a cat — a pair tile, a tile, a card or a list row — starts a selection with that cat
+in it. While selecting, a tap adds or removes a cat instead of opening it, and so does a long press;
+a bar at the top shows how many are selected, a ✕ and a Delete. A selected cat carries a check
+badge and an outline; cards and list rows also turn to a tinted background. Deselecting the last
+cat, the ✕ and system back all end the selection; back ends it without leaving the tab. Whether a
+tap opens or selects is the Store's call, not the screen's: every tap reaches `EncountersStore` as
+`EncounterClicked`, and only outside a selection does it answer with `OpenEncounter` (*a tap outside
+selection opens the encounter and selects nothing*). A selection survives switching between the
+grid and the list (*a selection survives turning the grid off*).
+
+Delete is a soft delete with an undo, like the detail screen's, and asks nothing first. The selected
+cats leave the list at once, the selection ends, and a bar at the bottom says how many went, with
+Undo, for `Tuning.UNDO_VISIBLE`. The window lives in the Store's state rather than in a
+`SnackbarHost`, so its length is a unit test under virtual time. The detail screen keeps its own
+undo for the opposite reason: there the deletion is another screen's, and showing it here would
+need two Stores to talk. Here the list's own Store made it.
+
+### At the edges
+
+- **Undo brings back exactly that batch.** Every cat in it gets one `deletedAt`, and undo restores
+  only rows still carrying it, so a cat deleted some other way stays deleted (`data-model.md`).
+- **A second delete inside the window replaces the undo.** The bar shows the new count, undo
+  restores only the new batch, the first one stands, and the new batch gets a full window of its own
+  (*a second delete inside the window replaces the undo with its own batch*).
+- **A selected cat deleted elsewhere** — from its detail screen, or by the Counter's undo — drops
+  out of the selection; when none is left, the selection ends. The mapper does this: an id naming no
+  cat on screen is never reported as selected.
+- **A failed write** leaves the selection as it was and shows no undo. A failed undo reopens the
+  window rather than stranding the cats (*a failed undo keeps the undo bar and a fresh window to try
+  again*), unless another batch was deleted while it ran: that batch owns the bar then, and the
+  failed one stays deleted (*a failed undo leaves a batch deleted meanwhile as the one to undo*).
+- **Delete tapped twice** while the write is in flight writes once.
+- **A tap while selecting costs no re-mapping.** `withSelection` re-marks the cats already on screen;
+  only a new emission from the database groups, packs and formats the list again.
+- **Rows coming back above the screen.** A keyed `LazyColumn` keeps its first visible row in place
+  when rows are inserted above it, so undoing the delete of the top outing would bring it back out
+  of sight. A list resting at the very top, and not being scrolled, asks to stay at the top on every
+  change, so the restored outing is what the user sees; a drag that has just started is left alone.
+- **Screen readers** hear the removed count when the bar appears and the selected count as it
+  changes; a row's actions are read as Select or Deselect while selecting.
+- **The bar covers the bottom of the list** for its window, as a Material snackbar does; the list
+  gains no extra padding under it.
+- **Leaving the tab during the window** takes the undo with it and the deletion stands, the same
+  trade the detail screen makes. A selection does not survive a tab switch either: both live in the
+  Store, which is scoped to the tab's entry.
+
 ## Not handled yet
 
 There is no paging: the list still reads the full non-deleted table on every change, acceptable at
-today's usage but not indefinitely, per the note above. Headers are inline, not sticky.
+today's usage but not indefinitely, per the note above. Headers are inline, not sticky. There is no
+"select all" and no way to select an outing from its header.

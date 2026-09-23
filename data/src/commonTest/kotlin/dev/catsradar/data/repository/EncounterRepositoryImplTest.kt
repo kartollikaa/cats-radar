@@ -78,6 +78,16 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
+    fun undoDeleteAllClearsOnlyRowsDeletedAtTheBatchInstant() = runTest {
+        val deletedAt = Instant.parse("2026-02-01T00:00:00Z")
+
+        repository.undoDeleteAll(listOf("id-1", "id-2"), deletedAt)
+
+        assertEquals(listOf("id-1" to deletedAt, "id-2" to deletedAt), dao.clearDeletedAtIfDeletedAtCalls)
+        assertEquals(null, dao.clearDeletedAtCall)
+    }
+
+    @Test
     fun findBySourceDigestDelegatesAndMaps() = runTest {
         dao.findBySourceDigestResult = distinctEncounter().toEntity()
 
