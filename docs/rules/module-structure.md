@@ -24,9 +24,11 @@ Rules, enforced by a Konsist test in `:app` (`app/src/test/kotlin/dev/catsradar/
 - `:domain` files do not import `android.*` or `androidx.*` (any depth).
 - `:presentation` files do not import `androidx.compose.*` or `dev.catsradar.data`.
 - `:ui` files do not import `dev.catsradar.data`.
+- `:ui` files do not import Material's dynamic colour schemes: the wallpaper's colours are `:app`'s
+  choice, and `CatsRadarTheme` without a scheme stays deterministic for previews.
 - `:data` files do not import `dev.catsradar.presentation` or `dev.catsradar.ui`.
 - Each module's physical files declare that module's package (`dev.catsradar.<module>` or a
-  subpackage) — otherwise the four rules above, which key on the declared package rather than the
+  subpackage) — otherwise the rules above, which key on the declared package rather than the
   physical module, would silently stop covering a mis-packaged file.
 
 `:domain` depending on nothing but `kotlinx`, and `:ui` never depending on `:domain`, are
