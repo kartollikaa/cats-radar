@@ -18,13 +18,6 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
-    fun observeActiveCountDelegatesToTheDao() = runTest {
-        dao.observeActiveCountResult = 3
-
-        assertEquals(3, repository.observeActiveCount().first())
-    }
-
-    @Test
     fun observeByIdDelegatesAndMaps() = runTest {
         dao.observeByIdResult = distinctEncounter().toEntity()
 

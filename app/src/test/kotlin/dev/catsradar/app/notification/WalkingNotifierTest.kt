@@ -3,17 +3,25 @@ package dev.catsradar.app.notification
 import android.Manifest
 import android.app.Application
 import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.app.MainActivity
+import dev.catsradar.app.photo.TakePhotoShortcut
+import dev.catsradar.ui.R
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
@@ -38,11 +46,59 @@ class WalkingNotifierTest {
     }
 
     @Test
-    fun aWalkPostsAnOngoingNotificationWithBothActions() {
+    fun aWalkPostsAnOngoingNotificationWithTallyPhotoAndDone() {
         val posted = showAndRead(count = 3)
 
         assertTrue(posted.flags and Notification.FLAG_ONGOING_EVENT != 0)
-        assertEquals(2, posted.actions.size)
+        assertEquals(
+            listOf(
+                R.string.notification_walking_tally,
+                R.string.notification_walking_photo,
+                R.string.notification_walking_stop,
+            ).map(context::getString),
+            posted.actions.map { it.title.toString() },
+        )
+    }
+
+    @Test
+    fun photoOpensTheAppStraightIntoTheCamera() {
+        val posted = showAndRead(count = 3)
+
+        val photo = shadowOf(posted.actions[1].actionIntent)
+        assertTrue(photo.isActivityIntent)
+        assertTrue(TakePhotoShortcut.isRequest(photo.savedIntent))
+    }
+
+    @Test
+    fun tappingTheNotificationOpensTheAppAsItsIconWould() {
+        val posted = showAndRead(count = 3)
+
+        val open = shadowOf(assertNotNull(posted.contentIntent))
+        assertTrue(open.isActivityIntent)
+        assertEquals(Intent.ACTION_MAIN, open.savedIntent.action)
+        assertEquals(setOf(Intent.CATEGORY_LAUNCHER), open.savedIntent.categories)
+        assertEquals(ComponentName(context, MainActivity::class.java), open.savedIntent.component)
+    }
+
+    @Test
+    fun theChannelIsDefaultSoTheLockScreenShowsItButMakesNoSound() {
+        val posted = showAndRead(count = 3)
+
+        val channel = assertNotNull(manager.getNotificationChannel(posted.channelId))
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.importance)
+        assertNull(channel.sound)
+        assertFalse(channel.shouldVibrate())
+    }
+
+    @Test
+    fun theRetiredSilentChannelIsDeleted() {
+        manager.createNotificationChannel(
+            NotificationChannel("walking", "Walking mode", NotificationManager.IMPORTANCE_LOW),
+        )
+
+        notifier.ensureChannel()
+
+        assertNull(manager.getNotificationChannel("walking"))
     }
 
     // Both values travel in the notification's extras, which is where androidx puts them below the
