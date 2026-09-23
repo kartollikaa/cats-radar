@@ -20,6 +20,9 @@ class FakeEncounterRepository : EncounterRepository {
     val purgeCalls = mutableListOf<Instant>()
     var attachPhotoShouldThrow: Throwable? = null
 
+    /** Runs after a successful write, for what else happens to the cat in the meantime. */
+    var afterAttachPhoto: suspend () -> Unit = {}
+
     // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
     // hide every bug about what a read is allowed to see.
     override fun observeAll(): Flow<List<Encounter>> =
@@ -76,6 +79,7 @@ class FakeEncounterRepository : EncounterRepository {
                 updatedAt = stamp.updatedAt,
             ),
         )
+        afterAttachPhoto()
         return true
     }
 

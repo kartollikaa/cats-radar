@@ -23,7 +23,7 @@ sealed interface AttachResult {
     /** The image could not be decoded; the cat is unchanged. */
     data object Unreadable : AttachResult
 
-    /** The cat is gone or already has a photo; it is unchanged and no file of the attempt is kept. */
+    /** The cat is gone or already has a photo; it is unchanged and the attempt's own copies are removed. */
     data object NotAttachable : AttachResult
 }
 
@@ -51,22 +51,25 @@ class AttachPhoto(
         // Not the cat's id: an attempt that loses the row to another must remove only its own files.
         val baseName = idGenerator.newId()
         val stored = imageResizer.store(sourceUri, baseName) ?: return AttachResult.Unreadable
-        val galleryUri = if (source == PhotoSource.CAMERA && settingsRepository.saveOriginalsToGallery().first()) {
-            gallerySaver.save(sourceUri, "$baseName.jpg")
-        } else {
-            null
-        }
-        val stamp = PhotoStamp(
-            photoPath = stored.photoPath,
-            thumbPath = stored.thumbPath,
-            galleryUri = galleryUri,
-            sourceDigest = digest.sha256(sourceUri),
-            updatedAt = clock.now(),
-        )
 
         var attached = false
         try {
-            attached = encounterRepository.attachPhoto(encounterId, stamp)
+            val galleryUri = if (
+                source == PhotoSource.CAMERA && settingsRepository.saveOriginalsToGallery().first()
+            ) {
+                gallerySaver.save(sourceUri, "$baseName.jpg")
+            } else {
+                null
+            }
+            val stamp = PhotoStamp(
+                photoPath = stored.photoPath,
+                thumbPath = stored.thumbPath,
+                galleryUri = galleryUri,
+                sourceDigest = digest.sha256(sourceUri),
+                updatedAt = clock.now(),
+            )
+            // Not cancellable: once the write lands, these files are the cat's.
+            withContext(NonCancellable) { attached = encounterRepository.attachPhoto(encounterId, stamp) }
         } finally {
             if (!attached) withContext(NonCancellable) { discard(stored) }
         }

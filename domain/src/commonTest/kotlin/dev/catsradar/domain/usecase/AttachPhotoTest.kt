@@ -12,7 +12,10 @@ import dev.catsradar.domain.testing.FakeImageResizer
 import dev.catsradar.domain.testing.FakeSettingsRepository
 import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -172,6 +175,41 @@ class AttachPhotoTest {
         assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
         assertEquals(AttachResult.Attached, attachPhoto("cat-2", SOURCE, PhotoSource.GALLERY))
         assertTrue(storage.deleted.isEmpty())
+        assertEquals(listOf("id-1", "id-2"), resizer.baseNames)
+        assertEquals(FakeDigest.SHA, stored().sourceDigest)
+        assertEquals(FakeDigest.SHA, stored("cat-2").sourceDigest)
+    }
+
+    @Test
+    fun `a cancellation after the write has landed keeps the files the cat now points at`() = runTest {
+        encounters.insert(tally)
+        lateinit var job: Job
+        encounters.afterAttachPhoto = {
+            job.cancel()
+            yield()
+        }
+
+        job = launch { attachPhoto(ID, SOURCE, PhotoSource.GALLERY) }
+        job.join()
+
+        assertTrue(storage.deleted.isEmpty())
+        assertEquals(FakeImageResizer.PHOTO_PATH, stored().photoPath)
+    }
+
+    @Test
+    fun `a cancellation while the original goes to the gallery removes the copies`() = runTest {
+        encounters.insert(tally)
+        lateinit var job: Job
+        gallery.duringSave = {
+            job.cancel()
+            yield()
+        }
+
+        job = launch { attachPhoto(ID, SOURCE, PhotoSource.CAMERA) }
+        job.join()
+
+        assertEquals(listOf(FakeImageResizer.PHOTO_PATH, FakeImageResizer.THUMB_PATH), storage.deleted)
+        assertEquals(tally, stored())
     }
 
     private companion object {
