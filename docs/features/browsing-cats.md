@@ -58,12 +58,13 @@ row counts stop being trivial to read and group on every emission.
 
 ## What a row shows
 
-Each outing reads as one card: its rows are cards of their own, two points apart, round at the
+Each outing reads as one card: its rows are cards of their own with a hairline gap, round at the
 outing's outer corners and tight where they meet — the mapper tells each row whether it is the
-first, a middle, the last or the only one of its outing, so the screen only picks a shape. A row
-leads with the photo when there is one, else the cat's coat as its face, else a paw, so every row
-shows what is known about that cat; the face is announced by its coat's name, the paw is decorative.
-With nothing logged, the tab says so and points at the Counter.
+first, a middle, the last or the only one of its outing, so the screen only picks a shape. The
+mapper also decides what a row leads with: the photo when there is one, else the cat's coat as its
+face, else a paw, so every row shows the most telling thing known about that cat; the face is
+announced by its coat's name, the paw is decorative. With nothing logged, the tab says so and points
+at the Counter.
 
 ## Not handled yet
 

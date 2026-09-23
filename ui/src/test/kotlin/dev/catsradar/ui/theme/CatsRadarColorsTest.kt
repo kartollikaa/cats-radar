@@ -30,9 +30,12 @@ private val TextOnSurface: List<Triple<String, (ColorScheme) -> Color, (ColorSch
     Triple("onPrimaryFixed on primaryFixed", { it.onPrimaryFixed }, { it.primaryFixed }),
     Triple("onSecondaryFixed on secondaryFixed", { it.onSecondaryFixed }, { it.secondaryFixed }),
     Triple("onTertiaryFixed on tertiaryFixed", { it.onTertiaryFixed }, { it.tertiaryFixed }),
-    // Drawn as text by components: the selected navigation label, and the Counter's tap burst.
+    Triple("onSurface on surfaceContainerLow", { it.onSurface }, { it.surfaceContainerLow }),
+    Triple("onSurfaceVariant on surfaceContainerLow", { it.onSurfaceVariant }, { it.surfaceContainerLow }),
+    // Accent colours drawn as text: the selected navigation label, card and outing titles, Delete.
     Triple("secondary on surfaceContainer", { it.secondary }, { it.surfaceContainer }),
-    Triple("primary on primaryContainer", { it.primary }, { it.primaryContainer }),
+    Triple("primary on surface", { it.primary }, { it.surface }),
+    Triple("error on surface", { it.error }, { it.surface }),
 )
 
 private val Schemes = listOf(

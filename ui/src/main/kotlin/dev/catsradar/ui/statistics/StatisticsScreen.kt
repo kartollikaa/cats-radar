@@ -39,6 +39,9 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
 
+// A coat nobody noted keeps a blank of the same size, so the names still line up.
+private val CoatFaceSize = 28.dp
+
 @Composable
 fun StatisticsScreen(
     state: StatisticsState,
@@ -102,9 +105,9 @@ private fun ByCoatSection(shares: ImmutableList<CoatShareState>, modifier: Modif
                 leading = {
                     val coat = share.coat
                     if (coat != null) {
-                        CatFace(coat = coat, modifier = Modifier.size(28.dp))
+                        CatFace(coat = coat, modifier = Modifier.size(CoatFaceSize))
                     } else {
-                        Box(modifier = Modifier.size(28.dp))
+                        Box(modifier = Modifier.size(CoatFaceSize))
                     }
                 },
             )
@@ -154,9 +157,10 @@ private fun PlacesCard(modifier: Modifier = Modifier, onClick: () -> Unit = {}) 
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(text = stringResource(R.string.statistics_places), style = MaterialTheme.typography.titleMedium)
-            Text(text = "›", style = MaterialTheme.typography.titleMedium)
+            Icon(painter = painterResource(R.drawable.ic_chevron_right), contentDescription = null)
         }
     }
 }

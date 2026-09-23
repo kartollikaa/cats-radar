@@ -1,6 +1,7 @@
 package dev.catsradar.ui.detail
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
@@ -86,37 +88,48 @@ private fun LoadedDetail(
             )
             Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        SectionCard(R.string.detail_where) {
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
-                state.coordinatesLabel?.let { coordinates ->
-                    Text(
-                        text = coordinates,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                state.accuracyMeters?.takeIf { state.coordinatesLabel != null }?.let { accuracy ->
-                    Text(
-                        text = stringResource(R.string.detail_accuracy, accuracy),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+        WhereCard(state)
         SectionCard(R.string.detail_coat) {
-            CoatPicker(selected = state.coat, onCoatClick = onCoatClick, modifier = Modifier.padding(vertical = 8.dp))
+            CoatPicker(
+                selected = state.coat,
+                modifier = Modifier.padding(vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                onCoatClick = onCoatClick,
+            )
         }
         OutlinedButton(
             onClick = onDeleteClick,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
         ) {
             Text(text = stringResource(R.string.detail_delete))
+        }
+    }
+}
+
+@Composable
+private fun WhereCard(state: EncounterDetailState.Loaded, modifier: Modifier = Modifier) {
+    SectionCard(R.string.detail_where, modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
+            state.coordinatesLabel?.let { coordinates ->
+                Text(
+                    text = coordinates,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            state.accuracyMeters?.takeIf { state.coordinatesLabel != null }?.let { accuracy ->
+                Text(
+                    text = stringResource(R.string.detail_accuracy, accuracy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -128,11 +141,15 @@ private fun DeletedDetail(
     onUndoClick: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
-        Text(text = stringResource(R.string.detail_deleted), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(R.string.detail_deleted),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
         if (state.undoVisible) {
             AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.detail_undo)) })
         }
@@ -141,8 +158,8 @@ private fun DeletedDetail(
 
 @Composable
 private fun CenteredMessage(@StringRes textRes: Int, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = stringResource(textRes), style = MaterialTheme.typography.bodyLarge)
+    Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text(text = stringResource(textRes), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
     }
 }
 

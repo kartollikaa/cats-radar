@@ -35,6 +35,7 @@ import dev.catsradar.presentation.encounters.EncounterListItem
 import dev.catsradar.presentation.encounters.EncountersState
 import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
+import dev.catsradar.presentation.encounters.RowLead
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CatFace
 import dev.catsradar.ui.coat.labelRes
@@ -43,6 +44,10 @@ import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
 
 private val LeadingSize = 48.dp
+
+// The header lines up with the text inside a row, so its inset is the row's two insets added.
+private val RowOuterInset = 16.dp
+private val RowInnerInset = 12.dp
 private val OutingOuterCorner = 20.dp
 private val OutingJoinCorner = 4.dp
 
@@ -77,7 +82,10 @@ private fun OutingHeaderRow(header: EncounterListItem.OutingHeader, modifier: Mo
         text = header.label,
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 20.dp, bottom = 6.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = RowOuterInset + RowInnerInset)
+            .padding(top = 20.dp, bottom = 6.dp),
     )
 }
 
@@ -86,15 +94,15 @@ private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifi
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = RowOuterInset)
             .clip(row.position.shape())
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = RowInnerInset, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        EncounterLeading(thumbnailPath = row.thumbnailPath, coat = row.coat)
+        EncounterLead(lead = row.lead)
         Column(modifier = Modifier.weight(1f)) {
             Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -106,43 +114,30 @@ private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifi
     }
 }
 
-// An outing reads as one card: round at its outer corners, tight where its rows meet.
 private fun GroupPosition.shape(): RoundedCornerShape {
     val top = if (this == GroupPosition.FIRST || this == GroupPosition.ONLY) OutingOuterCorner else OutingJoinCorner
     val bottom = if (this == GroupPosition.LAST || this == GroupPosition.ONLY) OutingOuterCorner else OutingJoinCorner
     return RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
 }
 
-// The photo when there is one, else the cat's coat, else a paw: every row shows what is known of it.
 @Composable
-private fun EncounterLeading(thumbnailPath: String?, coat: CoatOption?, modifier: Modifier = Modifier) {
+private fun EncounterLead(lead: RowLead, modifier: Modifier = Modifier) {
     val shape = MaterialTheme.shapes.small
-    when {
-        thumbnailPath != null -> AsyncImage(
-            model = thumbnailPath,
+    val tile = modifier.size(LeadingSize).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+    when (lead) {
+        is RowLead.Photo -> AsyncImage(
+            model = lead.thumbnailPath,
             contentDescription = stringResource(R.string.encounters_photo_description),
             modifier = modifier.size(LeadingSize).clip(shape),
             contentScale = ContentScale.Crop,
         )
-        coat != null -> {
-            val coatLabel = stringResource(coat.labelRes())
-            Box(
-                modifier = modifier
-                    .size(LeadingSize)
-                    .clip(shape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .semantics { contentDescription = coatLabel },
-                contentAlignment = Alignment.Center,
-            ) {
-                CatFace(coat = coat, modifier = Modifier.size(36.dp))
+        is RowLead.Coat -> {
+            val coatLabel = stringResource(lead.coat.labelRes())
+            Box(modifier = tile.semantics { contentDescription = coatLabel }, contentAlignment = Alignment.Center) {
+                CatFace(coat = lead.coat, modifier = Modifier.size(36.dp))
             }
         }
-        else -> Box(
-            modifier = modifier.size(
-                LeadingSize
-            ).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHighest),
-            contentAlignment = Alignment.Center,
-        ) {
+        RowLead.Paw -> Box(modifier = tile, contentAlignment = Alignment.Center) {
             Icon(
                 painter = painterResource(R.drawable.ic_nav_pets),
                 contentDescription = null,
@@ -205,14 +200,14 @@ private val sampleEncountersStatePopulated = EncountersState(
             id = "1",
             timeLabel = "14:32",
             location = LocationLabel.CURRENT,
-            coat = CoatOption.TRICOLOR_MOSTLY_WHITE,
+            lead = RowLead.Coat(CoatOption.TRICOLOR_MOSTLY_WHITE),
             position = GroupPosition.FIRST,
         ),
         EncounterListItem.Row(
             id = "2",
             timeLabel = "14:20",
             location = LocationLabel.FROM_OUTING,
-            coat = CoatOption.BLACK,
+            lead = RowLead.Coat(CoatOption.BLACK),
             position = GroupPosition.MIDDLE,
         ),
         EncounterListItem.Row(

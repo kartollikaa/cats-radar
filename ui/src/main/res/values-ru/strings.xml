@@ -36,7 +36,7 @@
     <string name="counter_location_dismiss">Не надо</string>
 
     <string name="encounters_empty">Пока ни одного котика</string>
-    <string name="encounters_empty_hint">Нажмите на число на Счётчике — и кот появится здесь</string>
+    <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_photo_description">Фото этого котика</string>
 
     <string name="location_from_photo">С фото</string>

@@ -49,10 +49,20 @@ class EncountersStateMapper(
             id = encounter.id,
             timeLabel = encounter.timeLabel(),
             location = encounter.locationSource.toLocationLabel(),
-            thumbnailPath = encounter.thumbPath?.let(photoStorage::resolve),
-            coat = encounter.coat?.toOption(),
+            lead = encounter.lead(),
             position = position,
         )
+
+    // A photo tells more than a coat, and a coat more than nothing.
+    private fun Encounter.lead(): RowLead {
+        val thumbnail = thumbPath?.let(photoStorage::resolve)
+        val coatOption = coat?.toOption()
+        return when {
+            thumbnail != null -> RowLead.Photo(thumbnail)
+            coatOption != null -> RowLead.Coat(coatOption)
+            else -> RowLead.Paw
+        }
+    }
 
     private fun Encounter.timeLabel(): String =
         dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))

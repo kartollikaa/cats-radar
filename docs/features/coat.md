@@ -76,5 +76,6 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 
 No coat filter anywhere, and no coat on the map — the map is its own epic after v1. The fur colours
 are fixed values rather than theme tokens, on purpose: a ginger cat is ginger in both themes. The
-face also leads each coated row in the Encounters list and each coat in the statistics' By coat
-block; a cat without a coat keeps a blank space there, so the names still line up.
+face also leads each coated row in the Encounters list that has no photo, and each coat in the
+statistics' By coat block; a cat without a coat keeps a blank space there, so the names still line
+up.
