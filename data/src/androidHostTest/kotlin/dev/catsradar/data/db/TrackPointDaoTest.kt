@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 @RunWith(AndroidJUnit4::class)
 class TrackPointDaoTest {
@@ -64,6 +65,16 @@ class TrackPointDaoTest {
         )
 
         assertEquals(listOf(41.1, 41.2, 41.5), dao.loadEvery().map { it.lat })
+    }
+
+    @Test
+    fun upsertingAWalkKeepsItsRoute() = runTest {
+        walks.startIfNoneOpen(walkEntity("walk"))
+        dao.insertAll(listOf(trackPointEntity("walk", second = 1), trackPointEntity("walk", second = 2)))
+
+        walks.upsert(walkEntity("walk").copy(endedAt = walkStart + 1.minutes, updatedAt = walkStart + 1.minutes))
+
+        assertEquals(2, dao.loadEvery().size)
     }
 
     @Test

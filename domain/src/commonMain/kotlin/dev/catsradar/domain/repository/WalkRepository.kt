@@ -30,7 +30,7 @@ interface WalkRepository {
     /** Every point of every walk, each walk's in route order. */
     suspend fun loadEveryPoint(): List<TrackPoint>
 
-    /** Writes [walk] as given, for an import that has already settled it against the walks here. */
+    /** Writes [walk] as given, with none of [startIfNoneOpen]'s one-walk-at-a-time check. */
     suspend fun upsert(walk: Walk)
 
     suspend fun appendPoints(points: List<TrackPoint>)
