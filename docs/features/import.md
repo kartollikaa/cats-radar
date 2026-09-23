@@ -30,12 +30,13 @@ describes a timestamp we do not have says nothing about the file's date.
 
 ## Where it happened
 
-- Coordinates in the photo's own EXIF → they become the encounter's, geohashed, with
-  `locationFixedAt` set to when the photo was taken rather than when it was imported. The place cell
-  they fall in is created at the same moment, so the photo can be named like any other located cat —
-  no worker runs for these, and nothing else would create it. **In practice this branch is never
-  taken from the photo picker** — see below — but it is what an unredacted source would get.
-- No coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
+- Coordinates in the photo's own EXIF that are a point on the globe → they become the encounter's,
+  geohashed, with `locationFixedAt` set to when the photo was taken rather than when it was
+  imported. The place cell they fall in is created at the same moment, so the photo can be named
+  like any other located cat — no worker runs for these, and nothing else would create it. **In
+  practice this branch is never taken from the photo picker** — see below — but it is what an
+  unredacted source would get.
+- No usable coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
   where the phone is standing, so it is worth asking for a fix.
 - Otherwise → no location, ever. **A historical photo never receives today's location**; that is the
   one rule the whole design of this feature exists to protect.

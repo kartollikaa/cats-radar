@@ -2,11 +2,11 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
+import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
-import dev.catsradar.domain.photo.hasLocationOnGlobe
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
@@ -60,12 +60,8 @@ class LogPhoto(
         }
 
         val now = clock.now()
-        val hasExifLocation = exif.hasLocationOnGlobe
-        val geohash = if (hasExifLocation) {
-            Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
-        } else {
-            null
-        }
+        val exifPoint = pointOnGlobe(exif.lat, exif.lon)
+        val geohash = exifPoint?.let { Geohash.encode(it.lat, it.lon, Tuning.GEOHASH_PRECISION) }
         val encounter = Encounter(
             id = id,
             occurredAt = now,
@@ -77,11 +73,11 @@ class LogPhoto(
             thumbPath = stored.thumbPath,
             galleryUri = galleryUri,
             sourceDigest = digest.sha256(sourceUri),
-            lat = exif.lat.takeIf { hasExifLocation },
-            lon = exif.lon.takeIf { hasExifLocation },
+            lat = exifPoint?.lat,
+            lon = exifPoint?.lon,
             accuracyMeters = null,
-            locationSource = if (hasExifLocation) LocationSource.EXIF else LocationSource.NONE,
-            locationFixedAt = if (hasExifLocation) now else null,
+            locationSource = if (exifPoint != null) LocationSource.EXIF else LocationSource.NONE,
+            locationFixedAt = now.takeIf { exifPoint != null },
             geohash = geohash,
             placeCellId = geohash?.let { PlaceCells.remember(placeCellRepository, it) },
             deviceId = deviceIdProvider.deviceId,
@@ -90,6 +86,6 @@ class LogPhoto(
             deletedAt = null,
         )
         encounterRepository.insert(encounter)
-        return PhotoResult.Logged(encounter = encounter, needsLocation = !hasExifLocation)
+        return PhotoResult.Logged(encounter = encounter, needsLocation = exifPoint == null)
     }
 }

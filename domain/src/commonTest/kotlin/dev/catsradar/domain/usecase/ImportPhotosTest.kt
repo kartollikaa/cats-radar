@@ -113,6 +113,16 @@ class ImportPhotosTest {
     }
 
     @Test
+    fun `a recent photo whose coordinates are off the globe asks for a fix instead`() = runTest {
+        exifReader.data = ExifData(lat = 200.0, lon = 37.62, takenAt = NOW - 10.minutes)
+
+        val summary = importPhotos()(listOf("content://picked/1"))
+
+        assertEquals(listOf(ImportedPhoto(id = "id-1", needsLocation = true)), summary.added)
+        assertNull(repository.inserted.single().lat)
+    }
+
+    @Test
     fun `a photo from an hour ago asks for a fix instead of carrying none`() = runTest {
         exifReader.data = ExifData(takenAt = NOW - 10.minutes)
 

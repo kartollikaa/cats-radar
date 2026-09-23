@@ -1,6 +1,7 @@
 package dev.catsradar.domain.photo
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.platform.ExifData
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
@@ -49,7 +50,7 @@ object ImportRules {
         now: Instant,
         recentWindow: Duration = Tuning.RECENT_PHOTO_WINDOW,
     ): ImportLocation = when {
-        exif.hasLocationOnGlobe -> ImportLocation.EXIF
+        pointOnGlobe(exif.lat, exif.lon) != null -> ImportLocation.EXIF
         (now - occurredAt).absoluteValue <= recentWindow -> ImportLocation.NEEDS_FIX
         else -> ImportLocation.NONE
     }
