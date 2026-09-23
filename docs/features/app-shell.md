@@ -76,17 +76,17 @@ label is always shown and names the tab, so the icons carry no content descripti
 
 **Motion.** Screens change the way Material's transition patterns describe, and every change is
 short: `NavTransitionTimingTest` drives the host's own `NavDisplay` on the test clock and fails if a
-tab switch, a step forward or a step back outlasts the motion's duration. Moving between tabs *fades
-through*: the old tab fades out before the new one fades in and settles from slightly smaller, so
-two layouts never show on top of each other. Opening a detail — an encounter, a level of the places
-drill-down — moves along the *horizontal axis*: the new screen slides in from the right as the old
-one slides away to the left, and going back reverses it. Only a one-level step moves along the axis.
-Leaving a detail for another tab, or tapping a tab from two levels down its stack, fades through
-like any tab switch, although the stack underneath only pushed or popped. The motion is decided from
-the two screens alone: each tab's entry carries a tab-root marker in its Navigation 3 metadata, and
-a detail is recognised by what sits directly under it (`NavMotionTest`). The test builds the nav
-host's own entry for every `BottomNavTab`, so a tab added without the marker fails rather than
-silently sliding like a detail.
+tab switch, a step forward or a step back runs past the motion's duration and the frame that ends
+it. Moving between tabs *fades through*: the old tab fades out before the new one fades in and
+settles from slightly smaller, so two layouts never show on top of each other. Opening a detail — an
+encounter, a level of the places drill-down — moves along the *horizontal axis*: the new screen
+slides in from the right as the old one slides away to the left, and going back reverses it. Only a
+one-level step moves along the axis. Leaving a detail for another tab, or tapping a tab from two
+levels down its stack, fades through like any tab switch, although the stack underneath only pushed
+or popped. The motion is decided from the two screens alone: each tab's entry carries a tab-root
+marker in its Navigation 3 metadata, and a detail is recognised by what sits directly under it
+(`NavMotionTest`). The test builds the nav host's own entry for every `BottomNavTab`, so a tab added
+without the marker fails rather than silently sliding like a detail.
 
 **The back gesture** follows the finger. The current screen shrinks toward the side the finger is
 moving to and fades as it goes; the screen it returns to starts fading in once the current one is

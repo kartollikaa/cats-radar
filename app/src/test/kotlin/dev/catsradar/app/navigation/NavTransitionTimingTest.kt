@@ -26,6 +26,7 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
@@ -87,6 +88,15 @@ class NavTransitionTimingTest {
         val back = transitionMs(leaving = DETAIL, entering = ENCOUNTERS) { backStack.popOrNull() }
 
         assertWithinTheBound(back)
+    }
+
+    @Test
+    fun `a tab switch fades the old tab where it stands instead of sliding it away`() {
+        navigate { backStack.selectTab(BottomNavTab.ENCOUNTERS) }
+        advanceFrames(PICK_UP_FRAMES + INTO_MOTION_FRAMES)
+
+        val left = compose.onNodeWithText(COUNTER).getUnclippedBoundsInRoot().left
+        assertEquals(0.dp, left, "the old tab's left edge while it fades")
     }
 
     @Test
