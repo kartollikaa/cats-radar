@@ -146,9 +146,10 @@ has been rendering, and an archive should not quietly replace it.
 - **An outcome stays until it is dismissed, and never comes back after.** WorkManager keeps a
   finished run, and the screen reads it back every time it opens. Coming back from another tab
   builds a new screen, and so does a restart, so an outcome the user has not seen yet is still
-  waiting for them. OK records that run as dealt with (`acknowledgedBackupRun`, kept in DataStore
-  next to the settings). After that, reading the same run back shows nothing. `ReportedRun` in
-  `:presentation` holds the rule.
+  waiting for them. OK records that run as dealt with (`SettingsRepository.acknowledgedRun`, kept
+  in DataStore next to the settings), and the write completes even if the screen is left straight
+  after. After that, reading the same run back shows nothing. `ReportedRun` in `:presentation` holds
+  the rule.
 
 ## Not built yet
 

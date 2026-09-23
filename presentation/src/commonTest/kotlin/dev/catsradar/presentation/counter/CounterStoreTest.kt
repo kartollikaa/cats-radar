@@ -641,6 +641,24 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `a dealt-with import read back again leaves a new import's progress row alone`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+            val finished = CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 1, failed = 0)
+            store.dispatch(finished)
+            runCurrent()
+            store.dispatch(CounterIntent.Import.SummaryDismissed)
+            store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a")))
+            runCurrent()
+
+            store.dispatch(finished)
+            runCurrent()
+
+            assertEquals(ImportProgressState(done = 0, total = 1), store.state.value.importProgress)
+            assertNull(store.state.value.importSummary)
+        }
+
+    @Test
     fun `a failed undo leaves the import on offer for a new screen`() = runTest(mainDispatcher) {
         val settings = milestonesAlreadyCelebrated()
         val encounters = FakeEncounterRepository()

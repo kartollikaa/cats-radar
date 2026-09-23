@@ -255,14 +255,16 @@ internal class FakeSettingsRepository(
 
     private val acknowledgedRuns = MutableStateFlow(emptyMap<ReportedJob, String>())
 
-    var acknowledgedRunGate: CompletableDeferred<Unit>? = null
+    var acknowledgedRunReadGate: CompletableDeferred<Unit>? = null
+    var acknowledgedRunWriteGate: CompletableDeferred<Unit>? = null
 
     override fun acknowledgedRun(job: ReportedJob): Flow<String?> = flow {
-        acknowledgedRunGate?.await()
+        acknowledgedRunReadGate?.await()
         emitAll(acknowledgedRuns.map { it[job] })
     }
 
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) {
+        acknowledgedRunWriteGate?.await()
         check(!writesFail) { "preferences unwritable" }
         acknowledgedRuns.update { it + (job to runId) }
     }

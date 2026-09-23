@@ -54,7 +54,7 @@ class SettingsStore(
             }
             SettingsIntent.Backup.OutcomeDismissed -> {
                 setState { copy(backupOutcome = null) }
-                backupRun.id?.let { backupRun.acknowledge(it) }
+                backupRun.acknowledge()
             }
         }
     }

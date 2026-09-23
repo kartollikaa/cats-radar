@@ -1,7 +1,9 @@
 package dev.catsradar.presentation.settings
 
 import app.cash.turbine.test
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.presentation.counter.FakeSettingsRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -166,6 +168,43 @@ class SettingsStoreTest {
         runCurrent()
 
         assertEquals(BackupOutcome.EXPORT_FAILED, store.state.value.backupOutcome)
+    }
+
+    @Test
+    fun `dismissing while a newer run is being checked records the run that was on screen`() =
+        runTest(mainDispatcher) {
+            val repository = FakeSettingsRepository()
+            val store = SettingsStore(repository)
+            store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+            runCurrent()
+            val gate = CompletableDeferred<Unit>()
+            repository.acknowledgedRunReadGate = gate
+
+            store.dispatch(SettingsIntent.Backup.Finished("run-2", BackupOutcome.IMPORTED))
+            runCurrent()
+            store.dispatch(SettingsIntent.Backup.OutcomeDismissed)
+            runCurrent()
+            gate.complete(Unit)
+            runCurrent()
+
+            assertEquals("run-1", repository.acknowledgedRun(ReportedJob.BACKUP).first())
+            assertEquals(BackupOutcome.IMPORTED, store.state.value.backupOutcome)
+        }
+
+    @Test
+    fun `a dismissed run read back again does not end the run in progress`() = runTest(mainDispatcher) {
+        val store = newStore()
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+        store.dispatch(SettingsIntent.Backup.OutcomeDismissed)
+        store.dispatch(SettingsIntent.Backup.Started)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+
+        assertEquals(true, store.state.value.backupRunning)
+        assertNull(store.state.value.backupOutcome)
     }
 
     @Test

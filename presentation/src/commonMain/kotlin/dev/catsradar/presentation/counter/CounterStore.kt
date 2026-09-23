@@ -171,7 +171,7 @@ class CounterStore(
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
             CounterIntent.Import.SummaryDismissed -> {
                 setState { copy(importSummary = null) }
-                importRun.id?.let { importRun.acknowledge(it) }
+                importRun.acknowledge()
             }
         }
     }
@@ -182,12 +182,12 @@ class CounterStore(
         val ids = importedIds
         if (ids.isEmpty()) return
         importedIds = emptyList()
-        val runId = importRun.id
+        val runId = importRun.reportedId
         setState { copy(importSummary = importSummary?.copy(undoable = false)) }
         // The batch write is all or none, so a failed one left every cat in place and can be retried.
         runStorageWrite(onFailure = { restoreUndoImport(ids) }) {
             undoImport(ids)
-            runId?.let { importRun.acknowledge(it) }
+            importRun.acknowledge(runId)
         }
     }
 
