@@ -34,9 +34,9 @@ object BackupMerge {
         }
 
         val localCells = local.placeCells.associateBy { it.cellId }
-        val placeCells = imported.placeCells.filter { candidate ->
+        val placeCells = imported.placeCells.bestPerCell().filter { candidate ->
             val existing = localCells[candidate.cellId]
-            existing == null || importedWins(local = existing, imported = candidate)
+            existing == null || replaces(offered = candidate, kept = existing)
         }
 
         return MergeResult(
@@ -68,19 +68,25 @@ object BackupMerge {
      * A name beats no name: a cell someone's device managed to resolve is worth more than one that
      * is still pending or gave up, however many attempts went into it.
      */
-    private fun importedWins(local: PlaceCell, imported: PlaceCell): Boolean {
-        val localResolved = local.status == PlaceStatus.RESOLVED
-        val importedResolved = imported.status == PlaceStatus.RESOLVED
+    private fun replaces(offered: PlaceCell, kept: PlaceCell): Boolean {
+        val keptResolved = kept.status == PlaceStatus.RESOLVED
+        val offeredResolved = offered.status == PlaceStatus.RESOLVED
         return when {
-            importedResolved && !localResolved -> true
-            !importedResolved -> false
-            else -> isFresherResolution(local = local, imported = imported)
+            offeredResolved && !keptResolved -> true
+            !offeredResolved -> false
+            else -> isFresherResolution(offered = offered, kept = kept)
         }
     }
 
-    private fun isFresherResolution(local: PlaceCell, imported: PlaceCell): Boolean {
-        val localAt = local.resolvedAt
-        val importedAt = imported.resolvedAt ?: return false
-        return localAt == null || importedAt > localAt
+    private fun isFresherResolution(offered: PlaceCell, kept: PlaceCell): Boolean {
+        val keptAt = kept.resolvedAt
+        val offeredAt = offered.resolvedAt ?: return false
+        return keptAt == null || offeredAt > keptAt
     }
+
+    // An archive is a file, not a table: nothing stops it listing one cell twice.
+    private fun List<PlaceCell>.bestPerCell(): List<PlaceCell> =
+        groupBy { it.cellId }.values.map { rows ->
+            rows.reduce { kept, offered -> if (replaces(offered = offered, kept = kept)) offered else kept }
+        }
 }

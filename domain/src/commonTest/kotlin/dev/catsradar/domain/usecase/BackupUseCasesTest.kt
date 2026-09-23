@@ -239,6 +239,47 @@ class ImportBackupTest {
     }
 
     @Test
+    fun `a cell another device had no geocoder for arrives here untried`() = runTest {
+        val unavailableThere = cell("ucfv0n", PlaceStatus.UNAVAILABLE).copy(attempts = 1, lastAttemptAt = EARLY)
+
+        importBackup(BackupReadResult.Readable(BackupContents(placeCells = listOf(unavailableThere))))(
+            "content://in.zip",
+        )
+
+        assertEquals(
+            cell("ucfv0n", PlaceStatus.PENDING).copy(centerLat = 55.75836181640625, centerLon = 37.6226806640625),
+            placeCells.loadById("ucfv0n"),
+        )
+    }
+
+    @Test
+    fun `an unnamed cell from the archive leaves the unnamed one here as it was`() = runTest {
+        val tryingHere = cell(PENDING_HERE, PlaceStatus.PENDING).copy(attempts = 3, lastAttemptAt = EARLY)
+        placeCells.upsert(tryingHere)
+        val unavailableThere = cell(PENDING_HERE, PlaceStatus.UNAVAILABLE).copy(attempts = 1, lastAttemptAt = LATE)
+
+        importBackup(BackupReadResult.Readable(BackupContents(placeCells = listOf(unavailableThere))))(
+            "content://in.zip",
+        )
+
+        assertEquals(listOf(tryingHere), placeCells.upserted)
+    }
+
+    @Test
+    fun `a name the archive gives a cell is written even when a later row for it has none`() = runTest {
+        val imported = BackupContents(
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED), cell("ucfv0n", PlaceStatus.PENDING)),
+        )
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(
+            cell("ucfv0n", PlaceStatus.RESOLVED).copy(centerLat = 55.75836181640625, centerLon = 37.6226806640625),
+            placeCells.loadById("ucfv0n"),
+        )
+    }
+
+    @Test
     fun `a cell whose id is not a place cell is left out of an archive that is otherwise imported`() = runTest {
         val imported = BackupContents(
             encounters = listOf(locatedInMoscow),
@@ -246,6 +287,7 @@ class ImportBackupTest {
                 cell("ucfv0", PlaceStatus.RESOLVED),
                 cell("ucfv0a", PlaceStatus.RESOLVED),
                 cell("UCFV0N", PlaceStatus.RESOLVED),
+                cell("ucfv0n0123456", PlaceStatus.PENDING),
             ),
         )
 
