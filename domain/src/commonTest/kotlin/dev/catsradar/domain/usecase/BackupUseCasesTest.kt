@@ -20,6 +20,8 @@ import kotlin.time.Instant
 
 private val EARLY = Instant.parse("2026-09-01T00:00:00Z")
 private val LATE = Instant.parse("2026-09-20T00:00:00Z")
+private const val NAMED_HERE = "ucfv0h"
+private const val PENDING_HERE = "ucfv0j"
 
 private val locatedInMoscow = encounterAt(EARLY).copy(
     id = "cat",
@@ -190,14 +192,39 @@ class ImportBackupTest {
 
     @Test
     fun `place cells the backup knows better are written, the rest left alone`() = runTest {
-        placeCells.upsert(cell("named", PlaceStatus.RESOLVED))
-        placeCells.upsert(cell("pending", PlaceStatus.PENDING))
+        placeCells.upsert(cell(NAMED_HERE, PlaceStatus.RESOLVED))
+        placeCells.upsert(cell(PENDING_HERE, PlaceStatus.PENDING))
         val imported = BackupContents(
-            placeCells = listOf(cell("named", PlaceStatus.PENDING), cell("pending", PlaceStatus.RESOLVED)),
+            placeCells = listOf(cell(NAMED_HERE, PlaceStatus.PENDING), cell(PENDING_HERE, PlaceStatus.RESOLVED)),
         )
 
         importBackup(BackupReadResult.Readable(imported))("content://in.zip")
 
-        assertEquals(listOf("pending"), placeCells.upserted.drop(2).map { it.cellId })
+        assertEquals(listOf(PENDING_HERE), placeCells.upserted.drop(2).map { it.cellId })
+    }
+
+    @Test
+    fun `an archive's cell is written centred on its id, not where the archive put it`() = runTest {
+        val imported = BackupContents(placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED)))
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(
+            cell("ucfv0n", PlaceStatus.RESOLVED).copy(centerLat = 55.75836181640625, centerLon = 37.6226806640625),
+            placeCells.loadById("ucfv0n"),
+        )
+    }
+
+    @Test
+    fun `a cell whose id is not a place cell is left out of an archive that is otherwise imported`() = runTest {
+        val imported = BackupContents(
+            encounters = listOf(locatedInMoscow),
+            placeCells = listOf(cell("ucfv0", PlaceStatus.RESOLVED), cell("UCFV0N", PlaceStatus.RESOLVED)),
+        )
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 1, updated = 0, unchanged = 0), result)
+        assertEquals(listOf("ucfv0n" to PlaceStatus.PENDING), placeCells.upserted.map { it.cellId to it.status })
     }
 }

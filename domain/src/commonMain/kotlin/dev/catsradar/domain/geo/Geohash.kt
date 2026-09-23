@@ -90,6 +90,14 @@ object Geohash {
         return if (bitValue == 1) mid to max else min to mid
     }
 
+    /** Whether [encode] could have written [hash] at [precision] — lowercase only, unlike what [decode] accepts. */
+    fun isWellFormed(hash: String, precision: Int): Boolean {
+        require(precision in MIN_PRECISION..MAX_PRECISION) {
+            "precision must be in $MIN_PRECISION..$MAX_PRECISION, was $precision"
+        }
+        return hash.length == precision && hash.all { it in BASE32_ALPHABET }
+    }
+
     // A geohash's prefix is itself a valid geohash at that precision - no re-encoding needed.
     fun prefix(hash: String, precision: Int): String {
         require(precision in MIN_PRECISION..MAX_PRECISION) {

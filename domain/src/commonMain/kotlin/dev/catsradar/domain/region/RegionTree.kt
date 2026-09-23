@@ -115,10 +115,7 @@ object RegionTree {
         if (subLocality != null) return RegionLabel.Named(subLocality)
 
         val bounds = Geohash.decode(areaHash)
-        return RegionLabel.Coordinates(
-            lat = (bounds.south + bounds.north) / 2,
-            lon = (bounds.west + bounds.east) / 2,
-        )
+        return RegionLabel.Coordinates(lat = bounds.centerLat, lon = bounds.centerLon)
     }
 
     private fun Encounter.belongsTo(parent: RegionKey, byCell: Map<String, PlaceCell>): Boolean {

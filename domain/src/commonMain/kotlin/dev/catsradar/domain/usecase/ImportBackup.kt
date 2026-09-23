@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.backup.BackupMerge
+import dev.catsradar.domain.backup.withCenterFromId
 import dev.catsradar.domain.backup.withLocationFromCoordinates
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
@@ -30,7 +31,10 @@ class ImportBackup(
         }
 
     private suspend fun write(archived: BackupContents): ImportBackupResult {
-        val imported = archived.copy(encounters = archived.encounters.map { it.withLocationFromCoordinates() })
+        val imported = archived.copy(
+            encounters = archived.encounters.map { it.withLocationFromCoordinates() },
+            placeCells = archived.placeCells.mapNotNull { it.withCenterFromId() },
+        )
         // loadEvery, not observeAll: a cat deleted here must stay deleted when an older backup
         // offers it back, and only the deleted row itself carries the deletedAt that decides.
         val localEncounters = encounterRepository.loadEvery()
