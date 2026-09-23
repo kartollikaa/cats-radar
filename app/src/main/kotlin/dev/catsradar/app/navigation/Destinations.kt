@@ -82,6 +82,9 @@ internal fun MapDestination(
         onSpotDismiss = { store.dispatch(MapIntent.SpotDismissed) },
         onOutingFocus = { id -> store.dispatch(MapIntent.OutingFocused(id)) },
         onFocusClear = { store.dispatch(MapIntent.FocusCleared) },
+        onHeatToggle = { store.dispatch(MapIntent.HeatToggled) },
+        onCoatToggle = { coat -> store.dispatch(MapIntent.CoatToggled(coat)) },
+        onCoatFilterClear = { store.dispatch(MapIntent.CoatFilterCleared) },
     )
 }
 

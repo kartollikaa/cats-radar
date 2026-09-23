@@ -4,9 +4,11 @@ import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
@@ -18,6 +20,13 @@ sealed interface MapIntent {
     data class OutingFocused(val encounterId: String) : MapIntent
 
     data object FocusCleared : MapIntent
+
+    /** Shows cats of [coat], or stops showing them; null stands for a cat with no coat noted. */
+    data class CoatToggled(val coat: CoatOption?) : MapIntent
+
+    data object CoatFilterCleared : MapIntent
+
+    data object HeatToggled : MapIntent
 }
 
 sealed interface MapEffect {
@@ -31,16 +40,15 @@ class MapStore(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<MapState, MapIntent, MapEffect>(MapState.Loading) {
 
-    private val openSpot = MutableStateFlow<Set<String>?>(null)
-    private val focus = MutableStateFlow<String?>(null)
+    private val choices = MutableStateFlow(MapChoices())
 
     init {
-        combine(observeEncounters(), openSpot, focus) { encounters, spot, outing ->
-            val mapped = stateMapper.map(encounters, clock.today(timeZone), spot, outing)
+        combine(observeEncounters(), choices) { encounters, chosen ->
+            val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen)
             val shown = mapped as? MapState.Located
             // A spot or focus the cats no longer match is let go, so it cannot reopen by itself later.
-            if (spot != null && shown?.spot == null) openSpot.value = null
-            if (outing != null && shown?.focus == null) focus.value = null
+            if (chosen.spot != null && shown?.spot == null) choices.update { it.copy(spot = null) }
+            if (chosen.focus != null && shown?.focus == null) choices.update { it.copy(focus = null) }
             setState { mapped }
         }.launchIn(viewModelScope)
     }
@@ -52,15 +60,18 @@ class MapStore(
                 when (cats.size) {
                     0 -> Unit
                     1 -> emit(MapEffect.OpenCat(cats.single()))
-                    else -> openSpot.value = cats
+                    else -> choices.update { it.copy(spot = cats) }
                 }
             }
-            MapIntent.SpotDismissed -> openSpot.value = null
-            is MapIntent.OutingFocused -> {
-                openSpot.value = null
-                focus.value = intent.encounterId
+            MapIntent.SpotDismissed -> choices.update { it.copy(spot = null) }
+            is MapIntent.OutingFocused -> choices.update { it.copy(spot = null, focus = intent.encounterId) }
+            MapIntent.FocusCleared -> choices.update { it.copy(focus = null) }
+            is MapIntent.CoatToggled -> choices.update { chosen ->
+                val coats = if (intent.coat in chosen.coats) chosen.coats - intent.coat else chosen.coats + intent.coat
+                chosen.copy(coats = coats)
             }
-            MapIntent.FocusCleared -> focus.value = null
+            MapIntent.CoatFilterCleared -> choices.update { it.copy(coats = emptySet()) }
+            MapIntent.HeatToggled -> choices.update { it.copy(heat = !it.heat) }
         }
     }
 }

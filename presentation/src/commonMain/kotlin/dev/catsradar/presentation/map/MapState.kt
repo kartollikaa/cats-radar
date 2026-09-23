@@ -3,6 +3,8 @@ package dev.catsradar.presentation.map
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.EncountersRow
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
 
 sealed interface MapState {
     data object Loading : MapState
@@ -16,6 +18,11 @@ sealed interface MapState {
         /** The cats of one spot the user opened, while it is open. */
         val spot: MapSpot? = null,
         val focus: MapFocus? = null,
+        val heat: Boolean = false,
+        /** The coats shown, null standing for a cat with none noted; empty shows every cat. */
+        val shownCoats: ImmutableSet<CoatOption?> = persistentSetOf(),
+        val coatFilterActive: Boolean = false,
+        val filterMatchesNone: Boolean = false,
     ) : MapState
 }
 
@@ -24,7 +31,7 @@ data class MapPoint(val id: String, val latitude: Double, val longitude: Double,
 /** The part of the world the map opens on, in degrees. */
 data class MapArea(val south: Double, val west: Double, val north: Double, val east: Double)
 
-/** An outing shown alone; its located cats are the points, in the order they were seen. */
-data class MapFocus(val outingId: String, val label: String)
+/** An outing shown alone; [route] is its located cats in the order they were seen, whichever coats show. */
+data class MapFocus(val outingId: String, val label: String, val route: ImmutableList<MapPoint>)
 
 data class MapSpot(val catCount: Int, val rows: ImmutableList<EncountersRow>)

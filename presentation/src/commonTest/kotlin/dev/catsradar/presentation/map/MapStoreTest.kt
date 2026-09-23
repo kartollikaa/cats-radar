@@ -3,6 +3,7 @@ package dev.catsradar.presentation.map
 import app.cash.turbine.test
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.usecase.ObserveEncounters
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.encounters.EncountersStateMapper
@@ -221,6 +222,34 @@ class MapStoreTest {
 
         assertNull(store.state.value.spot())
     }
+
+    @Test
+    fun `coats are chosen one at a time and cleared back to every cat, and heat turns on and off`() =
+        runTest(mainDispatcher) {
+            repository.insert(located("a", minute = 0))
+            val store = newStore()
+            runCurrent()
+            fun shown() = assertIs<MapState.Located>(store.state.value)
+
+            store.dispatch(MapIntent.CoatToggled(CoatOption.GINGER))
+            store.dispatch(MapIntent.CoatToggled(null))
+            runCurrent()
+            assertEquals(setOf(CoatOption.GINGER, null), shown().shownCoats)
+
+            store.dispatch(MapIntent.CoatToggled(CoatOption.GINGER))
+            runCurrent()
+            assertEquals(setOf<CoatOption?>(null), shown().shownCoats)
+
+            store.dispatch(MapIntent.CoatFilterCleared)
+            store.dispatch(MapIntent.HeatToggled)
+            runCurrent()
+            assertEquals(emptySet(), shown().shownCoats)
+            assertEquals(true, shown().heat)
+
+            store.dispatch(MapIntent.HeatToggled)
+            runCurrent()
+            assertEquals(false, shown().heat)
+        }
 
     // Floating-point padding: compare the area to a millionth of a degree.
     private fun MapState.roundedArea(): MapState = when (this) {

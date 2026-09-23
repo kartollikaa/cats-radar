@@ -53,6 +53,21 @@ the walk tracks' job.
   another of its cats gets a location later.
 - **Cats sharing one fix** give the line no length there; their cluster still opens as a spot's list.
 
+## Heat and coats
+
+Two chips sit at the map's top edge.
+
+- **Heatmap** draws where cats are seen most, weighing every cat alike, and hides the dots while it
+  is on. Its heat is drawn from the cats themselves, not from their clusters, so ten cats at one
+  spot weigh ten times one.
+- **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
+  shows the cats with none noted. The choice applies to the dots, the clusters, the heat, a
+  focused outing and a spot's list alike; a focused outing's line still runs through all of its
+  cats, since it is the order they were seen in. The view stays where it is when the choice changes, and "Every coat" clears
+  it. A choice that matches no cat says so, rather than showing a map with nothing on it.
+
+Both last as long as the tab does; leaving the tab clears them.
+
 ## At the edges
 
 - **No cat has a location yet:** the tab says so instead of showing an empty map, and so loads no
@@ -76,11 +91,11 @@ the walk tracks' job.
   on), `MapStateMapper`, `MapStore`
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
   their taps; `MapFeatures.kt` — cats as map features; `MapSpotSheet.kt` — a spot's list, drawn by
-  the Encounters tab's own `EncounterRows` in its list layout
+  the Encounters tab's own `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map;
+  `MapCoatSheet.kt` — the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapFocusRequest.kt` — the outing
   another tab asked the map to show
 
 ## Not built yet
 
-Walk tracks and a heatmap are the next slices of the Map epic
-(`docs/tbd/decompositions/2026-09-23-map-epic.md`).
+Walk tracks are the next slices of the Map epic (`docs/tbd/decompositions/2026-09-23-map-epic.md`).

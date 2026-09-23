@@ -4,13 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,10 +29,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.map.MapArea
 import dev.catsradar.presentation.map.MapState
 import dev.catsradar.ui.R
-import dev.catsradar.ui.coat.faceRim
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import org.maplibre.compose.map.MaplibreMap
@@ -43,6 +40,7 @@ import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
+import org.maplibre.compose.map.MapState as MaplibreMapState
 
 // Vector tiles of OpenStreetMap data, free and keyless; the attribution the overlay draws is required.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
@@ -61,18 +59,32 @@ fun MapScreen(
     onSpotDismiss: () -> Unit = {},
     onOutingFocus: (String) -> Unit = {},
     onFocusClear: () -> Unit = {},
+    onHeatToggle: () -> Unit = {},
+    onCoatToggle: (CoatOption?) -> Unit = {},
+    onCoatFilterClear: () -> Unit = {},
 ) {
     when (state) {
         MapState.Loading -> Box(modifier = modifier.fillMaxSize())
         MapState.Empty -> EmptyMap(modifier = modifier.fillMaxSize().padding(contentPadding))
         is MapState.Located -> {
+            var choosingCoats by rememberSaveable { mutableStateOf(false) }
             CatsMap(
                 state = state,
                 contentPadding = contentPadding,
                 modifier = modifier.fillMaxSize(),
                 onCatsTap = onCatsTap,
                 onFocusClear = onFocusClear,
+                onHeatToggle = onHeatToggle,
+                onCoatsClick = { choosingCoats = true },
             )
+            if (choosingCoats) {
+                MapCoatSheet(
+                    shown = state.shownCoats,
+                    onCoatToggle = onCoatToggle,
+                    onClear = onCoatFilterClear,
+                    onDismiss = { choosingCoats = false },
+                )
+            }
             state.spot?.let { spot ->
                 MapSpotSheet(
                     spot = spot,
@@ -92,40 +104,21 @@ private fun CatsMap(
     modifier: Modifier = Modifier,
     onCatsTap: (List<String>) -> Unit = {},
     onFocusClear: () -> Unit = {},
+    onHeatToggle: () -> Unit = {},
+    onCoatsClick: () -> Unit = {},
 ) {
-    val colors = CatLayerColors(
-        unnoted = MaterialTheme.colorScheme.primary,
-        rim = MaterialTheme.colorScheme.faceRim(),
-        cluster = MaterialTheme.colorScheme.primary,
-        clusterCount = MaterialTheme.colorScheme.onPrimary,
-        route = MaterialTheme.colorScheme.primary,
-    )
+    val colors = catLayerColors()
     val cats = remember(state.points, colors.unnoted) { catFeatures(state.points, colors.unnoted) }
-    val route = remember(state.points, state.focus) { state.focus?.let { routeLine(state.points) } }
+    val route = remember(state.focus) { state.focus?.let { routeLine(it.route) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
     val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)
     val tapCats by rememberUpdatedState(onCatsTap)
     var clusterTap by remember { mutableStateOf<ClusterTap?>(null) }
     val mapState = rememberMapState(baseStyle = style) {
-        CatLayers(cats, route, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
+        CatLayers(cats, route, state.heat, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
     }
-    // Fitted once per map and focus, saved across recreation: the map restores its own camera, and a
-    // cat located while it is up must not pull the view off where it was panned.
-    var fitted by rememberSaveable { mutableStateOf(false) }
-    var fittedFocus by rememberSaveable { mutableStateOf<String?>(null) }
-    val focus = state.focus?.outingId
-    val area by rememberUpdatedState(state.area)
-    LaunchedEffect(mapState, focus) {
-        if (fitted && fittedFocus == focus) return@LaunchedEffect
-        if (fitted) {
-            mapState.animateCameraToBounds(area.toBoundingBox(), padding = FitPadding)
-        } else {
-            mapState.fitCameraToBounds(area.toBoundingBox(), padding = FitPadding)
-        }
-        fitted = true
-        fittedFocus = focus
-    }
+    FitOncePerFocus(mapState, area = state.area, focus = state.focus?.outingId)
     LaunchedEffect(clusterTap) {
         val tap = clusterTap ?: return@LaunchedEffect
         mapState.open(tap, tapCats)
@@ -136,36 +129,33 @@ private fun CatsMap(
     Box(modifier = modifier.semantics { contentDescription = summary }) {
         MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
-        state.focus?.let { focused ->
-            OutingFocusChip(
-                label = focused.label,
-                modifier = Modifier.align(Alignment.TopCenter).padding(contentPadding).padding(top = 12.dp),
-                onClose = onFocusClear,
-            )
-        }
+        MapOverlay(
+            state = state,
+            contentPadding = contentPadding,
+            modifier = Modifier.fillMaxSize(),
+            onFocusClear = onFocusClear,
+            onHeatToggle = onHeatToggle,
+            onCoatsClick = onCoatsClick,
+        )
     }
 }
 
+// Fitted once per map and focus, saved across recreation: the map restores its own camera, and a cat
+// located while it is up must not pull the view off where it was panned.
 @Composable
-private fun OutingFocusChip(label: String, modifier: Modifier = Modifier, onClose: () -> Unit = {}) {
-    Surface(
-        modifier = modifier,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 3.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = stringResource(R.string.map_focus_label, label), style = MaterialTheme.typography.labelLarge)
-            IconButton(onClick = onClose) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_close),
-                    contentDescription = stringResource(R.string.map_focus_close),
-                )
-            }
+private fun FitOncePerFocus(mapState: MaplibreMapState, area: MapArea, focus: String?) {
+    var fitted by rememberSaveable { mutableStateOf(false) }
+    var fittedFocus by rememberSaveable { mutableStateOf<String?>(null) }
+    val latestArea by rememberUpdatedState(area)
+    LaunchedEffect(mapState, focus) {
+        if (fitted && fittedFocus == focus) return@LaunchedEffect
+        if (fitted) {
+            mapState.animateCameraToBounds(latestArea.toBoundingBox(), padding = FitPadding)
+        } else {
+            mapState.fitCameraToBounds(latestArea.toBoundingBox(), padding = FitPadding)
         }
+        fitted = true
+        fittedFocus = focus
     }
 }
 
@@ -236,10 +226,4 @@ private fun MapScreenEmptyPreview() {
 @Composable
 private fun MapUnavailablePreview() {
     CatsRadarTheme { MapUnavailable() }
-}
-
-@ThemePreviews
-@Composable
-private fun OutingFocusChipPreview() {
-    CatsRadarTheme { OutingFocusChip(label = "Today, 14:10", modifier = Modifier.padding(16.dp)) }
 }

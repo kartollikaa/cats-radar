@@ -9,6 +9,11 @@
     <string name="map_unavailable_hint">It needs the internet the first time it shows an area. Your cats are safe on the phone.</string>
     <string name="map_focus_label">Outing · %1$s</string>
     <string name="map_focus_close">Show every cat</string>
+    <string name="map_heat">Heatmap</string>
+    <string name="map_coats">Coats</string>
+    <string name="map_coats_title">Show cats by coat</string>
+    <string name="map_coats_all">Every coat</string>
+    <string name="map_filter_none">No cat of these coats on the map</string>
     <plurals name="map_summary">
         <item quantity="one">Map with %d cat</item>
         <item quantity="other">Map with %d cats</item>
