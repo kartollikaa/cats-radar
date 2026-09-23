@@ -6,7 +6,7 @@ import kotlin.time.Instant
 data class LocationStamp(
     val lat: Double,
     val lon: Double,
-    val accuracyMeters: Float,
+    val accuracyMeters: Float?,
     val locationSource: LocationSource,
     val locationFixedAt: Instant,
     val geohash: String,

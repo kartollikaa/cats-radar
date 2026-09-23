@@ -60,8 +60,8 @@ exactly for a healthy row.
 
 A `Walk` is a stretch of time the user chose to be out walking: a start, and an end once it is over.
 Its route is a list of `TrackPoint`s, each a fix with its time and accuracy, kept in `track_points`
-with a foreign key to its walk that deletes the points with it. Nothing records walks yet; the walk
-mode that will is its own slice of the Map epic.
+with a foreign key to its walk that deletes the points with it. Walking mode opens and ends walks,
+and records their routes while location is allowed (`walking-mode.md`).
 
 - **One walk at a time.** Starting a walk while one is on returns that walk rather than opening a
   second: the check and the insert are one transaction (`WalkDao.startIfNoneOpen`), so two starts
@@ -70,13 +70,15 @@ mode that will is its own slice of the Map epic.
   and a clock set back before the start ends the walk at its start rather than before it. The walk's
   `updatedAt` records when it was changed, which is not always the moment it ended.
 - **A route keeps only fixes that say something.** `RecordTrackPoint` leaves out a fix that is too
-  rough to trust (`Tuning.TRACK_MAX_ACCURACY_METERS`), older than the walk or than the route's last
-  point, or nearer that point than `Tuning.TRACK_MIN_STEP_METERS` or than either fix's accuracy. A
-  phone standing still wanders by about its accuracy, and would otherwise pile up points in one spot.
+  rough to trust (`Tuning.TRACK_MAX_ACCURACY_METERS`) or does not say how rough it is, older than the
+  walk or than the route's last point, or nearer that point than `Tuning.TRACK_MIN_STEP_METERS` or
+  than either fix's accuracy. A phone standing still wanders by about its accuracy, and would
+  otherwise pile up points in one spot.
   Fixes take turns, since each is measured against the point the one before it kept.
 - **Distance is great-circle** (`trackLengthMeters`), on the Earth's mean radius: within half a
   percent of the Earth's real shape, which on a step is far less than a phone fix's own error.
 - **A walk does not define an outing.** Outings stay derived from the cats alone (`outings.md`).
+- **Walks travel in backups**, merged so that no import shortens a route (`backup.md`).
 
 The database went from version 1 to 2 for these two tables, by an automatic migration that only adds
 them; `CatsDatabaseMigrationTest` opens a version-1 database with a cat in it, migrates, and checks
@@ -91,15 +93,11 @@ the cat is still there.
 - `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`,
   `PlaceCellMapper.kt`, `EncounterRepositoryImpl.kt`, `PlaceCellRepositoryImpl.kt`
 - Walks: `domain/.../model/Walk.kt`, `domain/.../geo/Distance.kt`, the use cases `StartWalk.kt`,
-  `EndWalk.kt`, `RecordTrackPoint.kt`; `data/.../db/WalkEntity.kt`, `WalkDao.kt`, and
+  `EndWalk.kt`, `RecordTrackPoint.kt`; `data/.../db/WalkEntity.kt`, `WalkDao.kt`, `TrackPointDao.kt`, and
   `data/.../repository/WalkRepositoryImpl.kt`
 
 Each schema version is exported to `data/schemas/dev.catsradar.data.db.CatsDatabase/<version>.json`,
 with a copy in the test assets that `SchemaAssetSyncTest` keeps identical to the export.
-
-## Not handled yet
-
-Walks do not travel in backups yet: an archive holds cats and place cells, as `backup.md` says.
 
 ## Purging
 

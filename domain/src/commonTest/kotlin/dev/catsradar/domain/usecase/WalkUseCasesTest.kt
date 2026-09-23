@@ -27,7 +27,7 @@ class WalkUseCasesTest {
     private val startWalk = StartWalk(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(START))
     private val recordTrackPoint = RecordTrackPoint(repository)
 
-    private fun fix(atSecond: Int, latOffset: Double = 0.0, accuracy: Float = 8f) =
+    private fun fix(atSecond: Int, latOffset: Double = 0.0, accuracy: Float? = 8f) =
         LocationFix(41.3851 + latOffset, 2.1734, accuracy, START + atSecond.seconds)
 
     @Test
@@ -100,6 +100,14 @@ class WalkUseCasesTest {
 
         assertFalse(recordTrackPoint(fix(atSecond = 5, accuracy = Tuning.TRACK_MAX_ACCURACY_METERS + 1f)))
         assertTrue(recordTrackPoint(fix(atSecond = 6, accuracy = Tuning.TRACK_MAX_ACCURACY_METERS)))
+    }
+
+    @Test
+    fun `a fix with no accuracy is left out rather than taken as a perfect one`() = runTest {
+        startWalk()
+
+        assertFalse(recordTrackPoint(fix(atSecond = 5, accuracy = null)))
+        assertTrue(repository.points().isEmpty())
     }
 
     @Test

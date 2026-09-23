@@ -36,7 +36,8 @@ a document nobody updates is worse than none.
 - `backup.md` — the archive: what it carries, and how importing one merges with what is
   already here instead of replacing it.
 - `walking-mode.md` — the lock-screen tally: one tap from the notification, why a silent channel
-  would keep it off the lock screen, and why it does not define an outing.
+  would keep it off the lock screen, how the walk's route is recorded, and why it does not define
+  an outing.
 - `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
   things that redraw it.
 - `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the

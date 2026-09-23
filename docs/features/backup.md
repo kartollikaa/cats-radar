@@ -9,9 +9,10 @@ reads the run's state back rather than remembering it.
 
 ## What goes in
 
-Live encounters and every place cell. **Deleted cats stay home** — a backup is what you have, not
-what you threw away. That single decision is what makes the merge rules below as short as they are:
-a tombstone never travels, so an imported row is always a live one.
+Live encounters, every place cell, and every walk with its route. **Deleted cats stay home** — a
+backup is what you have, not what you threw away. That single decision is what makes the merge
+rules below as short as they are: a tombstone never travels, so an imported row is always a live
+one.
 
 ## Merging, not replacing
 
@@ -46,13 +47,26 @@ devices.
   good. A cell imported before this rule keeps the state it arrived with: importing the archive
   again meets it as an unnamed local cell, which stays.
 
+## Walks
+
+A walk is matched by `id`, as a cat is: the later edit wins, and a tie keeps the walk here.
+
+- **A route is never shortened.** A point is one walk at one moment, and the two copies' points are
+  merged. A point only the archive has is added; one both have is not written twice. An archive of
+  the same walk taken earlier in it therefore adds nothing, and one taken later adds what it has
+  on top.
+- **A walk still on in the archive arrives ended** at its last point, or at its start when it has
+  none, because it was being recorded on another phone and cannot carry on here. The exception is
+  the walk on here, which stays on. Either way at most one walk is ever on.
+- **A walk ended that way reaches the end** of the longer route a later archive of it brings.
+
 ## The archive
 
-A ZIP holding `manifest.json`, `encounters.json`, `placecells.json`, and a `photos/` entry for every
-file the rows point at. Instants travel as epoch milliseconds and enums as their names, so a future
+A ZIP holding `manifest.json`, `encounters.json`, `placecells.json`, `walks.json`,
+`trackpoints.json`, and a `photos/` entry for every file the rows point at. Instants travel as epoch milliseconds and enums as their names, so a future
 version reordering a column changes nothing.
 
-The manifest records `formatVersion`, when it was exported, which device wrote it, and that build's
+The manifest records `formatVersion`, 2 since walks joined the archive, when it was exported, which device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
 
@@ -66,7 +80,9 @@ has been rendering, and an archive should not quietly replace it.
 ## At the edges
 
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
-  fields this version would silently drop. Nothing is written.
+  fields this version would silently drop. Nothing is written. That is why the walks raised the
+  version: an app from before them refuses an archive rather than losing its walks.
+- **An archive from before walks** still imports, with no walks in it.
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, or rows that will not
   parse. Both reasons reach the caller, which decides what to say.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
@@ -104,7 +120,8 @@ has been rendering, and an archive should not quietly replace it.
 
 ## Where the code lives
 
-- `domain/…/backup/BackupMerge.kt` — the rules, as one pure function
+- `domain/…/backup/BackupMerge.kt` — the rules, as one pure function; `WalkMerge.kt` — the walks'
+  rules
 - `domain/…/backup/BackupContents.kt` — what an archive holds, and what a merge decided
 - `domain/…/backup/ImportedLocation.kt` — what an imported cat keeps of its location, and what is
   derived again
@@ -112,7 +129,7 @@ has been rendering, and an archive should not quietly replace it.
   and what an unnamed one leaves behind
 - `domain/…/usecase/ExportBackup.kt`, `ImportBackup.kt`
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
-- `data/…/backup/BackupRecords.kt` — the serialized shape and its mappers
+- `data/…/backup/BackupRecords.kt`, `WalkRecords.kt` — the serialized shape and its mappers
 - `data/…/androidMain/backup/ZipBackupArchive.android.kt` — the ZIP itself
 
 ## At the edges, on screen
