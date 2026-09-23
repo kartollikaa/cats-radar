@@ -74,6 +74,8 @@ internal fun WalkButton(
                 awaitEachGesture {
                     awaitFirstDown()
                     val hold = scope.launch {
+                        // Still full: the last stop has not landed, and this press must earn its own.
+                        if (fill.value == 1f) fill.snapTo(0f)
                         val remaining = (HoldToStop.inWholeMilliseconds * (1f - fill.value)).roundToInt()
                         fill.animateTo(1f, tween(durationMillis = remaining, easing = LinearEasing))
                         haptics.performHapticFeedback(HapticFeedbackType.Confirm)

@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -106,6 +107,21 @@ class CounterControlsTest {
         compose.mainClock.advanceTimeBy(HOLD_MS * 2)
 
         assertEquals(listOf(false), beforeLifting)
+        assertEquals(listOf(false), requested)
+    }
+
+    @Test
+    fun `a tap after a finished hold does not stop the walk while it is still on`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
+        walkButton(walking = true).performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(HOLD_MS + 100)
+        walkButton(walking = true).performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(HOLD_MS)
+
+        walkButton(walking = true).performTouchInput { click(center) }
+        compose.mainClock.advanceTimeBy(HOLD_MS)
+
         assertEquals(listOf(false), requested)
     }
 
