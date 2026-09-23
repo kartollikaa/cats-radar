@@ -686,6 +686,67 @@ class AttachPhoto(
 
 ---
 
+### Task 3b: A coat write that cannot undo a photo
+
+Added during execution. `SetCoat` reads the row and writes it back whole with `update(target.copy(...))`.
+A photo attached between that read and write — reachable in one tap once P1b puts both controls on the
+detail screen — is overwritten with `null`, and so is a location the background worker attached in the
+same gap. Same cure as `attachLocation` / `attachPhoto`: a guarded write of the coat column only.
+
+**Files:**
+- Modify: `EncounterDao.kt`, `EncounterRepository.kt`, `EncounterRepositoryImpl.kt`, `SetCoat.kt`
+- Modify fakes: `FakeEncounterDao.kt`, domain and presentation `FakeEncounterRepository`, the three `:app` test fakes
+- Test: `data/src/androidHostTest/kotlin/dev/catsradar/data/db/EncounterDaoSetCoatTest.kt` (create),
+  `EncounterRepositoryImplTest.kt`, `domain/src/commonTest/kotlin/dev/catsradar/domain/usecase/SetCoatTest.kt` (create)
+
+**Interfaces:**
+- Produces: `EncounterDao.setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int` —
+  `UPDATE encounters SET coat = :coat, updatedAt = :updatedAt WHERE id = :id AND deletedAt IS NULL`;
+  `EncounterRepository.setCoat(id: String, coat: CatCoat?, updatedAt: Instant)` with KDoc
+  `/** No-ops if the row was soft-deleted in the meantime; never resurrects it. */` (same as `attachLocation`);
+  domain fake `var beforeSetCoat: suspend () -> Unit = {}` run inside its `setCoat` before it writes.
+
+- [ ] **Step 1: DAO test** `EncounterDaoSetCoatTest` (same harness as `EncounterDaoAttachPhotoTest`):
+  - `setCoatWritesOnlyTheCoatAndUpdatedAtOfALiveRow` — insert `fullEncounterEntity(id = "live")` (it has a
+    photo, a location and `GINGER_WHITE`); `setCoat("live", CatCoat.BLACK, UPDATED)` returns 1 and the row
+    equals `entity.copy(coat = CatCoat.BLACK, updatedAt = UPDATED)`.
+  - `setCoatToNullClearsIt` — returns 1, row equals `entity.copy(coat = null, updatedAt = UPDATED)`.
+  - `setCoatOnASoftDeletedRowNeitherResurrectsItNorChangesIt` — returns 0, `loadEvery()` equals `listOf(entity)`.
+- [ ] **Step 2: Domain test** `SetCoatTest` (fakes from `domain/testing`, `FakeClock(NOW)`):
+  - *setting a coat stamps it and nothing else* — whole-row `assertEquals(tally.copy(coat = GINGER, updatedAt = NOW), …)`;
+  - *setting the coat that is already set writes nothing* — row unchanged, `updatedAt` included;
+  - *a soft-deleted cat is not edited and not brought back*;
+  - *a photo attached between the read and the write survives the coat* — `encounters.beforeSetCoat = {
+    encounters.attachPhoto(ID, stamp) }`; after `setCoat(ID, GINGER)` the row has both `GINGER` and the stamp's
+    `photoPath`.
+- [ ] **Step 3: Run** — compile failures. **Implement** the DAO query (no comment needed beyond what
+  `attachLocation`'s neighbour already says; if one is added it states the full-row hazard in one line),
+  the repository method (`dao.setCoat(id, coat, updatedAt)`), and `SetCoat`:
+  ```kotlin
+      suspend operator fun invoke(encounterId: String, coat: CatCoat?) {
+          val target = encounterRepository.observeById(encounterId).first() ?: return
+          if (target.coat == coat) return
+          encounterRepository.setCoat(encounterId, coat, clock.now())
+      }
+  ```
+  keeping the existing KDoc and dropping the comment that only explained the soft-delete read.
+  Fakes: domain and presentation fakes change only `coat` and `updatedAt` of a live row, in one
+  `encounters.update { list -> list.map { … } }`; while there, rewrite both fakes' `attachPhoto` in the same
+  single-`update` shape (Task 1 deferred minor). `FakeEncounterDao` records the call. `:app` fakes throw
+  `NotImplementedError("unused by this test")`.
+- [ ] **Step 4:** also fold in Task 1's deferred minors: `EncounterRepository.attachPhoto` KDoc becomes
+  `/** True only when a live row without a photo was written; otherwise writes nothing. */`, and
+  `EncounterDaoAttachPhotoTest` gains `attachPhotoOnAnUnknownIdWritesNothing` (returns 0).
+- [ ] **Step 5: Run** the new tests, then `:domain`, `:data`, `:presentation` host tests and `:app:testDebugUnitTest`,
+  plus detekt on those modules — PASS.
+- [ ] **Step 6:** `data-model.md` *At the edges*: one sentence that the coat, too, is written column-only and
+  only on a live row, so changing it cannot undo a photo or a location attached a moment earlier
+  (`EncounterDaoSetCoatTest`). `coat.md` *At the edges*: "**A coat set while a photo or a location is being
+  attached keeps both** — only the coat is written."
+- [ ] **Step 7: Commit** — `SetCoat writes only the coat, so it cannot undo a photo attached meanwhile`.
+
+---
+
 ### Task 4: P1a docs, gate and PR
 
 **Files:**
