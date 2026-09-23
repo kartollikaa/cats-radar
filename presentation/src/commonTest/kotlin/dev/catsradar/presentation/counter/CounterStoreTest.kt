@@ -511,6 +511,27 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `a failed undo of an import keeps the cats and the undo, and a retry takes them back`() =
+        runTest(mainDispatcher) {
+            val (store, repository) = newStore()
+            repository.insert(externalEncounter(id = "id-1"))
+            store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1"), skipped = 0, failed = 0))
+            runCurrent()
+            repository.softDeleteAllShouldThrow = IllegalStateException("disk full")
+
+            store.dispatch(CounterIntent.Import.UndoClicked)
+            runCurrent()
+            assertEquals(true, store.state.value.importSummary?.undoable)
+            assertEquals(listOf("id-1"), repository.encounters().filter { it.deletedAt == null }.map { it.id })
+
+            repository.softDeleteAllShouldThrow = null
+            store.dispatch(CounterIntent.Import.UndoClicked)
+            runCurrent()
+            assertEquals(false, store.state.value.importSummary?.undoable)
+            assertEquals(emptyList(), repository.encounters().filter { it.deletedAt == null })
+        }
+
+    @Test
     fun `undoing an import twice deletes each cat only once`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         repository.insert(externalEncounter(id = "id-1"))

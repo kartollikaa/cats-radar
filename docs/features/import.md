@@ -57,9 +57,12 @@ Per photo: added, skipped, or failed.
 A soft-deleted twin does **not** block a re-import. Deleting a cat and picking its photo again is a
 deliberate act, and refusing it would leave the user unable to undo their own deletion.
 
-**Undo takes the whole run back in one write** (`softDeleteAll`): every cat of the run gets the same
-`deletedAt`, the run goes all or none, and the list and statistics redraw once rather than once per
-cat (`UndoImportTest`).
+**Undo takes the whole run back in one write**: `UndoImport` hands every cat of the run to
+`softDeleteAll` with one `deletedAt` (`UndoImportTest`), and `EncounterDao.softDeleteAll` runs it as
+one Room transaction, so the run goes all or none and the list and statistics redraw once rather
+than once per cat. A write that fails leaves every cat in place and keeps Undo on offer, so the
+user can simply try again (*a failed undo of an import keeps the cats and the undo, and a retry
+takes them back*).
 
 ## At the edges
 
