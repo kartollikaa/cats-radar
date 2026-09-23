@@ -32,6 +32,8 @@ has both.
 ### At the edges
 
 - **Cancelled camera** — no encounter, and the file the camera was given is deleted.
+- **A camera whose answer never comes** — the app swiped away with the camera still open — leaves its
+  file behind until the app next starts afresh, which clears whatever is left.
 - **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
 - **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
 

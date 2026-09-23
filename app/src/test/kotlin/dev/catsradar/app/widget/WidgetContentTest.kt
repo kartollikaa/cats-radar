@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.photo.TakePhotoShortcut
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
@@ -36,10 +37,17 @@ class WidgetContentTest {
         onNode(hasStartActivityClickAction(TakePhotoShortcut.intent(context))).assertExists()
     }
 
-    // Without Responsive, Glance hands every layout the provider's minimum size.
     @Test
-    fun theWidgetIsDrawnForTheSizeItActuallyHas() {
-        assertTrue(CatsRadarWidget().sizeMode is SizeMode.Responsive)
+    fun theWidgetOffersEveryLayoutItSwitchesBetween() {
+        val offered = (CatsRadarWidget().sizeMode as SizeMode.Responsive).sizes
+
+        assertEquals(setOf(WidgetSizes.Compact, WidgetSizes.Wide, WidgetSizes.Tall, WidgetSizes.Large), offered)
+    }
+
+    // A landscape row as the Pixel launcher reports it; a Wide taller than this loses Photo there.
+    @Test
+    fun aLandscapeRowIsTallEnoughForPhotoBesideTheCount() {
+        assertTrue(WidgetSizes.Wide.height <= 47.dp)
     }
 
     @Test

@@ -8,7 +8,8 @@ app straight into the camera.
 It is placed two cells wide. Photo appears whenever there is room for two tiles side by side: two
 cells on a phone held upright, and even one cell in landscape, where cells are wide and short.
 Narrower than that the widget is the count alone, since two targets in one upright cell are two
-targets too small. Made two cells tall — or two by two — Photo goes under the count instead.
+targets too small. On a widget tall enough for two tiles stacked — two cells on an upright phone —
+Photo goes under the count instead; landscape rows are too short for that, so there it stays beside.
 
 The sizes that switch the layout sit between the platform's reference cell sizes rather than on
 them, because launchers round cells differently: a single upright cell must never read as two.
@@ -36,7 +37,8 @@ The request reaches an app that is already running rather than starting a second
 from the Counter still leaves the app instead of stepping into an older one. Once Photo has reached
 the app's task, though, the launcher's own intent no longer matches that task, and Android would
 stack a second copy on the next tap of the app icon; that copy closes itself at once, leaving
-whatever was in front — the Counter, or a camera still open.
+whatever was in front — the screen the app was on, or a camera still open. Only a copy on the app's
+own task closes: another app opening Cats Radar inside its own task gets it as usual.
 
 Tapping Photo while a camera the app opened earlier is still up closes that camera, which counts as
 cancelled, and opens a fresh one. Each camera's answer is matched to the file that camera was given,

@@ -53,11 +53,14 @@ import org.koin.core.component.inject
 private val WidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
 
 // Between the platform's reference cell sizes rather than on them: one upright phone cell is
-// narrower than Wide and shorter than Tall, and a landscape row is still taller than Compact.
-private val Compact = DpSize(40.dp, 40.dp)
-private val Wide = DpSize(110.dp, 40.dp)
-private val Tall = DpSize(40.dp, 160.dp)
-private val Large = DpSize(110.dp, 160.dp)
+// narrower than Wide and shorter than Tall, and a landscape row is still taller than Wide.
+internal object WidgetSizes {
+    val Compact = DpSize(40.dp, 40.dp)
+    val Wide = DpSize(110.dp, 40.dp)
+    val Tall = DpSize(40.dp, 160.dp)
+    val Large = DpSize(110.dp, 160.dp)
+    val all = setOf(Compact, Wide, Tall, Large)
+}
 
 internal object WidgetLayout {
     const val STACKED = "stacked"
@@ -72,7 +75,7 @@ class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
 
     private val observeTodayCount: ObserveTodayCount by inject()
 
-    override val sizeMode = SizeMode.Responsive(setOf(Compact, Wide, Tall, Large))
+    override val sizeMode = SizeMode.Responsive(WidgetSizes.all)
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Glance publishes a session's first frame before a flow answers, so a placeholder there
@@ -92,14 +95,14 @@ class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
 internal fun WidgetContent(count: Int) {
     val size = LocalSize.current
     when {
-        size.height >= Tall.height -> Column(
+        size.height >= WidgetSizes.Tall.height -> Column(
             modifier = GlanceModifier.fillMaxSize().semantics { testTag = WidgetLayout.STACKED },
         ) {
             CountTile(count, GlanceModifier.fillMaxWidth().defaultWeight())
             Spacer(GlanceModifier.height(TileGap))
             PhotoTile(GlanceModifier.fillMaxWidth().defaultWeight())
         }
-        size.width >= Wide.width -> Row(
+        size.width >= WidgetSizes.Wide.width -> Row(
             modifier = GlanceModifier.fillMaxSize().semantics { testTag = WidgetLayout.SIDE_BY_SIDE },
         ) {
             CountTile(count, GlanceModifier.fillMaxHeight().defaultWeight())

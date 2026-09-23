@@ -25,4 +25,8 @@ object CaptureTarget {
     fun discard(context: Context, uri: String) {
         runCatching { context.contentResolver.delete(uri.toUri(), null, null) }
     }
+
+    fun clear(context: Context) {
+        File(context.cacheDir, CAPTURES_DIRECTORY).listFiles()?.forEach { it.delete() }
+    }
 }
