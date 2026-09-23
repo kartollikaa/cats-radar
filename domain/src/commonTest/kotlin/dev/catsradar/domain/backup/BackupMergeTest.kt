@@ -225,6 +225,83 @@ class BackupMergeTest {
     }
 
     @Test
+    fun `a name the archive gives a cell survives a later row for it that has none`() {
+        val named = cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Moscow")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(placeCells = listOf(named, cell(status = PlaceStatus.PENDING))),
+        )
+
+        assertEquals(listOf(named), merged.placeCells)
+    }
+
+    @Test
+    fun `a name the archive gives a cell beats an earlier row for it that has none`() {
+        val named = cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Moscow")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING), named)),
+        )
+
+        assertEquals(listOf(named), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell, the fresher is weighed against the one here`() {
+        val fresher = cell(status = PlaceStatus.RESOLVED, resolvedAt = LATE, locality = "New name")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(
+                placeCells = listOf(cell(status = PlaceStatus.RESOLVED, resolvedAt = EARLY, locality = "Old name")),
+            ),
+            imported = BackupContents(
+                placeCells = listOf(
+                    fresher,
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Middle name"),
+                ),
+            ),
+        )
+
+        assertEquals(listOf(fresher), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell, neither replaces a fresher one here`() {
+        val merged = BackupMerge.merge(
+            local = BackupContents(
+                placeCells = listOf(cell(status = PlaceStatus.RESOLVED, resolvedAt = LATE, locality = "Here")),
+            ),
+            imported = BackupContents(
+                placeCells = listOf(
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = EARLY, locality = "Oldest"),
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Older"),
+                ),
+            ),
+        )
+
+        assertEquals(emptyList(), merged.placeCells)
+    }
+
+    @Test
+    fun `of two names the archive gives one cell from the same moment, the first is kept`() {
+        val first = cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "First")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(
+                placeCells = listOf(
+                    first,
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Second"),
+                ),
+            ),
+        )
+
+        assertEquals(listOf(first), merged.placeCells)
+    }
+
+    @Test
     fun `importing a backup of exactly what is here writes nothing`() {
         val here = BackupContents(
             encounters = listOf(encounter("a", MIDDLE), encounter("b", LATE)),

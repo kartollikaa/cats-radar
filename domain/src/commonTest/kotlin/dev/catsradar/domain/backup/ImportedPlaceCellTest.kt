@@ -22,6 +22,27 @@ private val namedMoscow = PlaceCell(
     resolvedAt = Instant.parse("2026-09-12T19:30:00Z"),
 )
 
+private val untriedMoscow = PlaceCell(
+    cellId = "ucfv0n",
+    centerLat = 55.75836181640625,
+    centerLon = 37.6226806640625,
+    countryCode = null,
+    countryName = null,
+    adminArea = null,
+    locality = null,
+    subLocality = null,
+    status = PlaceStatus.PENDING,
+    attempts = 0,
+    lastAttemptAt = null,
+    resolvedAt = null,
+)
+
+private fun triedMoscow(status: PlaceStatus, attempts: Int) = untriedMoscow.copy(
+    status = status,
+    attempts = attempts,
+    lastAttemptAt = Instant.parse("2026-09-12T19:29:58Z"),
+)
+
 class ImportedPlaceCellTest {
 
     @Test
@@ -61,5 +82,30 @@ class ImportedPlaceCellTest {
     @Test
     fun `an id in upper case is no cell at all`() {
         assertNull(namedMoscow.copy(cellId = "UCFV0N").withCenterFromId())
+    }
+
+    @Test
+    fun `a named cell keeps every lookup that named it`() {
+        assertEquals(namedMoscow, namedMoscow.withLookupsFromHere())
+    }
+
+    @Test
+    fun `a cell another device is still trying arrives untried`() {
+        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.PENDING, attempts = 3).withLookupsFromHere())
+    }
+
+    @Test
+    fun `a cell another device gave up on arrives untried`() {
+        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.FAILED, attempts = 5).withLookupsFromHere())
+    }
+
+    @Test
+    fun `a cell another device had no geocoder for arrives untried`() {
+        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.UNAVAILABLE, attempts = 1).withLookupsFromHere())
+    }
+
+    @Test
+    fun `a name written on a cell that was never resolved does not come with it`() {
+        assertEquals(untriedMoscow, namedMoscow.copy(status = PlaceStatus.FAILED).withLookupsFromHere())
     }
 }
