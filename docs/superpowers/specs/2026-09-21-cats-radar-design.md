@@ -199,7 +199,8 @@ camera or picked from the gallery (one photo).
    does not (`galleryUri = null`, as in §4.6).
 3. The write sets only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`, and
    only on a live row that still has no photo. A row deleted or given a photo in the meantime is
-   left alone and the files just written are removed. A full-row update would resurrect a cat
+   left alone and the files just written are removed. A camera original already handed to the
+   gallery stays there: it is the user's photo either way. A full-row update would resurrect a cat
    deleted mid-attach and overwrite a location attached mid-attach.
 4. `occurredAt`, location, `kind`, `origin` and `coat` stay: the encounter happened when it was
    logged, and the photo's EXIF says nothing about that moment.
