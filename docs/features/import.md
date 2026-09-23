@@ -66,6 +66,12 @@ takes them back*).
 
 ## At the edges
 
+- **A summary stays until the user deals with it, and never comes back after.** WorkManager keeps
+  a finished run, and the Counter reads it back each time it is shown and again after a restart.
+  So a summary the user walked away from, Undo included, is still there when they come back. A
+  successful Undo, or OK, records that run as dealt with (`acknowledgedImportRun`, kept in
+  DataStore next to the settings). After that, reading the same run back shows nothing and offers
+  no second Undo. A failed Undo records nothing, so the offer survives it.
 - **The photo picker hands over a redacted copy, not the file on disk.** Verified on a device: the
   bytes received hash differently from the original, and the GPS tags are gone, so an imported photo
   gets no location however carefully the original recorded one. The **date survives** — an imported
@@ -88,6 +94,7 @@ takes them back*).
 - `domain/…/usecase/ImportPhotos.kt` — the run, and what it reports
 - `domain/…/region/PlaceCells.kt` — shared with `AttachLocation`: coordinates always get a cell
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
+- `presentation/…/ReportedRun.kt` — which finished run the summary reports, shared with Backup
 
 ## Walking away mid-import
 

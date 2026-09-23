@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.LocationPermissionRequestState
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
@@ -11,6 +12,7 @@ import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
+import dev.catsradar.presentation.ReportedRun
 import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
@@ -43,6 +45,7 @@ class CounterStore(
 
     // Not in State: the screen shows how many were added, never which ones.
     private var importedIds: List<String> = emptyList()
+    private val importRun = ReportedRun(settingsRepository, ReportedJob.GALLERY_IMPORT)
 
     init {
         observeStats()
@@ -152,7 +155,7 @@ class CounterStore(
             is CounterIntent.Import.Progressed -> setState {
                 copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
             }
-            is CounterIntent.Import.Finished -> {
+            is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
                 importedIds = intent.addedIds
                 setState {
                     copy(
@@ -166,7 +169,10 @@ class CounterStore(
                 }
             }
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
-            CounterIntent.Import.SummaryDismissed -> setState { copy(importSummary = null) }
+            CounterIntent.Import.SummaryDismissed -> {
+                setState { copy(importSummary = null) }
+                importRun.id?.let { importRun.acknowledge(it) }
+            }
         }
     }
 
@@ -176,9 +182,13 @@ class CounterStore(
         val ids = importedIds
         if (ids.isEmpty()) return
         importedIds = emptyList()
+        val runId = importRun.id
         setState { copy(importSummary = importSummary?.copy(undoable = false)) }
         // The batch write is all or none, so a failed one left every cat in place and can be retried.
-        runStorageWrite(onFailure = { restoreUndoImport(ids) }) { undoImport(ids) }
+        runStorageWrite(onFailure = { restoreUndoImport(ids) }) {
+            undoImport(ids)
+            runId?.let { importRun.acknowledge(it) }
+        }
     }
 
     private fun restoreUndoImport(ids: List<String>) {

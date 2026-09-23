@@ -74,7 +74,7 @@ class SettingsStoreTest {
     @Test
     fun `a run in progress takes both buttons away and clears the last outcome`() = runTest(mainDispatcher) {
         val store = newStore()
-        store.dispatch(SettingsIntent.Backup.Finished(BackupOutcome.EXPORTED))
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
         runCurrent()
 
         store.dispatch(SettingsIntent.Backup.Started)
@@ -90,7 +90,7 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.Backup.Started)
         runCurrent()
 
-        store.dispatch(SettingsIntent.Backup.Finished(BackupOutcome.IMPORT_REFUSED_TOO_NEW))
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.IMPORT_REFUSED_TOO_NEW))
         runCurrent()
 
         assertEquals(false, store.state.value.backupRunning)
@@ -100,7 +100,7 @@ class SettingsStoreTest {
     @Test
     fun `dismissing the outcome leaves the buttons available`() = runTest(mainDispatcher) {
         val store = newStore()
-        store.dispatch(SettingsIntent.Backup.Finished(BackupOutcome.EXPORTED))
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
         runCurrent()
 
         store.dispatch(SettingsIntent.Backup.OutcomeDismissed)
@@ -108,6 +108,64 @@ class SettingsStoreTest {
 
         assertNull(store.state.value.backupOutcome)
         assertEquals(false, store.state.value.backupRunning)
+    }
+
+    @Test
+    fun `a dismissed outcome stays gone when its run is read back`() = runTest(mainDispatcher) {
+        val store = newStore()
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+        store.dispatch(SettingsIntent.Backup.OutcomeDismissed)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+
+        assertNull(store.state.value.backupOutcome)
+    }
+
+    @Test
+    fun `a dismissed outcome is not shown by a new screen reading its run back`() = runTest(mainDispatcher) {
+        val repository = FakeSettingsRepository()
+        val first = SettingsStore(repository)
+        first.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+        first.dispatch(SettingsIntent.Backup.OutcomeDismissed)
+        runCurrent()
+
+        val second = SettingsStore(repository)
+        second.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+
+        assertNull(second.state.value.backupOutcome)
+    }
+
+    @Test
+    fun `an outcome nobody dismissed is shown again by a new screen`() = runTest(mainDispatcher) {
+        val repository = FakeSettingsRepository()
+        val first = SettingsStore(repository)
+        first.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.IMPORTED))
+        runCurrent()
+
+        val second = SettingsStore(repository)
+        second.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.IMPORTED))
+        runCurrent()
+
+        assertEquals(BackupOutcome.IMPORTED, second.state.value.backupOutcome)
+    }
+
+    @Test
+    fun `a newer run's outcome is shown after an earlier one was dismissed`() = runTest(mainDispatcher) {
+        val store = newStore()
+        store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
+        runCurrent()
+        store.dispatch(SettingsIntent.Backup.OutcomeDismissed)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.Backup.Finished("run-2", BackupOutcome.EXPORT_FAILED))
+        runCurrent()
+
+        assertEquals(BackupOutcome.EXPORT_FAILED, store.state.value.backupOutcome)
     }
 
     @Test
