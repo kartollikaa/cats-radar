@@ -12,8 +12,9 @@ when something about it cannot be read.
 The Photo button on the counter opens the system camera, which writes its original to a
 `FileProvider` URI under the cache directory. On the way back `LogPhoto` reads the EXIF, stores the
 app's copies, hands the original to the gallery if the setting allows, and saves one encounter with
-`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile ends up on the
-same path: it opens the app on the counter and presses that button (see [widget.md](./widget.md)).
+`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile and the walking
+notification's Photo button end up on the same path: each opens the app on the counter and presses
+that button (see [widget.md](./widget.md) and [walking-mode.md](./walking-mode.md#photo)).
 
 The order matters and is deliberate: **the app's own copy is written first**. A gallery item for an
 encounter that does not exist would be worse than no gallery item, so an unreadable photo produces
@@ -37,6 +38,11 @@ has both.
   lasts are cleared, so one that may still be answered, even by the app open in another task, stays.
 - **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
 - **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
+- **EXIF coordinates that are not a point on the globe are no coordinates** — a latitude beyond
+  ±90, a longitude beyond ±180, a value that is not a number, or only one of the pair. The photo is
+  logged without them and goes to the background attach like one with no GPS at all.
+  `ExifInterface` applies no range check of its own: a corrupt GPS tag reaches the app as, say,
+  200°, and a zero denominator as infinity or, for `0/0`, not a number.
 
 ## The gallery setting
 
@@ -119,6 +125,7 @@ unchanged and could not tell a correct resize from a broken one.
 ## Where the code lives
 
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
+- `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`

@@ -127,6 +127,7 @@
     <string name="notification_walking_title">Out looking for cats</string>
     <string name="notification_walking_tally">Cat!</string>
     <string name="notification_walking_stop">Done</string>
+    <string name="notification_walking_photo">Photo</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d cat this outing</item>
         <item quantity="other">%1$d cats this outing</item>

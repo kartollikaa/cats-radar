@@ -216,6 +216,16 @@ class ImportBackupTest {
     }
 
     @Test
+    fun `an archive's cell off the globe still loses to a named one here`() = runTest {
+        placeCells.upsert(cell(NAMED_HERE, PlaceStatus.RESOLVED))
+        val offGlobe = cell(NAMED_HERE, PlaceStatus.PENDING).copy(centerLat = 95.0, centerLon = -237.0)
+
+        importBackup(BackupReadResult.Readable(BackupContents(placeCells = listOf(offGlobe))))("content://in.zip")
+
+        assertEquals(listOf(cell(NAMED_HERE, PlaceStatus.RESOLVED)), placeCells.upserted)
+    }
+
+    @Test
     fun `an archive's cell that wins over the one here is written centred on its id`() = runTest {
         placeCells.upsert(cell(PENDING_HERE, PlaceStatus.PENDING))
         val offGlobe = cell(PENDING_HERE, PlaceStatus.RESOLVED).copy(centerLat = 95.0, centerLon = -237.0)
@@ -275,6 +285,7 @@ class ImportBackupTest {
             encounters = listOf(locatedInMoscow),
             placeCells = listOf(
                 cell("ucfv0", PlaceStatus.RESOLVED),
+                cell("ucfv0a", PlaceStatus.RESOLVED),
                 cell("UCFV0N", PlaceStatus.RESOLVED),
                 cell("ucfv0n0123456", PlaceStatus.PENDING),
             ),

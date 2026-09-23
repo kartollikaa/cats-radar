@@ -20,9 +20,10 @@ a location fix (`AttachLocation`), or a photo's own EXIF, whether the camera jus
 (`ImportBackup`), whose cell the archive may not carry. Coordinates without a cell would be a cat
 that knows exactly where it was and still reads as "no location" in this screen.
 
-A cell's centre is the point the geocoder is asked about, and it is always the centre of the cell's
-id — for a cell restored from a backup too, whose centre is derived from its id again on import
-rather than read from the archive.
+A cell's centre is the point the geocoder is asked about. Every path that creates a cell takes it
+from the cell's id — an import too, which derives it from the id again rather than reading it from
+the archive. A cell imported before that rule keeps whatever centre it was stored with; nothing
+rewrites it.
 
 ## Naming them
 
