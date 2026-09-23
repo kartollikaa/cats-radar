@@ -159,5 +159,7 @@
         <item quantity="other">котика сегодня</item>
     </plurals>
     <string name="widget_tally">Отметить кота</string>
-    <string name="widget_description">Коты за сегодня и одно нажатие, чтобы добавить ещё</string>
+    <string name="widget_description">Коты за сегодня: одно нажатие добавит ещё или откроет камеру</string>
+    <string name="widget_photo">Фото</string>
+    <string name="widget_photo_action">Сфотографировать кота</string>
 </resources>

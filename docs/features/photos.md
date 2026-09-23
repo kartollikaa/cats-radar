@@ -12,7 +12,8 @@ when something about it cannot be read.
 The Photo button on the counter opens the system camera, which writes its original to a
 `FileProvider` URI under the cache directory. On the way back `LogPhoto` reads the EXIF, stores the
 app's copies, hands the original to the gallery if the setting allows, and saves one encounter with
-`kind = PHOTO`, `origin = CAMERA` and the original's digest.
+`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile ends up on the
+same path: it opens the app on the counter and presses that button (see [widget.md](./widget.md)).
 
 The order matters and is deliberate: **the app's own copy is written first**. A gallery item for an
 encounter that does not exist would be worse than no gallery item, so an unreadable photo produces
@@ -31,6 +32,9 @@ has both.
 ### At the edges
 
 - **Cancelled camera** — no encounter, and the file the camera was given is deleted.
+- **A camera whose answer never comes** — the app swiped away with the camera still open — leaves its
+  file behind until a later start of the app clears it. Only captures older than any camera session
+  lasts are cleared, so one that may still be answered, even by the app open in another task, stays.
 - **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
 - **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
 
