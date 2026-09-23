@@ -56,16 +56,17 @@ country → city → area, and an encounter rate derived from automatically dete
 
 Single user, on foot, phone in hand, often abroad, often without data.
 
-**F1 Tally.** Counter screen → tap the big button. Counter increments instantly, haptic tick. An
-"Undo" chip and a horizontally scrolling strip of eleven coat swatches appear for `UNDO_VISIBLE`
-seconds; tapping a swatch sets `coat` on the encounter just created. Undo reverts the newest tap
-of the run: every tap and every Undo restarts the window, so a run of taps can be undone one by one
-down to nothing. No debounce — rapid taps are several cats; the strip always refers to the latest
-one. Location is attached in the background (§4.3).
+**F1 Tally.** Counter screen → tap the big button, or one of the eleven coats in the grid below it,
+which logs a cat of that coat in the same single tap. Counter increments instantly, haptic tick. An
+"Undo" chip appears for `UNDO_VISIBLE`, and the grid rings the coat of the newest undoable cat. Undo
+reverts the newest tap of the run: every tap and every Undo restarts the window, so a run of taps
+can be undone one by one down to nothing. No debounce — rapid taps are several cats. Location is
+attached in the background (§4.3).
 
 **F2 Photo.** Counter screen → tap camera → system camera. On return: original saved to the gallery
 (if enabled), compressed copy + thumbnail stored privately, encounter saved with EXIF location if
-present, else the background location chain. The same coat strip as in F1 appears afterwards.
+present, else the background location chain. No coat control follows a photo; its coat is set on
+the detail screen (F6).
 
 **F3 Import.** Counter screen → long-press camera (or Settings → Import photos) → gallery
 multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress bar, then a
