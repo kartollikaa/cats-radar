@@ -178,6 +178,30 @@ class BackupMergeTest {
     }
 
     @Test
+    fun `a cat the archive lists three times keeps its latest edit wherever it is listed`() {
+        val latest = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(encounter("cat", EARLY), latest, encounter("cat", MIDDLE))),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(latest), added = 1), merged)
+    }
+
+    @Test
+    fun `a deletion written into an archive row does not decide between two of its rows`() {
+        val laterEdit = encounter("cat", MIDDLE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(encounter("cat", EARLY, deletedAt = LATE), laterEdit)),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(laterEdit), added = 1), merged)
+    }
+
+    @Test
     fun `two rows for one cat edited at the same moment keep the one listed first`() {
         val first = encounter("cat", MIDDLE)
 
