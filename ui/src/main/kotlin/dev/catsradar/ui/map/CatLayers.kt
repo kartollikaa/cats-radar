@@ -1,10 +1,12 @@
 package dev.catsradar.ui.map
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.catsradar.ui.coat.faceRim
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
 import org.maplibre.compose.expressions.dsl.const
@@ -12,12 +14,16 @@ import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.convertToString
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.format
+import org.maplibre.compose.expressions.dsl.heatmapDensity
+import org.maplibre.compose.expressions.dsl.interpolate
+import org.maplibre.compose.expressions.dsl.linear
 import org.maplibre.compose.expressions.dsl.not
 import org.maplibre.compose.expressions.dsl.span
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.interaction.ClickResult
 import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.HeatmapLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapState
@@ -43,6 +49,10 @@ private const val COUNT_FONT = "Noto Sans Bold"
 private val DotRadius = 7.dp
 private val ClusterRadius = 16.dp
 private val HalfTouchTarget = 24.dp
+private val HeatRadius = 28.dp
+private const val HeatLowDensity = 0.3
+private const val HeatOpacity = 0.85f
+private const val HeatLowAlpha = 0.5f
 
 private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
 
@@ -54,6 +64,8 @@ internal data class CatLayerColors(
     val cluster: Color,
     val clusterCount: Color,
     val route: Color,
+    val heatLow: Color,
+    val heatHigh: Color,
 )
 
 internal data class ClusterTap(val source: GeoJsonSource, val cluster: Feature<*, JsonObject?>)
@@ -62,10 +74,52 @@ internal data class ClusterTap(val source: GeoJsonSource, val cluster: Feature<*
 internal fun CatLayers(
     cats: FeatureCollection<Point, JsonObject>,
     route: FeatureCollection<LineString, JsonObject>?,
+    heat: Boolean,
     colors: CatLayerColors,
     onClusterTap: (ClusterTap) -> Unit,
     onCatsTap: (List<String>) -> Unit,
 ) {
+    CatHeat(cats = cats, visible = heat, colors = colors)
+    OutingRoute(route = route, colors = colors)
+    CatDots(cats = cats, visible = !heat, colors = colors, onClusterTap = onClusterTap, onCatsTap = onCatsTap)
+}
+
+/** The theme's colours for the map's layers, read here because the layers compose without the theme. */
+@Composable
+internal fun catLayerColors(): CatLayerColors {
+    val scheme = MaterialTheme.colorScheme
+    return CatLayerColors(
+        unnoted = scheme.primary,
+        rim = scheme.faceRim(),
+        cluster = scheme.primary,
+        clusterCount = scheme.onPrimary,
+        route = scheme.primary,
+        heatLow = scheme.primary.copy(alpha = HeatLowAlpha),
+        heatHigh = scheme.tertiary,
+    )
+}
+
+@Composable
+private fun CatHeat(cats: FeatureCollection<Point, JsonObject>, visible: Boolean, colors: CatLayerColors) {
+    // Its own source, unclustered: over a clustered one, a cluster of ten would weigh as one cat.
+    HeatmapLayer(
+        id = "cat-heat",
+        source = rememberGeoJsonSource(GeoJsonData.Features(cats)),
+        visible = visible,
+        color = interpolate(
+            linear(),
+            heatmapDensity(),
+            0 to const(Color.Transparent),
+            HeatLowDensity to const(colors.heatLow),
+            1 to const(colors.heatHigh),
+        ),
+        radius = const(HeatRadius),
+        opacity = const(HeatOpacity),
+    )
+}
+
+@Composable
+private fun OutingRoute(route: FeatureCollection<LineString, JsonObject>?, colors: CatLayerColors) {
     LineLayer(
         id = "outing-route",
         source = rememberGeoJsonSource(GeoJsonData.Features(route ?: NoRoute)),
@@ -75,6 +129,16 @@ internal fun CatLayers(
         cap = const(LineCap.Round),
         join = const(LineJoin.Round),
     )
+}
+
+@Composable
+private fun CatDots(
+    cats: FeatureCollection<Point, JsonObject>,
+    visible: Boolean,
+    colors: CatLayerColors,
+    onClusterTap: (ClusterTap) -> Unit,
+    onCatsTap: (List<String>) -> Unit,
+) {
     val source = rememberGeoJsonSource(
         GeoJsonData.Features(cats),
         GeoJsonOptions(cluster = true, clusterRadius = CLUSTER_RADIUS, clusterMaxZoom = CLUSTER_MAX_ZOOM),
@@ -84,6 +148,7 @@ internal fun CatLayers(
         id = "cat-clusters",
         source = source,
         filter = isCluster,
+        visible = visible,
         color = const(colors.cluster),
         radius = const(ClusterRadius),
         strokeColor = const(colors.rim),
@@ -98,6 +163,7 @@ internal fun CatLayers(
         id = "cat-cluster-counts",
         source = source,
         filter = isCluster,
+        visible = visible,
         textField = format(span(feature[POINT_COUNT].convertToString())),
         textFont = const(listOf(COUNT_FONT)),
         textColor = const(colors.clusterCount),
@@ -109,6 +175,7 @@ internal fun CatLayers(
         id = "cats",
         source = source,
         filter = !isCluster,
+        visible = visible,
         color = feature[CAT_COLOR].convertToColor(),
         radius = const(DotRadius),
         strokeColor = const(colors.rim),

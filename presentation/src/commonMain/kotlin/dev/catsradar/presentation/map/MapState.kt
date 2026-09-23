@@ -3,6 +3,8 @@ package dev.catsradar.presentation.map
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.EncounterListItem
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
 
 sealed interface MapState {
     data object Loading : MapState
@@ -16,6 +18,10 @@ sealed interface MapState {
         /** The cats of one spot the user opened, while it is open. */
         val spot: MapSpot? = null,
         val focus: MapFocus? = null,
+        val heat: Boolean = false,
+        /** The coats shown, null standing for a cat with none noted; empty shows every cat. */
+        val shownCoats: ImmutableSet<CoatOption?> = persistentSetOf(),
+        val filterMatchesNone: Boolean = false,
     ) : MapState
 }
 

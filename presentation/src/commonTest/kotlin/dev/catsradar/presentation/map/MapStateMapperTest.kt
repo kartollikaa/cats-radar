@@ -24,8 +24,12 @@ class MapStateMapperTest {
     private val encountersMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
     private val mapper = MapStateMapper(encountersMapper)
 
-    private fun map(encounters: List<Encounter>, spot: Set<String>? = null, focus: String? = null) =
-        mapper.map(encounters, TODAY, spot, focus)
+    private fun map(
+        encounters: List<Encounter>,
+        spot: Set<String>? = null,
+        focus: String? = null,
+        coats: Set<CoatOption?> = emptySet(),
+    ) = mapper.map(encounters, TODAY, MapChoices(spot = spot, focus = focus, coats = coats))
 
     private fun located(id: String, lat: Double, lon: Double, coat: CatCoat? = null) =
         encounterFixture(id, BASE).copy(lat = lat, lon = lon, coat = coat)
@@ -139,6 +143,45 @@ class MapStateMapperTest {
 
         assertEquals(everyCat, map(cats, focus = "no-such-cat"))
         assertEquals(everyCat, map(cats, focus = "later"))
+    }
+
+    @Test
+    fun `a coat filter keeps only its coats, a cat with no coat among them when chosen, and leaves the area`() {
+        val ginger = located("ginger", 41.30, 2.10, CatCoat.GINGER)
+        val black = located("black", 41.45, 2.25, CatCoat.BLACK)
+        val unnoted = located("unnoted", 41.35, 2.20)
+        val cats = listOf(ginger, black, unnoted)
+        val everyCat = assertIs<MapState.Located>(map(cats))
+
+        val gingerAndUnnoted = assertIs<MapState.Located>(map(cats, coats = setOf(CoatOption.GINGER, null)))
+
+        assertEquals(listOf("ginger", "unnoted"), gingerAndUnnoted.points.map { it.id })
+        assertEquals(everyCat.area, gingerAndUnnoted.area)
+        assertEquals(setOf(CoatOption.GINGER, null), gingerAndUnnoted.shownCoats)
+        assertEquals(false, gingerAndUnnoted.filterMatchesNone)
+    }
+
+    @Test
+    fun `a filter that matches no cat says so rather than looking like a map with no cats`() {
+        val ginger = located("ginger", 41.39, 2.17, CatCoat.GINGER)
+
+        val state = assertIs<MapState.Located>(map(listOf(ginger), coats = setOf(CoatOption.BLACK)))
+
+        assertEquals(emptyList(), state.points)
+        assertEquals(true, state.filterMatchesNone)
+    }
+
+    @Test
+    fun `a focused outing filtered by coat keeps only its cats of that coat`() {
+        val ginger = located("ginger", 41.37, 2.15, CatCoat.GINGER)
+        val black = located("black", 41.39, 2.17, CatCoat.BLACK).copy(occurredAt = BASE + 5.minutes)
+        val otherGinger = located("other ginger", 41.45, 2.25, CatCoat.GINGER).copy(occurredAt = BASE + 3.hours)
+
+        val state = assertIs<MapState.Located>(
+            map(listOf(ginger, black, otherGinger), focus = "ginger", coats = setOf(CoatOption.GINGER)),
+        )
+
+        assertEquals(listOf("ginger"), state.points.map { it.id })
     }
 
     @Test
