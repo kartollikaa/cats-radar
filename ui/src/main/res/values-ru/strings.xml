@@ -2,6 +2,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="tab_counter">Счётчик</string>
     <string name="tab_encounters">Котики</string>
+    <string name="tab_map">Карта</string>
+    <string name="map_empty">На карте пока нет котиков</string>
+    <string name="map_empty_hint">Котик появится здесь, как только у него будет место</string>
     <string name="tab_statistics">Статистика</string>
 
     <string name="counter_camera">Фото</string>

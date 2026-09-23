@@ -39,5 +39,7 @@ a document nobody updates is worse than none.
   not define an outing.
 - `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
   things that redraw it.
+- `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the
+  one screen that goes online.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.
