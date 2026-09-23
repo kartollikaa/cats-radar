@@ -22,8 +22,8 @@ object PlaceCells {
         repository.upsert(
             PlaceCell(
                 cellId = cellId,
-                centerLat = (bounds.south + bounds.north) / 2,
-                centerLon = (bounds.west + bounds.east) / 2,
+                centerLat = bounds.centerLat,
+                centerLon = bounds.centerLon,
                 countryCode = null,
                 countryName = null,
                 adminArea = null,
