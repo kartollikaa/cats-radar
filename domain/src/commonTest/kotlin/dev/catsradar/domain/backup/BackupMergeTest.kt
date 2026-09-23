@@ -214,12 +214,24 @@ class BackupMergeTest {
     }
 
     @Test
-    fun `a cat the archive lists twice is weighed against the one here by its later edit`() {
+    fun `a cat the archive lists twice is weighed against the one here by its later edit listed first`() {
         val later = encounter("cat", LATE)
 
         val merged = BackupMerge.merge(
             local = BackupContents(encounters = listOf(encounter("cat", EARLY))),
             imported = BackupContents(encounters = listOf(later, encounter("cat", MIDDLE))),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later), updated = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive lists twice is weighed against the one here by its later edit listed last`() {
+        val later = encounter("cat", LATE)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", EARLY))),
+            imported = BackupContents(encounters = listOf(encounter("cat", MIDDLE), later)),
         )
 
         assertEquals(MergeResult(encounters = listOf(later), updated = 1), merged)

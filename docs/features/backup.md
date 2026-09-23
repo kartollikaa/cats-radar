@@ -27,7 +27,7 @@ Importing never wipes what is here. Every cat is reconciled on its own, by `id`:
   first — the later edit wins, a tie keeps the one listed first — and only that copy meets the rules
   above. It is counted once, as added, updated or unchanged: the counts are cats, not rows.
 
-There is no server to arbitrate, so each rule settles the conflict from the two rows alone.
+There is no server to arbitrate, so each rule settles the conflict from the rows alone.
 
 ## Place cells
 

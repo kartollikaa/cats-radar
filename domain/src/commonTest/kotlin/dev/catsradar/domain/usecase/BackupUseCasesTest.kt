@@ -152,11 +152,24 @@ class ImportBackupTest {
     }
 
     @Test
-    fun `a cat here that the archive lists twice takes the later edit, whichever row is last`() = runTest {
+    fun `a cat here that the archive lists twice takes the later edit listed first`() = runTest {
         encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY))
         val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
         val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = MIDDLE)
         val imported = BackupContents(encounters = listOf(later, earlier))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.loadEvery())
+    }
+
+    @Test
+    fun `a cat here that the archive lists twice takes the later edit listed last`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY))
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = MIDDLE)
+        val imported = BackupContents(encounters = listOf(earlier, later))
 
         val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
 
