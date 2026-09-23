@@ -17,8 +17,8 @@ interface PlaceCellDao {
     @Query("SELECT * FROM place_cells WHERE cellId = :cellId")
     suspend fun loadById(cellId: String): PlaceCellEntity?
 
-    // Keyed on cellId, not OFFSET: the geocode worker moves cells out of a status between pages, so
-    // an offset would skip as many rows as the previous page resolved.
+    // Keyed on cellId, not OFFSET: callers change the status of rows between pages, so an offset would
+    // skip as many rows as the previous page moved out.
     @Query(
         "SELECT * FROM place_cells WHERE status = :status AND (:afterCellId IS NULL OR cellId > :afterCellId) " +
             "ORDER BY cellId LIMIT :limit",

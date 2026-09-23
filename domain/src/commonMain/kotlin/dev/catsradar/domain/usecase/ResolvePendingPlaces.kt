@@ -18,14 +18,22 @@ class ResolvePendingPlaces(
     private val clock: Clock,
 ) {
     /** Returns false when the device has no geocoder, so the caller can stop rescheduling. */
-    suspend operator fun invoke(): Boolean {
+    suspend operator fun invoke(): Boolean = resolveEach { true }
+
+    /**
+     * Only cells never looked up; one that already failed is left alone, so calling this often never
+     * spends its attempts. Returns false as [invoke] does.
+     */
+    suspend fun resolveUntried(): Boolean = resolveEach { it.isUntried }
+
+    private suspend fun resolveEach(isDue: (PlaceCell) -> Boolean): Boolean {
         var afterCellId: String? = null
         while (true) {
             val page = placeCellRepository.loadPendingPage(afterCellId = afterCellId, limit = PAGE_SIZE)
             if (page.isEmpty()) return true
 
             for (cell in page) {
-                if (!resolve(cell)) return false
+                if (isDue(cell) && !resolve(cell)) return false
             }
             afterCellId = page.last().cellId
         }

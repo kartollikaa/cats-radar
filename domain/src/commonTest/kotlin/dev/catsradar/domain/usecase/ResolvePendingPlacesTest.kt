@@ -124,6 +124,34 @@ class ResolvePendingPlacesTest {
     }
 
     @Test
+    fun `the untried pass names a cell nobody has looked up yet`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("fresh")))
+
+        resolver(repository, ScriptedGeocoder(GeocodeResult.Resolved(PlaceName(countryCode = "ES"))))
+            .resolveUntried()
+
+        assertEquals(PlaceStatus.RESOLVED, assertNotNull(repository.loadById("fresh")).status)
+    }
+
+    @Test
+    fun `the untried pass leaves a cell that already failed for the scheduled retry`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("tried", attempts = 2)))
+        val geocoder = ScriptedGeocoder(GeocodeResult.Failed)
+
+        resolver(repository, geocoder).resolveUntried()
+
+        assertEquals(0, geocoder.calls)
+        assertEquals(2, assertNotNull(repository.loadById("tried")).attempts)
+    }
+
+    @Test
+    fun `the untried pass reports a missing geocoder like the full one`() = runTest {
+        val repository = FakePlaceCellRepository(listOf(pending("fresh")))
+
+        assertFalse(resolver(repository, ScriptedGeocoder(GeocodeResult.Unavailable)).resolveUntried())
+    }
+
+    @Test
     fun `an already resolved cell is never looked up again`() = runTest {
         val resolved = pending("done").copy(status = PlaceStatus.RESOLVED, countryCode = "ES")
         val repository = FakePlaceCellRepository(listOf(resolved))

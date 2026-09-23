@@ -9,8 +9,11 @@ import dev.catsradar.app.widget.CatsRadarWidget
 import dev.catsradar.app.widget.WidgetRedraw
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.BackupScheduler
+import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
+import dev.catsradar.app.worker.PlaceNamingScheduler
+import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.WorkManagerBackupScheduler
 import dev.catsradar.app.worker.WorkManagerImportScheduler
 import dev.catsradar.app.worker.WorkManagerLocationAttachScheduler
@@ -24,6 +27,8 @@ val workerModule = module {
     single { WalkingNotificationSync(get(), get(), get()) }
     single<WidgetRedraw> { WidgetRedraw { CatsRadarWidget().updateAll(androidContext()) } }
     single { WidgetRefresh(get(), get()) }
+    single<PlaceNamingScheduler> { PlaceNamingScheduler { GeocodeWorkScheduler.nameUntriedCells(androidContext()) } }
+    single { PlaceNamingTrigger(get(), get()) }
     single<LocationAttachScheduler> { WorkManagerLocationAttachScheduler(androidContext()) }
     single<ImportScheduler> { WorkManagerImportScheduler(androidContext()) }
     single<BackupScheduler> { WorkManagerBackupScheduler(androidContext()) }
