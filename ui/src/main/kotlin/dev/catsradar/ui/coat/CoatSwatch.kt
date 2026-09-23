@@ -2,18 +2,21 @@ package dev.catsradar.ui.coat
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,8 +38,8 @@ import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 
-private val FaceSize = 34.dp
-private val CellWidth = 72.dp
+private val CellWidth = 70.dp
+private val PickerGap = 12.dp
 private const val CoatsPerRow = 4
 
 /**
@@ -63,8 +67,8 @@ fun CoatGrid(
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         maxItemsInEachRow = CoatsPerRow,
     ) {
         CoatOption.entries.forEach { coat ->
@@ -86,25 +90,29 @@ fun CoatPicker(
     contentPadding: PaddingValues = PaddingValues(),
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = firstShownCoat(selected))
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        state = listState,
-        contentPadding = contentPadding,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    val coats = CoatOption.entries
+    val coatPitch = with(LocalDensity.current) { CellWidth.roundToPx() + PickerGap.roundToPx() }
+    // Opens one coat before the selected one, so the row visibly scrolls both ways.
+    val scrollState = rememberScrollState(initial = (coats.indexOf(selected) - 1).coerceAtLeast(0) * coatPitch)
+    // Not lazy: every cell is measured, so all of them take the tallest name's height.
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(scrollState)
+            .padding(contentPadding)
+            .height(IntrinsicSize.Max),
+        horizontalArrangement = Arrangement.spacedBy(PickerGap),
     ) {
-        items(items = CoatOption.entries, key = { it.name }) { coat ->
+        coats.forEach { coat ->
             CoatColumn(
                 coat = coat,
                 selected = coat == selected,
+                modifier = Modifier.fillMaxHeight(),
                 onClick = { onCoatClick(coat.takeIf { it != selected }) },
             )
         }
     }
 }
-
-/** The row opens one coat before the selected one, so it visibly scrolls both ways. */
-private fun firstShownCoat(selected: CoatOption?): Int = ((selected?.ordinal ?: 0) - 1).coerceAtLeast(0)
 
 @Composable
 private fun CoatColumn(
@@ -125,13 +133,11 @@ private fun CoatColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        CatFace(coat = coat, modifier = Modifier.size(FaceSize))
+        CatFace(coat = coat, modifier = Modifier.size(34.dp))
         Text(
             text = stringResource(coat.labelRes()),
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
-            // Most names wrap to two lines; the short ones keep that height so every ring is the same size.
-            minLines = 2,
         )
     }
 }

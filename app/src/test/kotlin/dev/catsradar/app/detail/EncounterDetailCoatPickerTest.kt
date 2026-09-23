@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "w360dp-h800dp")
@@ -35,21 +36,21 @@ class EncounterDetailCoatPickerTest {
     fun `the last coat is on screen when the detail opens`() {
         showDetail(coat = CoatOption.BLACK_WHITE)
 
-        compose.onNodeWithText(text(R.string.coat_black_white)).assertIsDisplayed()
+        assertWholeCellOnScreen(R.string.coat_black_white)
     }
 
     @Test
     fun `a coat in the middle of the row is on screen when the detail opens`() {
         showDetail(coat = CoatOption.GREY)
 
-        compose.onNodeWithText(text(R.string.coat_grey)).assertIsDisplayed()
+        assertWholeCellOnScreen(R.string.coat_grey)
     }
 
     @Test
     fun `a cat without a coat opens the picker at the first coat`() {
         showDetail(coat = null)
 
-        compose.onNodeWithText(text(R.string.coat_ginger)).assertIsDisplayed()
+        assertWholeCellOnScreen(R.string.coat_ginger)
     }
 
     private fun showDetail(coat: CoatOption?) {
@@ -69,5 +70,9 @@ class EncounterDetailCoatPickerTest {
         }
     }
 
-    private fun text(@StringRes id: Int): String = context.getString(id)
+    private fun assertWholeCellOnScreen(@StringRes name: Int) {
+        val cell = compose.onNodeWithText(context.getString(name)).assertIsDisplayed().fetchSemanticsNode()
+
+        assertEquals(cell.size.width.toFloat(), cell.boundsInWindow.width, 1f)
+    }
 }
