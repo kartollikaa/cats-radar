@@ -30,6 +30,12 @@ class WidgetColorsTest {
     }
 
     @Test
+    @Config(sdk = [31])
+    fun onAndroid12ItselfTheWidgetTakesTheWallpapersColours() {
+        assertEquals(Color(context.getColor(android.R.color.system_accent1_100)), tileColour())
+    }
+
+    @Test
     @Config(sdk = [30])
     fun belowAndroid12TheLightWidgetKeepsTheAppsTeal() {
         assertEquals(CatsRadarLightColors.primaryContainer, tileColour())

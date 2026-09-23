@@ -36,6 +36,24 @@ class DeviceColorSchemeTest {
     }
 
     @Test
+    @Config(sdk = [31])
+    fun onAndroid12ItselfTheLightSchemeIsTheWallpapers() {
+        assertEquals(
+            systemColor(android.R.color.system_accent1_600),
+            deviceColorScheme(context, darkTheme = false).primary,
+        )
+    }
+
+    @Test
+    @Config(sdk = [31])
+    fun onAndroid12ItselfTheDarkSchemeIsTheWallpapers() {
+        assertEquals(
+            systemColor(android.R.color.system_accent1_200),
+            deviceColorScheme(context, darkTheme = true).primary,
+        )
+    }
+
+    @Test
     @Config(sdk = [30])
     fun belowAndroid12TheLightSchemeIsTheAppsOwnTeal() {
         assertSame(CatsRadarLightColors, deviceColorScheme(context, darkTheme = false))
