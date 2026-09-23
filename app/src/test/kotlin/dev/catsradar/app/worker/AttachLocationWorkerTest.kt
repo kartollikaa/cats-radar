@@ -45,7 +45,6 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
     private val encounters = MutableStateFlow(listOf(seed))
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
-    override fun observeActiveCount(): Flow<Int> = throw NotImplementedError("unused by this test")
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")

@@ -20,7 +20,7 @@ the UTC offset at the moment the encounter happened, not the device's offset now
 ## At the edges
 
 Deletion is soft: `deletedAt` is a nullable timestamp, and every read (`observeAll`,
-`observeActiveCount`, `observeById`, `findBySourceDigest`) filters `WHERE deletedAt IS NULL`.
+`observeById`, `findBySourceDigest`) filters `WHERE deletedAt IS NULL`.
 `softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
