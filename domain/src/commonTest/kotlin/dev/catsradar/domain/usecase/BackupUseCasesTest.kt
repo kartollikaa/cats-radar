@@ -1,6 +1,7 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
@@ -8,11 +9,13 @@ import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.platform.BackupWriter
+import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.FakeTransactionRunner
 import dev.catsradar.domain.testing.encounterAt
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -56,6 +59,31 @@ private class StubReader(private val result: BackupReadResult) : BackupReader {
 
 private class DiskFullOnUpsert(delegate: PlaceCellRepository) : PlaceCellRepository by delegate {
     override suspend fun upsert(cell: PlaceCell) = error("database or disk is full")
+}
+
+private class ReadsInTransaction(private val transactions: FakeTransactionRunner) {
+    val seen = mutableSetOf<Pair<String, Boolean>>()
+
+    fun record(read: String) {
+        seen += read to transactions.isOpen
+    }
+}
+
+private class WatchedEncounters(
+    private val delegate: EncounterRepository,
+    private val reads: ReadsInTransaction,
+) : EncounterRepository by delegate {
+    override suspend fun loadEvery(): List<Encounter> = delegate.loadEvery().also { reads.record("loadEvery") }
+}
+
+private class WatchedPlaceCells(
+    private val delegate: PlaceCellRepository,
+    private val reads: ReadsInTransaction,
+) : PlaceCellRepository by delegate {
+    override fun observeAll(): Flow<List<PlaceCell>> = delegate.observeAll().also { reads.record("observeAll") }
+
+    override suspend fun loadById(cellId: String): PlaceCell? =
+        delegate.loadById(cellId).also { reads.record("loadById") }
 }
 
 private fun cell(id: String, status: PlaceStatus = PlaceStatus.PENDING) = PlaceCell(
@@ -118,8 +146,11 @@ class ImportBackupTest {
 
     private val transactions = FakeTransactionRunner(encounters, placeCells)
 
-    private fun importBackup(result: BackupReadResult, placeCellRepository: PlaceCellRepository = placeCells) =
-        ImportBackup(encounters, placeCellRepository, transactions, StubReader(result))
+    private fun importBackup(
+        result: BackupReadResult,
+        encounterRepository: EncounterRepository = encounters,
+        placeCellRepository: PlaceCellRepository = placeCells,
+    ) = ImportBackup(encounterRepository, placeCellRepository, transactions, StubReader(result))
 
     @Test
     fun `an import that fails once cats are written leaves every cat and cell as it was`() = runTest {
@@ -132,10 +163,27 @@ class ImportBackupTest {
         )
 
         assertFailsWith<IllegalStateException> {
-            importBackup(BackupReadResult.Readable(imported), DiskFullOnUpsert(placeCells))("content://in.zip")
+            importBackup(BackupReadResult.Readable(imported), placeCellRepository = DiskFullOnUpsert(placeCells))(
+                "content://in.zip",
+            )
         }
 
+        assertEquals(listOf("known", "cat"), encounters.inserted.map { it.id })
         assertEquals(before, encounters.loadEvery() to placeCells.observeAll().first())
+    }
+
+    @Test
+    fun `the merge reads what is here inside the transaction it writes in`() = runTest {
+        val reads = ReadsInTransaction(transactions)
+        val imported = BackupContents(encounters = listOf(locatedInMoscow), placeCells = listOf(cell("ucfv0n")))
+
+        importBackup(
+            BackupReadResult.Readable(imported),
+            encounterRepository = WatchedEncounters(encounters, reads),
+            placeCellRepository = WatchedPlaceCells(placeCells, reads),
+        )("content://in.zip")
+
+        assertEquals(setOf("loadEvery" to true, "observeAll" to true, "loadById" to true), reads.seen)
     }
 
     @Test

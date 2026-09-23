@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.first
 sealed interface ImportBackupResult {
     data class Merged(val added: Int, val updated: Int, val unchanged: Int) : ImportBackupResult
 
-    /** Nothing was written; the archive never got as far as being merged. */
+    /** No row was written; the archive never got as far as being merged. */
     data class Rejected(val reason: BackupRejection) : ImportBackupResult
 }
 
@@ -29,7 +29,7 @@ class ImportBackup(
     suspend operator fun invoke(source: String): ImportBackupResult =
         when (val read = backupReader.read(source)) {
             is BackupReadResult.Rejected -> ImportBackupResult.Rejected(read.reason)
-            // Reads included: a merge decided on rows another writer changed since would undo that change.
+            // The merge's reads go inside too: deciding on rows another writer then changes would undo that change.
             is BackupReadResult.Readable -> transactionRunner.inTransaction { write(read.contents) }
         }
 

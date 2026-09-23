@@ -2,7 +2,7 @@ package dev.catsradar.domain.platform
 
 import dev.catsradar.domain.backup.BackupContents
 
-/** Why an archive could not be read. The user is told which; nothing is written for any of them. */
+/** Why an archive could not be read. The user is told which; no row is written for any of them. */
 enum class BackupRejection {
     /** Written by a newer version of the app than this one, so its fields cannot be trusted. */
     TOO_NEW,

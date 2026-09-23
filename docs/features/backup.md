@@ -67,9 +67,9 @@ has been rendering, and an archive should not quietly replace it.
 
 **Photos are not part of the merge's transaction.** They are restored while the archive is read,
 before the archive is judged and before any row is merged, and a file cannot join a database
-transaction. An import that fails or is refused writes no rows but can leave restored photos behind
-that no row points at. They are the archive's own bytes, so importing it again finds them here,
-keeps them, and its rows point at exactly those files.
+transaction. An import that fails or is refused writes no rows but can leave behind the photos it
+restored. They are the archive's own bytes, written only where no file was here, so importing the
+same archive again finds them and keeps them.
 
 ## At the edges
 
