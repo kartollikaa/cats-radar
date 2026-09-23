@@ -10,7 +10,7 @@ immediately**: one tap, not tap-then-choose. The big button above it logs a cat 
 noted. Both paths are the same tally — same undo, same location attach, same burst.
 
 After a tap the grid rings the coat just used — a line in the theme's primary colour around that
-face — so a run of the same cat down the same street reads back at a glance. An Undo moves the ring
+coat's whole cell, face and name together — so a run of the same cat down the same street reads back at a glance. An Undo moves the ring
 back to the coat of the newest cat still undoable, and it clears when the undo window closes or the
 last of those cats is undone.
 
@@ -52,6 +52,15 @@ archives hold those names, and renaming what nobody sees would need a migration 
 
 The detail screen shows the coat and lets it be changed, or cleared by tapping the current one
 again. Nothing else needs a "clear" control.
+
+The coats there sit in one row wider than a phone, and the row opens scrolled so the cat's own coat
+is on screen, second from the start with the coat before it showing; a cat with no coat opens the
+row at the first coat (`EncounterDetailCoatPickerTest`). Only the opening position is chosen: after
+that the row stays wherever it is scrolled, including when the coat is changed.
+
+The chosen coat is ringed the same way as on the Counter. Every cell is as tall as a two-line name,
+so the ring is the same size whichever coat it is on, and the cells of one grid row share the
+tallest one's height.
 
 ## In the statistics
 
