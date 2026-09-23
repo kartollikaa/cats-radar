@@ -24,7 +24,7 @@ Tiles already seen, and the style, are kept in the app's cache, which no backup 
 Every cat that is not deleted and has coordinates, from whichever source they came: a GPS fix, the
 last known position, a photo's own EXIF. A cat still waiting for a location, or one that never got
 one, is not drawn, and the list keeps it as before. Neither is a cat whose coordinates are off the
-globe, past a pole or the 180th meridian, which only a backup edited by hand could carry.
+globe, past a pole or the 180th meridian.
 
 ## At the edges
 
