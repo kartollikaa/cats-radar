@@ -36,6 +36,7 @@
     <string name="counter_location_dismiss">Не надо</string>
 
     <string name="encounters_empty">Пока ни одного котика</string>
+    <string name="encounters_empty_hint">Нажмите на число на Счётчике — и кот появится здесь</string>
     <string name="encounters_photo_description">Фото этого котика</string>
 
     <string name="location_from_photo">С фото</string>
@@ -44,7 +45,6 @@
     <string name="location_from_outing">Из этой вылазки</string>
     <string name="location_none">Места пока нет</string>
 
-    <string name="detail_coordinates">Координаты</string>
     <string name="detail_photo_description">Фото этого котика</string>
     <string name="detail_accuracy">±%1$d м</string>
     <string name="detail_delete">Удалить</string>
@@ -118,11 +118,13 @@
     <string name="coat_not_specified">Не указан</string>
     <string name="statistics_by_coat">По окрасу</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
+    <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>
     <string name="settings_save_originals_explained">Своя копия всегда остаётся в приложении</string>
+    <string name="settings_section_logging">Фото и прогулки</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_backup_explained">Один файл со всеми котиками, фото и местами</string>
     <string name="settings_export">Сохранить</string>

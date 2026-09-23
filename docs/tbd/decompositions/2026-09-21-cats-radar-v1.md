@@ -46,7 +46,7 @@
 | 23a | Design foundation | Explicit teal light/dark schemes from the launcher icon, rounder shapes, heavier display type, icons in the bottom bar; a palette contrast test. | safe | ~300 | 22 | merged |
 | 23b | Coats as cat faces | Each coat drawn as a cat face carrying its real markings — white muzzle and blaze, calico ear patches, amber eyes on dark fur — legible on both themes; the chosen coat gets a ring; "tricolour" labels become "calico". | safe | ~300 | 23a | merged |
 | 23c | The Counter as centrepiece | The count in a large expressive container, spring motion on tally and undo, the walk chip and photo button restyled. | safe | ~350 | 23b | in-review |
-| 23d | List, detail and stats rhythm | Encounters list and detail, statistics, settings, and empty states on the new tokens. | safe | ~450 | 23c | planned |
+| 23d | List, detail and stats rhythm | Encounters list and detail, statistics, settings, and empty states on the new tokens. | safe | ~450 | 23c | in-review |
 | 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`

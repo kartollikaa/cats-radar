@@ -1,7 +1,9 @@
 package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -139,6 +141,45 @@ class EncountersStateMapperTest {
         assertEquals(LocalDate(2026, 9, 22), dateAtUtc)
         assertEquals(LocalDate(2026, 9, 21), dateAnHourWest)
         assertNotEquals(dateAtUtc, dateAnHourWest)
+    }
+
+    // Newest first within the outing, so the most recent cat opens the group.
+    @Test
+    fun `an outing's rows form one group, first to last, and a lone cat is a group of its own`() {
+        val outing = listOf(
+            encounterFixture("a", BASE),
+            encounterFixture("b", BASE + 5.minutes),
+            encounterFixture("c", BASE + 10.minutes),
+        )
+        val lone = encounterFixture("lone", BASE + 5.hours)
+
+        val positions = mapper.map(outing + lone, today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.position }
+
+        assertEquals(
+            mapOf(
+                "lone" to GroupPosition.ONLY,
+                "c" to GroupPosition.FIRST,
+                "b" to GroupPosition.MIDDLE,
+                "a" to GroupPosition.LAST,
+            ),
+            positions,
+        )
+    }
+
+    @Test
+    fun `a row carries its coat, and none when no coat was noted`() {
+        val ginger = encounterFixture("ginger", BASE).copy(coat = CatCoat.GINGER)
+        val unknown = encounterFixture("unknown", BASE + 5.minutes)
+
+        val coats = mapper.map(listOf(ginger, unknown), today)
+            .rows
+            .filterIsInstance<EncounterListItem.Row>()
+            .associate { it.id to it.coat }
+
+        assertEquals(mapOf("unknown" to null, "ginger" to CoatOption.GINGER), coats)
     }
 
     private companion object {

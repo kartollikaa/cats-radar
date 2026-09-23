@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +30,7 @@ import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatPicker
+import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.encounters.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -40,7 +44,7 @@ fun EncounterDetailScreen(
     onUndoClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
-    Box(modifier = modifier.fillMaxSize().padding(contentPadding).padding(24.dp)) {
+    Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
         when (state) {
             EncounterDetailState.Loading -> Unit
             is EncounterDetailState.Loaded -> LoadedDetail(
@@ -61,36 +65,57 @@ private fun LoadedDetail(
     onDeleteClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
         val photoPath = state.photoPath
         if (photoPath != null) {
             AsyncImage(
                 model = photoPath,
                 contentDescription = stringResource(R.string.detail_photo_description),
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.large),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.extraLarge),
                 contentScale = ContentScale.Crop,
             )
         }
-        Text(text = state.dayLabel, style = MaterialTheme.typography.headlineSmall)
-        Text(text = state.timeLabel, style = MaterialTheme.typography.displaySmall)
-        Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
-        val coordinates = state.coordinatesLabel
-        val accuracy = state.accuracyMeters
-        if (coordinates != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = stringResource(R.string.detail_coordinates), style = MaterialTheme.typography.labelMedium)
-                Text(text = coordinates, style = MaterialTheme.typography.bodyLarge)
-                if (accuracy != null) {
+        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+            Text(
+                text = state.dayLabel,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
+        }
+        SectionCard(R.string.detail_where) {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
+                state.coordinatesLabel?.let { coordinates ->
+                    Text(
+                        text = coordinates,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                state.accuracyMeters?.takeIf { state.coordinatesLabel != null }?.let { accuracy ->
                     Text(
                         text = stringResource(R.string.detail_accuracy, accuracy),
                         style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
         }
-        Text(text = stringResource(R.string.detail_coat), style = MaterialTheme.typography.labelMedium)
-        CoatPicker(selected = state.coat, onCoatClick = onCoatClick)
-        Button(onClick = onDeleteClick, modifier = Modifier.padding(top = 16.dp)) {
+        SectionCard(R.string.detail_coat) {
+            CoatPicker(selected = state.coat, onCoatClick = onCoatClick, modifier = Modifier.padding(vertical = 8.dp))
+        }
+        OutlinedButton(
+            onClick = onDeleteClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) {
             Text(text = stringResource(R.string.detail_delete))
         }
     }
