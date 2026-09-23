@@ -13,6 +13,8 @@ import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.HangingLocationProvider
 import dev.catsradar.domain.testing.MisbehavingLocationProvider
 import dev.catsradar.domain.testing.encounterFixture
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -90,6 +92,19 @@ class AttachLocationTest {
         assertEquals(Fix.accuracyMeters, updated.accuracyMeters)
         assertEquals(LocationSource.CURRENT_FIX, updated.locationSource)
         assertEquals(Fix.fixedAt, updated.locationFixedAt)
+    }
+
+    @Test
+    fun `a fix with no accuracy stamps the cat with its position and no accuracy`() = runTest {
+        val repository = FakeEncounterRepository()
+        repository.insert(encounterFixture(id = "target", occurredAt = Now))
+        val unrated = Fix.copy(accuracyMeters = null)
+
+        AttachLocation(repository, placeCells, FakeLocationProvider(currentFix = unrated), FakeClock(Now))("target")
+
+        val updated = encounter(repository, "target")
+        assertEquals(unrated.lat, updated.lat)
+        assertNull(updated.accuracyMeters)
     }
 
     @Test
@@ -208,6 +223,8 @@ class AttachLocationTest {
             }
 
             override suspend fun lastKnown(): LocationFix? = null
+
+            override fun trackFixes(): Flow<LocationFix> = emptyFlow()
         }
         val attachLocation = AttachLocation(repository, placeCells, locationProvider, FakeClock(Now))
 

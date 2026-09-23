@@ -6,6 +6,7 @@ import kotlin.time.Instant
 data class LocationFix(
     val lat: Double,
     val lon: Double,
-    val accuracyMeters: Float,
+    /** Null when the reading says nothing about how precise it is. */
+    val accuracyMeters: Float?,
     val fixedAt: Instant,
 )

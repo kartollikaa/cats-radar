@@ -11,6 +11,7 @@ import dev.catsradar.domain.region.PlaceCells
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.TransactionRunner
+import dev.catsradar.domain.repository.WalkRepository
 import kotlinx.coroutines.flow.first
 
 sealed interface ImportBackupResult {
@@ -23,6 +24,7 @@ sealed interface ImportBackupResult {
 class ImportBackup(
     private val encounterRepository: EncounterRepository,
     private val placeCellRepository: PlaceCellRepository,
+    private val walkRepository: WalkRepository,
     private val transactionRunner: TransactionRunner,
     private val backupReader: BackupReader,
 ) {
@@ -44,6 +46,8 @@ class ImportBackup(
         val local = BackupContents(
             encounters = localEncounters,
             placeCells = placeCellRepository.observeAll().first(),
+            walks = walkRepository.observeAll().first(),
+            trackPoints = walkRepository.loadEveryPoint(),
         )
         val merged = BackupMerge.merge(local = local, imported = imported)
 
@@ -58,6 +62,9 @@ class ImportBackup(
         merged.placeCells.forEach { placeCellRepository.upsert(it) }
         merged.encounters.mapNotNullTo(mutableSetOf()) { it.geohash }
             .forEach { PlaceCells.remember(placeCellRepository, it) }
+        // Walks first: a point may belong to a walk this import is adding.
+        merged.walks.forEach { walkRepository.upsert(it) }
+        walkRepository.appendPoints(merged.trackPoints)
 
         return ImportBackupResult.Merged(
             added = merged.added,

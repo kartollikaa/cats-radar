@@ -14,7 +14,8 @@ import kotlin.time.Instant
 
 class WalkRepositoryImplTest {
     private val dao = FakeWalkDao()
-    private val repository = WalkRepositoryImpl(dao)
+    private val points = FakeTrackPointDao()
+    private val repository = WalkRepositoryImpl(dao, points)
 
     @Test
     fun startIfNoneOpenMapsEveryFieldBothWays() = runTest {
@@ -46,18 +47,30 @@ class WalkRepositoryImplTest {
     fun appendPointMapsEveryField() = runTest {
         repository.appendPoint(distinctPoint)
 
-        assertEquals(listOf(distinctPointEntity), dao.insertedPoints)
+        assertEquals(listOf(distinctPointEntity), points.inserted)
     }
 
     @Test
     fun lastPointAndTrackMapEveryField() = runTest {
-        dao.lastPointResult = distinctPointEntity.copy(rowId = 7)
-        dao.trackResult = listOf(distinctPointEntity.copy(rowId = 7))
+        points.lastResult = distinctPointEntity.copy(rowId = 7)
+        points.trackResult = listOf(distinctPointEntity.copy(rowId = 7))
 
         assertEquals(distinctPoint, repository.lastPoint("walk"))
         assertEquals(listOf(distinctPoint), repository.observeTrack("walk").first())
-        assertEquals("walk", dao.lastPointCall)
-        assertEquals("walk", dao.trackCall)
+        assertEquals("walk", points.lastCall)
+        assertEquals("walk", points.trackCall)
+    }
+
+    @Test
+    fun upsertAppendPointsAndLoadEveryPointMapEveryField() = runTest {
+        points.everyResult = listOf(distinctPointEntity.copy(rowId = 7))
+
+        repository.upsert(distinctWalk)
+        repository.appendPoints(listOf(distinctPoint))
+
+        assertEquals(listOf(distinctWalkEntity), dao.upserted)
+        assertEquals(listOf(distinctPointEntity), points.inserted)
+        assertEquals(listOf(distinctPoint), repository.loadEveryPoint())
     }
 
     private companion object {

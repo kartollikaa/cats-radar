@@ -26,4 +26,12 @@ interface WalkRepository {
     suspend fun lastPoint(walkId: String): TrackPoint?
 
     fun observeTrack(walkId: String): Flow<List<TrackPoint>>
+
+    /** Every point of every walk, each walk's in route order. */
+    suspend fun loadEveryPoint(): List<TrackPoint>
+
+    /** Writes [walk] as given, with none of [startIfNoneOpen]'s one-walk-at-a-time check. */
+    suspend fun upsert(walk: Walk)
+
+    suspend fun appendPoints(points: List<TrackPoint>)
 }

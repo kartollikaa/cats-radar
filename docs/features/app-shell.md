@@ -81,10 +81,11 @@ blip just behind the sweep line. The cat is the adaptive icon's foreground and t
 background, so the launcher's parallax moves them apart. The themed (monochrome) layer is the head's
 silhouette with the eyes and nose cut out, plus the blip. A vector drawable cannot read a Kotlin
 constant, so the foreground and monochrome drawables carry their own copies of the face's paths.
-`LauncherIconTest` fails if either copy stops matching `CatFacePaths`, so a change to the face has
-to be copied into both. The two inner rings stay inside the safe zone, so a launcher shape with
-inward curves never cuts them. The third ring lies beyond the circle and shows only in the corners
-of squarer shapes.
+The walking notification's icon ([walking-mode.md](./walking-mode.md#a-live-update-from-api-361)) is
+another copy. `CatIconTest` fails if any copy stops matching `CatFacePaths`, so a change to the face
+has to be copied into every one of them. The two inner rings stay inside the safe zone, so a
+launcher shape with inward curves never cuts them. The third ring lies beyond the circle and shows
+only in the corners of squarer shapes.
 
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
@@ -102,6 +103,28 @@ indicator pill; only the map and the settings gear also change to their filled f
 other glyphs have no separate filled version. The label is always shown and names the tab, so the
 icons carry no content description of their own. Each label gets a fifth of the bar, which on a
 360dp-wide phone is narrower than «Статистика», so the Russian stats tab says «Итоги».
+
+**Motion.** Screens change the way Material's transition patterns describe, and every change is
+short: `NavTransitionTimingTest` drives the host's own `NavDisplay` on the test clock and fails if a
+tab switch, a step forward or a step back runs past the motion's duration and the frame that ends
+it. Moving between tabs *fades through*: the old tab fades out before the new one fades in and
+settles from slightly smaller, so two layouts never show on top of each other. Opening a detail — an
+encounter, a level of the places drill-down — moves along the *horizontal axis*: the new screen
+slides in from the right as the old one slides away to the left, and going back reverses it. Only a
+one-level step moves along the axis. Leaving a detail for another tab, or tapping a tab from two
+levels down its stack, fades through like any tab switch, although the stack underneath only pushed
+or popped. The motion is decided from the two screens alone: each tab's entry carries a tab-root
+marker in its Navigation 3 metadata, and a detail is recognised by what sits directly under it
+(`NavMotionTest`). The test builds the nav host's own entry for every `BottomNavTab`, so a tab added
+without the marker fails rather than silently sliding like a detail.
+
+**The back gesture** follows the finger. The current screen shrinks toward the side the finger is
+moving to and fades as it goes; the screen it returns to starts fading in once the current one is
+mostly gone, so the two barely overlap. A back that starts from no edge — the Back button's own
+predictive back — shrinks the screen toward its centre. Releasing plays the rest; dragging back to
+the edge cancels and restores the screen. The app sets all three specs because Navigation 3's
+defaults are a long cross-fade for every change and a back gesture that shrinks the screen without
+fading it, leaving it fully opaque over the one coming in until it vanishes at the end.
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
@@ -149,8 +172,8 @@ run.
 
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/Store.kt`
 - `app/src/main/kotlin/dev/catsradar/app/CatsRadarApplication.kt`, `MainActivity.kt`
-- `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`, `Counter.kt`,
-  `CounterEffectHandler.kt`
+- `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`, `NavMotion.kt`,
+  `Counter.kt`, `CounterEffectHandler.kt`
 - `app/src/main/kotlin/dev/catsradar/app/di/DomainModule.kt`, `DataModule.kt`,
   `PresentationModule.kt`, `WorkerModule.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`,

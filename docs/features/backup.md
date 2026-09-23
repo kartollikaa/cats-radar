@@ -11,9 +11,10 @@ disk, a stopped worker, a killed process — leaves the database exactly as it f
 
 ## What goes in
 
-Live encounters and every place cell. **Deleted cats stay home** — a backup is what you have, not
-what you threw away. That single decision is what makes the merge rules below as short as they are:
-a tombstone never travels, so an imported row is always a live one.
+Live encounters, every place cell, and every walk with its route. **Deleted cats stay home** — a
+backup is what you have, not what you threw away. That single decision is what makes the merge
+rules below as short as they are: a tombstone never travels, so an imported row is always a live
+one.
 
 ## Merging, not replacing
 
@@ -48,13 +49,26 @@ devices.
   good. A cell imported before this rule keeps the state it arrived with: importing the archive
   again meets it as an unnamed local cell, which stays.
 
+## Walks
+
+A walk is matched by `id`, as a cat is: the later edit wins, and a tie keeps the walk here.
+
+- **A route is never shortened.** A point is one walk at one moment, and the two copies' points are
+  merged. A point only the archive has is added; one both have is not written twice. An archive of
+  the same walk taken earlier in it therefore adds nothing, and one taken later adds what it has
+  on top.
+- **A walk still on in the archive arrives ended** at its last point, or at its start when it has
+  none, because it was being recorded on another phone and cannot carry on here. The exception is
+  the walk on here, which stays on. Either way at most one walk is ever on.
+- **A walk ended that way reaches the end** of the longer route a later archive of it brings.
+
 ## The archive
 
-A ZIP holding `manifest.json`, `encounters.json`, `placecells.json`, and a `photos/` entry for every
-file the rows point at. Instants travel as epoch milliseconds and enums as their names, so a future
+A ZIP holding `manifest.json`, `encounters.json`, `placecells.json`, `walks.json`,
+`trackpoints.json`, and a `photos/` entry for every file the rows point at. Instants travel as epoch milliseconds and enums as their names, so a future
 version reordering a column changes nothing.
 
-The manifest records `formatVersion`, when it was exported, which device wrote it, and that build's
+The manifest records `formatVersion`, 2 since walks joined the archive, when it was exported, which device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
 
@@ -74,7 +88,9 @@ same archive again finds them and keeps them.
 ## At the edges
 
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
-  fields this version would silently drop. No row is written (photos: see above).
+  fields this version would silently drop. No row is written (photos: see above). That is why the
+  walks raised the version: an app from before them refuses an archive rather than losing its walks.
+- **An archive from before walks** still imports, with no walks in it.
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, or rows that will not
   parse. Both reasons reach the caller, which decides what to say.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
@@ -106,9 +122,10 @@ same archive again finds them and keeps them.
 - **An archive that lists one cat more than once imports it once.** Taken row by row, a cat new here
   would be inserted twice, and the second insert would fail the import with every cat before it
   already written; a cat already here would end up as whichever row came last, older or not.
-- **An import that fails part-way writes no rows at all.** Without the transaction, the cats written
-  before the failure would stay, place cells could be missing for cats that point at them, and the
-  worker would still report the import as failed.
+- **An import that fails part-way writes no rows at all.** Without the transaction, the cats and
+  walks written before the failure would stay, place cells could be missing for cats that point at
+  them, a walk could arrive without its route, and the worker would still report the import as
+  failed.
 - **The merge reads what is here inside the same transaction it writes in.** A change landing
   between the read and the writes — a cat deleted here while the import runs — would otherwise be
   overwritten by a decision made without it. Instead, that write waits until the import has finished.
@@ -118,7 +135,8 @@ same archive again finds them and keeps them.
 
 ## Where the code lives
 
-- `domain/…/backup/BackupMerge.kt` — the rules, as one pure function
+- `domain/…/backup/BackupMerge.kt` — the rules, as one pure function; `WalkMerge.kt` — the walks'
+  rules
 - `domain/…/backup/BackupContents.kt` — what an archive holds, and what a merge decided
 - `domain/…/backup/ImportedLocation.kt` — what an imported cat keeps of its location, and what is
   derived again
@@ -128,14 +146,14 @@ same archive again finds them and keeps them.
 - `domain/…/repository/TransactionRunner.kt` — the one-unit-of-work seam the import runs inside;
   `data/…/db/RoomTransactionRunner.kt` is Room's write transaction behind it
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
-- `data/…/backup/BackupRecords.kt` — the serialized shape and its mappers
+- `data/…/backup/BackupRecords.kt`, `WalkRecords.kt` — the serialized shape and its mappers
 - `data/…/androidMain/backup/ZipBackupArchive.android.kt` — the ZIP itself
 
 ## At the edges, on screen
 
-- **Export and import share one work name**, so they cannot run at once. An export reads the cats and
-  the cells separately, so an import landing between the two reads would give an archive whose cats
-  and cells come from different sides of the merge.
+- **Export and import share one work name**, so they cannot run at once. An export reads cats, cells
+  and walks one query at a time, so an import landing between two of those reads would give an
+  archive whose rows come from different sides of the merge.
 - **Neither worker retries.** The file picker's grant dies with the process, so a retry would write
   nothing and report success for an archive that does not exist.
 - **Both buttons are unavailable while a run is in progress**, and a finished run replaces the

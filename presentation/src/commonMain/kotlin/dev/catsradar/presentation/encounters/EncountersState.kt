@@ -2,13 +2,20 @@ package dev.catsradar.presentation.encounters
 
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 
 data class EncountersState(
     val rows: ImmutableList<EncountersRow> = persistentListOf(),
     val layout: EncountersLayout = EncountersLayout.GRID,
+    val selectedIds: ImmutableSet<String> = persistentSetOf(),
+    /** How many cats the last delete removed while its undo is still offered; null once it is not. */
+    val removedCount: Int? = null,
 ) {
     val isEmpty: Boolean get() = rows.isEmpty()
+    val isSelecting: Boolean get() = selectedIds.isNotEmpty()
+    val selectedCount: Int get() = selectedIds.size
 }
 
 enum class EncountersLayout { GRID, LIST }
@@ -61,6 +68,7 @@ data class EncounterCell(
     val timeLabel: String,
     val location: LocationLabel,
     val lead: CellLead = CellLead.Paw,
+    val selected: Boolean = false,
 )
 
 /** Both paths are absolute; [thumbnailPath] stands in for [photoPath] when that one cannot be read. */
@@ -70,6 +78,7 @@ data class PhotoCell(
     val location: LocationLabel,
     val photoPath: String,
     val thumbnailPath: String,
+    val selected: Boolean = false,
 )
 
 /** What a cell shows first: the most telling thing known about that cat. */

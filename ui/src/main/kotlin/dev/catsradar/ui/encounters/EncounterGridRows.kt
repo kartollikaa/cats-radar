@@ -1,7 +1,6 @@
 package dev.catsradar.ui.encounters
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,11 +58,22 @@ internal val CellGap = 8.dp
 internal fun PhotoPairRow(
     row: EncountersRow.PhotoPair,
     modifier: Modifier = Modifier,
+    selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
+    onEncounterLongClick: (String) -> Unit = {},
 ) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(CellGap)) {
-        PhotoTile(row.first, Modifier.weight(1f), onClick = { onEncounterClick(row.first.id) })
-        PhotoTile(row.second, Modifier.weight(1f), onClick = { onEncounterClick(row.second.id) })
+        listOf(row.first, row.second).forEach { cell ->
+            key(cell.id) {
+                PhotoTile(
+                    cell = cell,
+                    modifier = Modifier.weight(1f),
+                    selecting = selecting,
+                    onClick = { onEncounterClick(cell.id) },
+                    onLongClick = { onEncounterLongClick(cell.id) },
+                )
+            }
+        }
     }
 }
 
@@ -71,12 +81,20 @@ internal fun PhotoPairRow(
 internal fun TileRow(
     row: EncountersRow.Tiles,
     modifier: Modifier = Modifier,
+    selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
+    onEncounterLongClick: (String) -> Unit = {},
 ) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(CellGap)) {
         row.cells.forEach { cell ->
             key(cell.id) {
-                EncounterTile(cell, Modifier.weight(1f), onClick = { onEncounterClick(cell.id) })
+                EncounterTile(
+                    cell = cell,
+                    modifier = Modifier.weight(1f),
+                    selecting = selecting,
+                    onClick = { onEncounterClick(cell.id) },
+                    onLongClick = { onEncounterLongClick(cell.id) },
+                )
             }
         }
     }
@@ -86,7 +104,9 @@ internal fun TileRow(
 internal fun CardRow(
     row: EncountersRow.Cards,
     modifier: Modifier = Modifier,
+    selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
+    onEncounterLongClick: (String) -> Unit = {},
 ) {
     Row(
         modifier = modifier.height(IntrinsicSize.Min),
@@ -94,23 +114,37 @@ internal fun CardRow(
     ) {
         row.cells.forEach { cell ->
             key(cell.id) {
-                EncounterCard(cell, Modifier.weight(1f).fillMaxHeight(), onClick = { onEncounterClick(cell.id) })
+                EncounterCard(
+                    cell = cell,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    selecting = selecting,
+                    onClick = { onEncounterClick(cell.id) },
+                    onLongClick = { onEncounterLongClick(cell.id) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PhotoTile(cell: PhotoCell, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+private fun PhotoTile(
+    cell: PhotoCell,
+    modifier: Modifier = Modifier,
+    selecting: Boolean = false,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {},
+) {
     val subject = stringResource(R.string.encounters_photo_description)
     val description = cellDescription(subject, cell.timeLabel, cell.location)
     var fullCopyUnreadable by remember(cell.photoPath) { mutableStateOf(false) }
+    val shape = MaterialTheme.shapes.medium
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .clip(MaterialTheme.shapes.medium)
+            .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .clickable(onClick = onClick)
+            .selectionOutline(cell.selected, MaterialTheme.colorScheme.primary, shape)
+            .selectableCell(cell.selected, selecting, toggleLabel(cell.selected), onClick, onLongClick)
             .clearAndSetSemantics { contentDescription = description },
     ) {
         AsyncImage(
@@ -130,21 +164,37 @@ private fun PhotoTile(cell: PhotoCell, modifier: Modifier = Modifier, onClick: (
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         )
+        if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
     }
 }
 
 @Composable
-private fun EncounterTile(cell: EncounterCell, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+private fun EncounterTile(
+    cell: EncounterCell,
+    modifier: Modifier = Modifier,
+    selecting: Boolean = false,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {},
+) {
     val description = cellDescription(cell.lead.description(), cell.timeLabel, cell.location)
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
+            .selectableCell(cell.selected, selecting, toggleLabel(cell.selected), onClick, onLongClick)
             .clearAndSetSemantics { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        EncounterLead(lead = cell.lead, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
+        Box {
+            EncounterLead(
+                lead = cell.lead,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .selectionOutline(cell.selected, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small),
+            )
+            if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd).padding(4.dp))
+        }
         val timeStyle = MaterialTheme.typography.labelMedium
         Text(
             text = cell.timeLabel,
@@ -163,18 +213,28 @@ internal fun EncounterCard(
     cell: EncounterCell,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.medium,
+    selecting: Boolean = false,
     onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {},
 ) {
+    val background = if (cell.selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
     Row(
         modifier = modifier
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .clickable(onClick = onClick)
+            .background(background)
+            .selectableCell(cell.selected, selecting, toggleLabel(cell.selected), onClick, onLongClick)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        EncounterLead(lead = cell.lead, modifier = Modifier.size(48.dp))
+        Box {
+            EncounterLead(lead = cell.lead, modifier = Modifier.size(48.dp))
+            if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(text = cell.timeLabel, style = MaterialTheme.typography.bodyLarge)
             Text(

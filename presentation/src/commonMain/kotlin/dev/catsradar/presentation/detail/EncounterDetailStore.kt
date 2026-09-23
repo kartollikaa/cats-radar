@@ -11,7 +11,7 @@ import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
-import kotlinx.coroutines.CancellationException
+import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -66,7 +66,7 @@ class EncounterDetailStore(
         deletedHere = true
         setState { EncounterDetailState.Deleted(undoVisible = true) }
         startUndoWindow()
-        runWrite(onFailure = ::restoreAfterFailedDelete) { deleteEncounter(encounterId) }
+        runStorageWrite(onFailure = ::restoreAfterFailedDelete) { deleteEncounter(encounterId) }
     }
 
     private fun startUndoWindow() {
@@ -82,7 +82,7 @@ class EncounterDetailStore(
         val current = state.value
         if (current !is EncounterDetailState.Deleted || !current.undoVisible) return
         undoTimeoutJob?.cancel()
-        runWrite(onFailure = { startUndoWindow() }) {
+        runStorageWrite(onFailure = { startUndoWindow() }) {
             undoDelete(encounterId)
             deletedHere = false
         }
@@ -90,23 +90,12 @@ class EncounterDetailStore(
 
     private suspend fun onCoatPicked(coat: CoatOption?) {
         // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
-        runWrite(onFailure = {}) { setCoat(encounterId, coat?.toCatCoat()) }
+        runStorageWrite { setCoat(encounterId, coat?.toCatCoat()) }
     }
 
     private fun restoreAfterFailedDelete() {
         undoTimeoutJob?.cancel()
         deletedHere = false
         setState { reduce(lastSeen) }
-    }
-
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // any storage failure degrades the same way
-    private suspend fun runWrite(onFailure: () -> Unit, block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            onFailure()
-        }
     }
 }

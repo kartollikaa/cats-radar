@@ -11,7 +11,7 @@ internal data class AttachLocationCall(
     val id: String,
     val lat: Double,
     val lon: Double,
-    val accuracyMeters: Float,
+    val accuracyMeters: Float?,
     val locationSource: LocationSource,
     val locationFixedAt: Instant,
     val geohash: String,
@@ -32,6 +32,7 @@ internal class FakeEncounterDao : EncounterDao {
     var observeByIdCall: String? = null
     var softDeleteCall: Pair<String, Instant>? = null
     var clearDeletedAtCall: String? = null
+    val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
@@ -60,12 +61,16 @@ internal class FakeEncounterDao : EncounterDao {
         clearDeletedAtCall = id
     }
 
+    override suspend fun clearDeletedAtIfDeletedAt(id: String, deletedAt: Instant) {
+        clearDeletedAtIfDeletedAtCalls += id to deletedAt
+    }
+
     @Suppress("LongParameterList") // mirrors EncounterDao.attachLocation's own Room binding constraint
     override suspend fun attachLocation(
         id: String,
         lat: Double,
         lon: Double,
-        accuracyMeters: Float,
+        accuracyMeters: Float?,
         locationSource: LocationSource,
         locationFixedAt: Instant,
         geohash: String,

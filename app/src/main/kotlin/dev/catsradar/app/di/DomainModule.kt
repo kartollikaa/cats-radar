@@ -2,8 +2,11 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.DeleteEncounters
+import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.EndWalk
 import dev.catsradar.domain.usecase.ExportBackup
+import dev.catsradar.domain.usecase.FollowWalkingMode
 import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
@@ -16,10 +19,12 @@ import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
+import dev.catsradar.domain.usecase.RecordWalk
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.StartWalk
 import dev.catsradar.domain.usecase.UndoDelete
+import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
@@ -34,6 +39,9 @@ val domainModule = module {
     factoryOf(::LogTally)
     factoryOf(::StartWalk)
     factoryOf(::EndWalk)
+    factoryOf(::FollowWalkingMode)
+    factoryOf(::EndInterruptedWalk)
+    factoryOf(::RecordWalk)
     singleOf(::RecordTrackPoint) // one instance, so every caller waits on the same turn
     factoryOf(::LogPhoto)
     // Constructed by hand: timeZone has a default, which factoryOf would try to inject.
@@ -68,6 +76,8 @@ val domainModule = module {
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)
+    factoryOf(::DeleteEncounters)
+    factoryOf(::UndoDeleteEncounters)
     factoryOf(::UndoImport)
     factoryOf(::ExportBackup)
     factoryOf(::ImportBackup)

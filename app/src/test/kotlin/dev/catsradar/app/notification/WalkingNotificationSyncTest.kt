@@ -6,7 +6,6 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.repository.EncounterRepository
-import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -53,6 +52,7 @@ class WalkingNotificationSyncTest {
     private val settings = FakeWalkingSettings()
     private val notifications = RecordingWalkingNotifications()
     private val ticks = MutableSharedFlow<Unit>(replay = 1)
+    private val appOnScreen = MutableStateFlow(false)
 
     private fun TestScope.startSync() {
         ticks.tryEmit(Unit)
@@ -67,7 +67,7 @@ class WalkingNotificationSyncTest {
                 ticks = ticks,
             ),
             notifications = notifications,
-        ).start(backgroundScope)
+        ).start(backgroundScope, appOnScreen)
     }
 
     // Every test opens with Clear: a process starting with the mode off sweeps away a notification
@@ -115,6 +115,21 @@ class WalkingNotificationSyncTest {
         }
 
     @Test
+    fun `the app coming on screen during a walk reaches the notification, and leaving it too`() =
+        runTest(UnconfinedTestDispatcher()) {
+            startSync()
+            settings.walking.value = true
+
+            appOnScreen.value = true
+            appOnScreen.value = false
+
+            assertEquals(
+                listOf(Posted.Clear, Posted.Show(0), Posted.Show(0, appOnScreen = true), Posted.Show(0)),
+                notifications.actions,
+            )
+        }
+
+    @Test
     fun `stopping the walk takes the notification away`() = runTest(UnconfinedTestDispatcher()) {
         startSync()
         settings.walking.value = true
@@ -126,37 +141,20 @@ class WalkingNotificationSyncTest {
 }
 
 private sealed interface Posted {
-    data class Show(val count: Int) : Posted
+    data class Show(val count: Int, val appOnScreen: Boolean = false) : Posted
     data object Clear : Posted
 }
 
 private class RecordingWalkingNotifications : WalkingNotifications {
     val actions = mutableListOf<Posted>()
 
-    override fun show(count: Int) {
-        actions += Posted.Show(count)
+    override fun show(count: Int, appOnScreen: Boolean) {
+        actions += Posted.Show(count, appOnScreen)
     }
 
     override fun clear() {
         actions += Posted.Clear
     }
-}
-
-private class FakeWalkingSettings : SettingsRepository {
-    val walking = MutableStateFlow(false)
-
-    override fun walkingMode(): Flow<Boolean> = walking
-
-    override suspend fun setWalkingMode(enabled: Boolean) {
-        walking.value = enabled
-    }
-
-    override fun saveOriginalsToGallery(): Flow<Boolean> = MutableStateFlow(true)
-    override suspend fun setSaveOriginalsToGallery(enabled: Boolean) = Unit
-    override fun lastSeenMilestone(): Flow<Int> = MutableStateFlow(Int.MAX_VALUE)
-    override suspend fun setLastSeenMilestone(value: Int) = Unit
-    override fun encountersGrid(): Flow<Boolean> = MutableStateFlow(true)
-    override suspend fun setEncountersGrid(enabled: Boolean) = Unit
 }
 
 private class FakeEncounterRepository : EncounterRepository {
@@ -178,6 +176,12 @@ private class FakeEncounterRepository : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
     override suspend fun loadEvery(): List<Encounter> = rows.value
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> = emptyList()
