@@ -1,5 +1,6 @@
 package dev.catsradar.domain.testing
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PhotoStamp
@@ -22,6 +23,9 @@ class FakeEncounterRepository : EncounterRepository {
 
     /** Runs after a successful write, for what else happens to the cat in the meantime. */
     var afterAttachPhoto: suspend () -> Unit = {}
+
+    /** Runs before setCoat writes, for what else happens to the cat in the meantime. */
+    var beforeSetCoat: suspend () -> Unit = {}
 
     // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
     // hide every bug about what a read is allowed to see.
@@ -68,19 +72,39 @@ class FakeEncounterRepository : EncounterRepository {
     // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
     override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
         attachPhotoShouldThrow?.let { throw it }
-        val target = encounters.value.firstOrNull { it.id == id && it.deletedAt == null && it.photoPath == null }
-            ?: return false
-        update(
-            target.copy(
-                photoPath = stamp.photoPath,
-                thumbPath = stamp.thumbPath,
-                galleryUri = stamp.galleryUri,
-                sourceDigest = stamp.sourceDigest,
-                updatedAt = stamp.updatedAt,
-            ),
-        )
-        afterAttachPhoto()
-        return true
+        var attached = false
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
+                    attached = true
+                    encounter.copy(
+                        photoPath = stamp.photoPath,
+                        thumbPath = stamp.thumbPath,
+                        galleryUri = stamp.galleryUri,
+                        sourceDigest = stamp.sourceDigest,
+                        updatedAt = stamp.updatedAt,
+                    )
+                } else {
+                    encounter
+                }
+            }
+        }
+        if (attached) afterAttachPhoto()
+        return attached
+    }
+
+    // beforeSetCoat runs first, so a change it makes (e.g. attaching a photo) survives the copy() below.
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
+        beforeSetCoat()
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null) {
+                    encounter.copy(coat = coat, updatedAt = updatedAt)
+                } else {
+                    encounter
+                }
+            }
+        }
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {

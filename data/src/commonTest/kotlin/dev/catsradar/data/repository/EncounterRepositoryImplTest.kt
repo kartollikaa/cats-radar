@@ -1,5 +1,6 @@
 package dev.catsradar.data.repository
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.PhotoStamp
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -80,6 +81,15 @@ class EncounterRepositoryImplTest {
 
         dao.attachPhotoResult = 0
         assertEquals(false, repository.attachPhoto("id-1", stamp))
+    }
+
+    @Test
+    fun setCoatForwardsToTheDao() = runTest {
+        val updatedAt = Instant.parse("2026-02-01T00:00:00Z")
+
+        repository.setCoat("id-1", CatCoat.BLACK, updatedAt)
+
+        assertEquals(SetCoatCall("id-1", CatCoat.BLACK, updatedAt), dao.setCoatCall)
     }
 
     @Test

@@ -2,6 +2,7 @@ package dev.catsradar.data.repository
 
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.EncounterEntity
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -28,6 +29,8 @@ internal data class AttachPhotoCall(
     val updatedAt: Instant,
 )
 
+internal data class SetCoatCall(val id: String, val coat: CatCoat?, val updatedAt: Instant)
+
 internal class FakeEncounterDao : EncounterDao {
     var observeAllResult: List<EncounterEntity> = emptyList()
     var observeByIdResult: EncounterEntity? = null
@@ -45,6 +48,8 @@ internal class FakeEncounterDao : EncounterDao {
     var attachLocationCall: AttachLocationCall? = null
     var attachPhotoResult: Int = 1
     var attachPhotoCall: AttachPhotoCall? = null
+    var setCoatResult: Int = 1
+    var setCoatCall: SetCoatCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
     var loadDeletedBeforeCall: Instant? = null
@@ -104,6 +109,11 @@ internal class FakeEncounterDao : EncounterDao {
     ): Int {
         attachPhotoCall = AttachPhotoCall(id, photoPath, thumbPath, galleryUri, sourceDigest, updatedAt)
         return attachPhotoResult
+    }
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int {
+        setCoatCall = SetCoatCall(id, coat, updatedAt)
+        return setCoatResult
     }
 
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {

@@ -1,5 +1,6 @@
 package dev.catsradar.app.notification
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -174,6 +175,9 @@ private class FakeEncounterRepository : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =

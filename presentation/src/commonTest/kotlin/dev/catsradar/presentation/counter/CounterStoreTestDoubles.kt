@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -91,18 +92,36 @@ internal class FakeEncounterRepository : EncounterRepository {
     // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
     override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
         attachPhotoShouldThrow?.let { throw it }
-        val target = encounters.value.firstOrNull { it.id == id && it.deletedAt == null && it.photoPath == null }
-            ?: return false
-        update(
-            target.copy(
-                photoPath = stamp.photoPath,
-                thumbPath = stamp.thumbPath,
-                galleryUri = stamp.galleryUri,
-                sourceDigest = stamp.sourceDigest,
-                updatedAt = stamp.updatedAt,
-            ),
-        )
-        return true
+        var attached = false
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
+                    attached = true
+                    encounter.copy(
+                        photoPath = stamp.photoPath,
+                        thumbPath = stamp.thumbPath,
+                        galleryUri = stamp.galleryUri,
+                        sourceDigest = stamp.sourceDigest,
+                        updatedAt = stamp.updatedAt,
+                    )
+                } else {
+                    encounter
+                }
+            }
+        }
+        return attached
+    }
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null) {
+                    encounter.copy(coat = coat, updatedAt = updatedAt)
+                } else {
+                    encounter
+                }
+            }
+        }
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {

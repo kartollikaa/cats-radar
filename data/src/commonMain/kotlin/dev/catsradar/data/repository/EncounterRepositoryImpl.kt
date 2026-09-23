@@ -1,6 +1,7 @@
 package dev.catsradar.data.repository
 
 import dev.catsradar.data.db.EncounterDao
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PhotoStamp
@@ -40,6 +41,10 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         sourceDigest = stamp.sourceDigest,
         updatedAt = stamp.updatedAt,
     ) > 0
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
+        dao.setCoat(id, coat, updatedAt)
+    }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) = dao.softDelete(id, deletedAt)
 

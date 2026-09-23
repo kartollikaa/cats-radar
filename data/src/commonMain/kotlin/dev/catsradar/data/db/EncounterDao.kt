@@ -5,6 +5,7 @@ import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
@@ -90,6 +91,10 @@ interface EncounterDao {
         sourceDigest: String?,
         updatedAt: Instant,
     ): Int
+
+    // A full-row update here would undo a photo or a location attached between the read and this write.
+    @Query("UPDATE encounters SET coat = :coat, updatedAt = :updatedAt WHERE id = :id AND deletedAt IS NULL")
+    suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int
 
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?

@@ -68,6 +68,11 @@ class EncounterDaoAttachPhotoTest {
         assertEquals(entity, dao.observeById("photo").first())
     }
 
+    @Test
+    fun attachPhotoOnAnUnknownIdWritesNothing() = runTest {
+        assertEquals(0, attach("nobody"))
+    }
+
     private suspend fun attach(id: String): Int = dao.attachPhoto(
         id = id,
         photoPath = "p.jpg",
