@@ -39,11 +39,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -77,6 +75,7 @@ internal fun TallyBlock(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "tallyPress",
     )
+    val tallyLabel = stringResource(R.string.counter_tally)
     val shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp, bottomEnd = 48.dp, bottomStart = 16.dp)
     // Clickable outside the scale: squashing the block must not shrink what a held press can land on.
     Box(
@@ -84,14 +83,11 @@ internal fun TallyBlock(
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClickLabel = stringResource(R.string.counter_tally),
+                onClickLabel = tallyLabel,
                 role = Role.Button,
                 onClick = onClick,
             )
-            .semantics {
-                if (totalLabel.isNotEmpty()) contentDescription = totalLabel
-                liveRegion = LiveRegionMode.Polite
-            },
+            .semantics { contentDescription = totalLabel.ifEmpty { tallyLabel } },
     ) {
         Surface(
             modifier = Modifier
@@ -152,7 +148,7 @@ private fun RollingCount(shown: ShownCount, modifier: Modifier = Modifier) {
 }
 
 // A badge rather than bare text: a wide number in a short block reaches this corner, and the
-// burst has to stay legible over it. TalkBack is told the new total by the block instead.
+// burst has to stay legible over it. TalkBack reads the total from the block instead.
 @Composable
 private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
     AnimatedVisibility(

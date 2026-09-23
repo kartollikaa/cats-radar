@@ -54,7 +54,7 @@ fun CounterScreen(
         padding = 24.dp,
         modifier = modifier.fillMaxSize(),
         above = {
-            // Above the count, which gives up its room first, so the controls under it stay put.
+            // Above the count, which gives up its room first.
             state.importProgress?.let { ImportProgress(it) }
             state.importSummary?.let {
                 ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
@@ -195,7 +195,7 @@ private fun CounterScreenOutingInProgressPreview() {
     }
 }
 
-@Preview(heightDp = 600, fontScale = 1.5f, showBackground = true)
+@Preview(heightDp = 600, fontScale = 1.5f)
 @Composable
 private fun CounterScreenCrampedPreview() {
     CatsRadarTheme {
