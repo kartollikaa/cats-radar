@@ -77,6 +77,7 @@ mode that will is its own slice of the Map epic.
 - **Distance is great-circle** (`trackLengthMeters`), on the Earth's mean radius: within half a
   percent of the Earth's real shape, which on a step is far less than a phone fix's own error.
 - **A walk does not define an outing.** Outings stay derived from the cats alone (`outings.md`).
+- **Walks travel in backups**, merged so that no import shortens a route (`backup.md`).
 
 The database went from version 1 to 2 for these two tables, by an automatic migration that only adds
 them; `CatsDatabaseMigrationTest` opens a version-1 database with a cat in it, migrates, and checks
@@ -91,15 +92,11 @@ the cat is still there.
 - `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`,
   `PlaceCellMapper.kt`, `EncounterRepositoryImpl.kt`, `PlaceCellRepositoryImpl.kt`
 - Walks: `domain/.../model/Walk.kt`, `domain/.../geo/Distance.kt`, the use cases `StartWalk.kt`,
-  `EndWalk.kt`, `RecordTrackPoint.kt`; `data/.../db/WalkEntity.kt`, `WalkDao.kt`, and
+  `EndWalk.kt`, `RecordTrackPoint.kt`; `data/.../db/WalkEntity.kt`, `WalkDao.kt`, `TrackPointDao.kt`, and
   `data/.../repository/WalkRepositoryImpl.kt`
 
 Each schema version is exported to `data/schemas/dev.catsradar.data.db.CatsDatabase/<version>.json`,
 with a copy in the test assets that `SchemaAssetSyncTest` keeps identical to the export.
-
-## Not handled yet
-
-Walks do not travel in backups yet: an archive holds cats and place cells, as `backup.md` says.
 
 ## Purging
 

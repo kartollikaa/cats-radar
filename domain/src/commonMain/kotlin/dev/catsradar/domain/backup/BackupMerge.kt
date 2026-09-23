@@ -39,9 +39,13 @@ object BackupMerge {
             existing == null || replaces(offered = candidate, kept = existing)
         }
 
+        val (walks, trackPoints) = WalkMerge.merge(local = local, imported = imported)
+
         return MergeResult(
             encounters = encounters,
             placeCells = placeCells,
+            walks = walks,
+            trackPoints = trackPoints,
             added = added,
             updated = updated,
             unchanged = unchanged,
