@@ -62,12 +62,17 @@ has been rendering, and an archive should not quietly replace it.
   parse. Both reasons reach the caller, which decides what to say.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
-- **A cat whose coordinates are not a point on the globe is imported without a location.** A
-  latitude beyond ±90, a longitude beyond ±180, or only one of the pair: the cat arrives at `NONE`,
-  with no accuracy, fix time, geohash or place cell, rather than the whole archive being refused
-  over one hand-edited row. The cat is otherwise untouched — its `updatedAt` included, so importing
-  the same archive again still writes nothing — and the merge still picks whole rows: if that copy
-  wins over the one here, it wins without a location.
+- **A cat whose location is not a point on the globe is imported without one.** A latitude beyond
+  ±90, a longitude beyond ±180, only one of the pair, a source with no coordinates, or coordinates
+  on a cat marked `NONE`: the cat arrives at `NONE`, with no coordinates, accuracy, fix time,
+  geohash or place cell, rather than the whole archive being refused over one hand-edited row. The
+  cat is otherwise untouched — its `updatedAt` included, so importing the same archive again still
+  writes nothing — and the merge still picks whole rows: if that copy wins over the one here, it
+  wins without a location.
+- **A located cat's geohash and place cell are derived from its coordinates, not read from the
+  archive**, so a hand-edited geohash cannot disagree with the point it claims to describe. A cell
+  the archive does not carry is created pending, exactly as for a cat located on this device, and
+  a cell it does carry keeps its name.
 - **Reading the local side uses `loadEvery`**, the one read that sees soft-deleted rows. Every other
   read hides them, and a merge that could not see a deletion would let an old archive reinsert the
   cat as if it were new.
@@ -76,7 +81,8 @@ has been rendering, and an archive should not quietly replace it.
 
 - `domain/…/backup/BackupMerge.kt` — the rules, as one pure function
 - `domain/…/backup/BackupContents.kt` — what an archive holds, and what a merge decided
-- `domain/…/backup/ImportedLocation.kt` — what an imported cat keeps of a location off the globe
+- `domain/…/backup/ImportedLocation.kt` — what an imported cat keeps of its location, and what is
+  derived again
 - `domain/…/usecase/ExportBackup.kt`, `ImportBackup.kt`
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
 - `data/…/backup/BackupRecords.kt` — the serialized shape and its mappers

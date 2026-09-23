@@ -16,7 +16,8 @@ it a second time.
 
 Every path that gives an encounter a geohash goes through it, whatever produced the coordinates:
 a location fix (`AttachLocation`), or a photo's own EXIF, whether the camera just took it
-(`LogPhoto`) or it came from the gallery (`ImportPhotos`). Coordinates without a cell would be a cat
+(`LogPhoto`) or it came from the gallery (`ImportPhotos`) — and a cat restored from a backup
+(`ImportBackup`), whose cell the archive may not carry. Coordinates without a cell would be a cat
 that knows exactly where it was and still reads as "no location" in this screen.
 
 ## Naming them

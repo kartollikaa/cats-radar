@@ -21,6 +21,15 @@ import kotlin.time.Instant
 private val EARLY = Instant.parse("2026-09-01T00:00:00Z")
 private val LATE = Instant.parse("2026-09-20T00:00:00Z")
 
+private val locatedInMoscow = encounterAt(EARLY).copy(
+    id = "cat",
+    lat = 55.7558,
+    lon = 37.6173,
+    locationSource = LocationSource.EXIF,
+    geohash = "ucfv0n01",
+    placeCellId = "ucfv0n",
+)
+
 private class RecordingWriter(private val succeeds: Boolean = true) : BackupWriter {
     var written: BackupContents? = null
         private set
@@ -146,6 +155,27 @@ class ImportBackupTest {
 
         assertEquals(ImportBackupResult.Merged(added = 1, updated = 0, unchanged = 0), result)
         assertEquals(listOf(encounterAt(EARLY).copy(id = "cat")), encounters.inserted)
+    }
+
+    @Test
+    fun `a located cat whose cell the archive lacks gets a pending one`() = runTest {
+        val imported = BackupContents(encounters = listOf(locatedInMoscow))
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(PlaceStatus.PENDING, placeCells.loadById("ucfv0n")?.status)
+    }
+
+    @Test
+    fun `a cell the archive names is not replaced by a pending one`() = runTest {
+        val imported = BackupContents(
+            encounters = listOf(locatedInMoscow),
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED)),
+        )
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(PlaceStatus.RESOLVED, placeCells.loadById("ucfv0n")?.status)
     }
 
     @Test

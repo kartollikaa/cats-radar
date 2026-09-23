@@ -25,8 +25,8 @@ private val locatedPhoto = encounterAt(OCCURRED).copy(
     accuracyMeters = 12f,
     locationSource = LocationSource.CURRENT_FIX,
     locationFixedAt = FIXED,
-    geohash = "ucfv0h8y",
-    placeCellId = "ucfv0h",
+    geohash = "ucfv0n01",
+    placeCellId = "ucfv0n",
     updatedAt = EDITED,
 )
 
@@ -44,32 +44,53 @@ class ImportedLocationTest {
 
     @Test
     fun `a cat on the globe keeps its location`() {
-        assertEquals(locatedPhoto, locatedPhoto.withoutLocationUnlessOnGlobe())
+        assertEquals(locatedPhoto, locatedPhoto.withLocationFromCoordinates())
+    }
+
+    @Test
+    fun `a geohash and place cell that disagree with the coordinates are derived from them again`() {
+        val imported = locatedPhoto.copy(geohash = "u", placeCellId = "zzzzzz")
+
+        assertEquals(locatedPhoto, imported.withLocationFromCoordinates())
     }
 
     @Test
     fun `a latitude past a pole leaves the cat without a location`() {
         val imported = locatedPhoto.copy(lat = 155.7558)
 
-        assertEquals(unlocatedPhoto, imported.withoutLocationUnlessOnGlobe())
+        assertEquals(unlocatedPhoto, imported.withLocationFromCoordinates())
     }
 
     @Test
     fun `a longitude past the antimeridian leaves the cat without a location`() {
         val imported = locatedPhoto.copy(lon = -237.6173)
 
-        assertEquals(unlocatedPhoto, imported.withoutLocationUnlessOnGlobe())
+        assertEquals(unlocatedPhoto, imported.withLocationFromCoordinates())
     }
 
     @Test
     fun `half a coordinate pair leaves the cat without a location`() {
         val imported = locatedPhoto.copy(lon = null)
 
-        assertEquals(unlocatedPhoto, imported.withoutLocationUnlessOnGlobe())
+        assertEquals(unlocatedPhoto, imported.withLocationFromCoordinates())
+    }
+
+    @Test
+    fun `a location source with no coordinates leaves the cat without a location`() {
+        val imported = locatedPhoto.copy(lat = null, lon = null)
+
+        assertEquals(unlocatedPhoto, imported.withLocationFromCoordinates())
+    }
+
+    @Test
+    fun `coordinates on a cat marked as having no location are dropped`() {
+        val imported = locatedPhoto.copy(locationSource = LocationSource.NONE)
+
+        assertEquals(unlocatedPhoto, imported.withLocationFromCoordinates())
     }
 
     @Test
     fun `a cat that never had a location stays as it is`() {
-        assertEquals(unlocatedPhoto, unlocatedPhoto.withoutLocationUnlessOnGlobe())
+        assertEquals(unlocatedPhoto, unlocatedPhoto.withLocationFromCoordinates())
     }
 }
