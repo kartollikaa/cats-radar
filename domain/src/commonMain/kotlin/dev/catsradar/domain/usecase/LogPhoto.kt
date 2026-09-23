@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.photo.hasLocationOnGlobe
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
@@ -59,7 +60,7 @@ class LogPhoto(
         }
 
         val now = clock.now()
-        val hasExifLocation = exif.lat != null && exif.lon != null
+        val hasExifLocation = exif.hasLocationOnGlobe
         val geohash = if (hasExifLocation) {
             Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
         } else {
@@ -76,8 +77,8 @@ class LogPhoto(
             thumbPath = stored.thumbPath,
             galleryUri = galleryUri,
             sourceDigest = digest.sha256(sourceUri),
-            lat = exif.lat,
-            lon = exif.lon,
+            lat = exif.lat.takeIf { hasExifLocation },
+            lon = exif.lon.takeIf { hasExifLocation },
             accuracyMeters = null,
             locationSource = if (hasExifLocation) LocationSource.EXIF else LocationSource.NONE,
             locationFixedAt = if (hasExifLocation) now else null,

@@ -69,8 +69,10 @@ deliberate act, and refusing it would leave the user unable to undo their own de
 - **A Photo Picker URI serves a narrow projection** and throws on columns it does not recognise, so
   each date column is asked for on its own and a refusal reads as "no date" rather than a failed
   import. `DATE_TAKEN` is milliseconds; `DATE_ADDED` and `DATE_MODIFIED` are seconds.
-- **Half a coordinate pair is no coordinate pair.** A latitude without a longitude is treated as no
-  EXIF location at all.
+- **Half a coordinate pair, or a pair that is not a point on the globe, is no coordinate pair.** A
+  latitude without a longitude, a latitude beyond ±90, a longitude beyond ±180 or a value that is
+  not a number is treated as no EXIF location at all — so a recent photo still asks for a fix, and
+  an older one gets no location rather than an impossible one.
 
 ## Where the code lives
 

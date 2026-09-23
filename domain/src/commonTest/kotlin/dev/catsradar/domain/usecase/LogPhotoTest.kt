@@ -86,6 +86,52 @@ class LogPhotoTest {
     }
 
     @Test
+    fun `a photo whose EXIF coordinates are off the globe is logged without them and asks for a fix`() = runTest {
+        exif.data = ExifData(lat = 200.0, lon = 2.17842)
+
+        val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
+
+        assertNull(logged.encounter.lat)
+        assertNull(logged.encounter.lon)
+        assertNull(logged.encounter.geohash)
+        assertNull(logged.encounter.placeCellId)
+        assertEquals(LocationSource.NONE, logged.encounter.locationSource)
+        assertNull(logged.encounter.locationFixedAt)
+        assertTrue(logged.needsLocation)
+    }
+
+    @Test
+    fun `a photo whose EXIF coordinate is not a number is logged without a location`() = runTest {
+        exif.data = ExifData(lat = 41.39864, lon = Double.NaN)
+
+        val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
+
+        assertNull(logged.encounter.lon)
+        assertEquals(LocationSource.NONE, logged.encounter.locationSource)
+        assertTrue(logged.needsLocation)
+    }
+
+    @Test
+    fun `a photo whose EXIF coordinates are off the globe creates no place cell`() = runTest {
+        exif.data = ExifData(lat = 41.39864, lon = -237.5)
+
+        logPhoto()(SOURCE)
+
+        assertEquals(emptyList(), placeCells.upserted)
+    }
+
+    @Test
+    fun `half an EXIF coordinate pair is stored as no coordinates at all`() = runTest {
+        exif.data = ExifData(lat = 41.39864)
+
+        val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
+
+        assertNull(logged.encounter.lat)
+        assertNull(logged.encounter.lon)
+        assertEquals(LocationSource.NONE, logged.encounter.locationSource)
+    }
+
+    @Test
     fun `a camera photo's EXIF coordinates create the place cell that can name them`() = runTest {
         exif.data = ExifData(lat = 41.39864, lon = 2.17842)
 

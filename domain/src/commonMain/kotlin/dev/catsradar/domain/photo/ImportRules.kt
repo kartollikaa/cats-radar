@@ -49,7 +49,7 @@ object ImportRules {
         now: Instant,
         recentWindow: Duration = Tuning.RECENT_PHOTO_WINDOW,
     ): ImportLocation = when {
-        exif.lat != null && exif.lon != null -> ImportLocation.EXIF
+        exif.hasLocationOnGlobe -> ImportLocation.EXIF
         (now - occurredAt).absoluteValue <= recentWindow -> ImportLocation.NEEDS_FIX
         else -> ImportLocation.NONE
     }
