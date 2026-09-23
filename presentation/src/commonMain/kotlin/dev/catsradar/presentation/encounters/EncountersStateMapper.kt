@@ -6,6 +6,7 @@ import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.map.isOnTheMap
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -30,7 +31,7 @@ class EncountersStateMapper(
         val header = EncounterListItem.OutingHeader(
             key = "header-${earliest.id}",
             label = outingLabel(outing, today),
-            mapOutingId = earliest.id.takeIf { outing.any { it.lat != null && it.lon != null } },
+            mapOutingId = earliest.id.takeIf { outing.any { it.isOnTheMap() } },
         )
         val rows = outing.asReversed()
         return listOf(header) + rows.mapIndexed { index, encounter ->

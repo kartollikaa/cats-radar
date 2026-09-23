@@ -97,7 +97,11 @@ private fun OutingHeaderRow(
             color = MaterialTheme.colorScheme.primary,
         )
         header.mapOutingId?.let { id ->
-            TextButton(onClick = { onMapClick(id) }) {
+            val description = stringResource(R.string.encounters_outing_on_map_description, header.label)
+            TextButton(
+                onClick = { onMapClick(id) },
+                modifier = Modifier.semantics { contentDescription = description },
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_nav_map),
                     contentDescription = null,

@@ -179,6 +179,49 @@ class MapStoreTest {
             assertEquals(3, everyCat.points.size)
         }
 
+    @Test
+    fun `a focus whose outing loses its last located cat is let go, and does not come back on its own`() =
+        runTest(mainDispatcher) {
+            val tally = encounterFixture("tally", BASE)
+            val located = located("located", minute = 5)
+            repository.insert(tally)
+            repository.insert(located)
+            repository.insert(located("other outing", minute = 180))
+            val store = newStore()
+            runCurrent()
+            store.dispatch(MapIntent.OutingFocused("tally"))
+            runCurrent()
+            assertEquals("tally", assertIs<MapState.Located>(store.state.value).focus?.outingId)
+
+            repository.update(located.copy(deletedAt = BASE + 1.hours))
+            runCurrent()
+            repository.update(tally.copy(lat = 41.40, lon = 2.18))
+            runCurrent()
+
+            assertNull(assertIs<MapState.Located>(store.state.value).focus)
+        }
+
+    @Test
+    fun `a spot whose cats are all deleted closes, and restoring one does not reopen it`() = runTest(mainDispatcher) {
+        val a = located("a", minute = 0)
+        val b = located("b", minute = 5)
+        repository.insert(a)
+        repository.insert(b)
+        repository.insert(located("elsewhere", minute = 180))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(MapIntent.CatsTapped(listOf("a", "b")))
+        runCurrent()
+
+        repository.update(a.copy(deletedAt = BASE + 1.hours))
+        repository.update(b.copy(deletedAt = BASE + 1.hours))
+        runCurrent()
+        repository.update(a)
+        runCurrent()
+
+        assertNull(store.state.value.spot())
+    }
+
     // Floating-point padding: compare the area to a millionth of a degree.
     private fun MapState.roundedArea(): MapState = when (this) {
         is MapState.Located -> copy(area = area.run { MapArea(south.r(), west.r(), north.r(), east.r()) })

@@ -36,7 +36,12 @@ class MapStore(
 
     init {
         combine(observeEncounters(), openSpot, focus) { encounters, spot, outing ->
-            setState { stateMapper.map(encounters, clock.today(timeZone), spot, outing) }
+            val mapped = stateMapper.map(encounters, clock.today(timeZone), spot, outing)
+            val shown = mapped as? MapState.Located
+            // A spot or focus the cats no longer match is let go, so it cannot reopen by itself later.
+            if (spot != null && shown?.spot == null) openSpot.value = null
+            if (outing != null && shown?.focus == null) focus.value = null
+            setState { mapped }
         }.launchIn(viewModelScope)
     }
 

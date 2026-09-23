@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDate
 private const val MIN_AREA_DEGREES = 0.01
 
 private const val MAX_LATITUDE = 90.0
-private const val MAX_LONGITUDE = 180.0
 
 class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
 
@@ -35,7 +34,7 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
     private fun focusedOuting(encounters: List<Encounter>, id: String): List<Encounter>? =
         SessionSplitter.groupByOuting(encounters)
             .firstOrNull { outing -> outing.any { it.id == id } }
-            ?.takeIf { outing -> outing.any { it.toPoint() != null } }
+            ?.takeIf { outing -> outing.any { it.isOnTheMap() } }
 
     private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
         if (cats.isEmpty()) return null
@@ -45,13 +44,9 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
     private fun Encounter.toPoint(): MapPoint? {
         val latitude = lat
         val longitude = lon
-        if (deletedAt != null || latitude == null || longitude == null) return null
-        val point = MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
-        return if (isOnEarth(latitude, longitude)) point else null
+        if (!isOnTheMap() || latitude == null || longitude == null) return null
+        return MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
     }
-
-    private fun isOnEarth(latitude: Double, longitude: Double): Boolean =
-        latitude in -MAX_LATITUDE..MAX_LATITUDE && longitude in -MAX_LONGITUDE..MAX_LONGITUDE
 
     private fun areaAround(points: List<MapPoint>): MapArea {
         val south = points.minOf { it.latitude }

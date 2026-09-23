@@ -221,6 +221,17 @@ class EncountersStateMapperTest {
         assertEquals(listOf(null, "first"), headers.map { it.mapOutingId })
     }
 
+    @Test
+    fun `an outing whose only coordinates are off the globe offers no map`() {
+        val offGlobe = encounterFixture("off", BASE).copy(lat = 123.4, lon = 2.17)
+
+        val header = mapper.map(listOf(offGlobe), today).rows
+            .filterIsInstance<EncounterListItem.OutingHeader>()
+            .single()
+
+        assertEquals(null, header.mapOutingId)
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
     }

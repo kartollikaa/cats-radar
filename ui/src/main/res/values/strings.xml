@@ -47,6 +47,7 @@
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
     <string name="encounters_outing_on_map">On the map</string>
+    <string name="encounters_outing_on_map_description">Show the outing of %1$s on the map</string>
     <string name="encounters_photo_description">Photo of this cat</string>
 
     <string name="location_from_photo">From photo</string>
