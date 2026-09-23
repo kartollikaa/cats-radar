@@ -2,6 +2,7 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.EndWalk
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
@@ -14,13 +15,16 @@ import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
 import dev.catsradar.domain.usecase.PurgeDeleted
+import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
+import dev.catsradar.domain.usecase.StartWalk
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import kotlin.time.Clock
 
@@ -28,6 +32,9 @@ val domainModule = module {
     single<Clock> { Clock.System }
     single { TimeZone.currentSystemDefault() }
     factoryOf(::LogTally)
+    factoryOf(::StartWalk)
+    factoryOf(::EndWalk)
+    singleOf(::RecordTrackPoint) // one instance, so every caller waits on the same turn
     factoryOf(::LogPhoto)
     // Constructed by hand: timeZone has a default, which factoryOf would try to inject.
     factory {

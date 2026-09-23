@@ -6,12 +6,18 @@ import androidx.room3.RoomDatabase
 
 // A separate @Database over the same entities/version, adding SchemaProbeDao for tests. It needs
 // no @ConstructedBy/expect-actual: it's only ever built from this Android-only test source set.
-@Database(entities = [EncounterEntity::class, PlaceCellEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [EncounterEntity::class, PlaceCellEntity::class, WalkEntity::class, TrackPointEntity::class],
+    version = 2,
+    exportSchema = false,
+)
 @ColumnTypeConverters(InstantConverters::class, EnumConverters::class)
 internal abstract class TestCatsDatabase : RoomDatabase() {
     abstract fun encounterDao(): EncounterDao
 
     abstract fun placeCellDao(): PlaceCellDao
+
+    abstract fun walkDao(): WalkDao
 
     abstract fun schemaProbeDao(): SchemaProbeDao
 }
