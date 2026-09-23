@@ -38,6 +38,11 @@ has both.
   lasts are cleared, so one that may still be answered, even by the app open in another task, stays.
 - **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
 - **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
+- **EXIF coordinates that are not a point on the globe are no coordinates** — a latitude beyond
+  ±90, a longitude beyond ±180, a value that is not a number, or only one of the pair. The photo is
+  logged without them and goes to the background attach like one with no GPS at all.
+  `ExifInterface` applies no range check of its own: a corrupt GPS tag reaches the app as, say,
+  200°, and a zero denominator as infinity or, for `0/0`, not a number.
 
 ## The gallery setting
 
@@ -120,6 +125,7 @@ unchanged and could not tell a correct resize from a broken one.
 ## Where the code lives
 
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
+- `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
