@@ -38,6 +38,11 @@ has both.
   lasts are cleared, so one that may still be answered, even by the app open in another task, stays.
 - **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
 - **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
+- **EXIF coordinates that are not a point on the globe are no coordinates** — a latitude beyond
+  ±90, a longitude beyond ±180, a value that is not a number, or only one of the pair. The photo is
+  logged without them and goes to the background attach like one with no GPS at all.
+  `ExifInterface` applies no range check of its own: a corrupt GPS tag reaches the app as, say,
+  200°, and a zero denominator as infinity or, for `0/0`, not a number.
 
 ## The gallery setting
 
@@ -120,6 +125,7 @@ unchanged and could not tell a correct resize from a broken one.
 ## Where the code lives
 
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
+- `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
@@ -127,15 +133,16 @@ unchanged and could not tell a correct resize from a broken one.
 
 ## Seeing one
 
-A photo encounter shows its thumbnail in the Encounters list and the app's full copy on the detail
-screen, both loaded from app-private storage with Coil. The mapper resolves the stored **relative**
-path into an absolute one — the row carries a path Coil can open, not the path the database happens
-to hold.
+A photo encounter shows its thumbnail in an Encounters tile or card, the app's full copy when it
+shares a pair row with the photo next to it (see `browsing-cats.md`), and the full copy on the detail
+screen, all loaded from app-private storage with Coil. The mapper resolves the stored **relative**
+path into an absolute one — the cell carries a path Coil can open, not the path the database happens
+to hold. A pair tile with no full copy falls back to its thumbnail.
 
-A row with no thumbnail leads with the cat's coat, or a paw when no coat was noted, in a tile the
-same size — covering both a tally, which never had a photo, and a photo whose thumbnail failed to
-write while the copy succeeded. The list keeps its rhythm either way rather than shifting when a
-thumbnail is missing.
+A cat with no thumbnail leads with its coat, or a paw when no coat was noted, in a tile the same
+size — covering both a tally, which never had a photo, and a photo whose thumbnail failed to write
+while the copy succeeded. Such a photo never joins a pair: the grid packs it like any cat without
+one.
 
 ## Not built yet
 

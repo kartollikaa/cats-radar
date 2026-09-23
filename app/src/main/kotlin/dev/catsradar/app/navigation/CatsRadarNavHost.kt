@@ -98,7 +98,7 @@ internal fun catsRadarEntries(
     entry<Encounters>(metadata = tabRootMetadata()) {
         EncountersDestination(
             contentPadding = contentPadding,
-            onRowClick = { id -> backStack.push(EncounterDetail(id)) },
+            onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
     entry<Statistics>(metadata = tabRootMetadata()) {

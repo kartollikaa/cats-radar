@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.worker.LocationAttachScheduler
+import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.platform.Digest
@@ -56,6 +57,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<Haptics>())
         assertNotNull(koin.get<LocationProvider>())
         assertNotNull(koin.get<LocationAttachScheduler>())
+        assertNotNull(koin.get<PlaceNamingTrigger>())
         assertNotNull(koin.get<ExifReader>())
         assertNotNull(koin.get<ImportPhotos>())
         assertNotNull(koin.get<ExportBackup>())

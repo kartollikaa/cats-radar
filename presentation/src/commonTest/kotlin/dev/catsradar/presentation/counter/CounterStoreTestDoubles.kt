@@ -19,11 +19,13 @@ import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 internal class FakeEncounterRepository : EncounterRepository {
@@ -33,6 +35,10 @@ internal class FakeEncounterRepository : EncounterRepository {
     var insertShouldThrow: Throwable? = null
     var softDeleteShouldThrow: Throwable? = null
 
+    /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
+    val insertDelays = ArrayDeque<Duration>()
+    var softDeleteDelay: Duration = Duration.ZERO
+
     fun encounters(): List<Encounter> = encounters.value
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
@@ -40,6 +46,7 @@ internal class FakeEncounterRepository : EncounterRepository {
         encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
 
     override suspend fun insert(encounter: Encounter) {
+        insertDelays.removeFirstOrNull()?.let { delay(it) }
         insertShouldThrow?.let { throw it }
         insertedIds += encounter.id
         encounters.update { it + encounter }
@@ -71,6 +78,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
+        delay(softDeleteDelay)
         softDeleteShouldThrow?.let { throw it }
         softDeletedIds += id
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
@@ -166,8 +174,10 @@ internal class FakePlaceCellRepository : PlaceCellRepository {
 
     override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
 
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
-        cells.value.filter { it.status == PlaceStatus.PENDING }.drop(offset).take(limit)
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
+        cells.value.filter { it.status == PlaceStatus.PENDING && (afterCellId == null || it.cellId > afterCellId) }
+            .sortedBy { it.cellId }
+            .take(limit)
 }
 
 internal class FakeGallerySaver : GallerySaver {

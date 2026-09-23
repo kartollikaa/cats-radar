@@ -5,13 +5,7 @@ import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.ExifData
-import dev.catsradar.domain.usecase.LogPhoto
-import dev.catsradar.domain.usecase.LogTally
-import dev.catsradar.domain.usecase.ObserveStats
-import dev.catsradar.domain.usecase.UndoImport
-import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,7 +20,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.TimeZone
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -36,8 +29,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CounterStoreTest {
@@ -54,12 +45,8 @@ class CounterStoreTest {
         Dispatchers.resetMain()
     }
 
-    // Milestones are silenced by default so a test about undo or photos is not also a test about
-    // celebrating the first cat; the milestone tests pass their own starting point.
-    private val settings = FakeSettingsRepository(lastMilestone = Tuning.MILESTONES.last())
     private val exifReader = FakeExifReader()
     private val imageResizer = FakeImageResizer()
-    private val gallerySaver = FakeGallerySaver()
 
     private fun milestonesIn(events: List<Event<CounterEffect>>): List<CounterEffect.MilestoneReached> =
         events.filterIsInstance<Event.Item<CounterEffect>>()
@@ -69,35 +56,16 @@ class CounterStoreTest {
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
         locationPermissionRequestState: FakeLocationPermissionRequestState = FakeLocationPermissionRequestState(),
-        settingsRepository: FakeSettingsRepository = settings,
+        settingsRepository: FakeSettingsRepository = milestonesAlreadyCelebrated(),
         ticks: Flow<Unit> = flowOf(Unit),
-    ): Pair<CounterStore, FakeEncounterRepository> {
-        val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
-        val store = CounterStore(
-            logTally = LogTally(encounterRepository, FakeIdGenerator(), FakeDeviceIdProvider(), clock, TimeZone.UTC),
-            logPhoto = LogPhoto(
-                encounterRepository = encounterRepository,
-                placeCellRepository = FakePlaceCellRepository(),
-                settingsRepository = settingsRepository,
-                exifReader = exifReader,
-                imageResizer = imageResizer,
-                digest = FakeDigest(),
-                gallerySaver = gallerySaver,
-                idGenerator = FakeIdGenerator(),
-                deviceIdProvider = FakeDeviceIdProvider(),
-                clock = clock,
-                timeZone = TimeZone.UTC,
-            ),
-            undoLastTally = UndoLastTally(encounterRepository, clock),
-            undoImport = UndoImport(encounterRepository, clock),
-            observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
-            settingsRepository = settingsRepository,
-            stateMapper = CounterStateMapper(FakeDateTimeFormatter()),
-            locationPermissionRequestState = locationPermissionRequestState,
-        )
-        runCurrent()
-        return store to encounterRepository
-    }
+    ): Pair<CounterStore, FakeEncounterRepository> = newCounterStore(
+        encounterRepository = encounterRepository,
+        locationPermissionRequestState = locationPermissionRequestState,
+        settingsRepository = settingsRepository,
+        exifReader = exifReader,
+        imageResizer = imageResizer,
+        ticks = ticks,
+    ) to encounterRepository
 
     @Test
     fun `tapping the camera button asks the screen to open the camera`() = runTest(mainDispatcher) {
@@ -335,73 +303,6 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `undo targets the most recently created encounter and a second undo is a no-op`() = runTest(mainDispatcher) {
-        val (store, repository) = newStore()
-
-        store.dispatch(CounterIntent.TallyClicked)
-        runCurrent()
-        store.dispatch(CounterIntent.TallyClicked)
-        runCurrent()
-        val newestId = repository.insertedIds.last()
-
-        store.dispatch(CounterIntent.UndoClicked)
-        runCurrent()
-        store.dispatch(CounterIntent.UndoClicked)
-        runCurrent()
-
-        assertEquals(listOf(newestId), repository.softDeletedIds)
-        assertEquals("1", store.state.value.totalLabel)
-    }
-
-    @Test
-    fun `undo emits CancelLocationAttach for the target id, but a second undo does not`() = runTest(mainDispatcher) {
-        val (store, _) = newStore()
-
-        store.effects.test {
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-            assertEquals(CounterEffect.HapticTick, awaitItem())
-            assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
-            assertEquals(CounterEffect.AttachLocation("id-1"), awaitItem())
-
-            store.dispatch(CounterIntent.UndoClicked)
-            runCurrent()
-            assertEquals(CounterEffect.CancelLocationAttach("id-1"), awaitItem())
-
-            store.dispatch(CounterIntent.UndoClicked)
-            runCurrent()
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `a second tap restarts the undo window, which then expires and disables undo`() = runTest(mainDispatcher) {
-        val (store, repository) = newStore()
-        val margin = 1.seconds
-
-        store.dispatch(CounterIntent.TallyClicked)
-        runCurrent()
-        advanceTimeBy((Tuning.UNDO_VISIBLE - margin).inWholeMilliseconds)
-        runCurrent()
-        store.dispatch(CounterIntent.TallyClicked)
-        runCurrent()
-
-        // Past the first tap's original deadline: still visible only because the second tap
-        // restarted the window instead of the first tap's timer firing on schedule.
-        advanceTimeBy((margin + margin).inWholeMilliseconds)
-        runCurrent()
-        assertTrue(store.state.value.undoVisible)
-
-        advanceTimeBy(Tuning.UNDO_VISIBLE.inWholeMilliseconds)
-        runCurrent()
-        assertFalse(store.state.value.undoVisible)
-
-        store.dispatch(CounterIntent.UndoClicked)
-        runCurrent()
-        assertEquals(emptyList<String>(), repository.softDeletedIds)
-    }
-
-    @Test
     fun `tapping shows a plus-one that grows with each tap in the same run`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
 
@@ -505,32 +406,6 @@ class CounterStoreTest {
         runCurrent()
 
         assertNull(repository.encounters().single().coat)
-    }
-
-    @Test
-    fun `the grid shows which coat the undoable cat had, and forgets it once undone`() =
-        runTest(mainDispatcher) {
-            val (store, _) = newStore()
-
-            store.dispatch(CounterIntent.CoatTallyClicked(CoatOption.BLACK))
-            runCurrent()
-            assertEquals(CoatOption.BLACK, store.state.value.lastCoat)
-
-            store.dispatch(CounterIntent.UndoClicked)
-            runCurrent()
-            assertNull(store.state.value.lastCoat)
-        }
-
-    @Test
-    fun `a coat tap is undoable like any other cat`() = runTest(mainDispatcher) {
-        val (store, repository) = newStore()
-
-        store.dispatch(CounterIntent.CoatTallyClicked(CoatOption.GINGER))
-        runCurrent()
-        store.dispatch(CounterIntent.UndoClicked)
-        runCurrent()
-
-        assertEquals(1, repository.softDeletedIds.size)
     }
 
     @Test

@@ -16,11 +16,16 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun EncountersDestination(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    onRowClick: (String) -> Unit = {},
+    onEncounterClick: (String) -> Unit = {},
 ) {
     val store = koinViewModel<EncountersStore>()
     val state by store.state.collectAsStateWithLifecycle()
-    EncountersScreen(state = state, modifier = modifier, contentPadding = contentPadding, onRowClick = onRowClick)
+    EncountersScreen(
+        state = state,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        onEncounterClick = onEncounterClick,
+    )
 }
 
 @Composable
