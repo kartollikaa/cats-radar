@@ -141,6 +141,7 @@
     <string name="notification_walking_title">На прогулке за котиками</string>
     <string name="notification_walking_tally">Котик!</string>
     <string name="notification_walking_stop">Хватит</string>
+    <string name="notification_walking_photo">Фото</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d котик за прогулку</item>
         <item quantity="few">%1$d котика за прогулку</item>

@@ -12,8 +12,9 @@ when something about it cannot be read.
 The Photo button on the counter opens the system camera, which writes its original to a
 `FileProvider` URI under the cache directory. On the way back `LogPhoto` reads the EXIF, stores the
 app's copies, hands the original to the gallery if the setting allows, and saves one encounter with
-`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile ends up on the
-same path: it opens the app on the counter and presses that button (see [widget.md](./widget.md)).
+`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile and the walking
+notification's Photo button end up on the same path: each opens the app on the counter and presses
+that button (see [widget.md](./widget.md) and [walking-mode.md](./walking-mode.md#photo)).
 
 The order matters and is deliberate: **the app's own copy is written first**. A gallery item for an
 encounter that does not exist would be worse than no gallery item, so an unreadable photo produces
