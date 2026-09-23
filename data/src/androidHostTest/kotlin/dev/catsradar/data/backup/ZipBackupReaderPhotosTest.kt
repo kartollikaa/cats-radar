@@ -16,6 +16,7 @@ import java.io.File
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /** What reading an archive may and may not leave in the photo directory. */
@@ -33,6 +34,41 @@ class ZipBackupReaderPhotosTest {
     private fun target(): String = File(temporaryFolder.root, "backup.zip").path
 
     private fun photoRestored(relativePath: String): Boolean = photoStorage.fileFor(relativePath).exists()
+
+    private val staging get() = File(context.filesDir, STAGING_DIR)
+
+    @Test
+    fun aPhotoInAFolderOfItsOwnIsRestoredThoughTheArchiveListsTheFolder() = runTest {
+        val path = target()
+        File(path).writeArchive(
+            MANIFEST_ENTRY to VALID_MANIFEST,
+            ENCOUNTERS_ENTRY to catWithPhotos("sub/cat.jpg"),
+            "${PHOTOS_PREFIX}sub/" to "",
+            "${PHOTOS_PREFIX}sub/cat.jpg" to "jpeg bytes",
+        )
+
+        assertIs<BackupReadResult.Readable>(reader().read(path))
+        assertEquals("jpeg bytes", photoStorage.fileFor("sub/cat.jpg").readText())
+    }
+
+    @Test
+    fun nothingUnpackedStaysBehindWhetherTheArchiveIsTakenOrRefused() = runTest {
+        File(staging, "left-by-a-killed-run").apply { parentFile?.mkdirs() }.writeText("stale")
+        val taken = target()
+        File(taken).writeArchive(
+            MANIFEST_ENTRY to VALID_MANIFEST,
+            ENCOUNTERS_ENTRY to catWithPhotos("cat.jpg"),
+            "${PHOTOS_PREFIX}cat.jpg" to "jpeg bytes",
+        )
+        val refused = File(temporaryFolder.root, "newer.zip").apply {
+            writeArchive(MANIFEST_ENTRY to NEWER_MANIFEST, "${PHOTOS_PREFIX}dog.jpg" to "jpeg bytes")
+        }
+
+        assertIs<BackupReadResult.Readable>(reader().read(taken))
+        assertFalse(staging.exists(), "unpacked photos stayed after an accepted archive")
+        reader().read(refused.path)
+        assertFalse(staging.exists(), "unpacked photos stayed after a refused archive")
+    }
 
     @Test
     fun anArchiveFromANewerVersionLeavesNoPhotoBehind() = runTest {

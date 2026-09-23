@@ -27,11 +27,11 @@ class ZipBackupReaderRejectionTest {
 
     private fun reader() = ZipBackupReader(context, AndroidPhotoStorage(context))
 
-    private fun target(): String = File(temporaryFolder.root, "backup.zip").path
+    private val target: String get() = File(temporaryFolder.root, "backup.zip").path
 
     @Test
     fun anArchiveFromANewerVersionIsRefusedWholesale() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(
             MANIFEST_ENTRY to """{"formatVersion":99,"exportedAt":0,"deviceId":"d","appVersion":"9"}""",
             ENCOUNTERS_ENTRY to "[]",
@@ -51,7 +51,7 @@ class ZipBackupReaderRejectionTest {
 
     @Test
     fun anArchiveWithNoManifestIsRefused() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(ENCOUNTERS_ENTRY to "[]")
 
         assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader().read(path))
@@ -59,7 +59,7 @@ class ZipBackupReaderRejectionTest {
 
     @Test
     fun anArchiveWhoseRowsAreCorruptIsRefusedRatherThanPartlyRead() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(
             MANIFEST_ENTRY to VALID_MANIFEST,
             ENCOUNTERS_ENTRY to """[{"id":"a"}]""",
@@ -70,7 +70,7 @@ class ZipBackupReaderRejectionTest {
 
     @Test
     fun aPhotoEntryThatClimbsOutOfThePhotoDirectoryIsRefused() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(
             MANIFEST_ENTRY to VALID_MANIFEST,
             ENCOUNTERS_ENTRY to "[]",
@@ -85,7 +85,7 @@ class ZipBackupReaderRejectionTest {
 
     @Test
     fun aFormatOneArchiveWithNoWalksStillReads() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(MANIFEST_ENTRY to VALID_MANIFEST, ENCOUNTERS_ENTRY to "[]")
 
         val read = reader().read(path)
@@ -97,7 +97,7 @@ class ZipBackupReaderRejectionTest {
 
     @Test
     fun aNewerArchiveWhoseRowsThisVersionCannotParseIsRefusedAsNewerWhereverItsManifestIs() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(
             ENCOUNTERS_ENTRY to """[{"id":"a","occurredAt":"2026-09-20T08:00:00Z"}]""",
             MANIFEST_ENTRY to NEWER_MANIFEST,
@@ -107,8 +107,19 @@ class ZipBackupReaderRejectionTest {
     }
 
     @Test
+    fun aNewerArchiveWhoseManifestHasChangedShapeIsStillRefusedAsNewer() = runTest {
+        val path = target
+        File(path).writeArchive(
+            MANIFEST_ENTRY to """{"formatVersion":99,"exportedAt":"2031-01-01T00:00:00Z","device":{"id":"d"}}""",
+            ENCOUNTERS_ENTRY to "[]",
+        )
+
+        assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader().read(path))
+    }
+
+    @Test
     fun anArchiveWithNoPlaceCellsFileStillReads() = runTest {
-        val path = target()
+        val path = target
         File(path).writeArchive(
             MANIFEST_ENTRY to VALID_MANIFEST,
             ENCOUNTERS_ENTRY to "[]",

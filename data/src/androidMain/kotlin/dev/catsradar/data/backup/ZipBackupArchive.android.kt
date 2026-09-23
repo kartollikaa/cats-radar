@@ -12,6 +12,7 @@ import dev.catsradar.domain.platform.DeviceIdProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
@@ -132,11 +133,12 @@ class ZipBackupReader(
 
     private fun readArchive(source: String, staging: File): BackupReadResult {
         val unpacked = context.openRead(source)?.use { unpack(it, staging) }
-        val manifest = unpacked?.texts?.get(MANIFEST_ENTRY)?.let { ArchiveJson.decodeFromString<BackupManifest>(it) }
+        val manifest = unpacked?.texts?.get(MANIFEST_ENTRY)?.let { ArchiveJson.decodeFromString<ManifestVersion>(it) }
         val encounters = unpacked?.texts?.get(ENCOUNTERS_ENTRY)
         return when {
             manifest == null || encounters == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
-            // Before any row is decoded: a newer version's rows may not parse in this one at all.
+            // Before any row is decoded, and from the version alone: a newer version's rows, or the rest
+            // of its manifest, may not parse in this one at all.
             manifest.formatVersion > BACKUP_FORMAT_VERSION -> BackupReadResult.Rejected(BackupRejection.TOO_NEW)
             else -> {
                 val contents = BackupContents(
@@ -163,6 +165,7 @@ class ZipBackupReader(
             generateSequence { zip.nextEntry }.forEach { entry ->
                 when {
                     entry.name in archiveTextEntries -> unpacked.texts[entry.name] = zip.readText()
+                    entry.isDirectory -> Unit
                     entry.name.startsWith(PHOTOS_PREFIX) ->
                         stagePhoto(entry.name.removePrefix(PHOTOS_PREFIX), zip, staging, unpacked)
                 }
@@ -188,8 +191,11 @@ class ZipBackupReader(
     private fun ZipInputStream.readText(): String = readBytes().decodeToString()
 }
 
+@Serializable
+private data class ManifestVersion(val formatVersion: Int)
+
 private val archiveTextEntries =
     setOf(MANIFEST_ENTRY, ENCOUNTERS_ENTRY, PLACE_CELLS_ENTRY, WALKS_ENTRY, TRACK_POINTS_ENTRY)
 
 // Beside the photo directory, not in the cache: a staged photo moves into place by rename.
-private const val STAGING_DIR = "backup-import"
+internal const val STAGING_DIR = "backup-import"
