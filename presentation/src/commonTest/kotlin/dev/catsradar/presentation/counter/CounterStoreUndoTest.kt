@@ -159,6 +159,7 @@ class CounterStoreUndoTest {
             store.dispatch(CounterIntent.TallyClicked)
             runCurrent()
         }
+        assertEquals(3, store.state.value.tapBurst)
 
         val bursts = List(3) {
             store.dispatch(CounterIntent.UndoClicked)
