@@ -67,6 +67,12 @@ Two things are required for promotion to happen at all:
 notification is promoted just the same and the chip carries only the icon, which is why the count
 goes in as a bare number rather than a sentence.
 
+The icon beside that number, and in the shade, is the cat's face: the coat picker's head with the
+eyes and nose cut out, the same silhouette as the themed launcher icon. Android draws a
+notification's icon from its alpha alone, so the face's colours cannot carry over; the cut-outs are
+what keep it a face rather than a blob with ears. Like the launcher's, the drawable holds its own
+copy of `CatFacePaths`, and `CatIconTest` fails if it drifts.
+
 Channel importance is not one of them either; it matters for the lock screen instead (below).
 
 Promotion is prominence, not capability — which is why it could be a separate slice from the feature
@@ -148,6 +154,7 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 ## Where the code lives
 
 - `app/…/notification/WalkingNotifier.kt` — the notification, its channel and its actions
+- `app/…/res/drawable/ic_notification_cat.xml` — its icon, the face's silhouette
 - `app/…/photo/TakePhotoShortcut.kt` — the Photo intent, shared with the widget
 - `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
@@ -156,8 +163,8 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 
 ## Not built yet
 
-The chip's icon is the same placeholder the notification uses; it gets a real one in the design
-pass. No automatic stop, so a mode left on stays on until it is turned off —
+The Counter chip's walking figure is a placeholder; it gets a real one in the design pass. No
+automatic stop, so a mode left on stays on until it is turned off —
 there is no rule yet for what "the walk ended" would mean that the gap-based outing does not already
 answer. A reboot leaves the flag on but the shade empty until something starts the app again;
 nothing listens for `BOOT_COMPLETED`.

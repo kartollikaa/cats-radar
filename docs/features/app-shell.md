@@ -81,10 +81,11 @@ blip just behind the sweep line. The cat is the adaptive icon's foreground and t
 background, so the launcher's parallax moves them apart. The themed (monochrome) layer is the head's
 silhouette with the eyes and nose cut out, plus the blip. A vector drawable cannot read a Kotlin
 constant, so the foreground and monochrome drawables carry their own copies of the face's paths.
-`LauncherIconTest` fails if either copy stops matching `CatFacePaths`, so a change to the face has
-to be copied into both. The two inner rings stay inside the safe zone, so a launcher shape with
-inward curves never cuts them. The third ring lies beyond the circle and shows only in the corners
-of squarer shapes.
+`CatIconTest` fails if either copy stops matching `CatFacePaths`, and so does the walking
+notification's icon, a third copy ([walking-mode.md](./walking-mode.md#a-live-update-from-api-361)),
+so a change to the face has to be copied into all three. The two inner rings stay inside the safe
+zone, so a launcher shape with inward curves never cuts them. The third ring lies beyond the circle
+and shows only in the corners of squarer shapes.
 
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.

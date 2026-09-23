@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import dev.catsradar.app.MainActivity
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.ui.R
+import dev.catsradar.app.R as AppR
 
 // Android lets an app lower a channel's importance but never raise it; a raised one needs a new id.
 private const val CHANNEL_ID = "walking_lock_screen"
@@ -46,7 +47,7 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
 
     override fun show(count: Int) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_myplaces)
+            .setSmallIcon(AppR.drawable.ic_notification_cat)
             .setContentTitle(context.getString(R.string.notification_walking_title))
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
             .setOngoing(true)
