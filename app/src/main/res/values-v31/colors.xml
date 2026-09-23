@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 derives the wallpaper surface's tone at runtime before API 34, so no system
+         resource holds it; this is the nearest tone the system does publish. -->
+    <color name="window_background">@android:color/system_neutral2_10</color>
+</resources>

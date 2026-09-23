@@ -2,6 +2,7 @@ package dev.catsradar.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -31,11 +32,11 @@ private val CatsRadarShapes = Shapes(
 
 @Composable
 fun CatsRadarTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    colorScheme: ColorScheme = catsRadarColorScheme(isSystemInDarkTheme()),
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) CatsRadarDarkColors else CatsRadarLightColors,
+        colorScheme = colorScheme,
         shapes = CatsRadarShapes,
         typography = CatsRadarTypography,
         content = content,

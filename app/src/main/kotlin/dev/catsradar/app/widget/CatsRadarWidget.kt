@@ -1,6 +1,7 @@
 package dev.catsradar.app.widget
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +24,8 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.color.ColorProviders
+import androidx.glance.color.DynamicThemeColorProviders
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
@@ -49,8 +52,12 @@ import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-// Given explicitly: without it Glance paints the widget in wallpaper colours on Android 12+.
-private val WidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
+private val TealWidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
+
+// Resource-backed, so the launcher repaints the widget when the wallpaper changes; colours read from
+// a ColorScheme here would stay as they were until the widget's next update.
+internal fun widgetColors(): ColorProviders =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) DynamicThemeColorProviders else TealWidgetColors
 
 // Between the platform's reference cell sizes rather than on them: one upright phone cell is
 // narrower than Wide and shorter than Tall, and a landscape row is still taller than Wide.
@@ -84,7 +91,7 @@ class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
         val current = counts.first()
         provideContent {
             val today by counts.collectAsState(initial = current)
-            GlanceTheme(colors = WidgetColors) {
+            GlanceTheme(colors = widgetColors()) {
                 WidgetContent(today)
             }
         }
