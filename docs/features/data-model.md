@@ -29,6 +29,14 @@ an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
 purpose, unguarded: `undoDelete`, because undo is meant to resurrect the row, and a backup import
 whose copy of a cat deleted here was edited after the deletion (see `backup.md`).
 
+Undoing a batch is guarded, unlike `undoDelete`. `softDeleteAll` stamps every row of a batch with one
+`deletedAt`, and `undoDeleteAll` clears only rows still carrying exactly that instant, so undoing a
+batch never resurrects a row that was deleted some other time, even if its id was in the batch
+(`EncounterDaoTest`, *undoDeleteAllRestoresOnlyTheRowsDeletedAtTheBatchInstant*). Both run as one
+Room transaction of per-row statements rather than one `IN (:ids)`: SQLite before 3.32, which is
+what API 29 and 30 ship, allows at most 999 bound variables in a statement, and a transaction still
+makes the batch all-or-nothing and invalidates `observeAll` once rather than once per row.
+
 Every enum column (`EncounterKind`, `EncounterOrigin`, `LocationSource`, `CatCoat`, `PlaceStatus`)
 is stored by its `name`, never its ordinal — reordering the enum's declaration must never change
 what a stored row means. Reading back a name the current app version doesn't recognize (a

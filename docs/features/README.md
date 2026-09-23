@@ -16,8 +16,8 @@ a document nobody updates is worse than none.
   corrupt row degrades.
 - `outings.md` — the derived-session concept behind an "outing," computed on demand and never
   stored.
-- `browsing-cats.md` — the Encounters list grouped by outing, and the bottom nav's root-stack
-  back rule.
+- `browsing-cats.md` — the Encounters list grouped by outing, selecting and deleting several cats
+  with one undo, and the bottom nav's root-stack back rule.
 - `encounter-detail.md` — one cat's screen: what it shows, soft delete with a bounded undo, and
   what a missing or already-deleted id renders as.
 - `app-shell.md` — theme, navigation, the MVI `Store` contract, and dependency injection.

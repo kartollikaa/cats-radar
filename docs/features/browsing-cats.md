@@ -45,16 +45,21 @@ row counts stop being trivial to read and group on every emission.
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/session/SessionSplitter.kt` (`groupByOuting`)
-- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveEncounters.kt`
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveEncounters.kt`,
+  `DeleteEncounters.kt`, `UndoDeleteEncounters.kt`; `domain/…/model/DeletedBatch.kt`
+- `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterDao.kt` (`softDeleteAll`,
+  `undoDeleteAll`)
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/DateTimeFormatter.kt`,
   `presentation/src/androidMain/kotlin/dev/catsradar/presentation/AndroidDateTimeFormatter.android.kt`
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/` — `EncountersState`,
   `EncounterListItem`, `EncountersIntent`, `EncountersEffect`, `EncountersStore`,
   `EncountersStateMapper`
-- `ui/src/main/kotlin/dev/catsradar/ui/encounters/EncountersScreen.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `SelectionBar.kt`,
+  `UndoBar.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/` — `BottomNavTab`, `CatsRadarBottomBar`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
-  (`BottomNavBackStack`), `CatsRadarNavHost.kt`
+  (`BottomNavBackStack`), `CatsRadarNavHost.kt`, `Destinations.kt` (`EncountersDestination`, which
+  owns the `BackHandler` that ends a selection)
 
 ## What a row shows
 
@@ -66,7 +71,47 @@ face, else a paw, so every row shows the most telling thing known about that cat
 announced by its coat's name, the paw is decorative. With nothing logged, the tab says so and points
 at the Counter.
 
+## Selecting and deleting several
+
+A long press on a row starts a selection with that row in it. While selecting, a tap adds or removes
+a row instead of opening it; a bar at the top shows how many are selected, a ✕ and a Delete. The
+selected rows swap their lead for a check mark. Deselecting the last row, the ✕ and system back all
+end the selection; back ends it without leaving the tab. Whether a tap opens or selects is the
+Store's call, not the screen's: every tap reaches `EncountersStore` as `RowClicked`, and only
+outside a selection does it answer with `OpenEncounter` (*a tap outside selection opens the
+encounter and selects nothing*).
+
+Delete is a soft delete with an undo, like the detail screen's, and asks nothing first. The selected
+cats leave the list at once, the selection ends, and a bar at the bottom says how many went, with
+Undo, for `Tuning.UNDO_VISIBLE`. The window lives in the Store's state rather than in a
+`SnackbarHost`, so its length is a unit test under virtual time. The detail screen keeps its own
+undo for the opposite reason: there the deletion is another screen's, and showing it here would
+need two Stores to talk. Here the list's own Store made it.
+
+### At the edges
+
+- **Undo brings back exactly that batch.** Every cat in it gets one `deletedAt`, and undo restores
+  only rows still carrying it, so a cat deleted some other way stays deleted (`data-model.md`).
+- **A second delete inside the window replaces the undo.** The bar shows the new count, undo
+  restores only the new batch, the first one stands, and the new batch gets a full window of its own
+  (*a second delete inside the window replaces the undo with its own batch*).
+- **A selected cat deleted elsewhere** — from its detail screen, or by the Counter's undo — drops
+  out of the selection; when none is left, the selection ends. The mapper does this: an id with no
+  row on the list is never reported as selected.
+- **A failed write** leaves the selection as it was and shows no undo. A failed undo reopens the
+  window rather than stranding the cats (*a failed undo keeps the undo bar and a fresh window to try
+  again*).
+- **Delete tapped twice** while the write is in flight writes once.
+- **Rows coming back above the screen.** A keyed `LazyColumn` keeps its first visible row in place
+  when rows are inserted above it, so undoing the delete of the top outing would bring it back out
+  of sight. A list resting at the very top asks to stay at the top on every change, so the restored
+  outing is what the user sees.
+- **Leaving the tab during the window** takes the undo with it and the deletion stands, the same
+  trade the detail screen makes. A selection does not survive a tab switch either: both live in the
+  Store, which is scoped to the tab's entry.
+
 ## Not handled yet
 
 There is no paging: the list still reads the full non-deleted table on every change, acceptable at
-today's usage but not indefinitely, per the note above. Headers are inline, not sticky.
+today's usage but not indefinitely, per the note above. Headers are inline, not sticky. There is no
+"select all" and no way to select an outing from its header.
