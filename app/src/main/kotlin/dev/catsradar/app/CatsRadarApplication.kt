@@ -13,6 +13,7 @@ import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
+import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,7 @@ class CatsRadarApplication : Application() {
         // Every process start re-asserts it, including one a lock-screen tap woke up.
         koin.get<WalkingNotificationSync>().start(appScope)
         koin.get<WidgetRefresh>().start(appScope)
+        koin.get<PlaceNamingTrigger>().start(appScope)
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

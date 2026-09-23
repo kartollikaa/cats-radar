@@ -8,6 +8,8 @@ import dev.catsradar.presentation.detail.EncounterDetailStateMapper
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.map.MapStateMapper
+import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.regions.RegionsStateMapper
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsStore
@@ -25,6 +27,8 @@ val presentationModule = module {
     viewModelOf(::CounterStore)
     factoryOf(::EncountersStateMapper)
     viewModelOf(::EncountersStore)
+    factoryOf(::MapStateMapper)
+    viewModelOf(::MapStore)
     factoryOf(::EncounterDetailStateMapper)
     factoryOf(::StatisticsStateMapper)
     viewModelOf(::StatisticsStore)

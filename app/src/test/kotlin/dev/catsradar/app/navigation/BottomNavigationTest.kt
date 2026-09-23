@@ -19,6 +19,28 @@ class BottomNavigationTest {
     }
 
     @Test
+    fun `every tab puts its own screen on the stack and reads back as itself`() {
+        val backStack = newStack(Counter)
+
+        val screens = BottomNavTab.entries.associateWith { tab ->
+            backStack.selectTab(tab)
+            assertEquals(tab, backStack.selectedTab)
+            backStack.last()
+        }
+
+        assertEquals(
+            mapOf(
+                BottomNavTab.COUNTER to Counter,
+                BottomNavTab.ENCOUNTERS to Encounters,
+                BottomNavTab.MAP to CatsMap,
+                BottomNavTab.STATISTICS to Statistics,
+                BottomNavTab.SETTINGS to Settings,
+            ),
+            screens,
+        )
+    }
+
+    @Test
     fun `selecting Encounters from the Counter root pushes it once`() {
         val backStack = newStack(Counter)
 

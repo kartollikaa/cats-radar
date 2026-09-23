@@ -27,11 +27,34 @@ rewrites it.
 
 ## Naming them
 
-`GeocodePendingCellsWorker` runs periodically with a **network constraint**: a cat logged in a
-basement gets its name whenever the phone is next online, rather than failing immediately and
-retrying on a timer. The work is unique and enqueued with `KEEP`, because re-enqueuing on every
-launch would reset both the period and the backoff — a cell that keeps failing would then be retried
-far more often than intended.
+`GeocodePendingCellsWorker` names cells in two passes. Both wait on a **network constraint**, so a cat
+logged in a basement gets its name the next time the phone is online. It does not fail right away
+and retry on a timer.
+
+- **A new cell is named as soon as the phone is online.** `PlaceNamingTrigger` watches for cells
+  nobody has looked up yet for as long as the process lives. When one appears, it enqueues a one-time
+  pass. It also enqueues one when the process starts if a cell is already waiting, which covers a
+  process that died between writing the cell and asking. The periodic job cannot do this on its own:
+  WorkManager never runs periodic work ahead of its slot, so a cat would read "Not named yet" for
+  hours.
+- **This pass only touches cells never looked up.** A cell that already failed is left for the
+  periodic retry, so however often cells appear, a flaky geocoder cannot use up a cell's attempts in
+  one walk. That is also why a request made while a pass is running starts it over (`REPLACE`)
+  rather than being dropped: the running pass may already be past the new cell, and starting again
+  costs at most the one lookup that was in flight. At most one such pass is ever queued, however
+  many cells appear while the phone is offline.
+- **A failed lookup is retried periodically.** This work is unique and enqueued with `KEEP`, because
+  re-enqueuing on every launch would reset both the period and the backoff. A cell that keeps
+  failing would then be retried far more often than intended.
+
+A pass pages through pending cells by id, starting each page after the last cell it saw. An offset
+would not work: the pass moves the cells it names out of the pending set, so every page would skip
+as many cells as the one before it had named.
+
+The two passes can run at the same time, and a restore can write a cell while a lookup is in flight.
+A pass therefore writes its result only if the cell is still exactly as it read it. If anything
+changed meanwhile, the other writer's version stands. Without this rule, a lookup that failed could
+overwrite a name another pass had just found.
 
 Each cell ends in one of four states:
 
@@ -42,6 +65,10 @@ Each cell ends in one of four states:
 - **FAILED** — it has failed `MAX_GEOCODE_ATTEMPTS` times. Some points genuinely have no address,
   and retrying them forever costs battery for a name that will never arrive.
 - **UNAVAILABLE** — there is no geocoder on this device at all.
+
+Every state but RESOLVED is this device's own verdict: a cell restored from a backup without a name
+arrives `PENDING` and untried, whatever the device that exported it concluded — see `backup.md`. A
+cell imported before that rule keeps whatever state it was stored with; nothing resets it.
 
 ## No geocoder at all
 
@@ -56,14 +83,16 @@ geohash and needs no network — keeps working. Only country and city names are 
 ## Where the code lives
 
 - `domain/…/platform/ReverseGeocoder.kt` — the interface and its three outcomes
-- `domain/…/usecase/ResolvePendingPlaces.kt` — the state machine
+- `domain/…/usecase/ResolvePendingPlaces.kt` — the state machine, both passes
+- `domain/…/usecase/ObserveUntriedPlaceCells.kt` — which cells are waiting for their first lookup
 - `data/…/androidMain/platform/AndroidReverseGeocoder.android.kt` — the `Geocoder` call
-- `app/…/worker/GeocodePendingCellsWorker.kt`, `GeocodeWorkScheduler.kt`
+- `app/…/worker/GeocodePendingCellsWorker.kt`, `GeocodeWorkScheduler.kt`, `PlaceNamingTrigger.kt`
 
 ## Browsing them
 
 **Statistics → Places** opens the drill-down: countries, then cities, then areas, then the cats
-themselves. Every level is sorted busiest first.
+themselves — a plain list of one row per cat under its outing header, not the Encounters grid.
+Every level is sorted busiest first.
 
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 

@@ -7,6 +7,7 @@ import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
+import dev.catsradar.presentation.counter.FakeSettingsRepository
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,7 @@ class EncountersStoreTest {
 
     private val mainDispatcher = StandardTestDispatcher()
     private val repository = FakeEncounterRepository()
+    private val settings = FakeSettingsRepository()
     private val clock = FakeClock(NOW)
 
     @BeforeTest
@@ -67,11 +69,37 @@ class EncountersStoreTest {
     }
 
     @Test
+    fun `turning the grid off re-lays the open tab as a list, with no new encounter`() = runTest(mainDispatcher) {
+        settings.setEncountersGrid(true)
+        val store = storeWith("1")
+        val before = store.state.value.layout
+
+        settings.setEncountersGrid(false)
+        runCurrent()
+
+        assertEquals(EncountersLayout.GRID, before)
+        assertEquals(EncountersLayout.LIST, store.state.value.layout)
+        assertEquals(1, store.state.value.rows.count { it is EncountersRow.Single })
+    }
+
+    @Test
+    fun `a selection survives turning the grid off`() = runTest(mainDispatcher) {
+        val store = storeWith("a", "b")
+        select(store, "a")
+
+        settings.setEncountersGrid(false)
+        runCurrent()
+
+        assertEquals(persistentSetOf("a"), store.state.value.selectedIds)
+        assertEquals(setOf("a"), store.selectedCatIds())
+    }
+
+    @Test
     fun `a tap outside selection opens the encounter and selects nothing`() = runTest(mainDispatcher) {
         val store = storeWith("a", "b")
 
         store.effects.test {
-            store.dispatch(EncountersIntent.RowClicked("a"))
+            store.dispatch(EncountersIntent.EncounterClicked("a"))
             runCurrent()
 
             assertEquals(EncountersEffect.OpenEncounter("a"), awaitItem())
@@ -85,27 +113,27 @@ class EncountersStoreTest {
             val store = storeWith("a", "b")
 
             store.effects.test {
-                store.dispatch(EncountersIntent.RowLongPressed("a"))
+                store.dispatch(EncountersIntent.EncounterLongPressed("a"))
                 runCurrent()
 
                 expectNoEvents()
             }
             assertEquals(persistentSetOf("a"), store.state.value.selectedIds)
-            assertEquals(setOf("a"), store.selectedRowIds())
+            assertEquals(setOf("a"), store.selectedCatIds())
         }
 
     @Test
     fun `a tap while selecting toggles the row and opens nothing`() = runTest(mainDispatcher) {
         val store = storeWith("a", "b", "c")
-        store.dispatch(EncountersIntent.RowLongPressed("a"))
+        store.dispatch(EncountersIntent.EncounterLongPressed("a"))
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncountersIntent.RowClicked("b"))
+            store.dispatch(EncountersIntent.EncounterClicked("b"))
             runCurrent()
             assertEquals(persistentSetOf("a", "b"), store.state.value.selectedIds)
 
-            store.dispatch(EncountersIntent.RowClicked("a"))
+            store.dispatch(EncountersIntent.EncounterClicked("a"))
             runCurrent()
             assertEquals(persistentSetOf("b"), store.state.value.selectedIds)
 
@@ -116,14 +144,14 @@ class EncountersStoreTest {
     @Test
     fun `a long press while selecting toggles the row, as a tap does`() = runTest(mainDispatcher) {
         val store = storeWith("a", "b")
-        store.dispatch(EncountersIntent.RowLongPressed("a"))
+        store.dispatch(EncountersIntent.EncounterLongPressed("a"))
         runCurrent()
 
-        store.dispatch(EncountersIntent.RowLongPressed("b"))
+        store.dispatch(EncountersIntent.EncounterLongPressed("b"))
         runCurrent()
         assertEquals(persistentSetOf("a", "b"), store.state.value.selectedIds)
 
-        store.dispatch(EncountersIntent.RowLongPressed("a"))
+        store.dispatch(EncountersIntent.EncounterLongPressed("a"))
         runCurrent()
         assertEquals(persistentSetOf("b"), store.state.value.selectedIds)
     }
@@ -131,28 +159,28 @@ class EncountersStoreTest {
     @Test
     fun `deselecting the last selected row leaves selection mode`() = runTest(mainDispatcher) {
         val store = storeWith("a", "b")
-        store.dispatch(EncountersIntent.RowLongPressed("a"))
+        store.dispatch(EncountersIntent.EncounterLongPressed("a"))
         runCurrent()
 
-        store.dispatch(EncountersIntent.RowClicked("a"))
+        store.dispatch(EncountersIntent.EncounterClicked("a"))
         runCurrent()
 
         assertFalse(store.state.value.isSelecting)
-        assertEquals(emptySet(), store.selectedRowIds())
+        assertEquals(emptySet(), store.selectedCatIds())
     }
 
     @Test
     fun `dismissing the selection empties it and leaves selection mode`() = runTest(mainDispatcher) {
         val store = storeWith("a", "b")
-        store.dispatch(EncountersIntent.RowLongPressed("a"))
-        store.dispatch(EncountersIntent.RowClicked("b"))
+        store.dispatch(EncountersIntent.EncounterLongPressed("a"))
+        store.dispatch(EncountersIntent.EncounterClicked("b"))
         runCurrent()
 
         store.dispatch(EncountersIntent.SelectionDismissed)
         runCurrent()
 
         assertFalse(store.state.value.isSelecting)
-        assertEquals(emptySet(), store.selectedRowIds())
+        assertEquals(emptySet(), store.selectedCatIds())
     }
 
     @Test
@@ -335,6 +363,7 @@ class EncountersStoreTest {
 
     private fun newStore(): EncountersStore = EncountersStore(
         observeEncounters = ObserveEncounters(repository),
+        settingsRepository = settings,
         deleteEncounters = DeleteEncounters(repository, clock),
         undoDeleteEncounters = UndoDeleteEncounters(repository),
         stateMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
@@ -352,21 +381,28 @@ class EncountersStoreTest {
     private fun TestScope.select(store: EncountersStore, vararg ids: String) {
         ids.forEach { id ->
             val intent = if (store.state.value.isSelecting) {
-                EncountersIntent.RowClicked(id)
+                EncountersIntent.EncounterClicked(id)
             } else {
-                EncountersIntent.RowLongPressed(id)
+                EncountersIntent.EncounterLongPressed(id)
             }
             store.dispatch(intent)
             runCurrent()
         }
     }
 
-    private fun EncountersStore.rows(): List<EncounterListItem.Row> =
-        state.value.rows.filterIsInstance<EncounterListItem.Row>()
+    private fun EncountersStore.cats(): List<Pair<String, Boolean>> = state.value.rows.flatMap { row ->
+        when (row) {
+            is OutingHeader -> emptyList()
+            is EncountersRow.PhotoPair -> listOf(row.first, row.second).map { it.id to it.selected }
+            is EncountersRow.Tiles -> row.cells.map { it.id to it.selected }
+            is EncountersRow.Cards -> row.cells.map { it.id to it.selected }
+            is EncountersRow.Single -> listOf(row.cell.id to row.cell.selected)
+        }
+    }
 
-    private fun EncountersStore.rowIds(): Set<String> = rows().map { it.id }.toSet()
+    private fun EncountersStore.rowIds(): Set<String> = cats().map { it.first }.toSet()
 
-    private fun EncountersStore.selectedRowIds(): Set<String> = rows().filter { it.selected }.map { it.id }.toSet()
+    private fun EncountersStore.selectedCatIds(): Set<String> = cats().filter { it.second }.map { it.first }.toSet()
 
     private companion object {
         val NOW = Instant.parse("2026-09-22T12:00:00Z")

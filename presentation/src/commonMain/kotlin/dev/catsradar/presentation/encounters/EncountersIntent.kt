@@ -1,9 +1,9 @@
 package dev.catsradar.presentation.encounters
 
 sealed interface EncountersIntent {
-    data class RowClicked(val id: String) : EncountersIntent
+    data class EncounterClicked(val id: String) : EncountersIntent
 
-    data class RowLongPressed(val id: String) : EncountersIntent
+    data class EncounterLongPressed(val id: String) : EncountersIntent
 
     data object SelectionDismissed : EncountersIntent
 

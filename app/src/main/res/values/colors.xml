@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Must equal the app theme's surface, so the window shows the app's own colour before the
-         first frame and behind the system bars. -->
+    <!-- Each variant tracks the surface the app draws with at its API level, so the window shows the
+         app's own colour before the first frame and behind the system bars. -->
     <color name="window_background">#F0FCF8</color>
 </resources>

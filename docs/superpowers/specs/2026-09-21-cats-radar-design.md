@@ -50,6 +50,7 @@ country → city → area, and an encounter rate derived from automatically dete
 | Architecture | Layered modules `:domain` / `:data` / `:presentation` / `:ui` / `:app`; minimal MVI (`Store` with State/Intent/Effect). |
 | Quality gates | detekt + formatting + compose-rules, Android Lint, Konsist architecture tests; all in `./gradlew check` and CI. |
 | Coat (2026-09-22) | Optional cat coat from a fixed list of eleven, in v1: column in the first schema, picker after a tally or photo, editable in detail, statistics by coat. |
+| Colour (2026-09-23) | Material You: the wallpaper's colours on Android 12+, in the app and the widget; the icon-teal palette below 12 and in previews. No in-app switch. |
 | Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
 
 ## 2. Users and core flows
@@ -198,9 +199,14 @@ dismissible one-line hint with a "grant" button. The widget never prompts.
 
 - `ReverseGeocoder` interface in `commonMain`; Android impl wraps `android.location.Geocoder`
   (`isPresent()` false → all cells `UNAVAILABLE`).
-- `GeocodePendingCellsWorker`: unique (`KEEP`), `NetworkType.CONNECTED`, up to `GEOCODE_BATCH`
-  cells per run, exponential backoff, `FAILED` after `MAX_GEOCODE_ATTEMPTS`. Triggered when a cell
-  is created and on app start if pending cells exist.
+- `GeocodePendingCellsWorker`: `NetworkType.CONNECTED`, exponential backoff, `FAILED` after
+  `MAX_GEOCODE_ATTEMPTS`; a pass reads pending cells `GEOCODE_BATCH` at a time, keyed by id. It
+  runs as two passes:
+  - a one-time pass over cells never looked up, unique with `REPLACE`, requested when such a cell
+    appears and on app start if one is waiting;
+  - a periodic pass, unique with `KEEP`, which retries cells whose lookup failed.
+
+  A pass writes a result only if the cell is unchanged since it read it.
 - Statistics read whatever is resolved; the only "loading" state is the Unresolved node.
 
 ### 4.5 Delete and purge

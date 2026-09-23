@@ -197,8 +197,10 @@ internal class FakePlaceCellRepository : PlaceCellRepository {
 
     override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
 
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
-        cells.value.filter { it.status == PlaceStatus.PENDING }.drop(offset).take(limit)
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
+        cells.value.filter { it.status == PlaceStatus.PENDING && (afterCellId == null || it.cellId > afterCellId) }
+            .sortedBy { it.cellId }
+            .take(limit)
 }
 
 internal class FakeGallerySaver : GallerySaver {
@@ -215,9 +217,11 @@ internal class FakeSettingsRepository(
     saveOriginals: Boolean = true,
     lastMilestone: Int = 0,
     private val writesFail: Boolean = false,
+    encountersGrid: Boolean = true,
 ) : SettingsRepository {
     private val state = MutableStateFlow(saveOriginals)
     private val milestone = MutableStateFlow(lastMilestone)
+    private val grid = MutableStateFlow(encountersGrid)
 
     override fun saveOriginalsToGallery(): Flow<Boolean> = state
 
@@ -238,5 +242,11 @@ internal class FakeSettingsRepository(
 
     override suspend fun setLastSeenMilestone(value: Int) {
         milestone.value = value
+    }
+
+    override fun encountersGrid(): Flow<Boolean> = grid
+
+    override suspend fun setEncountersGrid(enabled: Boolean) {
+        grid.value = enabled
     }
 }
