@@ -21,7 +21,8 @@ the UTC offset at the moment the encounter happened, not the device's offset now
 
 Deletion is soft: `deletedAt` is a nullable timestamp, and every read of live rows (`observeAll`,
 `observeById`, `findBySourceDigest`) filters `WHERE deletedAt IS NULL`. Only two reads see
-soft-deleted rows: `loadEvery` for the backup merge and `loadDeletedBefore` for the purge.
+soft-deleted rows: `loadEvery` for the backup merge (see `backup.md`) and `loadDeletedBefore` for
+the purge.
 `softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
@@ -60,11 +61,6 @@ exactly for a healthy row.
 Schema is exported to `data/schemas/dev.catsradar.data.db.CatsDatabase/1.json`;
 `CatsDatabaseMigrationTest` opens that committed v1 baseline to prove the migration-test harness
 itself works — there is no v2 yet, so no actual migration path exists to test.
-
-## Not handled yet
-
-Backup export and import (§3.1, §4.7 of the design spec) are specified but unbuilt; nothing reads
-or writes an `Encounter` outside the app's own database yet.
 
 ## Purging
 
