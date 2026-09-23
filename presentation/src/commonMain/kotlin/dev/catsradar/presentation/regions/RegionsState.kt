@@ -27,6 +27,7 @@ sealed interface RegionRowLabel {
     data class Named(val name: String) : RegionRowLabel
     data class Coordinates(val text: String) : RegionRowLabel
     data object Unresolved : RegionRowLabel
+    data object NoCity : RegionRowLabel
     data object NoLocation : RegionRowLabel
 }
 
@@ -39,5 +40,6 @@ sealed interface RegionRowKey {
     data class City(val countryCode: String, val city: String) : RegionRowKey
     data class Area(val areaHash: String) : RegionRowKey
     data object Unresolved : RegionRowKey
+    data class NoCity(val countryCode: String) : RegionRowKey
     data object NoLocation : RegionRowKey
 }

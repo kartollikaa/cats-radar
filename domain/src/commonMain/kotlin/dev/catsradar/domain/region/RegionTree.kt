@@ -2,12 +2,12 @@ package dev.catsradar.domain.region
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
+import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 
-/** One row of a region list: a real place, or one of the two pseudo-nodes. */
+/** One row of a region list: a real place, or one of the pseudo-nodes. */
 data class RegionNode(val key: RegionKey, val label: RegionLabel, val count: Int)
 
 sealed interface RegionKey {
@@ -17,6 +17,9 @@ sealed interface RegionKey {
 
     /** Encounters with coordinates whose cell has no name — pending, failed, or unavailable. */
     data object Unresolved : RegionKey
+
+    /** Encounters in [countryCode] whose cell names neither a locality nor an admin area. */
+    data class NoCity(val countryCode: String) : RegionKey
 
     /** Encounters with no coordinates at all. */
     data object NoLocation : RegionKey
@@ -30,6 +33,7 @@ sealed interface RegionLabel {
     data class Named(val name: String) : RegionLabel
     data class Coordinates(val lat: Double, val lon: Double) : RegionLabel
     data object Unresolved : RegionLabel
+    data object NoCity : RegionLabel
     data object NoLocation : RegionLabel
 }
 
@@ -40,7 +44,7 @@ object RegionTree {
         val byCell = cells.associateBy { it.cellId }
         val live = encounters.filter { it.deletedAt == null }
 
-        val (located, unlocated) = live.partition { it.locationSource != LocationSource.NONE }
+        val (located, unlocated) = live.partition { it.areaHash() != null }
         val (named, unnamed) = located.partition { it.resolvedCell(byCell) != null }
 
         val countries = named
@@ -58,19 +62,21 @@ object RegionTree {
             pseudoNode(RegionKey.NoLocation, RegionLabel.NoLocation, unlocated.size)
     }
 
-    /** Cities within one country, busiest first. */
+    /** Cities within one country, busiest first; then No city, for the cats whose cell names none. */
     fun cities(countryCode: String, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
         val byCell = cells.associateBy { it.cellId }
-        return encounters
-            .filter { it.deletedAt == null }
+        val cityNames = encounters
+            .filter { it.deletedAt == null && it.areaHash() != null }
             .mapNotNull { it.resolvedCell(byCell) }
             .filter { it.countryCode == countryCode }
-            // adminArea is the fallback because a rural point often has a region but no locality.
-            .mapNotNull { it.locality ?: it.adminArea }
+            .map { it.cityName() }
+        val cities = cityNames
+            .filterNotNull()
             .groupingBy { it }
             .eachCount()
             .map { (city, count) -> RegionNode(RegionKey.City(countryCode, city), RegionLabel.Named(city), count) }
             .sortedByDescending { it.count }
+        return cities + pseudoNode(RegionKey.NoCity(countryCode), RegionLabel.NoCity, cityNames.count { it == null })
     }
 
     /**
@@ -82,9 +88,7 @@ object RegionTree {
         return encounters
             .filter { it.deletedAt == null }
             .filter { it.belongsTo(parent, byCell) }
-            .mapNotNull { encounter ->
-                encounter.geohash?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) to encounter }
-            }
+            .mapNotNull { encounter -> encounter.areaHash()?.let { it to encounter } }
             .groupBy({ it.first }, { it.second })
             .map { (areaHash, group) ->
                 RegionNode(
@@ -119,18 +123,25 @@ object RegionTree {
     }
 
     private fun Encounter.belongsTo(parent: RegionKey, byCell: Map<String, PlaceCell>): Boolean {
+        val area = areaHash() ?: return parent == RegionKey.NoLocation
         val cell = resolvedCell(byCell)
         return when (parent) {
             is RegionKey.Country -> cell?.countryCode == parent.countryCode
-            is RegionKey.City ->
-                cell?.countryCode == parent.countryCode &&
-                    (cell.locality ?: cell.adminArea) == parent.city
-            is RegionKey.Area ->
-                geohash?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) } == parent.areaHash
-            RegionKey.Unresolved -> locationSource != LocationSource.NONE && cell == null
-            RegionKey.NoLocation -> locationSource == LocationSource.NONE
+            is RegionKey.City -> cell?.countryCode == parent.countryCode && cell.cityName() == parent.city
+            is RegionKey.NoCity -> cell?.countryCode == parent.countryCode && cell.cityName() == null
+            is RegionKey.Area -> area == parent.areaHash
+            RegionKey.Unresolved -> cell == null
+            RegionKey.NoLocation -> false
         }
     }
+
+    // A row with coordinates but no geohash can only be hand-edited; it still has an area to be in.
+    private fun Encounter.areaHash(): String? =
+        (geohash ?: pointOnGlobe(lat, lon)?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) })
+            ?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) }
+
+    // adminArea is the fallback because a rural point often has a region but no locality.
+    private fun PlaceCell.cityName(): String? = locality ?: adminArea
 
     /** A cell counts as naming this encounter only once it is RESOLVED and has a country. */
     private fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
