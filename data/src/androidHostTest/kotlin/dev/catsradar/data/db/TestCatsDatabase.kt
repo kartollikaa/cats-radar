@@ -19,5 +19,7 @@ internal abstract class TestCatsDatabase : RoomDatabase() {
 
     abstract fun walkDao(): WalkDao
 
+    abstract fun trackPointDao(): TrackPointDao
+
     abstract fun schemaProbeDao(): SchemaProbeDao
 }

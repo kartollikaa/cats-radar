@@ -4,6 +4,7 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Transaction
+import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
@@ -29,12 +30,6 @@ interface WalkDao {
     @Query("UPDATE walks SET endedAt = :endedAt, updatedAt = :updatedAt WHERE id = :id AND endedAt IS NULL")
     suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Int
 
-    @Insert
-    suspend fun insertPoint(point: TrackPointEntity)
-
-    @Query("SELECT * FROM track_points WHERE walkId = :walkId ORDER BY at DESC, rowId DESC LIMIT 1")
-    suspend fun loadLastPoint(walkId: String): TrackPointEntity?
-
-    @Query("SELECT * FROM track_points WHERE walkId = :walkId ORDER BY at")
-    fun observeTrack(walkId: String): Flow<List<TrackPointEntity>>
+    @Upsert
+    suspend fun upsert(walk: WalkEntity)
 }

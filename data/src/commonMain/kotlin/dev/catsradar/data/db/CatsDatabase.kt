@@ -24,6 +24,8 @@ abstract class CatsDatabase : RoomDatabase() {
     abstract fun placeCellDao(): PlaceCellDao
 
     abstract fun walkDao(): WalkDao
+
+    abstract fun trackPointDao(): TrackPointDao
 }
 
 // The Room KSP compiler generates the actual implementation for this expect declaration.

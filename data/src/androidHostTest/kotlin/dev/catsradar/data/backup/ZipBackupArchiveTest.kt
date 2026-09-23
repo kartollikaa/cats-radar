@@ -12,6 +12,8 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
+import dev.catsradar.domain.model.TrackPoint
+import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.DeviceIdProvider
 import kotlinx.coroutines.test.runTest
@@ -20,10 +22,13 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.zip.ZipFile
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 private val ExportedAt = Instant.parse("2026-09-22T12:00:00Z")
@@ -114,6 +119,41 @@ class ZipBackupArchiveTest {
         assertIs<BackupReadResult.Readable>(read)
         assertEquals(contents.encounters, read.contents.encounters)
         assertEquals(contents.placeCells, read.contents.placeCells)
+    }
+
+    @Test
+    fun everyWalkAndEveryPointOfItsRouteSurvivesTheRoundTrip() = runTest {
+        val start = Instant.parse("2026-09-22T09:00:00Z")
+        val contents = BackupContents(
+            walks = listOf(
+                Walk("ended", start, start + 30.minutes, "device-1", start, start + 31.minutes),
+                Walk("on", start + 1.hours, null, "device-1", start + 1.hours, start + 1.hours),
+            ),
+            trackPoints = listOf(
+                TrackPoint("ended", start + 1.minutes, 41.3851, 2.1734, 7.5f),
+                TrackPoint("ended", start + 2.minutes, 41.3862, 2.1745, 12f),
+            ),
+        )
+        val path = target()
+
+        assertTrue(writer().write(path, contents))
+        val read = reader().read(path)
+
+        assertIs<BackupReadResult.Readable>(read)
+        assertEquals(contents.walks, read.contents.walks)
+        assertEquals(contents.trackPoints, read.contents.trackPoints)
+    }
+
+    @Test
+    fun anArchiveSaysItIsFormatTwoSoAnAppBeforeWalksRefusesIt() = runTest {
+        val path = target()
+
+        assertTrue(writer().write(path, BackupContents()))
+
+        val manifest = ZipFile(path).use { zip ->
+            zip.getInputStream(zip.getEntry(MANIFEST_ENTRY)).readBytes().decodeToString()
+        }
+        assertTrue("\"formatVersion\":2" in manifest, manifest)
     }
 
     @Test

@@ -177,7 +177,14 @@ class CounterStore(
         if (ids.isEmpty()) return
         importedIds = emptyList()
         setState { copy(importSummary = importSummary?.copy(undoable = false)) }
-        runStorageWrite { undoImport(ids) }
+        // The batch write is all or none, so a failed one left every cat in place and can be retried.
+        runStorageWrite(onFailure = { restoreUndoImport(ids) }) { undoImport(ids) }
+    }
+
+    private fun restoreUndoImport(ids: List<String>) {
+        if (importedIds.isNotEmpty()) return
+        importedIds = ids
+        setState { copy(importSummary = importSummary?.copy(undoable = true)) }
     }
 
     private fun showBurst() {
