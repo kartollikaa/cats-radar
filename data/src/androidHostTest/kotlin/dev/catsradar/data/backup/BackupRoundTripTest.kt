@@ -19,6 +19,8 @@ import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.DeviceIdProvider
+import dev.catsradar.domain.region.RegionNode
+import dev.catsradar.domain.region.RegionTree
 import dev.catsradar.domain.stats.Stats
 import dev.catsradar.domain.stats.StatsCalculator
 import dev.catsradar.domain.usecase.ExportBackup
@@ -37,6 +39,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -48,34 +51,44 @@ class BackupRoundTripTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val photoStorage = AndroidPhotoStorage(context)
-    private val here = buildInMemoryCatsDatabase(context)
-    private val elsewhere = buildInMemoryCatsDatabase(context)
+    private val here = Phone(buildInMemoryCatsDatabase(context))
+    private val elsewhere = Phone(buildInMemoryCatsDatabase(context))
 
     @After
     fun tearDown() {
-        here.close()
-        elsewhere.close()
+        here.database.close()
+        elsewhere.database.close()
     }
 
     @Test
     fun aBackupRestoredOnAnEmptyPhoneGivesTheSameStatistics() = runTest {
         val archive = File(temporaryFolder.root, "backup.zip").path
         val cats = catsFromAFewDaysAcrossZones()
-        cats.forEach { here.encounters().insert(it) }
-        here.encounters().softDelete(cats.first().id, NOW)
-        listOf(RED_SQUARE, TIMES_SQUARE).forEach { here.placeCells().upsert(it.cell()) }
+        cats.forEach { here.encounters.insert(it) }
+        here.encounters.softDelete(cats.first().id, NOW)
+        listOf(RED_SQUARE, TIMES_SQUARE).forEach { here.placeCells.upsert(it.cell()) }
         photoStorage.prepare(PHOTO).writeText("a cat")
 
-        ExportBackup(here.encounters(), here.placeCells(), here.walks(), writer()).invoke(archive)
-        val imported = ImportBackup(elsewhere.encounters(), elsewhere.placeCells(), elsewhere.walks(), reader())
+        assertTrue(ExportBackup(here.encounters, here.placeCells, here.walks, writer()).invoke(archive))
+        val imported = ImportBackup(elsewhere.encounters, elsewhere.placeCells, elsewhere.walks, reader())
             .invoke(archive)
 
         assertEquals(ImportBackupResult.Merged(added = cats.size - 1, updated = 0, unchanged = 0), imported)
-        assertEquals(statsOf(here), statsOf(elsewhere))
+        assertEquals(here.stats(), elsewhere.stats())
+        assertEquals(here.countries(), elsewhere.countries())
     }
 
-    private suspend fun statsOf(database: TestCatsDatabase): Stats =
-        StatsCalculator.calculate(database.encounters().observeAll().first(), today = TODAY, now = NOW)
+    private class Phone(val database: TestCatsDatabase) {
+        val encounters = EncounterRepositoryImpl(database.encounterDao())
+        val placeCells = PlaceCellRepositoryImpl(database.placeCellDao())
+        val walks = WalkRepositoryImpl(database.walkDao(), database.trackPointDao())
+
+        suspend fun stats(): Stats =
+            StatsCalculator.calculate(encounters.observeAll().first(), today = TODAY, now = NOW)
+
+        suspend fun countries(): List<RegionNode> =
+            RegionTree.countries(encounters.observeAll().first(), placeCells.observeAll().first())
+    }
 
     private fun catsFromAFewDaysAcrossZones(): List<Encounter> = listOf(
         cat("deleted", "2026-09-22T09:00", MOSCOW, CatCoat.WHITE),
@@ -160,12 +173,6 @@ class BackupRoundTripTest {
     )
 
     private fun reader() = ZipBackupReader(context, photoStorage)
-
-    private fun TestCatsDatabase.encounters() = EncounterRepositoryImpl(encounterDao())
-
-    private fun TestCatsDatabase.placeCells() = PlaceCellRepositoryImpl(placeCellDao())
-
-    private fun TestCatsDatabase.walks() = WalkRepositoryImpl(walkDao(), trackPointDao())
 
     private companion object {
         const val DEVICE = "device-1"
