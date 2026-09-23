@@ -6,6 +6,7 @@ import dev.catsradar.data.backup.ZipBackupWriter
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.PlaceCellDao
+import dev.catsradar.data.db.WalkDao
 import dev.catsradar.data.db.createCatsDatabase
 import dev.catsradar.data.platform.AndroidExifReader
 import dev.catsradar.data.platform.AndroidImageResizer
@@ -21,6 +22,7 @@ import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestSta
 import dev.catsradar.data.platform.VibratorHaptics
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
+import dev.catsradar.data.repository.WalkRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupWriter
@@ -39,6 +41,7 @@ import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.repository.WalkRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -48,12 +51,14 @@ val dataModule = module {
     single<EncounterRepository> { EncounterRepositoryImpl(get()) }
     single<PlaceCellDao> { get<CatsDatabase>().placeCellDao() }
     single<PlaceCellRepository> { PlaceCellRepositoryImpl(get()) }
+    single<WalkDao> { get<CatsDatabase>().walkDao() }
+    single<WalkRepository> { WalkRepositoryImpl(get()) }
     factory<IdGenerator> { RandomIdGenerator() }
     // createdAtStart: the one-time SharedPreferences read must land at app start, not on the
     // first tap that resolves LogTally.
     single<DeviceIdProvider>(createdAtStart = true) { SharedPreferencesDeviceIdProvider(androidContext(), get()) }
     single<Haptics> { VibratorHaptics(androidContext()) }
-    single<LocationProvider> { FusedLocationProvider(androidContext()) }
+    single<LocationProvider> { FusedLocationProvider(androidContext(), get()) }
     single<LocationPermissionRequestState> { SharedPreferencesLocationPermissionRequestState(androidContext()) }
     single { AndroidPhotoStorage(androidContext()) }
     // The resizer needs the concrete store: it writes through it, which the interface does not expose.

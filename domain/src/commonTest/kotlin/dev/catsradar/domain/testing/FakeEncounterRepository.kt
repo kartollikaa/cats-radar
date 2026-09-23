@@ -24,7 +24,9 @@ class FakeEncounterRepository : EncounterRepository {
         encounters.map { list -> list.filter { it.deletedAt == null } }
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
 
+    // Mirrors the DAO's plain @Insert, which aborts on an id that is already there.
     override suspend fun insert(encounter: Encounter) {
+        check(encounters.value.none { it.id == encounter.id }) { "UNIQUE constraint failed: ${encounter.id}" }
         inserted += encounter
         encounters.update { it + encounter }
     }
