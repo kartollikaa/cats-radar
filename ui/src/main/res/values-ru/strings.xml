@@ -38,6 +38,8 @@
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_photo_description">Фото этого котика</string>
+    <string name="encounters_paw_description">Котик</string>
+    <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
 
     <string name="location_from_photo">С фото</string>
     <string name="location_current">Текущее место</string>

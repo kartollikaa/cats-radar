@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
@@ -48,7 +49,7 @@ fun RegionsScreen(
         }
         items(items = state.encounters, key = { it.key }) { item ->
             when (item) {
-                is EncounterListItem.OutingHeader -> OutingHeaderRow(item.label)
+                is OutingHeader -> OutingHeaderRow(item.label)
                 is EncounterListItem.Row -> EncounterRow(item)
             }
         }

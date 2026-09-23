@@ -32,6 +32,8 @@
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
     <string name="encounters_photo_description">Photo of this cat</string>
+    <string name="encounters_paw_description">A cat</string>
+    <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
 
     <string name="location_from_photo">From photo</string>
     <string name="location_current">Current location</string>
