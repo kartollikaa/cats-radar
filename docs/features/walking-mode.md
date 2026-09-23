@@ -101,8 +101,9 @@ the old channel — silenced or blocked — does not carry over: the new one sta
 
 ## Tapping it opens the app
 
-A tap on the notification itself, rather than on a button, opens the app the way its icon does: a
-running app comes forward on the screen it was on, and one that is not running starts on the Counter.
+A tap on the notification itself, rather than on a button, opens the app the way its icon does: it
+comes back on the screen it was on, even after its process was killed, and a fresh start opens the
+Counter.
 The intent is the launcher's own — same action, category and activity — because Android brings a
 running task forward only for the intent that started it; a bare intent for the activity stacks a
 second copy of the app on top. When Photo started the app, that second copy closes itself exactly as it

@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.MainActivity
 import dev.catsradar.app.photo.TakePhotoShortcut
+import dev.catsradar.ui.R
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
@@ -49,7 +50,14 @@ class WalkingNotifierTest {
         val posted = showAndRead(count = 3)
 
         assertTrue(posted.flags and Notification.FLAG_ONGOING_EVENT != 0)
-        assertEquals(3, posted.actions.size)
+        assertEquals(
+            listOf(
+                R.string.notification_walking_tally,
+                R.string.notification_walking_photo,
+                R.string.notification_walking_stop,
+            ).map(context::getString),
+            posted.actions.map { it.title.toString() },
+        )
     }
 
     @Test
@@ -68,7 +76,7 @@ class WalkingNotifierTest {
         val open = shadowOf(assertNotNull(posted.contentIntent))
         assertTrue(open.isActivityIntent)
         assertEquals(Intent.ACTION_MAIN, open.savedIntent.action)
-        assertTrue(open.savedIntent.hasCategory(Intent.CATEGORY_LAUNCHER))
+        assertEquals(setOf(Intent.CATEGORY_LAUNCHER), open.savedIntent.categories)
         assertEquals(ComponentName(context, MainActivity::class.java), open.savedIntent.component)
     }
 

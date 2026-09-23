@@ -40,10 +40,7 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
                 context.getString(R.string.notification_channel_walking),
                 // Below Default a notification counts as silent, and lock screens hide silent ones by default.
                 NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply {
-                setSound(null, null)
-                enableVibration(false)
-            },
+            ).apply { setSound(null, null) },
         )
     }
 
