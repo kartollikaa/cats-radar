@@ -29,8 +29,8 @@ internal fun FillOrScroll(
         val scroll = rememberScrollState()
         Layout(
             contents = listOf(above, fill, below),
-            // Only on while there is overflow: an enabled scroll delays every press and turns a tap
-            // that drifts a few pixels into a drag, which would cost the tally its squash and its cat.
+            // Enabled only on overflow: an enabled scroll delays its children's press feedback and
+            // turns a tap that drifts past touch slop into a drag.
             modifier = Modifier.verticalScroll(scroll, enabled = scroll.maxValue > 0).padding(padding),
         ) { (aboveItems, fillItems, belowItems), stackConstraints ->
             val width = stackConstraints.maxWidth

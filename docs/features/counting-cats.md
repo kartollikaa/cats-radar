@@ -18,8 +18,8 @@ of taps is one burst rather than a flicker per tap, and a later run starts again
 haptic, it lands before the write rather than after it succeeds, so holding the button down still
 counts up smoothly. If the write then fails the total does not move: the burst is feedback for the
 *tap*, and the number is read back from the database. It is a badge rather than bare text because a
-wide number in a short block reaches that corner; the block itself announces the new total to
-TalkBack, politely, as it changes.
+wide number in a short block reaches that corner; TalkBack reads the total as the block's own label,
+and before the total is known the block is named by what it does.
 
 The count sits in a large block that **is** the button. It squashes under a press and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen
@@ -36,17 +36,17 @@ the Counter comes back, because nothing was on screen to roll it.
 
 The number shrinks to fit the block rather than wrapping, so a short phone, a large font or a
 five-digit total keeps it on one line. The block has a floor, though: when the screen cannot fit
-everything — a small phone at a large font, say, or with the location hint showing — it keeps a
-height at which the number still reads, and the Counter scrolls instead. Scrolling is switched on
-only then, because an enabled scroll delays every press and turns a tap that drifts a few pixels
-into a drag: on a screen with room to spare, a tap is only ever a tap.
+everything — a small phone at a large font, say, or a small phone with the location hint showing —
+it keeps a height at which the number still reads, and the Counter scrolls instead. Scrolling is
+switched on only then, because an enabled scroll delays every press and turns a tap that drifts a
+few pixels into a drag: on a screen with room to spare, a tap is only ever a tap.
 
-**The controls never move.** Undo has a place of its own at the far end of the walk-chip row,
+**The controls do not jump.** Undo has a place of its own at the far end of the walk-chip row,
 outside the count block — inside the block, a follow-up tap on the same spot would land on Undo and
 take a cat away instead of adding one. A long walk label gives way to it rather than squeezing it.
 The outing line keeps its line, empty when no outing is open, so an outing starting or ending leaves
 the block the same size. The location hint and the import progress and summary appear above the
-count and take their room from it; the number shrinks, and the walk chip, the coat grid and the
+count and take their room from it, so the number shrinks and the walk chip, the coat grid and the
 Photo button stay where they are — unless the block is already at its floor, when the Counter
 scrolls instead.
 
