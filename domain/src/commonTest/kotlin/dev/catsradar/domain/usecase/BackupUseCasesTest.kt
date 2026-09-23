@@ -1,6 +1,7 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
+import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.BackupReadResult
@@ -124,6 +125,27 @@ class ImportBackupTest {
 
         assertEquals(ImportBackupResult.Merged(added = 0, updated = 0, unchanged = 1), result)
         assertEquals(LATE, encounters.loadEvery().single().deletedAt)
+    }
+
+    @Test
+    fun `a cat whose coordinates are off the globe is imported without its location`() = runTest {
+        val offGlobe = encounterAt(EARLY).copy(
+            id = "cat",
+            lat = 95.0,
+            lon = 37.6,
+            accuracyMeters = 10f,
+            locationSource = LocationSource.EXIF,
+            locationFixedAt = EARLY,
+            geohash = "ucfv0h8y",
+            placeCellId = "ucfv0h",
+        )
+
+        val result = importBackup(BackupReadResult.Readable(BackupContents(encounters = listOf(offGlobe))))(
+            "content://in.zip",
+        )
+
+        assertEquals(ImportBackupResult.Merged(added = 1, updated = 0, unchanged = 0), result)
+        assertEquals(listOf(encounterAt(EARLY).copy(id = "cat")), encounters.inserted)
     }
 
     @Test
