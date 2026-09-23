@@ -36,7 +36,9 @@ class AndroidImageResizerOrientationTest {
     }
 
     private fun shownAs(relativePath: String): Shown {
-        val bitmap = BitmapFactory.decodeFile(photoStorage.resolve(relativePath))
+        val bitmap = checkNotNull(BitmapFactory.decodeFile(photoStorage.resolve(relativePath))) {
+            "stored $relativePath does not decode"
+        }
         val quadrants = listOf(1 to 1, 3 to 1, 1 to 3, 3 to 3).map { (column, row) ->
             bitmap.getPixel(column * bitmap.width / 4, row * bitmap.height / 4).nearestQuadrant()
         }

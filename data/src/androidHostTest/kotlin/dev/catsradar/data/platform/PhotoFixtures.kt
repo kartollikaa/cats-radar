@@ -13,7 +13,7 @@ internal object PhotoFixtures {
     const val TRUNCATED = "truncated.jpg"
     const val EMPTY = "empty.jpg"
 
-    /** 300x400 and [Quadrant.entries] in reading order, once turned the way its EXIF Orientation says. */
+    /** Portrait, with [Quadrant.entries] in reading order, once turned the way its EXIF Orientation says. */
     fun oriented(orientation: Int) = "orientation_$orientation.jpg"
 
     /** Copied out of the jar because ExifInterface and BitmapFactory want a real file. */
