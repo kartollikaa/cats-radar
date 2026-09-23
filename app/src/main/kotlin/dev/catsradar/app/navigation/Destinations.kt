@@ -2,11 +2,15 @@ package dev.catsradar.app.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.map.MapEffect
+import dev.catsradar.presentation.map.MapIntent
 import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.statistics.StatisticsStore
 import dev.catsradar.ui.encounters.EncountersScreen
@@ -26,10 +30,24 @@ internal fun EncountersDestination(
 }
 
 @Composable
-internal fun MapDestination(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+internal fun MapDestination(contentPadding: PaddingValues, onOpenCat: (String) -> Unit, modifier: Modifier = Modifier) {
     val store = koinViewModel<MapStore>()
     val state by store.state.collectAsStateWithLifecycle()
-    MapScreen(state = state, modifier = modifier, contentPadding = contentPadding)
+    val openCat by rememberUpdatedState(onOpenCat)
+    LaunchedEffect(store) {
+        store.effects.collect { effect ->
+            when (effect) {
+                is MapEffect.OpenCat -> openCat(effect.id)
+            }
+        }
+    }
+    MapScreen(
+        state = state,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        onCatsTap = { ids -> store.dispatch(MapIntent.CatsTapped(ids)) },
+        onSpotDismiss = { store.dispatch(MapIntent.SpotDismissed) },
+    )
 }
 
 @Composable

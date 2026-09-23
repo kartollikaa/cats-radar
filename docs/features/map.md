@@ -26,6 +26,16 @@ last known position, a photo's own EXIF. A cat still waiting for a location, or 
 one, is not drawn, and the list keeps it as before. Neither is a cat whose coordinates are off the
 globe, past a pole or the 180th meridian.
 
+## Tapping the map
+
+- **A dot** opens its cat's detail above the Map tab; back returns to the map as it was left.
+- **Dots close together** at the current zoom draw as one circle holding their count. Tapping it
+  zooms in until they come apart.
+- **Cats that never come apart** open as a list of that spot, grouped by outing as the Encounters
+  tab groups them. The outing backfill gives every cat of a walk the same fix, so this is common.
+  A row opens its cat, back returns to the list, and a second back closes it. A tap that lands on
+  several dots at once opens the same list.
+
 ## At the edges
 
 - **No cat has a location yet:** the tab says so instead of showing an empty map, and so loads no
@@ -36,7 +46,8 @@ globe, past a pole or the 180th meridian.
 - **No connection:** the dots sit on the map's style, so without the style there is nothing to draw
   them on. An area already seen loads from the cache; a first look with no connection says the map
   could not load, rather than showing an empty canvas.
-- **TalkBack** hears how many cats the map shows; the dots themselves are not reachable yet.
+- **TalkBack** hears how many cats the map shows; the dots themselves are not reachable yet, and a
+  spot's list is read like the Encounters tab.
 - **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
   world: the fitted area runs west to east the long way round. Every dot is still on screen.
 - **White cats on a light street:** each dot has the same outline the coat faces carry, so a white
@@ -46,10 +57,12 @@ globe, past a pole or the 180th meridian.
 
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
   on), `MapStateMapper`, `MapStore`
-- `ui/…/map/MapScreen.kt` — the map, its style and the dots
+- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
+  their taps; `MapFeatures.kt` — cats as map features; `MapSpotSheet.kt` — a spot's list, drawn by
+  the Encounters tab's own `EncounterList`
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab
 
 ## Not built yet
 
-Tapping a dot, clustering, an outing's route, walk tracks and a heatmap are the next slices of the
-Map epic (`docs/tbd/decompositions/2026-09-23-map-epic.md`).
+An outing's route, walk tracks and a heatmap are the next slices of the Map epic
+(`docs/tbd/decompositions/2026-09-23-map-epic.md`).

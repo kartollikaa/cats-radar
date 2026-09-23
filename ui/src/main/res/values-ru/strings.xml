@@ -13,6 +13,12 @@
         <item quantity="many">Карта: %d котиков</item>
         <item quantity="other">Карта: %d котика</item>
     </plurals>
+    <plurals name="map_spot_title">
+        <item quantity="one">%d котик на этом месте</item>
+        <item quantity="few">%d котика на этом месте</item>
+        <item quantity="many">%d котиков на этом месте</item>
+        <item quantity="other">%d котика на этом месте</item>
+    </plurals>
     <string name="tab_statistics">Итоги</string>
 
     <string name="counter_camera">Фото</string>

@@ -11,6 +11,10 @@
         <item quantity="one">Map with %d cat</item>
         <item quantity="other">Map with %d cats</item>
     </plurals>
+    <plurals name="map_spot_title">
+        <item quantity="one">%d cat seen here</item>
+        <item quantity="other">%d cats seen here</item>
+    </plurals>
     <string name="tab_statistics">Stats</string>
 
     <string name="counter_camera">Photo</string>

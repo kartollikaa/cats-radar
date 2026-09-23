@@ -1,27 +1,49 @@
 package dev.catsradar.presentation.map
 
 import androidx.lifecycle.viewModelScope
+import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.presentation.Store
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 
-sealed interface MapIntent
+sealed interface MapIntent {
+    /** The cats under a tap on the map, or the one row tapped in a spot's list. */
+    data class CatsTapped(val ids: List<String>) : MapIntent
 
-sealed interface MapEffect
+    data object SpotDismissed : MapIntent
+}
+
+sealed interface MapEffect {
+    data class OpenCat(val id: String) : MapEffect
+}
 
 class MapStore(
     observeEncounters: ObserveEncounters,
     private val stateMapper: MapStateMapper,
+    private val clock: Clock,
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<MapState, MapIntent, MapEffect>(MapState.Loading) {
 
+    private val openSpot = MutableStateFlow<Set<String>?>(null)
+
     init {
-        observeEncounters()
-            .onEach { encounters -> setState { stateMapper.map(encounters) } }
-            .launchIn(viewModelScope)
+        combine(observeEncounters(), openSpot) { encounters, spot ->
+            setState { stateMapper.map(encounters, clock.today(timeZone), spot) }
+        }.launchIn(viewModelScope)
     }
 
-    @Suppress("EmptyFunctionBlock") // MapIntent has no members: this screen dispatches none
     override suspend fun handle(intent: MapIntent) {
+        when (intent) {
+            is MapIntent.CatsTapped -> when (intent.ids.size) {
+                0 -> Unit
+                1 -> emit(MapEffect.OpenCat(intent.ids.single()))
+                else -> openSpot.value = intent.ids.toSet()
+            }
+            MapIntent.SpotDismissed -> openSpot.value = null
+        }
     }
 }
