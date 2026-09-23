@@ -26,9 +26,9 @@ class DatabaseSchemaTest {
     }
 
     @Test
-    fun databaseOpensAndBothTablesExist() = runTest {
+    fun databaseOpensWithEveryTable() = runTest {
         val tables = database.schemaProbeDao().tableNames().toSet()
-        assertEquals(setOf("encounters", "place_cells"), tables)
+        assertEquals(setOf("encounters", "place_cells", "walks", "track_points"), tables)
     }
 
     @Test

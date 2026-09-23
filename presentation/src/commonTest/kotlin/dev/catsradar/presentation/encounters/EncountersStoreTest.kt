@@ -3,6 +3,7 @@ package dev.catsradar.presentation.encounters
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
+import dev.catsradar.presentation.counter.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -33,8 +34,12 @@ class EncountersStoreTest {
         Dispatchers.resetMain()
     }
 
-    private fun newStore(repository: FakeEncounterRepository): EncountersStore = EncountersStore(
+    private fun newStore(
+        repository: FakeEncounterRepository,
+        settings: FakeSettingsRepository = FakeSettingsRepository(),
+    ): EncountersStore = EncountersStore(
         observeEncounters = ObserveEncounters(repository),
+        settingsRepository = settings,
         stateMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = FakeClock(Instant.parse("2026-09-22T12:00:00Z")),
         timeZone = TimeZone.UTC,
@@ -58,6 +63,23 @@ class EncountersStoreTest {
         runCurrent()
 
         assertEquals(false, store.state.value.isEmpty)
-        assertEquals(1, store.state.value.rows.count { it is EncounterGridRow.Cards })
+        assertEquals(1, store.state.value.rows.count { it is EncountersRow.Cards })
+    }
+
+    @Test
+    fun `turning the grid off re-lays the open tab as a list, with no new encounter`() = runTest(mainDispatcher) {
+        val repository = FakeEncounterRepository()
+        val settings = FakeSettingsRepository(encountersGrid = true)
+        val store = newStore(repository, settings)
+        repository.insert(encounterFixture("1", Instant.parse("2026-09-22T10:00:00Z")))
+        runCurrent()
+        val before = store.state.value.layout
+
+        settings.setEncountersGrid(false)
+        runCurrent()
+
+        assertEquals(EncountersLayout.GRID, before)
+        assertEquals(EncountersLayout.LIST, store.state.value.layout)
+        assertEquals(1, store.state.value.rows.count { it is EncountersRow.Single })
     }
 }

@@ -68,7 +68,8 @@ Composables render state; they don't build it. Banned inside `@Composable` files
 - building the list of items to show;
 - deciding visibility from domain fields (`if (source == NONE && permissionDenied)`);
 - `when (domainEnum) -> icon / label / text`;
-- formatting — dates, durations, plurals, rates.
+- formatting — dates, durations, plurals, rates. Choosing a plural form in code is formatting; a
+  count from State passed to `pluralStringResource` is not, since the resources pick the form.
 
 A mapper is a plain class you unit-test with `assertEquals` on the whole result; the same logic in a
 composable needs a UI test to reach.

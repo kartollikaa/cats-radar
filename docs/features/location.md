@@ -18,6 +18,11 @@ requested for.
 
 ## At the edges
 
+A fix is dated on the phone's own clock, the one every encounter is stamped with. Android dates a
+fix by its source, which for satellites is their clock, and a phone set by hand disagrees with it;
+the fix's age on the uptime clock is what places it (*a fix is dated on the phone's clock by how long
+ago it was taken*).
+
 A retry of the same worker (process death, WorkManager's own re-run policy) is idempotent:
 `AttachLocation` re-reads the target first and returns immediately unless its `locationSource` is
 still `NONE`, so an already-located row is neither re-stamped nor used to trigger another backfill

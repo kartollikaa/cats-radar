@@ -4,7 +4,8 @@ A cat seen on a walk should cost one tap. Walking mode puts an ongoing notificat
 on the lock screen with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and
 goes back — no unlock, no app launch, no hunting for the right screen.
 
-Started from the **Counter** — a chip that reads *Start a walk*, then *On a walk* — because that is
+Started from the **Counter** — a chip with a walking figure, centred under the count, that reads
+*Start a walk*, then *On a walk* — because that is
 the screen someone is on when they set out. The same switch is in **Settings → Walking mode** for
 finding it again later.
 

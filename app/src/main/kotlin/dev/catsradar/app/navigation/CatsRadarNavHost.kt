@@ -101,6 +101,7 @@ internal fun catsRadarEntries(
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
+    entry<CatsMap>(metadata = tabRootMetadata()) { MapDestination(contentPadding = contentPadding) }
     entry<Statistics>(metadata = tabRootMetadata()) {
         StatisticsDestination(
             contentPadding = contentPadding,
@@ -158,6 +159,7 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
         onWalkingModeChange = onWalkingModeChange,
+        onEncountersGridChange = { store.dispatch(SettingsIntent.EncountersGridToggled(it)) },
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
         onBackupOutcomeDismiss = { store.dispatch(SettingsIntent.Backup.OutcomeDismissed) },

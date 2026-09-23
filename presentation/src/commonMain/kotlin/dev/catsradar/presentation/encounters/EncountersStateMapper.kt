@@ -16,10 +16,20 @@ class EncountersStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounters: List<Encounter>, today: LocalDate): EncountersState = EncountersState(
+    fun map(encounters: List<Encounter>, today: LocalDate, grid: Boolean): EncountersState = EncountersState(
         rows = outingsNewestFirst(encounters)
-            .flatMap { outing -> listOf(outing.header(today)) + outing.gridRows() }
+            .flatMap { outing ->
+                val cats = if (grid) {
+                    outing.gridRows()
+                } else {
+                    outing.mapWithGroupPosition { encounter, position ->
+                        EncountersRow.Single(encounter.toCell(), position)
+                    }
+                }
+                listOf(outing.header(today)) + cats
+            }
             .toPersistentList(),
+        layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
     )
 
     fun mapList(encounters: List<Encounter>, today: LocalDate): ImmutableList<EncounterListItem> =
@@ -48,12 +58,12 @@ class EncountersStateMapper(
         )
     }
 
-    private fun List<Encounter>.gridRows(): List<EncounterGridRow> =
+    private fun List<Encounter>.gridRows(): List<EncountersRow> =
         EncounterGridPacker.pack(this, hasPhoto = { it.thumbnail() != null }).map { row ->
             when (row) {
-                is PackedRow.PhotoPair -> EncounterGridRow.PhotoPair(row.first.toPhotoCell(), row.second.toPhotoCell())
-                is PackedRow.Tiles -> EncounterGridRow.Tiles(row.cats.map { it.toCell() }.toPersistentList())
-                is PackedRow.Cards -> EncounterGridRow.Cards(row.cats.map { it.toCell() }.toPersistentList())
+                is PackedRow.PhotoPair -> EncountersRow.PhotoPair(row.first.toPhotoCell(), row.second.toPhotoCell())
+                is PackedRow.Tiles -> EncountersRow.Tiles(row.cats.map { it.toCell() }.toPersistentList())
+                is PackedRow.Cards -> EncountersRow.Cards(row.cats.map { it.toCell() }.toPersistentList())
             }
         }
 
@@ -90,3 +100,14 @@ class EncountersStateMapper(
     private fun Encounter.timeLabel(): String =
         dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
 }
+
+private inline fun <T, R> List<T>.mapWithGroupPosition(transform: (T, GroupPosition) -> R): List<R> =
+    mapIndexed { index, item ->
+        val position = when {
+            lastIndex == 0 -> GroupPosition.ONLY
+            index == 0 -> GroupPosition.FIRST
+            index == lastIndex -> GroupPosition.LAST
+            else -> GroupPosition.MIDDLE
+        }
+        transform(item, position)
+    }

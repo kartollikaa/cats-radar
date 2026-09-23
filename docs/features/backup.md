@@ -15,7 +15,7 @@ a tombstone never travels, so an imported row is always a live one.
 
 ## Merging, not replacing
 
-Importing never wipes what is here. Every row is reconciled on its own, by `id`:
+Importing never wipes what is here. Every cat is reconciled on its own, by `id`:
 
 - **A cat this device has never seen** is added.
 - **A cat both know about** keeps whichever copy was edited later. A tie keeps what is already here,
@@ -23,8 +23,11 @@ Importing never wipes what is here. Every row is reconciled on its own, by `id`:
 - **A cat deleted here** stays deleted, unless the archive's copy was edited *after* the deletion —
   in which case the user has been using another device since, and that later edit is the more recent
   statement of intent.
+- **A cat the archive lists more than once** is still one cat. Its copies settle among themselves
+  first — the later edit wins, a tie keeps the one listed first — and only that copy meets the rules
+  above. It is counted once, as added, updated or unchanged: the counts are cats, not rows.
 
-There is no server to arbitrate, so each rule settles the conflict from the two rows alone.
+There is no server to arbitrate, so each rule settles the conflict from the rows alone.
 
 ## Place cells
 
@@ -35,7 +38,13 @@ devices.
   on, however many attempts went into the local one.
 - **Between two names, the fresher lookup wins.**
 - **Between two unnamed cells, the local one stays** — its `attempts` is what the geocoding worker
-  paces its retries by, and an import must not reset that.
+  gives the cell up by, and an import must not reset that.
+- **An unnamed cell this device has never seen arrives untried**: `PENDING`, no attempts, no name,
+  exactly as if a cat here had just landed in it — whatever the exporting device concluded. Its
+  `FAILED` or `UNAVAILABLE` is a verdict about that device's geocoder, not this one's, and nothing
+  here ever retries a cell in either state, so taken as written it would read as "Not named yet" for
+  good. A cell imported before this rule keeps the state it arrived with: importing the archive
+  again meets it as an unnamed local cell, which stays.
 
 ## The archive
 
@@ -78,9 +87,17 @@ has been rendering, and an archive should not quietly replace it.
   that many characters of the geohash alphabet, lowercase — is dropped, not the archive with it: no
   imported cat can point at such a cell, since a cat's cell is derived from its coordinates. A
   valid id's centre is derived from the id, so a hand-edited centre off the globe, or in another
-  city, is never the point the geocoder is asked about. The rest of the cell — its name, status and
-  attempts — arrives as written, and the merge rules above decide between it and the local one as
-  before.
+  city, is never the point the geocoder is asked about. A named cell's name, status and attempts
+  arrive as written; an unnamed one arrives untried, as above. The merge rules then decide between
+  it and the local one.
+- **An archive that lists one cell more than once settles its own rows first**, by the same rules —
+  a name beats no name, the fresher name beats the older, and a tie keeps the row listed first — and
+  only the survivor is weighed against the cell here. Weighed one by one against the local cell,
+  every row that beat it would be written and the last would stick, so a pending row listed after a
+  named one would erase the name.
+- **An archive that lists one cat more than once imports it once.** Taken row by row, a cat new here
+  would be inserted twice, and the second insert would fail the import with every cat before it
+  already written; a cat already here would end up as whichever row came last, older or not.
 - **Reading the local side uses `loadEvery`**, which returns soft-deleted rows too. The live reads
   hide them, and a merge that could not see a deletion would let an old archive reinsert the cat as
   if it were new.
@@ -91,8 +108,8 @@ has been rendering, and an archive should not quietly replace it.
 - `domain/…/backup/BackupContents.kt` — what an archive holds, and what a merge decided
 - `domain/…/backup/ImportedLocation.kt` — what an imported cat keeps of its location, and what is
   derived again
-- `domain/…/backup/ImportedPlaceCell.kt` — which archived cells are cells at all, and where each one
-  is
+- `domain/…/backup/ImportedPlaceCell.kt` — which archived cells are cells at all, where each one is,
+  and what an unnamed one leaves behind
 - `domain/…/usecase/ExportBackup.kt`, `ImportBackup.kt`
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
 - `data/…/backup/BackupRecords.kt` — the serialized shape and its mappers

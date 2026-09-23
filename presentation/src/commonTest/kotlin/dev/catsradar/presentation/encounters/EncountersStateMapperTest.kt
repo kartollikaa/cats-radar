@@ -22,7 +22,7 @@ class EncountersStateMapperTest {
 
     @Test
     fun `an empty encounter list maps to the empty state`() {
-        val state = mapper.map(emptyList(), today)
+        val state = mapper.map(emptyList(), today, grid = true)
 
         assertEquals(EncountersState(), state)
     }
@@ -37,17 +37,17 @@ class EncountersStateMapperTest {
             photoFixture("p2", BASE + 4.minutes),
         )
 
-        val state = mapper.map(outing, today)
+        val state = mapper.map(outing, today, grid = true)
 
         assertEquals(
             EncountersState(
                 rows = persistentListOf(
                     OutingHeader(key = "header-e1", label = "2026-09-22, $BASE"),
-                    EncounterGridRow.PhotoPair(
+                    EncountersRow.PhotoPair(
                         first = photoCell("p2", BASE + 4.minutes, "/data/photos/p2.jpg"),
                         second = photoCell("p1", BASE + 3.minutes, "/data/photos/p1.jpg"),
                     ),
-                    EncounterGridRow.Tiles(
+                    EncountersRow.Tiles(
                         cells = persistentListOf(
                             cell("e3", BASE + 2.minutes),
                             cell("e2", BASE + 1.minutes, CellLead.Coat(CoatOption.GREY)),
@@ -65,16 +65,16 @@ class EncountersStateMapperTest {
         val morning = photoFixture("morning", BASE)
         val evening = photoFixture("evening", BASE + 8.hours)
 
-        val rows = mapper.map(listOf(morning, evening), today).rows
+        val rows = mapper.map(listOf(morning, evening), today, grid = true).rows
 
         assertEquals(
             persistentListOf(
                 OutingHeader(key = "header-evening", label = "2026-09-22, ${BASE + 8.hours}"),
-                EncounterGridRow.Cards(
+                EncountersRow.Cards(
                     persistentListOf(cell("evening", BASE + 8.hours, CellLead.Photo("/data/photos/evening_thumb.jpg"))),
                 ),
                 OutingHeader(key = "header-morning", label = "2026-09-22, $BASE"),
-                EncounterGridRow.Cards(
+                EncountersRow.Cards(
                     persistentListOf(cell("morning", BASE, CellLead.Photo("/data/photos/morning_thumb.jpg"))),
                 ),
             ),
@@ -87,16 +87,16 @@ class EncountersStateMapperTest {
         val morning = (0 until 3).map { encounterFixture("m$it", BASE + it.minutes) }
         val evening = (0 until 2).map { encounterFixture("e$it", BASE + 8.hours + it.minutes) }
 
-        val rows = mapper.map(morning + evening, today).rows
+        val rows = mapper.map(morning + evening, today, grid = true).rows
 
         assertEquals(
             persistentListOf(
                 OutingHeader(key = "header-e0", label = "2026-09-22, ${BASE + 8.hours}"),
-                EncounterGridRow.Cards(
+                EncountersRow.Cards(
                     persistentListOf(cell("e1", BASE + 8.hours + 1.minutes), cell("e0", BASE + 8.hours)),
                 ),
                 OutingHeader(key = "header-m0", label = "2026-09-22, $BASE"),
-                EncounterGridRow.Tiles(
+                EncountersRow.Tiles(
                     persistentListOf(cell("m2", BASE + 2.minutes), cell("m1", BASE + 1.minutes), cell("m0", BASE)),
                 ),
             ),
@@ -110,10 +110,10 @@ class EncountersStateMapperTest {
         val middle = encounterFixture("middle", BASE + 1.minutes)
         val photo = photoFixture("photo", BASE + 2.minutes)
 
-        val rows = mapper.map(listOf(older, middle, photo), today).rows
+        val rows = mapper.map(listOf(older, middle, photo), today, grid = true).rows
 
         assertEquals(
-            EncounterGridRow.Tiles(
+            EncountersRow.Tiles(
                 persistentListOf(
                     cell("photo", BASE + 2.minutes, CellLead.Photo("/data/photos/photo_thumb.jpg")),
                     cell("middle", BASE + 1.minutes),
@@ -125,14 +125,45 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `with the grid off, every cat is a full row of its outing, placed first to last`() {
+        val oldest = encounterFixture("oldest", BASE)
+        val middle = encounterFixture("middle", BASE + 5.minutes).copy(coat = CatCoat.BLACK)
+        val newest = photoFixture("newest", BASE + 10.minutes)
+        val lone = encounterFixture("lone", BASE + 5.hours)
+
+        val state = mapper.map(listOf(oldest, middle, newest, lone), today, grid = false)
+
+        assertEquals(
+            EncountersState(
+                rows = persistentListOf(
+                    OutingHeader(key = "header-lone", label = "2026-09-22, ${BASE + 5.hours}"),
+                    EncountersRow.Single(cell("lone", BASE + 5.hours), GroupPosition.ONLY),
+                    OutingHeader(key = "header-oldest", label = "2026-09-22, $BASE"),
+                    EncountersRow.Single(
+                        cell("newest", BASE + 10.minutes, CellLead.Photo("/data/photos/newest_thumb.jpg")),
+                        GroupPosition.FIRST,
+                    ),
+                    EncountersRow.Single(
+                        cell("middle", BASE + 5.minutes, CellLead.Coat(CoatOption.BLACK)),
+                        GroupPosition.MIDDLE,
+                    ),
+                    EncountersRow.Single(cell("oldest", BASE), GroupPosition.LAST),
+                ),
+                layout = EncountersLayout.LIST,
+            ),
+            state,
+        )
+    }
+
+    @Test
     fun `a pair cat without a full-size copy shows its thumbnail`() {
         val thumbOnly = photoFixture("thumbOnly", BASE).copy(photoPath = null)
         val full = photoFixture("full", BASE + 1.minutes)
 
-        val rows = mapper.map(listOf(thumbOnly, full), today).rows
+        val rows = mapper.map(listOf(thumbOnly, full), today, grid = true).rows
 
         assertEquals(
-            EncounterGridRow.PhotoPair(
+            EncountersRow.PhotoPair(
                 first = photoCell("full", BASE + 1.minutes, "/data/photos/full.jpg"),
                 second = photoCell("thumbOnly", BASE, "/data/photos/thumbOnly_thumb.jpg"),
             ),
@@ -147,7 +178,7 @@ class EncountersStateMapperTest {
             encounterFixture("e$index", BASE + (index * 2).hours, locationSource = source)
         }
 
-        val labels = mapper.map(encounters, today).cells().associate { it.id to it.location }
+        val labels = mapper.map(encounters, today, grid = true).cells().associate { it.id to it.location }
 
         assertEquals(
             mapOf(
@@ -168,7 +199,11 @@ class EncountersStateMapperTest {
         val coatOnly = encounterFixture("coatOnly", BASE + 5.minutes).copy(coat = CatCoat.GINGER)
         val neither = encounterFixture("neither", BASE + 10.minutes)
 
-        val leads = mapper.map(listOf(both, coatOnly, neither), today).cells().associate { it.id to it.lead }
+        val leads = mapper.map(
+            listOf(both, coatOnly, neither),
+            today,
+            grid = true,
+        ).cells().associate { it.id to it.lead }
 
         assertEquals(
             mapOf(
@@ -185,10 +220,10 @@ class EncountersStateMapperTest {
         val coated = encounterFixture("coated", BASE).copy(photoPath = "a.jpg", thumbPath = null, coat = CatCoat.GREY)
         val bare = encounterFixture("bare", BASE + 5.minutes).copy(photoPath = "b.jpg", thumbPath = null)
 
-        val rows = mapper.map(listOf(coated, bare), today).rows
+        val rows = mapper.map(listOf(coated, bare), today, grid = true).rows
 
         assertEquals(
-            EncounterGridRow.Cards(
+            EncountersRow.Cards(
                 persistentListOf(
                     cell("bare", BASE + 5.minutes),
                     cell("coated", BASE, CellLead.Coat(CoatOption.GREY)),
@@ -204,7 +239,7 @@ class EncountersStateMapperTest {
         val mid = encounterFixture("mid", BASE + 10.minutes) // same outing as `old`
         val new = encounterFixture("new", BASE + 2.hours) // past SESSION_GAP from `mid`: a new outing
 
-        val state = mapper.map(listOf(old, mid, new), today) // fed in oldest-first order
+        val state = mapper.map(listOf(old, mid, new), today, grid = true) // fed in oldest-first order
 
         assertEquals(listOf("new", "mid", "old"), state.cells().map { it.id })
     }
@@ -214,6 +249,7 @@ class EncountersStateMapperTest {
         val sameOuting = mapper.map(
             listOf(encounterFixture("a1", BASE), encounterFixture("a2", BASE + Tuning.SESSION_GAP)),
             today,
+            grid = true,
         )
         assertEquals(1, sameOuting.rows.count { it is OutingHeader })
         assertEquals(2, sameOuting.cells().size)
@@ -224,6 +260,7 @@ class EncountersStateMapperTest {
                 encounterFixture("b2", BASE + Tuning.SESSION_GAP + 1.milliseconds),
             ),
             today,
+            grid = true,
         )
         assertEquals(2, split.rows.count { it is OutingHeader })
         assertEquals(2, split.cells().size)
@@ -234,7 +271,7 @@ class EncountersStateMapperTest {
         val morning = encounterFixture("morning", BASE)
         val evening = encounterFixture("evening", BASE + 8.hours) // past SESSION_GAP: a separate outing
 
-        val state = mapper.map(listOf(morning, evening), today)
+        val state = mapper.map(listOf(morning, evening), today, grid = true)
 
         val headerLabels = state.rows.filterIsInstance<OutingHeader>().map { it.label }
         assertEquals(2, headerLabels.size)
@@ -246,7 +283,7 @@ class EncountersStateMapperTest {
         val kept = encounterFixture("kept", BASE)
         val deleted = encounterFixture("deleted", BASE + 5.minutes, deletedAt = BASE + 1.hours)
 
-        val state = mapper.map(listOf(kept, deleted), today)
+        val state = mapper.map(listOf(kept, deleted), today, grid = true)
 
         assertEquals(listOf("kept"), state.cells().map { it.id })
         assertEquals(1, state.rows.count { it is OutingHeader })
@@ -258,10 +295,10 @@ class EncountersStateMapperTest {
         val deleted = encounterFixture("deleted", BASE + 5.minutes, deletedAt = BASE + 1.hours)
         val newer = photoFixture("newer", BASE + 10.minutes)
 
-        val rows = mapper.map(listOf(older, deleted, newer), today).rows
+        val rows = mapper.map(listOf(older, deleted, newer), today, grid = true).rows
 
         assertEquals(
-            EncounterGridRow.PhotoPair(
+            EncountersRow.PhotoPair(
                 first = photoCell("newer", BASE + 10.minutes, "/data/photos/newer.jpg"),
                 second = photoCell("older", BASE, "/data/photos/older.jpg"),
             ),
@@ -273,10 +310,10 @@ class EncountersStateMapperTest {
     fun `changing only an encounter's own offset changes which local day its outing header uses`() {
         val instant = Instant.parse("2026-09-22T00:10:00Z")
 
-        mapper.map(listOf(encounterFixture("same-zone", instant, tzOffsetMinutes = 0)), today)
+        mapper.map(listOf(encounterFixture("same-zone", instant, tzOffsetMinutes = 0)), today, grid = true)
         val dateAtUtc = formatter.dayHeaderCalls.last()
 
-        mapper.map(listOf(encounterFixture("hour-west", instant, tzOffsetMinutes = -60)), today)
+        mapper.map(listOf(encounterFixture("hour-west", instant, tzOffsetMinutes = -60)), today, grid = true)
         val dateAnHourWest = formatter.dayHeaderCalls.last()
 
         assertEquals(LocalDate(2026, 9, 22), dateAtUtc)
@@ -313,9 +350,10 @@ class EncountersStateMapperTest {
     private fun EncountersState.cells(): List<CellView> = rows.flatMap { row ->
         when (row) {
             is OutingHeader -> emptyList()
-            is EncounterGridRow.PhotoPair -> listOf(row.first, row.second).map { CellView(it.id, it.location, null) }
-            is EncounterGridRow.Tiles -> row.cells.map { CellView(it.id, it.location, it.lead) }
-            is EncounterGridRow.Cards -> row.cells.map { CellView(it.id, it.location, it.lead) }
+            is EncountersRow.PhotoPair -> listOf(row.first, row.second).map { CellView(it.id, it.location, null) }
+            is EncountersRow.Tiles -> row.cells.map { CellView(it.id, it.location, it.lead) }
+            is EncountersRow.Cards -> row.cells.map { CellView(it.id, it.location, it.lead) }
+            is EncountersRow.Single -> listOf(CellView(row.cell.id, row.cell.location, row.cell.lead))
         }
     }
 

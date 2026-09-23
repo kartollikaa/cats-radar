@@ -19,6 +19,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 private val EARLY = Instant.parse("2026-09-01T00:00:00Z")
+private val MIDDLE = Instant.parse("2026-09-10T00:00:00Z")
 private val LATE = Instant.parse("2026-09-20T00:00:00Z")
 private const val NAMED_HERE = "ucfv0h"
 private const val PENDING_HERE = "ucfv0j"
@@ -139,6 +140,44 @@ class ImportBackupTest {
     }
 
     @Test
+    fun `a cat the archive lists twice is inserted once, as its later edit`() = runTest {
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY)
+        val imported = BackupContents(encounters = listOf(later, earlier))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 1, updated = 0, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.inserted)
+    }
+
+    @Test
+    fun `a cat here that the archive lists twice takes the later edit listed first`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY))
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = MIDDLE)
+        val imported = BackupContents(encounters = listOf(later, earlier))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.loadEvery())
+    }
+
+    @Test
+    fun `a cat here that the archive lists twice takes the later edit listed last`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY))
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = MIDDLE)
+        val imported = BackupContents(encounters = listOf(earlier, later))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.loadEvery())
+    }
+
+    @Test
     fun `a cat whose coordinates are off the globe is imported without its location`() = runTest {
         val offGlobe = encounterAt(EARLY).copy(
             id = "cat",
@@ -239,6 +278,47 @@ class ImportBackupTest {
     }
 
     @Test
+    fun `a cell another device had no geocoder for arrives here untried`() = runTest {
+        val unavailableThere = cell("ucfv0n", PlaceStatus.UNAVAILABLE).copy(attempts = 1, lastAttemptAt = EARLY)
+
+        importBackup(BackupReadResult.Readable(BackupContents(placeCells = listOf(unavailableThere))))(
+            "content://in.zip",
+        )
+
+        assertEquals(
+            cell("ucfv0n", PlaceStatus.PENDING).copy(centerLat = 55.75836181640625, centerLon = 37.6226806640625),
+            placeCells.loadById("ucfv0n"),
+        )
+    }
+
+    @Test
+    fun `an unnamed cell from the archive leaves the unnamed one here as it was`() = runTest {
+        val tryingHere = cell(PENDING_HERE, PlaceStatus.PENDING).copy(attempts = 3, lastAttemptAt = EARLY)
+        placeCells.upsert(tryingHere)
+        val unavailableThere = cell(PENDING_HERE, PlaceStatus.UNAVAILABLE).copy(attempts = 1, lastAttemptAt = LATE)
+
+        importBackup(BackupReadResult.Readable(BackupContents(placeCells = listOf(unavailableThere))))(
+            "content://in.zip",
+        )
+
+        assertEquals(listOf(tryingHere), placeCells.upserted)
+    }
+
+    @Test
+    fun `a name the archive gives a cell is written even when a later row for it has none`() = runTest {
+        val imported = BackupContents(
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED), cell("ucfv0n", PlaceStatus.PENDING)),
+        )
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(
+            cell("ucfv0n", PlaceStatus.RESOLVED).copy(centerLat = 55.75836181640625, centerLon = 37.6226806640625),
+            placeCells.loadById("ucfv0n"),
+        )
+    }
+
+    @Test
     fun `a cell whose id is not a place cell is left out of an archive that is otherwise imported`() = runTest {
         val imported = BackupContents(
             encounters = listOf(locatedInMoscow),
@@ -246,6 +326,7 @@ class ImportBackupTest {
                 cell("ucfv0", PlaceStatus.RESOLVED),
                 cell("ucfv0a", PlaceStatus.RESOLVED),
                 cell("UCFV0N", PlaceStatus.RESOLVED),
+                cell("ucfv0n0123456", PlaceStatus.PENDING),
             ),
         )
 
