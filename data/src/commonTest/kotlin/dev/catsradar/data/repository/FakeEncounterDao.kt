@@ -32,6 +32,7 @@ internal class FakeEncounterDao : EncounterDao {
     var observeByIdCall: String? = null
     var softDeleteCall: Pair<String, Instant>? = null
     var clearDeletedAtCall: String? = null
+    val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
@@ -58,6 +59,10 @@ internal class FakeEncounterDao : EncounterDao {
 
     override suspend fun clearDeletedAt(id: String) {
         clearDeletedAtCall = id
+    }
+
+    override suspend fun clearDeletedAtIfDeletedAt(id: String, deletedAt: Instant) {
+        clearDeletedAtIfDeletedAtCalls += id to deletedAt
     }
 
     @Suppress("LongParameterList") // mirrors EncounterDao.attachLocation's own Room binding constraint
