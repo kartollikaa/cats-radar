@@ -14,6 +14,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 // USE_TIME_BASED_SCHEDULING, and no constraint is ever marked met: requests stay queued, which is the
@@ -53,15 +54,17 @@ class GeocodeWorkSchedulerTest {
         assertTrue(input.getBoolean(GeocodePendingCellsWorker.KEY_UNTRIED_ONLY, false))
     }
 
-    // A cell written while a pass is already past it would otherwise wait for the periodic slot.
+    // Kept instead, a pass already past a cell written meanwhile would leave it for the periodic slot.
     @Test
-    fun `a second request while one is still queued runs after it instead of being dropped`() {
+    fun `a new request starts the pass over, so at most one is ever queued`() {
         GeocodeWorkScheduler.nameUntriedCells(context)
+        val first = untriedWork().single()
+        assertEquals(WorkInfo.State.ENQUEUED, first.state)
+
         GeocodeWorkScheduler.nameUntriedCells(context)
 
-        val work = untriedWork()
-        assertEquals(2, work.size)
-        assertEquals(1, work.count { it.state == WorkInfo.State.BLOCKED })
+        val waiting = untriedWork().filterNot { it.state.isFinished }
+        assertNotEquals(first.id, waiting.single().id)
     }
 
     private fun untriedWork(): List<WorkInfo> =

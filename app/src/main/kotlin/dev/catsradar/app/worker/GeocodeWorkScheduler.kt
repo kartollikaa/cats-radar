@@ -47,9 +47,9 @@ object GeocodeWorkScheduler {
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNTRIED_UNIQUE_NAME,
-            // Not KEEP: a pass already running may be past the new cell. An extra pass costs nothing,
-            // because it only touches cells nobody has looked up.
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            // Not KEEP: a pass already running may be past the new cell. Starting over costs at most
+            // one lookup, because the pass only touches cells nobody has looked up.
+            ExistingWorkPolicy.REPLACE,
             request,
         )
     }

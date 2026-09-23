@@ -39,9 +39,10 @@ and retry on a timer.
   hours.
 - **This pass only touches cells never looked up.** A cell that already failed is left for the
   periodic retry, so however often cells appear, a flaky geocoder cannot use up a cell's attempts in
-  one walk. That is also why a request made while a pass is running is queued behind it
-  (`APPEND_OR_REPLACE`) rather than dropped: the running pass may already be past the new cell, and
-  an extra pass costs nothing.
+  one walk. That is also why a request made while a pass is running starts it over (`REPLACE`)
+  rather than being dropped: the running pass may already be past the new cell, and starting again
+  costs at most the one lookup that was in flight. At most one such pass is ever queued, however
+  many cells appear while the phone is offline.
 - **A failed lookup is retried periodically.** This work is unique and enqueued with `KEEP`, because
   re-enqueuing on every launch would reset both the period and the backoff. A cell that keeps
   failing would then be retried far more often than intended.
@@ -49,6 +50,11 @@ and retry on a timer.
 A pass pages through pending cells by id, starting each page after the last cell it saw. An offset
 would not work: the pass moves the cells it names out of the pending set, so every page would skip
 as many cells as the one before it had named.
+
+The two passes can run at the same time, and a restore can write a cell while a lookup is in flight.
+A pass therefore writes its result only if the cell is still exactly as it read it. If anything
+changed meanwhile, the other writer's version stands. Without this rule, a lookup that failed could
+overwrite a name another pass had just found.
 
 Each cell ends in one of four states:
 

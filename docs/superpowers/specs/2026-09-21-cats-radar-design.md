@@ -196,9 +196,14 @@ dismissible one-line hint with a "grant" button. The widget never prompts.
 
 - `ReverseGeocoder` interface in `commonMain`; Android impl wraps `android.location.Geocoder`
   (`isPresent()` false → all cells `UNAVAILABLE`).
-- `GeocodePendingCellsWorker`: unique (`KEEP`), `NetworkType.CONNECTED`, up to `GEOCODE_BATCH`
-  cells per run, exponential backoff, `FAILED` after `MAX_GEOCODE_ATTEMPTS`. Triggered when a cell
-  is created and on app start if pending cells exist.
+- `GeocodePendingCellsWorker`: `NetworkType.CONNECTED`, exponential backoff, `FAILED` after
+  `MAX_GEOCODE_ATTEMPTS`; a pass reads pending cells `GEOCODE_BATCH` at a time, keyed by id. It
+  runs as two passes:
+  - a one-time pass over cells never looked up, unique with `REPLACE`, requested when such a cell
+    appears and on app start if one is waiting;
+  - a periodic pass, unique with `KEEP`, which retries cells whose lookup failed.
+
+  A pass writes a result only if the cell is unchanged since it read it.
 - Statistics read whatever is resolved; the only "loading" state is the Unresolved node.
 
 ### 4.5 Delete and purge
