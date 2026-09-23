@@ -47,6 +47,7 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
     private fun BottomNavTab.key(): NavKey = when (this) {
         BottomNavTab.COUNTER -> Counter
         BottomNavTab.ENCOUNTERS -> Encounters
+        BottomNavTab.MAP -> CatsMap
         BottomNavTab.STATISTICS -> Statistics
         BottomNavTab.SETTINGS -> Settings
     }

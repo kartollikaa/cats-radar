@@ -2,7 +2,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="tab_counter">Счётчик</string>
     <string name="tab_encounters">Котики</string>
-    <string name="tab_statistics">Статистика</string>
+    <string name="tab_map">Карта</string>
+    <string name="map_empty">На карте пока нет котиков</string>
+    <string name="map_empty_hint">Котик появится здесь, как только у него будет место</string>
+    <string name="map_unavailable">Карта не загрузилась</string>
+    <string name="map_unavailable_hint">Ей нужен интернет, когда она впервые показывает место. Котики в безопасности на телефоне.</string>
+    <plurals name="map_summary">
+        <item quantity="one">Карта: %d котик</item>
+        <item quantity="few">Карта: %d котика</item>
+        <item quantity="many">Карта: %d котиков</item>
+        <item quantity="other">Карта: %d котика</item>
+    </plurals>
+    <string name="tab_statistics">Итоги</string>
 
     <string name="counter_camera">Фото</string>
     <string name="counter_tally">Отметить кота</string>

@@ -2,6 +2,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="tab_counter">Counter</string>
     <string name="tab_encounters">Encounters</string>
+    <string name="tab_map">Map</string>
+    <string name="map_empty">No cat on the map yet</string>
+    <string name="map_empty_hint">A cat appears here once it has a location</string>
+    <string name="map_unavailable">The map could not load</string>
+    <string name="map_unavailable_hint">It needs the internet the first time it shows an area. Your cats are safe on the phone.</string>
+    <plurals name="map_summary">
+        <item quantity="one">Map with %d cat</item>
+        <item quantity="other">Map with %d cats</item>
+    </plurals>
     <string name="tab_statistics">Stats</string>
 
     <string name="counter_camera">Photo</string>
