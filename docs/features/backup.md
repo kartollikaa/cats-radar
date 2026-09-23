@@ -10,8 +10,9 @@ reads the run's state back rather than remembering it.
 ## What goes in
 
 Live encounters, every place cell, and every walk with its route. **Deleted cats stay home** — a
-backup is what you have, not what you threw away. That single decision is what makes the merge rules below as short as they are:
-a tombstone never travels, so an imported row is always a live one.
+backup is what you have, not what you threw away. That single decision is what makes the merge
+rules below as short as they are: a tombstone never travels, so an imported row is always a live
+one.
 
 ## Merging, not replacing
 
@@ -84,6 +85,7 @@ has been rendering, and an archive should not quietly replace it.
 ## Where the code lives
 
 - `domain/…/backup/BackupMerge.kt` — the rules, as one pure function; `WalkMerge.kt` — the walks'
+  rules
 - `domain/…/backup/BackupContents.kt` — what an archive holds, and what a merge decided
 - `domain/…/usecase/ExportBackup.kt`, `ImportBackup.kt`
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
