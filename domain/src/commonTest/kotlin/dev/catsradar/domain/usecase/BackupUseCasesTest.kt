@@ -216,6 +216,19 @@ class ImportBackupTest {
     }
 
     @Test
+    fun `an archive's cell that wins over the one here is written centred on its id`() = runTest {
+        placeCells.upsert(cell(PENDING_HERE, PlaceStatus.PENDING))
+        val offGlobe = cell(PENDING_HERE, PlaceStatus.RESOLVED).copy(centerLat = 95.0, centerLon = -237.0)
+
+        importBackup(BackupReadResult.Readable(BackupContents(placeCells = listOf(offGlobe))))("content://in.zip")
+
+        assertEquals(
+            cell(PENDING_HERE, PlaceStatus.RESOLVED).copy(centerLat = 55.75286865234375, centerLon = 37.6226806640625),
+            placeCells.loadById(PENDING_HERE),
+        )
+    }
+
+    @Test
     fun `a cell whose id is not a place cell is left out of an archive that is otherwise imported`() = runTest {
         val imported = BackupContents(
             encounters = listOf(locatedInMoscow),
