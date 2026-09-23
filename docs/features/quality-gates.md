@@ -7,7 +7,8 @@ convention plugin — `catsradar.kmp.library`, `catsradar.android.library`, and
 `detekt-formatting` and `compose-rules`) for style, complexity, and Compose-specific rules; Android
 Lint for manifest/resource/API-level/Compose-runtime issues; and Konsist for the architecture and
 naming rules described in `docs/rules/module-structure.md` and `docs/rules/mvi-architecture.md`,
-written as plain JUnit tests under `app/src/test/kotlin/dev/catsradar/app/architecture/`.
+written as plain JUnit tests under `app/src/test/kotlin/dev/catsradar/app/architecture/`. The
+binding rules for all three are `docs/rules/static-analysis.md`.
 
 ## At the edges
 
@@ -45,9 +46,11 @@ Beyond the import-boundary rules, Konsist also checks: every class named `*Store
 lambda type, a `fun interface`, or a typealias for either — the enforcement mechanism behind
 `docs/rules/mvi-architecture.md`'s "State is data, no function types," since detekt/compose-rules
 has no rule for it); every public `@Composable` with a `Modifier` parameter declares
-`modifier: Modifier = Modifier` as its first defaulted parameter; and every `NavKey`
+`modifier: Modifier = Modifier` as its first defaulted parameter; every `NavKey`
 implementation is `@Serializable` (needed for Navigation 3's saved-state restoration, and for
-polymorphic key serialization once a non-JVM target exists). `*Intent`, `*Effect`, and
+polymorphic key serialization once a non-JVM target exists); and `CatsRadarNavHost` takes its
+back stack from `rememberBottomNavBackStack()`, with no other `:app` source building or
+remembering a raw `NavBackStack` (`NavBackStackUsageTest`, see `app-shell.md`). `*Intent`, `*Effect`, and
 `*StateMapper` naming has no Konsist test at all.
 
 The DI graph gets its own two-layer check outside the three formal tools: `KoinModulesTest`
@@ -66,25 +69,34 @@ can't see — see `app-shell.md`.
 
 ## Not handled yet
 
-The rest of the design spec's §7 test list has tests; these parts do not. Only the first is held
-back by the build — the others are simply unwritten.
+The rest of the design spec's §7 test list has tests; these parts do not. The first needs build
+and CI setup that does not exist yet; the others need only the tests themselves.
 
-- **An on-device smoke test** (tap the counter, see 1). No module declares an instrumented source
-  set, and `./gradlew check` runs host tests only, so a test that needs an emulator has nowhere to
-  run, locally or in CI.
+- **An on-device smoke test** (tap the counter, see 1). `:app` has no `src/androidTest` sources,
+  no instrumentation runner and no instrumented-test dependencies, and CI runs `./gradlew check`
+  alone, which runs host tests and starts no emulator.
 - **A backup round trip judged by the statistics** (export, wipe, import, identical `Stats`). Its
   pieces are tested apart: `ZipBackupArchiveTest` writes an archive and reads every field back, and
   `BackupUseCasesTest` checks what export gathers and how import merges, against fakes. No test
   exports a real database, imports the archive into an empty one and compares the two `Stats`.
-- **Statistics across a timezone change.** `StatsCalculatorTest` dates every cat at one offset, so
-  no streak or day window is tested with cats logged in different zones — the case
-  `docs/rules/date-time.md` asks every calculation keyed by `LocalDate` to cover.
-- **The far side of the rate-eligibility edge.** An outing just short of
-  `Tuning.MIN_RATE_DURATION` is tested to get no rate; one exactly that long is not tested to get
-  one.
-- **Region drill-down above the domain.** `RegionTreeTest` covers each level's query, but
-  `ObserveRegion` — which level a parent key opens, and that an area or No location lists its cats
-  instead of more rows — and `RegionsStore` have no test.
+- **By-coat statistics.** No test hands `StatsCalculator` a cat with a coat, so the by-coat rows
+  — busiest coat first, "Not specified" last whatever its size, each coat's share of the total —
+  are unchecked, and `StatisticsStateMapperTest` only ever maps an empty list of them, so the
+  share's rounding is unchecked too.
+- **Statistics across midnight and a timezone change.** Every day-keyed case in
+  `StatsCalculatorTest` — the day windows and the streaks — sits around midday at offset zero, so
+  none crosses midnight or a zone change, the two cases `docs/rules/date-time.md` asks every
+  calculation keyed by `LocalDate` to cover. The Counter's today count is tested across offsets
+  (`ObserveTodayCountTest`); the statistics are not.
+- **The rate-eligibility boundary itself.** An outing just short of `Tuning.MIN_RATE_DURATION` is
+  tested to get no rate, but none exactly that long is tested to get one, and the current outing's
+  own minimum is tested only well clear of it. Either comparison could lose its `=` and every test
+  would still pass.
+- **Region drill-down below the countries.** `RegionTreeTest` checks the country rows in full —
+  they add up to the cats, busiest first, pseudo-nodes last — but not that a country's cities or a
+  city's areas add up to it or come busiest first. It never asks for a city's areas or an area's
+  cats, which are what tapping a city or an area asks for. `ObserveRegion`, which picks the level
+  a parent key opens, has no test, and `RegionsStore` none beyond Koin constructing it.
 - **Whole-`State` mapper assertions.** `StatisticsStateMapperTest` and `RegionsStateMapperTest`
   check chosen fields only. The statistics count, streak and outing labels are asserted nowhere,
   and neither are `RegionsStateMapper`'s rows: the drillable flag, the row keys, and the label
