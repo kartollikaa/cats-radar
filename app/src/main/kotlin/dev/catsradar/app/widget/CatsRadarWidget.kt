@@ -36,6 +36,7 @@ import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
+import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -51,10 +52,17 @@ import org.koin.core.component.inject
 // Given explicitly: without it Glance paints the widget in wallpaper colours on Android 12+.
 private val WidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
 
-private val Compact = DpSize(57.dp, 57.dp)
-private val Wide = DpSize(110.dp, 57.dp)
-private val Tall = DpSize(57.dp, 110.dp)
-private val Large = DpSize(110.dp, 110.dp)
+// Between the platform's reference cell sizes rather than on them: one upright phone cell is
+// narrower than Wide and shorter than Tall, and a landscape row is still taller than Compact.
+private val Compact = DpSize(40.dp, 40.dp)
+private val Wide = DpSize(110.dp, 40.dp)
+private val Tall = DpSize(40.dp, 160.dp)
+private val Large = DpSize(110.dp, 160.dp)
+
+internal object WidgetLayout {
+    const val STACKED = "stacked"
+    const val SIDE_BY_SIDE = "sideBySide"
+}
 
 private val TileGap = 4.dp
 private val TileCorner = 16.dp
@@ -84,12 +92,16 @@ class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
 internal fun WidgetContent(count: Int) {
     val size = LocalSize.current
     when {
-        size.height >= Tall.height -> Column(modifier = GlanceModifier.fillMaxSize()) {
+        size.height >= Tall.height -> Column(
+            modifier = GlanceModifier.fillMaxSize().semantics { testTag = WidgetLayout.STACKED },
+        ) {
             CountTile(count, GlanceModifier.fillMaxWidth().defaultWeight())
             Spacer(GlanceModifier.height(TileGap))
             PhotoTile(GlanceModifier.fillMaxWidth().defaultWeight())
         }
-        size.width >= Wide.width -> Row(modifier = GlanceModifier.fillMaxSize()) {
+        size.width >= Wide.width -> Row(
+            modifier = GlanceModifier.fillMaxSize().semantics { testTag = WidgetLayout.SIDE_BY_SIDE },
+        ) {
             CountTile(count, GlanceModifier.fillMaxHeight().defaultWeight())
             Spacer(GlanceModifier.width(TileGap))
             PhotoTile(GlanceModifier.fillMaxHeight().defaultWeight())
@@ -134,7 +146,8 @@ private fun PhotoTile(modifier: GlanceModifier = GlanceModifier) {
             .background(GlanceTheme.colors.primary)
             .cornerRadius(TileCorner)
             .padding(8.dp)
-            .clickable(actionStartActivity(TakePhotoShortcut.intent(context))),
+            .clickable(actionStartActivity(TakePhotoShortcut.intent(context)))
+            .semantics { contentDescription = context.getString(R.string.widget_photo_action) },
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

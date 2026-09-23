@@ -22,11 +22,6 @@ object CaptureTarget {
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
 
-    /** Removes originals the camera wrote; a cancelled capture leaves one nothing will ever read. */
-    fun clear(context: Context) {
-        File(context.cacheDir, CAPTURES_DIRECTORY).listFiles()?.forEach { it.delete() }
-    }
-
     fun discard(context: Context, uri: String) {
         runCatching { context.contentResolver.delete(uri.toUri(), null, null) }
     }

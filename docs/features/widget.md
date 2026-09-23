@@ -2,11 +2,16 @@
 
 A widget reading **6 cats today**, with a **Photo** tile beside it. Tapping the count logs a cat
 without opening the app, and there is nothing smaller to aim at, because the whole tile is the button.
-TalkBack announces it as **Log a cat**. Tapping Photo opens the app straight into the camera.
+TalkBack announces it as **Log a cat**. Tapping Photo — **Photograph a cat** to TalkBack — opens the
+app straight into the camera.
 
-It is placed two cells wide. Shrunk to a single cell it drops the Photo tile and becomes the count
-alone, since two targets in one cell are two targets too small; made two cells tall instead of wide,
-the Photo tile goes under the count.
+It is placed two cells wide. Photo appears whenever there is room for two tiles side by side: two
+cells on a phone held upright, and even one cell in landscape, where cells are wide and short.
+Narrower than that the widget is the count alone, since two targets in one upright cell are two
+targets too small. Made two cells tall — or two by two — Photo goes under the count instead.
+
+The sizes that switch the layout sit between the platform's reference cell sizes rather than on
+them, because launchers round cells differently: a single upright cell must never read as two.
 
 ## What a tap does
 
@@ -28,9 +33,14 @@ same `origin = CAMERA`, the same "Photo not saved" if the picture cannot be read
 camera leaves the app open on the Counter with nothing logged.
 
 The request reaches an app that is already running rather than starting a second copy of it, so Back
-from the Counter still leaves the app instead of stepping into an older one. Tapping Photo while a
-camera the app opened earlier is still up closes that camera, which counts as cancelled, and opens a
-fresh one.
+from the Counter still leaves the app instead of stepping into an older one. Once Photo has reached
+the app's task, though, the launcher's own intent no longer matches that task, and Android would
+stack a second copy on the next tap of the app icon; that copy closes itself at once, leaving
+whatever was in front — the Counter, or a camera still open.
+
+Tapping Photo while a camera the app opened earlier is still up closes that camera, which counts as
+cancelled, and opens a fresh one. Each camera's answer is matched to the file that camera was given,
+so the cancelled one can never take the new photo with it.
 
 ## Staying in step with the app
 
@@ -83,11 +93,13 @@ for it in every process the app runs in.
   flying across zones mid-trip does not leave "today" pinned to the old one.
 - **A cat deleted or undone after it was counted comes off the count** on the next redraw, because
   the count reads the same filtered query everything else does.
-- **Reopening the app from recents never opens the camera.** A task started by Photo keeps Photo's
-  intent, and Android hands it back when the app is reopened from recents; that launch is told apart
-  and ignored, and so is the same intent after a rotation or a process restart.
+- **Reopening the app from recents never opens the camera.** Once Photo has reached the app, its task
+  holds Photo's intent, and Android hands it back when the app is reopened from recents; that launch
+  is told apart and ignored, and so is the same intent after a rotation or a process restart. A
+  request not yet carried out when the activity is recreated survives the recreation.
 - **After a force stop the first tap is lost**, on either tile. Force-stopping cancels everything the
-  widget had armed, so that tap only wakes the app and redraws the widget; the next one works.
+  widget had armed; on the Android version this was checked on, that tap only wakes the app and
+  redraws the widget, and the next one works.
 - **The receiver is exported**, unlike the walking-mode one: the launcher hosts the widget and
   `AppWidgetManager` is what sends it `APPWIDGET_UPDATE`.
 - **The caption is a plural, and carries no number.** The count is drawn above it in its own text, so
@@ -99,6 +111,7 @@ for it in every process the app runs in.
 - `app/…/widget/CatsRadarWidget.kt` — what it draws, at each size
 - `app/…/widget/TallyAction.kt` — what a tap on the count does
 - `app/…/photo/TakePhotoShortcut.kt`, `CameraRequest.kt` — how Photo reaches the Counter's camera
+- `app/…/photo/PendingCaptures.kt` — which camera a result belongs to
 - `app/…/widget/WidgetRefresh.kt` — redrawing it when the app changes the count
 - `app/…/widget/CatsRadarWidgetReceiver.kt`, `res/xml/cats_radar_widget_info.xml` — how the launcher
   finds it

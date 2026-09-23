@@ -1,11 +1,13 @@
 # App shell
 
-`:app` hosts a single-activity Compose UI. `MainActivity` wraps one `CatsRadarNavHost()` in
-`CatsRadarTheme` inside a full-screen `Surface`; the nav host owns a Navigation 3 `NavDisplay` over
-a back stack rooted at `Counter`, with the selected bottom-navigation tab above it and any detail
-above that. The tab-to-destination mapping is exhaustive over `BottomNavTab`, so a new tab does not
-compile until it has a destination, and the selected tab is read back out of the stack rather than
-stored — a detail pushed above a tab still reports the tab it belongs to.
+`:app` hosts a single-activity Compose UI. `MainActivity` wraps one `CatsRadarNavHost` in
+`CatsRadarTheme` inside a full-screen `Surface`, and turns the widget's Photo launch into a camera
+request that sends the nav host back to the Counter (see [widget.md](./widget.md)). The nav host
+owns a Navigation 3 `NavDisplay` over a back stack rooted at `Counter`, with the selected
+bottom-navigation tab above it and any detail above that. The tab-to-destination mapping is
+exhaustive over `BottomNavTab`, so a new tab does not compile until it has a destination, and the
+selected tab is read back out of the stack rather than stored — a detail pushed above a tab still
+reports the tab it belongs to.
 `CatsRadarApplication.onCreate()` starts Koin with four modules (`domainModule`, `dataModule`,
 `presentationModule`, `workerModule`) and then initializes `WorkManager` by hand with a
 Koin-backed `WorkerFactory`, because the manifest disables WorkManager's own default initializer —

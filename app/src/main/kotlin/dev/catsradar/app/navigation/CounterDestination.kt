@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -24,6 +22,7 @@ import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.photo.CaptureTarget
+import dev.catsradar.app.photo.PendingCaptures
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.toCounterIntent
@@ -177,18 +176,18 @@ private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
 @Composable
 private fun rememberCameraLauncher(store: CounterStore): CameraLauncher {
     val context = LocalContext.current
-    // rememberSaveable: the process can die while the camera app is in front, and the result
-    // arrives with nothing but this URI to say where the original was written.
-    var captureUri by rememberSaveable { mutableStateOf<String?>(null) }
+    // Saveable: the process can die while a camera is in front, and its result says nothing about
+    // where it wrote.
+    val pending = rememberSaveable(saver = PendingCaptures.Saver) { PendingCaptures() }
     val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        store.dispatch(CounterIntent.PhotoCaptured(captureUri.takeIf { saved }))
-        captureUri = null
-        if (!saved) CaptureTarget.clear(context)
+        val target = pending.answered()
+        store.dispatch(CounterIntent.PhotoCaptured(target.takeIf { saved }))
+        if (!saved && target != null) CaptureTarget.discard(context, target)
     }
-    return remember(resultLauncher, context) {
+    return remember(resultLauncher, context, pending) {
         CameraLauncher {
             val target = CaptureTarget.newUri(context)
-            captureUri = target.toString()
+            pending.launched(target.toString())
             resultLauncher.launch(target)
         }
     }

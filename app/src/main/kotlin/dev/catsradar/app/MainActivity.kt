@@ -13,15 +13,23 @@ import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.ui.theme.CatsRadarTheme
 
+private const val CAMERA_REQUEST_PENDING = "cameraRequestPending"
+
 class MainActivity : ComponentActivity() {
 
     private val cameraRequest = CameraRequest()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (TakePhotoShortcut.isSecondLauncherCopy(intent, isTaskRoot)) {
+            finish()
+            return
+        }
         enableEdgeToEdge()
-        // A recreated activity still holds its launch intent; that request was carried out already.
-        if (savedInstanceState == null && TakePhotoShortcut.isRequest(intent)) cameraRequest.post()
+        val restoredRequest = savedInstanceState?.getBoolean(CAMERA_REQUEST_PENDING) == true
+        if (restoredRequest || TakePhotoShortcut.isRequest(intent, recreated = savedInstanceState != null)) {
+            cameraRequest.post()
+        }
         setContent {
             CatsRadarTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -33,6 +41,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (TakePhotoShortcut.isRequest(intent)) cameraRequest.post()
+        if (TakePhotoShortcut.isRequest(intent, recreated = false)) cameraRequest.post()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(CAMERA_REQUEST_PENDING, cameraRequest.isPending)
     }
 }

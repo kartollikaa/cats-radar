@@ -15,35 +15,51 @@ import kotlin.test.assertTrue
 class TakePhotoShortcutTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
 
     @Test
     fun theShortcutOpensTheAppAsAPhotoRequest() {
         val intent = TakePhotoShortcut.intent(context)
 
         assertEquals(MainActivity::class.java.name, intent.component?.className)
-        assertTrue(TakePhotoShortcut.isRequest(intent))
+        assertTrue(TakePhotoShortcut.isRequest(intent, recreated = false))
+    }
+
+    @Test
+    fun aRecreatedActivityHoldingTheShortcutIsNotAPhotoRequest() {
+        assertFalse(TakePhotoShortcut.isRequest(TakePhotoShortcut.intent(context), recreated = true))
     }
 
     @Test
     fun reopeningTheAppFromRecentsIsNotAPhotoRequest() {
         val fromRecents = TakePhotoShortcut.intent(context).addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
 
-        assertFalse(TakePhotoShortcut.isRequest(fromRecents))
+        assertFalse(TakePhotoShortcut.isRequest(fromRecents, recreated = false))
     }
 
     @Test
     fun anOrdinaryLaunchIsNotAPhotoRequest() {
-        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-
-        assertFalse(TakePhotoShortcut.isRequest(launcher))
-        assertFalse(TakePhotoShortcut.isRequest(null))
+        assertFalse(TakePhotoShortcut.isRequest(launcher, recreated = false))
+        assertFalse(TakePhotoShortcut.isRequest(null, recreated = false))
     }
 
     @Test
-    fun theRequestReachesTheRunningAppInsteadOfStartingASecondOne() {
+    fun theShortcutAsksAndroidToReuseTheRunningActivity() {
         val flags = TakePhotoShortcut.intent(context).flags
         val reuseRunning = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
         assertEquals(reuseRunning, flags and reuseRunning)
+    }
+
+    @Test
+    fun aLauncherStartAboveTheAppIsASecondCopy() {
+        assertTrue(TakePhotoShortcut.isSecondLauncherCopy(launcher, isTaskRoot = false))
+    }
+
+    @Test
+    fun aLauncherStartAtTheRootAndAnyOtherStartAreNot() {
+        assertFalse(TakePhotoShortcut.isSecondLauncherCopy(launcher, isTaskRoot = true))
+        assertFalse(TakePhotoShortcut.isSecondLauncherCopy(TakePhotoShortcut.intent(context), isTaskRoot = false))
+        assertFalse(TakePhotoShortcut.isSecondLauncherCopy(Intent(Intent.ACTION_MAIN), isTaskRoot = false))
     }
 }
