@@ -5,6 +5,7 @@
     <string name="tab_statistics">Статистика</string>
 
     <string name="counter_camera">Фото</string>
+    <string name="counter_tally">Отметить кота</string>
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
     <string name="counter_import">Импорт из галереи</string>

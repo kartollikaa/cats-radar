@@ -1,9 +1,5 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,18 +9,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CounterState
@@ -50,37 +47,49 @@ fun CounterScreen(
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Surface(
-            onClick = onTallyClick,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.primaryContainer,
-        ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Text(text = state.totalLabel, style = MaterialTheme.typography.displayLarge)
-                TapBurst(count = state.tapBurst, modifier = Modifier.align(Alignment.TopCenter).padding(top = 32.dp))
+    // A large font or a small phone must never leave the tally button zero pixels tall.
+    FillOrScroll(
+        minFill = 120.dp,
+        gap = 16.dp,
+        padding = 24.dp,
+        modifier = modifier.fillMaxSize(),
+        above = {
+            // Above the count, which gives up its room first.
+            state.importProgress?.let { ImportProgress(it) }
+            state.importSummary?.let {
+                ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
             }
-        }
-        state.currentOuting?.let { CurrentOuting(it) }
-        WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
-        CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-        if (state.undoVisible) {
-            AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
-        }
-        CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
-        state.importProgress?.let { ImportProgress(it) }
-        state.importSummary?.let {
-            ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
-        }
-        if (state.locationPermissionHintVisible) {
-            LocationPermissionHint(onAction = onLocationHintAction)
-        }
-    }
+            if (state.locationPermissionHintVisible) {
+                LocationPermissionHint(onAction = onLocationHintAction)
+            }
+        },
+        fill = {
+            TallyBlock(
+                totalLabel = state.totalLabel,
+                count = state.count,
+                tapBurst = state.tapBurst,
+                onClick = onTallyClick,
+            )
+        },
+        below = {
+            CurrentOutingLine(state.currentOuting)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Weighted so Undo is measured first: a long walk label gives way instead of squeezing it.
+                WalkingModeChip(
+                    checked = state.walkingMode,
+                    modifier = Modifier.weight(1f, fill = false),
+                    onCheckedChange = onWalkingModeChange,
+                )
+                UndoChip(visible = state.undoVisible, onClick = onUndoClick)
+            }
+            CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
+            CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
+        },
+    )
 }
 
 // A long press is the only entry to import, so the button says so out loud: a gesture nothing
@@ -93,12 +102,14 @@ private fun CameraButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.combinedClickable(
-            onClick = onClick,
-            onLongClick = onLongClick,
-            onLongClickLabel = stringResource(R.string.counter_import),
-        ),
-        shape = MaterialTheme.shapes.large,
+        modifier = modifier
+            .clip(CircleShape)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onLongClickLabel = stringResource(R.string.counter_import),
+            ),
+        shape = CircleShape,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
@@ -115,22 +126,16 @@ private fun CameraButton(
     }
 }
 
+// An empty line of the same style holds its place, so an outing starting or ending leaves the count
+// above it the same size at any font scale.
 @Composable
-private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
-    AnimatedVisibility(
-        visible = count != null,
-        enter = fadeIn() + slideInVertically { it / 2 },
-        exit = fadeOut(),
-        modifier = modifier,
-    ) {
-        // Held after the state clears so the exit animation has something to fade out.
-        val lastShown = remember { mutableIntStateOf(1) }
-        count?.let { lastShown.intValue = it }
-        Text(
-            text = stringResource(R.string.counter_tap_burst, lastShown.intValue),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
+private fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if (state == null) {
+            Text(text = "", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.clearAndSetSemantics {})
+        } else {
+            CurrentOuting(state)
+        }
     }
 }
 
@@ -143,6 +148,9 @@ private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifi
         Text(
             text = pluralStringResource(R.plurals.counter_outing_now, state.count, state.count, state.elapsedLabel),
             style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
         state.rate?.let {
             val rateRes = if (it.unit == RateUnit.PER_MINUTE) {
@@ -150,28 +158,7 @@ private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifi
             } else {
                 R.string.statistics_rate_per_hour
             }
-            Text(text = stringResource(rateRes, it.value), style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Composable
-private fun LocationPermissionHint(
-    onAction: (LocationHintAction) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(R.string.counter_location_hint),
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = { onAction(LocationHintAction.GRANT) }) {
-                Text(text = stringResource(R.string.counter_location_grant))
-            }
-            TextButton(onClick = { onAction(LocationHintAction.DISMISS) }) {
-                Text(text = stringResource(R.string.counter_location_dismiss))
-            }
+            Text(text = stringResource(rateRes, it.value), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
         }
     }
 }
@@ -181,6 +168,14 @@ private fun LocationPermissionHint(
 private fun CounterScreenEmptyPreview() {
     CatsRadarTheme {
         Surface { CounterScreen(state = sampleCounterStateEmpty) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun CounterScreenLoadingPreview() {
+    CatsRadarTheme {
+        Surface { CounterScreen(state = sampleCounterStateUnread) }
     }
 }
 
@@ -200,6 +195,14 @@ private fun CounterScreenOutingInProgressPreview() {
     }
 }
 
+@Preview(heightDp = 600, fontScale = 1.5f)
+@Composable
+private fun CounterScreenCrampedPreview() {
+    CatsRadarTheme {
+        Surface { CounterScreen(state = sampleCounterStateLocationHintVisible) }
+    }
+}
+
 @ThemePreviews
 @Composable
 private fun CounterScreenLocationHintVisiblePreview() {
@@ -208,12 +211,14 @@ private fun CounterScreenLocationHintVisiblePreview() {
     }
 }
 
-private val sampleCounterStateEmpty = CounterState(totalLabel = "0", undoVisible = false)
-private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", undoVisible = true)
+private val sampleCounterStateUnread = CounterState(totalLabel = "", count = null, undoVisible = false)
+private val sampleCounterStateEmpty = CounterState(totalLabel = "0", count = 0, undoVisible = false)
+private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", count = 3, undoVisible = true)
 private val sampleCounterStateLocationHintVisible =
-    CounterState(totalLabel = "3", undoVisible = false, locationPermissionHintVisible = true)
+    CounterState(totalLabel = "3", count = 3, undoVisible = false, locationPermissionHintVisible = true)
 private val sampleCounterStateOutingInProgress = CounterState(
     totalLabel = "12",
+    count = 12,
     undoVisible = false,
     currentOuting = CurrentOutingState(
         count = 4,
