@@ -67,7 +67,7 @@ fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier
                 entry<Encounters> {
                     EncountersDestination(
                         contentPadding = innerPadding,
-                        onRowClick = { id -> backStack.push(EncounterDetail(id)) },
+                        onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
                     )
                 }
                 entry<Statistics> {

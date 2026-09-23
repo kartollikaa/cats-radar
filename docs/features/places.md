@@ -87,7 +87,8 @@ geohash and needs no network — keeps working. Only country and city names are 
 ## Browsing them
 
 **Statistics → Places** opens the drill-down: countries, then cities, then areas, then the cats
-themselves. Every level is sorted busiest first.
+themselves — a plain list of one row per cat under its outing header, not the Encounters grid.
+Every level is sorted busiest first.
 
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 
