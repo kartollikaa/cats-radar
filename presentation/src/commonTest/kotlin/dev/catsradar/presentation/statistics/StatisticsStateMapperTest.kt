@@ -3,6 +3,7 @@ package dev.catsradar.presentation.statistics
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Session
 import dev.catsradar.domain.stats.CoatCount
+import dev.catsradar.domain.stats.CurrentOuting
 import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.domain.stats.Rate
 import dev.catsradar.domain.stats.RatedOuting
@@ -156,16 +157,16 @@ class StatisticsStateMapperTest {
             today = 2,
             lastSevenDays = 5,
             lastThirtyDays = 13,
-            withPhoto = 4,
+            withPhoto = 7,
             byCoat = listOf(CoatCount(CatCoat.GINGER, 12, 12.0 / 21), CoatCount(null, 9, 9.0 / 21)),
             currentStreak = 3,
             longestStreak = 8,
             nextMilestone = Milestone(value = 25, remaining = 4),
             outings = 6,
-            activeTime = 3.hours,
-            overallRate = Rate(perHour = 42.0),
-            bestOuting = RatedOuting(bestSession, Rate(perHour = 78.0)),
-            currentOuting = null,
+            activeTime = 150.minutes,
+            overallRate = Rate(perHour = 36.0),
+            bestOuting = RatedOuting(bestSession.copy(count = 11), Rate(perHour = 78.0)),
+            currentOuting = CurrentOuting(count = 14, elapsed = 17.minutes, rate = Rate(perHour = 50.0)),
         )
 
         assertEquals(
@@ -175,7 +176,7 @@ class StatisticsStateMapperTest {
                 todayLabel = "2",
                 weekLabel = "5",
                 monthLabel = "13",
-                withPhotoLabel = "4",
+                withPhotoLabel = "7",
                 byCoat = persistentListOf(
                     CoatShareState(CoatOption.GINGER, countLabel = "12", sharePercentLabel = "57"),
                     CoatShareState(coat = null, countLabel = "9", sharePercentLabel = "43"),
@@ -184,10 +185,10 @@ class StatisticsStateMapperTest {
                 longestStreakLabel = "8",
                 nextMilestone = MilestoneState(valueLabel = "25", remainingLabel = "4"),
                 outingsLabel = "6",
-                activeTimeLabel = 3.hours.toString(),
-                overallRate = RateState(value = "42.0", unit = RateUnit.PER_HOUR),
+                activeTimeLabel = 150.minutes.toString(),
+                overallRate = RateState(value = "36.0", unit = RateUnit.PER_HOUR),
                 bestOuting = BestOutingState(
-                    count = 9,
+                    count = 11,
                     durationLabel = 42.minutes.toString(),
                     rate = RateState(value = "1.3", unit = RateUnit.PER_MINUTE),
                 ),
