@@ -7,6 +7,8 @@
     <string name="map_empty_hint">Котик появится здесь, как только у него будет место</string>
     <string name="map_unavailable">Карта не загрузилась</string>
     <string name="map_unavailable_hint">Ей нужен интернет, когда она впервые показывает место. Котики в безопасности на телефоне.</string>
+    <string name="map_focus_label">Вылазка · %1$s</string>
+    <string name="map_focus_close">Показать всех котиков</string>
     <plurals name="map_summary">
         <item quantity="one">Карта: %d котик</item>
         <item quantity="few">Карта: %d котика</item>
@@ -54,6 +56,8 @@
 
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
+    <string name="encounters_outing_on_map">На карте</string>
+    <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_paw_description">Котик</string>
     <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>

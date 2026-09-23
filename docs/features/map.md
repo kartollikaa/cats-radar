@@ -33,8 +33,25 @@ globe, past a pole or the 180th meridian.
   zooms in until they come apart.
 - **Cats that never come apart** open as a list of that spot, grouped by outing as the Encounters
   tab groups them and drawn in its list layout, whichever layout the tab is set to. The outing
-  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, back returns to the list, and a second back closes it. A tap that lands on
-  several dots at once opens the same list.
+  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, back
+  returns to the list, and a second back closes it. A tap that lands on several dots at once opens
+  the same list. A list whose cats are all deleted closes, and restoring one of them does not reopen
+  it.
+
+## An outing's route
+
+"On the map" on an outing's header in the Encounters list switches to the Map tab showing that outing
+alone. Only its cats are on the map, and the view fits around them. A line joins the located ones in
+the order they were seen, with a chip naming the outing above them. Closing the chip, or pressing
+back, returns to every cat and fits the view around them again. A spot's list offers the same action
+for its outings. The line is drawn from cat to cat. It is not the route actually walked, which is
+the walk tracks' job.
+
+- **No located cat in an outing:** its header offers no map.
+- **The outing changes while it is shown:** a cat added to it or deleted from it moves the line with
+  it. If its last located cat is deleted, the map returns to every cat, and stays there even when
+  another of its cats gets a location later.
+- **Cats sharing one fix** give the line no length there; their cluster still opens as a spot's list.
 
 ## At the edges
 
@@ -60,9 +77,10 @@ globe, past a pole or the 180th meridian.
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
   their taps; `MapFeatures.kt` — cats as map features; `MapSpotSheet.kt` — a spot's list, drawn by
   the Encounters tab's own `EncounterRows` in its list layout
-- `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab
+- `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapFocusRequest.kt` — the outing
+  another tab asked the map to show
 
 ## Not built yet
 
-An outing's route, walk tracks and a heatmap are the next slices of the Map epic
+Walk tracks and a heatmap are the next slices of the Map epic
 (`docs/tbd/decompositions/2026-09-23-map-epic.md`).

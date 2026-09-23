@@ -89,7 +89,7 @@ class NavMotionTest {
     @Test
     fun `every bottom-bar tab entry the nav host builds fades through from the Counter root`() {
         val backStack = BottomNavBackStack(NavBackStack(Counter))
-        val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest())
+        val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), MapFocusRequest())
         val counterRoot = scene(entries(Counter))
 
         BottomNavTab.entries.filter { it != BottomNavTab.COUNTER }.forEach { tab ->

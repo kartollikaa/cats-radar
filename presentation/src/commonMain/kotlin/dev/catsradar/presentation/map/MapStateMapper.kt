@@ -1,8 +1,10 @@
 package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.encounters.EncountersStateMapper
+import dev.catsradar.presentation.encounters.OutingHeader
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.datetime.LocalDate
 
@@ -10,20 +12,34 @@ import kotlinx.datetime.LocalDate
 private const val MIN_AREA_DEGREES = 0.01
 
 private const val MAX_LATITUDE = 90.0
-private const val MAX_LONGITUDE = 180.0
 
 class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
 
-    /** [spot] holds the ids of the cats the user opened together, if any. */
-    fun map(encounters: List<Encounter>, today: LocalDate, spot: Set<String>? = null): MapState {
-        val points = encounters.mapNotNull { it.toPoint() }
+    /**
+     * [spot] holds the ids of the cats the user opened together, and [focus] the id of a cat whose
+     * outing the map shows alone; each is ignored when it matches nothing.
+     */
+    fun map(encounters: List<Encounter>, today: LocalDate, spot: Set<String>? = null, focus: String? = null): MapState {
+        val outing = focus?.let { id -> focusedOuting(encounters, id) }
+        val shown = outing ?: encounters
+        val points = shown.mapNotNull { it.toPoint() }
         if (points.isEmpty()) return MapState.Empty
         return MapState.Located(
             points = points.toImmutableList(),
             area = areaAround(points),
-            spot = spot?.let { ids -> spotOf(encounters.filter { it.id in ids && it.deletedAt == null }, today) },
+            spot = spot?.let { ids -> spotOf(shown.filter { it.id in ids && it.deletedAt == null }, today) },
+            focus = outing?.let { MapFocus(outingId = it.first().id, label = headerLabel(it, today)) },
         )
     }
+
+    private fun focusedOuting(encounters: List<Encounter>, id: String): List<Encounter>? =
+        SessionSplitter.groupByOuting(encounters)
+            .firstOrNull { outing -> outing.any { it.id == id } }
+            ?.takeIf { outing -> outing.any { it.isOnTheMap() } }
+
+    // The same header the Encounters list gives the outing, so the chip and the list never disagree.
+    private fun headerLabel(outing: List<Encounter>, today: LocalDate): String =
+        encountersMapper.mapList(outing, today).filterIsInstance<OutingHeader>().first().label
 
     private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
         if (cats.isEmpty()) return null
@@ -33,13 +49,9 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
     private fun Encounter.toPoint(): MapPoint? {
         val latitude = lat
         val longitude = lon
-        if (deletedAt != null || latitude == null || longitude == null) return null
-        val point = MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
-        return if (isOnEarth(latitude, longitude)) point else null
+        if (!isOnTheMap() || latitude == null || longitude == null) return null
+        return MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
     }
-
-    private fun isOnEarth(latitude: Double, longitude: Double): Boolean =
-        latitude in -MAX_LATITUDE..MAX_LATITUDE && longitude in -MAX_LONGITUDE..MAX_LONGITUDE
 
     private fun areaAround(points: List<MapPoint>): MapArea {
         val south = points.minOf { it.latitude }

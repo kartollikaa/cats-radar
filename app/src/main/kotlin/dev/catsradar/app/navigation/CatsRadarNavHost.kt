@@ -8,6 +8,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier) {
     val backStack = rememberBottomNavBackStack()
+    val mapFocus = remember { MapFocusRequest() }
     LaunchedEffect(cameraRequest.isPending) {
         if (cameraRequest.isPending) backStack.selectTab(BottomNavTab.COUNTER)
     }
@@ -60,7 +62,7 @@ fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier
     ) { innerPadding ->
         CatsRadarNavDisplay(
             backStack = backStack,
-            entryProvider = catsRadarEntries(backStack, innerPadding, cameraRequest),
+            entryProvider = catsRadarEntries(backStack, innerPadding, cameraRequest, mapFocus),
         )
     }
 }
@@ -91,6 +93,7 @@ internal fun catsRadarEntries(
     backStack: BottomNavBackStack,
     contentPadding: PaddingValues,
     cameraRequest: CameraRequest,
+    mapFocus: MapFocusRequest,
 ): (NavKey) -> NavEntry<NavKey> = entryProvider {
     entry<Counter>(metadata = tabRootMetadata()) {
         CounterDestination(contentPadding = contentPadding, cameraRequest = cameraRequest)
@@ -99,10 +102,18 @@ internal fun catsRadarEntries(
         EncountersDestination(
             contentPadding = contentPadding,
             onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
+            onOutingMapClick = { id ->
+                mapFocus.post(id)
+                backStack.selectTab(BottomNavTab.MAP)
+            },
         )
     }
     entry<CatsMap>(metadata = tabRootMetadata()) {
-        MapDestination(contentPadding = contentPadding, onOpenCat = { id -> backStack.push(EncounterDetail(id)) })
+        MapDestination(
+            contentPadding = contentPadding,
+            focusRequest = mapFocus,
+            onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
+        )
     }
     entry<Statistics>(metadata = tabRootMetadata()) {
         StatisticsDestination(

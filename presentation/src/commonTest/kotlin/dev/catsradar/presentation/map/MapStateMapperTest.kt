@@ -6,6 +6,7 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
+import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
@@ -23,7 +24,8 @@ class MapStateMapperTest {
     private val encountersMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
     private val mapper = MapStateMapper(encountersMapper)
 
-    private fun map(encounters: List<Encounter>, spot: Set<String>? = null) = mapper.map(encounters, TODAY, spot)
+    private fun map(encounters: List<Encounter>, spot: Set<String>? = null, focus: String? = null) =
+        mapper.map(encounters, TODAY, spot, focus)
 
     private fun located(id: String, lat: Double, lon: Double, coat: CatCoat? = null) =
         encounterFixture(id, BASE).copy(lat = lat, lon = lon, coat = coat)
@@ -106,6 +108,40 @@ class MapStateMapperTest {
         )
         assertEquals(null, assertIs<MapState.Located>(map(cats)).spot)
         assertEquals(null, assertIs<MapState.Located>(map(cats, spot = setOf("gone"))).spot)
+    }
+
+    @Test
+    fun `a focused outing shows only its cats, oldest first, around them, under its list header`() {
+        val first = located("first", 41.37, 2.15)
+        val tally = encounterFixture("tally", BASE + 2.minutes)
+        val second = located("second", 41.39, 2.17).copy(occurredAt = BASE + 5.minutes)
+        val otherOuting = located("other", 41.45, 2.25).copy(occurredAt = BASE + 3.hours)
+        val cats = listOf(second, otherOuting, tally, first)
+
+        val state = assertIs<MapState.Located>(map(cats, focus = "second"))
+
+        val header = encountersMapper.map(cats, TODAY, grid = true).rows
+            .filterIsInstance<OutingHeader>()
+            .single { it.mapOutingId == "first" }
+        assertEquals(
+            MapState.Located(
+                points = persistentListOf(MapPoint("first", 41.37, 2.15, null), MapPoint("second", 41.39, 2.17, null)),
+                area = MapArea(south = 41.37, west = 2.15, north = 41.39, east = 2.17),
+                focus = MapFocus(outingId = "first", label = header.label),
+            ),
+            state,
+        )
+    }
+
+    @Test
+    fun `a focus that matches no outing with a located cat leaves every cat on the map`() {
+        val located = located("located", 41.39, 2.17)
+        val unlocatedOuting = encounterFixture("later", BASE + 3.hours)
+        val cats = listOf(located, unlocatedOuting)
+        val everyCat = map(cats)
+
+        assertEquals(everyCat, map(cats, focus = "no-such-cat"))
+        assertEquals(everyCat, map(cats, focus = "later"))
     }
 
     @Test

@@ -14,8 +14,11 @@ import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.format
 import org.maplibre.compose.expressions.dsl.not
 import org.maplibre.compose.expressions.dsl.span
+import org.maplibre.compose.expressions.value.LineCap
+import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.interaction.ClickResult
 import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapState
 import org.maplibre.compose.sources.GeoJsonData
@@ -25,6 +28,7 @@ import org.maplibre.compose.sources.GeoJsonSourceHandle
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.FeatureCollection
+import org.maplibre.spatialk.geojson.LineString
 import org.maplibre.spatialk.geojson.Point
 
 private const val POINT_COUNT = "point_count"
@@ -40,19 +44,37 @@ private val DotRadius = 7.dp
 private val ClusterRadius = 16.dp
 private val HalfTouchTarget = 24.dp
 
+private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
+
 /** Colours read from the theme outside the map, whose layers compose without it. */
 @Immutable
-internal data class CatLayerColors(val unnoted: Color, val rim: Color, val cluster: Color, val clusterCount: Color)
+internal data class CatLayerColors(
+    val unnoted: Color,
+    val rim: Color,
+    val cluster: Color,
+    val clusterCount: Color,
+    val route: Color,
+)
 
 internal data class ClusterTap(val source: GeoJsonSource, val cluster: Feature<*, JsonObject?>)
 
 @Composable
 internal fun CatLayers(
     cats: FeatureCollection<Point, JsonObject>,
+    route: FeatureCollection<LineString, JsonObject>?,
     colors: CatLayerColors,
     onClusterTap: (ClusterTap) -> Unit,
     onCatsTap: (List<String>) -> Unit,
 ) {
+    LineLayer(
+        id = "outing-route",
+        source = rememberGeoJsonSource(GeoJsonData.Features(route ?: NoRoute)),
+        visible = route != null,
+        color = const(colors.route),
+        width = const(4.dp),
+        cap = const(LineCap.Round),
+        join = const(LineJoin.Round),
+    )
     val source = rememberGeoJsonSource(
         GeoJsonData.Features(cats),
         GeoJsonOptions(cluster = true, clusterRadius = CLUSTER_RADIUS, clusterMaxZoom = CLUSTER_MAX_ZOOM),

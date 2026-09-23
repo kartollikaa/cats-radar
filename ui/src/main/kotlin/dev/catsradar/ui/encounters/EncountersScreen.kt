@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
@@ -25,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -61,6 +66,7 @@ fun EncountersScreen(
     onSelectionDismiss: () -> Unit = {},
     onDeleteSelectedClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
+    onOutingMapClick: (String) -> Unit = {},
 ) {
     val layoutDirection = LocalLayoutDirection.current
     // The selection bar takes the top inset, so the list below it must not add it a second time.
@@ -99,6 +105,7 @@ fun EncountersScreen(
                     selecting = state.isSelecting,
                     onEncounterClick = onEncounterClick,
                     onEncounterLongClick = onEncounterLongClick,
+                    onOutingMapClick = onOutingMapClick,
                 )
             }
             state.removedCount?.let { count ->
@@ -126,6 +133,7 @@ internal fun EncounterRows(
     selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
     onEncounterLongClick: (String) -> Unit = {},
+    onOutingMapClick: (String) -> Unit = {},
 ) {
     val list = layout == EncountersLayout.LIST
     LazyColumn(
@@ -137,7 +145,12 @@ internal fun EncounterRows(
         items(items = rows, key = { it.key }, contentType = { it::class }) { row ->
             val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
             when (row) {
-                is OutingHeader -> OutingHeaderRow(row, alignWithCardText = list, modifier = rowModifier)
+                is OutingHeader -> OutingHeaderRow(
+                    header = row,
+                    alignWithCardText = list,
+                    modifier = rowModifier,
+                    onMapClick = onOutingMapClick,
+                )
                 is EncountersRow.PhotoPair ->
                     PhotoPairRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
                 is EncountersRow.Tiles -> TileRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
@@ -150,21 +163,44 @@ internal fun EncounterRows(
 }
 
 @Composable
-private fun OutingHeaderRow(header: OutingHeader, alignWithCardText: Boolean, modifier: Modifier = Modifier) {
-    Text(
-        text = header.label,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+private fun OutingHeaderRow(
+    header: OutingHeader,
+    alignWithCardText: Boolean,
+    modifier: Modifier = Modifier,
+    onMapClick: (String) -> Unit = {},
+) {
+    Row(
         modifier = modifier
-            .padding(top = 16.dp)
-            .then(
-                if (alignWithCardText) {
-                    Modifier.padding(start = CardTextInset, end = CardTextInset, bottom = 4.dp)
-                } else {
-                    Modifier
-                },
-            ),
-    )
+            .padding(top = 8.dp)
+            .heightIn(min = 40.dp)
+            .then(if (alignWithCardText) Modifier.padding(start = CardTextInset, bottom = 4.dp) else Modifier),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = header.label,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        header.mapOutingId?.let { id ->
+            val description = stringResource(R.string.encounters_outing_on_map_description, header.label)
+            TextButton(
+                onClick = { onMapClick(id) },
+                modifier = Modifier.semantics { contentDescription = description },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_nav_map),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = stringResource(R.string.encounters_outing_on_map),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+    }
 }
 
 @Composable

@@ -7,6 +7,8 @@
     <string name="map_empty_hint">A cat appears here once it has a location</string>
     <string name="map_unavailable">The map could not load</string>
     <string name="map_unavailable_hint">It needs the internet the first time it shows an area. Your cats are safe on the phone.</string>
+    <string name="map_focus_label">Outing · %1$s</string>
+    <string name="map_focus_close">Show every cat</string>
     <plurals name="map_summary">
         <item quantity="one">Map with %d cat</item>
         <item quantity="other">Map with %d cats</item>
@@ -44,6 +46,8 @@
 
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
+    <string name="encounters_outing_on_map">On the map</string>
+    <string name="encounters_outing_on_map_description">Show the outing of %1$s on the map</string>
     <string name="encounters_photo_description">Photo of this cat</string>
     <string name="encounters_paw_description">A cat</string>
     <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
