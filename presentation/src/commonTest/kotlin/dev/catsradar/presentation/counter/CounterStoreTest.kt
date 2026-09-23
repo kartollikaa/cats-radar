@@ -29,6 +29,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CounterStoreTest {
@@ -317,27 +318,33 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `the burst fades once tapping stops, and the window restarts on every tap`() =
-        runTest(mainDispatcher) {
-            val (store, _) = newStore()
+    fun `the plus-one lands before the write does`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insertDelays += 1.seconds
 
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-            advanceTimeBy(Tuning.TAP_BURST_VISIBLE - 1.milliseconds)
-            runCurrent()
-            assertEquals(1, store.state.value.tapBurst, "faded before the window closed")
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
 
-            // A second tap here restarts the window rather than inheriting the first tap's.
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-            advanceTimeBy(Tuning.TAP_BURST_VISIBLE - 1.milliseconds)
-            runCurrent()
-            assertEquals(2, store.state.value.tapBurst)
+        assertEquals(emptyList(), repository.insertedIds)
+        assertEquals(1, store.state.value.tapBurst)
+    }
 
-            advanceTimeBy(1.milliseconds)
-            runCurrent()
-            assertNull(store.state.value.tapBurst)
-        }
+    @Test
+    fun `the burst stays up as long as undo does, and goes with it`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        advanceTimeBy(Tuning.UNDO_VISIBLE - 1.milliseconds)
+        runCurrent()
+        assertTrue(store.state.value.undoVisible)
+        assertEquals(1, store.state.value.tapBurst, "faded while undo was still up")
+
+        advanceTimeBy(1.milliseconds)
+        runCurrent()
+        assertFalse(store.state.value.undoVisible)
+        assertNull(store.state.value.tapBurst)
+    }
 
     @Test
     fun `a new run of taps starts counting from one again`() = runTest(mainDispatcher) {
@@ -345,7 +352,7 @@ class CounterStoreTest {
 
         store.dispatch(CounterIntent.TallyClicked)
         runCurrent()
-        advanceTimeBy(Tuning.TAP_BURST_VISIBLE + 1.milliseconds)
+        advanceTimeBy(Tuning.UNDO_VISIBLE + 1.milliseconds)
         runCurrent()
 
         store.dispatch(CounterIntent.TallyClicked)
@@ -417,12 +424,7 @@ class CounterStoreTest {
             store.dispatch(CounterIntent.TallyClicked)
             runCurrent()
 
-            // The burst and the tick are feedback for the tap itself, so they land either way;
-            // the total comes from the database and stays put because nothing was written.
-            assertEquals(
-                CounterState(totalLabel = "0", count = 0, undoVisible = false, tapBurst = 1),
-                store.state.value,
-            )
+            assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
             store.effects.test {
                 assertEquals(CounterEffect.HapticTick, awaitItem())
                 assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
