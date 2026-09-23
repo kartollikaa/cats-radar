@@ -44,7 +44,8 @@ Each cell ends in one of four states:
 - **UNAVAILABLE** — there is no geocoder on this device at all.
 
 Every state but RESOLVED is this device's own verdict: a cell restored from a backup without a name
-arrives `PENDING` and untried, whatever the device that exported it concluded — see `backup.md`.
+arrives `PENDING` and untried, whatever the device that exported it concluded — see `backup.md`. A
+cell imported before that rule keeps whatever state it was stored with; nothing resets it.
 
 ## No geocoder at all
 

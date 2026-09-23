@@ -268,6 +268,25 @@ class BackupMergeTest {
     }
 
     @Test
+    fun `of two names the archive gives one cell, the fresher listed second is weighed against the one here`() {
+        val fresher = cell(status = PlaceStatus.RESOLVED, resolvedAt = LATE, locality = "New name")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(
+                placeCells = listOf(cell(status = PlaceStatus.RESOLVED, resolvedAt = EARLY, locality = "Old name")),
+            ),
+            imported = BackupContents(
+                placeCells = listOf(
+                    cell(status = PlaceStatus.RESOLVED, resolvedAt = MIDDLE, locality = "Middle name"),
+                    fresher,
+                ),
+            ),
+        )
+
+        assertEquals(listOf(fresher), merged.placeCells)
+    }
+
+    @Test
     fun `of two names the archive gives one cell, neither replaces a fresher one here`() {
         val merged = BackupMerge.merge(
             local = BackupContents(

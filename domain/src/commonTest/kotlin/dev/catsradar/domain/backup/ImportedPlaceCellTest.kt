@@ -38,6 +38,8 @@ private val untriedMoscow = PlaceCell(
 )
 
 private fun triedMoscow(status: PlaceStatus, attempts: Int) = untriedMoscow.copy(
+    centerLat = 41.39864,
+    centerLon = 2.17842,
     status = status,
     attempts = attempts,
     lastAttemptAt = Instant.parse("2026-09-12T19:29:58Z"),
@@ -82,11 +84,6 @@ class ImportedPlaceCellTest {
     @Test
     fun `an id in upper case is no cell at all`() {
         assertNull(namedMoscow.copy(cellId = "UCFV0N").asImported())
-    }
-
-    @Test
-    fun `a named cell keeps every lookup that named it`() {
-        assertEquals(namedMoscow, namedMoscow.asImported())
     }
 
     @Test

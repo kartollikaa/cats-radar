@@ -40,7 +40,8 @@ devices.
   exactly as if a cat here had just landed in it — whatever the exporting device concluded. Its
   `FAILED` or `UNAVAILABLE` is a verdict about that device's geocoder, not this one's, and nothing
   here ever retries a cell in either state, so taken as written it would read as "Not named yet" for
-  good.
+  good. A cell imported before this rule keeps the state it arrived with: importing the archive
+  again meets it as an unnamed local cell, which stays.
 
 ## The archive
 
