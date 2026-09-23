@@ -58,12 +58,13 @@ mode that will is its own slice of the Map epic.
   second: the check and the insert are one transaction (`WalkDao.startIfNoneOpen`), so two starts
   racing each other still make one walk.
 - **Ending is final.** Ending only touches a walk that is on, so ending twice keeps the first end,
-  and a clock set back before the start ends the walk at its start rather than before it.
+  and a clock set back before the start ends the walk at its start rather than before it. The walk's
+  `updatedAt` records when it was changed, which is not always the moment it ended.
 - **A route keeps only fixes that say something.** `RecordTrackPoint` leaves out a fix that is too
   rough to trust (`Tuning.TRACK_MAX_ACCURACY_METERS`), older than the walk or than the route's last
-  point, or nearer that point than `Tuning.TRACK_MIN_STEP_METERS` — a phone standing still at a
-  crossing would otherwise pile up points in one spot. Fixes are recorded one at a time, since each
-  is measured against the point before it.
+  point, or nearer that point than `Tuning.TRACK_MIN_STEP_METERS` or than either fix's accuracy. A
+  phone standing still wanders by about its accuracy, and would otherwise pile up points in one spot.
+  Fixes take turns, since each is measured against the point the one before it kept.
 - **Distance is great-circle** (`trackLengthMeters`), on the Earth's mean radius: within half a
   percent of the Earth's real shape, which on a step is far less than a phone fix's own error.
 - **A walk does not define an outing.** Outings stay derived from the cats alone (`outings.md`).

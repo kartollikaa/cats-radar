@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.SystemClock
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -12,10 +13,12 @@ import dev.catsradar.domain.platform.LocationProvider
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Instant
 
-class FusedLocationProvider(context: Context) : LocationProvider {
+class FusedLocationProvider(context: Context, private val clock: Clock) : LocationProvider {
     private val appContext = context.applicationContext
 
     // Lazy: constructing this must not touch Play Services (Koin resolves this eagerly for
@@ -49,9 +52,18 @@ class FusedLocationProvider(context: Context) : LocationProvider {
         lat = latitude,
         lon = longitude,
         accuracyMeters = accuracy,
-        fixedAt = Instant.fromEpochMilliseconds(time),
+        // `time` may come from the satellite clock, which a phone's own clock can disagree with.
+        fixedAt = fixTime(clock.now(), SystemClock.elapsedRealtimeNanos(), elapsedRealtimeNanos, time),
     )
 }
+
+/** When a fix was taken, on [now]'s clock, from its age on the uptime clock; 0 means no uptime stamp. */
+internal fun fixTime(now: Instant, nowUptimeNanos: Long, fixUptimeNanos: Long, fixUtcMillis: Long): Instant =
+    if (fixUptimeNanos <= 0L) {
+        Instant.fromEpochMilliseconds(fixUtcMillis)
+    } else {
+        now - (nowUptimeNanos - fixUptimeNanos).coerceAtLeast(0L).nanoseconds
+    }
 
 // Cancellation must propagate to the caller; only a genuine Play Services failure (a missing
 // module, a SecurityException on a permission revoked mid-call, ...) falls through to null.

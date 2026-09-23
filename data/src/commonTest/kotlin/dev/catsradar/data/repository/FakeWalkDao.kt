@@ -12,7 +12,7 @@ class FakeWalkDao : WalkDao {
     var loadOpenResult: WalkEntity? = null
     val inserted = mutableListOf<WalkEntity>()
     var endResult = 1
-    var endCall: Pair<String, Instant>? = null
+    var endCall: Triple<String, Instant, Instant>? = null
     val insertedPoints = mutableListOf<TrackPointEntity>()
     var lastPointResult: TrackPointEntity? = null
     var lastPointCall: String? = null
@@ -28,8 +28,8 @@ class FakeWalkDao : WalkDao {
         loadOpenResult = walk
     }
 
-    override suspend fun end(id: String, endedAt: Instant): Int {
-        endCall = id to endedAt
+    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Int {
+        endCall = Triple(id, endedAt, updatedAt)
         return endResult
     }
 

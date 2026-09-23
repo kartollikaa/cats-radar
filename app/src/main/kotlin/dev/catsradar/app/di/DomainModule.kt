@@ -24,6 +24,7 @@ import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import kotlin.time.Clock
 
@@ -33,7 +34,7 @@ val domainModule = module {
     factoryOf(::LogTally)
     factoryOf(::StartWalk)
     factoryOf(::EndWalk)
-    factoryOf(::RecordTrackPoint)
+    singleOf(::RecordTrackPoint) // one instance, so every caller waits on the same turn
     factoryOf(::LogPhoto)
     // Constructed by hand: timeZone has a default, which factoryOf would try to inject.
     factory {

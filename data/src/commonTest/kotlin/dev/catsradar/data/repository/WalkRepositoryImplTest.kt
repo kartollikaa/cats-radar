@@ -35,11 +35,11 @@ class WalkRepositoryImplTest {
 
     @Test
     fun endReportsWhetherAWalkWasStillOn() = runTest {
-        assertTrue(repository.end("walk", at(5)))
-        assertEquals("walk" to at(5), dao.endCall)
+        assertTrue(repository.end("walk", endedAt = at(5), updatedAt = at(6)))
+        assertEquals(Triple("walk", at(5), at(6)), dao.endCall)
 
         dao.endResult = 0
-        assertFalse(repository.end("walk", at(6)))
+        assertFalse(repository.end("walk", endedAt = at(7), updatedAt = at(7)))
     }
 
     @Test

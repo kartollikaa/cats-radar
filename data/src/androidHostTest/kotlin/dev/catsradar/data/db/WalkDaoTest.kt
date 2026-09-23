@@ -52,11 +52,13 @@ class WalkDaoTest {
     fun endingTouchesOnlyAnOpenWalk() = runTest {
         dao.startIfNoneOpen(walkEntity("walk"))
         val endedAt = walkStart + 10.minutes
-        assertEquals(1, dao.end("walk", endedAt))
+        assertEquals(1, dao.end("walk", endedAt, updatedAt = walkStart + 12.minutes))
 
-        assertEquals(0, dao.end("walk", walkStart + 15.minutes))
+        assertEquals(0, dao.end("walk", walkStart + 15.minutes, updatedAt = walkStart + 15.minutes))
 
-        assertEquals(endedAt, dao.observeAll().first().single().endedAt)
+        val ended = dao.observeAll().first().single()
+        assertEquals(endedAt, ended.endedAt)
+        assertEquals(walkStart + 12.minutes, ended.updatedAt)
         assertNull(dao.loadOpen())
     }
 }

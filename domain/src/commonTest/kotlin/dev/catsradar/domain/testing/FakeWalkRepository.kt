@@ -24,10 +24,10 @@ class FakeWalkRepository : WalkRepository {
     override suspend fun startIfNoneOpen(walk: Walk): Walk =
         openWalk() ?: walk.also { started -> walks.update { it + started } }
 
-    override suspend fun end(id: String, endedAt: Instant): Boolean {
+    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean {
         val open = walks.value.any { it.id == id && it.endedAt == null }
         walks.update { all ->
-            all.map { if (it.id == id && it.endedAt == null) it.copy(endedAt = endedAt, updatedAt = endedAt) else it }
+            all.map { if (it.id == id && it.endedAt == null) it.copy(endedAt = endedAt, updatedAt = updatedAt) else it }
         }
         return open
     }

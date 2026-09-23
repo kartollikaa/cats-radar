@@ -7,7 +7,10 @@ import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeWalkRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -43,9 +46,8 @@ class WalkUseCasesTest {
 
         val ended = EndWalk(repository, FakeClock(START + 30.minutes))()
 
-        assertEquals(START + 30.minutes, assertNotNull(ended).endedAt)
-        assertEquals(START + 30.minutes, repository.walks().single().endedAt)
-        assertEquals(walk.id, ended.id)
+        assertEquals(walk.copy(endedAt = START + 30.minutes, updatedAt = START + 30.minutes), ended)
+        assertEquals(ended, repository.walks().single())
         assertNull(EndWalk(repository, FakeClock(START + 31.minutes))())
 
         startWalk()
@@ -59,7 +61,8 @@ class WalkUseCasesTest {
         val ended = EndWalk(repository, FakeClock(START - 5.minutes))()
 
         assertEquals(START, assertNotNull(ended).endedAt)
-        assertEquals(START, repository.walks().single().endedAt)
+        assertEquals(START - 5.minutes, ended.updatedAt)
+        assertEquals(ended, repository.walks().single())
     }
 
     @Test
@@ -106,6 +109,35 @@ class WalkUseCasesTest {
 
         assertFalse(recordTrackPoint(fix(atSecond = 10, latOffset = 0.00005)))
         assertTrue(recordTrackPoint(fix(atSecond = 15, latOffset = 0.0001)))
+        assertEquals(2, repository.points().size)
+    }
+
+    @Test
+    fun `a step is never shorter than either fix is rough, so jitter standing still adds nothing`() = runTest {
+        startWalk()
+        recordTrackPoint(fix(atSecond = 5, accuracy = 20f))
+
+        assertFalse(recordTrackPoint(fix(atSecond = 10, latOffset = 0.00015, accuracy = 5f)))
+        assertTrue(recordTrackPoint(fix(atSecond = 15, latOffset = 0.0002, accuracy = 5f)))
+        assertFalse(recordTrackPoint(fix(atSecond = 20, latOffset = 0.00035, accuracy = 20f)))
+        assertTrue(recordTrackPoint(fix(atSecond = 25, latOffset = 0.00035, accuracy = 5f)))
+    }
+
+    @Test
+    fun `two fixes arriving together are measured one after the other`() = runTest {
+        startWalk()
+        recordTrackPoint(fix(atSecond = 5))
+        val slowReads = object : WalkRepository by repository {
+            override suspend fun lastPoint(walkId: String) = repository.lastPoint(walkId).also { yield() }
+        }
+        val record = RecordTrackPoint(slowReads)
+
+        val kept = listOf(
+            async { record(fix(atSecond = 10, latOffset = 0.0002)) },
+            async { record(fix(atSecond = 11, latOffset = 0.00025)) },
+        ).awaitAll()
+
+        assertEquals(listOf(true, false), kept)
         assertEquals(2, repository.points().size)
     }
 

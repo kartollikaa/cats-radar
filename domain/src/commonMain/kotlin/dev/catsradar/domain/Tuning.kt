@@ -33,7 +33,7 @@ object Tuning {
     /** A fix less precise than this is left out of a walk's route rather than bending it. */
     const val TRACK_MAX_ACCURACY_METERS: Float = 50f
 
-    /** A fix nearer than this to the route's last point adds nothing to the route. */
+    /** The shortest step a walk's route keeps between two points. */
     const val TRACK_MIN_STEP_METERS: Double = 10.0
 
     val MILESTONES: List<Int> = listOf(1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000)

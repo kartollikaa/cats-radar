@@ -26,8 +26,8 @@ interface WalkDao {
         return checkNotNull(loadOpen())
     }
 
-    @Query("UPDATE walks SET endedAt = :endedAt, updatedAt = :endedAt WHERE id = :id AND endedAt IS NULL")
-    suspend fun end(id: String, endedAt: Instant): Int
+    @Query("UPDATE walks SET endedAt = :endedAt, updatedAt = :updatedAt WHERE id = :id AND endedAt IS NULL")
+    suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Int
 
     @Insert
     suspend fun insertPoint(point: TrackPointEntity)

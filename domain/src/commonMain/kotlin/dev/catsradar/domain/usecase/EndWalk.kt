@@ -11,8 +11,9 @@ import kotlin.time.Clock
 class EndWalk(private val walkRepository: WalkRepository, private val clock: Clock) {
     suspend operator fun invoke(): Walk? {
         val open = walkRepository.openWalk() ?: return null
-        val endedAt = maxOf(clock.now(), open.startedAt)
-        val ended = walkRepository.end(open.id, endedAt)
-        return if (ended) open.copy(endedAt = endedAt, updatedAt = endedAt) else null
+        val now = clock.now()
+        val endedAt = maxOf(now, open.startedAt)
+        val ended = walkRepository.end(open.id, endedAt, updatedAt = now)
+        return if (ended) open.copy(endedAt = endedAt, updatedAt = now) else null
     }
 }

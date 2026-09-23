@@ -17,7 +17,8 @@ class WalkRepositoryImpl(private val dao: WalkDao) : WalkRepository {
 
     override suspend fun startIfNoneOpen(walk: Walk): Walk = dao.startIfNoneOpen(walk.toEntity()).toDomain()
 
-    override suspend fun end(id: String, endedAt: Instant): Boolean = dao.end(id, endedAt) > 0
+    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean =
+        dao.end(id, endedAt, updatedAt) > 0
 
     override suspend fun appendPoint(point: TrackPoint) = dao.insertPoint(point.toEntity())
 

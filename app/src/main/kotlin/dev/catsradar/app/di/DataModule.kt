@@ -58,7 +58,7 @@ val dataModule = module {
     // first tap that resolves LogTally.
     single<DeviceIdProvider>(createdAtStart = true) { SharedPreferencesDeviceIdProvider(androidContext(), get()) }
     single<Haptics> { VibratorHaptics(androidContext()) }
-    single<LocationProvider> { FusedLocationProvider(androidContext()) }
+    single<LocationProvider> { FusedLocationProvider(androidContext(), get()) }
     single<LocationPermissionRequestState> { SharedPreferencesLocationPermissionRequestState(androidContext()) }
     single { AndroidPhotoStorage(androidContext()) }
     // The resizer needs the concrete store: it writes through it, which the interface does not expose.

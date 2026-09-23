@@ -15,8 +15,11 @@ interface WalkRepository {
     /** Starts [walk] unless a walk is already open, atomically; returns whichever walk is now open. */
     suspend fun startIfNoneOpen(walk: Walk): Walk
 
-    /** Ends walk [id] if it is still on; false when it had already ended or does not exist. */
-    suspend fun end(id: String, endedAt: Instant): Boolean
+    /**
+     * Ends walk [id] at [endedAt] if it is still on, recording [updatedAt] as when it changed; false
+     * when it had already ended or does not exist.
+     */
+    suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean
 
     suspend fun appendPoint(point: TrackPoint)
 
