@@ -13,8 +13,8 @@ compose-rules-detekt = "0.4.28" # 0.5.0+ requires detekt 2.0.0-alpha, we're stil
 konsist = "0.17.3"
 junit = "4.13.2"
 compose-bom = "2026.09.00"
-# Overrides the BOM's stable material3, which lacks the Expressive split button; newer alphas than this
-# one raise compose-foundation above the BOM's to an alpha.
+# Overrides the BOM until its material3 has SplitButtonLayout, then goes. Pick the newest alpha whose
+# compose-foundation floor the BOM already meets, so the rest of Compose stays on the BOM.
 compose-material3 = "1.5.0-alpha27"
 androidx-activity = "1.13.0"
 androidx-core = "1.19.0"

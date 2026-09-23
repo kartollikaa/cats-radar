@@ -5,10 +5,9 @@ cat. Import turns picked photos into encounters that sit in the history at the t
 not at the time you imported them.
 
 The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
-at its end** opens the system photo picker. That half is the secondary action on purpose, visible
-rather than a long press nobody would find. The run happens in a worker, so it survives leaving the
-screen; the Counter shows how far it has got, and at the end what was added, skipped and failed,
-with one undo for the whole batch.
+at its end** opens the system photo picker; holding that icon names it. The run happens in a worker,
+so it survives leaving the screen; the Counter shows how far it has got, and at the end what was
+added, skipped and failed, with one undo for the whole batch.
 
 ## What an imported photo becomes
 
