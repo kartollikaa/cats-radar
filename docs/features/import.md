@@ -4,9 +4,11 @@ A cat you photographed before the app existed, or on a walk where you forgot to 
 cat. Import turns picked photos into encounters that sit in the history at the time they were taken,
 not at the time you imported them.
 
-**Long-press the camera button** on the Counter to pick photos. The run happens in a worker, so it
-survives leaving the screen; the Counter shows how far it has got, and at the end what was added,
-skipped and failed, with one undo for the whole batch.
+The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
+at its end** opens the system photo picker. That half is the secondary action on purpose, visible
+rather than a long press nobody would find. The run happens in a worker, so it survives leaving the
+screen; the Counter shows how far it has got, and at the end what was added, skipped and failed,
+with one undo for the whole batch.
 
 ## What an imported photo becomes
 
@@ -112,7 +114,7 @@ buy a notification that the OS, rather than the app, keeps alive — for a job t
 
 ## Not built yet
 
-**No Settings entry point** — the long-press is the only way in today.
+**No Settings entry point** — the gallery half of the Photo button is the only way in.
 
 **`ACCESS_MEDIA_LOCATION` is not requested.** It plus `MediaStore.setRequireOriginal` is the
 documented way to ask for unredacted EXIF, and it would cost the user another permission dialog for
