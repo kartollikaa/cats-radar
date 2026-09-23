@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 private val SaveOriginalsToGallery = booleanPreferencesKey("save_originals_to_gallery")
@@ -37,7 +38,9 @@ class DataStoreSettingsRepository(
         dataStore.edit { it[LastSeenMilestone] = value }
     }
 
-    override fun encountersGrid(): Flow<Boolean> = dataStore.data.map { it[EncountersGrid] ?: true }
+    // DataStore's data re-emits on a write to any key, so an unrelated write would repeat this value.
+    override fun encountersGrid(): Flow<Boolean> =
+        dataStore.data.map { it[EncountersGrid] ?: true }.distinctUntilChanged()
 
     override suspend fun setEncountersGrid(enabled: Boolean) {
         dataStore.edit { it[EncountersGrid] = enabled }

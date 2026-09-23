@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
 import dev.catsradar.presentation.encounters.EncounterCell
-import dev.catsradar.presentation.encounters.EncounterGridRow
+import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -25,7 +25,7 @@ private val OutingJoinCorner = 4.dp
 
 @Composable
 internal fun SingleRow(
-    row: EncounterGridRow.Single,
+    row: EncountersRow.Single,
     modifier: Modifier = Modifier,
     onEncounterClick: (String) -> Unit = {},
 ) {
@@ -58,18 +58,18 @@ private fun SingleRowPreview() {
 }
 
 private val sampleOuting = listOf(
-    EncounterGridRow.Single(
+    EncountersRow.Single(
         EncounterCell("1", "14:32", LocationLabel.CURRENT, CellLead.Coat(CoatOption.TRICOLOR_MOSTLY_WHITE)),
         GroupPosition.FIRST,
     ),
-    EncounterGridRow.Single(
+    EncountersRow.Single(
         EncounterCell("2", "14:20", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.BLACK)),
         GroupPosition.MIDDLE,
     ),
-    EncounterGridRow.Single(EncounterCell("3", "14:10", LocationLabel.FROM_OUTING), GroupPosition.LAST),
+    EncountersRow.Single(EncounterCell("3", "14:10", LocationLabel.FROM_OUTING), GroupPosition.LAST),
 )
 
-private val sampleLoneCat = EncounterGridRow.Single(
+private val sampleLoneCat = EncountersRow.Single(
     EncounterCell("4", "09:05", LocationLabel.NONE),
     GroupPosition.ONLY,
 )

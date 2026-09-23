@@ -63,7 +63,7 @@ class EncountersStoreTest {
         runCurrent()
 
         assertEquals(false, store.state.value.isEmpty)
-        assertEquals(1, store.state.value.rows.count { it is EncounterGridRow.Cards })
+        assertEquals(1, store.state.value.rows.count { it is EncountersRow.Cards })
     }
 
     @Test
@@ -80,6 +80,6 @@ class EncountersStoreTest {
 
         assertEquals(EncountersLayout.GRID, before)
         assertEquals(EncountersLayout.LIST, store.state.value.layout)
-        assertEquals(1, store.state.value.rows.count { it is EncounterGridRow.Single })
+        assertEquals(1, store.state.value.rows.count { it is EncountersRow.Single })
     }
 }

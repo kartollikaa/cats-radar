@@ -16,14 +16,14 @@ class EncountersStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounters: List<Encounter>, today: LocalDate, grid: Boolean = true): EncountersState = EncountersState(
+    fun map(encounters: List<Encounter>, today: LocalDate, grid: Boolean): EncountersState = EncountersState(
         rows = outingsNewestFirst(encounters)
             .flatMap { outing ->
                 val cats = if (grid) {
                     outing.gridRows()
                 } else {
                     outing.mapWithGroupPosition { encounter, position ->
-                        EncounterGridRow.Single(encounter.toCell(), position)
+                        EncountersRow.Single(encounter.toCell(), position)
                     }
                 }
                 listOf(outing.header(today)) + cats
@@ -58,12 +58,12 @@ class EncountersStateMapper(
         )
     }
 
-    private fun List<Encounter>.gridRows(): List<EncounterGridRow> =
+    private fun List<Encounter>.gridRows(): List<EncountersRow> =
         EncounterGridPacker.pack(this, hasPhoto = { it.thumbnail() != null }).map { row ->
             when (row) {
-                is PackedRow.PhotoPair -> EncounterGridRow.PhotoPair(row.first.toPhotoCell(), row.second.toPhotoCell())
-                is PackedRow.Tiles -> EncounterGridRow.Tiles(row.cats.map { it.toCell() }.toPersistentList())
-                is PackedRow.Cards -> EncounterGridRow.Cards(row.cats.map { it.toCell() }.toPersistentList())
+                is PackedRow.PhotoPair -> EncountersRow.PhotoPair(row.first.toPhotoCell(), row.second.toPhotoCell())
+                is PackedRow.Tiles -> EncountersRow.Tiles(row.cats.map { it.toCell() }.toPersistentList())
+                is PackedRow.Cards -> EncountersRow.Cards(row.cats.map { it.toCell() }.toPersistentList())
             }
         }
 

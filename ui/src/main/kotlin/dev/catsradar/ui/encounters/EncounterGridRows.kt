@@ -42,7 +42,7 @@ import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
 import dev.catsradar.presentation.encounters.EncounterCell
-import dev.catsradar.presentation.encounters.EncounterGridRow
+import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.PhotoCell
 import dev.catsradar.ui.R
@@ -57,7 +57,7 @@ internal val CellGap = 8.dp
 
 @Composable
 internal fun PhotoPairRow(
-    row: EncounterGridRow.PhotoPair,
+    row: EncountersRow.PhotoPair,
     modifier: Modifier = Modifier,
     onEncounterClick: (String) -> Unit = {},
 ) {
@@ -69,7 +69,7 @@ internal fun PhotoPairRow(
 
 @Composable
 internal fun TileRow(
-    row: EncounterGridRow.Tiles,
+    row: EncountersRow.Tiles,
     modifier: Modifier = Modifier,
     onEncounterClick: (String) -> Unit = {},
 ) {
@@ -84,7 +84,7 @@ internal fun TileRow(
 
 @Composable
 internal fun CardRow(
-    row: EncounterGridRow.Cards,
+    row: EncountersRow.Cards,
     modifier: Modifier = Modifier,
     onEncounterClick: (String) -> Unit = {},
 ) {
@@ -228,7 +228,7 @@ private fun cellDescription(subject: String, timeLabel: String, location: Locati
 
 @ThemePreviews
 @Composable
-private fun EncounterGridRowsPreview() {
+private fun EncountersRowsPreview() {
     CatsRadarTheme {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -243,12 +243,12 @@ private fun EncounterGridRowsPreview() {
     }
 }
 
-private val samplePhotoPair = EncounterGridRow.PhotoPair(
+private val samplePhotoPair = EncountersRow.PhotoPair(
     first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, "/photos/1.jpg", "/photos/1_thumb.jpg"),
     second = PhotoCell("2", "14:30", LocationLabel.CURRENT, "/photos/2.jpg", "/photos/2_thumb.jpg"),
 )
 
-private val sampleTilesOfFive = EncounterGridRow.Tiles(
+private val sampleTilesOfFive = EncountersRow.Tiles(
     persistentListOf(
         EncounterCell("3", "14:28", LocationLabel.CURRENT, CellLead.Coat(CoatOption.GINGER)),
         EncounterCell("4", "14:25", LocationLabel.CURRENT),
@@ -258,7 +258,7 @@ private val sampleTilesOfFive = EncounterGridRow.Tiles(
     ),
 )
 
-private val sampleTilesOfThree = EncounterGridRow.Tiles(
+private val sampleTilesOfThree = EncountersRow.Tiles(
     persistentListOf(
         EncounterCell("8", "14:13", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.GREY)),
         EncounterCell("9", "14:12", LocationLabel.FROM_OUTING),
@@ -266,13 +266,13 @@ private val sampleTilesOfThree = EncounterGridRow.Tiles(
     ),
 )
 
-private val sampleCardsOfTwo = EncounterGridRow.Cards(
+private val sampleCardsOfTwo = EncountersRow.Cards(
     persistentListOf(
         EncounterCell("11", "09:20", LocationLabel.LAST_KNOWN, CellLead.Coat(CoatOption.BLACK)),
         EncounterCell("12", "09:05", LocationLabel.NONE),
     ),
 )
 
-private val sampleCardsOfOne = EncounterGridRow.Cards(
+private val sampleCardsOfOne = EncountersRow.Cards(
     persistentListOf(EncounterCell("13", "08:40", LocationLabel.CURRENT, CellLead.Coat(CoatOption.GREY))),
 )

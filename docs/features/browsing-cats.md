@@ -5,7 +5,7 @@ reuses `SessionSplitter.groupByOuting()` — the same gap rule `outings.md` desc
 second entry point that returns each outing's own encounters instead of just the aggregate
 `Session` `split()` returns; `split()` is now defined in terms of it, so the boundary comparison
 still has exactly one implementation. `EncountersStateMapper` turns that grouping into a flat,
-already-formatted `ImmutableList<EncounterGridRow>` — an `OutingHeader` per outing followed by the
+already-formatted `ImmutableList<EncountersRow>` — an `OutingHeader` per outing followed by the
 grid rows its cats pack into (see *What the grid shows*), every label already localized by the
 `DateTimeFormatter` interface (Android implementation in `presentation/androidMain`) — so
 `EncountersScreen`'s `LazyColumn` only renders, never formats, groups or packs. Counter and
@@ -51,7 +51,7 @@ row counts stop being trivial to read and group on every emission.
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/DateTimeFormatter.kt`,
   `presentation/src/androidMain/kotlin/dev/catsradar/presentation/AndroidDateTimeFormatter.android.kt`
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/` — `EncountersState`
-  (`EncounterGridRow`, and the `EncounterListItem` rows the Places area list uses),
+  (`EncountersRow`, and the `EncounterListItem` rows the Places area list uses),
   `EncounterGridPacker`, `EncountersIntent`, `EncountersEffect`, `EncountersStore`,
   `EncountersStateMapper`
 - `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`,

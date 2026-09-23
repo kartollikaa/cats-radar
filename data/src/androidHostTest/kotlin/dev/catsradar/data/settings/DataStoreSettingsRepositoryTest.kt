@@ -5,12 +5,15 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -68,5 +71,20 @@ class DataStoreSettingsRepositoryTest {
 
         assertFalse(off)
         assertTrue(repository.encountersGrid().first())
+    }
+
+    @Test
+    fun writingAnotherPreferenceDoesNotRepeatTheEncountersGridValue() = runTest {
+        val repository = DataStoreSettingsRepository(newStore(this))
+        val seen = mutableListOf<Boolean>()
+        backgroundScope.launch { repository.encountersGrid().collect { seen += it } }
+        advanceUntilIdle()
+
+        repository.setWalkingMode(true)
+        advanceUntilIdle()
+        repository.setEncountersGrid(false)
+        advanceUntilIdle()
+
+        assertEquals(listOf(true, false), seen)
     }
 }

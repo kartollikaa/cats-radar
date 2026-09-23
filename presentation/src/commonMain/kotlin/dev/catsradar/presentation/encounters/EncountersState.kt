@@ -5,7 +5,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 data class EncountersState(
-    val rows: ImmutableList<EncounterGridRow> = persistentListOf(),
+    val rows: ImmutableList<EncountersRow> = persistentListOf(),
     val layout: EncountersLayout = EncountersLayout.GRID,
 ) {
     val isEmpty: Boolean get() = rows.isEmpty()
@@ -13,14 +13,14 @@ data class EncountersState(
 
 enum class EncountersLayout { GRID, LIST }
 
-sealed interface EncounterGridRow {
+sealed interface EncountersRow {
     val key: String
 
-    data class PhotoPair(val first: PhotoCell, val second: PhotoCell) : EncounterGridRow {
+    data class PhotoPair(val first: PhotoCell, val second: PhotoCell) : EncountersRow {
         override val key: String get() = "pair-${first.id}"
     }
 
-    data class Tiles(val cells: ImmutableList<EncounterCell>) : EncounterGridRow {
+    data class Tiles(val cells: ImmutableList<EncounterCell>) : EncountersRow {
         init {
             require(cells.isNotEmpty()) { "a tile row holds at least one cat" }
         }
@@ -28,7 +28,7 @@ sealed interface EncounterGridRow {
         override val key: String get() = "tiles-${cells.first().id}"
     }
 
-    data class Cards(val cells: ImmutableList<EncounterCell>) : EncounterGridRow {
+    data class Cards(val cells: ImmutableList<EncounterCell>) : EncountersRow {
         init {
             require(cells.isNotEmpty()) { "a card row holds at least one cat" }
         }
@@ -37,7 +37,7 @@ sealed interface EncounterGridRow {
     }
 
     /** One cat on a full row, joined to the rows of the same outing above and below it. */
-    data class Single(val cell: EncounterCell, val position: GroupPosition) : EncounterGridRow {
+    data class Single(val cell: EncounterCell, val position: GroupPosition) : EncountersRow {
         override val key: String get() = "single-${cell.id}"
     }
 }
@@ -54,7 +54,7 @@ sealed interface EncounterListItem {
     }
 }
 
-data class OutingHeader(override val key: String, val label: String) : EncounterGridRow, EncounterListItem
+data class OutingHeader(override val key: String, val label: String) : EncountersRow, EncounterListItem
 
 data class EncounterCell(
     val id: String,
