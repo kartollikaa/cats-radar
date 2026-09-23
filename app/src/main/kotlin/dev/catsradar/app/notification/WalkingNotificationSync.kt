@@ -5,6 +5,8 @@ import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -25,14 +27,22 @@ class WalkingNotificationSync(
     private val notifications: WalkingNotifications,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun start(scope: CoroutineScope): Job =
+    fun start(scope: CoroutineScope, appOnScreen: Flow<Boolean>): Job =
         settingsRepository.walkingMode()
             // Nothing observes the encounters while the mode is off, which is nearly always.
             .flatMapLatest { enabled ->
-                if (enabled) observeStats().map { it.currentOuting?.count ?: 0 } else flowOf(null)
+                if (enabled) {
+                    combine(observeStats().map { it.currentOuting?.count ?: 0 }, appOnScreen, ::Shown)
+                } else {
+                    flowOf(null)
+                }
             }
             // The stats flow ticks to keep elapsed time moving; the notification carries no time.
             .distinctUntilChanged()
-            .onEach { count -> if (count == null) notifications.clear() else notifications.show(count) }
+            .onEach { shown ->
+                if (shown == null) notifications.clear() else notifications.show(shown.count, shown.appOnScreen)
+            }
             .launchIn(scope)
+
+    private data class Shown(val count: Int, val appOnScreen: Boolean)
 }

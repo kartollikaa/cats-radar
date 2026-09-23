@@ -7,7 +7,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class LauncherIconTest {
+class CatIconTest {
 
     private fun paths(drawable: String): List<String> =
         Regex("""<path\b[^>]*>""")
@@ -25,13 +25,22 @@ class LauncherIconTest {
             .forEach { assertContains(pathData, it) }
     }
 
-    @Test
-    fun theThemedLauncherCatIsTheCoatFaceWithItsEyesAndNoseCutOut() {
+    private fun assertFaceSilhouetteWithEyesAndNoseCutOut(drawable: String) {
         val silhouette = assertNotNull(
-            paths("ic_launcher_monochrome").find {
+            paths(drawable).find {
                 it.attribute("pathData") == CatFacePaths.Head + CatFacePaths.Eyes + CatFacePaths.Nose
             },
         )
         assertEquals("evenOdd", silhouette.attribute("fillType"))
+    }
+
+    @Test
+    fun theThemedLauncherCatIsTheCoatFaceWithItsEyesAndNoseCutOut() {
+        assertFaceSilhouetteWithEyesAndNoseCutOut("ic_launcher_monochrome")
+    }
+
+    @Test
+    fun theNotificationCatIsTheCoatFaceWithItsEyesAndNoseCutOut() {
+        assertFaceSilhouetteWithEyesAndNoseCutOut("ic_notification_cat")
     }
 }

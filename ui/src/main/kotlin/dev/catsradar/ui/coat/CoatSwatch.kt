@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +31,8 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
 
 private val SwatchSize = 40.dp
 private val FaceSize = 34.dp
@@ -41,11 +44,22 @@ private const val CoatsPerRow = 4
  * grey and white, black — so every swatch carries its name as well: colour alone would not tell
  * them apart, which the design brief called out explicitly.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CoatGrid(
     modifier: Modifier = Modifier,
     highlighted: CoatOption? = null,
+    onCoatClick: (CoatOption) -> Unit = {},
+) {
+    val selected = remember(highlighted) { persistentSetOf(highlighted) }
+    CoatGrid(selected = selected, modifier = modifier, onCoatClick = onCoatClick)
+}
+
+/** The same grid with any number of coats marked, for choosing several at once; a null marks none. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun CoatGrid(
+    selected: ImmutableSet<CoatOption?>,
+    modifier: Modifier = Modifier,
     onCoatClick: (CoatOption) -> Unit = {},
 ) {
     FlowRow(
@@ -57,7 +71,7 @@ fun CoatGrid(
         CoatOption.entries.forEach { coat ->
             CoatColumn(
                 coat = coat,
-                selected = coat == highlighted,
+                selected = coat in selected,
                 onClick = { onCoatClick(coat) },
             )
         }

@@ -3,6 +3,8 @@ package dev.catsradar.data.platform
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.photo.scaleToFit
 import dev.catsradar.domain.platform.ImageResizer
@@ -21,14 +23,15 @@ class AndroidImageResizer(
     override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? =
         withContext(ioDispatcher) {
             val source = decode(sourceUri) ?: return@withContext null
+            val turn = uprightTurn(sourceUri)
             try {
                 val photoPath = "$encounterId.jpg"
                 // No copy is worth keeping without the photo itself, so a failure here fails the call.
-                if (!source.writeScaled(Tuning.PHOTO_MAX_SIDE, photoStorage.prepare(photoPath))) {
+                if (!source.writeScaled(Tuning.PHOTO_MAX_SIDE, turn, photoStorage.prepare(photoPath))) {
                     return@withContext null
                 }
                 val thumbPath = "$encounterId$THUMB_SUFFIX"
-                val thumbWritten = source.writeScaled(Tuning.THUMB_SIZE, photoStorage.prepare(thumbPath))
+                val thumbWritten = source.writeScaled(Tuning.THUMB_SIZE, turn, photoStorage.prepare(thumbPath))
                 StoredPhoto(photoPath = photoPath, thumbPath = thumbPath.takeIf { thumbWritten })
             } finally {
                 source.recycle()
@@ -38,7 +41,16 @@ class AndroidImageResizer(
     private fun decode(sourceUri: String): Bitmap? =
         runCatching { context.openPhotoStream(sourceUri).use(BitmapFactory::decodeStream) }.getOrNull()
 
-    private fun Bitmap.writeScaled(maxSide: Int, destination: File): Boolean = runCatching {
+    // BitmapFactory ignores EXIF Orientation, and the copies carry no EXIF, so the turn goes into the pixels.
+    private fun uprightTurn(sourceUri: String): Matrix = Matrix().apply {
+        val exif = runCatching { context.openPhotoStream(sourceUri).use(::ExifInterface) }.getOrNull()
+            ?: return@apply
+        // ExifInterface's rotation degrees assume the flip has already been applied.
+        if (exif.isFlipped) postScale(-1f, 1f)
+        postRotate(exif.rotationDegrees.toFloat())
+    }
+
+    private fun Bitmap.writeScaled(maxSide: Int, turn: Matrix, destination: File): Boolean = runCatching {
         val target = scaleToFit(width, height, maxSide)
         val scaled = if (target.width == width && target.height == height) {
             this
@@ -46,10 +58,19 @@ class AndroidImageResizer(
             Bitmap.createScaledBitmap(this, target.width, target.height, true)
         }
         try {
-            // JPEG, and no EXIF is carried over: the app's own copy never republishes the
-            // original's GPS.
-            destination.outputStream().use { out ->
-                scaled.compress(Bitmap.CompressFormat.JPEG, Tuning.PHOTO_QUALITY, out)
+            val upright = if (turn.isIdentity) {
+                scaled
+            } else {
+                Bitmap.createBitmap(scaled, 0, 0, scaled.width, scaled.height, turn, true)
+            }
+            try {
+                // JPEG, and no EXIF is carried over: the app's own copy never republishes the
+                // original's GPS.
+                destination.outputStream().use { out ->
+                    upright.compress(Bitmap.CompressFormat.JPEG, Tuning.PHOTO_QUALITY, out)
+                }
+            } finally {
+                if (upright !== scaled) upright.recycle()
             }
         } finally {
             if (scaled !== this) scaled.recycle()
