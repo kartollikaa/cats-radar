@@ -24,7 +24,6 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/** A titled card of rows. */
 @Composable
 internal fun SectionCard(
     @StringRes titleRes: Int,
@@ -81,15 +80,15 @@ private fun LabelAndValue(label: String, value: String, modifier: Modifier = Mod
         val labelItem = labelItems.single()
         val valueItem = valueItems.single()
         val gap = 12.dp.roundToPx()
-        val singleLineWidth = labelItem.maxIntrinsicWidth(Constraints.Infinity) + gap +
-            valueItem.maxIntrinsicWidth(Constraints.Infinity)
-        // An intrinsic query measures with an unbounded width, which the layout cannot report back.
+        val valueWidth = valueItem.maxIntrinsicWidth(Constraints.Infinity)
+        val singleLineWidth = labelItem.maxIntrinsicWidth(Constraints.Infinity) + gap + valueWidth
+        // A width query measures with an unbounded width, and a layout cannot be infinitely wide.
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth else singleLineWidth
         val oneLine = singleLineWidth <= width
         val loose = Constraints(maxWidth = width)
         if (oneLine) {
             val valuePlaced = valueItem.measure(loose)
-            val labelPlaced = labelItem.measure(Constraints(maxWidth = width - gap - valuePlaced.width))
+            val labelPlaced = labelItem.measure(Constraints(maxWidth = (width - gap - valueWidth).coerceAtLeast(0)))
             val height = maxOf(labelPlaced.height, valuePlaced.height)
             layout(width, height) {
                 labelPlaced.placeRelative(0, (height - labelPlaced.height) / 2)
