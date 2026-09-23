@@ -15,7 +15,6 @@ import dev.catsradar.domain.testing.MisbehavingLocationProvider
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
