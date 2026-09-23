@@ -134,7 +134,7 @@ The orientation fixtures are the exception: one portrait picture in four coloure
 once per EXIF orientation with its pixels laid out the way a camera would lay them out for that tag.
 Four distinct corners put each of the eight orientations in a different order, which a gradient's
 corners after JPEG and resampling tell apart less reliably. The generator checks every one with
-Pillow's `ImageOps.exif_transpose` before keeping it, so the answer `AndroidImageResizerTest` expects
+Pillow's `ImageOps.exif_transpose` before keeping it, so the answer `AndroidImageResizerOrientationTest` expects
 never comes from the code under test.
 
 ## Where the code lives

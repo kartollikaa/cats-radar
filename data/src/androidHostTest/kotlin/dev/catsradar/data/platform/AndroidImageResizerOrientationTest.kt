@@ -69,11 +69,12 @@ class AndroidImageResizerOrientationTest {
     }
 
     @Test
-    fun anUprightedCopyAsksNoViewerToTurnItAgain() = runTest {
+    fun anUprightedCopyCarriesNoOrientationTagForAViewerToApplyAgain() = runTest {
         val stored = storeOriented(ExifInterface.ORIENTATION_ROTATE_90)
 
         val copy = ExifInterface(photoStorage.resolve(stored.photoPath))
-        assertEquals(0 to false, copy.rotationDegrees to copy.isFlipped)
+        val undefined = ExifInterface.ORIENTATION_UNDEFINED
+        assertEquals(undefined, copy.getAttributeInt(ExifInterface.TAG_ORIENTATION, undefined))
     }
 
     private companion object {
