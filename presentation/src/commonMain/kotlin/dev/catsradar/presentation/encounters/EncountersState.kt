@@ -15,13 +15,19 @@ sealed interface EncounterGridRow {
         override val key: String get() = "pair-${first.id}"
     }
 
-    /** Never empty. */
     data class Tiles(val cells: ImmutableList<EncounterCell>) : EncounterGridRow {
+        init {
+            require(cells.isNotEmpty()) { "a tile row holds at least one cat" }
+        }
+
         override val key: String get() = "tiles-${cells.first().id}"
     }
 
-    /** Never empty. */
     data class Cards(val cells: ImmutableList<EncounterCell>) : EncounterGridRow {
+        init {
+            require(cells.isNotEmpty()) { "a card row holds at least one cat" }
+        }
+
         override val key: String get() = "cards-${cells.first().id}"
     }
 }
@@ -44,8 +50,14 @@ data class EncounterCell(
     val lead: CellLead = CellLead.Paw,
 )
 
-/** [photoPath] is absolute. */
-data class PhotoCell(val id: String, val timeLabel: String, val location: LocationLabel, val photoPath: String)
+/** Both paths are absolute; [thumbnailPath] stands in for [photoPath] when that one cannot be read. */
+data class PhotoCell(
+    val id: String,
+    val timeLabel: String,
+    val location: LocationLabel,
+    val photoPath: String,
+    val thumbnailPath: String,
+)
 
 /** What a cell shows first: the most telling thing known about that cat. */
 sealed interface CellLead {

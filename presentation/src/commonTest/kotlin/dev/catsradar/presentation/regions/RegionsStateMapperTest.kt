@@ -6,7 +6,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
-import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.photoFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -36,7 +36,4 @@ class RegionsStateMapperTest {
             state.encounters,
         )
     }
-
-    private fun photoFixture(id: String, occurredAt: Instant) =
-        encounterFixture(id, occurredAt).copy(photoPath = "$id.jpg", thumbPath = "${id}_thumb.jpg")
 }

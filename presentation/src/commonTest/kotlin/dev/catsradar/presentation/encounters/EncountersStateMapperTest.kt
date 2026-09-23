@@ -2,7 +2,6 @@ package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
-import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.persistentListOf
@@ -88,11 +87,14 @@ class EncountersStateMapperTest {
         val thumbOnly = photoFixture("thumbOnly", BASE).copy(photoPath = null)
         val full = photoFixture("full", BASE + 1.minutes)
 
-        val pair = mapper.map(listOf(thumbOnly, full), today).rows.filterIsInstance<EncounterGridRow.PhotoPair>()
+        val rows = mapper.map(listOf(thumbOnly, full), today).rows
 
         assertEquals(
-            listOf("/data/photos/full.jpg", "/data/photos/thumbOnly_thumb.jpg"),
-            pair.flatMap { listOf(it.first.photoPath, it.second.photoPath) },
+            EncounterGridRow.PhotoPair(
+                first = photoCell("full", BASE + 1.minutes, "/data/photos/full.jpg"),
+                second = photoCell("thumbOnly", BASE, "/data/photos/thumbOnly_thumb.jpg"),
+            ),
+            rows.last(),
         )
     }
 
@@ -275,13 +277,6 @@ class EncountersStateMapperTest {
         }
     }
 
-    private fun photoFixture(
-        id: String,
-        occurredAt: Instant,
-        locationSource: LocationSource = LocationSource.NONE,
-    ): Encounter = encounterFixture(id, occurredAt, locationSource = locationSource)
-        .copy(photoPath = "$id.jpg", thumbPath = "${id}_thumb.jpg")
-
     private fun cell(id: String, occurredAt: Instant, lead: CellLead = CellLead.Paw) = EncounterCell(
         id = id,
         timeLabel = occurredAt.toString(),
@@ -294,6 +289,7 @@ class EncountersStateMapperTest {
         timeLabel = occurredAt.toString(),
         location = LocationLabel.NONE,
         photoPath = photoPath,
+        thumbnailPath = "/data/photos/${id}_thumb.jpg",
     )
 
     private companion object {

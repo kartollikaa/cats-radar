@@ -78,8 +78,22 @@ class EncounterGridPackerTest {
             val runs = rows.filterNot { it is PackedRow.PhotoPair }
                 .map { run -> run.cats().joinToString("") { "${sequence[it]}" } }
             assertTrue(runs.none { "PP" in it }, "two photos left unpaired in $sequence")
+            runsBetweenPairs(rows).forEach { run ->
+                val sizes = run.map { it.cats().size }
+                if (run.any { it is PackedRow.Cards }) {
+                    assertEquals(1, run.size, "a card row shares its run in $sequence")
+                } else {
+                    assertEquals(sizes.sortedDescending(), sizes, "a shorter tile row first in $sequence")
+                    assertTrue(sizes.max() - sizes.min() <= 1, "unbalanced tile rows $sizes in $sequence")
+                }
+            }
         }
     }
+
+    private fun <T> runsBetweenPairs(rows: List<PackedRow<T>>): List<List<PackedRow<T>>> =
+        rows.fold(listOf(emptyList<PackedRow<T>>())) { runs, row ->
+            if (row is PackedRow.PhotoPair) runs + listOf(emptyList()) else runs.dropLast(1) + listOf(runs.last() + row)
+        }.filter { it.isNotEmpty() }
 
     private fun layout(sequence: String): String =
         EncounterGridPacker.pack(sequence.indices.toList()) { sequence[it] == 'P' }

@@ -65,12 +65,14 @@ reordering them and never carrying a row across a header:
 
 - **Two photos in a row share a pair row** — two square tiles side by side, each loading the app's
   full-size copy (the thumbnail is too small at half the screen's width), with its time on a chip.
-  Pairing is greedy from the newest cat, so a third photo in a row is left without a partner.
-- **Everything between pairs is a run**, and a lone photo stays in it. A run of three or more is
-  split into **tile rows** of three to five, as even as they can be and the longer rows first
-  (seven cats are four then three, eleven are four, four, three); a tile is a square showing the
-  photo's thumbnail, the coat's face or a paw, with the time under it. A run of one or two is a
-  **card row**: full cards showing the time and location, two sharing the width.
+  A pair tile whose full copy is missing or unreadable falls back to the thumbnail. Pairing is
+  greedy from the newest cat, so a third photo in a row is left without a partner.
+- **Everything between pairs is a run**, and a lone photo stays in it. A run of at least
+  `MIN_TILES` cats is split into **tile rows** of `MIN_TILES` to `MAX_TILES` (both in
+  `EncounterGridPacker`), using as few rows as that allows, as even as they can be, and the longer
+  rows first; a tile is a square showing the photo's thumbnail, the coat's face or a paw, with the
+  time under it, shrunk to stay on one line. A shorter run is a **card row**: full cards showing
+  the time and location, sharing the width.
 
 "Has a photo" means its thumbnail exists: a photo whose thumbnail failed to write packs, and leads,
 like a cat without one. What a tile or card leads with is the mapper's choice — the thumbnail, else

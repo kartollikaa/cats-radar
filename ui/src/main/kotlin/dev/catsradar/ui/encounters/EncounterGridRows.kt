@@ -15,11 +15,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +36,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
@@ -97,6 +103,7 @@ internal fun CardRow(
 private fun PhotoTile(cell: PhotoCell, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val subject = stringResource(R.string.encounters_photo_description)
     val description = cellDescription(subject, cell.timeLabel, cell.location)
+    var fullCopyUnreadable by remember(cell.photoPath) { mutableStateOf(false) }
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -106,10 +113,11 @@ private fun PhotoTile(cell: PhotoCell, modifier: Modifier = Modifier, onClick: (
             .clearAndSetSemantics { contentDescription = description },
     ) {
         AsyncImage(
-            model = cell.photoPath,
+            model = if (fullCopyUnreadable) cell.thumbnailPath else cell.photoPath,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
+            onError = { fullCopyUnreadable = true },
         )
         Text(
             text = cell.timeLabel,
@@ -136,10 +144,14 @@ private fun EncounterTile(cell: EncounterCell, modifier: Modifier = Modifier, on
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         EncounterLead(lead = cell.lead, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
+        val timeStyle = MaterialTheme.typography.labelMedium
         Text(
             text = cell.timeLabel,
-            style = MaterialTheme.typography.labelMedium,
+            style = timeStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            softWrap = false,
+            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = timeStyle.fontSize),
             modifier = Modifier.padding(bottom = 4.dp),
         )
     }
@@ -226,8 +238,8 @@ private fun EncounterGridRowsPreview() {
 }
 
 private val samplePhotoPair = EncounterGridRow.PhotoPair(
-    first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, photoPath = "/photos/1.jpg"),
-    second = PhotoCell("2", "14:30", LocationLabel.CURRENT, photoPath = "/photos/2.jpg"),
+    first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, "/photos/1.jpg", "/photos/1_thumb.jpg"),
+    second = PhotoCell("2", "14:30", LocationLabel.CURRENT, "/photos/2.jpg", "/photos/2_thumb.jpg"),
 )
 
 private val sampleTilesOfFive = EncounterGridRow.Tiles(

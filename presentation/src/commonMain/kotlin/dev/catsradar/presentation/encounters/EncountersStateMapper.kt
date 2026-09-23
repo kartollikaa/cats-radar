@@ -24,7 +24,15 @@ class EncountersStateMapper(
 
     fun mapList(encounters: List<Encounter>, today: LocalDate): ImmutableList<EncounterListItem> =
         outingsNewestFirst(encounters)
-            .flatMap { outing -> listOf(outing.header(today)) + outing.map { it.toListRow() } }
+            .flatMap { outing ->
+                listOf(outing.header(today)) + outing.map { encounter ->
+                    EncounterListItem.Row(
+                        id = encounter.id,
+                        timeLabel = encounter.timeLabel(),
+                        location = encounter.locationSource.toLocationLabel(),
+                    )
+                }
+            }
             .toPersistentList()
 
     private fun outingsNewestFirst(encounters: List<Encounter>): List<List<Encounter>> =
@@ -41,7 +49,7 @@ class EncountersStateMapper(
     }
 
     private fun List<Encounter>.gridRows(): List<EncounterGridRow> =
-        EncounterGridPacker.pack(this, hasPhoto = { it.thumbPath != null }).map { row ->
+        EncounterGridPacker.pack(this, hasPhoto = { it.thumbnail() != null }).map { row ->
             when (row) {
                 is PackedRow.PhotoPair -> EncounterGridRow.PhotoPair(row.first.toPhotoCell(), row.second.toPhotoCell())
                 is PackedRow.Tiles -> EncounterGridRow.Tiles(row.cats.map { it.toCell() }.toPersistentList())
@@ -57,23 +65,20 @@ class EncountersStateMapper(
     )
 
     private fun Encounter.toPhotoCell(): PhotoCell {
-        val photo = checkNotNull(photoPath ?: thumbPath) { "a pair holds only cats with a photo" }
+        val thumbnail = checkNotNull(thumbnail()) { "a pair holds only cats with a photo" }
         return PhotoCell(
             id = id,
             timeLabel = timeLabel(),
             location = locationSource.toLocationLabel(),
-            photoPath = photoStorage.resolve(photo),
+            photoPath = photoPath?.let(photoStorage::resolve) ?: thumbnail,
+            thumbnailPath = thumbnail,
         )
     }
 
-    private fun Encounter.toListRow(): EncounterListItem.Row = EncounterListItem.Row(
-        id = id,
-        timeLabel = timeLabel(),
-        location = locationSource.toLocationLabel(),
-    )
+    private fun Encounter.thumbnail(): String? = thumbPath?.let(photoStorage::resolve)
 
     private fun Encounter.lead(): CellLead {
-        val thumbnail = thumbPath?.let(photoStorage::resolve)
+        val thumbnail = thumbnail()
         val coatOption = coat?.toOption()
         return when {
             thumbnail != null -> CellLead.Photo(thumbnail)

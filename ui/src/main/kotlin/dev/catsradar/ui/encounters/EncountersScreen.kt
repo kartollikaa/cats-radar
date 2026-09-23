@@ -121,8 +121,8 @@ private val sampleEncountersStatePopulated = EncountersState(
     rows = persistentListOf(
         OutingHeader(key = "header-1", label = "Today, 14:10"),
         EncounterGridRow.PhotoPair(
-            first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, photoPath = "/photos/1.jpg"),
-            second = PhotoCell("2", "14:30", LocationLabel.CURRENT, photoPath = "/photos/2.jpg"),
+            first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, "/photos/1.jpg", "/photos/1_thumb.jpg"),
+            second = PhotoCell("2", "14:30", LocationLabel.CURRENT, "/photos/2.jpg", "/photos/2_thumb.jpg"),
         ),
         EncounterGridRow.Tiles(
             persistentListOf(
