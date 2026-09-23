@@ -205,7 +205,6 @@ class BackupMergeTest {
 
     @Test
     fun `an unnamed imported cell leaves the local attempt count alone`() {
-        // The geocoding worker gives a cell up once its attempts run out; importing must not reset that.
         val merged = BackupMerge.merge(
             local = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING, attempts = 4))),
             imported = BackupContents(placeCells = listOf(cell(status = PlaceStatus.PENDING, attempts = 0))),
