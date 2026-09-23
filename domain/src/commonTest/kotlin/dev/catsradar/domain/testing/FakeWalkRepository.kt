@@ -17,21 +17,25 @@ class FakeWalkRepository : WalkRepository {
 
     fun points(): List<TrackPoint> = points.value
 
-    override fun observeAll(): Flow<List<Walk>> = walks
+    override fun observeAll(): Flow<List<Walk>> = walks.map { all -> all.sortedByDescending { it.startedAt } }
 
     override suspend fun openWalk(): Walk? = walks.value.firstOrNull { it.endedAt == null }
 
     override suspend fun startIfNoneOpen(walk: Walk): Walk =
         openWalk() ?: walk.also { started -> walks.update { it + started } }
 
-    override suspend fun end(id: String, endedAt: Instant) = walks.update { all ->
-        all.map { if (it.id == id && it.endedAt == null) it.copy(endedAt = endedAt, updatedAt = endedAt) else it }
+    override suspend fun end(id: String, endedAt: Instant): Boolean {
+        val open = walks.value.any { it.id == id && it.endedAt == null }
+        walks.update { all ->
+            all.map { if (it.id == id && it.endedAt == null) it.copy(endedAt = endedAt, updatedAt = endedAt) else it }
+        }
+        return open
     }
 
     override suspend fun appendPoint(point: TrackPoint) = points.update { it + point }
 
     override suspend fun lastPoint(walkId: String): TrackPoint? =
-        points.value.filter { it.walkId == walkId }.maxByOrNull { it.at }
+        points.value.filter { it.walkId == walkId }.sortedBy { it.at }.lastOrNull()
 
     override fun observeTrack(walkId: String): Flow<List<TrackPoint>> =
         points.map { all -> all.filter { it.walkId == walkId }.sortedBy { it.at } }

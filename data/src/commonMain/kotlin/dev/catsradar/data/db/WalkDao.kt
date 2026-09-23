@@ -18,16 +18,21 @@ interface WalkDao {
     @Insert
     suspend fun insert(walk: WalkEntity)
 
+    // Returns the row read back rather than [walk]: the database keeps instants to the millisecond.
     @Transaction
-    suspend fun startIfNoneOpen(walk: WalkEntity): WalkEntity = loadOpen() ?: walk.also { insert(it) }
+    suspend fun startIfNoneOpen(walk: WalkEntity): WalkEntity {
+        loadOpen()?.let { return it }
+        insert(walk)
+        return checkNotNull(loadOpen())
+    }
 
     @Query("UPDATE walks SET endedAt = :endedAt, updatedAt = :endedAt WHERE id = :id AND endedAt IS NULL")
-    suspend fun end(id: String, endedAt: Instant)
+    suspend fun end(id: String, endedAt: Instant): Int
 
     @Insert
     suspend fun insertPoint(point: TrackPointEntity)
 
-    @Query("SELECT * FROM track_points WHERE walkId = :walkId ORDER BY at DESC LIMIT 1")
+    @Query("SELECT * FROM track_points WHERE walkId = :walkId ORDER BY at DESC, rowId DESC LIMIT 1")
     suspend fun loadLastPoint(walkId: String): TrackPointEntity?
 
     @Query("SELECT * FROM track_points WHERE walkId = :walkId ORDER BY at")

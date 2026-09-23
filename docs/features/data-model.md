@@ -57,13 +57,15 @@ mode that will is its own slice of the Map epic.
 - **One walk at a time.** Starting a walk while one is on returns that walk rather than opening a
   second: the check and the insert are one transaction (`WalkDao.startIfNoneOpen`), so two starts
   racing each other still make one walk.
-- **Ending is final.** Ending only touches a walk that is on, so ending twice keeps the first end.
+- **Ending is final.** Ending only touches a walk that is on, so ending twice keeps the first end,
+  and a clock set back before the start ends the walk at its start rather than before it.
 - **A route keeps only fixes that say something.** `RecordTrackPoint` leaves out a fix that is too
   rough to trust (`Tuning.TRACK_MAX_ACCURACY_METERS`), older than the walk or than the route's last
   point, or nearer that point than `Tuning.TRACK_MIN_STEP_METERS` — a phone standing still at a
-  crossing would otherwise pile up points in one spot.
-- **Distance is great-circle** (`trackLengthMeters`), on the Earth's mean radius; the error against
-  the real shape of the Earth is far below a phone's own.
+  crossing would otherwise pile up points in one spot. Fixes are recorded one at a time, since each
+  is measured against the point before it.
+- **Distance is great-circle** (`trackLengthMeters`), on the Earth's mean radius: within half a
+  percent of the Earth's real shape, which on a step is far less than a phone fix's own error.
 - **A walk does not define an outing.** Outings stay derived from the cats alone (`outings.md`).
 
 The database went from version 1 to 2 for these two tables, by an automatic migration that only adds
@@ -78,15 +80,16 @@ the cat is still there.
   `EnumConverters.kt`, `InstantConverters.kt`, `CatsDatabase.kt`
 - `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`,
   `PlaceCellMapper.kt`, `EncounterRepositoryImpl.kt`, `PlaceCellRepositoryImpl.kt`
+- Walks: `domain/.../model/Walk.kt`, `domain/.../geo/Distance.kt`, the use cases `StartWalk.kt`,
+  `EndWalk.kt`, `RecordTrackPoint.kt`; `data/.../db/WalkEntity.kt`, `WalkDao.kt`, and
+  `data/.../repository/WalkRepositoryImpl.kt`
 
-Schema is exported to `data/schemas/dev.catsradar.data.db.CatsDatabase/1.json`;
-`CatsDatabaseMigrationTest` opens that committed v1 baseline to prove the migration-test harness
-itself works — there is no v2 yet, so no actual migration path exists to test.
+Each schema version is exported to `data/schemas/dev.catsradar.data.db.CatsDatabase/<version>.json`,
+with a copy in the test assets that `SchemaAssetSyncTest` keeps identical to the export.
 
 ## Not handled yet
 
-Backup export and import (§3.1, §4.7 of the design spec) are specified but unbuilt; nothing reads
-or writes an `Encounter` outside the app's own database yet.
+Walks do not travel in backups yet: an archive holds cats and place cells, as `backup.md` says.
 
 ## Purging
 

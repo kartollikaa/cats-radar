@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.location.LocationFix
+import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
@@ -23,7 +24,6 @@ class WalkUseCasesTest {
     private val startWalk = StartWalk(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(START))
     private val recordTrackPoint = RecordTrackPoint(repository)
 
-    // About eleven metres apart: one step of a walk.
     private fun fix(atSecond: Int, latOffset: Double = 0.0, accuracy: Float = 8f) =
         LocationFix(41.3851 + latOffset, 2.1734, accuracy, START + atSecond.seconds)
 
@@ -50,6 +50,28 @@ class WalkUseCasesTest {
 
         startWalk()
         assertEquals(2, repository.walks().size)
+    }
+
+    @Test
+    fun `a clock set back before the start ends the walk at its start`() = runTest {
+        startWalk()
+
+        val ended = EndWalk(repository, FakeClock(START - 5.minutes))()
+
+        assertEquals(START, assertNotNull(ended).endedAt)
+        assertEquals(START, repository.walks().single().endedAt)
+    }
+
+    @Test
+    fun `an end another call already made is not reported as this one's`() = runTest {
+        val walk = startWalk()
+        EndWalk(repository, FakeClock(START + 30.minutes))()
+        val stale = object : WalkRepository by repository {
+            override suspend fun openWalk() = walk
+        }
+
+        assertNull(EndWalk(stale, FakeClock(START + 31.minutes))())
+        assertEquals(START + 30.minutes, repository.walks().single().endedAt)
     }
 
     @Test
@@ -88,11 +110,18 @@ class WalkUseCasesTest {
     }
 
     @Test
-    fun `a fix older than the walk or than the route's last point is left out`() = runTest {
+    fun `a fix from before the walk is left out, one from its first moment is kept`() = runTest {
+        startWalk()
+
+        assertFalse(recordTrackPoint(fix(atSecond = -1)))
+        assertTrue(recordTrackPoint(fix(atSecond = 0)))
+    }
+
+    @Test
+    fun `a fix older than the route's last point is left out`() = runTest {
         startWalk()
         recordTrackPoint(fix(atSecond = 60))
 
-        assertFalse(recordTrackPoint(LocationFix(41.0, 2.0, 5f, START - 1.seconds)))
         assertFalse(recordTrackPoint(fix(atSecond = 30, latOffset = 0.01)))
         assertEquals(1, repository.points().size)
     }

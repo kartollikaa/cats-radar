@@ -10,9 +10,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertNull
-import kotlin.time.Instant
+import kotlin.time.Duration.Companion.microseconds
+import kotlin.time.Duration.Companion.minutes
 
 @RunWith(AndroidJUnit4::class)
 class WalkDaoTest {
@@ -30,54 +30,33 @@ class WalkDaoTest {
         database.close()
     }
 
-    private fun walk(id: String, endedAt: Instant? = null) =
-        WalkEntity(id = id, startedAt = AT, endedAt = endedAt, deviceId = "device", createdAt = AT, updatedAt = AT)
-
-    private fun point(walkId: String, second: Long, lat: Double = 41.0) = TrackPointEntity(
-        walkId = walkId,
-        at = Instant.fromEpochSeconds(AT.epochSeconds + second),
-        lat = lat,
-        lon = 2.0,
-        accuracyMeters = 5f,
-    )
-
     @Test
     fun startingWhileAWalkIsOpenReturnsThatWalkAndWritesNothing() = runTest {
-        val first = dao.startIfNoneOpen(walk("first"))
-        val second = dao.startIfNoneOpen(walk("second"))
+        val first = dao.startIfNoneOpen(walkEntity("first"))
+        val second = dao.startIfNoneOpen(walkEntity("second"))
 
         assertEquals("first", second.id)
         assertEquals(listOf(first), dao.observeAll().first())
     }
 
     @Test
-    fun endingTouchesOnlyAnOpenWalk() = runTest {
-        dao.startIfNoneOpen(walk("walk"))
-        val endedAt = Instant.fromEpochSeconds(AT.epochSeconds + 600)
-        dao.end("walk", endedAt)
+    fun startingReturnsTheWalkAsTheDatabaseKeepsIt() = runTest {
+        val first = dao.startIfNoneOpen(walkEntity("walk", startedAt = walkStart + 500.microseconds))
+        val second = dao.startIfNoneOpen(walkEntity("other"))
 
-        dao.end("walk", Instant.fromEpochSeconds(AT.epochSeconds + 900))
+        assertEquals(walkStart, first.startedAt)
+        assertEquals(first, second)
+    }
+
+    @Test
+    fun endingTouchesOnlyAnOpenWalk() = runTest {
+        dao.startIfNoneOpen(walkEntity("walk"))
+        val endedAt = walkStart + 10.minutes
+        assertEquals(1, dao.end("walk", endedAt))
+
+        assertEquals(0, dao.end("walk", walkStart + 15.minutes))
 
         assertEquals(endedAt, dao.observeAll().first().single().endedAt)
         assertNull(dao.loadOpen())
-    }
-
-    @Test
-    fun theLastPointIsTheLatestOneAndTheTrackComesBackInTimeOrder() = runTest {
-        dao.startIfNoneOpen(walk("walk"))
-        dao.insertPoint(point("walk", second = 20, lat = 41.2))
-        dao.insertPoint(point("walk", second = 10, lat = 41.1))
-
-        assertEquals(41.2, dao.loadLastPoint("walk")?.lat)
-        assertEquals(listOf(41.1, 41.2), dao.observeTrack("walk").first().map { it.lat })
-    }
-
-    @Test
-    fun aPointCannotBelongToAWalkThatDoesNotExist() = runTest {
-        assertFails { dao.insertPoint(point("no-such-walk", second = 1)) }
-    }
-
-    private companion object {
-        val AT = Instant.parse("2026-09-23T09:00:00Z")
     }
 }

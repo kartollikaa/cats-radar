@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 interface WalkRepository {
+    /** Newest start first. */
     fun observeAll(): Flow<List<Walk>>
 
     /** The walk that has not ended, or null; there is never more than one. */
@@ -14,7 +15,8 @@ interface WalkRepository {
     /** Starts [walk] unless a walk is already open, atomically; returns whichever walk is now open. */
     suspend fun startIfNoneOpen(walk: Walk): Walk
 
-    suspend fun end(id: String, endedAt: Instant)
+    /** Ends walk [id] if it is still on; false when it had already ended or does not exist. */
+    suspend fun end(id: String, endedAt: Instant): Boolean
 
     suspend fun appendPoint(point: TrackPoint)
 

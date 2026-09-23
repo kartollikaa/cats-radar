@@ -27,8 +27,12 @@ class DistanceTest {
     }
 
     @Test
-    fun `the same point is no distance at all, in either order`() {
+    fun `the same point is no distance at all`() {
         assertEquals(0.0, distanceMeters(41.39, 2.17, 41.39, 2.17))
+    }
+
+    @Test
+    fun `the distance is the same in either direction`() {
         assertEquals(distanceMeters(41.39, 2.17, 41.40, 2.18), distanceMeters(41.40, 2.18, 41.39, 2.17))
     }
 

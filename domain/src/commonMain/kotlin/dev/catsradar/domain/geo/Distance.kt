@@ -7,7 +7,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-// The mean radius; the few-metre error against the ellipsoid is far below a phone's GPS error.
+// The mean radius: a sphere is within half a percent of the ellipsoid, less than a fix's own error on a step.
 private const val EARTH_RADIUS_METERS = 6_371_008.8
 
 /** Great-circle distance between two points, in metres. */

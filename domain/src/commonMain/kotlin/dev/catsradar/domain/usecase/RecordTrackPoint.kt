@@ -7,9 +7,10 @@ import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.repository.WalkRepository
 
 /**
- * Adds [LocationFix] to the route of the walk that is on. Returns whether it was kept: a fix is
- * left out when no walk is on, when it is too rough, older than the walk or the route's last
- * point, or too near that point to add anything.
+ * Adds [fix] to the route of the walk that is on. Returns whether it was kept: a fix is left out
+ * when no walk is on, when it is too rough, older than the walk or the route's last point, or too
+ * near that point to add anything. Calls must not overlap, or two fixes can both be measured against
+ * the same last point.
  */
 class RecordTrackPoint(private val walkRepository: WalkRepository) {
     suspend operator fun invoke(fix: LocationFix): Boolean {
