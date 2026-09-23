@@ -57,8 +57,13 @@ private class StubReader(private val result: BackupReadResult) : BackupReader {
     override suspend fun read(source: String): BackupReadResult = result
 }
 
-private class DiskFullOnUpsert(delegate: PlaceCellRepository) : PlaceCellRepository by delegate {
-    override suspend fun upsert(cell: PlaceCell) = error("database or disk is full")
+private class DiskFullOnSecondUpsert(private val delegate: PlaceCellRepository) : PlaceCellRepository by delegate {
+    private var upserts = 0
+
+    override suspend fun upsert(cell: PlaceCell) {
+        check(++upserts < 2) { "database or disk is full" }
+        delegate.upsert(cell)
+    }
 }
 
 private class ReadsInTransaction(private val transactions: FakeTransactionRunner) {
@@ -159,16 +164,17 @@ class ImportBackupTest {
         val before = encounters.loadEvery() to placeCells.observeAll().first()
         val imported = BackupContents(
             encounters = listOf(encounterAt(EARLY).copy(id = "known", updatedAt = LATE), locatedInMoscow),
-            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED)),
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED), cell("ucfv0p", PlaceStatus.RESOLVED)),
         )
 
         assertFailsWith<IllegalStateException> {
-            importBackup(BackupReadResult.Readable(imported), placeCellRepository = DiskFullOnUpsert(placeCells))(
+            importBackup(BackupReadResult.Readable(imported), placeCellRepository = DiskFullOnSecondUpsert(placeCells))(
                 "content://in.zip",
             )
         }
 
         assertEquals(listOf("known", "cat"), encounters.inserted.map { it.id })
+        assertEquals(listOf(PENDING_HERE, "ucfv0n"), placeCells.upserted.map { it.cellId })
         assertEquals(before, encounters.loadEvery() to placeCells.observeAll().first())
     }
 

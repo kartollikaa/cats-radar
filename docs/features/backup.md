@@ -133,8 +133,9 @@ same archive again finds them and keeps them.
 
 ## At the edges, on screen
 
-- **Export and import share one work name**, so they cannot run at once: importing while an export
-  is still reading would archive a half-merged database.
+- **Export and import share one work name**, so they cannot run at once. An export reads the cats and
+  the cells separately, so an import landing between the two reads would give an archive whose cats
+  and cells come from different sides of the merge.
 - **Neither worker retries.** The file picker's grant dies with the process, so a retry would write
   nothing and report success for an archive that does not exist.
 - **Both buttons are unavailable while a run is in progress**, and a finished run replaces the
