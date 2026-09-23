@@ -182,6 +182,7 @@ class StatsCalculatorTest {
         val stats = stats(encounters, now = Instant.parse("2026-09-23T02:00:00Z"))
 
         assertEquals(2, stats.currentStreak)
+        assertEquals(2, stats.longestStreak)
     }
 
     @Test

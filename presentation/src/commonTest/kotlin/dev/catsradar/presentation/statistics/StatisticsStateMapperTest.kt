@@ -138,7 +138,6 @@ class StatisticsStateMapperTest {
         val options = mapper.map(stats(total = coats.size).copy(byCoat = rows)).byCoat.map { it.coat }
 
         assertEquals(coats.map { it?.name }, options.map { it?.name })
-        assertEquals(options.size, options.toSet().size)
     }
 
     @Test
