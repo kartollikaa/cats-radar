@@ -5,13 +5,13 @@ reuses `SessionSplitter.groupByOuting()` — the same gap rule `outings.md` desc
 second entry point that returns each outing's own encounters instead of just the aggregate
 `Session` `split()` returns; `split()` is now defined in terms of it, so the boundary comparison
 still has exactly one implementation. `EncountersStateMapper` turns that grouping into a flat,
-already-formatted `ImmutableList<EncounterGridRow>` — an `OutingHeader` per outing followed by the
-grid rows its cats pack into (see *What the grid shows*), every label already localized by the
-`DateTimeFormatter` interface (Android implementation in `presentation/androidMain`) — so
-`EncountersScreen`'s `LazyColumn` only renders, never formats, groups or packs. Counter and
-Encounters sit behind a bottom `NavigationBar`; Counter is the back-stack root (spec §2): selecting
-a tab rewrites the stack to `[Counter]` or `[Counter, tab]`, back from a tab returns to Counter, and
-back from Counter exits.
+already-formatted `ImmutableList<EncountersRow>` — an `OutingHeader` per outing followed by its
+cats' rows, packed into a grid or one per row (see *What the grid shows* and *Grid or list*), every
+label already localized by the `DateTimeFormatter` interface (Android implementation in
+`presentation/androidMain`) — so `EncountersScreen`'s `LazyColumn` only renders, never formats,
+groups or packs. Counter and Encounters sit behind a bottom `NavigationBar`; Counter is the
+back-stack root (spec §2): selecting a tab rewrites the stack to `[Counter]` or `[Counter, tab]`,
+back from a tab returns to Counter, and back from Counter exits.
 
 ## At the edges
 
@@ -51,10 +51,11 @@ row counts stop being trivial to read and group on every emission.
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/DateTimeFormatter.kt`,
   `presentation/src/androidMain/kotlin/dev/catsradar/presentation/AndroidDateTimeFormatter.android.kt`
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/` — `EncountersState`
-  (`EncounterGridRow`, and the `EncounterListItem` rows the Places area list uses),
+  (`EncountersRow`, and the `EncounterListItem` rows the Places area list uses),
   `EncounterGridPacker`, `EncountersIntent`, `EncountersEffect`, `EncountersStore`,
   `EncountersStateMapper`
-- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`,
+  `EncounterSingleRow.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/` — `BottomNavTab`, `CatsRadarBottomBar`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
   (`BottomNavBackStack`), `CatsRadarNavHost.kt`
@@ -81,6 +82,16 @@ the coat's face, else a paw. Tiles and pair tiles have no room for the location,
 itself to accessibility services as its subject (the photo, the coat's name, or "a cat"), time and
 location; a card's own text says the same. With nothing logged, the tab says so and points at the
 Counter.
+
+## Grid or list
+
+The grid is optional: **Settings → Encounters → Grid of cats** (`SettingsRepository.encountersGrid()`, on
+unless turned off). Off, the tab goes back to one full row per cat, and each outing reads as one card:
+its rows are cards of their own with a hairline gap, round at the outing's outer corners and tight where
+they meet. The mapper marks each row as the first, a middle, the last or the only one of its outing
+(`GroupPosition`), and states the layout (`EncountersLayout`) so the screen only picks the gaps and the
+header's inset. `EncountersStore` combines the setting with the encounters, so flipping the switch
+re-lays an open tab without waiting for a new cat. The Places area list is the same either way.
 
 ## Not handled yet
 

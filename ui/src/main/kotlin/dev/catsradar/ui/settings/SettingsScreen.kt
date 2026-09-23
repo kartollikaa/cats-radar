@@ -40,6 +40,7 @@ fun SettingsScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onSaveOriginalsChange: (Boolean) -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
+    onEncountersGridChange: (Boolean) -> Unit = {},
     onExportClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
     onBackupOutcomeDismiss: () -> Unit = {},
@@ -66,34 +67,58 @@ fun SettingsScreen(
                 onCheckedChange = onWalkingModeChange,
             )
         }
+        SectionCard(R.string.tab_encounters) {
+            SettingRow(
+                title = R.string.settings_encounters_grid,
+                explanation = R.string.settings_encounters_grid_explained,
+                checked = state.encountersGrid,
+                onCheckedChange = onEncountersGridChange,
+            )
+        }
         SectionCard(R.string.settings_backup) {
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_backup_explained),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(onClick = onExportClick, enabled = !state.backupRunning) {
-                        Text(text = stringResource(R.string.settings_export))
-                    }
-                    OutlinedButton(onClick = onImportClick, enabled = !state.backupRunning) {
-                        Text(text = stringResource(R.string.settings_import))
-                    }
-                }
-                if (state.backupRunning) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                }
-                state.backupOutcome?.let { outcome ->
-                    BackupOutcomeRow(outcome = outcome, onDismiss = onBackupOutcomeDismiss)
-                }
+            BackupSection(
+                state = state,
+                onExportClick = onExportClick,
+                onImportClick = onImportClick,
+                onBackupOutcomeDismiss = onBackupOutcomeDismiss,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BackupSection(
+    state: SettingsState,
+    modifier: Modifier = Modifier,
+    onExportClick: () -> Unit = {},
+    onImportClick: () -> Unit = {},
+    onBackupOutcomeDismiss: () -> Unit = {},
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_backup_explained),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Button(onClick = onExportClick, enabled = !state.backupRunning) {
+                Text(text = stringResource(R.string.settings_export))
             }
+            OutlinedButton(onClick = onImportClick, enabled = !state.backupRunning) {
+                Text(text = stringResource(R.string.settings_import))
+            }
+        }
+        if (state.backupRunning) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+        state.backupOutcome?.let { outcome ->
+            BackupOutcomeRow(outcome = outcome, onDismiss = onBackupOutcomeDismiss)
         }
     }
 }

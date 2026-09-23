@@ -8,11 +8,11 @@ class EncountersStateTest {
 
     @Test
     fun `a tile row with no cats is refused where it is built`() {
-        assertFailsWith<IllegalArgumentException> { EncounterGridRow.Tiles(persistentListOf()) }
+        assertFailsWith<IllegalArgumentException> { EncountersRow.Tiles(persistentListOf()) }
     }
 
     @Test
     fun `a card row with no cats is refused where it is built`() {
-        assertFailsWith<IllegalArgumentException> { EncounterGridRow.Cards(persistentListOf()) }
+        assertFailsWith<IllegalArgumentException> { EncountersRow.Cards(persistentListOf()) }
     }
 }
