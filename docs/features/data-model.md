@@ -19,8 +19,9 @@ the UTC offset at the moment the encounter happened, not the device's offset now
 
 ## At the edges
 
-Deletion is soft: `deletedAt` is a nullable timestamp, and every read (`observeAll`,
-`observeById`, `findBySourceDigest`) filters `WHERE deletedAt IS NULL`.
+Deletion is soft: `deletedAt` is a nullable timestamp, and every read of live rows (`observeAll`,
+`observeById`, `findBySourceDigest`) filters `WHERE deletedAt IS NULL`. Only two reads see
+soft-deleted rows: `loadEvery` for the backup merge and `loadDeletedBefore` for the purge.
 `softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
@@ -75,5 +76,5 @@ The files go **before** the rows: a row deleted first would leave photos nothing
 nothing would ever look for them again.
 
 This needed its own query. `observeAll()` filters soft-deleted rows out — correctly, for every other
-caller — so the purge cannot find its own targets through it. `loadDeletedBefore` is the one read
-that can see them; without it the rows would vanish and the photos would stay on disk forever.
+caller — so the purge cannot find its own targets through it. `loadDeletedBefore` selects them
+directly; without it the rows would vanish and the photos would stay on disk forever.

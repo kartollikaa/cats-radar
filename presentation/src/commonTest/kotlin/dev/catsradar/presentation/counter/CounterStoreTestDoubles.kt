@@ -84,7 +84,6 @@ internal class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
 
-    // Mirrors the DAO: this is the only read that can see soft-deleted rows.
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
         encounters.value.filter { it.deletedAt != null && it.deletedAt!! < cutoff }
 
