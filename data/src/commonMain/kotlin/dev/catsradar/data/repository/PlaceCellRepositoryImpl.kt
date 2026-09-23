@@ -15,6 +15,6 @@ class PlaceCellRepositoryImpl(private val dao: PlaceCellDao) : PlaceCellReposito
 
     override suspend fun loadById(cellId: String): PlaceCell? = dao.loadById(cellId)?.toDomain()
 
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
-        dao.loadPage(PlaceStatus.PENDING, limit, offset).map { it.toDomain() }
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
+        dao.loadPage(PlaceStatus.PENDING, afterCellId, limit).map { it.toDomain() }
 }

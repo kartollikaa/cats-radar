@@ -36,9 +36,9 @@ class PlaceCellRepositoryImplTest {
     fun loadPendingPageAsksTheDaoForPendingStatusSpecifically() = runTest {
         dao.loadPageResult = listOf(distinctPlaceCell().toEntity())
 
-        val result = repository.loadPendingPage(limit = 5, offset = 1)
+        val result = repository.loadPendingPage(afterCellId = "cell-0", limit = 5)
 
-        assertEquals(Triple(PlaceStatus.PENDING, 5, 1), dao.loadPageCall)
+        assertEquals(Triple(PlaceStatus.PENDING, "cell-0", 5), dao.loadPageCall)
         assertEquals(listOf(distinctPlaceCell()), result)
     }
 }
