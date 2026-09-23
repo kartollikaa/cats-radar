@@ -19,6 +19,15 @@ internal data class AttachLocationCall(
     val updatedAt: Instant,
 )
 
+internal data class AttachPhotoCall(
+    val id: String,
+    val photoPath: String,
+    val thumbPath: String?,
+    val galleryUri: String?,
+    val sourceDigest: String?,
+    val updatedAt: Instant,
+)
+
 internal class FakeEncounterDao : EncounterDao {
     var observeAllResult: List<EncounterEntity> = emptyList()
     var observeByIdResult: EncounterEntity? = null
@@ -34,6 +43,8 @@ internal class FakeEncounterDao : EncounterDao {
     var clearDeletedAtCall: String? = null
     val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
+    var attachPhotoResult: Int = 1
+    var attachPhotoCall: AttachPhotoCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
     var loadDeletedBeforeCall: Instant? = null
@@ -80,6 +91,19 @@ internal class FakeEncounterDao : EncounterDao {
         attachLocationCall = AttachLocationCall(
             id, lat, lon, accuracyMeters, locationSource, locationFixedAt, geohash, placeCellId, updatedAt,
         )
+    }
+
+    @Suppress("LongParameterList") // mirrors EncounterDao.attachPhoto's own Room binding constraint
+    override suspend fun attachPhoto(
+        id: String,
+        photoPath: String,
+        thumbPath: String?,
+        galleryUri: String?,
+        sourceDigest: String?,
+        updatedAt: Instant,
+    ): Int {
+        attachPhotoCall = AttachPhotoCall(id, photoPath, thumbPath, galleryUri, sourceDigest, updatedAt)
+        return attachPhotoResult
     }
 
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {

@@ -72,6 +72,25 @@ interface EncounterDao {
         updatedAt: Instant,
     )
 
+    // A full-row update here would resurrect a cat deleted while its photo was being copied.
+    @Suppress("LongParameterList") // Room binds one :placeholder per parameter; no POJO destructuring in a raw @Query
+    @Query(
+        """
+        UPDATE encounters SET
+            photoPath = :photoPath, thumbPath = :thumbPath, galleryUri = :galleryUri,
+            sourceDigest = :sourceDigest, updatedAt = :updatedAt
+        WHERE id = :id AND deletedAt IS NULL AND photoPath IS NULL
+        """
+    )
+    suspend fun attachPhoto(
+        id: String,
+        photoPath: String,
+        thumbPath: String?,
+        galleryUri: String?,
+        sourceDigest: String?,
+        updatedAt: Instant,
+    ): Int
+
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?
 

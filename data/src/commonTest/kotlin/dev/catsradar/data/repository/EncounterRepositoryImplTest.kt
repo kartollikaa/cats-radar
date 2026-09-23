@@ -1,5 +1,6 @@
 package dev.catsradar.data.repository
 
+import dev.catsradar.domain.model.PhotoStamp
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -59,6 +60,26 @@ class EncounterRepositoryImplTest {
             ),
             dao.attachLocationCall,
         )
+    }
+
+    @Test
+    fun attachPhotoForwardsEveryStampFieldAndReportsWhetherARowWasWritten() = runTest {
+        val stamp = PhotoStamp(
+            photoPath = "p.jpg",
+            thumbPath = "p_thumb.jpg",
+            galleryUri = "content://gallery/7",
+            sourceDigest = "sha",
+            updatedAt = Instant.parse("2026-02-01T00:00:00Z"),
+        )
+
+        assertEquals(true, repository.attachPhoto("id-1", stamp))
+        assertEquals(
+            AttachPhotoCall("id-1", "p.jpg", "p_thumb.jpg", "content://gallery/7", "sha", stamp.updatedAt),
+            dao.attachPhotoCall,
+        )
+
+        dao.attachPhotoResult = 0
+        assertEquals(false, repository.attachPhoto("id-1", stamp))
     }
 
     @Test

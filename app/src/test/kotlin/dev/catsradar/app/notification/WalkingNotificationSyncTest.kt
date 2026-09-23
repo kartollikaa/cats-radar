@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.flow.Flow
@@ -170,6 +171,9 @@ private class FakeEncounterRepository : EncounterRepository {
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
         throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =

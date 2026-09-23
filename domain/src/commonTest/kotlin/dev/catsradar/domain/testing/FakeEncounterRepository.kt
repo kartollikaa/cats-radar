@@ -2,6 +2,7 @@ package dev.catsradar.domain.testing
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,12 +18,14 @@ class FakeEncounterRepository : EncounterRepository {
     val undoDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
     val attachLocationCalls = mutableListOf<String>()
     val purgeCalls = mutableListOf<Instant>()
+    var attachPhotoShouldThrow: Throwable? = null
 
     // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
     // hide every bug about what a read is allowed to see.
     override fun observeAll(): Flow<List<Encounter>> =
         encounters.map { list -> list.filter { it.deletedAt == null } }
-    override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
+    override fun observeById(id: String): Flow<Encounter?> =
+        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
 
     // Mirrors the DAO's plain @Insert, which aborts on an id that is already there.
     override suspend fun insert(encounter: Encounter) {
@@ -57,6 +60,23 @@ class FakeEncounterRepository : EncounterRepository {
                 }
             }
         }
+    }
+
+    // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
+        attachPhotoShouldThrow?.let { throw it }
+        val target = encounters.value.firstOrNull { it.id == id && it.deletedAt == null && it.photoPath == null }
+            ?: return false
+        update(
+            target.copy(
+                photoPath = stamp.photoPath,
+                thumbPath = stamp.thumbPath,
+                galleryUri = stamp.galleryUri,
+                sourceDigest = stamp.sourceDigest,
+                updatedAt = stamp.updatedAt,
+            ),
+        )
+        return true
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {

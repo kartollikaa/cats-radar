@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.DeviceIdProvider
@@ -43,6 +44,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     var softDeleteAllGate: CompletableDeferred<Unit>? = null
     var undoDeleteAllShouldThrow: Throwable? = null
     var undoDeleteAllGate: CompletableDeferred<Unit>? = null
+    var attachPhotoShouldThrow: Throwable? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -84,6 +86,23 @@ internal class FakeEncounterRepository : EncounterRepository {
                 }
             }
         }
+    }
+
+    // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
+        attachPhotoShouldThrow?.let { throw it }
+        val target = encounters.value.firstOrNull { it.id == id && it.deletedAt == null && it.photoPath == null }
+            ?: return false
+        update(
+            target.copy(
+                photoPath = stamp.photoPath,
+                thumbPath = stamp.thumbPath,
+                galleryUri = stamp.galleryUri,
+                sourceDigest = stamp.sourceDigest,
+                updatedAt = stamp.updatedAt,
+            ),
+        )
+        return true
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {

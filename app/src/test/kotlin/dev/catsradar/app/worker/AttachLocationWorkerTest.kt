@@ -12,6 +12,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.repository.EncounterRepository
@@ -70,6 +71,9 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
             }
         }
     }
+
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
+        throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")

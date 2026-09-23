@@ -33,7 +33,7 @@ class AttachLocationTest {
 
     private val placeCells = FakePlaceCellRepository()
     private suspend fun encounter(repository: FakeEncounterRepository, id: String) =
-        repository.observeById(id).first()!!
+        repository.loadEvery().first { it.id == id }
 
     @Test
     fun `attaching a fix remembers its place cell as pending, for the geocoder to name later`() = runTest {

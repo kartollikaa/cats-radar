@@ -2,6 +2,7 @@ package dev.catsradar.domain.repository
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
@@ -17,6 +18,9 @@ interface EncounterRepository {
 
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun attachLocation(id: String, stamp: LocationStamp)
+
+    /** False, writing nothing, when the row is soft-deleted or already has a photo. */
+    suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean
 
     suspend fun softDelete(id: String, deletedAt: Instant)
 
