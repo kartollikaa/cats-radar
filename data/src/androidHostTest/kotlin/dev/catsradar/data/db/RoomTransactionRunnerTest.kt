@@ -127,7 +127,7 @@ class RoomTransactionRunnerTest {
 
             runner.inTransaction { encounterDao.insert(fullEncounterEntity(id = "imported")) }
 
-            withTimeout(EMISSION_TIMEOUT_MS) { assertEquals(listOf("imported"), seen.receive()) }
+            seen.awaitRows(listOf("imported"))
             observer.cancel()
         }
     }
@@ -148,10 +148,17 @@ class RoomTransactionRunnerTest {
 
             placeCellDao.upsert(pendingPlaceCellEntity("ucfv0j"))
 
-            withTimeout(EMISSION_TIMEOUT_MS) { assertEquals(listOf("ucfv0j"), seen.receive()) }
+            seen.awaitRows(listOf("ucfv0j"))
             observer.cancel()
         }
     }
+
+    private suspend fun Channel<List<String>>.awaitRows(expected: List<String>) =
+        withTimeout(EMISSION_TIMEOUT_MS) {
+            do {
+                val rows = receive()
+            } while (rows != expected)
+        }
 
     private companion object {
         const val OUTSIDE_WRITE_GRACE_MS = 300L

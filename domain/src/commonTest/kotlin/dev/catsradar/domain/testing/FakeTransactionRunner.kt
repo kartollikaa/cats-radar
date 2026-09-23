@@ -9,17 +9,17 @@ interface RollsBack {
 
 /** Restores every participant to where it stood when the block began, if the block does not finish. */
 class FakeTransactionRunner(private vararg val participants: RollsBack) : TransactionRunner {
-    var isOpen = false
-        private set
+    private var depth = 0
+    val isOpen: Boolean get() = depth > 0
 
     override suspend fun <R> inTransaction(block: suspend () -> R): R {
         val restores = participants.map { it.checkpoint() }
         var committed = false
-        isOpen = true
+        depth++
         try {
             return block().also { committed = true }
         } finally {
-            isOpen = false
+            depth--
             if (!committed) restores.forEach { restore -> restore() }
         }
     }
