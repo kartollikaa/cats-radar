@@ -82,7 +82,9 @@ one's; `CounterStore` tracks a monotonically increasing `tapSequence`, captured 
 suspending insert, and keeps the run in that order rather than the order the writes finish in, so
 Undo always takes back the tap that happened last (*undo follows the order of the taps, not the
 order their writes finished in*). A slow write from a run that has already expired does not reopen
-the window (*a tap whose write lands after the window closed does not reopen it*). Undo takes its
+the window (*a tap whose write lands after the window closed does not reopen it*), and one landing
+behind a newer tap's does not stretch it (*an older tap's write landing late does not stretch the
+window of the newer one*). Undo takes its
 cat off the run before the suspending delete runs, so two Undos pressed back to back take back two
 different cats, never the same one twice (*two undos dispatched back to back take away two
 different cats*); an Undo with the run empty does nothing (*undo walks a run of taps back newest

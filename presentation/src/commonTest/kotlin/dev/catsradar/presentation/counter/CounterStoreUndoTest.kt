@@ -214,6 +214,21 @@ class CounterStoreUndoTest {
         }
 
     @Test
+    fun `an older tap's write landing late does not stretch the window of the newer one`() =
+        runTest(mainDispatcher) {
+            val (store, repository) = newStore()
+            repository.insertDelays += listOf(Tuning.UNDO_VISIBLE - 1.seconds, Duration.ZERO)
+
+            store.dispatch(CounterIntent.TallyClicked)
+            store.dispatch(CounterIntent.TallyClicked)
+            advanceTimeBy(Tuning.UNDO_VISIBLE.inWholeMilliseconds)
+            runCurrent()
+
+            assertEquals(listOf("id-2", "id-1"), repository.insertedIds)
+            assertFalse(store.state.value.undoVisible)
+        }
+
+    @Test
     fun `a tap whose write lands after the window closed does not reopen it`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         repository.insertDelays += listOf(Tuning.UNDO_VISIBLE * 2, Duration.ZERO)

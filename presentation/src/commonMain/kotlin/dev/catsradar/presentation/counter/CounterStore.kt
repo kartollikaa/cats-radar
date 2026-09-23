@@ -112,10 +112,11 @@ class CounterStore(
             emit(CounterEffect.AttachLocation(encounter.id))
             // A slow write from a run that has already expired must not reopen the window.
             if (sequence > expiredThroughSequence) {
-                undoableRun += UndoableTally(sequence, encounter.id, coat?.toOption())
+                val tally = UndoableTally(sequence, encounter.id, coat?.toOption())
+                undoableRun += tally
                 // By tap, not by completion: a later tap's insert can resume before an earlier one's.
                 undoableRun.sortBy { it.sequence }
-                showNewestUndoable()
+                if (undoableRun.last() === tally) showNewestUndoable()
             }
         }
     }
