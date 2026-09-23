@@ -13,7 +13,7 @@
         <item quantity="many">Карта: %d котиков</item>
         <item quantity="other">Карта: %d котика</item>
     </plurals>
-    <string name="tab_statistics">Статистика</string>
+    <string name="tab_statistics">Итоги</string>
 
     <string name="counter_camera">Фото</string>
     <string name="counter_tally">Отметить кота</string>

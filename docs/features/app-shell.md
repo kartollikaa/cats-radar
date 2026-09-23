@@ -73,7 +73,8 @@ and each row reads as one item to TalkBack. A setting's whole row toggles it, no
 Settings — with Material Symbols Rounded icons (Apache 2.0). The selected tab is marked by the bar's
 indicator pill; only the map and the settings gear also change to their filled form, because the
 other glyphs have no separate filled version. The label is always shown and names the tab, so the
-icons carry no content description of their own.
+icons carry no content description of their own. Each label gets a fifth of the bar, which on a
+360dp-wide phone is narrower than «Статистика», so the Russian stats tab says «Итоги».
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that

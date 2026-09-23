@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.toImmutableList
 private const val MIN_AREA_DEGREES = 0.01
 
 private const val MAX_LATITUDE = 90.0
+private const val MAX_LONGITUDE = 180.0
 
 class MapStateMapper {
 
@@ -21,8 +22,12 @@ class MapStateMapper {
         val latitude = lat
         val longitude = lon
         if (deletedAt != null || latitude == null || longitude == null) return null
-        return MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
+        val point = MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
+        return if (isOnEarth(latitude, longitude)) point else null
     }
+
+    private fun isOnEarth(latitude: Double, longitude: Double): Boolean =
+        latitude in -MAX_LATITUDE..MAX_LATITUDE && longitude in -MAX_LONGITUDE..MAX_LONGITUDE
 
     private fun areaAround(points: List<MapPoint>): MapArea {
         val south = points.minOf { it.latitude }

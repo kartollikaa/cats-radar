@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,8 +47,8 @@ import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.layers.CircleLayer
-import org.maplibre.compose.map.MapEvent
 import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
@@ -104,22 +105,14 @@ private fun CatsMap(state: MapState.Located, contentPadding: PaddingValues, modi
     // Fitted once per map, saved across recreation: the map restores its own camera, and a cat located
     // while it is up must not pull the view off where it was panned.
     var fitted by rememberSaveable { mutableStateOf(false) }
+    val area by rememberUpdatedState(state.area)
     LaunchedEffect(mapState) {
         if (!fitted) {
-            mapState.fitCameraToBounds(state.area.toBoundingBox(), padding = PaddingValues(48.dp))
+            mapState.fitCameraToBounds(area.toBoundingBox(), padding = PaddingValues(48.dp))
             fitted = true
         }
     }
-    var styleFailed by remember { mutableStateOf(false) }
-    LaunchedEffect(mapState) {
-        mapState.events.collect { event ->
-            when (event) {
-                is MapEvent.StyleLoadFailed -> styleFailed = true
-                is MapEvent.StyleLoaded -> styleFailed = false
-                else -> Unit
-            }
-        }
-    }
+    val styleFailed = mapState.style.loadState is StyleLoadState.Failed
     val summary = pluralStringResource(R.plurals.map_summary, state.points.size, state.points.size)
     Box(modifier = modifier.semantics { contentDescription = summary }) {
         MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)

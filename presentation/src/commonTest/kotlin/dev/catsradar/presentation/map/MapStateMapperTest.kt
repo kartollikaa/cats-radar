@@ -38,6 +38,22 @@ class MapStateMapperTest {
     }
 
     @Test
+    fun `a cat whose coordinates are no place on Earth is left off the map`() {
+        val real = located("real", 41.39, 2.17)
+        val cats = listOf(
+            real,
+            located("past the pole", 123.4, 2.17),
+            located("past the date line", 41.39, 200.0),
+            located("not a number", Double.NaN, 2.17),
+        )
+
+        val state = assertIs<MapState.Located>(mapper.map(cats))
+
+        assertEquals(persistentListOf(MapPoint("real", 41.39, 2.17, coat = null)), state.points)
+        assertEquals(MapState.Empty, mapper.map(cats.drop(1)))
+    }
+
+    @Test
     fun `the map opens on the area around every located cat`() {
         val state = assertIs<MapState.Located>(
             mapper.map(listOf(located("a", 41.30, 2.10), located("b", 41.45, 2.25), located("c", 41.35, 2.20))),
