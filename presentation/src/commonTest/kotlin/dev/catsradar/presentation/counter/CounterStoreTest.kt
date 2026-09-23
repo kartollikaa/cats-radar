@@ -15,6 +15,8 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -68,6 +70,7 @@ class CounterStoreTest {
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
         locationPermissionRequestState: FakeLocationPermissionRequestState = FakeLocationPermissionRequestState(),
         settingsRepository: FakeSettingsRepository = settings,
+        ticks: Flow<Unit> = flowOf(Unit),
     ): Pair<CounterStore, FakeEncounterRepository> {
         val clock = FakeClock(Instant.parse("2026-09-22T10:00:00Z"))
         val store = CounterStore(
@@ -87,7 +90,7 @@ class CounterStoreTest {
             ),
             undoLastTally = UndoLastTally(encounterRepository, clock),
             undoImport = UndoImport(encounterRepository, clock),
-            observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = flowOf(Unit)),
+            observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
             settingsRepository = settingsRepository,
             stateMapper = CounterStateMapper(FakeDateTimeFormatter()),
             locationPermissionRequestState = locationPermissionRequestState,
@@ -206,10 +209,19 @@ class CounterStoreTest {
         }
 
     @Test
-    fun `initial state has zero total and no undo chip`() = runTest(mainDispatcher) {
+    fun `an empty history reads as zero with no undo chip`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
+        runCurrent()
 
         assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+    }
+
+    @Test
+    fun `the total is unknown until the history has been read`() = runTest(mainDispatcher) {
+        val (store, _) = newStore(ticks = emptyFlow())
+        runCurrent()
+
+        assertEquals(CounterState(totalLabel = "", count = null, undoVisible = false), store.state.value)
     }
 
     @Test

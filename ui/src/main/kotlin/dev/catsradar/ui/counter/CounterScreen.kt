@@ -1,5 +1,10 @@
 package dev.catsradar.ui.counter
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,9 +13,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,9 +23,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CounterState
@@ -51,19 +57,7 @@ fun CounterScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        TallyBlock(
-            totalLabel = state.totalLabel,
-            count = state.count,
-            tapBurst = state.tapBurst,
-            undoVisible = state.undoVisible,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            onClick = onTallyClick,
-            onUndoClick = onUndoClick,
-        )
-        CurrentOutingLine(state.currentOuting)
-        WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
-        CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-        CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
+        // Above the count, which gives up the room: the controls under it never move.
         state.importProgress?.let { ImportProgress(it) }
         state.importSummary?.let {
             ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
@@ -71,6 +65,36 @@ fun CounterScreen(
         if (state.locationPermissionHintVisible) {
             LocationPermissionHint(onAction = onLocationHintAction)
         }
+        TallyBlock(
+            totalLabel = state.totalLabel,
+            count = state.count,
+            tapBurst = state.tapBurst,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            onClick = onTallyClick,
+        )
+        CurrentOutingLine(state.currentOuting)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
+            UndoChip(visible = state.undoVisible, onClick = onUndoClick)
+        }
+        CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
+        CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+@Composable
+private fun UndoChip(visible: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + scaleIn(initialScale = 0.8f),
+        exit = fadeOut() + scaleOut(targetScale = 0.8f),
+        modifier = modifier,
+    ) {
+        AssistChip(onClick = onClick, label = { Text(text = stringResource(R.string.counter_undo)) })
     }
 }
 
@@ -84,11 +108,13 @@ private fun CameraButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.combinedClickable(
-            onClick = onClick,
-            onLongClick = onLongClick,
-            onLongClickLabel = stringResource(R.string.counter_import),
-        ),
+        modifier = modifier
+            .clip(CircleShape)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onLongClickLabel = stringResource(R.string.counter_import),
+            ),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -106,13 +132,12 @@ private fun CameraButton(
     }
 }
 
-// Holds one line of height with or without an outing, so the first cat of an outing, and the last
-// cat's outing closing, do not shift everything below it.
+// An empty line of the same style holds its place, so an outing starting or ending leaves the count
+// above it the same size at any font scale.
 @Composable
 private fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = Modifier) {
-    val lineHeight = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.lineHeight.toDp() }
-    Box(modifier = modifier.fillMaxWidth().heightIn(min = lineHeight), contentAlignment = Alignment.Center) {
-        state?.let { CurrentOuting(it) }
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if (state == null) Text(text = "", style = MaterialTheme.typography.bodyMedium) else CurrentOuting(state)
     }
 }
 
@@ -125,6 +150,8 @@ private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifi
         Text(
             text = pluralStringResource(R.plurals.counter_outing_now, state.count, state.count, state.elapsedLabel),
             style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         state.rate?.let {
             val rateRes = if (it.unit == RateUnit.PER_MINUTE) {
@@ -132,7 +159,7 @@ private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifi
             } else {
                 R.string.statistics_rate_per_hour
             }
-            Text(text = stringResource(rateRes, it.value), style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(rateRes, it.value), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
         }
     }
 }

@@ -6,6 +6,8 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.toRateState
 
 class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
+    fun initial(): CounterState = CounterState(totalLabel = "", count = null, undoVisible = false)
+
     @Suppress("LongParameterList") // one parameter per thing the Counter shows
     fun map(
         count: Int,

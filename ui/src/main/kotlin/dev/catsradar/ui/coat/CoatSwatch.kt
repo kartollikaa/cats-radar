@@ -95,7 +95,7 @@ private fun CoatColumn(
         modifier = modifier
             .width(SwatchColumnWidth)
             // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
-            .clip(MaterialTheme.shapes.medium)
+            .clip(MaterialTheme.shapes.small)
             .selectable(selected = selected, onClick = onClick)
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

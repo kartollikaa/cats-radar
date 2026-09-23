@@ -32,7 +32,7 @@ class CounterStore(
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
-) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.map(count = 0, undoVisible = false)) {
+) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.initial()) {
 
     private var tapSequence = 0
     private var undoTargetSequence = -1

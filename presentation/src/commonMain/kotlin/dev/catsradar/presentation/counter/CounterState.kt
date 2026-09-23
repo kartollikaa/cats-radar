@@ -5,8 +5,8 @@ import dev.catsradar.presentation.statistics.RateState
 
 data class CounterState(
     val totalLabel: String,
-    /** The number [totalLabel] shows, unformatted. */
-    val count: Int,
+    /** The number [totalLabel] shows, unformatted; null until the total has been read. */
+    val count: Int?,
     val undoVisible: Boolean,
     val locationPermissionHintVisible: Boolean = false,
     /** Null when no outing is in progress — the last cat was long enough ago to have closed it. */
