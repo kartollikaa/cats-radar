@@ -4,10 +4,6 @@ private const val BASE32_ALPHABET = "0123456789bcdefghjkmnpqrstuvwxyz"
 private const val BITS_PER_CHAR = 5
 private const val MIN_PRECISION = 1
 private const val MAX_PRECISION = 12
-private const val MIN_LATITUDE = -90.0
-internal const val MAX_LATITUDE = 90.0
-private const val MIN_LONGITUDE = -180.0
-internal const val MAX_LONGITUDE = 180.0
 
 object Geohash {
     fun encode(lat: Double, lon: Double, precision: Int): String {

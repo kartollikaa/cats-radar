@@ -1,6 +1,7 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
+import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.BackupReadResult
@@ -19,6 +20,15 @@ import kotlin.time.Instant
 
 private val EARLY = Instant.parse("2026-09-01T00:00:00Z")
 private val LATE = Instant.parse("2026-09-20T00:00:00Z")
+
+private val locatedInMoscow = encounterAt(EARLY).copy(
+    id = "cat",
+    lat = 55.7558,
+    lon = 37.6173,
+    locationSource = LocationSource.EXIF,
+    geohash = "ucfv0n01",
+    placeCellId = "ucfv0n",
+)
 
 private class RecordingWriter(private val succeeds: Boolean = true) : BackupWriter {
     var written: BackupContents? = null
@@ -124,6 +134,48 @@ class ImportBackupTest {
 
         assertEquals(ImportBackupResult.Merged(added = 0, updated = 0, unchanged = 1), result)
         assertEquals(LATE, encounters.loadEvery().single().deletedAt)
+    }
+
+    @Test
+    fun `a cat whose coordinates are off the globe is imported without its location`() = runTest {
+        val offGlobe = encounterAt(EARLY).copy(
+            id = "cat",
+            lat = 95.0,
+            lon = 37.6,
+            accuracyMeters = 10f,
+            locationSource = LocationSource.EXIF,
+            locationFixedAt = EARLY,
+            geohash = "ucfv0h8y",
+            placeCellId = "ucfv0h",
+        )
+
+        val result = importBackup(BackupReadResult.Readable(BackupContents(encounters = listOf(offGlobe))))(
+            "content://in.zip",
+        )
+
+        assertEquals(ImportBackupResult.Merged(added = 1, updated = 0, unchanged = 0), result)
+        assertEquals(listOf(encounterAt(EARLY).copy(id = "cat")), encounters.inserted)
+    }
+
+    @Test
+    fun `a located cat whose cell the archive lacks gets a pending one`() = runTest {
+        val imported = BackupContents(encounters = listOf(locatedInMoscow))
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(PlaceStatus.PENDING, placeCells.loadById("ucfv0n")?.status)
+    }
+
+    @Test
+    fun `a cell the archive names is not replaced by a pending one`() = runTest {
+        val imported = BackupContents(
+            encounters = listOf(locatedInMoscow),
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED)),
+        )
+
+        importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(PlaceStatus.RESOLVED, placeCells.loadById("ucfv0n")?.status)
     }
 
     @Test

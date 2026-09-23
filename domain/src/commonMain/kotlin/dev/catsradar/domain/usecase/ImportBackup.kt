@@ -2,9 +2,11 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.backup.BackupMerge
+import dev.catsradar.domain.backup.withLocationFromCoordinates
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
+import dev.catsradar.domain.region.PlaceCells
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.coroutines.flow.first
@@ -27,7 +29,8 @@ class ImportBackup(
             is BackupReadResult.Readable -> write(read.contents)
         }
 
-    private suspend fun write(imported: BackupContents): ImportBackupResult {
+    private suspend fun write(archived: BackupContents): ImportBackupResult {
+        val imported = archived.copy(encounters = archived.encounters.map { it.withLocationFromCoordinates() })
         // loadEvery, not observeAll: a cat deleted here must stay deleted when an older backup
         // offers it back, and only the deleted row itself carries the deletedAt that decides.
         val localEncounters = encounterRepository.loadEvery()
@@ -46,6 +49,8 @@ class ImportBackup(
             }
         }
         merged.placeCells.forEach { placeCellRepository.upsert(it) }
+        merged.encounters.mapNotNullTo(mutableSetOf()) { it.geohash }
+            .forEach { PlaceCells.remember(placeCellRepository, it) }
 
         return ImportBackupResult.Merged(
             added = merged.added,
