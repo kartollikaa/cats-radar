@@ -123,7 +123,7 @@ private fun WhereCard(state: EncounterDetailState.Loaded, modifier: Modifier = M
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            state.accuracyMeters?.takeIf { state.coordinatesLabel != null }?.let { accuracy ->
+            state.accuracyMeters?.let { accuracy ->
                 Text(
                     text = stringResource(R.string.detail_accuracy, accuracy),
                     style = MaterialTheme.typography.bodySmall,

@@ -53,7 +53,6 @@ class EncountersStateMapper(
             position = position,
         )
 
-    // A photo tells more than a coat, and a coat more than nothing.
     private fun Encounter.lead(): RowLead {
         val thumbnail = thumbPath?.let(photoStorage::resolve)
         val coatOption = coat?.toOption()

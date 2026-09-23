@@ -46,6 +46,13 @@ class EncounterDetailStateMapperTest {
     }
 
     @Test
+    fun `an accuracy with no coordinates to qualify is dropped`() {
+        val encounter = encounterFixture("e1", OCCURRED).copy(lat = null, lon = null, accuracyMeters = 12f)
+
+        assertEquals(null, mapper.map(encounter, today).accuracyMeters)
+    }
+
+    @Test
     fun `a photo encounter carries the app's own copy, resolved to a full path`() {
         val encounter = encounterFixture("e1", OCCURRED).copy(photoPath = "e1.jpg", thumbPath = "e1_thumb.jpg")
 

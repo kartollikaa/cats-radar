@@ -45,7 +45,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 private val LeadingSize = 48.dp
 
-// The header lines up with the text inside a row, so its inset is the row's two insets added.
+// The header lines up with a row's content, so its inset is the row's two insets added.
 private val RowOuterInset = 16.dp
 private val RowInnerInset = 12.dp
 private val OutingOuterCorner = 20.dp
@@ -128,7 +128,7 @@ private fun EncounterLead(lead: RowLead, modifier: Modifier = Modifier) {
         is RowLead.Photo -> AsyncImage(
             model = lead.thumbnailPath,
             contentDescription = stringResource(R.string.encounters_photo_description),
-            modifier = modifier.size(LeadingSize).clip(shape),
+            modifier = tile,
             contentScale = ContentScale.Crop,
         )
         is RowLead.Coat -> {

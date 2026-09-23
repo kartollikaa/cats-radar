@@ -24,7 +24,7 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/** A titled card of rows on the theme's low surface. */
+/** A titled card of rows. */
 @Composable
 internal fun SectionCard(
     @StringRes titleRes: Int,
@@ -80,10 +80,12 @@ private fun LabelAndValue(label: String, value: String, modifier: Modifier = Mod
     ) { (labelItems, valueItems), constraints ->
         val labelItem = labelItems.single()
         val valueItem = valueItems.single()
-        val width = constraints.maxWidth
         val gap = 12.dp.roundToPx()
-        val oneLine = labelItem.maxIntrinsicWidth(Constraints.Infinity) + gap +
-            valueItem.maxIntrinsicWidth(Constraints.Infinity) <= width
+        val singleLineWidth = labelItem.maxIntrinsicWidth(Constraints.Infinity) + gap +
+            valueItem.maxIntrinsicWidth(Constraints.Infinity)
+        // An intrinsic query measures with an unbounded width, which the layout cannot report back.
+        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else singleLineWidth
+        val oneLine = singleLineWidth <= width
         val loose = Constraints(maxWidth = width)
         if (oneLine) {
             val valuePlaced = valueItem.measure(loose)

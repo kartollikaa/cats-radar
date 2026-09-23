@@ -32,7 +32,7 @@ private val TextOnSurface: List<Triple<String, (ColorScheme) -> Color, (ColorSch
     Triple("onTertiaryFixed on tertiaryFixed", { it.onTertiaryFixed }, { it.tertiaryFixed }),
     Triple("onSurface on surfaceContainerLow", { it.onSurface }, { it.surfaceContainerLow }),
     Triple("onSurfaceVariant on surfaceContainerLow", { it.onSurfaceVariant }, { it.surfaceContainerLow }),
-    // Accent colours drawn as text: the selected navigation label, card and outing titles, Delete.
+    // Accent colours drawn as text.
     Triple("secondary on surfaceContainer", { it.secondary }, { it.surfaceContainer }),
     Triple("primary on surface", { it.primary }, { it.surface }),
     Triple("error on surface", { it.error }, { it.surface }),

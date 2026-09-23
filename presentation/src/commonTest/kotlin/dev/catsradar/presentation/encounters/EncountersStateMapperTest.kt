@@ -195,17 +195,17 @@ class EncountersStateMapperTest {
     }
 
     @Test
-    fun `a deleted cat inside an outing leaves its neighbours placed as if it had never been`() {
-        val first = encounterFixture("first", BASE)
-        val deleted = encounterFixture("deleted", BASE + 5.minutes, deletedAt = BASE + 1.hours)
-        val last = encounterFixture("last", BASE + 10.minutes)
+    fun `a deleted cat leaves its outing's rows placed as if it had never been`() {
+        val oldest = encounterFixture("oldest", BASE)
+        val middle = encounterFixture("middle", BASE + 5.minutes)
+        val deleted = encounterFixture("deleted", BASE + 10.minutes, deletedAt = BASE + 1.hours)
 
-        val positions = mapper.map(listOf(first, deleted, last), today)
+        val positions = mapper.map(listOf(oldest, middle, deleted), today)
             .rows
             .filterIsInstance<EncounterListItem.Row>()
             .associate { it.id to it.position }
 
-        assertEquals(mapOf("last" to GroupPosition.FIRST, "first" to GroupPosition.LAST), positions)
+        assertEquals(mapOf("middle" to GroupPosition.FIRST, "oldest" to GroupPosition.LAST), positions)
     }
 
     private companion object {

@@ -7,13 +7,13 @@ above the list, so the bottom bar still shows Encounters as selected; system bac
 return to the list, never to the Counter root. The screen scrolls: a photo and the coat picker
 together are taller than most phones, and Delete must never end up below the bottom edge.
 
-Every label is built in `EncounterDetailStateMapper`; the composable renders strings, resolves one
-token (`LocationLabel`) to a resource, and shows the accuracy only under coordinates. Coordinates
-are formatted with a fixed five decimals and a decimal point whatever the locale — that is how
-coordinates are conventionally written, so it is a fixed pattern in the mapper rather than a
-`DateTimeFormatter` concern. The day is derived from the encounter's **own** UTC offset, not the
-device's, so a cat logged abroad stays on the day it was logged (`EncounterDetailStateMapperTest`,
-*the day comes from the encounter's own offset*).
+Every label is built in `EncounterDetailStateMapper`; the composable renders strings and resolves
+one token (`LocationLabel`) to a resource. An accuracy with no coordinates to qualify is dropped
+there too. Coordinates are formatted with a fixed five decimals and a decimal point whatever the
+locale — that is how coordinates are conventionally written, so it is a fixed pattern in the mapper
+rather than a `DateTimeFormatter` concern. The day is derived from the encounter's **own** UTC
+offset, not the device's, so a cat logged abroad stays on the day it was logged
+(`EncounterDetailStateMapperTest`, *the day comes from the encounter's own offset*).
 
 ## Delete and undo
 
