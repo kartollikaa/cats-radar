@@ -47,6 +47,29 @@ fail every row read alongside the bad one, not just the bad one
 (`toEntity().toDomain()` and `toDomain().toEntity()`) are asserted to round-trip every field
 exactly for a healthy row.
 
+## Walks
+
+A `Walk` is a stretch of time the user chose to be out walking: a start, and an end once it is over.
+Its route is a list of `TrackPoint`s, each a fix with its time and accuracy, kept in `track_points`
+with a foreign key to its walk that deletes the points with it. Nothing records walks yet; the walk
+mode that will is its own slice of the Map epic.
+
+- **One walk at a time.** Starting a walk while one is on returns that walk rather than opening a
+  second: the check and the insert are one transaction (`WalkDao.startIfNoneOpen`), so two starts
+  racing each other still make one walk.
+- **Ending is final.** Ending only touches a walk that is on, so ending twice keeps the first end.
+- **A route keeps only fixes that say something.** `RecordTrackPoint` leaves out a fix that is too
+  rough to trust (`Tuning.TRACK_MAX_ACCURACY_METERS`), older than the walk or than the route's last
+  point, or nearer that point than `Tuning.TRACK_MIN_STEP_METERS` — a phone standing still at a
+  crossing would otherwise pile up points in one spot.
+- **Distance is great-circle** (`trackLengthMeters`), on the Earth's mean radius; the error against
+  the real shape of the Earth is far below a phone's own.
+- **A walk does not define an outing.** Outings stay derived from the cats alone (`outings.md`).
+
+The database went from version 1 to 2 for these two tables, by an automatic migration that only adds
+them; `CatsDatabaseMigrationTest` opens a version-1 database with a cat in it, migrates, and checks
+the cat is still there.
+
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Encounter.kt`, `PlaceCell.kt`,
