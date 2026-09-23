@@ -9,12 +9,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Instant
 
-class FakeEncounterRepository : EncounterRepository {
+class FakeEncounterRepository :
+    EncounterRepository,
+    RollsBack {
     private val encounters = MutableStateFlow<List<Encounter>>(emptyList())
     val inserted = mutableListOf<Encounter>()
     val softDeleteCalls = mutableListOf<Pair<String, Instant>>()
     val attachLocationCalls = mutableListOf<String>()
     val purgeCalls = mutableListOf<Instant>()
+
+    override fun checkpoint(): () -> Unit {
+        val saved = encounters.value
+        return { encounters.value = saved }
+    }
 
     // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
     // hide every bug about what a read is allowed to see.

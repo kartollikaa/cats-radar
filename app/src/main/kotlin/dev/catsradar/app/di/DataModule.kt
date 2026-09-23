@@ -6,6 +6,7 @@ import dev.catsradar.data.backup.ZipBackupWriter
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.PlaceCellDao
+import dev.catsradar.data.db.RoomTransactionRunner
 import dev.catsradar.data.db.WalkDao
 import dev.catsradar.data.db.createCatsDatabase
 import dev.catsradar.data.platform.AndroidExifReader
@@ -41,6 +42,7 @@ import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.repository.TransactionRunner
 import dev.catsradar.domain.repository.WalkRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -53,6 +55,7 @@ val dataModule = module {
     single<PlaceCellRepository> { PlaceCellRepositoryImpl(get()) }
     single<WalkDao> { get<CatsDatabase>().walkDao() }
     single<WalkRepository> { WalkRepositoryImpl(get()) }
+    single<TransactionRunner> { RoomTransactionRunner(get<CatsDatabase>()) }
     factory<IdGenerator> { RandomIdGenerator() }
     // createdAtStart: the one-time SharedPreferences read must land at app start, not on the
     // first tap that resolves LogTally.

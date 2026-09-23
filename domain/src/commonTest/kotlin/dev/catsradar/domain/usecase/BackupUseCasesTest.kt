@@ -8,12 +8,16 @@ import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.platform.BackupWriter
+import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
+import dev.catsradar.domain.testing.FakeTransactionRunner
 import dev.catsradar.domain.testing.encounterAt
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Instant
@@ -48,6 +52,10 @@ private class RecordingWriter(private val succeeds: Boolean = true) : BackupWrit
 
 private class StubReader(private val result: BackupReadResult) : BackupReader {
     override suspend fun read(source: String): BackupReadResult = result
+}
+
+private class DiskFullOnUpsert(delegate: PlaceCellRepository) : PlaceCellRepository by delegate {
+    override suspend fun upsert(cell: PlaceCell) = error("database or disk is full")
 }
 
 private fun cell(id: String, status: PlaceStatus = PlaceStatus.PENDING) = PlaceCell(
@@ -108,8 +116,27 @@ class ImportBackupTest {
     private val encounters = FakeEncounterRepository()
     private val placeCells = FakePlaceCellRepository()
 
-    private fun importBackup(result: BackupReadResult) =
-        ImportBackup(encounters, placeCells, StubReader(result))
+    private val transactions = FakeTransactionRunner(encounters, placeCells)
+
+    private fun importBackup(result: BackupReadResult, placeCellRepository: PlaceCellRepository = placeCells) =
+        ImportBackup(encounters, placeCellRepository, transactions, StubReader(result))
+
+    @Test
+    fun `an import that fails once cats are written leaves every cat and cell as it was`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "known", updatedAt = EARLY))
+        placeCells.upsert(cell(PENDING_HERE))
+        val before = encounters.loadEvery() to placeCells.observeAll().first()
+        val imported = BackupContents(
+            encounters = listOf(encounterAt(EARLY).copy(id = "known", updatedAt = LATE), locatedInMoscow),
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED)),
+        )
+
+        assertFailsWith<IllegalStateException> {
+            importBackup(BackupReadResult.Readable(imported), DiskFullOnUpsert(placeCells))("content://in.zip")
+        }
+
+        assertEquals(before, encounters.loadEvery() to placeCells.observeAll().first())
+    }
 
     @Test
     fun `an unknown cat is inserted and a known one updated in place`() = runTest {
