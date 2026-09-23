@@ -72,6 +72,15 @@ interface EncounterDao {
         updatedAt: Instant,
     )
 
+    // updatedAt stays: the geohash and cell are derived from the coordinates, so the cat is unchanged.
+    @Query(
+        """
+        UPDATE encounters SET geohash = :geohash, placeCellId = :placeCellId
+        WHERE id = :id AND lat = :lat AND lon = :lon
+        """
+    )
+    suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String)
+
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?
 

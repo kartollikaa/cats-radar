@@ -87,6 +87,14 @@ private class FakeTodayRepository : EncounterRepository {
 
     override fun observeAll(): Flow<List<Encounter>> = rows.map { list -> list.filter { it.deletedAt == null } }
 
+    override suspend fun setPlaceCell(
+        id: String,
+        lat: Double,
+        lon: Double,
+        geohash: String,
+        placeCellId: String,
+    ): Unit = throw NotImplementedError("unused by this test")
+
     override suspend fun softDelete(id: String, deletedAt: Instant) {
         rows.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
     }

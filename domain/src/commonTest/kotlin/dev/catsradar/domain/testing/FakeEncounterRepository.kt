@@ -16,6 +16,7 @@ class FakeEncounterRepository : EncounterRepository {
     val softDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
     val undoDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
     val attachLocationCalls = mutableListOf<String>()
+    val setPlaceCellCalls = mutableListOf<String>()
     val purgeCalls = mutableListOf<Instant>()
 
     // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
@@ -54,6 +55,20 @@ class FakeEncounterRepository : EncounterRepository {
                     )
                 } else {
                     encounter
+                }
+            }
+        }
+    }
+
+    // Mirrors the DAO's WHERE lat = :lat AND lon = :lon guard.
+    override suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String) {
+        setPlaceCellCalls += id
+        encounters.update { list ->
+            list.map {
+                if (it.id == id && it.lat == lat && it.lon == lon) {
+                    it.copy(geohash = geohash, placeCellId = placeCellId)
+                } else {
+                    it
                 }
             }
         }

@@ -20,6 +20,14 @@ a location fix (`AttachLocation`), or a photo's own EXIF, whether the camera jus
 (`ImportBackup`), whose cell the archive may not carry. Coordinates without a cell would be a cat
 that knows exactly where it was and still reads as "no location" in this screen.
 
+A cat stored without them anyway — by an earlier version, or by a restore that took the archive's
+geohash and cell as written — gets them at the next launch. `RepairPlaceCells` runs at every process
+start and gives each located cat the geohash and cell its coordinates imply. A missing cell is
+created pending, like any new one, so it gets named. Only those two columns are written. `updatedAt`
+stays as it was, because the cat itself has not changed. A cat whose coordinates changed while the
+repair was running is left alone. Without the repair such a cat would sit under "Not named yet" for
+good, because nothing ever looks up a cell that does not exist.
+
 A cell's centre is the point the geocoder is asked about. Every path that creates a cell takes it
 from the cell's id — an import too, which derives it from the id again rather than reading it from
 the archive. A cell imported before that rule keeps whatever centre it was stored with; nothing
@@ -85,6 +93,7 @@ geohash and needs no network — keeps working. Only country and city names are 
 - `domain/…/platform/ReverseGeocoder.kt` — the interface and its three outcomes
 - `domain/…/usecase/ResolvePendingPlaces.kt` — the state machine, both passes
 - `domain/…/usecase/ObserveUntriedPlaceCells.kt` — which cells are waiting for their first lookup
+- `domain/…/usecase/RepairPlaceCells.kt` — the launch-time repair of located cats with no cell
 - `data/…/androidMain/platform/AndroidReverseGeocoder.android.kt` — the `Geocoder` call
 - `app/…/worker/GeocodePendingCellsWorker.kt`, `GeocodeWorkScheduler.kt`, `PlaceNamingTrigger.kt`
 

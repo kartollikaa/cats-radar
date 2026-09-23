@@ -71,6 +71,14 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
         }
     }
 
+    override suspend fun setPlaceCell(
+        id: String,
+        lat: Double,
+        lon: Double,
+        geohash: String,
+        placeCellId: String,
+    ): Unit = throw NotImplementedError("unused by this test")
+
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")
 

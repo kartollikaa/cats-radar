@@ -31,6 +31,9 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         updatedAt = stamp.updatedAt,
     )
 
+    override suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String) =
+        dao.setPlaceCell(id, lat, lon, geohash, placeCellId)
+
     override suspend fun softDelete(id: String, deletedAt: Instant) = dao.softDelete(id, deletedAt)
 
     override suspend fun undoDelete(id: String) = dao.clearDeletedAt(id)

@@ -19,6 +19,14 @@ internal data class AttachLocationCall(
     val updatedAt: Instant,
 )
 
+internal data class SetPlaceCellCall(
+    val id: String,
+    val lat: Double,
+    val lon: Double,
+    val geohash: String,
+    val placeCellId: String,
+)
+
 internal class FakeEncounterDao : EncounterDao {
     var observeAllResult: List<EncounterEntity> = emptyList()
     var observeByIdResult: EncounterEntity? = null
@@ -34,6 +42,7 @@ internal class FakeEncounterDao : EncounterDao {
     var clearDeletedAtCall: String? = null
     val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
+    var setPlaceCellCall: SetPlaceCellCall? = null
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
     var loadDeletedBeforeCall: Instant? = null
@@ -80,6 +89,10 @@ internal class FakeEncounterDao : EncounterDao {
         attachLocationCall = AttachLocationCall(
             id, lat, lon, accuracyMeters, locationSource, locationFixedAt, geohash, placeCellId, updatedAt,
         )
+    }
+
+    override suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String) {
+        setPlaceCellCall = SetPlaceCellCall(id, lat, lon, geohash, placeCellId)
     }
 
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {

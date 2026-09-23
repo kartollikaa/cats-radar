@@ -62,6 +62,13 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
+    fun setPlaceCellForwardsItsArgumentsToTheDao() = runTest {
+        repository.setPlaceCell("id-1", lat = 41.39864, lon = 2.17842, geohash = "sp3e986k", placeCellId = "sp3e98")
+
+        assertEquals(SetPlaceCellCall("id-1", 41.39864, 2.17842, "sp3e986k", "sp3e98"), dao.setPlaceCellCall)
+    }
+
+    @Test
     fun softDeleteDelegatesWithTheSameArguments() = runTest {
         val deletedAt = Instant.parse("2026-02-01T00:00:00Z")
 

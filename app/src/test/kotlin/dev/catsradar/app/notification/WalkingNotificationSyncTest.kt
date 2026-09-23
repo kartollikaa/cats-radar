@@ -172,6 +172,14 @@ private class FakeEncounterRepository : EncounterRepository {
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
         throw NotImplementedError("unused by this test")
 
+    override suspend fun setPlaceCell(
+        id: String,
+        lat: Double,
+        lon: Double,
+        geohash: String,
+        placeCellId: String,
+    ): Unit = throw NotImplementedError("unused by this test")
+
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")
 

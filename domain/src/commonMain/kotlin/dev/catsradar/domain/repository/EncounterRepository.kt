@@ -18,6 +18,9 @@ interface EncounterRepository {
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun attachLocation(id: String, stamp: LocationStamp)
 
+    /** Writes [geohash] and [placeCellId] only, and only while the row still sits at [lat], [lon]. */
+    suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String)
+
     suspend fun softDelete(id: String, deletedAt: Instant)
 
     suspend fun undoDelete(id: String)

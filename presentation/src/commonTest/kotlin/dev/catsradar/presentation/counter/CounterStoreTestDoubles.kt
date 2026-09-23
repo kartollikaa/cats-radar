@@ -83,6 +83,14 @@ internal class FakeEncounterRepository : EncounterRepository {
         }
     }
 
+    override suspend fun setPlaceCell(
+        id: String,
+        lat: Double,
+        lon: Double,
+        geohash: String,
+        placeCellId: String,
+    ): Unit = throw NotImplementedError("unused by this test")
+
     override suspend fun softDelete(id: String, deletedAt: Instant) {
         delay(softDeleteDelay)
         softDeleteShouldThrow?.let { throw it }

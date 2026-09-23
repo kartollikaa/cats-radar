@@ -19,6 +19,7 @@ import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
 import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.FollowWalkingMode
+import dev.catsradar.domain.usecase.RepairPlaceCells
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,6 +58,7 @@ class CatsRadarApplication : Application() {
         }
         koin.get<WidgetRefresh>().start(appScope)
         koin.get<PlaceNamingTrigger>().start(appScope)
+        appScope.launch { koin.get<RepairPlaceCells>()() }
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }
