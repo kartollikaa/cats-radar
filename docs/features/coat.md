@@ -42,7 +42,8 @@ against the muzzle or the fur. The rim test fails if the line goes back to `outl
 not enough.
 
 The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
-the picker and anything later draw the same cat.
+the picker and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn
+with those paths (see [app-shell.md](./app-shell.md)).
 
 The labels say **calico**. The stored values are still `TRICOLOR_*`: the database and backup
 archives hold those names, and renaming what nobody sees would need a migration for nothing.
