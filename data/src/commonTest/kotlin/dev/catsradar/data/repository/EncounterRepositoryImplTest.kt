@@ -18,13 +18,6 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
-    fun observeActiveCountDelegatesToTheDao() = runTest {
-        dao.observeActiveCountResult = 3
-
-        assertEquals(3, repository.observeActiveCount().first())
-    }
-
-    @Test
     fun observeByIdDelegatesAndMaps() = runTest {
         dao.observeByIdResult = distinctEncounter().toEntity()
 
@@ -82,6 +75,16 @@ class EncounterRepositoryImplTest {
         repository.undoDelete("id-1")
 
         assertEquals("id-1", dao.clearDeletedAtCall)
+    }
+
+    @Test
+    fun undoDeleteAllClearsOnlyRowsDeletedAtTheBatchInstant() = runTest {
+        val deletedAt = Instant.parse("2026-02-01T00:00:00Z")
+
+        repository.undoDeleteAll(listOf("id-1", "id-2"), deletedAt)
+
+        assertEquals(listOf("id-1" to deletedAt, "id-2" to deletedAt), dao.clearDeletedAtIfDeletedAtCalls)
+        assertEquals(null, dao.clearDeletedAtCall)
     }
 
     @Test

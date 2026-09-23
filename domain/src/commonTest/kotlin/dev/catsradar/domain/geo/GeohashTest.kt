@@ -93,6 +93,26 @@ class GeohashTest {
         assertEquals(Geohash.decode("u4pruydqqvj"), Geohash.decode("U4PRUYDQQVJ"))
     }
 
+    @Test
+    fun `a hash is well-formed only at its own length`() {
+        assertTrue(Geohash.isWellFormed("ucfv0n", precision = 6))
+        assertFalse(Geohash.isWellFormed("ucfv0n", precision = 5))
+        assertFalse(Geohash.isWellFormed("ucfv0n", precision = 7))
+    }
+
+    @Test
+    fun `a hash encode would not write is not well-formed`() {
+        assertFalse(Geohash.isWellFormed("ucfv0a", precision = 6))
+        assertFalse(Geohash.isWellFormed("ucfv0!", precision = 6))
+        assertFalse(Geohash.isWellFormed("UCFV0N", precision = 6))
+    }
+
+    @Test
+    fun `rejects precision outside 1 to 12 when checking a hash`() {
+        assertFailsWith<IllegalArgumentException> { Geohash.isWellFormed("", precision = 0) }
+        assertFailsWith<IllegalArgumentException> { Geohash.isWellFormed("u4pruydqqvjkm", precision = 13) }
+    }
+
     private companion object {
         val FIXED_COORDINATES = listOf(
             0.0 to 0.0,

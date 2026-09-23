@@ -17,14 +17,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.CellLead
+import dev.catsradar.presentation.encounters.EncounterCell
+import dev.catsradar.presentation.encounters.EncountersLayout
+import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
-import dev.catsradar.presentation.encounters.RowLead
+import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.map.MapSpot
 import dev.catsradar.ui.R
-import dev.catsradar.ui.encounters.EncounterList
-import dev.catsradar.ui.encounters.EncounterListContentInset
+import dev.catsradar.ui.encounters.EncounterListTextInset
+import dev.catsradar.ui.encounters.EncounterRows
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
@@ -52,13 +55,14 @@ private fun MapSpotContent(spot: MapSpot, modifier: Modifier = Modifier, onCatCl
         Text(
             text = pluralStringResource(R.plurals.map_spot_title, spot.catCount, spot.catCount),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = EncounterListContentInset).padding(bottom = 8.dp),
+            modifier = Modifier.padding(horizontal = EncounterListTextInset).padding(bottom = 8.dp),
         )
-        EncounterList(
+        EncounterRows(
             rows = spot.rows,
+            layout = EncountersLayout.LIST,
             modifier = Modifier.weight(1f, fill = false),
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-            onRowClick = onCatClick,
+            onEncounterClick = onCatClick,
         )
     }
 }
@@ -72,19 +76,11 @@ private fun MapSpotContentPreview() {
 private val sampleSpot = MapSpot(
     catCount = 2,
     rows = persistentListOf(
-        EncounterListItem.OutingHeader(key = "header-1", label = "Today, 14:10"),
-        EncounterListItem.Row(
-            id = "1",
-            timeLabel = "14:32",
-            location = LocationLabel.FROM_OUTING,
-            lead = RowLead.Coat(CoatOption.GINGER),
-            position = GroupPosition.FIRST,
+        OutingHeader(key = "header-1", label = "Today, 14:10"),
+        EncountersRow.Single(
+            EncounterCell("1", "14:32", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.GINGER)),
+            GroupPosition.FIRST,
         ),
-        EncounterListItem.Row(
-            id = "2",
-            timeLabel = "14:10",
-            location = LocationLabel.CURRENT,
-            position = GroupPosition.LAST,
-        ),
+        EncountersRow.Single(EncounterCell("2", "14:10", LocationLabel.CURRENT), GroupPosition.LAST),
     ),
 )

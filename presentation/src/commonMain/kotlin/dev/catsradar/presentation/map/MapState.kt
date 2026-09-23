@@ -1,7 +1,7 @@
 package dev.catsradar.presentation.map
 
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncountersRow
 import kotlinx.collections.immutable.ImmutableList
 
 sealed interface MapState {
@@ -23,4 +23,4 @@ data class MapPoint(val id: String, val latitude: Double, val longitude: Double,
 /** The part of the world the map opens on, in degrees. */
 data class MapArea(val south: Double, val west: Double, val north: Double, val east: Double)
 
-data class MapSpot(val catCount: Int, val rows: ImmutableList<EncounterListItem>)
+data class MapSpot(val catCount: Int, val rows: ImmutableList<EncountersRow>)

@@ -1,6 +1,7 @@
 package dev.catsradar.domain.testing
 
 import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +20,8 @@ class FakePlaceCellRepository(initial: List<PlaceCell> = emptyList()) : PlaceCel
 
     override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
 
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
-        cells.value.filter { it.status == dev.catsradar.domain.model.PlaceStatus.PENDING }
-            .drop(offset)
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
+        cells.value.filter { it.status == PlaceStatus.PENDING && (afterCellId == null || it.cellId > afterCellId) }
+            .sortedBy { it.cellId }
             .take(limit)
 }

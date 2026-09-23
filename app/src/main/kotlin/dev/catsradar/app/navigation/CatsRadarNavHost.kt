@@ -67,7 +67,7 @@ fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier
                 entry<Encounters> {
                     EncountersDestination(
                         contentPadding = innerPadding,
-                        onRowClick = { id -> backStack.push(EncounterDetail(id)) },
+                        onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
                     )
                 }
                 entry<CatsMap> { MapDestination(innerPadding, onOpenCat = { backStack.push(EncounterDetail(it)) }) }
@@ -131,6 +131,7 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
         onWalkingModeChange = onWalkingModeChange,
+        onEncountersGridChange = { store.dispatch(SettingsIntent.EncountersGridToggled(it)) },
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
         onBackupOutcomeDismiss = { store.dispatch(SettingsIntent.Backup.OutcomeDismissed) },

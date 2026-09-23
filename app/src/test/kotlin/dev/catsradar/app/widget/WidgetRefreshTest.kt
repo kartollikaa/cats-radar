@@ -91,7 +91,6 @@ private class FakeTodayRepository : EncounterRepository {
         rows.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
     }
 
-    override fun observeActiveCount(): Flow<Int> = throw NotImplementedError("unused by this test")
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
@@ -99,6 +98,12 @@ private class FakeTodayRepository : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
     override suspend fun loadEvery(): List<Encounter> = rows.value
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> = emptyList()

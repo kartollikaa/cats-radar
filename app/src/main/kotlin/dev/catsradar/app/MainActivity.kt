@@ -14,6 +14,7 @@ import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.photo.Launch
 import dev.catsradar.app.photo.TakePhotoShortcut
+import dev.catsradar.app.theme.rememberDeviceColorScheme
 import dev.catsradar.ui.theme.CatsRadarTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
         CaptureTarget.clearStale(this)
         enableEdgeToEdge()
         setContent {
-            CatsRadarTheme {
+            CatsRadarTheme(colorScheme = rememberDeviceColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     CatsRadarNavHost(cameraRequest = cameraRequest)
                 }

@@ -27,7 +27,7 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
 
     private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
         if (cats.isEmpty()) return null
-        return MapSpot(catCount = cats.size, rows = encountersMapper.map(cats, today).rows)
+        return MapSpot(catCount = cats.size, rows = encountersMapper.map(cats, today, grid = false).rows)
     }
 
     private fun Encounter.toPoint(): MapPoint? {

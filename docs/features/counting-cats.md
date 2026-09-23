@@ -4,9 +4,9 @@ One tap on the counter screen logs an encounter. The tally is `LogTally`: it bui
 `Encounter` of `kind = TALLY`, `origin = APP`, `locationSource = NONE`, inserts it, and returns
 immediately — location is attached afterward, out of band. `CounterStore` fires a haptic tick
 before the insert even starts, so the tap never waits on the write, let alone on GPS. The number
-on screen is the total from `ObserveStats`, every non-deleted encounter; after each tap an "Undo"
-chip shows for `Tuning.UNDO_VISIBLE` (5 seconds) that soft-deletes the encounter that tap
-created. The very first tally the app ever sees also fires a system location-permission
+on screen is the total from `ObserveStats`, every non-deleted encounter; after a tap an "Undo" chip
+shows for `Tuning.UNDO_VISIBLE`, and each press of it soft-deletes the newest cat of the run of taps
+it belongs to (below). The very first tally the app ever sees also fires a system location-permission
 request; a later denial surfaces as a dismissible one-line hint on the counter screen with its own
 "Grant" button.
 
@@ -43,12 +43,25 @@ few pixels into a drag: on a screen with room to spare, a tap is only ever a tap
 
 **The controls do not jump.** Undo has a place of its own at the far end of the walk-chip row,
 outside the count block — inside the block, a follow-up tap on the same spot would land on Undo and
-take a cat away instead of adding one. A long walk label gives way to it rather than squeezing it.
-The outing line keeps its line, empty when no outing is open, so an outing starting or ending leaves
+take a cat away instead of adding one. The walk chip sits in the middle of that row, and Undo
+appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
+a longer translation — does the chip step aside toward the start, and past that it shortens its
+label: Undo is never squeezed. The outing line keeps its line, empty when no outing is open, so an outing starting or ending leaves
 the block the same size. The location hint and the import progress and summary appear above the
 count and take their room from it, so the number shrinks and the walk chip, the coat grid and the
 Photo button stay where they are — unless the block is already at its floor, when the Counter
 scrolls instead.
+
+## Undoing a run of taps
+
+The undo window belongs to a run of taps, not to one tap. Every tap made while the chip is up joins
+the run and restarts the window; every Undo soft-deletes the newest cat still in the run, cancels
+its location attach, and restarts the window again. So five mistaken taps come back off with five
+Undos, and the chip stays up until the last of them is gone. A tap after an Undo joins the same run.
+Once the window runs out with nothing pressed, the run is closed: the chip goes, and nothing brings
+it back except a fresh tap. The coat grid's ring follows the run as well — after an Undo it rings the
+coat of the newest cat still in it (`coat.md`). The cases below that concern undo are in
+`CounterStoreUndoTest`.
 
 ## The outing in progress
 
@@ -69,17 +82,22 @@ Tapping rapidly logs one encounter per tap, with no debounce — three fast taps
 and three haptic ticks (`CounterStoreTest`, *three rapid taps log three cats with no debounce, one
 haptic tick each*). Because inserts are async, a later tap's write can complete before an earlier
 one's; `CounterStore` tracks a monotonically increasing `tapSequence`, captured before the
-suspending insert, so only a strictly higher sequence number may move the undo target — the chip
-always refers to the tap that happened last, not the write that finished last (*undo targets the
-most recently created encounter and a second undo is a no-op*). Undo itself is guarded the same
-way in miniature: the target id is read and cleared before the suspending delete call runs, so a
-second, near-simultaneous "Undo" dispatch sees nothing to do.
+suspending insert, and keeps the run in that order rather than the order the writes finish in, so
+Undo always takes back the tap that happened last (*undo follows the order of the taps, not the
+order their writes finished in*). A slow write from a run that has already expired does not reopen
+the window (*a tap whose write lands after the window closed does not reopen it*), and one landing
+behind a newer tap's does not stretch it (*an older tap's write landing late does not stretch the
+window of the newer one*). Undo takes its
+cat off the run before the suspending delete runs, so two Undos pressed back to back take back two
+different cats, never the same one twice (*two undos dispatched back to back take away two
+different cats*); an Undo with the run empty does nothing (*undo walks a run of taps back newest
+first until every cat of it is gone*).
 
-A second tap while the chip is already showing restarts the 5-second window rather than stacking a
-second timer; once it does expire, nothing brings it back except a fresh tap (*a second tap
-restarts the undo window, which then expires and disables undo*). That 5-second window is shorter
-than `Tuning.LOCATION_TIMEOUT` (8 seconds) — a fix can still be resolving after Undo has already
-faded from the screen. The store itself does nothing special for that overlap; the correctness
+A tap or an Undo while the chip is showing restarts the window rather than stacking a second timer
+(*a second tap restarts the undo window, which then expires and disables undo*; *each undo restarts
+the window for the cats still left in the run*). The window is shorter than
+`Tuning.LOCATION_TIMEOUT` — a fix can still be resolving after Undo has already faded from the
+screen. The store itself does nothing special for that overlap; the correctness
 guarantee that a late fix can't resurrect an undone row lives one layer down, in how
 `AttachLocation` and the DB write are shaped (see `location.md`).
 

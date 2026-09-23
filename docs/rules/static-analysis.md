@@ -7,7 +7,7 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
 |---|---|---|
 | **detekt** with `detekt-formatting` and `compose-rules` | Style and complexity; ktlint-equivalent formatting; Compose-specific rules (modifier order and defaults, unstable collection parameters, `remember` misuse, preview naming) | `config/detekt/detekt.yml`; **no baseline file** — `config/detekt/baseline.xml` is never created, a finding on existing code is fixed, not suppressed |
 | **Android Lint** | Manifest, resource, API-level and Compose runtime issues, **`:app` and `:ui` only** — AGP's Kotlin Multiplatform Android Library plugin has no lint-report task, so `:domain`/`:data`/`:presentation` are configured but not actually checked | Gradle DSL only (`lint { }` in the convention plugins); no root `lint.xml` — the DSL covers everything needed; `warningsAsErrors = true`, `abortOnError = true` |
-| **Konsist** | The four import-boundary rules and the composable-Modifier, `*Store`, `*State` naming rules below — **not** `*Intent`/`*Effect`/`*StateMapper` naming, which has no test | Plain unit tests under `app/src/test/…/architecture` |
+| **Konsist** | The five import-boundary rules and the composable-Modifier, `*Store`, `*State` naming rules below — **not** `*Intent`/`*Effect`/`*StateMapper` naming, which has no test | Plain unit tests under `app/src/test/…/architecture` |
 
 ## detekt conventions
 

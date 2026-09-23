@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.worker.LocationAttachScheduler
+import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.platform.Digest
@@ -19,6 +20,7 @@ import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.regions.RegionsStore
 import org.junit.After
@@ -29,6 +31,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.parameter.parametersOf
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 
 @RunWith(AndroidJUnit4::class)
 class KoinRuntimeResolutionTest {
@@ -56,6 +59,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<Haptics>())
         assertNotNull(koin.get<LocationProvider>())
         assertNotNull(koin.get<LocationAttachScheduler>())
+        assertNotNull(koin.get<PlaceNamingTrigger>())
         assertNotNull(koin.get<ExifReader>())
         assertNotNull(koin.get<ImportPhotos>())
         assertNotNull(koin.get<ExportBackup>())
@@ -72,5 +76,15 @@ class KoinRuntimeResolutionTest {
         // Both the root (null parent) and a drilled-in level, because they take different paths.
         assertNotNull(koin.get<RegionsStore> { parametersOf(null) })
         assertNotNull(koin.get<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
+    }
+
+    @Test
+    fun `every caller recording a walk gets the same recorder, so fixes take turns`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+
+        assertSame(koin.get<RecordTrackPoint>(), koin.get<RecordTrackPoint>())
     }
 }

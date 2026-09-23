@@ -100,7 +100,10 @@ class MapStateMapperTest {
 
         val state = assertIs<MapState.Located>(map(cats, spot = setOf("a", "b", "gone")))
 
-        assertEquals(MapSpot(catCount = 2, rows = encountersMapper.map(listOf(a, b), TODAY).rows), state.spot)
+        assertEquals(
+            MapSpot(catCount = 2, rows = encountersMapper.map(listOf(a, b), TODAY, grid = false).rows),
+            state.spot,
+        )
         assertEquals(null, assertIs<MapState.Located>(map(cats)).spot)
         assertEquals(null, assertIs<MapState.Located>(map(cats, spot = setOf("gone"))).spot)
     }

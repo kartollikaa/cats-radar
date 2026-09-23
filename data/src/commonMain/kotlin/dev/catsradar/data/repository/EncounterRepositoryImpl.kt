@@ -13,8 +13,6 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
     override fun observeAll(): Flow<List<Encounter>> =
         dao.observeAll().map { entities -> entities.map { it.toDomain() } }
 
-    override fun observeActiveCount(): Flow<Int> = dao.observeActiveCount()
-
     override fun observeById(id: String): Flow<Encounter?> = dao.observeById(id).map { it?.toDomain() }
 
     override suspend fun insert(encounter: Encounter) = dao.insert(encounter.toEntity())
@@ -36,6 +34,10 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
     override suspend fun softDelete(id: String, deletedAt: Instant) = dao.softDelete(id, deletedAt)
 
     override suspend fun undoDelete(id: String) = dao.clearDeletedAt(id)
+
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant) = dao.softDeleteAll(ids, deletedAt)
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) = dao.undoDeleteAll(ids, deletedAt)
 
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
         dao.findBySourceDigest(sourceDigest)?.toDomain()
