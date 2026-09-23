@@ -19,15 +19,15 @@ class ResolvePendingPlaces(
 ) {
     /** Returns false when the device has no geocoder, so the caller can stop rescheduling. */
     suspend operator fun invoke(): Boolean {
-        var offset = 0
+        var afterCellId: String? = null
         while (true) {
-            val page = placeCellRepository.loadPendingPage(limit = PAGE_SIZE, offset = offset)
+            val page = placeCellRepository.loadPendingPage(afterCellId = afterCellId, limit = PAGE_SIZE)
             if (page.isEmpty()) return true
 
             for (cell in page) {
                 if (!resolve(cell)) return false
             }
-            offset += page.size
+            afterCellId = page.last().cellId
         }
     }
 

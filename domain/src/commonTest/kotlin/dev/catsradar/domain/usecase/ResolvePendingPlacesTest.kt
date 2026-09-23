@@ -104,6 +104,26 @@ class ResolvePendingPlacesTest {
     }
 
     @Test
+    fun `cells past the first page are attempted even though earlier ones stop being pending`() = runTest {
+        val repository = FakePlaceCellRepository(List(25) { pending("cell-${it.toString().padStart(2, '0')}") })
+        val geocoder = ScriptedGeocoder(GeocodeResult.Resolved(PlaceName(countryCode = "ES")))
+
+        resolver(repository, geocoder)()
+
+        assertEquals(25, geocoder.calls)
+    }
+
+    @Test
+    fun `cells past the first page are attempted even though earlier ones stay pending`() = runTest {
+        val repository = FakePlaceCellRepository(List(25) { pending("cell-${it.toString().padStart(2, '0')}") })
+        val geocoder = ScriptedGeocoder(GeocodeResult.Failed)
+
+        resolver(repository, geocoder)()
+
+        assertEquals(25, geocoder.calls)
+    }
+
+    @Test
     fun `an already resolved cell is never looked up again`() = runTest {
         val resolved = pending("done").copy(status = PlaceStatus.RESOLVED, countryCode = "ES")
         val repository = FakePlaceCellRepository(listOf(resolved))

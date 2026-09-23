@@ -166,8 +166,10 @@ internal class FakePlaceCellRepository : PlaceCellRepository {
 
     override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
 
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
-        cells.value.filter { it.status == PlaceStatus.PENDING }.drop(offset).take(limit)
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
+        cells.value.filter { it.status == PlaceStatus.PENDING && (afterCellId == null || it.cellId > afterCellId) }
+            .sortedBy { it.cellId }
+            .take(limit)
 }
 
 internal class FakeGallerySaver : GallerySaver {
