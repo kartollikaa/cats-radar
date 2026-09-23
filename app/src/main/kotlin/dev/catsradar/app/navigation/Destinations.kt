@@ -9,6 +9,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.catsradar.presentation.encounters.EncountersEffect
+import dev.catsradar.presentation.encounters.EncountersIntent
 import dev.catsradar.presentation.encounters.EncountersStore
 import dev.catsradar.presentation.map.MapEffect
 import dev.catsradar.presentation.map.MapIntent
@@ -24,16 +26,29 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun EncountersDestination(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    onRowClick: (String) -> Unit = {},
+    onOpenEncounter: (String) -> Unit = {},
     onOutingMapClick: (String) -> Unit = {},
 ) {
     val store = koinViewModel<EncountersStore>()
     val state by store.state.collectAsStateWithLifecycle()
+    val currentOnOpenEncounter by rememberUpdatedState(onOpenEncounter)
+    LaunchedEffect(store) {
+        store.effects.collect { effect ->
+            when (effect) {
+                is EncountersEffect.OpenEncounter -> currentOnOpenEncounter(effect.id)
+            }
+        }
+    }
+    BackHandler(enabled = state.isSelecting) { store.dispatch(EncountersIntent.SelectionDismissed) }
     EncountersScreen(
         state = state,
         modifier = modifier,
         contentPadding = contentPadding,
-        onRowClick = onRowClick,
+        onEncounterClick = { id -> store.dispatch(EncountersIntent.EncounterClicked(id)) },
+        onEncounterLongClick = { id -> store.dispatch(EncountersIntent.EncounterLongPressed(id)) },
+        onSelectionDismiss = { store.dispatch(EncountersIntent.SelectionDismissed) },
+        onDeleteSelectedClick = { store.dispatch(EncountersIntent.DeleteSelectedClicked) },
+        onUndoClick = { store.dispatch(EncountersIntent.UndoClicked) },
         onOutingMapClick = onOutingMapClick,
     )
 }

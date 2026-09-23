@@ -1,6 +1,8 @@
 package dev.catsradar.app
 
 import android.app.Application
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import dev.catsradar.app.di.dataModule
@@ -13,10 +15,15 @@ import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
+import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
+import dev.catsradar.domain.usecase.EndInterruptedWalk
+import dev.catsradar.domain.usecase.FollowWalkingMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -38,9 +45,18 @@ class CatsRadarApplication : Application() {
         koin.get<ImportNotifier>().ensureChannel()
         koin.get<WalkingNotifier>().ensureChannel()
         val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        // Every process start re-asserts it, including one a lock-screen tap woke up.
-        koin.get<WalkingNotificationSync>().start(appScope)
+        // A permission dialog over the app pauses it, so an answer to one is seen when it resumes.
+        val appOnScreen = ProcessLifecycleOwner.get().lifecycle.currentStateFlow
+            .map { it.isAtLeast(Lifecycle.State.RESUMED) }
+        appScope.launch {
+            // Settled first: a recording cut off by process death turns off the mode the two below follow.
+            koin.get<EndInterruptedWalk>()()
+            // Every process start re-asserts it, including one a lock-screen tap woke up.
+            koin.get<WalkingNotificationSync>().start(appScope, appOnScreen)
+            koin.get<FollowWalkingMode>()()
+        }
         koin.get<WidgetRefresh>().start(appScope)
+        koin.get<PlaceNamingTrigger>().start(appScope)
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

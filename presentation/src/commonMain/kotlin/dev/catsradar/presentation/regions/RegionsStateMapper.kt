@@ -27,7 +27,7 @@ class RegionsStateMapper(
                 drillable = node.key !is RegionKey.Area,
             )
         }.toPersistentList(),
-        encounters = encountersMapper.map(view.encounters, today).rows,
+        encounters = encountersMapper.mapList(view.encounters, today),
     )
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {

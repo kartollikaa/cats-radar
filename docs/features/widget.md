@@ -68,8 +68,10 @@ the home screen.
 
 ## Colours
 
-The widget uses the app's own colour scheme, light or dark with the system. It is given explicitly:
-left to itself, Glance paints a widget in the wallpaper's colours on Android 12 and later.
+Like the app, the widget follows the wallpaper on Android 12 and later and keeps the app's teal
+below it, light or dark with the system. On Android 12+ its colours are Glance's resource-backed
+dynamic ones rather than the app's scheme read at render time: the launcher resolves them itself, so
+a new wallpaper recolours the widget without the app having to redraw it.
 
 ## Today, and whose today
 

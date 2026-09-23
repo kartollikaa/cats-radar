@@ -19,6 +19,7 @@ import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.usecase.AttachLocation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
@@ -38,14 +39,13 @@ private class FakePlaceCellRepository : PlaceCellRepository {
     override fun observeAll(): Flow<List<PlaceCell>> = MutableStateFlow(emptyList())
     override suspend fun upsert(cell: PlaceCell) = Unit
     override suspend fun loadById(cellId: String): PlaceCell? = null
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> = emptyList()
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> = emptyList()
 }
 
 private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
     private val encounters = MutableStateFlow(listOf(seed))
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
-    override fun observeActiveCount(): Flow<Int> = throw NotImplementedError("unused by this test")
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
@@ -75,9 +75,14 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
 
-    // Mirrors the DAO: this is the only read that can see soft-deleted rows.
     override suspend fun loadEvery(): List<Encounter> = encounters.value
 
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> =
@@ -91,6 +96,7 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
 private class FakeLocationProvider : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix = Fix
     override suspend fun lastKnown(): LocationFix? = null
+    override fun trackFixes(): Flow<LocationFix> = emptyFlow()
 }
 
 private fun targetEncounter(): Encounter = Encounter(

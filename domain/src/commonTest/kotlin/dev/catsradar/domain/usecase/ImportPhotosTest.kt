@@ -97,6 +97,32 @@ class ImportPhotosTest {
     }
 
     @Test
+    fun `a photo whose coordinates are off the globe is imported without them`() = runTest {
+        exifReader.data = ExifData(lat = 55.75, lon = 237.62, takenAt = LAST_MONTH)
+
+        val summary = importPhotos()(listOf("content://picked/1"))
+
+        assertEquals(listOf(ImportedPhoto(id = "id-1", needsLocation = false)), summary.added)
+        val inserted = repository.inserted.single()
+        assertEquals(LocationSource.NONE, inserted.locationSource)
+        assertNull(inserted.lat)
+        assertNull(inserted.lon)
+        assertNull(inserted.geohash)
+        assertNull(inserted.placeCellId)
+        assertEquals(emptyList(), placeCells.upserted)
+    }
+
+    @Test
+    fun `a recent photo whose coordinates are off the globe asks for a fix instead`() = runTest {
+        exifReader.data = ExifData(lat = 200.0, lon = 37.62, takenAt = NOW - 10.minutes)
+
+        val summary = importPhotos()(listOf("content://picked/1"))
+
+        assertEquals(listOf(ImportedPhoto(id = "id-1", needsLocation = true)), summary.added)
+        assertNull(repository.inserted.single().lat)
+    }
+
+    @Test
     fun `a photo from an hour ago asks for a fix instead of carrying none`() = runTest {
         exifReader.data = ExifData(takenAt = NOW - 10.minutes)
 

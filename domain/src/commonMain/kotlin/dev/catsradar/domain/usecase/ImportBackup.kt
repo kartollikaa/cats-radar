@@ -2,11 +2,15 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.backup.BackupMerge
+import dev.catsradar.domain.backup.asImported
+import dev.catsradar.domain.backup.withLocationFromCoordinates
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
+import dev.catsradar.domain.region.PlaceCells
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
+import dev.catsradar.domain.repository.WalkRepository
 import kotlinx.coroutines.flow.first
 
 sealed interface ImportBackupResult {
@@ -19,6 +23,7 @@ sealed interface ImportBackupResult {
 class ImportBackup(
     private val encounterRepository: EncounterRepository,
     private val placeCellRepository: PlaceCellRepository,
+    private val walkRepository: WalkRepository,
     private val backupReader: BackupReader,
 ) {
     suspend operator fun invoke(source: String): ImportBackupResult =
@@ -27,13 +32,19 @@ class ImportBackup(
             is BackupReadResult.Readable -> write(read.contents)
         }
 
-    private suspend fun write(imported: BackupContents): ImportBackupResult {
+    private suspend fun write(archived: BackupContents): ImportBackupResult {
+        val imported = archived.copy(
+            encounters = archived.encounters.map { it.withLocationFromCoordinates() },
+            placeCells = archived.placeCells.mapNotNull { it.asImported() },
+        )
         // loadEvery, not observeAll: a cat deleted here must stay deleted when an older backup
         // offers it back, and only the deleted row itself carries the deletedAt that decides.
         val localEncounters = encounterRepository.loadEvery()
         val local = BackupContents(
             encounters = localEncounters,
             placeCells = placeCellRepository.observeAll().first(),
+            walks = walkRepository.observeAll().first(),
+            trackPoints = walkRepository.loadEveryPoint(),
         )
         val merged = BackupMerge.merge(local = local, imported = imported)
 
@@ -46,6 +57,11 @@ class ImportBackup(
             }
         }
         merged.placeCells.forEach { placeCellRepository.upsert(it) }
+        merged.encounters.mapNotNullTo(mutableSetOf()) { it.geohash }
+            .forEach { PlaceCells.remember(placeCellRepository, it) }
+        // Walks first: a point may belong to a walk this import is adding.
+        merged.walks.forEach { walkRepository.upsert(it) }
+        walkRepository.appendPoints(merged.trackPoints)
 
         return ImportBackupResult.Merged(
             added = merged.added,

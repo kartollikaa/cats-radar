@@ -104,6 +104,24 @@ class ImportRulesTest {
     }
 
     @Test
+    fun `coordinates off the globe on a recent photo are replaced by asking for a fix`() {
+        val location = ImportRules.location(exif = ExifData(lat = 200.0, lon = 37.62), occurredAt = NOW, now = NOW)
+
+        assertEquals(ImportLocation.NEEDS_FIX, location)
+    }
+
+    @Test
+    fun `coordinates off the globe on an old photo leave it without a location`() {
+        val location = ImportRules.location(
+            exif = ExifData(lat = 55.75, lon = 237.62),
+            occurredAt = Instant.parse("2020-01-01T00:00:00Z"),
+            now = NOW,
+        )
+
+        assertEquals(ImportLocation.NONE, location)
+    }
+
+    @Test
     fun `a photo taken minutes ago is worth asking the phone where it is`() {
         val location = ImportRules.location(exif = ExifData(), occurredAt = NOW - 10.minutes, now = NOW)
 

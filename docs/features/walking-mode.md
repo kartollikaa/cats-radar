@@ -1,10 +1,11 @@
 # Walking mode
 
-A cat seen on a walk should cost one tap. Walking mode puts an ongoing notification in the shade
-with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and goes back — no
-unlock, no app launch, no hunting for the right screen.
+A cat seen on a walk should cost one tap. Walking mode puts an ongoing notification in the shade and
+on the lock screen with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and
+goes back — no unlock, no app launch, no hunting for the right screen.
 
-Started from the **Counter** — a chip that reads *Start a walk*, then *On a walk* — because that is
+Started from the **Counter** — a chip with a walking figure, centred under the count, that reads
+*Start a walk*, then *On a walk* — because that is
 the screen someone is on when they set out. The same switch is in **Settings → Walking mode** for
 finding it again later.
 
@@ -16,6 +17,10 @@ The notification is kept equal to that flag, and to the outing it is counting, b
 that runs for as long as the process does. Anything that changes either — a cat tallied in the app,
 a walk stopped from the shade, the outing closing on its own — moves the notification without a
 screen being involved.
+
+The walk itself follows the flag the same way. `FollowWalkingMode` opens a walk when the flag goes
+on and ends it when the flag goes off, whichever control turned it off; a process that starts with
+the flag on keeps the walk already open rather than opening a second.
 
 A screen that posted it itself would leave the shade empty while the flag still read on: after a
 reboot, or after a force-stop. The control would say *On a walk* and the **Cat!** button would not
@@ -38,12 +43,42 @@ of truth — a stored flag and the derived grouping — which disagree the momen
 the mode off. It would also turn a derived concept into stored state, with a migration and a new way
 for the statistics to be wrong.
 
-## Not a foreground service
+## Recording the route
 
-An ongoing notification survives the app leaving the foreground on its own, and the action's
-broadcast starts the process again if it has been killed. A foreground service would add
-`FOREGROUND_SERVICE`, a service type, and on newer Android a written justification for it — and buy
-nothing the notification does not already do for a walk.
+With precise location allowed, the walk's route is recorded. The notification is then carried by
+`WalkRecordingService`, a foreground service of type `location`, which asks for fixes for as long as
+it runs and offers each one to the walk; which of them the route keeps is in `data-model.md`.
+Without location permission there is no service, and the notification is the plain ongoing one it
+always was: it outlives the app leaving the screen on its own, and its buttons start the process
+again if it has been killed. Approximate location alone counts as none here: its fixes are too rough
+for any of them to join a route, so running a location service for it would record nothing.
+
+- **It starts only while the app is on screen.** Android gives a service location access only when
+  it starts in front of the user; one already running keeps it after the app leaves. So recording
+  starts when the mode is turned on in the app, or the next time the app is in front with the mode
+  on, which is also how a walk started before location was allowed begins recording once it is. A
+  permission dialog that stays up for more than a moment counts as leaving the app, so allowing
+  location from the prompt a tally raises usually starts the recording as the dialog closes, and
+  otherwise with the next cat.
+- **Stopping the walk stops the service**, from the app, the **Done** button or a swipe, and takes
+  the notification away with it. The stop is sent to the service rather than done to it: a service
+  stopped from outside before it has gone foreground takes the app down with it.
+- **Done ends the walk there and then.** The walk otherwise follows the flag from inside the app's
+  process, and a process woken just to handle Done may be gone before that catches up, which would
+  end the walk only whenever the app next started.
+- **A recording cut off ends the walk.** Killed along with the app, or by a reboot, the service is
+  not restarted: from the background it would get no location. The next start of the app ends the
+  walk at its route's last point, or at its start when it has none, rather than at that moment, and
+  turns the mode off, which is what the empty shade already said. The service leaves a mark while it
+  runs and clears it when it stops; a mark still there at the next start is how a recording cut off
+  is told from one stopped.
+- **A walk without location keeps the old behaviour** across process deaths: nothing records, so
+  nothing is cut off, and it ends only when it is stopped.
+- **Refused anyway** — the app left the screen between the request and the service starting — the
+  notification goes up plain and the walk goes on unrecorded until the app is next in front.
+
+The manifest asks for `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION`. The second only counts
+once location is allowed, so for someone who has not allowed it nothing changes.
 
 ## A Live Update, from API 36.1
 
@@ -66,8 +101,7 @@ Two things are required for promotion to happen at all:
 notification is promoted just the same and the chip carries only the icon, which is why the count
 goes in as a bare number rather than a sentence.
 
-Channel importance is not one of them either. The obvious suspect was `IMPORTANCE_LOW`; raising the
-channel changed nothing, so it stays low and a walk still never makes a sound.
+Channel importance is not one of them either; it matters for the lock screen instead (below).
 
 Promotion is prominence, not capability — which is why it could be a separate slice from the feature
 itself.
@@ -84,6 +118,40 @@ Demotion is a different gesture, and the platform offers no callback for it. A u
 chip but leaves the notification up will see the chip return on the next tally; whether the system
 honours a renewed request after a demotion is its decision, not something the app can read.
 
+## It shows on the lock screen
+
+Android's lock screen leaves out *silent* notifications unless the user turns **Show silent
+notifications** on (older versions offer the same choice as *Hide silent conversations and
+notifications*), and a channel below `IMPORTANCE_DEFAULT` is what makes a notification silent. On a
+Low channel the **Cat!** button existed only after an unlock.
+
+So the channel is Default, with no sound and no vibration, and every post is still `setSilent`: the
+notification sits among the alerting ones, which the lock screen keeps, and a walk never makes a
+sound. A user who demotes the channel to Silent in system settings hides it again, by their choice.
+
+Android lets an app lower a channel's importance but never raise it, so the raised channel has a new
+id and the old `walking` channel, created Low, is deleted on start. Settings may count it among
+deleted categories; that is the platform's bookkeeping, not a leftover. A choice the user made on
+the old channel — silenced or blocked — does not carry over: the new one starts at Default.
+
+## Tapping it opens the app
+
+A tap on the notification itself, rather than on a button, opens the app the way its icon does: it
+comes back on the screen it was on, even after its process was killed, and a fresh start opens the
+Counter.
+The intent is the launcher's own — same action, category and activity — because Android brings a
+running task forward only for the intent that started it; a bare intent for the activity stacks a
+second copy of the app on top. When Photo started the app, that second copy closes itself exactly as it
+does for a tap on the icon ([widget.md](./widget.md#what-photo-does)). From a locked phone the
+unlock comes first.
+
+## Photo
+
+The third button, between **Cat!** and **Done**, is the widget's Photo: it opens the app on the
+Counter with the camera straight away, with the same `origin = CAMERA` and the same handling of an
+app already running — see [widget.md](./widget.md#what-photo-does). Unlike **Cat!**, it launches an
+activity, so from a locked phone Android asks for the unlock first and the camera opens after it.
+
 ## At the edges
 
 - **The count is re-read, never remembered.** The process may have died between taps, and the outing
@@ -96,13 +164,15 @@ honours a renewed request after a demotion is its decision, not something the ap
   are only subscribed to for the length of a walk.
 - **The receiver is not exported.** Only this app's own notification actions reach it; an `adb`
   broadcast from the shell is refused, which is the point of the flag.
-- **The pending intent is immutable.** Nothing may rewrite where a lock-screen tap ends up.
+- **Every pending intent is immutable.** Nothing may rewrite where a lock-screen tap ends up.
 - **A revoked Live Updates permission costs the chip, not the notification.** The post still
   succeeds, unpromoted. The app could ask — `canPostPromotedNotifications()` answers it from API 36
   — but nothing is done with the answer: there is no degraded mode to fall back to and nothing
   useful to say about a setting the user just chose.
 - **The notification is `VISIBILITY_PUBLIC`** — its text shows on the lock screen, because tallying
-  without unlocking is the whole feature. It says how many cats this outing, and nothing more.
+  without unlocking is the whole feature. It says how many cats this outing, and nothing more. The
+  visibility is set on the notification, not the channel: Android discards `VISIBILITY_PUBLIC` on a
+  channel an app creates.
 - **A tally from here is `origin = NOTIFICATION`**, distinct from the app, the widget and the two
   photo paths. An older build reading such a row falls back to `APP` rather than failing, because the
   Room converter maps an unknown name that way.
@@ -111,8 +181,13 @@ honours a renewed request after a demotion is its decision, not something the ap
 
 ## Where the code lives
 
-- `app/…/notification/WalkingNotifier.kt` — the notification and its actions
+- `app/…/notification/WalkingNotifier.kt` — the notification, its channel and its actions
+- `app/…/photo/TakePhotoShortcut.kt` — the Photo intent, shared with the widget
 - `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
+- `app/…/notification/WalkRecordingService.kt` — carries it while the route is recorded
+- `domain/…/usecase/FollowWalkingMode.kt` — holds the walk equal to the flag;
+  `EndInterruptedWalk.kt` — settles a recording cut off; `RecordWalk.kt` — sends fixes to the route
+- `data/…/platform/SharedPreferencesWalkRecordingState.kt` — the mark a running recording leaves
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use
 - `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the switch survives a restart
@@ -122,5 +197,5 @@ honours a renewed request after a demotion is its decision, not something the ap
 The chip's icon is the same placeholder the notification uses; it gets a real one in the design
 pass. No automatic stop, so a mode left on stays on until it is turned off —
 there is no rule yet for what "the walk ended" would mean that the gap-based outing does not already
-answer. A reboot leaves the flag on but the shade empty until something starts the app again;
-nothing listens for `BOOT_COMPLETED`.
+answer. A reboot during a walk without location leaves the flag on but the shade empty until
+something starts the app again; nothing listens for `BOOT_COMPLETED`.

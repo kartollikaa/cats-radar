@@ -1,5 +1,6 @@
 package dev.catsradar.data.db
 
+import androidx.room3.AutoMigration
 import androidx.room3.ColumnTypeConverters
 import androidx.room3.ConstructedBy
 import androidx.room3.Database
@@ -9,8 +10,9 @@ import androidx.room3.RoomDatabaseConstructor
 internal const val DATABASE_FILE_NAME = "cats_radar.db"
 
 @Database(
-    entities = [EncounterEntity::class, PlaceCellEntity::class],
-    version = 1,
+    entities = [EncounterEntity::class, PlaceCellEntity::class, WalkEntity::class, TrackPointEntity::class],
+    version = 2,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 // @ColumnTypeConverter(s), not Room 2.x's @TypeConverter(s): the old names compile but fail KSP
 // with an opaque [MissingType] error on CatsDatabase that never mentions converters.
@@ -20,6 +22,10 @@ abstract class CatsDatabase : RoomDatabase() {
     abstract fun encounterDao(): EncounterDao
 
     abstract fun placeCellDao(): PlaceCellDao
+
+    abstract fun walkDao(): WalkDao
+
+    abstract fun trackPointDao(): TrackPointDao
 }
 
 // The Room KSP compiler generates the actual implementation for this expect declaration.

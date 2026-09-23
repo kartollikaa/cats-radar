@@ -84,7 +84,7 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
         state.value = enabled
     }
 
-    private val walking = MutableStateFlow(false)
+    val walking = MutableStateFlow(false)
 
     override fun walkingMode(): Flow<Boolean> = walking
 
@@ -96,5 +96,13 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
 
     override suspend fun setLastSeenMilestone(value: Int) {
         milestone.value = value
+    }
+
+    private val grid = MutableStateFlow(true)
+
+    override fun encountersGrid(): Flow<Boolean> = grid
+
+    override suspend fun setEncountersGrid(enabled: Boolean) {
+        grid.value = enabled
     }
 }

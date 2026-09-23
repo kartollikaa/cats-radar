@@ -30,5 +30,14 @@ object Tuning {
     const val MAX_GEOCODE_ATTEMPTS: Int = 5
     const val IMPORT_BATCH_MAX: Int = 100
 
+    /** A fix less precise than this is left out of a walk's route rather than bending it. */
+    const val TRACK_MAX_ACCURACY_METERS: Float = 50f
+
+    /** The shortest step a walk's route keeps between two points. */
+    const val TRACK_MIN_STEP_METERS: Double = 10.0
+
+    /** How often a walk that is recording asks for a fix. */
+    val TRACK_FIX_INTERVAL: Duration = 5.seconds
+
     val MILESTONES: List<Int> = listOf(1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000)
 }

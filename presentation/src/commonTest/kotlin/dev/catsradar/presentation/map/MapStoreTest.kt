@@ -58,7 +58,7 @@ class MapStoreTest {
         encounterFixture(id, BASE + minute.minutes).copy(lat = 41.39, lon = 2.17)
 
     private fun spotOf(vararg cats: Encounter) =
-        MapSpot(catCount = cats.size, rows = encountersMapper.map(cats.toList(), TODAY).rows)
+        MapSpot(catCount = cats.size, rows = encountersMapper.map(cats.toList(), TODAY, grid = false).rows)
 
     private fun MapState.spot(): MapSpot? = assertIs<MapState.Located>(this).spot
 

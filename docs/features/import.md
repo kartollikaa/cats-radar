@@ -30,12 +30,13 @@ describes a timestamp we do not have says nothing about the file's date.
 
 ## Where it happened
 
-- Coordinates in the photo's own EXIF → they become the encounter's, geohashed, with
-  `locationFixedAt` set to when the photo was taken rather than when it was imported. The place cell
-  they fall in is created at the same moment, so the photo can be named like any other located cat —
-  no worker runs for these, and nothing else would create it. **In practice this branch is never
-  taken from the photo picker** — see below — but it is what an unredacted source would get.
-- No coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
+- Coordinates in the photo's own EXIF that are a point on the globe → they become the encounter's,
+  geohashed, with `locationFixedAt` set to when the photo was taken rather than when it was
+  imported. The place cell they fall in is created at the same moment, so the photo can be named
+  like any other located cat — no worker runs for these, and nothing else would create it. **In
+  practice this branch is never taken from the photo picker** — see below — but it is what an
+  unredacted source would get.
+- No usable coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
   where the phone is standing, so it is worth asking for a fix.
 - Otherwise → no location, ever. **A historical photo never receives today's location**; that is the
   one rule the whole design of this feature exists to protect.
@@ -56,6 +57,13 @@ Per photo: added, skipped, or failed.
 A soft-deleted twin does **not** block a re-import. Deleting a cat and picking its photo again is a
 deliberate act, and refusing it would leave the user unable to undo their own deletion.
 
+**Undo takes the whole run back in one write**: `UndoImport` hands every cat of the run to
+`softDeleteAll` with one `deletedAt` (`UndoImportTest`), and `EncounterDao.softDeleteAll` runs it as
+one Room transaction, so the run goes all or none and the list and statistics redraw once rather
+than once per cat. A write that fails leaves every cat in place and keeps Undo on offer, so the
+user can simply try again (*a failed undo of an import keeps the cats and the undo, and a retry
+takes them back*).
+
 ## At the edges
 
 - **The photo picker hands over a redacted copy, not the file on disk.** Verified on a device: the
@@ -69,8 +77,10 @@ deliberate act, and refusing it would leave the user unable to undo their own de
 - **A Photo Picker URI serves a narrow projection** and throws on columns it does not recognise, so
   each date column is asked for on its own and a refusal reads as "no date" rather than a failed
   import. `DATE_TAKEN` is milliseconds; `DATE_ADDED` and `DATE_MODIFIED` are seconds.
-- **Half a coordinate pair is no coordinate pair.** A latitude without a longitude is treated as no
-  EXIF location at all.
+- **Half a coordinate pair, or a pair that is not a point on the globe, is no coordinate pair.** A
+  latitude without a longitude, a latitude beyond ±90, a longitude beyond ±180 or a value that is
+  not a number is treated as no EXIF location at all — so a recent photo still asks for a fix, and
+  an older one gets no location rather than an impossible one.
 
 ## Where the code lives
 

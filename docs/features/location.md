@@ -18,6 +18,16 @@ requested for.
 
 ## At the edges
 
+A fix is dated on the phone's own clock, the one every encounter is stamped with. Android dates a
+fix by its source, which for satellites is their clock, and a phone set by hand disagrees with it;
+the fix's age on the uptime clock is what places it (*a fix is dated on the phone's clock by how long
+ago it was taken*).
+
+A fix that does not say how precise it is carries no accuracy, rather than the 0 Android reports for
+it, which would read as a perfect one (*a location that does not say how precise it is has no
+accuracy rather than a perfect one*). A cat stamped with such a fix gets its coordinates and no
+accuracy; a walk's route leaves it out.
+
 A retry of the same worker (process death, WorkManager's own re-run policy) is idempotent:
 `AttachLocation` re-reads the target first and returns immediately unless its `locationSource` is
 still `NONE`, so an already-located row is neither re-stamped nor used to trigger another backfill
@@ -48,6 +58,14 @@ mid-call) is caught and also returns `null`, with only `CancellationException` a
 Either way `LocationPolicy` simply falls through its rungs to `NONE` — a tally never shows a
 location error.
 
+## Following a walk
+
+While a walk records its route, the same provider streams fixes rather than answering once:
+`trackFixes` asks for high-accuracy updates every `Tuning.TRACK_FIX_INTERVAL` for as long as it is
+collected, and gives none without permission. A permission revoked between the check and the request
+ends the stream rather than the app. Which fixes join the route is `RecordTrackPoint`'s decision
+(`data-model.md`), and when the stream runs is walking mode's (`walking-mode.md`).
+
 ## Fields stamped
 
 `locationSource` records which rung produced the value: `CURRENT_FIX`, `LAST_KNOWN`,
@@ -63,7 +81,7 @@ placeCellId use their own distinct precisions*).
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/location/LocationPolicy.kt`, `LocationFix.kt`
-- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`, `RecordWalk.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/geo/Geohash.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/platform/LocationProvider.kt`
 - `data/src/androidMain/kotlin/dev/catsradar/data/platform/FusedLocationProvider.android.kt`
