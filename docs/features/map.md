@@ -60,8 +60,9 @@ Two chips sit at the map's top edge.
   is on. Its heat is drawn from the cats themselves, not from their clusters, so ten cats at one
   spot weigh ten times one.
 - **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
-  shows the cats with none noted. The choice applies to the dots, the clusters, the heat, and a
-  focused outing alike. The view stays where it is when the choice changes, and "Every coat" clears
+  shows the cats with none noted. The choice applies to the dots, the clusters, the heat, a
+  focused outing and a spot's list alike; a focused outing's line still runs through all of its
+  cats, since it is the order they were seen in. The view stays where it is when the choice changes, and "Every coat" clears
   it. A choice that matches no cat says so, rather than showing a map with nothing on it.
 
 Both last as long as the tab does; leaving the tab clears them.
