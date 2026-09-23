@@ -50,6 +50,7 @@ country → city → area, and an encounter rate derived from automatically dete
 | Architecture | Layered modules `:domain` / `:data` / `:presentation` / `:ui` / `:app`; minimal MVI (`Store` with State/Intent/Effect). |
 | Quality gates | detekt + formatting + compose-rules, Android Lint, Konsist architecture tests; all in `./gradlew check` and CI. |
 | Coat (2026-09-22) | Optional cat coat from a fixed list of eleven, in v1: column in the first schema, picker after a tally or photo, editable in detail, statistics by coat. |
+| Colour (2026-09-23) | Material You: the wallpaper's colours on Android 12+, in the app and the widget; the icon-teal palette below 12 and in previews. No in-app switch. |
 | Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
 
 ## 2. Users and core flows

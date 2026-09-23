@@ -44,20 +44,35 @@ the bars under a dark app, and a light flash before the first Compose frame.
 
 ## Look
 
-**Colour.** Light and dark schemes set every colour role in `CatsRadarColors.kt`, on Material 3's
-tones, seeded from the launcher icon's teal (`#4CAF93`) with a coral tertiary. Dynamic colour is off:
-previews stay deterministic, and the home-screen widget reads the same two schemes rather than the
-wallpaper's. The values come from `tools/make-palette.py`, which prints both schemes as Kotlin and
+**Colour.** The app follows Material You: on Android 12 and later it draws with the wallpaper's
+colours (`dynamicLightColorScheme` / `dynamicDarkColorScheme`). There is no in-app switch.
+`deviceColorScheme` in `:app` makes that choice; `:ui` never sees the platform, and `CatsRadarTheme`
+called without a scheme — every preview — draws the app's own palette, so previews stay
+deterministic.
+
+The app's own palette is what Android 10 and 11 get. Light and dark schemes set every colour role in
+`CatsRadarColors.kt`, on Material 3's tones, seeded from the launcher icon's teal (`#4CAF93`) with a
+coral tertiary. The values come from `tools/make-palette.py`, which prints both schemes as Kotlin and
 refuses to print one whose text would fall under WCAG AA; changing the palette means changing the
-recipe and re-running it, not hand-editing one role.
+recipe and re-running it, not hand-editing one role. The launcher icon keeps its teal everywhere;
+with themed icons on, the launcher tints its monochrome layer instead.
 
-`CatsRadarColorsTest` holds the palette to three things, in both themes: every text colour reads at
+`DeviceColorSchemeTest` pins the choice: on Android 12+ both schemes take their primary from the
+system's wallpaper palette, below it they are exactly the teal ones.
+
+`CatsRadarColorsTest` holds the palette to four things, in both themes: every text colour reads at
 WCAG AA against the surface it is meant for; no role is left at Material's default, found by
-reflection so a role added in a later Material version is caught too; and the primary is still a
-saturated teal. Each check has been broken on purpose and caught.
+reflection so a role added in a later Material version is caught too; the primary is still a
+saturated teal; and it is what the theme draws with when no scheme is given. Each check has been
+broken on purpose and caught.
 
-The **window background** is the theme's surface in both modes, because the window is painted
-before Compose draws its first frame; `WindowBackgroundTest` fails if the two drift apart.
+The **window background** is the surface the app draws with, in both modes, because the window is
+painted before Compose draws its first frame. From Android 14 it is the system's own surface colour,
+the one the wallpaper scheme reads, so it matches exactly; below Android 12 it is the teal surface.
+On Android 12 and 13 Material computes the wallpaper surface's tone at runtime and no resource holds
+it, so the window takes the nearest tone the system publishes: in dark mode a shade lighter than the
+app, for the moment before the first frame. `WindowBackgroundTest` fails if the window and the app
+drift apart on Android 14 or on Android 11.
 
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
