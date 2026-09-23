@@ -174,7 +174,7 @@
     <string name="settings_encounters_grid">Grid of cats</string>
     <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
     <string name="counter_walk_start">Start a walk</string>
-    <string name="counter_walk_start_hint">log cats from the lock screen</string>
+    <string name="counter_walk_start_hint">tap to begin</string>
     <string name="counter_walk_stop">Stop the walk</string>
     <string name="counter_walk_stop_hint">press and hold</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

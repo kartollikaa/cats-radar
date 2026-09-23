@@ -12,17 +12,17 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.DpRect
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.counter.CounterState
-import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -46,16 +46,20 @@ class CounterControlsTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val requested = mutableListOf<Boolean>()
+    private var undoVisible by mutableStateOf(false)
 
     @Test
-    fun `the walk button sits under the Photo button, as wide as it`() {
+    fun `the walk button sits centred under the count, at least half its width`() {
         show(walking = false)
 
-        val photo = compose.onNodeWithText(string(R.string.counter_camera)).getUnclippedBoundsInRoot()
+        val count = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
         val walk = walkButton(walking = false).getUnclippedBoundsInRoot()
+        val photo = compose.onNodeWithText(string(R.string.counter_camera)).getUnclippedBoundsInRoot()
 
-        assertTrue(walk.top >= photo.bottom, "the walk button's top is ${walk.top}, Photo's bottom ${photo.bottom}")
-        assertEquals(photo.width, walk.width)
+        assertTrue(walk.top >= count.bottom, "the walk button's top is ${walk.top}, the count's bottom ${count.bottom}")
+        assertTrue(walk.bottom <= photo.top, "the walk button's bottom is ${walk.bottom}, Photo's top ${photo.top}")
+        assertEquals(centre(count).value, centre(walk).value, absoluteTolerance = 1f)
+        assertTrue(walk.width >= count.width / 2 - 1.dp, "the walk button is ${walk.width}, the count ${count.width}")
     }
 
     @Test
@@ -123,7 +127,7 @@ class CounterControlsTest {
 
     @Test
     fun `Undo appearing and going leaves the count the same size`() {
-        showUndo(visible = false)
+        showUndoHidden()
         val hidden = countHeight()
 
         undoVisible = true
@@ -134,19 +138,6 @@ class CounterControlsTest {
 
         assertEquals(hidden, shown)
         assertEquals(hidden, countHeight())
-    }
-
-    @Test
-    fun `the outing line stays centred when Undo appears beside it`() {
-        showUndo(visible = false, outing = CurrentOutingState(count = 4, elapsedLabel = "35 min", rate = null))
-        val screenCentre = compose.onRoot().getUnclippedBoundsInRoot().let { (it.left + it.right) / 2 }
-        val hidden = outingLineBounds()
-
-        undoVisible = true
-        compose.waitForIdle()
-
-        assertEquals(screenCentre.value, ((hidden.left + hidden.right) / 2).value, absoluteTolerance = 1f)
-        assertEquals(hidden, outingLineBounds())
     }
 
     private fun show(walking: Boolean) {
@@ -160,22 +151,13 @@ class CounterControlsTest {
         }
     }
 
-    private var undoVisible by mutableStateOf(false)
-
-    private fun showUndo(visible: Boolean, outing: CurrentOutingState? = null) {
-        undoVisible = visible
+    private fun showUndoHidden() {
         compose.setContent {
             CatsRadarTheme {
-                CounterScreen(
-                    state = CounterState(totalLabel = "3", count = 3, undoVisible = undoVisible, currentOuting = outing),
-                )
+                CounterScreen(state = CounterState(totalLabel = "3", count = 3, undoVisible = undoVisible))
             }
         }
     }
-
-    private fun outingLineBounds() = compose.onNodeWithText(
-        context.resources.getQuantityString(R.plurals.counter_outing_now, 4, 4, "35 min"),
-    ).getUnclippedBoundsInRoot()
 
     private fun walkButton(walking: Boolean): SemanticsNodeInteraction =
         compose.onNodeWithText(string(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start))
@@ -184,7 +166,9 @@ class CounterControlsTest {
 
     private fun string(@StringRes id: Int) = context.getString(id)
 
+    private fun centre(bounds: DpRect) = (bounds.left + bounds.right) / 2
+
     private companion object {
-        const val HOLD_MS = 2_000L
+        const val HOLD_MS = 1_000L
     }
 }

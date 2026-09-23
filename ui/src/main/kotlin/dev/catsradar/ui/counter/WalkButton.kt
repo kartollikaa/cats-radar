@@ -10,8 +10,8 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -50,11 +50,11 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
-private val HoldToStop = 2.seconds
+private val HoldToStop = 1.seconds
 
 /**
  * Starts a walk on a tap, and stops one only when held until the fill crosses it: a stop ends the walk
- * and its route, which a pocket or a tap aimed at Photo must not do.
+ * and its route, which a stray touch must not do.
  */
 @Composable
 internal fun WalkButton(
@@ -113,12 +113,15 @@ private fun WalkButtonSurface(walking: Boolean, fill: () -> Float, modifier: Mod
         Row(
             modifier = Modifier
                 .drawBehind { drawFill(fill(), fillColor) }
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(painter = painterResource(R.drawable.ic_directions_walk), contentDescription = null)
+            Icon(
+                painter = painterResource(R.drawable.ic_directions_walk),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
             Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
                     text = stringResource(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start),

@@ -4,10 +4,26 @@ A cat seen on a walk should cost one tap. Walking mode puts an ongoing notificat
 on the lock screen with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and
 goes back — no unlock, no app launch, no hunting for the right screen.
 
-Started from the **Counter** — a chip with a walking figure, centred under the count, that reads
-*Start a walk*, then *On a walk* — because that is
-the screen someone is on when they set out. The same switch is in **Settings → Walking mode** for
-finding it again later.
+Started from the **Counter** — a button with a walking figure, centred under the count, that reads
+*Start a walk*, then *Stop the walk* — because that is the screen someone is on when they set out.
+The same switch is in **Settings → Walking mode** for finding it again later.
+
+## Stopping takes a hold
+
+On the Counter a tap starts a walk but never stops one. A stop ends the walk and its recorded route,
+and the button sits just under the count, where a thumb tallying cats can slip onto it, and so can
+a phone going back into a pocket. So while a walk is on the button has to be held until a fill has
+crossed it (`HoldToStop` in `WalkButton.kt`); the walk stops the moment it has, with a haptic, before
+the finger lifts. Let go earlier, or drift off the button, and the fill drains back and nothing changes. The
+button's second line reads *press and hold* meanwhile: a gesture nothing hints at is one nobody finds.
+
+Starting stays one tap, because a walk started by mistake loses nothing.
+
+TalkBack's double tap stops the walk at once: the hold guards against touches nobody meant, and a
+screen reader's double tap is always meant.
+
+Only the Counter's button asks for the hold. The Settings switch and the notification's **Done**
+still stop a walk in one action.
 
 ## One flag, one owner
 
@@ -23,14 +39,14 @@ on and ends it when the flag goes off, whichever control turned it off; a proces
 the flag on keeps the walk already open rather than opening a second.
 
 A screen that posted it itself would leave the shade empty while the flag still read on: after a
-reboot, or after a force-stop. The control would say *On a walk* and the **Cat!** button would not
-exist. (A swipe away is no longer one of those cases — it ends the walk outright, below.)
+reboot, or after a force-stop. The Counter would offer to stop a walk and the **Cat!** button would
+not exist. (A swipe away is no longer one of those cases — it ends the walk outright, below.)
 
 ## It needs permission to post
 
 Turning the mode on asks for `POST_NOTIFICATIONS` and, if refused, does not turn on. The
-notification *is* the feature; a control reading *On a walk* over an empty shade would be a lie, and
-a refusal that Android remembers is answered without a dialog, so the control simply will not
+notification *is* the feature; a button offering to stop a walk over an empty shade would be a lie,
+and a refusal that Android remembers is answered without a dialog, so the control simply will not
 engage until notifications are allowed in system settings.
 
 ## It does not define an outing
@@ -115,10 +131,10 @@ what keep it a face rather than a blob with ears. How its paths stay equal to th
 ### It does not come back after it is dismissed
 
 Swiping the notification away ends the walk: its delete intent is the same **Done** action the
-button uses, so the flag goes off, the Counter chip follows, and nothing reposts. Putting a Live
+button uses, so the flag goes off, the Counter's button follows, and nothing reposts. Putting a Live
 Update back after someone has just swiped it away is how an app gets its Live Updates permission
 revoked — and it would also re-open the gap this feature exists to close, where the shade is empty
-while the chip still reads *On a walk*.
+while the Counter still offers to stop a walk.
 
 Demotion is a different gesture, and the platform offers no callback for it. A user who demotes the
 chip but leaves the notification up will see the chip return on the next tally; whether the system
@@ -197,6 +213,7 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 - `data/…/platform/SharedPreferencesWalkRecordingState.kt` — the mark a running recording leaves
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use
+- `ui/…/counter/WalkButton.kt` — the Counter's button and its hold
 - `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the switch survives a restart
 
 ## Not built yet
