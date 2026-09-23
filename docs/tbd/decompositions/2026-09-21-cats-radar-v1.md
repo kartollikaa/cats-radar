@@ -31,23 +31,23 @@
 | 13b | Current outing and milestone toast | Current-outing block on the Counter with a live ticker, milestone toast with `lastSeenMilestone` persisted, and a "+N" burst on each tap. | safe | ~350 | 13 | merged |
 | 14 | Reverse geocoding of place cells | `ReverseGeocoder` (Android `Geocoder`), PlaceCell creation on location attach, `ResolvePendingPlaces` use case, connected-network worker with backoff, region tree builder + tests. | safe | ~450 | 7, 12 | merged |
 | 15 | Regions drill-down screens | `Regions(level, parentKey)` and `RegionEncounters(areaKey)` keys, stores, screens; Unresolved / No location pseudo-nodes; entry from Statistics. | safe | ~450 | 13, 14 | merged |
-| 16 | Import rules and the import use case | `ImportRules` (recent-photo window, digest dedup, EXIF time and offset) + tests, `ImportPhotos` use case, digest lookup in the repository, file-date fallback. Nothing calls it yet. | safe | ~450 | 11 | planned |
-| 16b | Gallery import on screen | `ImportPhotosWorker`, `PickMultipleVisualMedia` on long-press camera, in-app progress, summary with undo; EXIF-redaction spike resolved. | safe | ~450 | 16 | in-review |
-| 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS` asked for after the pick, one ongoing notification updated in place. No foreground service — expedited work needs none. | safe | ~250 | 16b | in-review |
-| 17 | Backup merge rules and use cases | `BackupMerge` (newer `updatedAt`, delete-vs-live, RESOLVED-wins cells) + tests, `ExportBackup`/`ImportBackup` over a reader/writer seam, `loadEvery`. Nothing calls it yet. | safe | ~450 | 11, 14 | in-review |
-| 17b | Backup archive format | `kotlinx.serialization` models, ZIP writer/reader, `manifest.json` with `formatVersion`, photo files, round-trip test. | safe | ~450 | 17 | in-review |
-| 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers, gallery toggle UI. | safe | ~450 | 11, 17b | in-review |
+| 16 | Import rules and the import use case | `ImportRules` (recent-photo window, digest dedup, EXIF time and offset) + tests, `ImportPhotos` use case, digest lookup in the repository, file-date fallback. Nothing calls it yet. | safe | ~450 | 11 | merged |
+| 16b | Gallery import on screen | `ImportPhotosWorker`, `PickMultipleVisualMedia` on long-press camera, in-app progress, summary with undo; EXIF-redaction spike resolved. | safe | ~450 | 16 | merged |
+| 16c | Import progress notification | Notification channel, `POST_NOTIFICATIONS` asked for after the pick, one ongoing notification updated in place. No foreground service — expedited work needs none. | safe | ~250 | 16b | merged |
+| 17 | Backup merge rules and use cases | `BackupMerge` (newer `updatedAt`, delete-vs-live, RESOLVED-wins cells) + tests, `ExportBackup`/`ImportBackup` over a reader/writer seam, `loadEvery`. Nothing calls it yet. | safe | ~450 | 11, 14 | merged |
+| 17b | Backup archive format | `kotlinx.serialization` models, ZIP writer/reader, `manifest.json` with `formatVersion`, photo files, round-trip test. | safe | ~450 | 17 | merged |
+| 18 | Settings screen: backup export/import and gallery toggle | `Settings` key/store/screen, SAF contracts, export/import workers, gallery toggle UI. | safe | ~450 | 11, 17b | merged |
 | 24 | Walking mode | An ongoing notification with a tally action, so a cat is logged from the lock screen without opening the app. No foreground service. Settings switch. Does not define an outing. | safe | ~450 | 6 | merged |
 | 24c | Walking mode on the Counter | A one-tap entry point where a walk actually starts, instead of Settings. | safe | ~150 | 24 | merged |
-| 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36.1+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | in-review |
+| 24b | Walking mode as a Live Update | Promote the ongoing notification on API 36.1+ so it reaches the status-bar chip and always-on display; ordinary ongoing notification below that. | safe | ~200 | 24 | merged |
 | 19 | Home-screen widget | Glance widget with today's count and "+1", receiver, manifest, refresh on table change and periodic. | safe | ~350 | 7 | merged |
-| 19b | Photo from the widget | A Photo tile beside the count once the widget is two cells, opening the app on the Counter straight into the camera. | safe | ~250 | 19 | in-review |
+| 19b | Photo from the widget | A Photo tile beside the count once the widget is two cells, opening the app on the Counter straight into the camera. | safe | ~250 | 19 | merged |
 | 20 | Purge soft-deleted encounters | Periodic worker removing files and rows older than `PURGE_AFTER`; scheduled at app start. | safe | ~200 | 11 | merged |
 | 21 | Russian localisation | `values-ru` for every string resource; plural rules for cats/outings/days. | safe | ~200 | 18 | merged |
 | 23a | Design foundation | Explicit teal light/dark schemes from the launcher icon, rounder shapes, heavier display type, icons in the bottom bar; a palette contrast test. | safe | ~300 | 22 | merged |
 | 23b | Coats as cat faces | Each coat drawn as a cat face carrying its real markings — white muzzle and blaze, calico ear patches, amber eyes on dark fur — legible on both themes; the chosen coat gets a ring; "tricolour" labels become "calico". | safe | ~300 | 23a | merged |
-| 23c | The Counter as centrepiece | The count in a large expressive container, spring motion on tally and undo, the walk chip and photo button restyled. | safe | ~350 | 23b | in-review |
-| 23d | List, detail and stats rhythm | Encounters list and detail, statistics, settings, and empty states on the new tokens. | safe | ~450 | 23c | in-review |
+| 23c | The Counter as centrepiece | The count in a large expressive container, spring motion on tally and undo, the walk chip and photo button restyled. | safe | ~350 | 23b | merged |
+| 23d | List, detail and stats rhythm | Encounters list and detail, statistics, settings, and empty states on the new tokens. | safe | ~450 | 23c | merged |
 | 22 | Cat coat | Coat **grid** on the Counter that logs a cat in one tap, coat on the encounter detail (set/clear), "By coat" block in Statistics; `SetCoat` use case. | safe | ~450 | 9, 13 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -259,6 +259,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-23: **v1 complete**: every slice in this map is merged, and the statuses above are reconciled with the merged pull requests (several had stayed at `in-review` after merging). Released as `v1.0.0-beta`, a debug-signed pre-release, since nothing has yet run on a real phone. From here a pull request merges only once its CI run is green; the Map epic gets its own decomposition map.
 - 2026-09-23: owner asked for a **Photo button on the widget** that opens the app in camera mode. Mapped as 19b rather than folded into the design pass: it is behaviour, not styling. The widget is now placed two cells wide so the button is there by default; one cell keeps the count alone.
 - 2026-09-23: **design direction C (expressive), with coats as cat faces.** The owner compared three directions (radar instrument, field notebook, expressive), then three more drawn from scrn.gallery references (Arc Search, Drinkit, Revolut, Pool, Craft, Headspace, Tolan, Hero's Journey), and chose C, keeping some of B's editorial touches in view. Coats become cat faces coloured by their real markings rather than flat swatches. Slice 23 split into 23a–23d: a whole-app restyle is well past one review-sized PR. `MaterialExpressiveTheme` and `MotionScheme` turned out to be internal in the stable material3 1.4.0, so the pass stays on stable APIs and writes its spring motion by hand rather than taking a 1.5 alpha.
 - 2026-09-22: **walking mode ruled to not define an outing.** Owner asked for a mode that keeps a
