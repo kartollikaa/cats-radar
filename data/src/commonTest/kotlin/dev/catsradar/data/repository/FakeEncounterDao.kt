@@ -21,7 +21,6 @@ internal data class AttachLocationCall(
 
 internal class FakeEncounterDao : EncounterDao {
     var observeAllResult: List<EncounterEntity> = emptyList()
-    var observeActiveCountResult: Int = 0
     var observeByIdResult: EncounterEntity? = null
     var findBySourceDigestResult: EncounterEntity? = null
     var purgeDeletedBeforeResult: Int = 0
@@ -39,8 +38,6 @@ internal class FakeEncounterDao : EncounterDao {
     var loadDeletedBeforeCall: Instant? = null
 
     override fun observeAll(): Flow<List<EncounterEntity>> = flowOf(observeAllResult)
-
-    override fun observeActiveCount(): Flow<Int> = flowOf(observeActiveCountResult)
 
     override fun observeById(id: String): Flow<EncounterEntity?> {
         observeByIdCall = id

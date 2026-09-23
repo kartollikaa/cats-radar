@@ -8,7 +8,6 @@ import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
-import dev.catsradar.domain.usecase.ObserveEncounterCount
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
@@ -45,7 +44,6 @@ val domainModule = module {
         )
     }
     factoryOf(::UndoLastTally)
-    factoryOf(::ObserveEncounterCount)
     factoryOf(::ObserveEncounters)
     factoryOf(::ObserveRegion)
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
