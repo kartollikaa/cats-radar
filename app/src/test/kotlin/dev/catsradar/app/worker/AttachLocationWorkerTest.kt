@@ -13,6 +13,7 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
@@ -71,13 +72,8 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
         }
     }
 
-    override suspend fun setPlaceCell(
-        id: String,
-        lat: Double,
-        lon: Double,
-        geohash: String,
-        placeCellId: String,
-    ): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
+        throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")

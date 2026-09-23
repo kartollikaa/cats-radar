@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.flow.Flow
@@ -172,13 +173,8 @@ private class FakeEncounterRepository : EncounterRepository {
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
         throw NotImplementedError("unused by this test")
 
-    override suspend fun setPlaceCell(
-        id: String,
-        lat: Double,
-        lon: Double,
-        geohash: String,
-        placeCellId: String,
-    ): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
+        throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")

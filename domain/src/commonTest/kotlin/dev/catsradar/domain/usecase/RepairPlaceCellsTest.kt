@@ -66,7 +66,38 @@ class RepairPlaceCellsTest {
         repair(cells)
 
         assertEquals(listOf(PlaceCells.untried(BARCELONA_CELL)), cells.observeAll().first())
-        assertTrue(encounters.setPlaceCellCalls.isEmpty())
+        assertTrue(encounters.setPlaceCellsCalls.isEmpty())
+    }
+
+    @Test
+    fun `a cat with the right cell but no geohash gets its geohash`() = runTest {
+        encounters.insert(located("cat", placeCellId = BARCELONA_CELL))
+
+        repair(FakePlaceCellRepository(listOf(namedBarcelona)))
+
+        assertEquals(BARCELONA_GEOHASH, encounters.observeById("cat").first()!!.geohash)
+    }
+
+    @Test
+    fun `a soft-deleted cat is repaired too, so an undo brings it back whole`() = runTest {
+        encounters.insert(located("deleted").copy(deletedAt = at))
+
+        repair(FakePlaceCellRepository())
+
+        val repaired = encounters.loadEvery().single()
+        assertEquals(BARCELONA_GEOHASH, repaired.geohash)
+        assertEquals(BARCELONA_CELL, repaired.placeCellId)
+    }
+
+    @Test
+    fun `every repaired cat lands in one write`() = runTest {
+        encounters.insert(located("first"))
+        encounters.insert(located("second"))
+
+        repair(FakePlaceCellRepository())
+
+        val writes = encounters.setPlaceCellsCalls.map { batch -> batch.map { it.encounterId } }
+        assertEquals(listOf(listOf("first", "second")), writes)
     }
 
     @Test
@@ -112,11 +143,10 @@ class RepairPlaceCellsTest {
         encounters.insert(encounterFixture("marked-none", at, LocationSource.NONE, BARCELONA_LAT, BARCELONA_LON))
         encounters.insert(encounterFixture("off-globe", at, LocationSource.CURRENT_FIX, lat = 91.0, lon = 2.0))
         encounters.insert(encounterFixture("half-a-point", at, LocationSource.EXIF, lat = BARCELONA_LAT))
-        encounters.insert(located("deleted").copy(deletedAt = at))
 
         repair(cells)
 
-        assertTrue(encounters.setPlaceCellCalls.isEmpty())
+        assertTrue(encounters.setPlaceCellsCalls.isEmpty())
         assertTrue(cells.upserted.isEmpty())
     }
 

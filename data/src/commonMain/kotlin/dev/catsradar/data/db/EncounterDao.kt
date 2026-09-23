@@ -6,6 +6,7 @@ import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
@@ -80,6 +81,12 @@ interface EncounterDao {
         """
     )
     suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String)
+
+    // One transaction, so observers are invalidated once rather than once per row.
+    @Transaction
+    suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>) {
+        assignments.forEach { setPlaceCell(it.encounterId, it.lat, it.lon, it.geohash, it.placeCellId) }
+    }
 
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?

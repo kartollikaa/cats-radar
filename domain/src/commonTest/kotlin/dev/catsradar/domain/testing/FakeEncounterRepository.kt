@@ -2,6 +2,7 @@ package dev.catsradar.domain.testing
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,7 @@ class FakeEncounterRepository : EncounterRepository {
     val softDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
     val undoDeleteAllCalls = mutableListOf<Pair<List<String>, Instant>>()
     val attachLocationCalls = mutableListOf<String>()
-    val setPlaceCellCalls = mutableListOf<String>()
+    val setPlaceCellsCalls = mutableListOf<List<PlaceCellAssignment>>()
     val purgeCalls = mutableListOf<Instant>()
 
     // Mirrors the DAO's deletedAt IS NULL filter; a fake that returned deleted rows here would
@@ -60,16 +61,15 @@ class FakeEncounterRepository : EncounterRepository {
         }
     }
 
-    // Mirrors the DAO's WHERE lat = :lat AND lon = :lon guard.
-    override suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String) {
-        setPlaceCellCalls += id
+    // Mirrors the DAO's WHERE lat = :lat AND lon = :lon guard, which ignores deletedAt.
+    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>) {
+        setPlaceCellsCalls += assignments
         encounters.update { list ->
-            list.map {
-                if (it.id == id && it.lat == lat && it.lon == lon) {
-                    it.copy(geohash = geohash, placeCellId = placeCellId)
-                } else {
-                    it
+            list.map { encounter ->
+                val assignment = assignments.firstOrNull {
+                    it.encounterId == encounter.id && it.lat == encounter.lat && it.lon == encounter.lon
                 }
+                assignment?.let { encounter.copy(geohash = it.geohash, placeCellId = it.placeCellId) } ?: encounter
             }
         }
     }

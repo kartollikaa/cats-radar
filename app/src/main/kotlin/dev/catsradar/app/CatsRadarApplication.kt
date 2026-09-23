@@ -58,7 +58,8 @@ class CatsRadarApplication : Application() {
         }
         koin.get<WidgetRefresh>().start(appScope)
         koin.get<PlaceNamingTrigger>().start(appScope)
-        appScope.launch { koin.get<RepairPlaceCells>()() }
+        // A repair that fails is retried at the next start; it must never take the app down with it.
+        appScope.launch { runCatching { koin.get<RepairPlaceCells>()() } }
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

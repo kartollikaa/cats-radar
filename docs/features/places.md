@@ -22,11 +22,13 @@ that knows exactly where it was and still reads as "no location" in this screen.
 
 A cat stored without them anyway — by an earlier version, or by a restore that took the archive's
 geohash and cell as written — gets them at the next launch. `RepairPlaceCells` runs at every process
-start and gives each located cat the geohash and cell its coordinates imply. A missing cell is
-created pending, like any new one, so it gets named. Only those two columns are written. `updatedAt`
-stays as it was, because the cat itself has not changed. A cat whose coordinates changed while the
-repair was running is left alone. Without the repair such a cat would sit under "Not named yet" for
-good, because nothing ever looks up a cell that does not exist.
+start and gives each located cat the geohash and cell its coordinates imply. That includes deleted
+cats, so an undo brings back a whole row. A missing cell is created pending, like any new one, so it
+gets named. Only those two columns are written, all rows in one transaction. `updatedAt` stays as it
+was, because the cat itself has not changed. A cat whose coordinates changed while the repair was
+running is left alone. If the repair fails, the next start runs it again. Without the repair such a
+cat would sit under "Not named yet" for good, because nothing ever looks up a cell that does not
+exist.
 
 A cell's centre is the point the geocoder is asked about. Every path that creates a cell takes it
 from the cell's id — an import too, which derives it from the id again rather than reading it from
@@ -106,14 +108,17 @@ Every level is sorted busiest first.
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 
 - **Not named yet** — cats with coordinates whose cell has no name (pending, failed, or no
-  geocoder). It drills into areas like any country would.
-- **No location** — cats with no coordinates at all. It drills straight to the cats.
+  geocoder) or does not exist yet. It drills into areas like any country would.
+- **No location** — cats without a location: no coordinates, coordinates off the globe, or a cat
+  marked as having none. It drills straight to the cats.
 
 Their counts are what make the tree honest: **the counts of every sibling add up to the number of
 cats**, so a drill-down never quietly loses one. That invariant has its own test.
 
 An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
-geohash, so they work with no network and even for cells that were never named. An area whose cells
+coordinates themselves, so they work with no network and even for cells that were never named or
+never created. A cat with coordinates therefore always lands in an area, even before the repair above
+has run. An area whose cells
 disagree takes the name most of them agree on.
 
 ## Not built yet
