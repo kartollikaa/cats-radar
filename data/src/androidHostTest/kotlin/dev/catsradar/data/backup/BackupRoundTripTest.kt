@@ -37,6 +37,7 @@ import java.io.File
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -116,6 +117,7 @@ class BackupRoundTripTest {
                 coat = CatCoat.GINGER_WHITE,
                 photoPath = "photo.jpg",
                 thumbPath = "photo_thumb.jpg",
+                galleryUri = "content://media/external/images/media/42",
                 sourceDigest = "9f86d081884c7d65",
             ),
         )
@@ -123,15 +125,26 @@ class BackupRoundTripTest {
         here.encounters.insert(tally("deleted", Morning + 20.minutes))
         here.encounters.softDelete("deleted", Morning + 30.minutes)
         here.placeCells.upsert(resolvedCellFor(lat = 41.39864, lon = 2.17842))
+        here.placeCells.upsert(noGeocoderCell)
         here.walks.upsert(Walk("walk", Morning, Morning + 40.minutes, "phone-a", Morning, Morning + 40.minutes))
+        here.walks.upsert(Walk("on", Morning + 1.hours, null, "phone-a", Morning + 1.hours, Morning + 1.hours))
         here.walks.appendPoints(
             listOf(
                 TrackPoint("walk", Morning + 1.minutes, 41.3985, 2.1783, 6.5f),
                 TrackPoint("walk", Morning + 2.minutes, 41.3987, 2.1786, 9f),
+                TrackPoint("on", Morning + 1.hours + 3.minutes, 41.3990, 2.1790, 5f),
             ),
         )
         return photos
     }
+
+    // What the import rules make of the two rows that do not travel as written: an unnamed cell is
+    // tried again on the new device, and a walk being recorded elsewhere cannot go on here.
+    private fun Snapshot.asImported() = copy(
+        encounters = encounters.filter { it.deletedAt == null },
+        placeCells = placeCells.map { if (it.cellId == noGeocoderCell.cellId) untried(it.cellId) else it },
+        walks = walks.map { if (it.id == "on") it.copy(endedAt = Morning + 1.hours + 3.minutes) else it },
+    )
 
     private suspend fun wipe(photos: Map<String, ByteArray>) {
         photos.keys.forEach { path -> photoStorage.delete(path) }
@@ -146,9 +159,7 @@ class BackupRoundTripTest {
 
         elsewhere.import(archive)
 
-        val original = here.snapshot()
-        val live = original.copy(encounters = original.encounters.filter { it.deletedAt == null })
-        assertEquals(live, elsewhere.snapshot())
+        assertEquals(here.snapshot().asImported(), elsewhere.snapshot())
         photos.forEach { (path, bytes) ->
             assertTrue(bytes.contentEquals(photoStorage.fileFor(path).readBytes()), path)
         }
@@ -224,6 +235,30 @@ private fun located(id: String, at: Instant, lat: Double, lon: Double): Encounte
         geohash = geohash,
         placeCellId = Geohash.prefix(geohash, Tuning.PLACE_CELL_PRECISION),
         updatedAt = at + 1.minutes,
+    )
+}
+
+private val noGeocoderCell = untried("sp3e3w").copy(
+    status = PlaceStatus.UNAVAILABLE,
+    attempts = 1,
+    lastAttemptAt = Morning + 15.minutes,
+)
+
+private fun untried(cellId: String): PlaceCell {
+    val bounds = Geohash.decode(cellId)
+    return PlaceCell(
+        cellId = cellId,
+        centerLat = bounds.centerLat,
+        centerLon = bounds.centerLon,
+        countryCode = null,
+        countryName = null,
+        adminArea = null,
+        locality = null,
+        subLocality = null,
+        status = PlaceStatus.PENDING,
+        attempts = 0,
+        lastAttemptAt = null,
+        resolvedAt = null,
     )
 }
 
