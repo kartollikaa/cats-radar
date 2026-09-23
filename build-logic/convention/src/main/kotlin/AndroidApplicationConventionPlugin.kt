@@ -33,6 +33,20 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 configureLintSeverity()
                 checkDependencies = true
             }
+            signReleaseWithLocalKey(target)
         }
     }
+}
+
+// The key never enters the repo: without these properties a release build is left unsigned.
+private fun ApplicationExtension.signReleaseWithLocalKey(project: Project) {
+    fun property(name: String) = project.providers.gradleProperty("catsradar.release.$name")
+    val storeFile = property("storeFile").orNull ?: return
+    val key = signingConfigs.create("release") {
+        this.storeFile = project.file(storeFile)
+        storePassword = property("storePassword").get()
+        keyAlias = property("keyAlias").get()
+        keyPassword = property("keyPassword").get()
+    }
+    buildTypes.getByName("release").signingConfig = key
 }

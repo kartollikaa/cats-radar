@@ -1,0 +1,42 @@
+# Releasing
+
+A release is a GitHub pre-release tagged `v<versionName>` on the merge of a `tech/release-<version>`
+pull request, with the release APK attached.
+
+## The version
+
+`app-versionCode` and `app-versionName` in `gradle/libs.versions.toml`. The code goes up by one every
+release: Android refuses an update whose version code is not higher than the one installed.
+
+## The signing key
+
+A release build is signed with a key that never enters the repository. The build reads it from four
+Gradle properties, normally kept in `~/.gradle/gradle.properties`:
+
+```
+catsradar.release.storeFile
+catsradar.release.storePassword
+catsradar.release.keyAlias
+catsradar.release.keyPassword
+```
+
+Without them `assembleRelease` still builds, but leaves `app-release-unsigned.apk`, which no phone will
+install. Nothing else changes, which is why CI builds and checks without a key.
+
+The key is the app's identity. Every later version has to be signed with the same key to install as
+an update over the last one; a build signed with any other key installs only after the old app is
+removed. Keep the keystore file and its password backed up somewhere other than this machine.
+
+A debug build is signed with the machine's debug key, not this one, so a phone that has a debug build
+installed has to remove it before the first release build will install. Export a backup first:
+removing the app removes its cats.
+
+## Cutting one
+
+1. Merge a `tech/release-<version>` pull request that bumps both version values and marks the epic's
+   slices in its decomposition map.
+2. On that merge, `./gradlew :app:assembleRelease`.
+3. `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` shows the release
+   key's certificate, not `Android Debug`.
+4. `gh release create v<versionName> --prerelease --target <merge commit>`, with the APK attached as
+   `cats-radar-<versionName>.apk`.
