@@ -139,5 +139,7 @@
         <item quantity="other">cats today</item>
     </plurals>
     <string name="widget_tally">Log a cat</string>
-    <string name="widget_description">Today\'s cats, and one tap to add another</string>
+    <string name="widget_description">Today\'s cats: one tap adds another, or opens the camera</string>
+    <string name="widget_photo">Photo</string>
+    <string name="widget_photo_action">Photograph a cat</string>
 </resources>
