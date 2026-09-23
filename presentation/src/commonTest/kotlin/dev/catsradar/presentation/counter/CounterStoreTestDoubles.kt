@@ -201,7 +201,7 @@ internal class FakeExifReader(var data: ExifData = ExifData()) : ExifReader {
 internal class FakeImageResizer(
     var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
 ) : ImageResizer {
-    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? = result
+    override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? = result
 }
 
 internal class FakeDigest : Digest {

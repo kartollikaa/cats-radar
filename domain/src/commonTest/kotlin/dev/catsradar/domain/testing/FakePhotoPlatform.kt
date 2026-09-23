@@ -5,6 +5,7 @@ import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.platform.ExifReader
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.ImageResizer
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.ReportedJob
@@ -33,8 +34,15 @@ class FakeImageResizer(
     /** Sources that cannot be decoded, however [result] is set. */
     val undecodable = mutableSetOf<String>()
 
-    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? {
+    val baseNames = mutableListOf<String>()
+
+    /** Runs while the copy is being made, for what else happens to the cat in the meantime. */
+    var duringStore: suspend () -> Unit = {}
+
+    override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
         calls++
+        baseNames += baseName
+        duringStore()
         return result.takeIf { sourceUri !in undecodable }
     }
 
@@ -110,4 +118,14 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
     override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
 
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
+}
+
+class RecordingPhotoStorage : PhotoStorage {
+    val deleted = mutableListOf<String>()
+
+    override fun resolve(relativePath: String): String = "/photos/$relativePath"
+
+    override suspend fun delete(relativePath: String) {
+        deleted += relativePath
+    }
 }
