@@ -1,9 +1,14 @@
 package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.CatCoat
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.encounters.EncountersStateMapper
+import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,15 +20,18 @@ import kotlin.time.Instant
 
 class MapStateMapperTest {
 
-    private val mapper = MapStateMapper()
+    private val encountersMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
+    private val mapper = MapStateMapper(encountersMapper)
+
+    private fun map(encounters: List<Encounter>, spot: Set<String>? = null) = mapper.map(encounters, TODAY, spot)
 
     private fun located(id: String, lat: Double, lon: Double, coat: CatCoat? = null) =
         encounterFixture(id, BASE).copy(lat = lat, lon = lon, coat = coat)
 
     @Test
     fun `with no cat located, the map is empty`() {
-        assertEquals(MapState.Empty, mapper.map(emptyList()))
-        assertEquals(MapState.Empty, mapper.map(listOf(encounterFixture("tally", BASE))))
+        assertEquals(MapState.Empty, map(emptyList()))
+        assertEquals(MapState.Empty, map(listOf(encounterFixture("tally", BASE))))
     }
 
     @Test
@@ -32,7 +40,7 @@ class MapStateMapperTest {
         val deleted = located("deleted", 41.40, 2.18).copy(deletedAt = BASE + 1.hours)
         val unlocated = encounterFixture("unlocated", BASE + 5.minutes)
 
-        val state = assertIs<MapState.Located>(mapper.map(listOf(ginger, deleted, unlocated)))
+        val state = assertIs<MapState.Located>(map(listOf(ginger, deleted, unlocated)))
 
         assertEquals(persistentListOf(MapPoint("ginger", 41.39, 2.17, CoatOption.GINGER)), state.points)
     }
@@ -47,16 +55,16 @@ class MapStateMapperTest {
             located("not a number", Double.NaN, 2.17),
         )
 
-        val state = assertIs<MapState.Located>(mapper.map(cats))
+        val state = assertIs<MapState.Located>(map(cats))
 
         assertEquals(persistentListOf(MapPoint("real", 41.39, 2.17, coat = null)), state.points)
-        assertEquals(MapState.Empty, mapper.map(cats.drop(1)))
+        assertEquals(MapState.Empty, map(cats.drop(1)))
     }
 
     @Test
     fun `the map opens on the area around every located cat`() {
         val state = assertIs<MapState.Located>(
-            mapper.map(listOf(located("a", 41.30, 2.10), located("b", 41.45, 2.25), located("c", 41.35, 2.20))),
+            map(listOf(located("a", 41.30, 2.10), located("b", 41.45, 2.25), located("c", 41.35, 2.20))),
         )
 
         assertEquals(MapArea(south = 41.30, west = 2.10, north = 41.45, east = 2.25), state.area)
@@ -64,7 +72,7 @@ class MapStateMapperTest {
 
     @Test
     fun `a lone cat opens on a street-sized area centred on it, not on a doorstep`() {
-        val state = assertIs<MapState.Located>(mapper.map(listOf(located("lone", 41.39, 2.17))))
+        val state = assertIs<MapState.Located>(map(listOf(located("lone", 41.39, 2.17))))
 
         val area = state.area
         assertTrue(abs((area.north - area.south) - 0.01) < 1e-9, "latitude span ${area.north - area.south}")
@@ -76,7 +84,7 @@ class MapStateMapperTest {
     @Test
     fun `cats along one east-west street widen only the side that is too narrow`() {
         val state =
-            assertIs<MapState.Located>(mapper.map(listOf(located("west", 41.39, 2.10), located("east", 41.39, 2.20))))
+            assertIs<MapState.Located>(map(listOf(located("west", 41.39, 2.10), located("east", 41.39, 2.20))))
 
         assertEquals(2.10, state.area.west)
         assertEquals(2.20, state.area.east)
@@ -84,13 +92,31 @@ class MapStateMapperTest {
     }
 
     @Test
+    fun `a spot lists its live cats in the list's own grouping, and counts them`() {
+        val a = located("a", 41.39, 2.17)
+        val b = located("b", 41.39, 2.17).copy(occurredAt = BASE + 5.minutes)
+        val gone = located("gone", 41.39, 2.17).copy(deletedAt = BASE + 1.hours)
+        val cats = listOf(a, b, gone, located("elsewhere", 41.40, 2.18))
+
+        val state = assertIs<MapState.Located>(map(cats, spot = setOf("a", "b", "gone")))
+
+        assertEquals(
+            MapSpot(catCount = 2, rows = encountersMapper.map(listOf(a, b), TODAY, grid = false).rows),
+            state.spot,
+        )
+        assertEquals(null, assertIs<MapState.Located>(map(cats)).spot)
+        assertEquals(null, assertIs<MapState.Located>(map(cats, spot = setOf("gone"))).spot)
+    }
+
+    @Test
     fun `a cat by a pole never opens on an area past it`() {
-        val state = assertIs<MapState.Located>(mapper.map(listOf(located("polar", 89.999, 10.0))))
+        val state = assertIs<MapState.Located>(map(listOf(located("polar", 89.999, 10.0))))
 
         assertEquals(90.0, state.area.north)
     }
 
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
+        val TODAY = LocalDate(2026, 9, 22)
     }
 }

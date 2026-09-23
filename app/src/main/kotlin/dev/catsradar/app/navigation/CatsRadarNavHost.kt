@@ -101,7 +101,9 @@ internal fun catsRadarEntries(
             onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
-    entry<CatsMap>(metadata = tabRootMetadata()) { MapDestination(contentPadding = contentPadding) }
+    entry<CatsMap>(metadata = tabRootMetadata()) {
+        MapDestination(contentPadding = contentPadding, onOpenCat = { id -> backStack.push(EncounterDetail(id)) })
+    }
     entry<Statistics>(metadata = tabRootMetadata()) {
         StatisticsDestination(
             contentPadding = contentPadding,

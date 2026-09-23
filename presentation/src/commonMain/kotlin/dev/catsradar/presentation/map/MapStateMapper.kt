@@ -2,7 +2,9 @@ package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.encounters.EncountersStateMapper
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.datetime.LocalDate
 
 // About a kilometre: one cat, or several on one street, should open on the street rather than a doorstep.
 private const val MIN_AREA_DEGREES = 0.01
@@ -10,12 +12,22 @@ private const val MIN_AREA_DEGREES = 0.01
 private const val MAX_LATITUDE = 90.0
 private const val MAX_LONGITUDE = 180.0
 
-class MapStateMapper {
+class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
 
-    fun map(encounters: List<Encounter>): MapState {
+    /** [spot] holds the ids of the cats the user opened together, if any. */
+    fun map(encounters: List<Encounter>, today: LocalDate, spot: Set<String>? = null): MapState {
         val points = encounters.mapNotNull { it.toPoint() }
         if (points.isEmpty()) return MapState.Empty
-        return MapState.Located(points = points.toImmutableList(), area = areaAround(points))
+        return MapState.Located(
+            points = points.toImmutableList(),
+            area = areaAround(points),
+            spot = spot?.let { ids -> spotOf(encounters.filter { it.id in ids && it.deletedAt == null }, today) },
+        )
+    }
+
+    private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
+        if (cats.isEmpty()) return null
+        return MapSpot(catCount = cats.size, rows = encountersMapper.map(cats, today, grid = false).rows)
     }
 
     private fun Encounter.toPoint(): MapPoint? {

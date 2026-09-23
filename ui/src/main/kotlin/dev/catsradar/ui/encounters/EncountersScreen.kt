@@ -40,9 +40,16 @@ import dev.catsradar.presentation.encounters.PhotoCell
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
+
+private val RowInset = 16.dp
+private val CardTextInset = 12.dp
+
+/** Where a list row's text starts, for a heading above [EncounterRows] that lines up with it. */
+internal val EncounterListTextInset = RowInset + CardTextInset
 
 @Composable
 fun EncountersScreen(
@@ -83,7 +90,16 @@ fun EncountersScreen(
             if (state.isEmpty) {
                 EmptyEncounters(modifier = Modifier.fillMaxSize().padding(listPadding))
             } else {
-                EncountersList(state, listState, listPadding, onEncounterClick, onEncounterLongClick)
+                EncounterRows(
+                    rows = state.rows,
+                    layout = state.layout,
+                    modifier = Modifier.fillMaxSize(),
+                    listState = listState,
+                    contentPadding = listPadding,
+                    selecting = state.isSelecting,
+                    onEncounterClick = onEncounterClick,
+                    onEncounterLongClick = onEncounterLongClick,
+                )
             }
             state.removedCount?.let { count ->
                 UndoBar(
@@ -99,25 +115,27 @@ fun EncountersScreen(
     }
 }
 
+/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout]. */
 @Composable
-private fun EncountersList(
-    state: EncountersState,
-    listState: LazyListState,
-    contentPadding: PaddingValues,
-    onEncounterClick: (String) -> Unit,
-    onEncounterLongClick: (String) -> Unit,
+internal fun EncounterRows(
+    rows: ImmutableList<EncountersRow>,
+    layout: EncountersLayout,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(),
+    selecting: Boolean = false,
+    onEncounterClick: (String) -> Unit = {},
+    onEncounterLongClick: (String) -> Unit = {},
 ) {
-    val list = state.layout == EncountersLayout.LIST
-    val selecting = state.isSelecting
+    val list = layout == EncountersLayout.LIST
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         state = listState,
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(if (list) ListRowGap else CellGap),
     ) {
-        items(items = state.rows, key = { it.key }, contentType = { it::class }) { row ->
-            val rowModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        items(items = rows, key = { it.key }, contentType = { it::class }) { row ->
+            val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
             when (row) {
                 is OutingHeader -> OutingHeaderRow(row, alignWithCardText = list, modifier = rowModifier)
                 is EncountersRow.PhotoPair ->
@@ -139,7 +157,13 @@ private fun OutingHeaderRow(header: OutingHeader, alignWithCardText: Boolean, mo
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
             .padding(top = 16.dp)
-            .then(if (alignWithCardText) Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp) else Modifier),
+            .then(
+                if (alignWithCardText) {
+                    Modifier.padding(start = CardTextInset, end = CardTextInset, bottom = 4.dp)
+                } else {
+                    Modifier
+                },
+            ),
     )
 }
 
