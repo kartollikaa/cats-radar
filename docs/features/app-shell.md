@@ -63,9 +63,11 @@ before Compose draws its first frame; `WindowBackgroundTest` fails if the two dr
 draws, with the same paths and the ginger-and-white coat's colours. The rings and the sweep are the
 palette's seed teal, with a blip just behind the sweep line. The cat is the adaptive icon's
 foreground and the radar its background, so the launcher's parallax moves them apart. The themed
-(monochrome) layer is the head's silhouette with the eyes and nose cut out, plus the blip. The
-drawables cannot share `CatFace.kt`'s paths, so a change to the face there has to be copied into
-the three `ic_launcher_*` drawables by hand.
+(monochrome) layer is the head's silhouette with the eyes and nose cut out, plus the blip. A
+vector drawable cannot read a Kotlin constant, so the foreground and monochrome drawables carry
+their own copies of the face's paths. `LauncherIconTest` fails if either copy stops matching
+`CatFacePaths`, so a change to the face has to be copied into both. The outer ring stays inside the
+safe zone, so a launcher shape with inward curves never cuts it.
 
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
