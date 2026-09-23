@@ -54,7 +54,8 @@ row counts stop being trivial to read and group on every emission.
   (`EncounterGridRow`, and the `EncounterListItem` rows the Places area list uses),
   `EncounterGridPacker`, `EncountersIntent`, `EncountersEffect`, `EncountersStore`,
   `EncountersStateMapper`
-- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`,
+  `EncounterSingleRow.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/` — `BottomNavTab`, `CatsRadarBottomBar`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
   (`BottomNavBackStack`), `CatsRadarNavHost.kt`
@@ -81,6 +82,16 @@ the coat's face, else a paw. Tiles and pair tiles have no room for the location,
 itself to accessibility services as its subject (the photo, the coat's name, or "a cat"), time and
 location; a card's own text says the same. With nothing logged, the tab says so and points at the
 Counter.
+
+## Grid or list
+
+The grid is optional: **Settings → Encounters → Grid of cats** (`SettingsRepository.encountersGrid()`, on
+unless turned off). Off, the tab goes back to one full row per cat, and each outing reads as one card:
+its rows are cards of their own with a hairline gap, round at the outing's outer corners and tight where
+they meet. The mapper marks each row as the first, a middle, the last or the only one of its outing
+(`GroupPosition`), and states the layout (`EncountersLayout`) so the screen only picks the gaps and the
+header's inset. `EncountersStore` combines the setting with the encounters, so flipping the switch
+re-lays an open tab without waiting for a new cat. The Places area list is the same either way.
 
 ## Not handled yet
 

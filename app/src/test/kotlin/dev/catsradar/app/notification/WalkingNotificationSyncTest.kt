@@ -155,6 +155,8 @@ private class FakeWalkingSettings : SettingsRepository {
     override suspend fun setSaveOriginalsToGallery(enabled: Boolean) = Unit
     override fun lastSeenMilestone(): Flow<Int> = MutableStateFlow(Int.MAX_VALUE)
     override suspend fun setLastSeenMilestone(value: Int) = Unit
+    override fun encountersGrid(): Flow<Boolean> = MutableStateFlow(true)
+    override suspend fun setEncountersGrid(enabled: Boolean) = Unit
 }
 
 private class FakeEncounterRepository : EncounterRepository {

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import dev.catsradar.presentation.counter.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -119,5 +120,26 @@ class SettingsStoreTest {
         runCurrent()
 
         assertEquals(false, store.state.value.saveOriginalsToGallery)
+    }
+
+    @Test
+    fun `the grid switch shows the stored value`() = runTest(mainDispatcher) {
+        val store = SettingsStore(FakeSettingsRepository(encountersGrid = false))
+        runCurrent()
+
+        assertEquals(false, store.state.value.encountersGrid)
+    }
+
+    @Test
+    fun `turning the grid switch off stores it, and the switch follows the stored value`() = runTest(mainDispatcher) {
+        val repository = FakeSettingsRepository(encountersGrid = true)
+        val store = SettingsStore(repository)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.EncountersGridToggled(false))
+        runCurrent()
+
+        assertEquals(false, repository.encountersGrid().first())
+        assertEquals(false, store.state.value.encountersGrid)
     }
 }

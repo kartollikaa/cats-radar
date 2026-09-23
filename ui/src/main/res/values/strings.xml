@@ -135,6 +135,8 @@
     </plurals>
     <string name="settings_walking">Walking mode</string>
     <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
+    <string name="settings_encounters_grid">Grid of cats</string>
+    <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
     <string name="counter_walking_off">Start a walk</string>
     <string name="counter_walking_on">On a walk</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

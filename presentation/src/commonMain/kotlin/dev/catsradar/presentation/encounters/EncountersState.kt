@@ -4,9 +4,14 @@ import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-data class EncountersState(val rows: ImmutableList<EncounterGridRow> = persistentListOf()) {
+data class EncountersState(
+    val rows: ImmutableList<EncounterGridRow> = persistentListOf(),
+    val layout: EncountersLayout = EncountersLayout.GRID,
+) {
     val isEmpty: Boolean get() = rows.isEmpty()
 }
+
+enum class EncountersLayout { GRID, LIST }
 
 sealed interface EncounterGridRow {
     val key: String
@@ -30,7 +35,15 @@ sealed interface EncounterGridRow {
 
         override val key: String get() = "cards-${cells.first().id}"
     }
+
+    /** One cat on a full row, joined to the rows of the same outing above and below it. */
+    data class Single(val cell: EncounterCell, val position: GroupPosition) : EncounterGridRow {
+        override val key: String get() = "single-${cell.id}"
+    }
 }
+
+/** Where a row sits among the rows of its outing. */
+enum class GroupPosition { FIRST, MIDDLE, LAST, ONLY }
 
 /** One row per cat, for lists that show every cat the same way. */
 sealed interface EncounterListItem {

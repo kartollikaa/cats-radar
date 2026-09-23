@@ -184,9 +184,11 @@ internal class FakeSettingsRepository(
     saveOriginals: Boolean = true,
     lastMilestone: Int = 0,
     private val writesFail: Boolean = false,
+    encountersGrid: Boolean = true,
 ) : SettingsRepository {
     private val state = MutableStateFlow(saveOriginals)
     private val milestone = MutableStateFlow(lastMilestone)
+    private val grid = MutableStateFlow(encountersGrid)
 
     override fun saveOriginalsToGallery(): Flow<Boolean> = state
 
@@ -207,5 +209,11 @@ internal class FakeSettingsRepository(
 
     override suspend fun setLastSeenMilestone(value: Int) {
         milestone.value = value
+    }
+
+    override fun encountersGrid(): Flow<Boolean> = grid
+
+    override suspend fun setEncountersGrid(enabled: Boolean) {
+        grid.value = enabled
     }
 }

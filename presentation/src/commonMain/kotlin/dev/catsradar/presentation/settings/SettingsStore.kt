@@ -17,6 +17,9 @@ class SettingsStore(
         settingsRepository.walkingMode()
             .onEach { enabled -> setState { copy(walkingMode = enabled) } }
             .launchIn(viewModelScope)
+        settingsRepository.encountersGrid()
+            .onEach { enabled -> setState { copy(encountersGrid = enabled) } }
+            .launchIn(viewModelScope)
     }
 
     override suspend fun handle(intent: SettingsIntent) {
@@ -26,6 +29,7 @@ class SettingsStore(
             is SettingsIntent.SaveOriginalsToggled ->
                 settingsRepository.setSaveOriginalsToGallery(intent.enabled)
             is SettingsIntent.WalkingModeToggled -> settingsRepository.setWalkingMode(intent.enabled)
+            is SettingsIntent.EncountersGridToggled -> settingsRepository.setEncountersGrid(intent.enabled)
             is SettingsIntent.Backup -> handleBackup(intent)
         }
     }

@@ -16,10 +16,20 @@ class EncountersStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounters: List<Encounter>, today: LocalDate): EncountersState = EncountersState(
+    fun map(encounters: List<Encounter>, today: LocalDate, grid: Boolean = true): EncountersState = EncountersState(
         rows = outingsNewestFirst(encounters)
-            .flatMap { outing -> listOf(outing.header(today)) + outing.gridRows() }
+            .flatMap { outing ->
+                val cats = if (grid) {
+                    outing.gridRows()
+                } else {
+                    outing.mapWithGroupPosition { encounter, position ->
+                        EncounterGridRow.Single(encounter.toCell(), position)
+                    }
+                }
+                listOf(outing.header(today)) + cats
+            }
             .toPersistentList(),
+        layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
     )
 
     fun mapList(encounters: List<Encounter>, today: LocalDate): ImmutableList<EncounterListItem> =
@@ -90,3 +100,14 @@ class EncountersStateMapper(
     private fun Encounter.timeLabel(): String =
         dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
 }
+
+private inline fun <T, R> List<T>.mapWithGroupPosition(transform: (T, GroupPosition) -> R): List<R> =
+    mapIndexed { index, item ->
+        val position = when {
+            lastIndex == 0 -> GroupPosition.ONLY
+            index == 0 -> GroupPosition.FIRST
+            index == lastIndex -> GroupPosition.LAST
+            else -> GroupPosition.MIDDLE
+        }
+        transform(item, position)
+    }

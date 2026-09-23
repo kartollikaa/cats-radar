@@ -24,6 +24,7 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
 import dev.catsradar.presentation.encounters.EncounterCell
 import dev.catsradar.presentation.encounters.EncounterGridRow
+import dev.catsradar.presentation.encounters.EncountersLayout
 import dev.catsradar.presentation.encounters.EncountersState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
@@ -44,30 +45,34 @@ fun EncountersScreen(
         EmptyEncounters(modifier = modifier.fillMaxSize().padding(contentPadding))
         return
     }
+    val list = state.layout == EncountersLayout.LIST
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(CellGap),
+        verticalArrangement = Arrangement.spacedBy(if (list) ListRowGap else CellGap),
     ) {
         items(items = state.rows, key = { it.key }, contentType = { it::class }) { row ->
             val rowModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             when (row) {
-                is OutingHeader -> OutingHeaderRow(row, modifier = rowModifier)
+                is OutingHeader -> OutingHeaderRow(row, alignWithCardText = list, modifier = rowModifier)
                 is EncounterGridRow.PhotoPair -> PhotoPairRow(row, rowModifier, onEncounterClick)
                 is EncounterGridRow.Tiles -> TileRow(row, rowModifier, onEncounterClick)
                 is EncounterGridRow.Cards -> CardRow(row, rowModifier, onEncounterClick)
+                is EncounterGridRow.Single -> SingleRow(row, rowModifier, onEncounterClick)
             }
         }
     }
 }
 
 @Composable
-private fun OutingHeaderRow(header: OutingHeader, modifier: Modifier = Modifier) {
+private fun OutingHeaderRow(header: OutingHeader, alignWithCardText: Boolean, modifier: Modifier = Modifier) {
     Text(
         text = header.label,
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(top = 16.dp),
+        modifier = modifier
+            .padding(top = 16.dp)
+            .then(if (alignWithCardText) Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp) else Modifier),
     )
 }
 

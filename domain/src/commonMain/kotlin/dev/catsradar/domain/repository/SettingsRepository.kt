@@ -17,4 +17,9 @@ interface SettingsRepository {
     fun lastSeenMilestone(): Flow<Int>
 
     suspend fun setLastSeenMilestone(value: Int)
+
+    /** Whether the Encounters tab lays cats out as a grid rather than one row each. On unless turned off. */
+    fun encountersGrid(): Flow<Boolean>
+
+    suspend fun setEncountersGrid(enabled: Boolean)
 }

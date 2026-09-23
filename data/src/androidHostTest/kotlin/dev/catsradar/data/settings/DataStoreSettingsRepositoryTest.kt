@@ -50,4 +50,23 @@ class DataStoreSettingsRepositoryTest {
 
         assertTrue(repository.saveOriginalsToGallery().first())
     }
+
+    @Test
+    fun theEncountersGridIsOnWhenNothingHasEverBeenStored() = runTest {
+        val repository = DataStoreSettingsRepository(newStore(this))
+
+        assertTrue(repository.encountersGrid().first())
+    }
+
+    @Test
+    fun turningTheEncountersGridOffAndOnAgainIsReadBack() = runTest {
+        val repository = DataStoreSettingsRepository(newStore(this))
+
+        repository.setEncountersGrid(false)
+        val off = repository.encountersGrid().first()
+        repository.setEncountersGrid(true)
+
+        assertFalse(off)
+        assertTrue(repository.encountersGrid().first())
+    }
 }

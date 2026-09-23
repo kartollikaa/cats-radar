@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -158,10 +159,15 @@ private fun EncounterTile(cell: EncounterCell, modifier: Modifier = Modifier, on
 }
 
 @Composable
-private fun EncounterCard(cell: EncounterCell, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+internal fun EncounterCard(
+    cell: EncounterCell,
+    modifier: Modifier = Modifier,
+    shape: Shape = MaterialTheme.shapes.medium,
+    onClick: () -> Unit = {},
+) {
     Row(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
+            .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 10.dp),

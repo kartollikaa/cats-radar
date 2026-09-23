@@ -125,6 +125,37 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `with the grid off, every cat is a full row of its outing, placed first to last`() {
+        val oldest = encounterFixture("oldest", BASE)
+        val middle = encounterFixture("middle", BASE + 5.minutes).copy(coat = CatCoat.BLACK)
+        val newest = photoFixture("newest", BASE + 10.minutes)
+        val lone = encounterFixture("lone", BASE + 5.hours)
+
+        val state = mapper.map(listOf(oldest, middle, newest, lone), today, grid = false)
+
+        assertEquals(
+            EncountersState(
+                rows = persistentListOf(
+                    OutingHeader(key = "header-lone", label = "2026-09-22, ${BASE + 5.hours}"),
+                    EncounterGridRow.Single(cell("lone", BASE + 5.hours), GroupPosition.ONLY),
+                    OutingHeader(key = "header-oldest", label = "2026-09-22, $BASE"),
+                    EncounterGridRow.Single(
+                        cell("newest", BASE + 10.minutes, CellLead.Photo("/data/photos/newest_thumb.jpg")),
+                        GroupPosition.FIRST,
+                    ),
+                    EncounterGridRow.Single(
+                        cell("middle", BASE + 5.minutes, CellLead.Coat(CoatOption.BLACK)),
+                        GroupPosition.MIDDLE,
+                    ),
+                    EncounterGridRow.Single(cell("oldest", BASE), GroupPosition.LAST),
+                ),
+                layout = EncountersLayout.LIST,
+            ),
+            state,
+        )
+    }
+
+    @Test
     fun `a pair cat without a full-size copy shows its thumbnail`() {
         val thumbOnly = photoFixture("thumbOnly", BASE).copy(photoPath = null)
         val full = photoFixture("full", BASE + 1.minutes)
@@ -316,6 +347,7 @@ class EncountersStateMapperTest {
             is EncounterGridRow.PhotoPair -> listOf(row.first, row.second).map { CellView(it.id, it.location, null) }
             is EncounterGridRow.Tiles -> row.cells.map { CellView(it.id, it.location, it.lead) }
             is EncounterGridRow.Cards -> row.cells.map { CellView(it.id, it.location, it.lead) }
+            is EncounterGridRow.Single -> listOf(CellView(row.cell.id, row.cell.location, row.cell.lead))
         }
     }
 
