@@ -13,7 +13,7 @@ internal class FakePlaceCellDao : PlaceCellDao {
 
     val upserted = mutableListOf<PlaceCellEntity>()
     var loadByIdCall: String? = null
-    var loadPageCall: Triple<PlaceStatus, Int, Int>? = null
+    var loadPageCall: Triple<PlaceStatus, String?, Int>? = null
 
     override suspend fun upsert(cell: PlaceCellEntity) {
         upserted += cell
@@ -26,8 +26,8 @@ internal class FakePlaceCellDao : PlaceCellDao {
         return loadByIdResult
     }
 
-    override suspend fun loadPage(status: PlaceStatus, limit: Int, offset: Int): List<PlaceCellEntity> {
-        loadPageCall = Triple(status, limit, offset)
+    override suspend fun loadPage(status: PlaceStatus, afterCellId: String?, limit: Int): List<PlaceCellEntity> {
+        loadPageCall = Triple(status, afterCellId, limit)
         return loadPageResult
     }
 }

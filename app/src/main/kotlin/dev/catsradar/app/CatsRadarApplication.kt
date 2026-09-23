@@ -15,6 +15,7 @@ import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
+import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
 import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.FollowWalkingMode
@@ -55,6 +56,7 @@ class CatsRadarApplication : Application() {
             koin.get<FollowWalkingMode>()()
         }
         koin.get<WidgetRefresh>().start(appScope)
+        koin.get<PlaceNamingTrigger>().start(appScope)
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

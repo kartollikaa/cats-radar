@@ -39,15 +39,17 @@ fun CatsRadarBottomBar(
 private fun BottomNavTab.labelRes(): Int = when (this) {
     BottomNavTab.COUNTER -> R.string.tab_counter
     BottomNavTab.ENCOUNTERS -> R.string.tab_encounters
+    BottomNavTab.MAP -> R.string.tab_map
     BottomNavTab.STATISTICS -> R.string.tab_statistics
     BottomNavTab.SETTINGS -> R.string.tab_settings
 }
 
-// Only the gear has a filled form in Material Symbols; the other three glyphs are already solid.
+// Only the map and the gear have a filled form in Material Symbols; the other glyphs are already solid.
 @DrawableRes
 private fun BottomNavTab.iconRes(selected: Boolean): Int = when (this) {
     BottomNavTab.COUNTER -> R.drawable.ic_nav_pets
     BottomNavTab.ENCOUNTERS -> R.drawable.ic_nav_format_list_bulleted
+    BottomNavTab.MAP -> if (selected) R.drawable.ic_nav_map_filled else R.drawable.ic_nav_map
     BottomNavTab.STATISTICS -> R.drawable.ic_nav_bar_chart
     BottomNavTab.SETTINGS -> if (selected) R.drawable.ic_nav_settings_filled else R.drawable.ic_nav_settings
 }

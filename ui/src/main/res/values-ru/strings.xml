@@ -2,7 +2,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="tab_counter">Счётчик</string>
     <string name="tab_encounters">Котики</string>
-    <string name="tab_statistics">Статистика</string>
+    <string name="tab_map">Карта</string>
+    <string name="map_empty">На карте пока нет котиков</string>
+    <string name="map_empty_hint">Котик появится здесь, как только у него будет место</string>
+    <string name="map_unavailable">Карта не загрузилась</string>
+    <string name="map_unavailable_hint">Ей нужен интернет, когда она впервые показывает место. Котики в безопасности на телефоне.</string>
+    <plurals name="map_summary">
+        <item quantity="one">Карта: %d котик</item>
+        <item quantity="few">Карта: %d котика</item>
+        <item quantity="many">Карта: %d котиков</item>
+        <item quantity="other">Карта: %d котика</item>
+    </plurals>
+    <string name="tab_statistics">Итоги</string>
 
     <string name="counter_camera">Фото</string>
     <string name="counter_tally">Отметить кота</string>
@@ -38,6 +49,25 @@
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_photo_description">Фото этого котика</string>
+    <string name="encounters_paw_description">Котик</string>
+    <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
+    <string name="encounters_select">Выбрать</string>
+    <string name="encounters_deselect">Снять выбор</string>
+    <string name="encounters_selection_close">Отменить выбор</string>
+    <string name="encounters_delete_selected">Удалить выбранных</string>
+    <string name="encounters_undo">Вернуть</string>
+    <plurals name="encounters_selected">
+        <item quantity="one">Выбран %1$d котик</item>
+        <item quantity="few">Выбрано %1$d котика</item>
+        <item quantity="many">Выбрано %1$d котиков</item>
+        <item quantity="other">Выбрано %1$d котика</item>
+    </plurals>
+    <plurals name="encounters_removed">
+        <item quantity="one">%1$d котик удалён</item>
+        <item quantity="few">%1$d котика удалено</item>
+        <item quantity="many">%1$d котиков удалено</item>
+        <item quantity="other">%1$d котика удалено</item>
+    </plurals>
 
     <string name="location_from_photo">С фото</string>
     <string name="location_current">Текущее место</string>
@@ -150,6 +180,8 @@
     </plurals>
     <string name="settings_walking">Режим прогулки</string>
     <string name="settings_walking_explained">Уведомление, из которого котик отмечается без разблокировки</string>
+    <string name="settings_encounters_grid">Сетка котиков</string>
+    <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
     <string name="counter_walking_off">Начать прогулку</string>
     <string name="counter_walking_on">На прогулке</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

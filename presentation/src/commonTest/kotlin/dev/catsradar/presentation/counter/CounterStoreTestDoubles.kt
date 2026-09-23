@@ -19,11 +19,14 @@ import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 internal class FakeEncounterRepository : EncounterRepository {
@@ -32,6 +35,15 @@ internal class FakeEncounterRepository : EncounterRepository {
     val softDeletedIds = mutableListOf<String>()
     var insertShouldThrow: Throwable? = null
     var softDeleteShouldThrow: Throwable? = null
+    val softDeleteAllCalls = mutableListOf<List<String>>()
+    var softDeleteAllShouldThrow: Throwable? = null
+    var softDeleteAllGate: CompletableDeferred<Unit>? = null
+    var undoDeleteAllShouldThrow: Throwable? = null
+    var undoDeleteAllGate: CompletableDeferred<Unit>? = null
+
+    /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
+    val insertDelays = ArrayDeque<Duration>()
+    var softDeleteDelay: Duration = Duration.ZERO
 
     fun encounters(): List<Encounter> = encounters.value
 
@@ -40,6 +52,7 @@ internal class FakeEncounterRepository : EncounterRepository {
         encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
 
     override suspend fun insert(encounter: Encounter) {
+        insertDelays.removeFirstOrNull()?.let { delay(it) }
         insertShouldThrow?.let { throw it }
         insertedIds += encounter.id
         encounters.update { it + encounter }
@@ -71,6 +84,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
+        delay(softDeleteDelay)
         softDeleteShouldThrow?.let { throw it }
         softDeletedIds += id
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
@@ -78,6 +92,23 @@ internal class FakeEncounterRepository : EncounterRepository {
 
     override suspend fun undoDelete(id: String) {
         encounters.update { list -> list.map { if (it.id == id) it.copy(deletedAt = null) else it } }
+    }
+
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant) {
+        softDeleteAllCalls += ids
+        softDeleteAllGate?.await()
+        softDeleteAllShouldThrow?.let { throw it }
+        encounters.update { list ->
+            list.map { if (it.id in ids && it.deletedAt == null) it.copy(deletedAt = deletedAt) else it }
+        }
+    }
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) {
+        undoDeleteAllGate?.await()
+        undoDeleteAllShouldThrow?.let { throw it }
+        encounters.update { list ->
+            list.map { if (it.id in ids && it.deletedAt == deletedAt) it.copy(deletedAt = null) else it }
+        }
     }
 
     override suspend fun loadEvery(): List<Encounter> = encounters.value
@@ -166,8 +197,10 @@ internal class FakePlaceCellRepository : PlaceCellRepository {
 
     override suspend fun loadById(cellId: String): PlaceCell? = cells.value.firstOrNull { it.cellId == cellId }
 
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> =
-        cells.value.filter { it.status == PlaceStatus.PENDING }.drop(offset).take(limit)
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
+        cells.value.filter { it.status == PlaceStatus.PENDING && (afterCellId == null || it.cellId > afterCellId) }
+            .sortedBy { it.cellId }
+            .take(limit)
 }
 
 internal class FakeGallerySaver : GallerySaver {
@@ -184,9 +217,11 @@ internal class FakeSettingsRepository(
     saveOriginals: Boolean = true,
     lastMilestone: Int = 0,
     private val writesFail: Boolean = false,
+    encountersGrid: Boolean = true,
 ) : SettingsRepository {
     private val state = MutableStateFlow(saveOriginals)
     private val milestone = MutableStateFlow(lastMilestone)
+    private val grid = MutableStateFlow(encountersGrid)
 
     override fun saveOriginalsToGallery(): Flow<Boolean> = state
 
@@ -207,5 +242,11 @@ internal class FakeSettingsRepository(
 
     override suspend fun setLastSeenMilestone(value: Int) {
         milestone.value = value
+    }
+
+    override fun encountersGrid(): Flow<Boolean> = grid
+
+    override suspend fun setEncountersGrid(enabled: Boolean) {
+        grid.value = enabled
     }
 }

@@ -47,6 +47,8 @@ internal class FakeWalkingSettings : SettingsRepository {
     override suspend fun setSaveOriginalsToGallery(enabled: Boolean) = Unit
     override fun lastSeenMilestone(): Flow<Int> = MutableStateFlow(Int.MAX_VALUE)
     override suspend fun setLastSeenMilestone(value: Int) = Unit
+    override fun encountersGrid(): Flow<Boolean> = MutableStateFlow(true)
+    override suspend fun setEncountersGrid(enabled: Boolean) = Unit
 }
 
 /** One walk, on from [WalkStart] until something ends it. */

@@ -2,6 +2,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="tab_counter">Counter</string>
     <string name="tab_encounters">Encounters</string>
+    <string name="tab_map">Map</string>
+    <string name="map_empty">No cat on the map yet</string>
+    <string name="map_empty_hint">A cat appears here once it has a location</string>
+    <string name="map_unavailable">The map could not load</string>
+    <string name="map_unavailable_hint">It needs the internet the first time it shows an area. Your cats are safe on the phone.</string>
+    <plurals name="map_summary">
+        <item quantity="one">Map with %d cat</item>
+        <item quantity="other">Map with %d cats</item>
+    </plurals>
     <string name="tab_statistics">Stats</string>
 
     <string name="counter_camera">Photo</string>
@@ -32,6 +41,21 @@
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
     <string name="encounters_photo_description">Photo of this cat</string>
+    <string name="encounters_paw_description">A cat</string>
+    <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
+    <string name="encounters_select">Select</string>
+    <string name="encounters_deselect">Deselect</string>
+    <string name="encounters_selection_close">Cancel selection</string>
+    <string name="encounters_delete_selected">Delete selected</string>
+    <string name="encounters_undo">Undo</string>
+    <plurals name="encounters_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="encounters_removed">
+        <item quantity="one">%1$d cat removed</item>
+        <item quantity="other">%1$d cats removed</item>
+    </plurals>
 
     <string name="location_from_photo">From photo</string>
     <string name="location_current">Current location</string>
@@ -134,6 +158,8 @@
     </plurals>
     <string name="settings_walking">Walking mode</string>
     <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
+    <string name="settings_encounters_grid">Grid of cats</string>
+    <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
     <string name="counter_walking_off">Start a walk</string>
     <string name="counter_walking_on">On a walk</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

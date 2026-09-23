@@ -6,6 +6,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import dev.catsradar.ui.testing.MIN_TEXT_CONTRAST
 import dev.catsradar.ui.testing.contrast
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.atan2
@@ -69,6 +70,12 @@ class CatsRadarColorsTest {
         }
 
         assertTrue("still Material's default: $leftovers", leftovers.isEmpty())
+    }
+
+    @Test
+    fun withoutASchemeTheThemeDrawsTheTealPalette() {
+        assertSame(CatsRadarLightColors, catsRadarColorScheme(darkTheme = false))
+        assertSame(CatsRadarDarkColors, catsRadarColorScheme(darkTheme = true))
     }
 
     @Test

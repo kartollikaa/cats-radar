@@ -3,6 +3,7 @@ package dev.catsradar.data.db
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
+import androidx.room3.Transaction
 import androidx.room3.Update
 import dev.catsradar.domain.model.LocationSource
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +31,21 @@ interface EncounterDao {
 
     @Query("UPDATE encounters SET deletedAt = NULL WHERE id = :id")
     suspend fun clearDeletedAt(id: String)
+
+    @Query("UPDATE encounters SET deletedAt = NULL WHERE id = :id AND deletedAt = :deletedAt")
+    suspend fun clearDeletedAtIfDeletedAt(id: String, deletedAt: Instant)
+
+    // Row by row rather than one IN (:ids): SQLite before 3.32 (API < 31) caps a statement at 999
+    // bound variables. The transaction keeps it all-or-nothing and invalidates observers once.
+    @Transaction
+    suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant) {
+        ids.forEach { softDelete(it, deletedAt) }
+    }
+
+    @Transaction
+    suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) {
+        ids.forEach { clearDeletedAtIfDeletedAt(it, deletedAt) }
+    }
 
     // The deletedAt IS NULL guard stops a fix that resolves after the row was undone (an
     // up-to-8-second wait) from writing deletedAt back to NULL and resurrecting it: this touches

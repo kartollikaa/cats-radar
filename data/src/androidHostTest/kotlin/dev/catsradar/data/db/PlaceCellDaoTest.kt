@@ -69,7 +69,7 @@ class PlaceCellDaoTest {
         dao.upsert(pendingPlaceCellEntity("pending-2"))
         dao.upsert(pendingPlaceCellEntity("resolved-1").copy(status = PlaceStatus.RESOLVED))
 
-        val page = dao.loadPage(PlaceStatus.PENDING, limit = 10, offset = 0)
+        val page = dao.loadPage(PlaceStatus.PENDING, afterCellId = null, limit = 10)
 
         assertEquals(setOf("pending-1", "pending-2"), page.map { it.cellId }.toSet())
     }
@@ -80,10 +80,21 @@ class PlaceCellDaoTest {
         dao.upsert(pendingPlaceCellEntity("alpha"))
         dao.upsert(pendingPlaceCellEntity("bravo"))
 
-        val firstPage = dao.loadPage(PlaceStatus.PENDING, limit = 2, offset = 0)
-        val secondPage = dao.loadPage(PlaceStatus.PENDING, limit = 2, offset = 2)
+        val firstPage = dao.loadPage(PlaceStatus.PENDING, afterCellId = null, limit = 2)
+        val secondPage = dao.loadPage(PlaceStatus.PENDING, afterCellId = "bravo", limit = 2)
 
         assertEquals(listOf("alpha", "bravo"), firstPage.map { it.cellId })
+        assertEquals(listOf("charlie"), secondPage.map { it.cellId })
+    }
+
+    @Test
+    fun theNextPageStartsAfterTheLastCellSeenEvenWhenEarlierOnesStoppedBeingPending() = runTest {
+        listOf("alpha", "bravo", "charlie").forEach { dao.upsert(pendingPlaceCellEntity(it)) }
+        val firstPage = dao.loadPage(PlaceStatus.PENDING, afterCellId = null, limit = 2)
+        firstPage.forEach { dao.upsert(it.copy(status = PlaceStatus.RESOLVED)) }
+
+        val secondPage = dao.loadPage(PlaceStatus.PENDING, afterCellId = firstPage.last().cellId, limit = 2)
+
         assertEquals(listOf("charlie"), secondPage.map { it.cellId })
     }
 }

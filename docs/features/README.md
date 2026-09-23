@@ -16,8 +16,8 @@ a document nobody updates is worse than none.
   corrupt row degrades.
 - `outings.md` — the derived-session concept behind an "outing," computed on demand and never
   stored.
-- `browsing-cats.md` — the Encounters list grouped by outing, and the bottom nav's root-stack
-  back rule.
+- `browsing-cats.md` — the Encounters list grouped by outing, selecting and deleting several cats
+  with one undo, and the bottom nav's root-stack back rule.
 - `encounter-detail.md` — one cat's screen: what it shows, soft delete with a bounded undo, and
   what a missing or already-deleted id renders as.
 - `app-shell.md` — theme, navigation, the MVI `Store` contract, and dependency injection.
@@ -40,5 +40,7 @@ a document nobody updates is worse than none.
   an outing.
 - `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
   things that redraw it.
+- `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the
+  one screen that goes online.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

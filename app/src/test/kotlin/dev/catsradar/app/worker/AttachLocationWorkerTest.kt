@@ -39,7 +39,7 @@ private class FakePlaceCellRepository : PlaceCellRepository {
     override fun observeAll(): Flow<List<PlaceCell>> = MutableStateFlow(emptyList())
     override suspend fun upsert(cell: PlaceCell) = Unit
     override suspend fun loadById(cellId: String): PlaceCell? = null
-    override suspend fun loadPendingPage(limit: Int, offset: Int): List<PlaceCell> = emptyList()
+    override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> = emptyList()
 }
 
 private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
@@ -75,6 +75,12 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
 
     override suspend fun loadEvery(): List<Encounter> = encounters.value
