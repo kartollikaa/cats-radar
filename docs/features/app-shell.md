@@ -59,6 +59,14 @@ saturated teal. Each check has been broken on purpose and caught.
 The **window background** is the theme's surface in both modes, because the window is painted
 before Compose draws its first frame; `WindowBackgroundTest` fails if the two drift apart.
 
+**Launcher icon.** A ginger-and-white cat on a dark teal radar. The cat is the face the coat picker
+draws, with the same paths and the ginger-and-white coat's colours. The rings and the sweep are the
+palette's seed teal, with a blip just behind the sweep line. The cat is the adaptive icon's
+foreground and the radar its background, so the launcher's parallax moves them apart. The themed
+(monochrome) layer is the head's silhouette with the eyes and nose cut out, plus the blip. The
+drawables cannot share `CatFace.kt`'s paths, so a change to the face there has to be copied into
+the three `ic_launcher_*` drawables by hand.
+
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
 
