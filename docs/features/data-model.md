@@ -11,12 +11,11 @@ layer leaking into the other.
 after creation, see `coat.md`); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
 `sourceDigest`, covered in `photos.md`; set once — at creation, or later on a cat that had none);
 location (`lat`, `lon`, `accuracyMeters`, `locationSource`, `locationFixedAt`, `geohash`,
-`placeCellId`, covered in `location.md`); and row lifecycle (`createdAt`, `updatedAt`,
-`deletedAt`). `tzOffsetMinutes` is the UTC offset at the moment the
-encounter happened, not the device's offset now — it is what lets "today" and streak calculations
-stay correct for an encounter logged while travelling (see `docs/rules/date-time.md`). `id` must be
-unique across devices, not just on this one: a backup import reconciles rows by it (see
-`backup.md`).
+`placeCellId`, covered in `location.md`); and row lifecycle (`createdAt`, `updatedAt`, `deletedAt`).
+`tzOffsetMinutes` is the UTC offset at the moment the encounter happened, not the device's offset
+now — it is what lets "today" and streak calculations stay correct for an encounter logged while
+travelling (see `docs/rules/date-time.md`). `id` must be unique across devices, not just on this
+one: a backup import reconciles rows by it (see `backup.md`).
 
 ## At the edges
 
@@ -27,11 +26,11 @@ the purge. `softDelete` itself is guarded the same way in reverse — its `UPDAT
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
 *reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `attachPhoto` is guarded both ways
-at once: it writes only the photo columns, and only `WHERE deletedAt IS NULL AND photoPath IS
-NULL`, so giving a cat a photo can neither bring back a deleted one nor replace a photo it has
-(`EncounterDaoAttachPhotoTest`). Two writes clear `deletedAt` on
-purpose, unguarded: `undoDelete`, because undo is meant to resurrect the row, and a backup import
-whose copy of a cat deleted here was edited after the deletion (see `backup.md`).
+at once: it writes only the photo columns and `updatedAt`, and only `WHERE deletedAt IS NULL AND
+photoPath IS NULL`, so giving a cat a photo can neither bring back a deleted one nor replace a photo
+it has (`EncounterDaoAttachPhotoTest`). Two writes clear `deletedAt` on purpose, unguarded:
+`undoDelete`, because undo is meant to resurrect the row, and a backup import whose copy of a cat
+deleted here was edited after the deletion (see `backup.md`).
 
 Undoing a batch is guarded, unlike `undoDelete`. `softDeleteAll` stamps every row of a batch with one
 `deletedAt`, and `undoDeleteAll` clears only rows still carrying exactly that instant, so undoing a
