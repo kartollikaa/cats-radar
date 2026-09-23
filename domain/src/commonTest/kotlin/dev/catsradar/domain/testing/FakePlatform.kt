@@ -4,7 +4,10 @@ import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.LocationProvider
+import dev.catsradar.domain.platform.WalkRecordingState
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 
@@ -18,9 +21,21 @@ class FakeDeviceIdProvider(override val deviceId: String = "device-1") : DeviceI
 class FakeLocationProvider(
     private val currentFix: LocationFix? = null,
     private val lastKnownFix: LocationFix? = null,
+    private val trackedFixes: Flow<LocationFix> = emptyFlow(),
 ) : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? = currentFix
     override suspend fun lastKnown(): LocationFix? = lastKnownFix
+    override fun trackFixes(): Flow<LocationFix> = trackedFixes
+}
+
+class FakeWalkRecordingState(override var recording: Boolean = false) : WalkRecordingState {
+    override fun markRecording() {
+        recording = true
+    }
+
+    override fun markStopped() {
+        recording = false
+    }
 }
 
 // A current fix that never arrives on its own: getCurrentFix only ever returns via the [timeout]
@@ -36,6 +51,7 @@ class HangingLocationProvider(private val lastKnownFix: LocationFix? = null) : L
     }
 
     override suspend fun lastKnown(): LocationFix? = lastKnownFix
+    override fun trackFixes(): Flow<LocationFix> = emptyFlow()
 }
 
 // Simulates a platform implementation that fails to honour its own [timeout]: unlike
@@ -44,4 +60,5 @@ class HangingLocationProvider(private val lastKnownFix: LocationFix? = null) : L
 class MisbehavingLocationProvider : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? = awaitCancellation()
     override suspend fun lastKnown(): LocationFix? = null
+    override fun trackFixes(): Flow<LocationFix> = emptyFlow()
 }

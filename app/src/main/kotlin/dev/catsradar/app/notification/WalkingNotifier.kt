@@ -5,12 +5,15 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import dev.catsradar.app.MainActivity
 import dev.catsradar.app.photo.TakePhotoShortcut
@@ -25,13 +28,13 @@ private const val NOTIFICATION_ID = 2
 /**
  * The walking notification: one tap logs a cat without unlocking the phone or opening the app.
  *
- * There is no foreground service behind it. An ongoing notification survives the app leaving the
- * foreground on its own, and the action's broadcast starts the process again if it has gone — a
- * service would buy nothing here but permissions.
+ * With location allowed it is carried by [WalkRecordingService], which records the walk's route;
+ * without, it is a plain ongoing notification, which outlives the app leaving the screen on its own.
  */
 class WalkingNotifier(private val context: Context) : WalkingNotifications {
 
     private val manager = NotificationManagerCompat.from(context)
+    private val recording = WalkRecordingControl(context)
 
     fun ensureChannel() {
         manager.deleteNotificationChannel(RETIRED_CHANNEL_ID)
@@ -45,8 +48,29 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         )
     }
 
-    override fun show(count: Int) {
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+    override fun show(count: Int, appOnScreen: Boolean) {
+        // A service may only gain location access while the app is on screen; one running keeps it.
+        val recorded = appOnScreen && context.hasPreciseLocation() && recording.start(count)
+        if (!recorded) post(build(count))
+    }
+
+    /** Makes the notification [service]'s own, running it in the foreground with location access. */
+    fun carry(service: Service, count: Int) {
+        ServiceCompat.startForeground(
+            service,
+            NOTIFICATION_ID,
+            build(count),
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+        )
+    }
+
+    override fun clear() {
+        recording.stop()
+        manager.cancel(NOTIFICATION_ID)
+    }
+
+    private fun build(count: Int): Notification =
+        NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(AppR.drawable.ic_notification_cat)
             .setContentTitle(context.getString(R.string.notification_walking_title))
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
@@ -79,12 +103,6 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
                 broadcast(WalkingAction.STOP),
             )
             .build()
-        post(notification)
-    }
-
-    override fun clear() {
-        manager.cancel(NOTIFICATION_ID)
-    }
 
     private fun broadcast(action: String): PendingIntent = PendingIntent.getBroadcast(
         context,
@@ -124,6 +142,11 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         manager.notify(NOTIFICATION_ID, notification)
     }
 }
+
+// Approximate location alone gives fixes too rough for any of them to join a route.
+private fun Context.hasPreciseLocation(): Boolean =
+    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED
 
 internal object WalkingAction {
     const val TALLY = "dev.catsradar.action.WALKING_TALLY"
