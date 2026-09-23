@@ -35,7 +35,7 @@ devices.
   on, however many attempts went into the local one.
 - **Between two names, the fresher lookup wins.**
 - **Between two unnamed cells, the local one stays** — its `attempts` is what the geocoding worker
-  paces its retries by, and an import must not reset that.
+  gives the cell up by, and an import must not reset that.
 - **An unnamed cell this device has never seen arrives untried**: `PENDING`, no attempts, no name,
   exactly as if a cat here had just landed in it — whatever the exporting device concluded. Its
   `FAILED` or `UNAVAILABLE` is a verdict about that device's geocoder, not this one's, and nothing

@@ -273,7 +273,11 @@ class ImportBackupTest {
     fun `a cell whose id is not a place cell is left out of an archive that is otherwise imported`() = runTest {
         val imported = BackupContents(
             encounters = listOf(locatedInMoscow),
-            placeCells = listOf(cell("ucfv0", PlaceStatus.RESOLVED), cell("UCFV0N", PlaceStatus.RESOLVED)),
+            placeCells = listOf(
+                cell("ucfv0", PlaceStatus.RESOLVED),
+                cell("UCFV0N", PlaceStatus.RESOLVED),
+                cell("ucfv0n0123456", PlaceStatus.PENDING),
+            ),
         )
 
         val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")

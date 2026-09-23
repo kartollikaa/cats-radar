@@ -47,65 +47,70 @@ class ImportedPlaceCellTest {
 
     @Test
     fun `a cell centred on its own id comes through unchanged`() {
-        assertEquals(namedMoscow, namedMoscow.withCenterFromId())
+        assertEquals(namedMoscow, namedMoscow.asImported())
     }
 
     @Test
     fun `a centre off the globe is replaced by the centre of the cell's id`() {
         val imported = namedMoscow.copy(centerLat = 95.0, centerLon = -237.0)
 
-        assertEquals(namedMoscow, imported.withCenterFromId())
+        assertEquals(namedMoscow, imported.asImported())
     }
 
     @Test
     fun `a centre elsewhere on the globe is replaced by the centre of the cell's id`() {
         val imported = namedMoscow.copy(centerLat = 41.39864, centerLon = 2.17842)
 
-        assertEquals(namedMoscow, imported.withCenterFromId())
+        assertEquals(namedMoscow, imported.asImported())
     }
 
     @Test
     fun `an id shorter than a place cell is no cell at all`() {
-        assertNull(namedMoscow.copy(cellId = "ucfv0").withCenterFromId())
+        assertNull(namedMoscow.copy(cellId = "ucfv0").asImported())
     }
 
     @Test
     fun `an id longer than a place cell is no cell at all`() {
-        assertNull(namedMoscow.copy(cellId = "ucfv0n01").withCenterFromId())
+        assertNull(namedMoscow.copy(cellId = "ucfv0n01").asImported())
     }
 
     @Test
     fun `an id with a letter geohash never uses is no cell at all`() {
-        assertNull(namedMoscow.copy(cellId = "ucfv0a").withCenterFromId())
+        assertNull(namedMoscow.copy(cellId = "ucfv0a").asImported())
     }
 
     @Test
     fun `an id in upper case is no cell at all`() {
-        assertNull(namedMoscow.copy(cellId = "UCFV0N").withCenterFromId())
+        assertNull(namedMoscow.copy(cellId = "UCFV0N").asImported())
     }
 
     @Test
     fun `a named cell keeps every lookup that named it`() {
-        assertEquals(namedMoscow, namedMoscow.withLookupsFromHere())
+        assertEquals(namedMoscow, namedMoscow.asImported())
     }
 
     @Test
     fun `a cell another device is still trying arrives untried`() {
-        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.PENDING, attempts = 3).withLookupsFromHere())
+        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.PENDING, attempts = 3).asImported())
     }
 
     @Test
     fun `a cell another device gave up on arrives untried`() {
-        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.FAILED, attempts = 5).withLookupsFromHere())
+        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.FAILED, attempts = 5).asImported())
     }
 
     @Test
     fun `a cell another device had no geocoder for arrives untried`() {
-        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.UNAVAILABLE, attempts = 1).withLookupsFromHere())
+        assertEquals(untriedMoscow, triedMoscow(PlaceStatus.UNAVAILABLE, attempts = 1).asImported())
+    }
+
+    @Test
+    fun `an unnamed cell whose id is not a place cell is no cell at all`() {
+        assertNull(triedMoscow(PlaceStatus.PENDING, attempts = 3).copy(cellId = "ucfv0n0123456").asImported())
     }
 
     @Test
     fun `a name written on a cell that was never resolved does not come with it`() {
-        assertEquals(untriedMoscow, namedMoscow.copy(status = PlaceStatus.FAILED).withLookupsFromHere())
+        assertEquals(untriedMoscow, namedMoscow.copy(status = PlaceStatus.FAILED).asImported())
     }
 }
