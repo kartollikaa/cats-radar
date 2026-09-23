@@ -12,12 +12,13 @@ request; a later denial surfaces as a dismissible one-line hint on the counter s
 
 ## Feedback for the tap
 
-Each tap raises a **"+N"** in the count block's top corner that grows while you keep tapping and
-fades `Tuning.TAP_BURST_VISIBLE` after the last one — the window restarts on every tap, so a run of
-taps is one burst rather than a flicker per tap, and a later run starts again from one. Like the
+Each tap raises a **"+N"** badge in the count block's top corner that grows while you keep tapping
+and fades `Tuning.TAP_BURST_VISIBLE` after the last one — the window restarts on every tap, so a run
+of taps is one burst rather than a flicker per tap, and a later run starts again from one. Like the
 haptic, it lands before the write rather than after it succeeds, so holding the button down still
 counts up smoothly. If the write then fails the total does not move: the burst is feedback for the
-*tap*, and the number is read back from the database.
+*tap*, and the number is read back from the database. It is a badge rather than bare text because a
+wide number in a short block reaches that corner; TalkBack hears the new total instead.
 
 The count sits in a large block that **is** the button. It squashes under a press and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen
@@ -32,15 +33,18 @@ been read the block shows no number at all, rather than a 0 that then rolls up t
 made while another tab is showing — a delete on the encounter screen, say — is already in place when
 the Counter comes back, because nothing was on screen to roll it.
 
-The number shrinks to fit the block, so a short phone, a large font or a five-digit total never
-wraps or clips it.
+The number shrinks to fit the block rather than wrapping, so a short phone, a large font or a
+five-digit total keeps it on one line. That has a floor: on the smallest phones, with the location
+hint showing, the block gets shorter than the smallest size and crops the number until the hint is
+dismissed.
 
 **The controls never move.** Undo has a place of its own at the far end of the walk-chip row,
-outside the count block: inside it, a follow-up tap on the same spot would land on Undo and take a
-cat away instead of adding one. The outing line keeps its line, empty when no outing is open, so an
-outing starting or ending leaves the block the same size. The location hint and the import progress
-and summary appear above the count and take their room from it; the number shrinks, and the walk
-chip, the coat grid and the Photo button stay where they are.
+outside the count block — inside the block, a follow-up tap on the same spot would land on Undo and
+take a cat away instead of adding one. A long walk label gives way to it rather than squeezing it.
+The outing line keeps its line, empty when no outing is open, so an outing starting or ending leaves
+the block the same size. The location hint and the import progress and summary appear above the
+count and take their room from it; the number shrinks, and the walk chip, the coat grid and the
+Photo button stay where they are.
 
 ## The outing in progress
 

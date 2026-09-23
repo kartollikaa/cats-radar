@@ -9,6 +9,11 @@ class CounterStateMapperTest {
     private val mapper = CounterStateMapper(FakeDateTimeFormatter())
 
     @Test
+    fun `before the total is read there is no number, not a zero`() {
+        assertEquals(CounterState(totalLabel = "", count = null, undoVisible = false), mapper.initial())
+    }
+
+    @Test
     fun `maps a zero count with the undo chip hidden`() {
         assertEquals(
             CounterState(totalLabel = "0", count = 0, undoVisible = false),

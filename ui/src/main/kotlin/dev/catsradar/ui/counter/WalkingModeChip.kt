@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -29,6 +30,8 @@ internal fun WalkingModeChip(
                 text = stringResource(
                     if (checked) R.string.counter_walking_on else R.string.counter_walking_off,
                 ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         },
         modifier = modifier,

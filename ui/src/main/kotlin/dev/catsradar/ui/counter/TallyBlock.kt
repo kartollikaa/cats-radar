@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -77,6 +79,7 @@ internal fun TallyBlock(
         modifier = modifier.clickable(
             interactionSource = interactionSource,
             indication = null,
+            onClickLabel = stringResource(R.string.counter_tally),
             role = Role.Button,
             onClick = onClick,
         ),
@@ -101,7 +104,7 @@ internal fun TallyBlock(
                 )
                 TapBurst(
                     count = tapBurst,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 24.dp, end = 32.dp),
+                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 20.dp, end = 24.dp),
                 )
             }
         }
@@ -138,22 +141,30 @@ private fun RollingCount(shown: ShownCount, modifier: Modifier = Modifier) {
     }
 }
 
+// A badge rather than bare text: a wide number in a short block reaches this corner, and the
+// burst has to stay legible over it. TalkBack already hears the new total.
 @Composable
 private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
     AnimatedVisibility(
         visible = count != null,
         enter = fadeIn() + slideInVertically { it / 2 },
         exit = fadeOut(),
-        modifier = modifier,
+        modifier = modifier.clearAndSetSemantics {},
     ) {
         // Held after the state clears so the exit animation has something to fade out.
         val lastShown = remember { mutableIntStateOf(1) }
         count?.let { lastShown.intValue = it }
-        Text(
-            text = stringResource(R.string.counter_tap_burst, lastShown.intValue),
-            style = MaterialTheme.typography.headlineMedium,
+        Surface(
+            shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
-        )
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
+            Text(
+                text = stringResource(R.string.counter_tap_burst, lastShown.intValue),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            )
+        }
     }
 }
 

@@ -1,10 +1,5 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -52,50 +47,50 @@ fun CounterScreen(
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // Above the count, which gives up the room: the controls under it never move.
-        state.importProgress?.let { ImportProgress(it) }
-        state.importSummary?.let {
-            ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
-        }
-        if (state.locationPermissionHintVisible) {
-            LocationPermissionHint(onAction = onLocationHintAction)
-        }
-        TallyBlock(
-            totalLabel = state.totalLabel,
-            count = state.count,
-            tapBurst = state.tapBurst,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            onClick = onTallyClick,
-        )
-        CurrentOutingLine(state.currentOuting)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            WalkingModeChip(checked = state.walkingMode, onCheckedChange = onWalkingModeChange)
-            UndoChip(visible = state.undoVisible, onClick = onUndoClick)
-        }
-        CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-        CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
-    }
-}
-
-@Composable
-private fun UndoChip(visible: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + scaleIn(initialScale = 0.8f),
-        exit = fadeOut() + scaleOut(targetScale = 0.8f),
-        modifier = modifier,
-    ) {
-        AssistChip(onClick = onClick, label = { Text(text = stringResource(R.string.counter_undo)) })
-    }
+    // The block keeps a floor instead of yielding to everything else: past it the screen scrolls,
+    // because a large font or a small phone must never leave the tally button zero pixels tall.
+    FillOrScroll(
+        minFill = 120.dp,
+        gap = 16.dp,
+        padding = 24.dp,
+        modifier = modifier.fillMaxSize(),
+        above = {
+            // Above the count, which gives up the room: the controls under it never move.
+            state.importProgress?.let { ImportProgress(it) }
+            state.importSummary?.let {
+                ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
+            }
+            if (state.locationPermissionHintVisible) {
+                LocationPermissionHint(onAction = onLocationHintAction)
+            }
+        },
+        fill = {
+            TallyBlock(
+                totalLabel = state.totalLabel,
+                count = state.count,
+                tapBurst = state.tapBurst,
+                onClick = onTallyClick,
+            )
+        },
+        below = {
+            CurrentOutingLine(state.currentOuting)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Weighted so Undo is measured first: a long walk label gives way instead of squeezing it.
+                WalkingModeChip(
+                    checked = state.walkingMode,
+                    modifier = Modifier.weight(1f, fill = false),
+                    onCheckedChange = onWalkingModeChange,
+                )
+                UndoChip(visible = state.undoVisible, onClick = onUndoClick)
+            }
+            CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
+            CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
+        },
+    )
 }
 
 // A long press is the only entry to import, so the button says so out loud: a gesture nothing
@@ -137,7 +132,11 @@ private fun CameraButton(
 @Composable
 private fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        if (state == null) Text(text = "", style = MaterialTheme.typography.bodyMedium) else CurrentOuting(state)
+        if (state == null) {
+            Text(text = "", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.clearAndSetSemantics {})
+        } else {
+            CurrentOuting(state)
+        }
     }
 }
 
@@ -152,6 +151,7 @@ private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifi
             style = MaterialTheme.typography.bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
         state.rate?.let {
             val rateRes = if (it.unit == RateUnit.PER_MINUTE) {
@@ -195,6 +195,14 @@ private fun CounterScreenEmptyPreview() {
 
 @ThemePreviews
 @Composable
+private fun CounterScreenLoadingPreview() {
+    CatsRadarTheme {
+        Surface { CounterScreen(state = sampleCounterStateUnread) }
+    }
+}
+
+@ThemePreviews
+@Composable
 private fun CounterScreenUndoVisiblePreview() {
     CatsRadarTheme {
         Surface { CounterScreen(state = sampleCounterStateUndoVisible) }
@@ -217,6 +225,7 @@ private fun CounterScreenLocationHintVisiblePreview() {
     }
 }
 
+private val sampleCounterStateUnread = CounterState(totalLabel = "", count = null, undoVisible = false)
 private val sampleCounterStateEmpty = CounterState(totalLabel = "0", count = 0, undoVisible = false)
 private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", count = 3, undoVisible = true)
 private val sampleCounterStateLocationHintVisible =
