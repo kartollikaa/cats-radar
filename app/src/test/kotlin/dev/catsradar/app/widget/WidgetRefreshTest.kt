@@ -91,7 +91,6 @@ private class FakeTodayRepository : EncounterRepository {
         rows.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
     }
 
-    override fun observeActiveCount(): Flow<Int> = throw NotImplementedError("unused by this test")
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")

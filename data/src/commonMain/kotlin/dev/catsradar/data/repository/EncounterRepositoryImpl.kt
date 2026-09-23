@@ -13,8 +13,6 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
     override fun observeAll(): Flow<List<Encounter>> =
         dao.observeAll().map { entities -> entities.map { it.toDomain() } }
 
-    override fun observeActiveCount(): Flow<Int> = dao.observeActiveCount()
-
     override fun observeById(id: String): Flow<Encounter?> = dao.observeById(id).map { it?.toDomain() }
 
     override suspend fun insert(encounter: Encounter) = dao.insert(encounter.toEntity())
