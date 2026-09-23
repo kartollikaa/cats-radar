@@ -33,7 +33,6 @@
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
     <string name="counter_import">Импорт из галереи</string>
-    <string name="counter_import_hint">удерживайте — импорт из галереи</string>
     <string name="counter_import_progress">%1$d из %2$d</string>
     <string name="counter_import_ok">Понятно</string>
     <plurals name="counter_import_added">
