@@ -32,10 +32,11 @@ globe, past a pole or the 180th meridian.
 - **Dots close together** at the current zoom draw as one circle holding their count. Tapping it
   zooms in until they come apart.
 - **Cats that never come apart** open as a list of that spot, grouped by outing as the Encounters
-  tab groups them. The outing backfill gives every cat of a walk the same fix, so this is common.
-  A row opens its cat, back returns to the list, and a second back closes it. A tap that lands on
-  several dots at once opens the same list. A list whose cats are all deleted closes, and restoring
-  one of them does not reopen it.
+  tab groups them and drawn in its list layout, whichever layout the tab is set to. The outing
+  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, back
+  returns to the list, and a second back closes it. A tap that lands on several dots at once opens
+  the same list. A list whose cats are all deleted closes, and restoring one of them does not reopen
+  it.
 
 ## An outing's route
 
@@ -75,7 +76,7 @@ the walk tracks' job.
   on), `MapStateMapper`, `MapStore`
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
   their taps; `MapFeatures.kt` — cats as map features; `MapSpotSheet.kt` — a spot's list, drawn by
-  the Encounters tab's own `EncounterList`
+  the Encounters tab's own `EncounterRows` in its list layout
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapFocusRequest.kt` — the outing
   another tab asked the map to show
 

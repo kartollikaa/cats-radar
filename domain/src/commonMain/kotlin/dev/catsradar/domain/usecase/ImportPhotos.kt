@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
+import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -103,12 +104,8 @@ class ImportPhotos(
             timeZone = timeZone,
         )
         val location = ImportRules.location(exif = exif, occurredAt = captured.occurredAt, now = now)
-        val carriesExifLocation = location == ImportLocation.EXIF
-        val geohash = if (carriesExifLocation) {
-            Geohash.encode(exif.lat!!, exif.lon!!, Tuning.GEOHASH_PRECISION)
-        } else {
-            null
-        }
+        val exifPoint = pointOnGlobe(exif.lat, exif.lon).takeIf { location == ImportLocation.EXIF }
+        val geohash = exifPoint?.let { Geohash.encode(it.lat, it.lon, Tuning.GEOHASH_PRECISION) }
         encounterRepository.insert(
             Encounter(
                 id = id,
@@ -122,11 +119,11 @@ class ImportPhotos(
                 // The original is already in the gallery; copying it back would duplicate it.
                 galleryUri = null,
                 sourceDigest = sourceDigest,
-                lat = exif.lat.takeIf { carriesExifLocation },
-                lon = exif.lon.takeIf { carriesExifLocation },
+                lat = exifPoint?.lat,
+                lon = exifPoint?.lon,
                 accuracyMeters = null,
-                locationSource = if (carriesExifLocation) LocationSource.EXIF else LocationSource.NONE,
-                locationFixedAt = captured.occurredAt.takeIf { carriesExifLocation },
+                locationSource = if (exifPoint != null) LocationSource.EXIF else LocationSource.NONE,
+                locationFixedAt = captured.occurredAt.takeIf { exifPoint != null },
                 geohash = geohash,
                 placeCellId = geohash?.let { PlaceCells.remember(placeCellRepository, it) },
                 deviceId = deviceIdProvider.deviceId,

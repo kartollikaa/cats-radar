@@ -155,6 +155,8 @@ private class FakeWalkingSettings : SettingsRepository {
     override suspend fun setSaveOriginalsToGallery(enabled: Boolean) = Unit
     override fun lastSeenMilestone(): Flow<Int> = MutableStateFlow(Int.MAX_VALUE)
     override suspend fun setLastSeenMilestone(value: Int) = Unit
+    override fun encountersGrid(): Flow<Boolean> = MutableStateFlow(true)
+    override suspend fun setEncountersGrid(enabled: Boolean) = Unit
 }
 
 private class FakeEncounterRepository : EncounterRepository {
@@ -166,7 +168,6 @@ private class FakeEncounterRepository : EncounterRepository {
 
     override fun observeAll(): Flow<List<Encounter>> = rows
 
-    override fun observeActiveCount(): Flow<Int> = throw NotImplementedError("unused by this test")
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
@@ -177,6 +178,12 @@ private class FakeEncounterRepository : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
     override suspend fun loadEvery(): List<Encounter> = rows.value
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> = emptyList()

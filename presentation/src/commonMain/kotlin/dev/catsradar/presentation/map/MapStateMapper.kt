@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.encounters.EncountersStateMapper
+import dev.catsradar.presentation.encounters.OutingHeader
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.datetime.LocalDate
 
@@ -27,7 +28,7 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
             points = points.toImmutableList(),
             area = areaAround(points),
             spot = spot?.let { ids -> spotOf(shown.filter { it.id in ids && it.deletedAt == null }, today) },
-            focus = outing?.let { MapFocus(outingId = it.first().id, label = encountersMapper.outingLabel(it, today)) },
+            focus = outing?.let { MapFocus(outingId = it.first().id, label = headerLabel(it, today)) },
         )
     }
 
@@ -36,9 +37,13 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
             .firstOrNull { outing -> outing.any { it.id == id } }
             ?.takeIf { outing -> outing.any { it.isOnTheMap() } }
 
+    // The same header the Encounters list gives the outing, so the chip and the list never disagree.
+    private fun headerLabel(outing: List<Encounter>, today: LocalDate): String =
+        encountersMapper.mapList(outing, today).filterIsInstance<OutingHeader>().first().label
+
     private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
         if (cats.isEmpty()) return null
-        return MapSpot(catCount = cats.size, rows = encountersMapper.map(cats, today).rows)
+        return MapSpot(catCount = cats.size, rows = encountersMapper.map(cats, today, grid = false).rows)
     }
 
     private fun Encounter.toPoint(): MapPoint? {

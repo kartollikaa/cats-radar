@@ -3,10 +3,10 @@ package dev.catsradar.presentation.map
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.encounters.EncounterListItem
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
+import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
@@ -102,7 +102,10 @@ class MapStateMapperTest {
 
         val state = assertIs<MapState.Located>(map(cats, spot = setOf("a", "b", "gone")))
 
-        assertEquals(MapSpot(catCount = 2, rows = encountersMapper.map(listOf(a, b), TODAY).rows), state.spot)
+        assertEquals(
+            MapSpot(catCount = 2, rows = encountersMapper.map(listOf(a, b), TODAY, grid = false).rows),
+            state.spot,
+        )
         assertEquals(null, assertIs<MapState.Located>(map(cats)).spot)
         assertEquals(null, assertIs<MapState.Located>(map(cats, spot = setOf("gone"))).spot)
     }
@@ -117,8 +120,8 @@ class MapStateMapperTest {
 
         val state = assertIs<MapState.Located>(map(cats, focus = "second"))
 
-        val header = encountersMapper.map(cats, TODAY).rows
-            .filterIsInstance<EncounterListItem.OutingHeader>()
+        val header = encountersMapper.map(cats, TODAY, grid = true).rows
+            .filterIsInstance<OutingHeader>()
             .single { it.mapOutingId == "first" }
         assertEquals(
             MapState.Located(

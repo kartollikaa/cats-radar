@@ -15,7 +15,9 @@ class GeocodePendingCellsWorker(
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unexpected failure must not crash the process
     override suspend fun doWork(): Result = try {
-        if (!resolvePendingPlaces()) {
+        val untriedOnly = inputData.getBoolean(KEY_UNTRIED_ONLY, false)
+        val geocoderPresent = if (untriedOnly) resolvePendingPlaces.resolveUntried() else resolvePendingPlaces()
+        if (!geocoderPresent) {
             // No geocoder on this device, and there never will be: waking up on a schedule to
             // find that out again would cost battery for nothing.
             WorkManager.getInstance(context).cancelUniqueWork(GeocodeWorkScheduler.UNIQUE_NAME)
@@ -25,5 +27,9 @@ class GeocodePendingCellsWorker(
         throw e
     } catch (e: Exception) {
         Result.retry()
+    }
+
+    companion object {
+        const val KEY_UNTRIED_ONLY = "untried_only"
     }
 }

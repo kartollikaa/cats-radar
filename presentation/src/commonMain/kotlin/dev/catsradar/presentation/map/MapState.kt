@@ -1,7 +1,7 @@
 package dev.catsradar.presentation.map
 
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncountersRow
 import kotlinx.collections.immutable.ImmutableList
 
 sealed interface MapState {
@@ -27,4 +27,4 @@ data class MapArea(val south: Double, val west: Double, val north: Double, val e
 /** An outing shown alone; its located cats are the points, in the order they were seen. */
 data class MapFocus(val outingId: String, val label: String)
 
-data class MapSpot(val catCount: Int, val rows: ImmutableList<EncounterListItem>)
+data class MapSpot(val catCount: Int, val rows: ImmutableList<EncountersRow>)

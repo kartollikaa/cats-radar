@@ -41,6 +41,13 @@ internal fun encounterFixture(
     deletedAt = deletedAt,
 )
 
+internal fun photoFixture(
+    id: String,
+    occurredAt: Instant,
+    locationSource: LocationSource = LocationSource.NONE,
+): Encounter = encounterFixture(id, occurredAt, locationSource = locationSource)
+    .copy(photoPath = "$id.jpg", thumbPath = "${id}_thumb.jpg")
+
 // Returns the argument each call was given rather than a real translation, so a mapper test can
 // assert on the LocalDate/Instant it was asked to format without depending on any locale.
 internal class FakeDateTimeFormatter : DateTimeFormatter {

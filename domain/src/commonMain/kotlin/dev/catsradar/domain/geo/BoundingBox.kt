@@ -6,6 +6,9 @@ data class BoundingBox(
     val north: Double,
     val east: Double,
 ) {
+    val centerLat: Double get() = (south + north) / 2
+    val centerLon: Double get() = (west + east) / 2
+
     // Half-open [south, north) x [west, east): adjoining cells share an edge, and only one of them
     // should claim a point on it. Closed at +90/+180, the true edge of the coordinate system itself.
     fun contains(lat: Double, lon: Double): Boolean {

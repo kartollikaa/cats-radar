@@ -12,9 +12,10 @@ import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.coat.toOption
-import kotlinx.coroutines.CancellationException
+import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -35,8 +36,8 @@ class CounterStore(
 ) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.initial()) {
 
     private var tapSequence = 0
-    private var undoTargetSequence = -1
-    private var undoTargetId: String? = null
+    private val undoableRun = mutableListOf<UndoableTally>()
+    private var expiredThroughSequence = 0
     private var undoTimeoutJob: Job? = null
     private var burstJob: Job? = null
 
@@ -84,7 +85,7 @@ class CounterStore(
             CounterIntent.UndoClicked -> onUndoClicked()
             // Only the flag is written; the notification follows it from outside the screen.
             is CounterIntent.WalkingModeToggled ->
-                runWriteIgnoringFailure { settingsRepository.setWalkingMode(intent.enabled) }
+                runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.LocationPermissionResult ->
@@ -106,16 +107,16 @@ class CounterStore(
             locationPermissionRequestState.markRequested()
             emit(CounterEffect.RequestLocationPermission)
         }
-        runWriteIgnoringFailure {
+        runStorageWrite {
             val encounter = logTally(coat)
             emit(CounterEffect.AttachLocation(encounter.id))
-            // Captured before suspending, not completion order: a later tap's insert can resume
-            // before an earlier one's, so only a higher sequence may overwrite the undo target.
-            if (sequence > undoTargetSequence) {
-                undoTargetSequence = sequence
-                undoTargetId = encounter.id
-                setState { copy(undoVisible = true, lastCoat = coat?.toOption()) }
-                restartUndoTimer()
+            // A slow write from a run that has already expired must not reopen the window.
+            if (sequence > expiredThroughSequence) {
+                val tally = UndoableTally(sequence, encounter.id, coat?.toOption())
+                undoableRun += tally
+                // By tap, not by completion: a later tap's insert can resume before an earlier one's.
+                undoableRun.sortBy { it.sequence }
+                if (undoableRun.last() === tally) showNewestUndoable()
             }
         }
     }
@@ -123,7 +124,7 @@ class CounterStore(
     private suspend fun onPhotoCaptured(uri: String?) {
         // A cancelled camera is not a failure and must leave nothing behind.
         if (uri == null) return
-        runWriteIgnoringFailure {
+        runStorageWrite {
             when (val result = logPhoto(uri)) {
                 is PhotoResult.Logged ->
                     if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
@@ -176,7 +177,7 @@ class CounterStore(
         if (ids.isEmpty()) return
         importedIds = emptyList()
         setState { copy(importSummary = importSummary?.copy(undoable = false)) }
-        runWriteIgnoringFailure { undoImport(ids) }
+        runStorageWrite { undoImport(ids) }
     }
 
     private fun showBurst() {
@@ -188,34 +189,30 @@ class CounterStore(
         }
     }
 
-    private fun restartUndoTimer() {
+    private fun showNewestUndoable() {
         undoTimeoutJob?.cancel()
+        val newest = undoableRun.lastOrNull()
+        if (newest == null) {
+            setState { copy(undoVisible = false, lastCoat = null) }
+            return
+        }
+        setState { copy(undoVisible = true, lastCoat = newest.coat) }
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
-            undoTargetId = null
+            expiredThroughSequence = newest.sequence
+            undoableRun.clear()
             setState { copy(undoVisible = false, lastCoat = null) }
         }
     }
 
     private suspend fun onUndoClicked() {
-        // Read-and-clear before the suspending call below, so a second dispatch sees null and
-        // no-ops: that ordering is what makes pressing undo twice delete only once.
-        val id = undoTargetId ?: return
-        undoTargetId = null
-        undoTimeoutJob?.cancel()
-        setState { copy(undoVisible = false, lastCoat = null) }
-        emit(CounterEffect.CancelLocationAttach(id))
-        runWriteIgnoringFailure { undoLastTally(id) }
+        // Taken off before the suspending calls below, so an undo dispatched right behind this one
+        // takes the next cat back rather than this one a second time.
+        val undone = undoableRun.removeLastOrNull() ?: return
+        showNewestUndoable()
+        emit(CounterEffect.CancelLocationAttach(undone.encounterId))
+        runStorageWrite { undoLastTally(undone.encounterId) }
     }
 
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // no user-visible error handling this slice
-    private suspend fun runWriteIgnoringFailure(block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // A failed insert or delete must not crash the app.
-        }
-    }
+    private class UndoableTally(val sequence: Int, val encounterId: String, val coat: CoatOption?)
 }

@@ -49,6 +49,21 @@
     <string name="encounters_outing_on_map">On the map</string>
     <string name="encounters_outing_on_map_description">Show the outing of %1$s on the map</string>
     <string name="encounters_photo_description">Photo of this cat</string>
+    <string name="encounters_paw_description">A cat</string>
+    <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
+    <string name="encounters_select">Select</string>
+    <string name="encounters_deselect">Deselect</string>
+    <string name="encounters_selection_close">Cancel selection</string>
+    <string name="encounters_delete_selected">Delete selected</string>
+    <string name="encounters_undo">Undo</string>
+    <plurals name="encounters_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="encounters_removed">
+        <item quantity="one">%1$d cat removed</item>
+        <item quantity="other">%1$d cats removed</item>
+    </plurals>
 
     <string name="location_from_photo">From photo</string>
     <string name="location_current">Current location</string>
@@ -144,12 +159,15 @@
     <string name="notification_walking_title">Out looking for cats</string>
     <string name="notification_walking_tally">Cat!</string>
     <string name="notification_walking_stop">Done</string>
+    <string name="notification_walking_photo">Photo</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d cat this outing</item>
         <item quantity="other">%1$d cats this outing</item>
     </plurals>
     <string name="settings_walking">Walking mode</string>
     <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
+    <string name="settings_encounters_grid">Grid of cats</string>
+    <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
     <string name="counter_walking_off">Start a walk</string>
     <string name="counter_walking_on">On a walk</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

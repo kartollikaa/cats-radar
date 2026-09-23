@@ -72,11 +72,38 @@ class EncounterDaoTest {
     }
 
     @Test
-    fun observeActiveCountCountsOnlyNonDeletedRows() = runTest {
-        dao.insert(fullEncounterEntity(id = "active"))
-        dao.insert(fullEncounterEntity(id = "deleted", deletedAt = Instant.parse("2026-09-21T00:00:00Z")))
+    fun softDeleteAllDeletesEveryGivenLiveRowAndKeepsAnEarlierDeletionsInstant() = runTest {
+        val earlier = Instant.parse("2026-09-01T00:00:00Z")
+        val batchAt = Instant.parse("2026-09-23T10:00:00Z")
+        dao.insert(fullEncounterEntity(id = "a"))
+        dao.insert(fullEncounterEntity(id = "b"))
+        dao.insert(fullEncounterEntity(id = "gone", deletedAt = earlier))
+        dao.insert(fullEncounterEntity(id = "untouched"))
 
-        assertEquals(1, dao.observeActiveCount().first())
+        dao.softDeleteAll(listOf("a", "b", "gone"), batchAt)
+
+        assertEquals(
+            mapOf("a" to batchAt, "b" to batchAt, "gone" to earlier, "untouched" to null),
+            dao.loadEvery().associate { it.id to it.deletedAt },
+        )
+    }
+
+    @Test
+    fun undoDeleteAllRestoresOnlyTheRowsDeletedAtTheBatchInstant() = runTest {
+        val earlier = Instant.parse("2026-09-01T00:00:00Z")
+        // Finer than the stored milliseconds, as a real clock reading is.
+        val batchAt = Instant.parse("2026-09-23T10:00:00.123456789Z")
+        dao.insert(fullEncounterEntity(id = "a"))
+        dao.insert(fullEncounterEntity(id = "b"))
+        dao.insert(fullEncounterEntity(id = "gone", deletedAt = earlier))
+        dao.softDeleteAll(listOf("a", "b", "gone"), batchAt)
+
+        dao.undoDeleteAll(listOf("a", "b", "gone"), batchAt)
+
+        assertEquals(
+            mapOf("a" to null, "b" to null, "gone" to earlier),
+            dao.loadEvery().associate { it.id to it.deletedAt },
+        )
     }
 
     @Test

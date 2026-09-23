@@ -9,8 +9,6 @@ import kotlin.time.Instant
 interface EncounterRepository {
     fun observeAll(): Flow<List<Encounter>>
 
-    fun observeActiveCount(): Flow<Int>
-
     fun observeById(id: String): Flow<Encounter?>
 
     suspend fun insert(encounter: Encounter)
@@ -23,6 +21,12 @@ interface EncounterRepository {
     suspend fun softDelete(id: String, deletedAt: Instant)
 
     suspend fun undoDelete(id: String)
+
+    /** All of [ids] or none; a row that is already deleted keeps its own `deletedAt`. */
+    suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant)
+
+    /** Restores those of [ids] deleted at exactly [deletedAt]; a row deleted at another time stays deleted. */
+    suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant)
 
     suspend fun findBySourceDigest(sourceDigest: String): Encounter?
 

@@ -80,7 +80,7 @@ private fun catsRadarEntries(
     entry<Encounters> {
         EncountersDestination(
             contentPadding = innerPadding,
-            onRowClick = { id -> backStack.push(EncounterDetail(id)) },
+            onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
             onOutingMapClick = { id ->
                 mapFocus.post(id)
                 backStack.selectTab(BottomNavTab.MAP)
@@ -151,6 +151,7 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
         onWalkingModeChange = onWalkingModeChange,
+        onEncountersGridChange = { store.dispatch(SettingsIntent.EncountersGridToggled(it)) },
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
         onBackupOutcomeDismiss = { store.dispatch(SettingsIntent.Backup.OutcomeDismissed) },

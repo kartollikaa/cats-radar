@@ -44,6 +44,16 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    fun `ui files do not import material dynamic colour`() {
+        Konsist.scopeFromPackage("dev.catsradar.ui..")
+            .files
+            .excludingGeneratedSources()
+            .assertFalse(testName = "ui files do not import material dynamic colour") { file ->
+                file.hasImport { it.name.startsWith("androidx.compose.material3.dynamic") }
+            }
+    }
+
+    @Test
     fun `data files do not import dev catsradar presentation or dev catsradar ui`() {
         Konsist.scopeFromPackage("dev.catsradar.data..")
             .files
