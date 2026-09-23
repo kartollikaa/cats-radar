@@ -22,9 +22,8 @@ internal object TakePhotoShortcut {
         intent?.action == ACTION && intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0
 
     /**
-     * What an activity being created should do. A recreated one still holds its own launch intent,
-     * so only the request it saved unfinished counts. Once Photo has reached the app's task the
-     * launcher's intent no longer matches it, and Android stacks a second copy above the first.
+     * A recreated activity still holds its launch intent, so only a request it saved unfinished counts.
+     * Once Photo has reached the app's task, Android stacks a launcher start on it as a second copy.
      */
     fun onCreate(intent: Intent?, isTaskRoot: Boolean, isOwnTask: () -> Boolean, savedState: Bundle?): Launch =
         when {

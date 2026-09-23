@@ -33,7 +33,8 @@ has both.
 
 - **Cancelled camera** — no encounter, and the file the camera was given is deleted.
 - **A camera whose answer never comes** — the app swiped away with the camera still open — leaves its
-  file behind until the app next starts afresh, which clears whatever is left.
+  file behind until a later start of the app clears it. Only captures older than any camera session
+  lasts are cleared, so one that may still be answered, even by the app open in another task, stays.
 - **Undecodable photo** — no encounter, one "Photo not saved" message, and the original still goes.
 - **Gallery refuses** — the encounter is saved anyway with no `galleryUri`.
 

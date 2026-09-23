@@ -36,8 +36,7 @@ class MainActivity : ComponentActivity() {
             Launch.OPEN_CAMERA -> cameraRequest.post()
             Launch.SHOW -> Unit
         }
-        // A fresh task has no camera answer on its way, so whatever is left there nothing will read.
-        if (savedInstanceState == null && isTaskRoot) CaptureTarget.clear(this)
+        CaptureTarget.clearStale(this)
         enableEdgeToEdge()
         setContent {
             CatsRadarTheme {
@@ -53,8 +52,9 @@ class MainActivity : ComponentActivity() {
         if (TakePhotoShortcut.isRequest(intent)) cameraRequest.post()
     }
 
-    private fun isOwnTask(): Boolean =
-        getSystemService(ActivityManager::class.java).appTasks.any { it.taskInfo?.taskId == taskId }
+    // A task can vanish between listing it and reading it, and then its info throws.
+    private fun isOwnTask(): Boolean = getSystemService(ActivityManager::class.java).appTasks
+        .any { task -> runCatching { task.taskInfo?.taskId == taskId }.getOrDefault(false) }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)

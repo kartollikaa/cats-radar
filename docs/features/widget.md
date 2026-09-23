@@ -5,11 +5,11 @@ without opening the app, and there is nothing smaller to aim at, because the who
 TalkBack announces it as **Log a cat**. Tapping Photo — **Photograph a cat** to TalkBack — opens the
 app straight into the camera.
 
-It is placed two cells wide. Photo appears whenever there is room for two tiles side by side: two
-cells on a phone held upright, and even one cell in landscape, where cells are wide and short.
-Narrower than that the widget is the count alone, since two targets in one upright cell are two
-targets too small. On a widget tall enough for two tiles stacked — two cells on an upright phone —
-Photo goes under the count instead; landscape rows are too short for that, so there it stays beside.
+It is placed two cells wide. Once the widget is tall enough for two tiles stacked — two cells on an
+upright phone, three rows in landscape — Photo goes under the count, whatever its width. Otherwise
+Photo sits beside the count once there is room for two tiles side by side: two cells upright, and
+even one in landscape, where cells are wide and short. Smaller than both, the widget is the count
+alone, since two targets in one upright cell are two targets too small.
 
 The sizes that switch the layout sit between the platform's reference cell sizes rather than on
 them, because launchers round cells differently: a single upright cell must never read as two.

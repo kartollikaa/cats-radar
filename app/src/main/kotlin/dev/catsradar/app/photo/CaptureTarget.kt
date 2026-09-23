@@ -5,8 +5,12 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import java.io.File
+import kotlin.time.Duration.Companion.days
 
 private const val CAPTURES_DIRECTORY = "captures"
+
+// Longer than any camera session: a younger capture may still be answered, even by another task.
+private val staleAfter = 1.days
 
 /**
  * Where the camera writes an original before the app has made its own copies of it.
@@ -26,7 +30,10 @@ object CaptureTarget {
         runCatching { context.contentResolver.delete(uri.toUri(), null, null) }
     }
 
-    fun clear(context: Context) {
-        File(context.cacheDir, CAPTURES_DIRECTORY).listFiles()?.forEach { it.delete() }
+    fun clearStale(context: Context, now: Long = System.currentTimeMillis()) {
+        val cutoff = now - staleAfter.inWholeMilliseconds
+        File(context.cacheDir, CAPTURES_DIRECTORY).listFiles()
+            ?.filter { it.lastModified() < cutoff }
+            ?.forEach { it.delete() }
     }
 }
