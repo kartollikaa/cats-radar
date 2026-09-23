@@ -14,7 +14,9 @@ sealed interface SettingsIntent {
         data class ExportTargetChosen(val uri: String?) : Backup
         data class ImportSourceChosen(val uri: String?) : Backup
         data object Started : Backup
-        data class Finished(val outcome: BackupOutcome) : Backup
+
+        /** The same run may be reported again; [runId] tells a repeat from a new run. */
+        data class Finished(val runId: String, val outcome: BackupOutcome) : Backup
         data object OutcomeDismissed : Backup
     }
 }

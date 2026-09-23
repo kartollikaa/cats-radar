@@ -7,6 +7,7 @@ import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.platform.StoredPhoto
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,4 +106,8 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
     override suspend fun setEncountersGrid(enabled: Boolean) {
         grid.value = enabled
     }
+
+    override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
+
+    override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
 }

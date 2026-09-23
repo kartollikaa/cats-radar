@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.WalkRecordingState
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.repository.WalkRepository
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +50,8 @@ internal class FakeWalkingSettings : SettingsRepository {
     override suspend fun setLastSeenMilestone(value: Int) = Unit
     override fun encountersGrid(): Flow<Boolean> = MutableStateFlow(true)
     override suspend fun setEncountersGrid(enabled: Boolean) = Unit
+    override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
+    override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
 }
 
 /** One walk, on from [WalkStart] until something ends it. */
