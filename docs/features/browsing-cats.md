@@ -8,9 +8,10 @@ still has exactly one implementation. `EncountersStateMapper` turns that groupin
 already-formatted `ImmutableList<EncounterGridRow>` — an `OutingHeader` per outing followed by the
 grid rows its cats pack into (see *What the grid shows*), every label already localized by the
 `DateTimeFormatter` interface (Android implementation in `presentation/androidMain`) — so
-`EncountersScreen`'s `LazyColumn` only renders, never formats, groups or packs. Counter and Encounters sit behind a bottom `NavigationBar`; Counter is the
-back-stack root (spec §2): selecting a tab rewrites the stack to `[Counter]` or `[Counter, tab]`,
-back from a tab returns to Counter, and back from Counter exits.
+`EncountersScreen`'s `LazyColumn` only renders, never formats, groups or packs. Counter and
+Encounters sit behind a bottom `NavigationBar`; Counter is the back-stack root (spec §2): selecting
+a tab rewrites the stack to `[Counter]` or `[Counter, tab]`, back from a tab returns to Counter, and
+back from Counter exits.
 
 ## At the edges
 

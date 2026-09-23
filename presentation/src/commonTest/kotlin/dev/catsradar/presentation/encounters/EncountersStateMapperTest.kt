@@ -83,6 +83,28 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `a run of cats without photos ends at its outing header instead of filling a row across it`() {
+        val morning = (0 until 3).map { encounterFixture("m$it", BASE + it.minutes) }
+        val evening = (0 until 2).map { encounterFixture("e$it", BASE + 8.hours + it.minutes) }
+
+        val rows = mapper.map(morning + evening, today).rows
+
+        assertEquals(
+            persistentListOf(
+                OutingHeader(key = "header-e0", label = "2026-09-22, ${BASE + 8.hours}"),
+                EncounterGridRow.Cards(
+                    persistentListOf(cell("e1", BASE + 8.hours + 1.minutes), cell("e0", BASE + 8.hours)),
+                ),
+                OutingHeader(key = "header-m0", label = "2026-09-22, $BASE"),
+                EncounterGridRow.Tiles(
+                    persistentListOf(cell("m2", BASE + 2.minutes), cell("m1", BASE + 1.minutes), cell("m0", BASE)),
+                ),
+            ),
+            rows,
+        )
+    }
+
+    @Test
     fun `a pair cat without a full-size copy shows its thumbnail`() {
         val thumbOnly = photoFixture("thumbOnly", BASE).copy(photoPath = null)
         val full = photoFixture("full", BASE + 1.minutes)
