@@ -40,7 +40,7 @@ today only by there being no `implementation(projects.domain)` in `:ui`'s `build
 no project dependency at all in `:domain`'s; no Konsist test backs either one, so an accidental
 dependency edit would not be caught by `check`.
 
-Beyond the four import-boundary rules, Konsist also checks: every class named `*Store` lives under
+Beyond the import-boundary rules, Konsist also checks: every class named `*Store` lives under
 `dev.catsradar.presentation`; every class named `*State` has no function-typed property (a literal
 lambda type, a `fun interface`, or a typealias for either — the enforcement mechanism behind
 `docs/rules/mvi-architecture.md`'s "State is data, no function types," since detekt/compose-rules
@@ -66,7 +66,26 @@ can't see — see `app-shell.md`.
 
 ## Not handled yet
 
-Instrumented/on-device tests, the backup round-trip test, and most of the design spec's §7 test
-list depend on features that don't exist yet (photos, import/export, statistics).
-`docs/rules/static-analysis.md` is otherwise a complete, current description of what's configured;
-nothing found in the code contradicts it.
+The rest of the design spec's §7 test list has tests; these parts do not. Only the first is held
+back by the build — the others are simply unwritten.
+
+- **An on-device smoke test** (tap the counter, see 1). No module declares an instrumented source
+  set, and `./gradlew check` runs host tests only, so a test that needs an emulator has nowhere to
+  run, locally or in CI.
+- **A backup round trip judged by the statistics** (export, wipe, import, identical `Stats`). Its
+  pieces are tested apart: `ZipBackupArchiveTest` writes an archive and reads every field back, and
+  `BackupUseCasesTest` checks what export gathers and how import merges, against fakes. No test
+  exports a real database, imports the archive into an empty one and compares the two `Stats`.
+- **Statistics across a timezone change.** `StatsCalculatorTest` dates every cat at one offset, so
+  no streak or day window is tested with cats logged in different zones — the case
+  `docs/rules/date-time.md` asks every calculation keyed by `LocalDate` to cover.
+- **The far side of the rate-eligibility edge.** An outing just short of
+  `Tuning.MIN_RATE_DURATION` is tested to get no rate; one exactly that long is not tested to get
+  one.
+- **Region drill-down above the domain.** `RegionTreeTest` covers each level's query, but
+  `ObserveRegion` — which level a parent key opens, and that an area or No location lists its cats
+  instead of more rows — and `RegionsStore` have no test.
+- **Whole-`State` mapper assertions.** `StatisticsStateMapperTest` and `RegionsStateMapperTest`
+  check chosen fields only. The statistics count, streak and outing labels are asserted nowhere,
+  and neither are `RegionsStateMapper`'s rows: the drillable flag, the row keys, and the label
+  tokens `docs/rules/compose-patterns.md` asks to be tested case by case.
