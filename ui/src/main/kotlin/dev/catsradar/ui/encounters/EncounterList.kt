@@ -45,6 +45,9 @@ private val LeadingSize = 48.dp
 // The header lines up with a row's content, so its inset is the row's two insets added.
 private val RowOuterInset = 16.dp
 private val RowInnerInset = 12.dp
+
+/** Where a row's content starts, for a heading that lines up with the list. */
+internal val EncounterListContentInset = RowOuterInset + RowInnerInset
 private val OutingOuterCorner = 20.dp
 private val OutingJoinCorner = 4.dp
 
@@ -78,7 +81,7 @@ private fun OutingHeaderRow(header: EncounterListItem.OutingHeader, modifier: Mo
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = RowOuterInset + RowInnerInset)
+            .padding(horizontal = EncounterListContentInset)
             .padding(top = 20.dp, bottom = 6.dp),
     )
 }

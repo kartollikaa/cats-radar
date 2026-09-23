@@ -24,6 +24,7 @@ import dev.catsradar.presentation.encounters.RowLead
 import dev.catsradar.presentation.map.MapSpot
 import dev.catsradar.ui.R
 import dev.catsradar.ui.encounters.EncounterList
+import dev.catsradar.ui.encounters.EncounterListContentInset
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
@@ -51,10 +52,11 @@ private fun MapSpotContent(spot: MapSpot, modifier: Modifier = Modifier, onCatCl
         Text(
             text = pluralStringResource(R.plurals.map_spot_title, spot.catCount, spot.catCount),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 28.dp),
+            modifier = Modifier.padding(horizontal = EncounterListContentInset).padding(bottom = 8.dp),
         )
         EncounterList(
             rows = spot.rows,
+            modifier = Modifier.weight(1f, fill = false),
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             onRowClick = onCatClick,
         )

@@ -93,22 +93,27 @@ class MapStoreTest {
     }
 
     @Test
-    fun `tapping one cat opens it, and tapping nothing does nothing`() = runTest(mainDispatcher) {
-        repository.insert(located("a", minute = 0))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(MapIntent.CatsTapped(emptyList()))
+    fun `tapping one cat opens it, even when the tap reports it twice, and tapping nothing does nothing`() =
+        runTest(mainDispatcher) {
+            repository.insert(located("a", minute = 0))
+            val store = newStore()
             runCurrent()
-            expectNoEvents()
 
-            store.dispatch(MapIntent.CatsTapped(listOf("a")))
-            runCurrent()
-            assertEquals(MapEffect.OpenCat("a"), awaitItem())
+            store.effects.test {
+                store.dispatch(MapIntent.CatsTapped(emptyList()))
+                runCurrent()
+                expectNoEvents()
+
+                store.dispatch(MapIntent.CatsTapped(listOf("a")))
+                runCurrent()
+                assertEquals(MapEffect.OpenCat("a"), awaitItem())
+
+                store.dispatch(MapIntent.CatsTapped(listOf("a", "a")))
+                runCurrent()
+                assertEquals(MapEffect.OpenCat("a"), awaitItem())
+            }
+            assertNull(store.state.value.spot())
         }
-        assertNull(store.state.value.spot())
-    }
 
     @Test
     fun `tapping several cats lists exactly those, grouped as in the list, until dismissed`() =

@@ -11,7 +11,6 @@ import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
 sealed interface MapIntent {
-    /** The cats under a tap on the map, or the one row tapped in a spot's list. */
     data class CatsTapped(val ids: List<String>) : MapIntent
 
     data object SpotDismissed : MapIntent
@@ -38,10 +37,13 @@ class MapStore(
 
     override suspend fun handle(intent: MapIntent) {
         when (intent) {
-            is MapIntent.CatsTapped -> when (intent.ids.size) {
-                0 -> Unit
-                1 -> emit(MapEffect.OpenCat(intent.ids.single()))
-                else -> openSpot.value = intent.ids.toSet()
+            is MapIntent.CatsTapped -> {
+                val cats = intent.ids.toSet()
+                when (cats.size) {
+                    0 -> Unit
+                    1 -> emit(MapEffect.OpenCat(cats.single()))
+                    else -> openSpot.value = cats
+                }
             }
             MapIntent.SpotDismissed -> openSpot.value = null
         }

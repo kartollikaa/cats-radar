@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.convertToColor
@@ -20,13 +21,13 @@ import org.maplibre.compose.map.MapState
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.GeoJsonOptions
 import org.maplibre.compose.sources.GeoJsonSource
+import org.maplibre.compose.sources.GeoJsonSourceHandle
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.FeatureCollection
 import org.maplibre.spatialk.geojson.Point
 
 private const val POINT_COUNT = "point_count"
-private const val POINT_COUNT_ABBREVIATED = "point_count_abbreviated"
 
 // Past street level clusters stop merging; cats sharing one fix still sit on one spot there.
 private const val CLUSTER_MAX_ZOOM = 17
@@ -75,7 +76,7 @@ internal fun CatLayers(
         id = "cat-cluster-counts",
         source = source,
         filter = isCluster,
-        textField = format(span(feature[POINT_COUNT_ABBREVIATED].convertToString())),
+        textField = format(span(feature[POINT_COUNT].convertToString())),
         textFont = const(listOf(COUNT_FONT)),
         textColor = const(colors.clusterCount),
         textSize = const(13.sp),
@@ -101,11 +102,24 @@ internal fun CatLayers(
 /** Zooms in until the cluster comes apart, or lists its cats when it never will. */
 internal suspend fun MapState.open(tap: ClusterTap, onCatsTap: (List<String>) -> Unit) {
     val handle = style.sources[tap.source] ?: return
-    val zoom = handle.getClusterExpansionZoom(tap.cluster)
+    val zoom = handle.query { getClusterExpansionZoom(tap.cluster) }
     val center = (tap.cluster.geometry as? Point)?.coordinates
-    if (zoom <= CLUSTER_MAX_ZOOM && center != null) {
-        animateCameraPosition(cameraPosition.copy(target = center, zoom = zoom))
-    } else {
-        onCatsTap(tappedCatIds(handle.getClusterLeaves(tap.cluster, Long.MAX_VALUE, 0).features))
+    when {
+        zoom == null -> Unit
+        zoom <= CLUSTER_MAX_ZOOM && center != null ->
+            animateCameraPosition(cameraPosition.copy(target = center, zoom = zoom))
+        else -> handle.query { getClusterLeaves(tap.cluster, Long.MAX_VALUE, 0) }
+            ?.let { leaves -> onCatsTap(tappedCatIds(leaves.features)) }
     }
 }
+
+// A cluster the source has rebuilt since the tap is gone, and the renderer fails the query for it.
+@Suppress("TooGenericExceptionCaught", "SwallowedException") // the native binding reports any renderer error
+private suspend fun <T> GeoJsonSourceHandle.query(block: suspend GeoJsonSourceHandle.() -> T): T? =
+    try {
+        block()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failed: Exception) {
+        null
+    }
