@@ -24,7 +24,7 @@ A cat stored without them anyway — by an earlier version, or by a restore that
 geohash and cell as written — gets them at the next launch. `RepairPlaceCells` runs at every process
 start and gives each located cat the geohash and cell its coordinates imply. That includes deleted
 cats, so an undo brings back a whole row. A missing cell is created pending, like any new one, so it
-gets named. Only those two columns are written, all rows in one transaction. `updatedAt` stays as it
+gets named. Only those two columns are written, every cat's in one transaction. `updatedAt` stays as it
 was, because the cat itself has not changed. A cat whose coordinates changed while the repair was
 running is left alone. If the repair fails, the next start runs it again. Without the repair such a
 cat would sit under "Not named yet" for good, because nothing ever looks up a cell that does not
@@ -118,8 +118,7 @@ cats**, so a drill-down never quietly loses one. That invariant has its own test
 An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
 coordinates themselves, so they work with no network and even for cells that were never named or
 never created. A cat with coordinates therefore always lands in an area, even before the repair above
-has run. An area whose cells
-disagree takes the name most of them agree on.
+has run. An area whose cells disagree takes the name most of them agree on.
 
 ## Not built yet
 
