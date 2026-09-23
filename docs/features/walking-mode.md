@@ -96,7 +96,8 @@ sound. A user who demotes the channel to Silent in system settings hides it agai
 
 Android lets an app lower a channel's importance but never raise it, so the raised channel has a new
 id and the old `walking` channel, created Low, is deleted on start. Settings may count it among
-deleted categories; that is the platform's bookkeeping, not a leftover.
+deleted categories; that is the platform's bookkeeping, not a leftover. A choice the user made on
+the old channel — silenced or blocked — does not carry over: the new one starts at Default.
 
 ## Tapping it opens the app
 
