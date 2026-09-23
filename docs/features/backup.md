@@ -4,8 +4,10 @@ Your cats are yours: an archive you can write somewhere of your choosing and rea
 device or another one. No account, no server, no sync.
 
 **Settings → Backup** has an Export and an Import button. Both run in a worker, so leaving the
-screen mid-run cannot leave a half-written archive or a half-merged database, and the screen
-reads the run's state back rather than remembering it.
+screen mid-run cannot leave a half-written archive, and the screen reads the run's state back
+rather than remembering it. Nor can an import leave a half-merged database: it reads, merges and
+writes every row inside one transaction, so an import that fails part-way — an SQLite error, a full
+disk, a stopped worker, a killed process — leaves the database exactly as it found it.
 
 ## What goes in
 
@@ -63,10 +65,16 @@ rather than failing the export, because the rest of the archive is still worth h
 On import a photo is restored **only where none is already here** — the local copy is the one the app
 has been rendering, and an archive should not quietly replace it.
 
+**Photos are not part of the merge's transaction.** They are restored while the archive is read,
+before the archive is judged and before any row is merged, and a file cannot join a database
+transaction. An import that fails or is refused writes no rows but can leave restored photos behind
+that no row points at. They are the archive's own bytes, so importing it again finds them here,
+keeps them, and its rows point at exactly those files.
+
 ## At the edges
 
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
-  fields this version would silently drop. Nothing is written.
+  fields this version would silently drop. No row is written (photos: see above).
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, or rows that will not
   parse. Both reasons reach the caller, which decides what to say.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
@@ -98,6 +106,12 @@ has been rendering, and an archive should not quietly replace it.
 - **An archive that lists one cat more than once imports it once.** Taken row by row, a cat new here
   would be inserted twice, and the second insert would fail the import with every cat before it
   already written; a cat already here would end up as whichever row came last, older or not.
+- **An import that fails part-way writes no rows at all.** Without the transaction, the cats written
+  before the failure would stay, place cells could be missing for cats that point at them, and the
+  worker would still report the import as failed.
+- **The merge reads what is here inside the same transaction it writes in.** A change landing
+  between the read and the writes — a cat deleted here while the import runs — would otherwise be
+  overwritten by a decision made without it. Instead, that write waits until the import has finished.
 - **Reading the local side uses `loadEvery`**, which returns soft-deleted rows too. The live reads
   hide them, and a merge that could not see a deletion would let an old archive reinsert the cat as
   if it were new.
@@ -111,6 +125,8 @@ has been rendering, and an archive should not quietly replace it.
 - `domain/…/backup/ImportedPlaceCell.kt` — which archived cells are cells at all, where each one is,
   and what an unnamed one leaves behind
 - `domain/…/usecase/ExportBackup.kt`, `ImportBackup.kt`
+- `domain/…/repository/TransactionRunner.kt` — the one-unit-of-work seam the import runs inside;
+  `data/…/db/RoomTransactionRunner.kt` is Room's write transaction behind it
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
 - `data/…/backup/BackupRecords.kt` — the serialized shape and its mappers
 - `data/…/androidMain/backup/ZipBackupArchive.android.kt` — the ZIP itself
