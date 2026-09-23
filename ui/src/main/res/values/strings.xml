@@ -32,6 +32,18 @@
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
     <string name="encounters_photo_description">Photo of this cat</string>
+    <string name="encounters_select">Select</string>
+    <string name="encounters_selection_close">Cancel selection</string>
+    <string name="encounters_delete_selected">Delete selected</string>
+    <string name="encounters_undo">Undo</string>
+    <plurals name="encounters_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="encounters_removed">
+        <item quantity="one">%1$d cat removed</item>
+        <item quantity="other">%1$d cats removed</item>
+    </plurals>
 
     <string name="location_from_photo">From photo</string>
     <string name="location_current">Current location</string>

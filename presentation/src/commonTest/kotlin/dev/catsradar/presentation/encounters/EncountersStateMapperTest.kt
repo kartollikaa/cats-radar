@@ -4,6 +4,8 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.presentation.coat.CoatOption
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -206,6 +208,49 @@ class EncountersStateMapperTest {
             .associate { it.id to it.position }
 
         assertEquals(mapOf("middle" to GroupPosition.FIRST, "oldest" to GroupPosition.LAST), positions)
+    }
+
+    @Test
+    fun `selected ids mark exactly their rows, and an id with no row is dropped from the selection`() {
+        val earlier = encounterFixture("earlier", BASE)
+        val later = encounterFixture("later", BASE + 5.minutes)
+
+        val state = mapper.map(listOf(earlier, later), today, selectedIds = setOf("later", "gone"))
+
+        assertEquals(
+            EncountersState(
+                rows = persistentListOf(
+                    EncounterListItem.OutingHeader(key = "header-earlier", label = "2026-09-22, $BASE"),
+                    EncounterListItem.Row(
+                        id = "later",
+                        timeLabel = (BASE + 5.minutes).toString(),
+                        location = LocationLabel.NONE,
+                        position = GroupPosition.FIRST,
+                        selected = true,
+                    ),
+                    EncounterListItem.Row(
+                        id = "earlier",
+                        timeLabel = BASE.toString(),
+                        location = LocationLabel.NONE,
+                        position = GroupPosition.LAST,
+                        selected = false,
+                    ),
+                ),
+                selectedIds = persistentSetOf("later"),
+            ),
+            state,
+        )
+        assertEquals(1, state.selectedCount)
+    }
+
+    @Test
+    fun `a selected cat that has been deleted is no longer selected`() {
+        val live = encounterFixture("live", BASE)
+        val deleted = encounterFixture("deleted", BASE + 5.minutes, deletedAt = BASE + 1.hours)
+
+        val state = mapper.map(listOf(live, deleted), today, selectedIds = setOf("live", "deleted"))
+
+        assertEquals(persistentSetOf("live"), state.selectedIds)
     }
 
     private companion object {

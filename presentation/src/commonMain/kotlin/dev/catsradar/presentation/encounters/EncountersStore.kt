@@ -1,28 +1,110 @@
 package dev.catsradar.presentation.encounters
 
 import androidx.lifecycle.viewModelScope
+import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.DeletedBatch
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.time.today
+import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.ObserveEncounters
+import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.presentation.Store
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
 class EncountersStore(
     observeEncounters: ObserveEncounters,
+    private val deleteEncounters: DeleteEncounters,
+    private val undoDeleteEncounters: UndoDeleteEncounters,
     private val stateMapper: EncountersStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<EncountersState, EncountersIntent, EncountersEffect>(EncountersState()) {
 
+    private var encounters: List<Encounter> = emptyList()
+    private var deleting = false
+    private var undoable: DeletedBatch? = null
+    private var undoTimeoutJob: Job? = null
+
     init {
         observeEncounters()
-            .onEach { encounters -> setState { stateMapper.map(encounters, clock.today(timeZone)) } }
+            .onEach { observed ->
+                encounters = observed
+                setState { rebuild(selectedIds) }
+            }
             .launchIn(viewModelScope)
     }
 
-    @Suppress("EmptyFunctionBlock") // EncountersIntent has no members: this screen dispatches none
+    private fun EncountersState.rebuild(selectedIds: Set<String>): EncountersState =
+        stateMapper.map(encounters, clock.today(timeZone), selectedIds).copy(removedCount = removedCount)
+
     override suspend fun handle(intent: EncountersIntent) {
+        when (intent) {
+            is EncountersIntent.RowClicked -> onRowClicked(intent.id)
+            is EncountersIntent.RowLongPressed -> toggle(intent.id)
+            EncountersIntent.SelectionDismissed -> setState { rebuild(emptySet()) }
+            EncountersIntent.DeleteSelectedClicked -> onDeleteSelectedClicked()
+            EncountersIntent.UndoClicked -> onUndoClicked()
+        }
+    }
+
+    private suspend fun onRowClicked(id: String) {
+        if (state.value.isSelecting) toggle(id) else emit(EncountersEffect.OpenEncounter(id))
+    }
+
+    private fun toggle(id: String) {
+        setState { rebuild(if (id in selectedIds) selectedIds - id else selectedIds + id) }
+    }
+
+    private suspend fun onDeleteSelectedClicked() {
+        val ids = state.value.selectedIds
+        // Set before the suspending write: a second tap in flight must see the flag and no-op.
+        if (deleting || ids.isEmpty()) return
+        deleting = true
+        try {
+            runWrite(onFailure = {}) {
+                val batch = deleteEncounters(ids)
+                setState { rebuild(selectedIds - ids) }
+                offerUndo(batch)
+            }
+        } finally {
+            deleting = false
+        }
+    }
+
+    private fun offerUndo(batch: DeletedBatch) {
+        undoable = batch
+        setState { copy(removedCount = batch.ids.size) }
+        undoTimeoutJob?.cancel()
+        undoTimeoutJob = viewModelScope.launch {
+            delay(Tuning.UNDO_VISIBLE)
+            undoable = null
+            setState { copy(removedCount = null) }
+        }
+    }
+
+    private suspend fun onUndoClicked() {
+        val batch = undoable ?: return
+        undoable = null
+        undoTimeoutJob?.cancel()
+        setState { copy(removedCount = null) }
+        runWrite(onFailure = { offerUndo(batch) }) { undoDeleteEncounters(batch) }
+    }
+
+    @Suppress("TooGenericExceptionCaught", "SwallowedException") // any storage failure degrades the same way
+    private suspend fun runWrite(onFailure: () -> Unit, block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            onFailure()
+        }
     }
 }

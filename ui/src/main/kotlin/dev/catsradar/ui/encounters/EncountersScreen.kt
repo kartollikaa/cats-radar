@@ -1,31 +1,38 @@
 package dev.catsradar.ui.encounters
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,6 +49,8 @@ import dev.catsradar.ui.coat.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentList
 
 private val LeadingSize = 48.dp
 
@@ -57,20 +66,67 @@ fun EncountersScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onRowClick: (String) -> Unit = {},
+    onRowLongClick: (String) -> Unit = {},
+    onSelectionDismiss: () -> Unit = {},
+    onDeleteSelectedClick: () -> Unit = {},
+    onUndoClick: () -> Unit = {},
 ) {
-    if (state.isEmpty) {
-        EmptyEncounters(modifier = modifier.fillMaxSize().padding(contentPadding))
-        return
+    val layoutDirection = LocalLayoutDirection.current
+    // The selection bar takes the top inset, so the list below it must not add it a second time.
+    val listPadding = if (state.isSelecting) {
+        PaddingValues(
+            start = contentPadding.calculateStartPadding(layoutDirection),
+            end = contentPadding.calculateEndPadding(layoutDirection),
+            bottom = contentPadding.calculateBottomPadding(),
+        )
+    } else {
+        contentPadding
     }
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        items(items = state.rows, key = { it.key }) { row ->
-            when (row) {
-                is EncounterListItem.OutingHeader -> OutingHeaderRow(row)
-                is EncounterListItem.Row -> EncounterRow(row, onClick = { onRowClick(row.id) })
+    val listState = rememberLazyListState()
+    // A keyed list keeps its first visible row in place when rows land above it, so an undone
+    // outing would come back out of sight; a list resting at the top moves up to show them.
+    SideEffect { if (!listState.canScrollBackward) listState.requestScrollToItem(0) }
+    Column(modifier = modifier.fillMaxSize()) {
+        if (state.isSelecting) {
+            SelectionBar(
+                selectedCount = state.selectedCount,
+                topInset = contentPadding.calculateTopPadding(),
+                onDismiss = onSelectionDismiss,
+                onDeleteClick = onDeleteSelectedClick,
+            )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            if (state.isEmpty) {
+                EmptyEncounters(modifier = Modifier.fillMaxSize().padding(listPadding))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    state = listState,
+                    contentPadding = listPadding,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    items(items = state.rows, key = { it.key }) { row ->
+                        when (row) {
+                            is EncounterListItem.OutingHeader -> OutingHeaderRow(row)
+                            is EncounterListItem.Row -> EncounterRow(
+                                row = row,
+                                selecting = state.isSelecting,
+                                onClick = { onRowClick(row.id) },
+                                onLongClick = { onRowLongClick(row.id) },
+                            )
+                        }
+                    }
+                }
+            }
+            state.removedCount?.let { count ->
+                UndoBar(
+                    removedCount = count,
+                    onUndoClick = onUndoClick,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = listPadding.calculateBottomPadding())
+                        .padding(16.dp),
+                )
             }
         }
     }
@@ -90,19 +146,35 @@ private fun OutingHeaderRow(header: EncounterListItem.OutingHeader, modifier: Mo
 }
 
 @Composable
-private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+private fun EncounterRow(
+    row: EncounterListItem.Row,
+    selecting: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {},
+) {
+    val background = if (row.selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = RowOuterInset)
             .clip(row.position.shape())
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .clickable(onClick = onClick)
+            .background(background)
+            .then(if (selecting) Modifier.semantics { selected = row.selected } else Modifier)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onLongClickLabel = stringResource(R.string.encounters_select),
+            )
             .padding(horizontal = RowInnerInset, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        EncounterLead(lead = row.lead)
+        EncounterLead(lead = row.lead, selected = row.selected)
         Column(modifier = Modifier.weight(1f)) {
             Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -121,7 +193,20 @@ private fun GroupPosition.shape(): RoundedCornerShape {
 }
 
 @Composable
-private fun EncounterLead(lead: RowLead, modifier: Modifier = Modifier) {
+private fun EncounterLead(lead: RowLead, selected: Boolean, modifier: Modifier = Modifier) {
+    if (selected) {
+        Box(
+            modifier = modifier.size(LeadingSize).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_check),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
+        return
+    }
     val shape = MaterialTheme.shapes.small
     val tile = modifier.size(LeadingSize).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHighest)
     when (lead) {
@@ -190,6 +275,22 @@ private fun EncountersScreenPopulatedPreview() {
     }
 }
 
+@ThemePreviews
+@Composable
+private fun EncountersScreenSelectingPreview() {
+    CatsRadarTheme {
+        Surface { EncountersScreen(state = sampleEncountersStateSelecting) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun EncountersScreenUndoPreview() {
+    CatsRadarTheme {
+        Surface { EncountersScreen(state = sampleEncountersStateUndo) }
+    }
+}
+
 private val sampleEncountersStateEmpty = EncountersState()
 
 // Two outings on the same day, so the preview also shows how their headers tell them apart.
@@ -220,3 +321,14 @@ private val sampleEncountersStatePopulated = EncountersState(
         EncounterListItem.Row(id = "4", timeLabel = "09:05", location = LocationLabel.NONE),
     ),
 )
+
+private val sampleSelectedIds = persistentSetOf("1", "2")
+
+private val sampleEncountersStateSelecting = sampleEncountersStatePopulated.copy(
+    rows = sampleEncountersStatePopulated.rows.map { item ->
+        if (item is EncounterListItem.Row) item.copy(selected = item.id in sampleSelectedIds) else item
+    }.toPersistentList(),
+    selectedIds = sampleSelectedIds,
+)
+
+private val sampleEncountersStateUndo = sampleEncountersStatePopulated.copy(removedCount = 2)
