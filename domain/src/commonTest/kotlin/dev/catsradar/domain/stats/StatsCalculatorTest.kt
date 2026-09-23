@@ -66,11 +66,17 @@ class StatsCalculatorTest {
     }
 
     @Test
-    fun `photos are counted apart from tallies`() {
-        val stats = stats(listOf(at(NOON), at(NOON - 1.hours, kind = EncounterKind.PHOTO)))
+    fun `cats with a photo are counted however they were logged`() {
+        val stats = stats(
+            listOf(
+                at(NOON),
+                at(NOON - 1.hours, kind = EncounterKind.PHOTO).copy(photoPath = "taken.jpg"),
+                at(NOON - 2.hours).copy(photoPath = "attached.jpg"),
+            ),
+        )
 
-        assertEquals(2, stats.total)
-        assertEquals(1, stats.withPhoto)
+        assertEquals(3, stats.total)
+        assertEquals(2, stats.withPhoto)
     }
 
     @Test
