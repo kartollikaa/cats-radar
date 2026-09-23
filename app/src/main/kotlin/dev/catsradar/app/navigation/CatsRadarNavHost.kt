@@ -58,15 +58,17 @@ fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier
             )
         },
     ) { innerPadding ->
-        CatsRadarNavDisplay(backStack = backStack, contentPadding = innerPadding, cameraRequest = cameraRequest)
+        CatsRadarNavDisplay(
+            backStack = backStack,
+            entryProvider = catsRadarEntries(backStack, innerPadding, cameraRequest),
+        )
     }
 }
 
 @Composable
-private fun CatsRadarNavDisplay(
+internal fun CatsRadarNavDisplay(
     backStack: BottomNavBackStack,
-    contentPadding: PaddingValues,
-    cameraRequest: CameraRequest,
+    entryProvider: (NavKey) -> NavEntry<NavKey>,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -81,7 +83,7 @@ private fun CatsRadarNavDisplay(
         transitionSpec = { navTransition(density) },
         popTransitionSpec = { navTransition(density) },
         predictivePopTransitionSpec = { swipeEdge -> predictivePopTransition(swipeEdge) },
-        entryProvider = catsRadarEntries(backStack, contentPadding, cameraRequest),
+        entryProvider = entryProvider,
     )
 }
 
