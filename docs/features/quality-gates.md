@@ -69,13 +69,7 @@ can't see — see `app-shell.md`.
 
 ## Not handled yet
 
-The rest of the design spec's §7 test list has tests; these parts do not. The first needs build
-and CI setup that does not exist yet; the second needs only the test itself.
-
-- **An on-device smoke test** (tap the counter, see 1). `:app` has no `src/androidTest` sources,
-  no instrumentation runner and no instrumented-test dependencies, and CI runs `./gradlew check`
-  alone, which runs host tests and starts no emulator.
-- **A backup round trip judged by the statistics** (export, wipe, import, identical `Stats`). Its
-  pieces are tested apart: `ZipBackupArchiveTest` writes an archive and reads every field back, and
-  `BackupUseCasesTest` checks what export gathers and how import merges, against fakes. No test
-  exports a real database, imports the archive into an empty one and compares the two `Stats`.
+The rest of the design spec's §7 test list has tests. The exception is the on-device smoke test (tap
+the counter, see 1): `:app` has no `src/androidTest` sources, no instrumentation runner and no
+instrumented-test dependencies, and CI runs `./gradlew check` alone, which runs host tests and
+starts no emulator.
