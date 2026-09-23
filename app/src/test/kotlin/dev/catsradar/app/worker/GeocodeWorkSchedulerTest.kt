@@ -54,7 +54,7 @@ class GeocodeWorkSchedulerTest {
         assertTrue(input.getBoolean(GeocodePendingCellsWorker.KEY_UNTRIED_ONLY, false))
     }
 
-    // Kept instead, a pass already past a cell written meanwhile would leave it for the periodic slot.
+    // Under KEEP, a pass already past a cell written meanwhile would leave that cell for the periodic slot.
     @Test
     fun `a new request starts the pass over, so at most one is ever queued`() {
         GeocodeWorkScheduler.nameUntriedCells(context)
