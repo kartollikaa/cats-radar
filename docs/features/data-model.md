@@ -1,34 +1,33 @@
 # Data model
 
-`Encounter` is the one row per logged cat; `PlaceCell` is a reverse-geocode cache keyed by a
-coarser geohash prefix, modeled but not yet populated by any code path (see `location.md`). Both
-are plain, Room-agnostic `data class`es in `:domain`; `:data` mirrors each with an `@Entity`
-(`EncounterEntity`, `PlaceCellEntity`) and a pair of mapper functions (`toDomain()`/`toEntity()`)
-so the persistence shape and the domain shape can diverge without either layer leaking into the
-other.
+`Encounter` is the one row per logged cat; `PlaceCell` is a reverse-geocode cache keyed by a coarser
+geohash prefix (see `places.md`). Both are plain, Room-agnostic `data class`es in `:domain`; `:data`
+mirrors each with an `@Entity` (`EncounterEntity`, `PlaceCellEntity`) and a pair of mapper functions
+(`toDomain()`/`toEntity()`) so the persistence shape and the domain shape can diverge without either
+layer leaking into the other.
 
 `Encounter`'s fields fall into a few groups: identity (`id`, `deviceId`); when and how it happened
-(`occurredAt`, `tzOffsetMinutes`, `kind`, `origin`); the cat (`coat`, the only field editable after
-creation, though nothing yet edits it); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
-`sourceDigest`) that stay `null` until the photo flow exists; location (`lat`, `lon`,
-`accuracyMeters`, `locationSource`, `locationFixedAt`, `geohash`, `placeCellId`, covered in
-`location.md`); and row lifecycle (`createdAt`, `updatedAt`, `deletedAt`). `tzOffsetMinutes` is
-the UTC offset at the moment the encounter happened, not the device's offset now — it is what lets
-"today" and streak calculations stay correct for an encounter logged while travelling (see
-`docs/rules/date-time.md`).
+(`occurredAt`, `tzOffsetMinutes`, `kind`, `origin`); the cat (`coat`, the only field the user can
+edit after creation, see `coat.md`); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
+`sourceDigest`, covered in `photos.md`); location (`lat`, `lon`, `accuracyMeters`, `locationSource`,
+`locationFixedAt`, `geohash`, `placeCellId`, covered in `location.md`); and row lifecycle
+(`createdAt`, `updatedAt`, `deletedAt`). `tzOffsetMinutes` is the UTC offset at the moment the
+encounter happened, not the device's offset now — it is what lets "today" and streak calculations
+stay correct for an encounter logged while travelling (see `docs/rules/date-time.md`). `id` must be
+unique across devices, not just on this one: a backup import reconciles rows by it (see
+`backup.md`).
 
 ## At the edges
 
 Deletion is soft: `deletedAt` is a nullable timestamp, and every read of live rows (`observeAll`,
 `observeById`, `findBySourceDigest`) filters `WHERE deletedAt IS NULL`. Only two reads see
 soft-deleted rows: `loadEvery` for the backup merge (see `backup.md`) and `loadDeletedBefore` for
-the purge.
-`softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
+the purge. `softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
-*reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `undoDelete` sets `deletedAt`
-back to `null` unconditionally — it is the one place a `deletedAt` write isn't guarded, because
-undo is meant to resurrect the row.
+*reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). Two writes clear `deletedAt` on
+purpose, unguarded: `undoDelete`, because undo is meant to resurrect the row, and a backup import
+whose copy of a cat deleted here was edited after the deletion (see `backup.md`).
 
 Every enum column (`EncounterKind`, `EncounterOrigin`, `LocationSource`, `CatCoat`, `PlaceStatus`)
 is stored by its `name`, never its ordinal — reordering the enum's declaration must never change
@@ -37,8 +36,8 @@ hand-edited row, or one written by a newer app version with a new member) degrad
 fallback per enum rather than throwing: `EncounterKind` → `TALLY`, `EncounterOrigin` → `APP`,
 `LocationSource` → `NONE`, `CatCoat` → `null`, `PlaceStatus` → `FAILED` (`EnumConvertersTest`, one
 `unrecognized*NameDegradesTo*` test per enum). `PlaceStatus` in particular falls back to `FAILED`
-rather than `PENDING`, so that an unrecognized status can't make the (not-yet-built) geocode
-worker retry it forever.
+rather than `PENDING`, so that an unrecognized status can't make the geocode worker retry it
+forever.
 
 A corrupt row doesn't take the rest of the list down with it, either. `tzOffsetMinutes` outside
 ±18 hours — `Encounter`'s own `init` block enforces that range and throws — is clamped at the
@@ -64,8 +63,8 @@ itself works — there is no v2 yet, so no actual migration path exists to test.
 
 ## Purging
 
-A soft-deleted cat is not kept forever. `PurgeDeletedWorker` runs daily, **while the device is
-idle**, and removes rows whose `deletedAt` is older than `Tuning.PURGE_AFTER`, along with their
+A soft-deleted cat is not kept forever. `PurgeDeletedWorker` runs periodically, **while the device
+is idle**, and removes rows whose `deletedAt` is older than `Tuning.PURGE_AFTER`, along with their
 photo files.
 
 The files go **before** the rows: a row deleted first would leave photos nothing points at, and
