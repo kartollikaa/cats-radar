@@ -19,6 +19,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 private val EARLY = Instant.parse("2026-09-01T00:00:00Z")
+private val MIDDLE = Instant.parse("2026-09-10T00:00:00Z")
 private val LATE = Instant.parse("2026-09-20T00:00:00Z")
 private const val NAMED_HERE = "ucfv0h"
 private const val PENDING_HERE = "ucfv0j"
@@ -136,6 +137,44 @@ class ImportBackupTest {
 
         assertEquals(ImportBackupResult.Merged(added = 0, updated = 0, unchanged = 1), result)
         assertEquals(LATE, encounters.loadEvery().single().deletedAt)
+    }
+
+    @Test
+    fun `a cat the archive lists twice is inserted once, as its later edit`() = runTest {
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY)
+        val imported = BackupContents(encounters = listOf(later, earlier))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 1, updated = 0, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.inserted)
+    }
+
+    @Test
+    fun `a cat here that the archive lists twice takes the later edit listed first`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY))
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = MIDDLE)
+        val imported = BackupContents(encounters = listOf(later, earlier))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.loadEvery())
+    }
+
+    @Test
+    fun `a cat here that the archive lists twice takes the later edit listed last`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY))
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE)
+        val earlier = encounterAt(EARLY).copy(id = "cat", updatedAt = MIDDLE)
+        val imported = BackupContents(encounters = listOf(earlier, later))
+
+        val result = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
+        assertEquals(listOf(later), encounters.loadEvery())
     }
 
     @Test
