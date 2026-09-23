@@ -6,6 +6,7 @@ import dev.catsradar.data.backup.ZipBackupWriter
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.PlaceCellDao
+import dev.catsradar.data.db.TrackPointDao
 import dev.catsradar.data.db.WalkDao
 import dev.catsradar.data.db.createCatsDatabase
 import dev.catsradar.data.platform.AndroidExifReader
@@ -52,7 +53,8 @@ val dataModule = module {
     single<PlaceCellDao> { get<CatsDatabase>().placeCellDao() }
     single<PlaceCellRepository> { PlaceCellRepositoryImpl(get()) }
     single<WalkDao> { get<CatsDatabase>().walkDao() }
-    single<WalkRepository> { WalkRepositoryImpl(get()) }
+    single<TrackPointDao> { get<CatsDatabase>().trackPointDao() }
+    single<WalkRepository> { WalkRepositoryImpl(get(), get()) }
     factory<IdGenerator> { RandomIdGenerator() }
     // createdAtStart: the one-time SharedPreferences read must land at app start, not on the
     // first tap that resolves LogTally.

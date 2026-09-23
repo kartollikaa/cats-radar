@@ -35,6 +35,10 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override suspend fun undoDelete(id: String) = dao.clearDeletedAt(id)
 
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant) = dao.softDeleteAll(ids, deletedAt)
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant) = dao.undoDeleteAll(ids, deletedAt)
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
         dao.findBySourceDigest(sourceDigest)?.toDomain()
 

@@ -16,7 +16,13 @@ class EncountersStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounters: List<Encounter>, today: LocalDate, grid: Boolean): EncountersState = EncountersState(
+    /** [selectedIds] naming no cat on screen are dropped from the result's selection. */
+    fun map(
+        encounters: List<Encounter>,
+        today: LocalDate,
+        grid: Boolean,
+        selectedIds: Set<String> = emptySet(),
+    ): EncountersState = EncountersState(
         rows = outingsNewestFirst(encounters)
             .flatMap { outing ->
                 val cats = if (grid) {
@@ -30,7 +36,7 @@ class EncountersStateMapper(
             }
             .toPersistentList(),
         layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
-    )
+    ).withSelection(selectedIds)
 
     fun mapList(encounters: List<Encounter>, today: LocalDate): ImmutableList<EncounterListItem> =
         outingsNewestFirst(encounters)

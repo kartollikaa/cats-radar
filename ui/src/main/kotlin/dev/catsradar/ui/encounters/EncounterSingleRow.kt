@@ -27,13 +27,17 @@ private val OutingJoinCorner = 4.dp
 internal fun SingleRow(
     row: EncountersRow.Single,
     modifier: Modifier = Modifier,
+    selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
+    onEncounterLongClick: (String) -> Unit = {},
 ) {
     EncounterCard(
         cell = row.cell,
         modifier = modifier,
         shape = row.position.shape(),
+        selecting = selecting,
         onClick = { onEncounterClick(row.cell.id) },
+        onLongClick = { onEncounterLongClick(row.cell.id) },
     )
 }
 

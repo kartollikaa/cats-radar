@@ -98,6 +98,12 @@ private class FakeTodayRepository : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
     override suspend fun loadEvery(): List<Encounter> = rows.value
     override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> = emptyList()

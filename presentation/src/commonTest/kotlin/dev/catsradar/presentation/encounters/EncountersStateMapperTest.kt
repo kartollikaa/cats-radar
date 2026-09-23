@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -346,6 +347,76 @@ class EncountersStateMapperTest {
     }
 
     private data class CellView(val id: String, val location: LocationLabel, val lead: CellLead?)
+
+    @Test
+    fun `selected ids mark exactly their cats, and an id with no cat is dropped from the selection`() {
+        val earlier = encounterFixture("earlier", BASE)
+        val later = encounterFixture("later", BASE + 5.minutes)
+
+        val state = mapper.map(listOf(earlier, later), today, grid = true, selectedIds = setOf("later", "gone"))
+
+        assertEquals(
+            EncountersState(
+                rows = persistentListOf(
+                    OutingHeader(key = "header-earlier", label = "2026-09-22, $BASE"),
+                    EncountersRow.Cards(
+                        persistentListOf(cell("later", BASE + 5.minutes).copy(selected = true), cell("earlier", BASE)),
+                    ),
+                ),
+                selectedIds = persistentSetOf("later"),
+            ),
+            state,
+        )
+        assertEquals(1, state.selectedCount)
+    }
+
+    @Test
+    fun `a selection marks photo pairs, tiles and list rows alike`() {
+        val encounters = listOf(
+            encounterFixture("tile", BASE),
+            encounterFixture("tile2", BASE + 1.minutes),
+            encounterFixture("tile3", BASE + 2.minutes),
+            photoFixture("p1", BASE + 3.minutes),
+            photoFixture("p2", BASE + 4.minutes),
+        )
+        val ids = setOf("tile2", "p1")
+
+        val grid = mapper.map(encounters, today, grid = true, selectedIds = ids)
+        val list = mapper.map(encounters, today, grid = false, selectedIds = ids)
+
+        assertEquals(persistentSetOf("tile2", "p1"), grid.selectedIds)
+        assertEquals(persistentSetOf("tile2", "p1"), list.selectedIds)
+        assertEquals(
+            listOf("p1", "tile2"),
+            list.rows.filterIsInstance<EncountersRow.Single>().filter { it.cell.selected }.map { it.cell.id },
+        )
+    }
+
+    @Test
+    fun `re-marking a selection gives the same state as mapping with it, without formatting again`() {
+        val encounters = listOf(
+            encounterFixture("a", BASE),
+            encounterFixture("b", BASE + 5.minutes),
+            photoFixture("c", BASE + 5.hours),
+        )
+        val first = mapper.map(encounters, today, grid = true, selectedIds = setOf("a"))
+        val headersFormatted = formatter.dayHeaderCalls.size
+
+        val reselected = first.withSelection(setOf("b", "c", "gone"))
+
+        assertEquals(headersFormatted, formatter.dayHeaderCalls.size, "re-marking formatted a header again")
+        assertEquals(mapper.map(encounters, today, grid = true, selectedIds = setOf("b", "c")), reselected)
+    }
+
+    @Test
+    fun `a selected cat that has been deleted is no longer selected`() {
+        val live = encounterFixture("live", BASE)
+        val deleted = encounterFixture("deleted", BASE + 5.minutes, deletedAt = BASE + 1.hours)
+
+        val state = mapper.map(listOf(live, deleted), today, grid = true, selectedIds = setOf("live", "deleted"))
+
+        assertEquals(persistentSetOf("live"), state.selectedIds)
+    }
 
     private fun EncountersState.cells(): List<CellView> = rows.flatMap { row ->
         when (row) {

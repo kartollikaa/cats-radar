@@ -49,6 +49,16 @@ class WalkDaoTest {
     }
 
     @Test
+    fun upsertingAWalkWritesItAsGivenOverTheOneStoredUnderItsId() = runTest {
+        dao.upsert(walkEntity("walk"))
+        val ended = walkEntity("walk").copy(endedAt = walkStart + 10.minutes, updatedAt = walkStart + 10.minutes)
+
+        dao.upsert(ended)
+
+        assertEquals(listOf(ended), dao.observeAll().first())
+    }
+
+    @Test
     fun endingTouchesOnlyAnOpenWalk() = runTest {
         dao.startIfNoneOpen(walkEntity("walk"))
         val endedAt = walkStart + 10.minutes
