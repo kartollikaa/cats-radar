@@ -18,14 +18,14 @@ object BackupMerge {
         var unchanged = 0
         val encounters = mutableListOf<Encounter>()
 
-        imported.encounters.forEach { candidate ->
+        imported.encounters.oneRowPer(Encounter::id, ::replaces).forEach { candidate ->
             val existing = localById[candidate.id]
             when {
                 existing == null -> {
                     encounters += candidate
                     added++
                 }
-                importedWins(local = existing, imported = candidate) -> {
+                replaces(offered = candidate, kept = existing) -> {
                     encounters += candidate
                     updated++
                 }
@@ -34,7 +34,7 @@ object BackupMerge {
         }
 
         val localCells = local.placeCells.associateBy { it.cellId }
-        val placeCells = imported.placeCells.bestPerCell().filter { candidate ->
+        val placeCells = imported.placeCells.oneRowPer(PlaceCell::cellId, ::replaces).filter { candidate ->
             val existing = localCells[candidate.cellId]
             existing == null || replaces(offered = candidate, kept = existing)
         }
@@ -50,17 +50,17 @@ object BackupMerge {
 
     /**
      * A deletion outranks a live row it post-dates, so an old backup cannot resurrect a cat the user
-     * removed after taking it. Otherwise the later edit wins, and a tie keeps what is already here —
-     * which is what makes importing a backup of the current state write nothing at all.
+     * removed after taking it. Otherwise the later edit wins, and a tie keeps [kept] — which is what
+     * makes importing a backup of the current state write nothing at all.
      */
-    private fun importedWins(local: Encounter, imported: Encounter): Boolean {
-        // Only the local row can be deleted: an export carries live rows only, so a tombstone
-        // never travels in an archive.
-        val deletedAt = local.deletedAt
+    private fun replaces(offered: Encounter, kept: Encounter): Boolean {
+        // Only a local row can be deleted: an export carries live rows only, so a tombstone never
+        // travels in an archive.
+        val deletedAt = kept.deletedAt
         return if (deletedAt != null) {
-            deletedAt <= imported.updatedAt
+            deletedAt <= offered.updatedAt
         } else {
-            imported.updatedAt > local.updatedAt
+            offered.updatedAt > kept.updatedAt
         }
     }
 
@@ -84,9 +84,9 @@ object BackupMerge {
         return keptAt == null || offeredAt > keptAt
     }
 
-    // An archive is a file, not a table: nothing stops it listing one cell twice.
-    private fun List<PlaceCell>.bestPerCell(): List<PlaceCell> =
-        groupBy { it.cellId }.values.map { rows ->
-            rows.reduce { kept, offered -> if (replaces(offered = offered, kept = kept)) offered else kept }
+    // An archive is a file, not a table: nothing stops it listing one row twice.
+    private fun <T> List<T>.oneRowPer(key: (T) -> Any, beats: (offered: T, kept: T) -> Boolean): List<T> =
+        groupBy(key).values.map { rows ->
+            rows.reduce { kept, offered -> if (beats(offered, kept)) offered else kept }
         }
 }
