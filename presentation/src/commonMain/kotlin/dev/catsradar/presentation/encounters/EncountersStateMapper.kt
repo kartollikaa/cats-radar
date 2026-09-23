@@ -6,6 +6,7 @@ import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.map.isOnTheMap
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
@@ -32,7 +33,8 @@ class EncountersStateMapper(
                         EncountersRow.Single(encounter.toCell(), position)
                     }
                 }
-                listOf(outing.header(today)) + cats
+                val mapOutingId = outing.last().id.takeIf { outing.any { it.isOnTheMap() } }
+                listOf(outing.header(today, mapOutingId)) + cats
             }
             .toPersistentList(),
         layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
@@ -56,11 +58,12 @@ class EncountersStateMapper(
 
     // Keyed to the outing's earliest encounter (its "start", per outings.md), so a midnight-
     // crossing outing keeps one header; the start time tells same-day outings apart.
-    private fun List<Encounter>.header(today: LocalDate): OutingHeader {
+    private fun List<Encounter>.header(today: LocalDate, mapOutingId: String? = null): OutingHeader {
         val earliest = last()
         return OutingHeader(
             key = "header-${earliest.id}",
             label = "${dateTimeFormatter.dayHeader(earliest.localDate(), today)}, ${earliest.timeLabel()}",
+            mapOutingId = mapOutingId,
         )
     }
 

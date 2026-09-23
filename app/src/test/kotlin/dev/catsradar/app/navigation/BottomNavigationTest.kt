@@ -41,6 +41,19 @@ class BottomNavigationTest {
     }
 
     @Test
+    fun `a cat opened from the map sits above the Map tab, and back returns to the map`() {
+        val backStack = newStack(Counter)
+        backStack.selectTab(BottomNavTab.MAP)
+
+        backStack.push(EncounterDetail("cat"))
+
+        assertEquals(listOf(Counter, CatsMap, EncounterDetail("cat")), backStack.toList())
+        assertEquals(BottomNavTab.MAP, backStack.selectedTab)
+        assertTrue(backStack.popOrNull())
+        assertEquals(listOf<NavKey>(Counter, CatsMap), backStack.toList())
+    }
+
+    @Test
     fun `selecting Encounters from the Counter root pushes it once`() {
         val backStack = newStack(Counter)
 

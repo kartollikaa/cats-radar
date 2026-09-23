@@ -21,9 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -31,92 +29,133 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.map.MapArea
-import dev.catsradar.presentation.map.MapPoint
 import dev.catsradar.presentation.map.MapState
 import dev.catsradar.ui.R
-import dev.catsradar.ui.coat.faceRim
-import dev.catsradar.ui.coat.look
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.convertToColor
-import org.maplibre.compose.expressions.dsl.feature
-import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
-import org.maplibre.compose.sources.GeoJsonData
-import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
-import org.maplibre.spatialk.geojson.Feature
-import org.maplibre.spatialk.geojson.FeatureCollection
-import org.maplibre.spatialk.geojson.Point
-import org.maplibre.spatialk.geojson.Position
+import org.maplibre.compose.map.MapState as MaplibreMapState
 
 // Vector tiles of OpenStreetMap data, free and keyless; the attribution the overlay draws is required.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
 private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
-private const val CAT_COLOR = "color"
 private const val HALF_LUMINANCE = 0.5f
+
+private val FitPadding = PaddingValues(48.dp)
 
 @Composable
 fun MapScreen(
     state: MapState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onCatsTap: (List<String>) -> Unit = {},
+    onSpotDismiss: () -> Unit = {},
+    onOutingFocus: (String) -> Unit = {},
+    onFocusClear: () -> Unit = {},
+    onHeatToggle: () -> Unit = {},
+    onCoatToggle: (CoatOption?) -> Unit = {},
+    onCoatFilterClear: () -> Unit = {},
 ) {
     when (state) {
         MapState.Loading -> Box(modifier = modifier.fillMaxSize())
         MapState.Empty -> EmptyMap(modifier = modifier.fillMaxSize().padding(contentPadding))
-        is MapState.Located -> CatsMap(
-            state = state,
-            contentPadding = contentPadding,
-            modifier = modifier.fillMaxSize(),
-        )
+        is MapState.Located -> {
+            var choosingCoats by rememberSaveable { mutableStateOf(false) }
+            CatsMap(
+                state = state,
+                contentPadding = contentPadding,
+                modifier = modifier.fillMaxSize(),
+                onCatsTap = onCatsTap,
+                onFocusClear = onFocusClear,
+                onHeatToggle = onHeatToggle,
+                onCoatsClick = { choosingCoats = true },
+            )
+            if (choosingCoats) {
+                MapCoatSheet(
+                    shown = state.shownCoats,
+                    onCoatToggle = onCoatToggle,
+                    onClear = onCoatFilterClear,
+                    onDismiss = { choosingCoats = false },
+                )
+            }
+            state.spot?.let { spot ->
+                MapSpotSheet(
+                    spot = spot,
+                    onCatClick = { id -> onCatsTap(listOf(id)) },
+                    onOutingMapClick = onOutingFocus,
+                    onDismiss = onSpotDismiss,
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun CatsMap(state: MapState.Located, contentPadding: PaddingValues, modifier: Modifier = Modifier) {
-    val unnoted = MaterialTheme.colorScheme.primary
-    // The coat faces' own rim: a white cat's dot would otherwise vanish into a light street.
-    val rim = MaterialTheme.colorScheme.faceRim()
-    val cats = remember(state.points, unnoted) { state.points.toFeatures(unnoted) }
+private fun CatsMap(
+    state: MapState.Located,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    onCatsTap: (List<String>) -> Unit = {},
+    onFocusClear: () -> Unit = {},
+    onHeatToggle: () -> Unit = {},
+    onCoatsClick: () -> Unit = {},
+) {
+    val colors = catLayerColors()
+    val cats = remember(state.points, colors.unnoted) { catFeatures(state.points, colors.unnoted) }
+    val route = remember(state.focus) { state.focus?.let { routeLine(it.route) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
     val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)
+    val tapCats by rememberUpdatedState(onCatsTap)
+    var clusterTap by remember { mutableStateOf<ClusterTap?>(null) }
     val mapState = rememberMapState(baseStyle = style) {
-        CircleLayer(
-            id = "cats",
-            source = rememberGeoJsonSource(GeoJsonData.Features(cats)),
-            color = feature[CAT_COLOR].convertToColor(),
-            radius = const(7.dp),
-            strokeColor = const(rim),
-            strokeWidth = const(1.5.dp),
-        )
+        CatLayers(cats, route, state.heat, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
     }
-    // Fitted once per map, saved across recreation: the map restores its own camera, and a cat located
-    // while it is up must not pull the view off where it was panned.
-    var fitted by rememberSaveable { mutableStateOf(false) }
-    val area by rememberUpdatedState(state.area)
-    LaunchedEffect(mapState) {
-        if (!fitted) {
-            mapState.fitCameraToBounds(area.toBoundingBox(), padding = PaddingValues(48.dp))
-            fitted = true
-        }
+    FitOncePerFocus(mapState, area = state.area, focus = state.focus?.outingId)
+    LaunchedEffect(clusterTap) {
+        val tap = clusterTap ?: return@LaunchedEffect
+        mapState.open(tap, tapCats)
+        clusterTap = null
     }
     val styleFailed = mapState.style.loadState is StyleLoadState.Failed
     val summary = pluralStringResource(R.plurals.map_summary, state.points.size, state.points.size)
     Box(modifier = modifier.semantics { contentDescription = summary }) {
         MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
+        MapOverlay(
+            state = state,
+            contentPadding = contentPadding,
+            modifier = Modifier.fillMaxSize(),
+            onFocusClear = onFocusClear,
+            onHeatToggle = onHeatToggle,
+            onCoatsClick = onCoatsClick,
+        )
+    }
+}
+
+// Fitted once per map and focus, saved across recreation: the map restores its own camera, and a cat
+// located while it is up must not pull the view off where it was panned.
+@Composable
+private fun FitOncePerFocus(mapState: MaplibreMapState, area: MapArea, focus: String?) {
+    var fitted by rememberSaveable { mutableStateOf(false) }
+    var fittedFocus by rememberSaveable { mutableStateOf<String?>(null) }
+    val latestArea by rememberUpdatedState(area)
+    LaunchedEffect(mapState, focus) {
+        if (fitted && fittedFocus == focus) return@LaunchedEffect
+        if (fitted) {
+            mapState.animateCameraToBounds(latestArea.toBoundingBox(), padding = FitPadding)
+        } else {
+            mapState.fitCameraToBounds(latestArea.toBoundingBox(), padding = FitPadding)
+        }
+        fitted = true
+        fittedFocus = focus
     }
 }
 
@@ -145,19 +184,6 @@ private fun MapUnavailable(modifier: Modifier = Modifier) {
         }
     }
 }
-
-private fun ImmutableList<MapPoint>.toFeatures(unnoted: Color): FeatureCollection<Point, JsonObject> =
-    FeatureCollection(
-        map { point ->
-            val color = point.coat?.look()?.fur ?: unnoted
-            Feature(
-                Point(Position(point.longitude, point.latitude)),
-                buildJsonObject { put(CAT_COLOR, color.toHex()) },
-            )
-        },
-    )
-
-private fun Color.toHex(): String = "#%06X".format(toArgb() and 0xFFFFFF)
 
 private fun MapArea.toBoundingBox() = BoundingBox(west, south, east, north)
 

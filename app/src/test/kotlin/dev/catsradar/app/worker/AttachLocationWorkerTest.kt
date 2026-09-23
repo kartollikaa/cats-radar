@@ -19,6 +19,7 @@ import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.usecase.AttachLocation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
@@ -95,6 +96,7 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
 private class FakeLocationProvider : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix = Fix
     override suspend fun lastKnown(): LocationFix? = null
+    override fun trackFixes(): Flow<LocationFix> = emptyFlow()
 }
 
 private fun targetEncounter(): Encounter = Encounter(

@@ -23,6 +23,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import dev.catsradar.app.R as AppR
 
 @RunWith(AndroidJUnit4::class)
 class WalkingNotifierTest {
@@ -33,15 +34,20 @@ class WalkingNotifierTest {
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val shadowManager = shadowOf(manager)
 
+    private val shadowApplication = shadowOf(ApplicationProvider.getApplicationContext<Application>())
+
     private fun grantNotifications() {
-        shadowOf(ApplicationProvider.getApplicationContext<Application>())
-            .grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private fun grantLocation() {
+        shadowApplication.grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     private fun showAndRead(count: Int): Notification {
         grantNotifications()
         notifier.ensureChannel()
-        notifier.show(count)
+        notifier.show(count, appOnScreen = false)
         return assertNotNull(shadowManager.allNotifications.firstOrNull())
     }
 
@@ -58,6 +64,13 @@ class WalkingNotifierTest {
             ).map(context::getString),
             posted.actions.map { it.title.toString() },
         )
+    }
+
+    @Test
+    fun theStatusBarIconIsTheCatFace() {
+        val posted = showAndRead(count = 3)
+
+        assertEquals(AppR.drawable.ic_notification_cat, posted.smallIcon.resId)
     }
 
     @Test
@@ -116,8 +129,8 @@ class WalkingNotifierTest {
         grantNotifications()
         notifier.ensureChannel()
 
-        notifier.show(count = 3)
-        notifier.show(count = 4)
+        notifier.show(count = 3, appOnScreen = false)
+        notifier.show(count = 4, appOnScreen = false)
 
         assertEquals(1, shadowManager.size())
         val posted = assertNotNull(shadowManager.allNotifications.firstOrNull())
@@ -152,8 +165,83 @@ class WalkingNotifierTest {
     fun withoutPermissionToPostNothingReachesTheShade() {
         notifier.ensureChannel()
 
-        notifier.show(count = 1)
+        notifier.show(count = 1, appOnScreen = false)
 
+        assertEquals(0, shadowManager.size())
+    }
+
+    @Test
+    fun onScreenWithLocationAllowedTheRecordingServiceCarriesTheNotification() {
+        grantNotifications()
+        grantLocation()
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = true)
+
+        val started = assertNotNull(shadowApplication.nextStartedService)
+        assertEquals(ComponentName(context, WalkRecordingService::class.java), started.component)
+        assertEquals(3, started.getIntExtra(WalkRecordingService.EXTRA_COUNT, -1))
+        assertEquals(0, shadowManager.size())
+    }
+
+    @Test
+    fun withoutLocationTheNotificationPostsAsBeforeAndNoServiceStarts() {
+        grantNotifications()
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = true)
+
+        assertNull(shadowApplication.nextStartedService)
+        assertEquals(1, shadowManager.size())
+    }
+
+    @Test
+    fun offScreenNoRecordingStartsEvenWithLocationAllowed() {
+        grantNotifications()
+        grantLocation()
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = false)
+
+        assertNull(shadowApplication.nextStartedService)
+        assertEquals(1, shadowManager.size())
+    }
+
+    @Test
+    fun withOnlyApproximateLocationNoRecordingStarts() {
+        grantNotifications()
+        shadowApplication.grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, appOnScreen = true)
+
+        assertNull(shadowApplication.nextStartedService)
+        assertEquals(1, shadowManager.size())
+    }
+
+    @Test
+    fun clearingARecordingAsksTheServiceToStopBehindItsStart() {
+        grantNotifications()
+        grantLocation()
+        notifier.ensureChannel()
+        notifier.show(count = 3, appOnScreen = true)
+        shadowApplication.nextStartedService
+
+        notifier.clear()
+
+        assertEquals(WalkRecordingService.ACTION_STOP, shadowApplication.nextStartedService?.action)
+        assertNull(shadowApplication.nextStoppedService)
+    }
+
+    @Test
+    fun clearingWithNoRecordingTakesTheNotificationAwayAndStartsNothing() {
+        grantNotifications()
+        notifier.ensureChannel()
+        notifier.show(count = 3, appOnScreen = false)
+
+        notifier.clear()
+
+        assertNull(shadowApplication.nextStartedService)
         assertEquals(0, shadowManager.size())
     }
 }

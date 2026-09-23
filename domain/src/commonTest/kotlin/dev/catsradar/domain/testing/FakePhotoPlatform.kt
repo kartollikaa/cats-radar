@@ -84,7 +84,7 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
         state.value = enabled
     }
 
-    private val walking = MutableStateFlow(false)
+    val walking = MutableStateFlow(false)
 
     override fun walkingMode(): Flow<Boolean> = walking
 

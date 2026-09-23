@@ -61,7 +61,12 @@ sealed interface EncounterListItem {
     }
 }
 
-data class OutingHeader(override val key: String, val label: String) : EncountersRow, EncounterListItem
+data class OutingHeader(
+    override val key: String,
+    val label: String,
+    /** The id the map focuses this outing by, when one of its cats has a location. */
+    val mapOutingId: String? = null,
+) : EncountersRow, EncounterListItem
 
 data class EncounterCell(
     val id: String,
