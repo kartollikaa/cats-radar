@@ -70,7 +70,7 @@ can't see — see `app-shell.md`.
 ## Not handled yet
 
 The rest of the design spec's §7 test list has tests; these parts do not. The first needs build
-and CI setup that does not exist yet; the others need only the tests themselves.
+and CI setup that does not exist yet; the second needs only the test itself.
 
 - **An on-device smoke test** (tap the counter, see 1). `:app` has no `src/androidTest` sources,
   no instrumentation runner and no instrumented-test dependencies, and CI runs `./gradlew check`
@@ -79,11 +79,3 @@ and CI setup that does not exist yet; the others need only the tests themselves.
   pieces are tested apart: `ZipBackupArchiveTest` writes an archive and reads every field back, and
   `BackupUseCasesTest` checks what export gathers and how import merges, against fakes. No test
   exports a real database, imports the archive into an empty one and compares the two `Stats`.
-- **Region drill-down below the countries.** `RegionTreeTest` checks the country rows in full —
-  they add up to the cats, busiest first, pseudo-nodes last — but not that a country's cities or a
-  city's areas add up to it or come busiest first. It never asks for a city's areas or an area's
-  cats, which are what tapping a city or an area asks for. `ObserveRegion`, which picks the level
-  a parent key opens, has no test, and `RegionsStore` none beyond Koin constructing it.
-- **A whole-`State` regions mapper assertion.** `RegionsStateMapperTest` checks the cat list only.
-  `RegionsStateMapper`'s rows are asserted nowhere: the drillable flag, the row keys, and the label
-  tokens `docs/rules/compose-patterns.md` asks to be tested case by case.

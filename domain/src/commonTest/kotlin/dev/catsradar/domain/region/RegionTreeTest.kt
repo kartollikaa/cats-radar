@@ -1,12 +1,11 @@
 package dev.catsradar.domain.region
 
-import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
+import dev.catsradar.domain.testing.areaOf
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.locatedFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -18,17 +17,8 @@ class RegionTreeTest {
 
     private var next = 0
 
-    private fun located(lat: Double, lon: Double, deletedAt: Instant? = null): Encounter {
-        val geohash = Geohash.encode(lat, lon, Tuning.GEOHASH_PRECISION)
-        return encounterFixture("e${next++}", BASE + next.hours, locationSource = LocationSource.CURRENT_FIX)
-            .copy(
-                lat = lat,
-                lon = lon,
-                geohash = geohash,
-                placeCellId = Geohash.prefix(geohash, Tuning.PLACE_CELL_PRECISION),
-                deletedAt = deletedAt,
-            )
-    }
+    private fun located(lat: Double, lon: Double, deletedAt: Instant? = null): Encounter =
+        locatedFixture("e${next++}", BASE + next.hours, lat, lon).copy(deletedAt = deletedAt)
 
     private fun unlocated(): Encounter = encounterFixture("e${next++}", BASE + next.hours)
 
@@ -177,6 +167,80 @@ class RegionTreeTest {
         val nodes = RegionTree.areas(RegionKey.Country("ES"), gracia + other, cells)
 
         assertEquals(RegionLabel.Named("Gracia"), nodes.first().label)
+    }
+
+    @Test
+    fun `a country's cities add up to the country when every cell names a city`() {
+        val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
+        val girona = located(41.980, 2.820)
+        val rural = located(42.100, 1.400)
+        val all = barcelona + girona + rural
+        val cells = barcelona.map { cell(it) } +
+            cell(girona, locality = "Girona") +
+            cell(rural, locality = null, adminArea = "Catalonia")
+
+        val spain = RegionTree.countries(all, cells).single { it.key == RegionKey.Country("ES") }
+
+        assertEquals(4, spain.count)
+        assertEquals(spain.count, RegionTree.cities("ES", all, cells).sumOf { it.count })
+    }
+
+    @Test
+    fun `a country's cities come busiest first`() {
+        val girona = located(41.980, 2.820)
+        val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
+        val cells = listOf(cell(girona, locality = "Girona")) + barcelona.map { cell(it) }
+
+        val cities = RegionTree.cities("ES", listOf(girona) + barcelona, cells)
+
+        assertEquals(listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona")), cities.map { it.key })
+    }
+
+    @Test
+    fun `a city's areas hold only that city's cats`() {
+        val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
+        val girona = located(41.980, 2.820)
+        val cells = barcelona.map { cell(it) } + cell(girona, locality = "Girona")
+
+        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), barcelona + girona, cells)
+
+        assertEquals(barcelona.map { areaOf(it) }.toSet(), areas.map { it.key }.toSet())
+    }
+
+    @Test
+    fun `a city's areas add up to the city`() {
+        val barcelona = listOf(located(41.390, 2.170), located(41.392, 2.172), located(41.440, 2.190))
+        val girona = located(41.980, 2.820)
+        val all = barcelona + girona
+        val cells = barcelona.map { cell(it) } + cell(girona, locality = "Girona")
+
+        val city = RegionTree.cities("ES", all, cells).single { it.key == RegionKey.City("ES", "Barcelona") }
+
+        assertEquals(3, city.count)
+        assertEquals(city.count, RegionTree.areas(city.key, all, cells).sumOf { it.count })
+    }
+
+    @Test
+    fun `a city's areas come busiest first`() {
+        val lone = located(41.440, 2.190)
+        val pair = listOf(located(41.390, 2.170), located(41.392, 2.172))
+        val all = listOf(lone) + pair
+
+        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), all, all.map { cell(it) })
+
+        assertEquals(listOf(areaOf(pair.first()), areaOf(lone)), areas.map { it.key })
+    }
+
+    @Test
+    fun `an area's cats are the live ones inside it, not its neighbour's`() {
+        val inside = listOf(located(41.390, 2.170), located(41.392, 2.172))
+        val deleted = located(41.391, 2.171, deletedAt = BASE)
+        val neighbour = located(41.440, 2.190)
+        val all = inside + deleted + neighbour
+
+        val found = RegionTree.encountersIn(areaOf(inside.first()), all, all.map { cell(it) })
+
+        assertEquals(inside.map { it.id }, found.map { it.id })
     }
 
     @Test
