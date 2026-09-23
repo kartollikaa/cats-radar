@@ -83,14 +83,16 @@ one-level step moves along the axis. Leaving a detail for another tab, or tappin
 levels down its stack, fades through like any tab switch, although the stack underneath only pushed
 or popped. The motion is decided from the two screens alone: each tab's entry carries a tab-root
 marker in its Navigation 3 metadata, and a detail is recognised by what sits directly under it
-(`NavMotionTest`).
+(`NavMotionTest`). The test builds the nav host's own entry for every `BottomNavTab`, so a tab added
+without the marker fails rather than silently sliding like a detail.
 
 **The back gesture** follows the finger. The current screen shrinks toward the side the finger is
-moving to and fades as it goes; the screen it returns to fades in over the second half of the
-gesture, so the two do not dissolve into each other. Releasing plays the rest; dragging back to the
-edge cancels and restores the screen. Navigation 3's own defaults, which this replaced, were a long
-cross-fade for every change and a back gesture that shrank the screen without fading it, leaving it
-fully opaque over the one coming in until it vanished at the end.
+moving to and fades as it goes; the screen it returns to starts fading in once the current one is
+mostly gone, so the two barely overlap. A back that starts from no edge — the Back button's own
+predictive back — shrinks the screen toward its centre. Releasing plays the rest; dragging back to
+the edge cancels and restores the screen. Navigation 3's own defaults, which this replaced, were a
+long cross-fade for every change and a back gesture that shrank the screen without fading it,
+leaving it fully opaque over the one coming in until it vanished at the end.
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that

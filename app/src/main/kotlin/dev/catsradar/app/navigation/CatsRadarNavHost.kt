@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
@@ -67,7 +69,7 @@ private fun CatsRadarNavDisplay(
     cameraRequest: CameraRequest,
     modifier: Modifier = Modifier,
 ) {
-    val slideDistancePx = with(LocalDensity.current) { NavSlideDistance.roundToPx() }
+    val density = LocalDensity.current
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
@@ -76,42 +78,48 @@ private fun CatsRadarNavDisplay(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
         ),
-        transitionSpec = { navTransition(slideDistancePx) },
-        popTransitionSpec = { navTransition(slideDistancePx) },
+        transitionSpec = { navTransition(density) },
+        popTransitionSpec = { navTransition(density) },
         predictivePopTransitionSpec = { swipeEdge -> predictivePopTransition(swipeEdge) },
-        entryProvider = entryProvider {
-            entry<Counter>(metadata = tabRootMetadata()) {
-                CounterDestination(contentPadding = contentPadding, cameraRequest = cameraRequest)
-            }
-            entry<Encounters>(metadata = tabRootMetadata()) {
-                EncountersDestination(
-                    contentPadding = contentPadding,
-                    onRowClick = { id -> backStack.push(EncounterDetail(id)) },
-                )
-            }
-            entry<Statistics>(metadata = tabRootMetadata()) {
-                StatisticsDestination(
-                    contentPadding = contentPadding,
-                    onPlacesClick = { backStack.push(Regions()) },
-                )
-            }
-            entry<Settings>(metadata = tabRootMetadata()) { SettingsDestination(contentPadding = contentPadding) }
-            entry<Regions> { key ->
-                RegionsDestination(
-                    key = key,
-                    contentPadding = contentPadding,
-                    onRegionClick = { row -> backStack.push(row.toNavKey()) },
-                )
-            }
-            entry<EncounterDetail> { key ->
-                EncounterDetailDestination(
-                    key = key,
-                    contentPadding = contentPadding,
-                    onNavigateBack = { backStack.popOrNull() },
-                )
-            }
-        },
+        entryProvider = catsRadarEntries(backStack, contentPadding, cameraRequest),
     )
+}
+
+internal fun catsRadarEntries(
+    backStack: BottomNavBackStack,
+    contentPadding: PaddingValues,
+    cameraRequest: CameraRequest,
+): (NavKey) -> NavEntry<NavKey> = entryProvider {
+    entry<Counter>(metadata = tabRootMetadata()) {
+        CounterDestination(contentPadding = contentPadding, cameraRequest = cameraRequest)
+    }
+    entry<Encounters>(metadata = tabRootMetadata()) {
+        EncountersDestination(
+            contentPadding = contentPadding,
+            onRowClick = { id -> backStack.push(EncounterDetail(id)) },
+        )
+    }
+    entry<Statistics>(metadata = tabRootMetadata()) {
+        StatisticsDestination(
+            contentPadding = contentPadding,
+            onPlacesClick = { backStack.push(Regions()) },
+        )
+    }
+    entry<Settings>(metadata = tabRootMetadata()) { SettingsDestination(contentPadding = contentPadding) }
+    entry<Regions> { key ->
+        RegionsDestination(
+            key = key,
+            contentPadding = contentPadding,
+            onRegionClick = { row -> backStack.push(row.toNavKey()) },
+        )
+    }
+    entry<EncounterDetail> { key ->
+        EncounterDetailDestination(
+            key = key,
+            contentPadding = contentPadding,
+            onNavigateBack = { backStack.popOrNull() },
+        )
+    }
 }
 
 @Composable

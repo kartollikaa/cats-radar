@@ -1,11 +1,22 @@
 package dev.catsradar.app.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.Scene
+import androidx.navigationevent.NavigationEvent
+import dev.catsradar.app.photo.CameraRequest
+import dev.catsradar.ui.navigation.BottomNavTab
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class NavMotionTest {
 
@@ -74,6 +85,47 @@ class NavMotionTest {
 
         assertEquals(NavMotion.FADE_THROUGH, navMotion(from, to))
     }
+
+    @Test
+    fun `every bottom-bar tab entry the nav host builds fades through from the Counter root`() {
+        val backStack = BottomNavBackStack(NavBackStack(Counter))
+        val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest())
+        val counterRoot = scene(entries(Counter))
+
+        BottomNavTab.entries.filter { it != BottomNavTab.COUNTER }.forEach { tab ->
+            backStack.selectTab(tab)
+            val tabRoot = scene(entries(Counter), entries(backStack.last()))
+
+            assertEquals(NavMotion.FADE_THROUGH, navMotion(counterRoot, tabRoot), "$tab")
+        }
+    }
+
+    @Test
+    fun `the back gesture both shrinks and fades the screen it leaves`() {
+        val exit = predictivePopTransition(NavigationEvent.EDGE_LEFT).initialContentExit
+
+        assertTrue(exit.scales(), "shrinks")
+        assertTrue(exit.fades(), "fades")
+    }
+
+    @Test
+    fun `the back gesture fades in the screen it returns to`() {
+        assertTrue(predictivePopTransition(NavigationEvent.EDGE_LEFT).targetContentEnter.fades())
+    }
+
+    @Test
+    fun `the back gesture shrinks toward the edge the finger moves to, or the centre without an edge`() {
+        assertEquals(1f, shrinkPivotX(NavigationEvent.EDGE_LEFT))
+        assertEquals(0f, shrinkPivotX(NavigationEvent.EDGE_RIGHT))
+        assertEquals(0.5f, shrinkPivotX(NavigationEvent.EDGE_NONE))
+    }
+
+    // Adding a fade or a scale leaves a transition equal to itself only when it already has its own.
+    private fun ExitTransition.fades() = fadeOut() + this == this || this + fadeOut() == this
+
+    private fun ExitTransition.scales() = scaleOut() + this == this || this + scaleOut() == this
+
+    private fun EnterTransition.fades() = fadeIn() + this == this || this + fadeIn() == this
 
     private fun tabRoot(key: NavKey): NavEntry<NavKey> = NavEntry(key, metadata = tabRootMetadata()) {}
 
