@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 
 /**
- * Stacks [above], [fill] and [below] with [gap] between every item, centred across. [fill] takes
- * the height the others leave, but never less than [minFill]: past that the stack scrolls instead.
+ * Stacks [above], one [fill] item and [below] with [gap] between every item, centred across. [fill]
+ * takes the height the others leave, but never less than [minFill]: past that the stack scrolls.
  */
 @Composable
 internal fun FillOrScroll(
@@ -26,11 +26,14 @@ internal fun FillOrScroll(
 ) {
     BoxWithConstraints(modifier) {
         val viewportHeight = constraints.maxHeight
+        val scroll = rememberScrollState()
         Layout(
             contents = listOf(above, fill, below),
-            modifier = Modifier.verticalScroll(rememberScrollState()).padding(padding),
-        ) { (aboveItems, fillItems, belowItems), constraints ->
-            val width = constraints.maxWidth
+            // Only on while there is overflow: an enabled scroll delays every press and turns a tap
+            // that drifts a few pixels into a drag, which would cost the tally its squash and its cat.
+            modifier = Modifier.verticalScroll(scroll, enabled = scroll.maxValue > 0).padding(padding),
+        ) { (aboveItems, fillItems, belowItems), stackConstraints ->
+            val width = stackConstraints.maxWidth
             val gapPx = gap.roundToPx()
             val loose = Constraints(maxWidth = width)
             val abovePlaced = aboveItems.map { it.measure(loose) }

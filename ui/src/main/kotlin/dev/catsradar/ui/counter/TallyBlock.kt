@@ -39,8 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -76,13 +80,18 @@ internal fun TallyBlock(
     val shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp, bottomEnd = 48.dp, bottomStart = 16.dp)
     // Clickable outside the scale: squashing the block must not shrink what a held press can land on.
     Box(
-        modifier = modifier.clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            onClickLabel = stringResource(R.string.counter_tally),
-            role = Role.Button,
-            onClick = onClick,
-        ),
+        modifier = modifier
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClickLabel = stringResource(R.string.counter_tally),
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics {
+                if (totalLabel.isNotEmpty()) contentDescription = totalLabel
+                liveRegion = LiveRegionMode.Polite
+            },
     ) {
         Surface(
             modifier = Modifier
@@ -98,9 +107,10 @@ internal fun TallyBlock(
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                // Mid-roll the old and the new number are both drawn; the block's own label is the total.
                 RollingCount(
                     shown = ShownCount(totalLabel, count),
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).clearAndSetSemantics {},
                 )
                 TapBurst(
                     count = tapBurst,
@@ -142,7 +152,7 @@ private fun RollingCount(shown: ShownCount, modifier: Modifier = Modifier) {
 }
 
 // A badge rather than bare text: a wide number in a short block reaches this corner, and the
-// burst has to stay legible over it. TalkBack already hears the new total.
+// burst has to stay legible over it. TalkBack is told the new total by the block instead.
 @Composable
 private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
     AnimatedVisibility(

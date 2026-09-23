@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +21,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CounterState
@@ -47,15 +47,14 @@ fun CounterScreen(
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
 ) {
-    // The block keeps a floor instead of yielding to everything else: past it the screen scrolls,
-    // because a large font or a small phone must never leave the tally button zero pixels tall.
+    // A large font or a small phone must never leave the tally button zero pixels tall.
     FillOrScroll(
         minFill = 120.dp,
         gap = 16.dp,
         padding = 24.dp,
         modifier = modifier.fillMaxSize(),
         above = {
-            // Above the count, which gives up the room: the controls under it never move.
+            // Above the count, which gives up its room first, so the controls under it stay put.
             state.importProgress?.let { ImportProgress(it) }
             state.importSummary?.let {
                 ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
@@ -164,27 +163,6 @@ private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifi
     }
 }
 
-@Composable
-private fun LocationPermissionHint(
-    onAction: (LocationHintAction) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(R.string.counter_location_hint),
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = { onAction(LocationHintAction.GRANT) }) {
-                Text(text = stringResource(R.string.counter_location_grant))
-            }
-            TextButton(onClick = { onAction(LocationHintAction.DISMISS) }) {
-                Text(text = stringResource(R.string.counter_location_dismiss))
-            }
-        }
-    }
-}
-
 @ThemePreviews
 @Composable
 private fun CounterScreenEmptyPreview() {
@@ -214,6 +192,14 @@ private fun CounterScreenUndoVisiblePreview() {
 private fun CounterScreenOutingInProgressPreview() {
     CatsRadarTheme {
         Surface { CounterScreen(state = sampleCounterStateOutingInProgress) }
+    }
+}
+
+@Preview(heightDp = 600, fontScale = 1.5f, showBackground = true)
+@Composable
+private fun CounterScreenCrampedPreview() {
+    CatsRadarTheme {
+        Surface { CounterScreen(state = sampleCounterStateLocationHintVisible) }
     }
 }
 
