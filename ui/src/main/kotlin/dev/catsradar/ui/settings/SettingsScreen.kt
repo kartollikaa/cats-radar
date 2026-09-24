@@ -186,3 +186,11 @@ private fun SettingsScreenPreview() {
         Surface { SettingsScreen(state = SettingsState(saveOriginalsToGallery = true)) }
     }
 }
+
+@ThemePreviews
+@Composable
+private fun SettingsScreenImportFailedPreview() {
+    CatsRadarTheme {
+        Surface { SettingsScreen(state = SettingsState(backupOutcome = BackupOutcome.IMPORT_FAILED)) }
+    }
+}
