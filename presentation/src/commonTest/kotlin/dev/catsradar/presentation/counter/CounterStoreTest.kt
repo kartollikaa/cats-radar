@@ -7,6 +7,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -689,13 +690,45 @@ class CounterStoreTest {
         advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE - 1.milliseconds)
         runCurrent()
         assertEquals(
-            ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
-            store.state.value.importSummary,
+            CounterState(
+                totalLabel = "0",
+                count = 0,
+                undoVisible = false,
+                importSummary = ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+            ),
+            store.state.value,
         )
 
         advanceTimeBy(1.milliseconds)
         runCurrent()
-        assertNull(store.state.value.importSummary)
+        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+    }
+
+    @Test
+    fun `an import summary with nothing to undo goes away by itself as well`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 2, failed = 0))
+        runCurrent()
+
+        advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE)
+        runCurrent()
+
+        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+    }
+
+    @Test
+    fun `an undone import's summary goes away by itself as well`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter(id = "id-1"))
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
+        runCurrent()
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE)
+        runCurrent()
+
+        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
     }
 
     @Test
@@ -712,7 +745,7 @@ class CounterStoreTest {
         second.dispatch(finished)
         runCurrent()
 
-        assertNull(second.state.value.importSummary)
+        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), second.state.value)
     }
 
     @Test
@@ -728,6 +761,33 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(emptyList(), repository.softDeleteAllCalls)
+        assertEquals(CounterState(totalLabel = "1", count = 1, undoVisible = false), store.state.value)
+    }
+
+    @Test
+    fun `an undo that fails after the import summary timed out leaves nothing to undo`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter(id = "id-1"))
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
+        runCurrent()
+        val undoWrite = CompletableDeferred<Unit>()
+        repository.softDeleteAllGate = undoWrite
+        repository.softDeleteAllShouldThrow = IllegalStateException("disk full")
+        advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE - 1.milliseconds)
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+        advanceTimeBy(1.milliseconds)
+        runCurrent()
+        undoWrite.complete(Unit)
+        runCurrent()
+        repository.softDeleteAllGate = null
+        repository.softDeleteAllShouldThrow = null
+
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        assertEquals(listOf(listOf("id-1")), repository.softDeleteAllCalls)
+        assertEquals(CounterState(totalLabel = "1", count = 1, undoVisible = false), store.state.value)
     }
 
     @Test
@@ -745,8 +805,13 @@ class CounterStoreTest {
             runCurrent()
 
             assertEquals(
-                ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
-                store.state.value.importSummary,
+                CounterState(
+                    totalLabel = "0",
+                    count = 0,
+                    undoVisible = false,
+                    importSummary = ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+                ),
+                store.state.value,
             )
         }
 

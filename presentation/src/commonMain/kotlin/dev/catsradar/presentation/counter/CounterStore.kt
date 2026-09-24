@@ -243,7 +243,7 @@ class CounterStore(
     }
 
     private fun restoreUndoImport(ids: List<String>) {
-        if (importedIds.isNotEmpty()) return
+        if (importedIds.isNotEmpty() || state.value.importSummary == null) return
         importedIds = ids
         setState { copy(importSummary = importSummary?.copy(undoable = true)) }
     }
