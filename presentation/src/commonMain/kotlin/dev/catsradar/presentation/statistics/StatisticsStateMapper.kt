@@ -2,14 +2,17 @@ package dev.catsradar.presentation.statistics
 
 import dev.catsradar.domain.stats.Rate
 import dev.catsradar.domain.stats.Stats
+import dev.catsradar.domain.stats.WalkStats
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import kotlinx.collections.immutable.toPersistentList
 import kotlin.math.round
 
+private val NothingWalked = WalkStats(walkedMeters = 0.0, catsPerKm = null)
+
 class StatisticsStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
 
-    fun map(stats: Stats): StatisticsState = StatisticsState(
+    fun map(stats: Stats, walks: WalkStats = NothingWalked): StatisticsState = StatisticsState(
         total = stats.total,
         hasAnyCats = stats.total > 0,
         todayLabel = stats.today.toString(),
@@ -38,6 +41,9 @@ class StatisticsStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
                 rate = it.rate.toRateState(),
             )
         },
+        walked = walks.walkedMeters.takeIf { it > 0.0 }?.let { meters ->
+            WalkedState(distance = meters.toDistanceState(), catsPerKm = walks.catsPerKm?.oneDecimal())
+        },
     )
 }
 
@@ -53,10 +59,20 @@ internal fun Rate.toRateState(): RateState = if (perMinute >= 1.0) {
 
 private const val TENTHS = 10.0
 private const val PERCENT = 100
+private const val METERS_PER_KM = 1000
 
 private fun Double.oneDecimal(): String {
     val rounded = round(this * TENTHS) / TENTHS
     val whole = rounded.toLong()
     val tenth = round((rounded - whole) * TENTHS).toLong()
     return "$whole.$tenth"
+}
+
+private fun Double.toDistanceState(): DistanceState {
+    val wholeMeters = round(this).toLong()
+    return if (wholeMeters < METERS_PER_KM) {
+        DistanceState(value = wholeMeters.toString(), unit = DistanceUnit.METERS)
+    } else {
+        DistanceState(value = (this / METERS_PER_KM).oneDecimal(), unit = DistanceUnit.KILOMETERS)
+    }
 }
