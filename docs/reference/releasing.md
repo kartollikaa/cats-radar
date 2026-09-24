@@ -10,22 +10,30 @@ release: Android refuses an update whose version code is not higher than the one
 
 ## The signing key
 
-A release build is signed with a key that never enters the repository. The build reads it from four
-Gradle properties, normally kept in `~/.gradle/gradle.properties`:
+A release build is signed with a key that never enters the repository. The keystore and a small
+signing file live together outside it. The signing file is shared by every app signed with that key,
+not specific to this one; it holds four values, with `storeFile` resolved against the signing file's
+own folder:
 
 ```
-catsradar.release.storeFile
-catsradar.release.storePassword
-catsradar.release.keyAlias
-catsradar.release.keyPassword
+storeFile=kartollika_key_store.jks
+storePassword=…
+keyAlias=kartollikaaps
+keyPassword=…
 ```
 
-Without them `assembleRelease` still builds, but leaves `app-release-unsigned.apk`, which no phone will
+`~/.gradle/gradle.properties` holds a single line pointing at it (a leading `~` means the home folder):
+
+```
+kartollika.signingFile=~/<folder with the keystore>/signing.properties
+```
+
+Without that line `assembleRelease` still builds, but leaves `app-release-unsigned.apk`, which no phone will
 install. Nothing else changes, which is why CI builds and checks without a key.
 
 The key is the app's identity. Every later version has to be signed with the same key to install as
 an update over the last one; a build signed with any other key installs only after the old app is
-removed. Keep the keystore file and its password backed up somewhere other than this machine.
+removed. Keep the keystore and the signing file backed up somewhere other than this machine.
 
 A debug build is signed with the machine's debug key, not this one, so a phone that has a debug build
 installed has to remove it before the first release build will install. Export a backup first:
@@ -72,7 +80,9 @@ proves nothing about a release one.
 
 1. Merge a `tech/release-<version>` pull request that bumps both version values and marks the epic's
    slices in its decomposition map.
-2. On that merge, `./gradlew :app:assembleRelease`.
+2. On that merge, `./gradlew :app:assembleRelease` with `CI` unset: the same run uploads its mapping to
+   Crashlytics. A rebuild can stamp a new mapping id, so the APK and mapping attached below come from
+   this one run — a rebuild could ship an APK whose crash reports Crashlytics cannot read.
 3. `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` shows the release
    key's certificate, not `Android Debug`.
 4. Install that APK and go through the paths that work by class name: a tap on the home-screen
