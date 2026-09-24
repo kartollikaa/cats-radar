@@ -170,6 +170,15 @@ class AnalyticsEventsTest {
     }
 
     @Test
+    fun `a photo from the camera is logged as attached from the camera`() = runTest {
+        val cat = storedTally()
+
+        attachPhoto()(cat.id, "content://camera/9", PhotoSource.CAMERA)
+
+        assertLogged(PhotoAttached(PhotoSource.CAMERA))
+    }
+
+    @Test
     fun `a photo that cannot be attached logs nothing`() = runTest {
         val cat = storedTally()
         resizer.undecodable += "content://gallery/broken"
@@ -271,16 +280,16 @@ class AnalyticsEventsTest {
 
     @Test
     fun `a merged backup is logged with what it added, updated and left alone`() = runTest {
-        val edited = storedTally("cat-1")
-        val kept = listOf(storedTally("cat-2"), storedTally("cat-3"))
+        val edited = listOf(storedTally("cat-1"), storedTally("cat-2"))
+        val kept = listOf(storedTally("cat-3"), storedTally("cat-4"), storedTally("cat-5"))
         val archived = BackupContents(
-            encounters = listOf(edited.copy(coat = CatCoat.BLACK, updatedAt = NOW + 1.minutes)) + kept +
-                encounterFixture("cat-4", NOW),
+            encounters = edited.map { it.copy(coat = CatCoat.BLACK, updatedAt = NOW + 1.minutes) } + kept +
+                encounterFixture("cat-6", NOW),
         )
 
         importBackup(BackupReadResult.Readable(archived))("content://backup")
 
-        assertLogged(BackupImported(added = 1, updated = 1, unchanged = 2))
+        assertLogged(BackupImported(added = 1, updated = 2, unchanged = 3))
     }
 
     @Test
