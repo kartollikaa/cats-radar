@@ -150,6 +150,10 @@ with no area — neither a geohash nor coordinates, which for every row the app 
 `locationSource = NONE`. Each pseudo-node drills down like a real one (Unresolved and No city → their
 areas; No location → its encounters). Sums across siblings always equal the parent.
 
+An area belongs to the node it is listed under: its key is that parent (a city, No city or
+Unresolved) plus the geohash prefix, and it holds only that parent's encounters in the patch — so
+the encounters an area lists are always exactly the ones its row counts.
+
 ### 3.5 Session (derived, never stored)
 
 Sort non-deleted encounters by `occurredAt`. A gap greater than `SESSION_GAP` (30 min) starts a new

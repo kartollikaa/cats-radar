@@ -370,7 +370,6 @@ class RegionTreeTest {
         assertTrue(RegionTree.countries(emptyList(), emptyList()).isEmpty())
     }
 
-    /** One area holding cats of two cities, of No city and of Not named yet, each in a place cell of its own. */
     private inner class SharedPatch {
         val barcelona = listOf(located(41.390, 2.170), located(41.392, 2.172))
         val hospitalet = located(41.364, 2.165)
