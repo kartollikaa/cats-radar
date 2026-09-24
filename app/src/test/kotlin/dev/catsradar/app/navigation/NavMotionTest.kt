@@ -16,6 +16,7 @@ import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.ui.navigation.BottomNavTab
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NavMotionTest {
@@ -110,6 +111,16 @@ class NavMotionTest {
 
             assertEquals(NavMotion.FADE_THROUGH, navMotion(counterRoot, tabRoot), "$tab")
         }
+    }
+
+    @Test
+    fun `the nav host draws a spot's list as a sheet and nothing else as one`() {
+        val backStack = BottomNavBackStack(NavBackStack(Counter))
+        val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), MapFocusRequest())
+        val screens = listOf(Counter, Encounters, CatsMap, Statistics, Settings, Regions(), EncounterDetail("a"))
+
+        assertTrue(entries(MapSpot(setOf("a", "b"), emptySet())).isSheet)
+        screens.forEach { key -> assertFalse(entries(key).isSheet, "$key") }
     }
 
     @Test
