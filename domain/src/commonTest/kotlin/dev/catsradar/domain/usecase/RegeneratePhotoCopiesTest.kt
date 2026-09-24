@@ -111,8 +111,8 @@ class RegeneratePhotoCopiesTest {
         repository.insert(cameraPhoto("a", URI_A))
         repository.insert(cameraPhoto("b", URI_B))
         val cutShort = object : ImageResizer {
-            override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? =
-                if (sourceUri == URI_B) error("process killed") else resizer.store(sourceUri, encounterId)
+            override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? =
+                if (sourceUri == URI_B) error("process killed") else resizer.store(sourceUri, baseName)
         }
         assertFailsWith<IllegalStateException> { regenerate(cutShort)() }
         resizer.requests.clear()
