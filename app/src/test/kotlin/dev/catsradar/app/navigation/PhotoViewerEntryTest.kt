@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import android.content.Context
+import android.os.Looper
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -31,6 +32,7 @@ import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
 import kotlin.time.Instant
 
@@ -52,7 +54,7 @@ class PhotoViewerEntryTest {
     fun `a tap on the photo in the nav host's own detail entry opens that cat's viewer above it`() {
         val levels = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID))
         val backStack = show(levels, cat = photographed())
-        compose.waitUntil { photo().fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) { photo().fetchSemanticsNodes().isNotEmpty() }
 
         compose.onNode(photoMatcher() and hasClickAction()).performClick()
         compose.waitForIdle()
@@ -76,7 +78,11 @@ class PhotoViewerEntryTest {
         val levels = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID))
         val backStack = show(levels + PhotoViewer(ID), cat = tally(ID, OCCURRED))
 
-        compose.waitUntil { backStack.toList() == levels }
+        // Robolectric's paused main looper delivers the database's answer only when idled, and no frame here idles it.
+        compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) {
+            shadowOf(Looper.getMainLooper()).idle()
+            backStack.toList() == levels
+        }
 
         assertEquals(levels, backStack.toList())
     }
@@ -102,6 +108,7 @@ class PhotoViewerEntryTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val LOAD_TIMEOUT_MS = 5_000L
         val OCCURRED = Instant.parse("2026-09-21T10:00:00Z")
     }
 }
