@@ -18,6 +18,7 @@ internal fun Lint.configureLintSeverity() {
     warningsAsErrors = true
     abortOnError = true
     disable += "GradleDependency" // the catalog is updated deliberately, not on lint's schedule
+    disable += "AndroidGradlePluginVersion" // same: agp is pinned deliberately, not to lint's latest
 }
 
 internal fun Project.moduleNamespace(): String = "dev.catsradar.$name"
