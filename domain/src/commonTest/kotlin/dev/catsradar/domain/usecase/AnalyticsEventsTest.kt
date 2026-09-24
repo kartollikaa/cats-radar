@@ -16,12 +16,14 @@ import dev.catsradar.domain.analytics.AnalyticsEvent.WalkEnded
 import dev.catsradar.domain.analytics.AnalyticsEvent.WalkStarted
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.model.CatCoat
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.platform.BackupWriter
+import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeDigest
@@ -42,11 +44,16 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private val NOW = Instant.parse("2026-09-24T10:00:00Z")
+
+private class DiskFull(delegate: EncounterRepository) : EncounterRepository by delegate {
+    override suspend fun insert(encounter: Encounter): Unit = error("database or disk is full")
+}
 
 class AnalyticsEventsTest {
     private val analytics = RecordingAnalytics()
@@ -72,8 +79,17 @@ class AnalyticsEventsTest {
         assertLogged(CatLogged(EncounterKind.TALLY, EncounterOrigin.WIDGET, hasCoat = true))
     }
 
-    private fun logPhoto() = LogPhoto(
-        encounterRepository = encounters,
+    @Test
+    fun `a tally that could not be saved logs nothing`() = runTest {
+        assertFailsWith<IllegalStateException> {
+            LogTally(DiskFull(encounters), FakeIdGenerator(), FakeDeviceIdProvider(), clock, analytics, TimeZone.UTC)()
+        }
+
+        assertLogged()
+    }
+
+    private fun logPhoto(repository: EncounterRepository = encounters) = LogPhoto(
+        encounterRepository = repository,
         placeCellRepository = placeCells,
         settingsRepository = FakeSettingsRepository(),
         exifReader = FakeExifReader(),
@@ -92,6 +108,13 @@ class AnalyticsEventsTest {
         logPhoto()("content://camera/1")
 
         assertLogged(CatLogged(EncounterKind.PHOTO, EncounterOrigin.CAMERA, hasCoat = false))
+    }
+
+    @Test
+    fun `a photo that could not be saved logs nothing`() = runTest {
+        assertFailsWith<IllegalStateException> { logPhoto(DiskFull(encounters))("content://camera/1") }
+
+        assertLogged()
     }
 
     @Test
