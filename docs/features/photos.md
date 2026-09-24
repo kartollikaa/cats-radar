@@ -83,12 +83,23 @@ left alone — enlarging costs bytes and quality and adds no detail.
 
 Neither copy carries the original's metadata. The app republishes nobody's GPS.
 
+The original is never decoded at its full size. A phone camera's photo can run to hundreds of
+megapixels, and holding one whole in memory fails on a phone; that failure used to reach the user
+as an unreadable photo, and the cat went unsaved. The resizer reads the file's dimensions first and
+has `BitmapFactory` shrink the decode by the largest power of two that still leaves the longest side
+at or above the copy's cap, so the bitmap in memory stays under twice the cap on each side whatever
+the camera. Powers of two because those are the only factors `BitmapFactory` honours; anything else
+it rounds down. Both copies are then sized from the file's own dimensions, not from the shrunk
+bitmap: the decoder rounds a halved odd side, and sizing from its result would put a copy a pixel
+off the original's proportions.
+
 Both copies are stored the way the photo is meant to be seen. A phone camera usually saves the
 sensor's pixels as they came off it plus an EXIF Orientation tag saying how to turn them — for a
-phone held upright, a quarter turn. The decoder ignores that tag, and the copies have no EXIF to
+phone held upright, a quarter turn. `BitmapFactory` ignores that tag, and the copies have no EXIF to
 pass it on, so the resizer applies the turn, or the mirroring, to the pixels itself. Without it a
 portrait photo lies on its side in the app while the gallery, which keeps the original, shows it
-upright.
+upright. `ImageDecoder` would shrink to an exact size in one call, but it applies the tag on its own,
+so on top of the resizer's turn it would turn every rotated photo twice.
 
 The arithmetic — which side is longest, what the other becomes, when to do nothing — is
 `scaleToFit` in `:domain`, a pure function with its own tests. That split is deliberate: see
@@ -138,6 +149,13 @@ Four distinct corners put each of the eight orientations in a different order, w
 corners after JPEG and resampling tell apart less reliably. The generator checks every one with
 Pillow's `ImageOps.exif_transpose` before keeping it, so the answer `AndroidImageResizerOrientationTest` expects
 never comes from the code under test.
+
+One of them is phone-sized: the quarter-turn case at more than twice the copy's cap on its longest
+side, so its decode has to shrink. `AndroidImageResizerLargePhotoTest` checks the decode itself —
+shrunk, but never below the cap — and the sizes of both copies. The fixture's sides are odd on purpose: halving
+rounds them, so a copy sized from the shrunk bitmap instead of the file comes out a pixel narrower,
+and the size test fails. Flat quadrants compress to almost nothing, which keeps a fixture that large
+small in the repository.
 
 ## Where the code lives
 

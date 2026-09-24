@@ -85,23 +85,6 @@ class AndroidImageResizerTest {
     }
 
     @Test
-    fun aPhotoOverTwiceTheCapIsDecodedShrunkButNeverBelowTheCap() {
-        val decoded = assertNotNull(context.decodeShrunk(fixture(PhotoFixtures.LARGE_ROTATED), Tuning.PHOTO_MAX_SIDE))
-
-        val longestSide = maxOf(decoded.bitmap.width, decoded.bitmap.height)
-        assertTrue(longestSide in Tuning.PHOTO_MAX_SIDE until 2 * Tuning.PHOTO_MAX_SIDE, "decoded at $longestSide")
-        assertEquals(4099 to 3082, decoded.width to decoded.height)
-    }
-
-    @Test
-    fun aPhotoDecodedShrunkIsStillSizedFromTheOriginal() = runTest {
-        val stored = assertNotNull(resizer.store(fixture(PhotoFixtures.LARGE_ROTATED), "cat-10"))
-
-        assertEquals(1540 to Tuning.PHOTO_MAX_SIDE, sizeOf(stored.photoPath))
-        assertEquals(192 to Tuning.THUMB_SIZE, sizeOf(assertNotNull(stored.thumbPath)))
-    }
-
-    @Test
     fun theStoredCopyCarriesNoneOfTheOriginalsMetadata() = runTest {
         val stored = assertNotNull(resizer.store(fixture(PhotoFixtures.LANDSCAPE_WITH_GPS), "cat-6"))
 
