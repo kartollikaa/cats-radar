@@ -79,25 +79,11 @@ and CI setup that does not exist yet; the others need only the tests themselves.
   pieces are tested apart: `ZipBackupArchiveTest` writes an archive and reads every field back, and
   `BackupUseCasesTest` checks what export gathers and how import merges, against fakes. No test
   exports a real database, imports the archive into an empty one and compares the two `Stats`.
-- **By-coat statistics.** No test hands `StatsCalculator` a cat with a coat, so the by-coat rows
-  — busiest coat first, "Not specified" last whatever its size, each coat's share of the total —
-  are unchecked, and `StatisticsStateMapperTest` only ever maps an empty list of them, so the
-  share's rounding is unchecked too.
-- **Statistics across midnight and a timezone change.** Every day-keyed case in
-  `StatsCalculatorTest` — the day windows and the streaks — sits around midday at offset zero, so
-  none crosses midnight or a zone change, the two cases `docs/rules/date-time.md` asks every
-  calculation keyed by `LocalDate` to cover. The Counter's today count is tested across offsets
-  (`ObserveTodayCountTest`); the statistics are not.
-- **The rate-eligibility boundary itself.** An outing just short of `Tuning.MIN_RATE_DURATION` is
-  tested to get no rate, but none exactly that long is tested to get one, and the current outing's
-  own minimum is tested only well clear of it. Either comparison could lose its `=` and every test
-  would still pass.
 - **Region drill-down below the countries.** `RegionTreeTest` checks the country rows in full —
   they add up to the cats, busiest first, pseudo-nodes last — but not that a country's cities or a
   city's areas add up to it or come busiest first. It never asks for a city's areas or an area's
   cats, which are what tapping a city or an area asks for. `ObserveRegion`, which picks the level
   a parent key opens, has no test, and `RegionsStore` none beyond Koin constructing it.
-- **Whole-`State` mapper assertions.** `StatisticsStateMapperTest` and `RegionsStateMapperTest`
-  check chosen fields only. The statistics count, streak and outing labels are asserted nowhere,
-  and neither are `RegionsStateMapper`'s rows: the drillable flag, the row keys, and the label
+- **A whole-`State` regions mapper assertion.** `RegionsStateMapperTest` checks the cat list only.
+  `RegionsStateMapper`'s rows are asserted nowhere: the drillable flag, the row keys, and the label
   tokens `docs/rules/compose-patterns.md` asks to be tested case by case.
