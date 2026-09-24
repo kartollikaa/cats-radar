@@ -12,7 +12,8 @@ it came from. There is no switch to turn it off.
   whenever the network next allows.
 - **A failure the app recovers from.** A few jobs are built to fail quietly and try again later; when
   one of them fails in a way nobody expected — an exception, or an error such as running out of
-  memory — it is sent as a *non-fatal* report and the job carries on exactly as it did before:
+  memory — it is sent as a *non-fatal* report, and the job ends the way it does for any unexpected
+  failure: a repair waits for the next start, a one-off job fails, a job that retries tries again later:
   - the two repairs that run at every start — tidying place cells, and rebuilding the app's own copy
     of a photo that has gone missing;
   - every background worker: attaching a location, naming places, purging deleted cats, importing
