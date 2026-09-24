@@ -68,6 +68,17 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    fun `analytics events carry no text, fraction or time`() {
+        val forbidden = setOf("String", "Double", "Float", "Instant", "Duration")
+        Konsist.scopeFromPackage("dev.catsradar.domain.analytics..")
+            .classes(includeNested = true)
+            .flatMap { it.primaryConstructor?.parameters.orEmpty() }
+            .assertFalse(testName = "analytics events carry no text, fraction or time") {
+                it.type.name.removeSuffix("?") in forbidden
+            }
+    }
+
+    @Test
     fun `data files do not import dev catsradar presentation or dev catsradar ui`() {
         Konsist.scopeFromPackage("dev.catsradar.data..")
             .files

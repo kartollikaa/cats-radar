@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.app.NoAnalytics
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Haptics
@@ -53,9 +54,9 @@ class WalkingActionReceiverTest {
                 module {
                     single<SettingsRepository> { settings }
                     single<WalkRepository> { walks }
-                    single { EndWalk(walks, clock) }
+                    single { EndWalk(walks, clock, analytics = NoAnalytics) }
                     single { WalkingNotifier(context, WalkClock) }
-                    single { LogTally(encounters, SequentialIds(), OneDevice, clock) }
+                    single { LogTally(encounters, SequentialIds(), OneDevice, clock, analytics = NoAnalytics) }
                     single { ObserveStats(encounters, clock, TimeZone.UTC) }
                     single<LocationAttachScheduler> { NoLocationAttach }
                     single<Haptics> { NoHaptics }

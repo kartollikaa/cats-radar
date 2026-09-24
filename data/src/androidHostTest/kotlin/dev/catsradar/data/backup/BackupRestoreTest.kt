@@ -3,6 +3,7 @@ package dev.catsradar.data.backup
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.data.NoAnalytics
 import dev.catsradar.data.db.RoomTransactionRunner
 import dev.catsradar.data.db.TestCatsDatabase
 import dev.catsradar.data.db.buildInMemoryCatsDatabase
@@ -86,6 +87,7 @@ class BackupRestoreTest {
                 clock = FixedClock(Now),
                 appVersion = "1.1.0",
             ),
+            analytics = NoAnalytics,
         )(target)
 
         suspend fun import(source: String): ImportBackupResult = ImportBackup(
@@ -94,6 +96,7 @@ class BackupRestoreTest {
             walkRepository = walks,
             transactionRunner = RoomTransactionRunner(database),
             backupReader = ZipBackupReader(context, photoStorage),
+            analytics = NoAnalytics,
         )(source)
 
         suspend fun snapshot() = Snapshot(

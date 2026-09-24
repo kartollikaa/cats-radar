@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,7 +14,7 @@ class UndoImportTest {
         val now = Instant.parse("2026-09-23T12:00:00Z")
         val repository = FakeEncounterRepository()
 
-        UndoImport(repository, FakeClock(now))(listOf("a", "b", "c"))
+        UndoImport(repository, FakeClock(now), analytics = RecordingAnalytics())(listOf("a", "b", "c"))
 
         assertEquals(listOf(listOf("a", "b", "c") to now), repository.softDeleteAllCalls)
         assertEquals(emptyList(), repository.softDeleteCalls)

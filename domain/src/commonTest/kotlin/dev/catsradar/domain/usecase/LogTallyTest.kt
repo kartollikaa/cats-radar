@@ -7,6 +7,7 @@ import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeIdGenerator
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -25,7 +26,14 @@ class LogTallyTest {
 
     @Test
     fun `logs a TALLY encounter from APP with no location`() = runTest {
-        val logTally = LogTally(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(now), TimeZone.UTC)
+        val logTally = LogTally(
+            repository,
+            FakeIdGenerator(),
+            FakeDeviceIdProvider(),
+            FakeClock(now),
+            analytics = RecordingAnalytics(),
+            TimeZone.UTC
+        )
 
         val encounter = logTally()
 
@@ -52,6 +60,7 @@ class LogTallyTest {
             FakeIdGenerator(),
             FakeDeviceIdProvider("device-42"),
             FakeClock(now),
+            analytics = RecordingAnalytics(),
             TimeZone.UTC,
         )
 
@@ -70,6 +79,7 @@ class LogTallyTest {
             FakeIdGenerator(),
             FakeDeviceIdProvider(),
             FakeClock(now),
+            analytics = RecordingAnalytics(),
             UtcOffset(hours = 3).asTimeZone(),
         )
 
@@ -80,7 +90,14 @@ class LogTallyTest {
 
     @Test
     fun `inserts the encounter and returns the same one so the caller can target an undo`() = runTest {
-        val logTally = LogTally(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(now), TimeZone.UTC)
+        val logTally = LogTally(
+            repository,
+            FakeIdGenerator(),
+            FakeDeviceIdProvider(),
+            FakeClock(now),
+            analytics = RecordingAnalytics(),
+            TimeZone.UTC
+        )
 
         val encounter = logTally()
 
@@ -89,7 +106,14 @@ class LogTallyTest {
 
     @Test
     fun `each invocation gets a fresh id`() = runTest {
-        val logTally = LogTally(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(now), TimeZone.UTC)
+        val logTally = LogTally(
+            repository,
+            FakeIdGenerator(),
+            FakeDeviceIdProvider(),
+            FakeClock(now),
+            analytics = RecordingAnalytics(),
+            TimeZone.UTC
+        )
 
         val first = logTally()
         val second = logTally()
@@ -99,7 +123,14 @@ class LogTallyTest {
 
     @Test
     fun `invoke reaches insert with no suspension before it`() = runTest {
-        val logTally = LogTally(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(now), TimeZone.UTC)
+        val logTally = LogTally(
+            repository,
+            FakeIdGenerator(),
+            FakeDeviceIdProvider(),
+            FakeClock(now),
+            analytics = RecordingAnalytics(),
+            TimeZone.UTC
+        )
 
         // Dispatchers.Unconfined runs eagerly to the first real suspension point; if invoke()
         // awaited anything (the device id, in particular) before insert(), the repository would

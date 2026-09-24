@@ -11,6 +11,7 @@ import dev.catsradar.domain.testing.FakeGallerySaver
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
 import dev.catsradar.domain.testing.FakeSettingsRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.Job
@@ -40,6 +41,7 @@ class AttachPhotoTest {
         photoStorage = storage,
         idGenerator = FakeIdGenerator(),
         clock = FakeClock(NOW),
+        analytics = RecordingAnalytics(),
     )
 
     private val tally: Encounter = encounterFixture(

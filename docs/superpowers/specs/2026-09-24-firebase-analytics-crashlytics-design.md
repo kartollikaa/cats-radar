@@ -88,7 +88,8 @@ Firebase-free, so another application module never needs a `google-services.json
 
 ## 5. Event catalogue
 
-Names and parameter keys are `snake_case`; enum values are sent lowercase. Counts are integers.
+Names and parameter keys are `snake_case`; enum values are sent lowercase, booleans as `true` /
+`false`, counts as integers.
 
 | Event | Parameters | Logged by | When |
 |---|---|---|---|

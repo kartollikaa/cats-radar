@@ -1,8 +1,8 @@
 # Crash reports and analytics
 
 The app reports its crashes to Firebase Crashlytics, so a failure on a phone is seen without anyone
-having to describe it, and counts which screens are opened in Google Analytics for Firebase, so it is
-clear which parts of the app are used. Every build reports, debug and release alike, and each report
+having to describe it, and counts which screens are opened and what is done on them in Google Analytics for Firebase, so
+it is clear which parts of the app are used and from where. Every build reports, debug and release alike, and each report
 says which one it came from. There is no switch to turn it off.
 
 ## What is sent
@@ -34,6 +34,27 @@ says which one it came from. There is no switch to turn it off.
   `settings`. The same screen again with nothing in between is not counted twice; going back to a
   screen after another counts it again, and so does coming back to the app from the background;
   turning the phone, which rebuilds the screen, does not.
+- **What was done**, one event per fact, logged only after the fact is written — a failed action
+  logs nothing:
+
+  | Event | Parameters | When |
+  |---|---|---|
+  | `cat_logged` | `kind` (`tally`, `photo`), `origin` (`app`, `widget`, `notification` for a tally; `camera` for a photo), `has_coat` (`true`/`false`) | a cat is saved |
+  | `tally_undone` | — | the Undo chip removes a tally |
+  | `coat_set` | `coat` (one of the eleven, or `none` when cleared) | a coat is written; setting the same coat again logs nothing |
+  | `photo_attached` | `source` (`camera`, `gallery`) | a logged cat gets a photo |
+  | `photos_imported` | `added`, `duplicates`, `failed` | a gallery import finishes (one event per batch, not per photo) |
+  | `import_undone` | `count` | an import is undone |
+  | `cats_deleted` | `count` | one cat or a selection is deleted |
+  | `delete_undone` | `count` | a deletion is undone |
+  | `backup_exported` | — | an archive is written |
+  | `backup_imported` | `added`, `updated`, `unchanged` | a backup is merged |
+  | `backup_rejected` | `reason` (`too_new`, `unreadable`) | a backup is refused |
+  | `walk_started` | — | a walk starts (not when one is already open) |
+  | `walk_ended` | `minutes` (whole) | a walk is ended; a walk cut off by the process dying logs nothing |
+
+  Every parameter is a word from a fixed list or a count. A Konsist rule fails `check` if an event
+  type ever gains a text, fraction or time field.
 - **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
   updates, the phone's model and Android version, and the country the phone's network address places
   it in.
@@ -48,7 +69,8 @@ says which one it came from. There is no switch to turn it off.
 ## What is never sent
 
 No coordinate, geohash, place, country or city name the app knows; no photo or any part of one; no
-cat's id, time or coat; the device id the backup format uses. A screen view names the screen, never
+cat's id or time — a cat's coat goes only as the word for it, never tied to where or when; the device
+id the backup format uses. A screen view names the screen, never
 what is on it: `regions` does not say which country or city was open. Neither service is given a user
 id, and Crashlytics gets no custom keys but `build_type` and no log lines. A stack trace names code,
 not data; an exception's *message*, though, goes as whoever threw it wrote it — a file error from the
@@ -83,7 +105,8 @@ ad personalisation, ad storage and ad user data are off by default.
   automatic screen reporting turned off (one activity hosts every screen, so it would only ever name
   that activity).
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/analytics/Analytics.kt` — the `Analytics` port,
-  the `AnalyticsEvent` catalogue and `AnalyticsScreen`.
+  the `AnalyticsEvent` catalogue and `AnalyticsScreen`; each use case in the table above takes the
+  port and logs after its write.
 - `data/src/commonMain/kotlin/dev/catsradar/data/analytics/EncodedEvent.kt` — an event turned into
   Firebase's name and parameters; `data/src/androidMain/…/FirebaseAnalyticsReporter.kt` hands it over.
 - `app/src/main/kotlin/dev/catsradar/app/navigation/ScreenViewTracker.kt` — which key is which
@@ -97,9 +120,9 @@ ad personalisation, ad storage and ad user data are off by default.
 - `app/src/main/kotlin/dev/catsradar/app/worker/` — each worker's catch-all, and
   `WorkerFailures.kt` (`recordOnFirstAttempt`) for the ones that retry.
 - Tests: `StartupRepairsTest`, `WorkerFailureReportingTest`, `ScreenViewTrackerTest` (`:app`),
-  `AnalyticsEncodingTest` (`:data`), and the Firebase rule in `ModuleBoundaryTest`.
+  `AnalyticsEncodingTest` (`:data`), `AnalyticsEventsTest` (`:domain`), and the Firebase and
+  event-field rules in `ModuleBoundaryTest`.
 
 ## Not handled yet
 
-- Product events beyond screen views (cats logged by origin, coats, imports, backups, walks).
 - A setting to turn reporting off (the owner chose always on).

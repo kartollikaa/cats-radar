@@ -1,5 +1,7 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.logged
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
@@ -19,6 +21,7 @@ class LogTally(
     private val idGenerator: IdGenerator,
     private val deviceIdProvider: DeviceIdProvider,
     private val clock: Clock,
+    private val analytics: Analytics,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
     suspend operator fun invoke(
@@ -50,6 +53,7 @@ class LogTally(
             deletedAt = null,
         )
         encounterRepository.insert(encounter)
+        analytics.log(encounter.logged())
         return encounter
     }
 }
