@@ -6,13 +6,14 @@ fun interface NonFatalReporter {
     fun record(error: Throwable)
 }
 
-@Suppress("TooGenericExceptionCaught") // whatever the block throws is recorded, not rethrown
+// Throwable, not Exception: an Error such as OutOfMemoryError must not take the process down either.
+@Suppress("TooGenericExceptionCaught")
 suspend fun NonFatalReporter.recordFailureOf(block: suspend () -> Unit) {
     try {
         block()
     } catch (e: CancellationException) {
         throw e
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         record(e)
     }
 }

@@ -49,14 +49,15 @@ and stay.
 
 ## 3. What leaves the phone
 
-**Sent.** Crash stack traces and device/OS model (Crashlytics' own); the events and parameters in §5;
+**Sent.** Crash and ANR stack traces, device/OS model, app sessions and a Firebase installation id
+(Crashlytics' own); the events and parameters in §5;
 the user property `build_type`; what Firebase Analytics collects on its own — an app-instance id,
 sessions, first open, app and OS updates, device model, OS version, country derived from the IP.
 
 **Never sent.** Latitude, longitude, accuracy, geohash, place-cell ids, country/city/area names, photos
 or any part of them, encounter/walk ids, encounter times, the sync device id; no event parameter holds
 a file path or URI. A crash report carries the exception's message as it was thrown, so a platform
-file error names the app-private path it failed on.
+file error names the path or URI it failed on — app-private storage or a file the user picked.
 
 **Advertising.** The Advertising ID is not collected (`google_analytics_adid_collection_enabled` off),
 the `com.google.android.gms.permission.AD_ID` permission the SDK merges in is removed, and ad

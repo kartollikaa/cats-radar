@@ -18,6 +18,11 @@ it came from. There is no switch to turn it off.
     photos, exporting and importing a backup.
   A worker that tries again later reports only its first failure, not one per retry. A job stopped
   by the system (cancelled, not failed) reports nothing.
+- **An app that stops responding** (an ANR), reported like a crash.
+- **App sessions.** Crashlytics' session tracking sends when the app starts and moves between the
+  foreground and the background, so a crash can be counted against how often the app is used.
+- **A Firebase installation id**, random and made on the phone at install time; it ties one
+  install's reports together and is not tied to a person or an account.
 - **`build_type`**, a custom key on every report: `debug` or `release`.
 
 ## What is never sent
@@ -25,8 +30,8 @@ it came from. There is no switch to turn it off.
 No coordinate, geohash, place, country or city name; no photo or any part of one; no cat's id, time
 or coat; the device id the backup format uses. Crashlytics is given no user id, no custom keys but
 `build_type`, and no log lines. A stack trace names code, not data; an exception's *message*,
-though, goes as whoever threw it wrote it — a file error from the platform names the path inside the
-app's own storage it failed on.
+though, goes as whoever threw it wrote it — a file error from the platform names the path or URI it
+failed on, which is the app's own storage or a file the user picked (a backup, a gallery photo).
 
 ## At the edges
 

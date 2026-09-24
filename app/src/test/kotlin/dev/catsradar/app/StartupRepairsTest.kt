@@ -26,6 +26,17 @@ class StartupRepairsTest {
     }
 
     @Test
+    fun `a repair that runs out of memory is recorded and the app keeps running`() = runTest {
+        val outOfMemory = OutOfMemoryError("Failed to allocate a 180 MB bitmap")
+
+        StartupRepairs(listOf { throw outOfMemory }, reporter).launchIn(this)
+        advanceUntilIdle()
+
+        assertEquals(listOf<Throwable>(outOfMemory), reporter.recorded)
+        assertTrue(coroutineContext.isActive)
+    }
+
+    @Test
     fun `a cancelled repair records nothing`() = runTest {
         StartupRepairs(listOf { throw CancellationException("process is going away") }, reporter).launchIn(this)
         advanceUntilIdle()

@@ -44,4 +44,6 @@ with fakes; `androidHostTest` is for Robolectric-backed tests (Room DAOs, migrat
 
 Adding a screen: State/Intent/Effect/Store + mapper in `:presentation`, composables in `:ui`,
 `NavKey` + entry + Koin registration in `:app`. Adding a platform capability: interface in
-`:domain`, implementation in `:data/androidMain`, binding in `:app`.
+`:domain`, implementation in `:data/androidMain`, binding in `:app`. A capability only `:app`
+code calls — the non-fatal crash reporter its workers and start-up repairs use — keeps its
+interface and implementation in `:app`; it moves to `:domain` the day a use case needs it.
