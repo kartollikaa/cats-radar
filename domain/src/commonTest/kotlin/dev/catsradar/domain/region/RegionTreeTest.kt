@@ -207,11 +207,11 @@ class RegionTreeTest {
     }
 
     @Test
-    fun `a located source with no point on the globe is No location, never Not named yet, even with a named cell`() {
+    fun `a located source with no point on the globe is No location, never Not named yet, whatever its cell`() {
         val cell = placeCellFixture(located(41.4, 2.2))
-        val noPoint = encounterFixture("no-point", BASE, LocationSource.CURRENT_FIX)
+        val noPoint = encounterFixture("no-point", BASE, LocationSource.CURRENT_FIX).copy(placeCellId = cell.cellId)
         val offGlobe = encounterFixture("off-globe", BASE, LocationSource.CURRENT_FIX, lat = 91.0, lon = 2.0)
-        val all = listOf(noPoint, offGlobe).map { it.copy(placeCellId = cell.cellId) }
+        val all = listOf(noPoint, offGlobe)
         val cells = listOf(cell)
 
         assertEquals(
