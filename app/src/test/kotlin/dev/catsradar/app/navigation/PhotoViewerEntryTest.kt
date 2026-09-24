@@ -54,7 +54,7 @@ class PhotoViewerEntryTest {
     fun `a tap on the photo in the nav host's own detail entry opens that cat's viewer above it`() {
         val levels = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID))
         val backStack = show(levels, cat = photographed())
-        compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) { photo().fetchSemanticsNodes().isNotEmpty() }
+        awaitTheDatabase { photo().fetchSemanticsNodes().isNotEmpty() }
 
         compose.onNode(photoMatcher() and hasClickAction()).performClick()
         compose.waitForIdle()
@@ -78,13 +78,15 @@ class PhotoViewerEntryTest {
         val levels = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID))
         val backStack = show(levels + PhotoViewer(ID), cat = tally(ID, OCCURRED))
 
-        // Robolectric's paused main looper delivers the database's answer only when idled, and no frame here idles it.
-        compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) {
-            shadowOf(Looper.getMainLooper()).idle()
-            backStack.toList() == levels
-        }
+        awaitTheDatabase { backStack.toList() == levels }
 
         assertEquals(levels, backStack.toList())
+    }
+
+    // Robolectric's paused main looper delivers the database's answer only when idled, and a still screen never idles it.
+    private fun awaitTheDatabase(condition: () -> Boolean) = compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) {
+        shadowOf(Looper.getMainLooper()).idle()
+        condition()
     }
 
     private fun show(keys: List<NavKey>, cat: Encounter): BottomNavBackStack {

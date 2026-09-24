@@ -11,9 +11,10 @@ photo has no viewer to open*).
 The app's own full copy — the one the detail screen shows, at most `Tuning.PHOTO_MAX_SIDE` on its
 longest side (see [photos.md](./photos.md#the-apps-own-copies)). Never the original: a photo imported
 from the gallery was never copied, and the app holds no permission to read it back, so one source for
-every cat keeps the viewer behaving the same for all of them. Zoom stops at twice the copy's own
-pixels — [Telephoto](https://github.com/saket/telephoto)'s default, and past it the copy has no more
-detail to show. The gestures are Telephoto's `ZoomableAsyncImage` over the app's Coil; it
+every cat keeps the viewer behaving the same for all of them. How far it zooms is
+[Telephoto](https://github.com/saket/telephoto)'s default limit, measured against the copy's own
+pixels rather than the screen, since past those the copy has no more detail to show. The gestures
+are Telephoto's `ZoomableAsyncImage` over the app's Coil; it
 carries no native code, so the 16 KB page-size check has nothing new to look at.
 
 ## Chrome

@@ -5,13 +5,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -68,13 +70,17 @@ fun PhotoViewerScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ViewerTopBar(modifier: Modifier = Modifier, onBackClick: () -> Unit = {}) {
+    // safeDrawing drops the status bar's height while it is hidden, so the arrow would slide as the bar returns.
+    val insets = WindowInsets.statusBarsIgnoringVisibility.union(WindowInsets.displayCutout)
+    val scrim = Brush.verticalGradient(listOf(ViewerColors.ChromeScrim, ViewerColors.ChromeScrim.copy(alpha = 0f)))
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(ViewerColors.ChromeScrim, Color.Transparent)))
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+            .background(scrim)
+            .windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
             .padding(horizontal = 4.dp, vertical = 8.dp),
     ) {
         IconButton(onClick = onBackClick) {
@@ -108,5 +114,14 @@ private fun SystemBarsVisibility(visible: Boolean) {
 @ThemePreviews
 @Composable
 private fun PhotoViewerScreenPreview() {
-    CatsRadarTheme { PhotoViewerScreen(state = PhotoViewerState.Showing(photoPath = "/data/photos/cat-1.jpg")) }
+    CatsRadarTheme { PhotoViewerScreen(state = sampleShowing) }
 }
+
+@ThemePreviews
+@Composable
+private fun PhotoViewerScreenLoadingPreview() {
+    CatsRadarTheme { PhotoViewerScreen(state = PhotoViewerState.Loading) }
+}
+
+private val sampleShowing =
+    PhotoViewerState.Showing(photoPath = "/data/user/0/dev.catsradar/files/photos/5f1c2d9e-4b7a.jpg")
