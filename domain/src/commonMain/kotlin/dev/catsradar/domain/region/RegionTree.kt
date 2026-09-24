@@ -15,7 +15,7 @@ sealed interface RegionKey {
     data class City(val countryCode: String, val city: String) : RegionKey
     data class Area(val areaHash: String) : RegionKey
 
-    /** Encounters with coordinates whose cell has no name — pending, failed, or unavailable. */
+    /** Encounters that can be placed but whose cell has no name — pending, failed, or unavailable. */
     data object Unresolved : RegionKey
 
     /** Encounters in [countryCode] whose cell names neither a locality nor an admin area. */
@@ -146,10 +146,10 @@ object RegionTree {
         if (count == 0) emptyList() else listOf(RegionNode(key, label, count))
 }
 
-// A row with coordinates but no geohash can only be hand-edited; it still has an area to be in.
+// Only a hand-edited row lacks a usable geohash; its coordinates still give it an area.
 private fun Encounter.areaHash(): String? =
-    (geohash ?: pointOnGlobe(lat, lon)?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) })
-        ?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) }
+    geohash?.take(Tuning.AREA_PRECISION)?.takeIf { Geohash.isWellFormed(it, Tuning.AREA_PRECISION) }
+        ?: pointOnGlobe(lat, lon)?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) }
 
 // adminArea is the fallback because a rural point often has a region but no locality.
 private fun PlaceCell.cityName(): String? = locality ?: adminArea

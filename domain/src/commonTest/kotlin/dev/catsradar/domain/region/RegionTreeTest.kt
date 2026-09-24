@@ -176,6 +176,19 @@ class RegionTreeTest {
     }
 
     @Test
+    fun `a geohash too short or garbled to hold an area is set aside for the coordinates`() {
+        val short = located(41.390, 2.170).copy(geohash = "sp3")
+        val garbled = located(41.392, 2.172).copy(geohash = "sp!e3qu4")
+        val all = listOf(short, garbled)
+        val cells = all.map { placeCellFixture(it) }
+
+        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), all, cells)
+
+        assertEquals(listOf(RegionKey.Country("ES")), RegionTree.countries(all, cells).map { it.key })
+        assertEquals(listOf(areaOf(located(41.390, 2.170)) to 2), areas.map { it.key to it.count })
+    }
+
+    @Test
     fun `a cat marked located with nothing to place it by is No location, and listed there`() {
         val intact = located(41.390, 2.170)
         val placeless = intact.copy(lat = null, lon = null, geohash = null)
