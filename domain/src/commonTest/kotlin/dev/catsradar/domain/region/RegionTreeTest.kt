@@ -1,5 +1,7 @@
 package dev.catsradar.domain.region
 
+import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.testing.areaOf
@@ -382,7 +384,8 @@ class RegionTreeTest {
             placeCellFixture(unnamed, null, null, locality = null, status = PlaceStatus.PENDING)
 
         init {
-            check(all.map { areaOf(it, BARCELONA).areaHash }.distinct().size == 1) { "the patch is not one area" }
+            val areaHashes = all.map { Geohash.prefix(it.geohash!!, Tuning.AREA_PRECISION) }
+            check(areaHashes.distinct().size == 1) { "the patch is not one area" }
             check(cells.map { it.cellId }.distinct().size == cells.size) { "two cats share a place cell" }
         }
 
