@@ -83,4 +83,19 @@ class TrackPointDaoTest {
 
         assertTrue("FOREIGN KEY" in error.message.orEmpty(), error.message)
     }
+
+    @Test
+    fun everyPointComesBackGroupedByWalkInTimeOrderAndAgainAfterAnInsert() = runTest {
+        walks.upsert(walkEntity("b"))
+        walks.upsert(walkEntity("a"))
+        dao.insert(trackPointEntity("b", second = 10, lat = 41.3))
+        dao.insert(trackPointEntity("a", second = 20, lat = 41.2))
+        dao.insert(trackPointEntity("a", second = 10, lat = 41.1))
+
+        assertEquals(listOf(41.1, 41.2, 41.3), dao.observeEvery().first().map { it.lat })
+
+        dao.insert(trackPointEntity("b", second = 20, lat = 41.4))
+
+        assertEquals(listOf(41.1, 41.2, 41.3, 41.4), dao.observeEvery().first().map { it.lat })
+    }
 }
