@@ -114,8 +114,9 @@ class WorkManagerImportSchedulerTest {
     fun aFullBatchReportsEveryPhotoItAdded() {
         val addedIds = List(Tuning.IMPORT_BATCH_MAX) { UUID.randomUUID().toString() }
         importPhotos = { _, _ -> ImportSummary(added = addedIds.map { ImportedPhoto(it, needsLocation = false) }) }
+        val uris = List(Tuning.IMPORT_BATCH_MAX, ::longProviderUri)
 
-        val run = WorkManagerImportScheduler(context).startAndAwaitTheRun(List(Tuning.IMPORT_BATCH_MAX, ::longProviderUri))
+        val run = WorkManagerImportScheduler(context).startAndAwaitTheRun(uris)
 
         assertEquals(WorkInfo.State.SUCCEEDED, run.state)
         assertEquals(addedIds, run.outputData.getStringArray(ImportPhotosWorker.KEY_ADDED_IDS)?.toList())
