@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
@@ -18,11 +19,14 @@ import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
@@ -82,6 +86,9 @@ internal class FakeEncounterRepository : EncounterRepository {
             }
         }
     }
+
+    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
+        throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
         delay(softDeleteDelay)
@@ -248,5 +255,21 @@ internal class FakeSettingsRepository(
 
     override suspend fun setEncountersGrid(enabled: Boolean) {
         grid.value = enabled
+    }
+
+    private val acknowledgedRuns = MutableStateFlow(emptyMap<ReportedJob, String>())
+
+    var acknowledgedRunReadGate: CompletableDeferred<Unit>? = null
+    var acknowledgedRunWriteGate: CompletableDeferred<Unit>? = null
+
+    override fun acknowledgedRun(job: ReportedJob): Flow<String?> = flow {
+        acknowledgedRunReadGate?.await()
+        emitAll(acknowledgedRuns.map { it[job] })
+    }
+
+    override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) {
+        acknowledgedRunWriteGate?.await()
+        check(!writesFail) { "preferences unwritable" }
+        acknowledgedRuns.update { it + (job to runId) }
     }
 }

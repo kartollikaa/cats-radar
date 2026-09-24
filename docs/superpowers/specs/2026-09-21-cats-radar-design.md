@@ -133,7 +133,9 @@ One row per geohash cell of precision `PLACE_CELL_PRECISION = 6` (~1.2 km × 0.6
 
 ### 3.3 Settings (DataStore Preferences, not Room)
 
-`saveOriginalsToGallery: Boolean = true`, `lastSeenMilestone: Int = 0`.
+`saveOriginalsToGallery: Boolean = true`, `lastSeenMilestone: Int = 0`, and per reported background job
+(gallery import, backup) `acknowledgedRun: String?` — the last run whose outcome the user has dealt
+with, so a finished run read back from WorkManager is not reported again.
 
 ### 3.4 Region hierarchy (derived)
 

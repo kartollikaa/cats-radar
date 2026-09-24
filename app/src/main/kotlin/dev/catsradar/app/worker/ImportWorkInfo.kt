@@ -4,6 +4,7 @@ import androidx.work.Data
 import androidx.work.WorkInfo
 import dev.catsradar.presentation.counter.CounterIntent
 import kotlinx.collections.immutable.toImmutableList
+import java.util.UUID
 
 /**
  * What the screen should be told about the one import run, or null when it should be told nothing.
@@ -13,8 +14,8 @@ import kotlinx.collections.immutable.toImmutableList
  */
 internal fun WorkInfo.toCounterIntent(): CounterIntent? = when (state) {
     WorkInfo.State.RUNNING -> progress.toProgressIntent()
-    WorkInfo.State.SUCCEEDED -> outputData.toFinishedIntent()
-    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> Data.EMPTY.toFinishedIntent()
+    WorkInfo.State.SUCCEEDED -> outputData.toFinishedIntent(id)
+    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> Data.EMPTY.toFinishedIntent(id)
     WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> null
 }
 
@@ -26,7 +27,8 @@ private fun Data.toProgressIntent(): CounterIntent? {
     return CounterIntent.Import.Progressed(done = getInt(ImportPhotosWorker.KEY_DONE, 0), total = total)
 }
 
-private fun Data.toFinishedIntent(): CounterIntent = CounterIntent.Import.Finished(
+private fun Data.toFinishedIntent(runId: UUID): CounterIntent = CounterIntent.Import.Finished(
+    runId = runId.toString(),
     addedIds = getStringArray(ImportPhotosWorker.KEY_ADDED_IDS)?.toList().orEmpty().toImmutableList(),
     skipped = getInt(ImportPhotosWorker.KEY_SKIPPED, 0),
     failed = getInt(ImportPhotosWorker.KEY_FAILED, 0),

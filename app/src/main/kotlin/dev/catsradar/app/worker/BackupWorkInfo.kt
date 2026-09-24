@@ -12,8 +12,8 @@ import dev.catsradar.presentation.settings.SettingsIntent
  */
 internal fun WorkInfo.toSettingsIntent(): SettingsIntent.Backup? = when (state) {
     WorkInfo.State.RUNNING -> SettingsIntent.Backup.Started
-    WorkInfo.State.SUCCEEDED -> SettingsIntent.Backup.Finished(succeededOutcome())
-    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> SettingsIntent.Backup.Finished(failedOutcome())
+    WorkInfo.State.SUCCEEDED -> SettingsIntent.Backup.Finished(id.toString(), succeededOutcome())
+    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> SettingsIntent.Backup.Finished(id.toString(), failedOutcome())
     WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> null
 }
 

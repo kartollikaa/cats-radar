@@ -1,7 +1,9 @@
 package dev.catsradar.presentation.settings
 
 import androidx.lifecycle.viewModelScope
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.presentation.ReportedRun
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -9,6 +11,8 @@ import kotlinx.coroutines.flow.onEach
 class SettingsStore(
     private val settingsRepository: SettingsRepository,
 ) : Store<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
+
+    private val backupRun = ReportedRun(settingsRepository, ReportedJob.BACKUP)
 
     init {
         settingsRepository.saveOriginalsToGallery()
@@ -45,9 +49,13 @@ class SettingsStore(
                 intent.uri?.let { emit(SettingsEffect.StartImport(it)) }
             SettingsIntent.Backup.Started ->
                 setState { copy(backupRunning = true, backupOutcome = null) }
-            is SettingsIntent.Backup.Finished ->
+            is SettingsIntent.Backup.Finished -> if (backupRun.claim(intent.runId)) {
                 setState { copy(backupRunning = false, backupOutcome = intent.outcome) }
-            SettingsIntent.Backup.OutcomeDismissed -> setState { copy(backupOutcome = null) }
+            }
+            SettingsIntent.Backup.OutcomeDismissed -> {
+                setState { copy(backupOutcome = null) }
+                backupRun.acknowledge()
+            }
         }
     }
 }

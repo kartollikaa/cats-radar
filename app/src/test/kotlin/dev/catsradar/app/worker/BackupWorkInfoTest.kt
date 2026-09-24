@@ -10,12 +10,14 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+private val RunId = UUID.fromString("6f1c2b9e-4d7a-4e5b-9c3d-2a8f0e1b7c64")
+
 private fun workInfo(
     state: WorkInfo.State,
     worker: Class<*>,
     output: Data = Data.EMPTY,
 ): WorkInfo = WorkInfo(
-    id = UUID.randomUUID(),
+    id = RunId,
     state = state,
     tags = setOf(worker.name),
     outputData = output,
@@ -37,21 +39,21 @@ class BackupWorkInfoTest {
     fun `a finished export reports an export, not an import`() {
         val intent = workInfo(WorkInfo.State.SUCCEEDED, ExportBackupWorker::class.java).toSettingsIntent()
 
-        assertEquals(SettingsIntent.Backup.Finished(BackupOutcome.EXPORTED), intent)
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.EXPORTED), intent)
     }
 
     @Test
     fun `a finished import reports an import`() {
         val intent = workInfo(WorkInfo.State.SUCCEEDED, ImportBackupWorker::class.java).toSettingsIntent()
 
-        assertEquals(SettingsIntent.Backup.Finished(BackupOutcome.IMPORTED), intent)
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.IMPORTED), intent)
     }
 
     @Test
     fun `a failed export never reports an import problem`() {
         val intent = workInfo(WorkInfo.State.FAILED, ExportBackupWorker::class.java).toSettingsIntent()
 
-        assertEquals(SettingsIntent.Backup.Finished(BackupOutcome.EXPORT_FAILED), intent)
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.EXPORT_FAILED), intent)
     }
 
     @Test
@@ -62,21 +64,21 @@ class BackupWorkInfoTest {
             output = rejection(BackupRejection.TOO_NEW),
         ).toSettingsIntent()
 
-        assertEquals(SettingsIntent.Backup.Finished(BackupOutcome.IMPORT_REFUSED_TOO_NEW), intent)
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.IMPORT_REFUSED_TOO_NEW), intent)
     }
 
     @Test
     fun `an import that failed without a reason reads as an unreadable file`() {
         val intent = workInfo(WorkInfo.State.FAILED, ImportBackupWorker::class.java).toSettingsIntent()
 
-        assertEquals(SettingsIntent.Backup.Finished(BackupOutcome.IMPORT_REFUSED_UNREADABLE), intent)
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.IMPORT_REFUSED_UNREADABLE), intent)
     }
 
     @Test
     fun `a cancelled run still clears the progress bar`() {
         val intent = workInfo(WorkInfo.State.CANCELLED, ExportBackupWorker::class.java).toSettingsIntent()
 
-        assertEquals(SettingsIntent.Backup.Finished(BackupOutcome.EXPORT_FAILED), intent)
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.EXPORT_FAILED), intent)
     }
 
     @Test

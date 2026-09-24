@@ -19,7 +19,10 @@ sealed interface CounterIntent {
         /** [uris] is empty when the picker was dismissed without choosing anything. */
         data class PhotosPicked(val uris: ImmutableList<String>) : Import
         data class Progressed(val done: Int, val total: Int) : Import
+
+        /** The same run may be reported again; [runId] tells a repeat from a new run. */
         data class Finished(
+            val runId: String,
             val addedIds: ImmutableList<String>,
             val skipped: Int,
             val failed: Int,
