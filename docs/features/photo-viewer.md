@@ -57,7 +57,11 @@ again and shows the same photo.
 **When it is offered.** A cat whose camera original the app saved to `Pictures/Cats Radar` (see
 [photos.md](./photos.md#the-gallery-setting)) shows a gallery button at the other end of the top bar.
 A tap hands that item to whatever app the phone opens images with — the user's default gallery, or
-the system's choice — with the app's own read access passed on. Whether that gallery lets the user
+the system's choice — with the app's own read access passed on. If Android refuses to pass it on
+(the item was deleted in the moment between the check and the tap reaching the gallery), the view
+goes again without it rather than crashing, and the gallery opens the item with its own access or
+says it cannot find it (`GalleryOpenerTest`, *a grant the app can no longer give is dropped and the
+item still opens*). Whether that gallery lets the user
 swipe on to the photos around it is its own behaviour. A camera photo taken with saving to the gallery
 turned off, and a photo imported or picked from the gallery, offer nothing: the app kept no link to
 where they are (`PhotoViewerStateMapperTest`, *a photo with no original in the gallery offers nothing
