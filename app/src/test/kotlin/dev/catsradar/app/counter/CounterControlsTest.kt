@@ -157,6 +157,14 @@ class CounterControlsTest {
         compose.onNodeWithText(context.getString(R.string.counter_walk_stop_hint_timed, "32 min")).assertIsDisplayed()
     }
 
+    @Config(qualifiers = "+ru")
+    @Test
+    fun `in Russian the walk's time keeps a hint short enough to share the line`() {
+        show(walking = true, elapsedLabel = "32 мин")
+
+        compose.onNodeWithText("32 мин · удерживайте").assertIsDisplayed()
+    }
+
     @Test
     fun `an accessibility click stops the walk without the hold`() {
         show(walking = true)

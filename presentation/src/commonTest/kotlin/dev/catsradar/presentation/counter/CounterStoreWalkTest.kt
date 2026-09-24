@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -101,7 +102,25 @@ class CounterStoreWalkTest {
 
         val (store, _) = newStore(settingsRepository = settings, walkRepository = walks)
 
-        assertEquals(32.minutes.toString(), store.state.value.walkElapsedLabel)
+        assertEquals(
+            CounterState(
+                totalLabel = "0",
+                count = 0,
+                undoVisible = false,
+                walkingMode = true,
+                walkElapsedLabel = FakeDateTimeFormatter().duration(32.minutes),
+            ),
+            store.state.value,
+        )
+    }
+
+    @Test
+    fun `with no walk on the state carries no walk time`() = runTest(mainDispatcher) {
+        val walks = FakeWalkRepository().apply { startAt(CounterNow - 32.minutes) }
+
+        val (store, _) = newStore(walkRepository = walks)
+
+        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
     }
 
     @Test
@@ -112,8 +131,10 @@ class CounterStoreWalkTest {
 
         settings.setWalkingMode(true)
         runCurrent()
-        assertEquals(true, store.state.value.walkingMode)
-        assertNull(store.state.value.walkElapsedLabel)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true),
+            store.state.value,
+        )
 
         walks.startAt(CounterNow)
         runCurrent()

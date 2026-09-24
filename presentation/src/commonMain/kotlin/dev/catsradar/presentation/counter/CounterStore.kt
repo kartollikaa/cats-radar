@@ -81,7 +81,7 @@ class CounterStore(
             }
             .launchIn(viewModelScope)
         settingsRepository.walkingMode()
-            // The walk's clock runs only for the length of a walk.
+            // Nothing ticks the walk's clock while walking mode is off.
             .flatMapLatest { enabled ->
                 val elapsed = if (enabled) observeWalkElapsed().onStart { emit(null) } else flowOf(null)
                 elapsed.map { enabled to stateMapper.walkElapsedLabel(enabled, it) }

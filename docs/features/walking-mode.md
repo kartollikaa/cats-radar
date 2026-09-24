@@ -18,8 +18,8 @@ the cat on both of them walks.
   the thing the button starts and stops.
 - **On the button it is minutes**: the second line reads *32 min · press and hold* (*32 мин ·
   удерживайте*: the hint is cut short so the line stays about as long as the plain hint was),
-  formatted like every other duration on the Counter. It moves within a few seconds of each minute,
-  and nothing keeps it ticking while no walk is on.
+  formatted like every other duration on the Counter. It moves shortly after each minute turns,
+  and nothing keeps it ticking while walking mode is off.
 - **In the notification it is a chronometer** counting up from the start, `12:34` then `1:02:03`. The
   system ticks it, so the time moves with no repost and keeps moving while the app's process is
   dead. From API 37 the notification is a `MetricStyle` with two metrics, *Cats* and *Walk*, and
@@ -227,9 +227,8 @@ activity, so from a locked phone Android asks for the unlock first and the camer
   useful to say about a setting the user just chose.
 - **The notification is `VISIBILITY_PUBLIC`** — its text shows on the lock screen, because tallying
   without unlocking is the whole feature. It says how many cats this outing and how long the walk has
-lasted, and nothing more. The
-  visibility is set on the notification, not the channel: Android discards `VISIBILITY_PUBLIC` on a
-  channel an app creates.
+  lasted, and nothing more. The visibility is set on the notification, not the channel: Android
+  discards `VISIBILITY_PUBLIC` on a channel an app creates.
 - **A tally from here is `origin = NOTIFICATION`**, distinct from the app, the widget and the two
   photo paths. An older build reading such a row falls back to `APP` rather than failing, because the
   Room converter maps an unknown name that way.
