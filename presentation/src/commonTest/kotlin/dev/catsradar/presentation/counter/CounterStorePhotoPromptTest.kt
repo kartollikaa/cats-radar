@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -75,11 +76,31 @@ class CounterStorePhotoPromptTest {
 
         store.dispatch(CounterIntent.CoatPromptDismissed)
         runCurrent()
+        assertNull(store.state.value.coatPrompt)
+
         store.dispatch(CounterIntent.CoatPromptPicked(CoatOption.BLACK))
         runCurrent()
+        assertNull(repository.encounters().single().coat)
+    }
 
+    @Test
+    fun `the prompt closes before the coat is written`() = runTest(mainDispatcher) {
+        val repository = FakeEncounterRepository()
+        val store = newCounterStore(encounterRepository = repository)
+        store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
+        runCurrent()
+        assertNotNull(store.state.value.coatPrompt)
+        val write = CompletableDeferred<Unit>()
+        repository.setCoatGate = write
+
+        store.dispatch(CounterIntent.CoatPromptPicked(CoatOption.BLACK))
+        runCurrent()
         assertNull(store.state.value.coatPrompt)
         assertNull(repository.encounters().single().coat)
+
+        write.complete(Unit)
+        runCurrent()
+        assertEquals(CatCoat.BLACK, repository.encounters().single().coat)
     }
 
     @Test
