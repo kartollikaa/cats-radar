@@ -122,6 +122,11 @@ written only where no file was here, so importing the same archive again finds t
   cut off and is refused as unreadable. The lists come before the photos, so a clean cut after them
   can only lose photos: the cats arrive, and those whose photos were past the cut show the
   placeholder until an archive that has them is imported.
+- **A file this device cannot open, or photos it has no room to unpack, fail the import instead of
+  refusing the archive.** The picker's grant may have died with the app, or the storage may be
+  full; neither says anything about the archive, so neither is reported as a file this app cannot
+  read. The read throws, nothing has been written, and the caller reports the import as not
+  finished.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
 - **So does a row whose photo or thumbnail path climbs out of it.** Every screen that shows a cat

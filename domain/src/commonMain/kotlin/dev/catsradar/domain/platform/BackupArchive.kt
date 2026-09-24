@@ -26,5 +26,6 @@ interface BackupWriter {
 }
 
 interface BackupReader {
+    /** Throws, rather than refusing, when the source cannot be opened or this device cannot store what it holds. */
     suspend fun read(source: String): BackupReadResult
 }

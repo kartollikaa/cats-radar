@@ -17,6 +17,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -126,6 +127,8 @@ class ZipBackupReader(
         val staging = File(context.filesDir, STAGING_DIR).apply { deleteRecursively() }
         try {
             readArchive(source, staging)
+        } catch (e: DeviceFailure) {
+            throw e.cause
         } catch (e: Exception) {
             BackupReadResult.Rejected(BackupRejection.UNREADABLE)
         } finally {
@@ -133,13 +136,23 @@ class ZipBackupReader(
         }
     }
 
+    /** Opening the source or writing to this device failed: not the archive's fault, so not a refusal. */
+    private class DeviceFailure(override val cause: Exception) : Exception(cause)
+
     private class Unpacked {
         val texts = mutableMapOf<String, String>()
         val stagedPhotos = mutableMapOf<String, File>()
     }
 
     private fun readArchive(source: String, staging: File): BackupReadResult {
-        val unpacked = context.openRead(source)?.use { unpack(it, staging) }
+        val stream = try {
+            context.openRead(source)
+        } catch (e: IOException) {
+            throw DeviceFailure(e)
+        } catch (e: SecurityException) {
+            throw DeviceFailure(e)
+        }
+        val unpacked = stream?.use { unpack(it, staging) }
         val manifest = unpacked?.texts?.get(MANIFEST_ENTRY)?.let { ArchiveJson.decodeFromString<ManifestVersion>(it) }
         val encounters = unpacked?.texts?.get(ENCOUNTERS_ENTRY)
         return when {
@@ -190,8 +203,27 @@ class ZipBackupReader(
         if (relativePath.isEmpty() || relativePath in unpacked.stagedPhotos) return
         if (photoStorage.fileFor(relativePath).isFile) return
         val staged = File(staging.apply { mkdirs() }, unpacked.stagedPhotos.size.toString())
-        staged.outputStream().use { zip.copyTo(it) }
+        val out = try {
+            staged.outputStream()
+        } catch (e: IOException) {
+            throw DeviceFailure(e)
+        }
+        out.use { zip.copyToStaged(it) }
         unpacked.stagedPhotos[relativePath] = staged
+    }
+
+    // A read that fails is the archive's fault; a write that fails is this device's.
+    private fun InputStream.copyToStaged(out: OutputStream) {
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        var read = read(buffer)
+        while (read >= 0) {
+            try {
+                out.write(buffer, 0, read)
+            } catch (e: IOException) {
+                throw DeviceFailure(e)
+            }
+            read = read(buffer)
+        }
     }
 
     private fun moveIntoPlace(relativePath: String, staged: File) {
