@@ -17,7 +17,11 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.FilterInputStream
+import java.io.IOException
+import java.io.InputStream
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
@@ -35,8 +39,43 @@ class ZipBackupReaderDeviceFailureTest {
     private val reader = ZipBackupReader(context, photoStorage)
 
     @After
-    fun makeTheAppDirectoryWritableAgain() {
+    fun makeTheAppDirectoriesWritableAgain() {
         context.filesDir.setWritable(true)
+        File(context.filesDir, "photos").setWritable(true)
+    }
+
+    private fun validArchive(): File = File(temporaryFolder.root, "backup.zip").apply {
+        writeArchive(
+            MANIFEST_ENTRY to VALID_MANIFEST,
+            ENCOUNTERS_ENTRY to catWithPhotos("cat.jpg"),
+            "${PHOTOS_PREFIX}cat.jpg" to "jpeg bytes ".repeat(4096),
+        )
+    }
+
+    @Test
+    fun aSourceWhoseStreamBreaksPartWayFailsTheReadRatherThanBeingCalledUnreadable() = runTest {
+        val bytes = validArchive().readBytes()
+        val dropsHalfway = ZipBackupReader(context, photoStorage) {
+            ConnectionDropsAfter(bytes.size / 2, ByteArrayInputStream(bytes))
+        }
+
+        assertFailsWith<IOException> { dropsHalfway.read("content://cloud/document/backup.zip") }
+    }
+
+    @Test
+    fun aSourceThatGivesNoStreamFailsTheReadRatherThanBeingCalledUnreadable() = runTest {
+        val noStream = ZipBackupReader(context, photoStorage) { null }
+
+        assertFailsWith<IOException> { noStream.read("content://cloud/document/backup.zip") }
+    }
+
+    @Test
+    fun aPhotoThisDeviceCannotPutInPlaceFailsTheRead() = runTest {
+        val archive = validArchive()
+        File(context.filesDir, "photos").apply { mkdirs() }.setWritable(false)
+        assumeFalse("a process running as root writes anyway", File(context.filesDir, "photos").canWrite())
+
+        assertFailsWith<IOException> { reader.read(archive.path) }
     }
 
     @Test
@@ -58,9 +97,20 @@ class ZipBackupReaderDeviceFailureTest {
         context.filesDir.setWritable(false)
         assumeFalse("a process running as root writes anyway", context.filesDir.canWrite())
 
-        assertFailsWith<java.io.IOException> { reader.read(archive.path) }
+        assertFailsWith<IOException> { reader.read(archive.path) }
         context.filesDir.setWritable(true)
         assertFalse(photoStorage.fileFor("cat.jpg").exists(), "a photo was left behind")
+    }
+}
+
+private class ConnectionDropsAfter(private val budget: Int, source: InputStream) : FilterInputStream(source) {
+    private var served = 0
+
+    override fun read(): Int = if (++served > budget) throw IOException("Connection reset") else super.read()
+
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
+        if (served >= budget) throw IOException("Connection reset")
+        return super.read(b, off, minOf(len, budget - served)).also { if (it > 0) served += it }
     }
 }
 

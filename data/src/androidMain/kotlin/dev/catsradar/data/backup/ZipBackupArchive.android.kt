@@ -17,6 +17,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -116,6 +117,7 @@ class ZipBackupWriter(
 class ZipBackupReader(
     private val context: Context,
     private val photoStorage: AndroidPhotoStorage,
+    private val openSource: (String) -> InputStream? = context::openRead,
 ) : BackupReader {
 
     /**
@@ -136,25 +138,15 @@ class ZipBackupReader(
         }
     }
 
-    /** Opening the source or writing to this device failed: not the archive's fault, so not a refusal. */
-    private class DeviceFailure(override val cause: Exception) : Exception(cause)
-
     private class Unpacked {
         val texts = mutableMapOf<String, String>()
         val stagedPhotos = mutableMapOf<String, File>()
     }
 
     private fun readArchive(source: String, staging: File): BackupReadResult {
-        val stream = try {
-            context.openRead(source)
-        } catch (e: IOException) {
-            throw DeviceFailure(e)
-        } catch (e: SecurityException) {
-            throw DeviceFailure(e)
-        }
-        val unpacked = stream?.use { unpack(it, staging) }
-        val manifest = unpacked?.texts?.get(MANIFEST_ENTRY)?.let { ArchiveJson.decodeFromString<ManifestVersion>(it) }
-        val encounters = unpacked?.texts?.get(ENCOUNTERS_ENTRY)
+        val unpacked = SourceStream(open(source)).use { unpack(it, staging) }
+        val manifest = unpacked.texts[MANIFEST_ENTRY]?.let { ArchiveJson.decodeFromString<ManifestVersion>(it) }
+        val encounters = unpacked.texts[ENCOUNTERS_ENTRY]
         return when {
             manifest == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
             // Before anything else is looked at, and from the version alone: a newer version's lists, or
@@ -184,6 +176,9 @@ class ZipBackupReader(
     private inline fun <reified T> Unpacked.decoded(entry: String): List<T> =
         texts[entry]?.let { ArchiveJson.decodeFromString<List<T>>(it) }.orEmpty()
 
+    private fun open(source: String): InputStream =
+        deviceSide { openSource(source) } ?: throw DeviceFailure(IOException("no stream for $source"))
+
     private fun unpack(stream: InputStream, staging: File): Unpacked = Unpacked().also { unpacked ->
         ZipInputStream(stream.buffered()).use { zip ->
             generateSequence { zip.nextEntry }.forEach { entry ->
@@ -203,12 +198,7 @@ class ZipBackupReader(
         if (relativePath.isEmpty() || relativePath in unpacked.stagedPhotos) return
         if (photoStorage.fileFor(relativePath).isFile) return
         val staged = File(staging.apply { mkdirs() }, unpacked.stagedPhotos.size.toString())
-        val out = try {
-            staged.outputStream()
-        } catch (e: IOException) {
-            throw DeviceFailure(e)
-        }
-        out.use { zip.copyToStaged(it) }
+        deviceSide { staged.outputStream() }.use { zip.copyToStaged(it) }
         unpacked.stagedPhotos[relativePath] = staged
     }
 
@@ -217,18 +207,16 @@ class ZipBackupReader(
         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
         var read = read(buffer)
         while (read >= 0) {
-            try {
-                out.write(buffer, 0, read)
-            } catch (e: IOException) {
-                throw DeviceFailure(e)
-            }
+            deviceSide { out.write(buffer, 0, read) }
             read = read(buffer)
         }
     }
 
     private fun moveIntoPlace(relativePath: String, staged: File) {
         if (photoStorage.fileFor(relativePath).isFile) return
-        staged.renameTo(photoStorage.prepare(relativePath))
+        if (!staged.renameTo(photoStorage.prepare(relativePath))) {
+            throw DeviceFailure(IOException("could not put a restored photo in place: $relativePath"))
+        }
     }
 
     private fun ZipInputStream.readText(): String = readBytes().decodeToString()
@@ -236,6 +224,26 @@ class ZipBackupReader(
 
 @Serializable
 private data class ManifestVersion(val formatVersion: Int)
+
+/** A failure on this device's side of a read, not the archive's fault: never a refusal. */
+private class DeviceFailure(override val cause: Exception) : Exception(cause)
+
+private inline fun <T> deviceSide(block: () -> T): T = try {
+    block()
+} catch (e: IOException) {
+    throw DeviceFailure(e)
+} catch (e: SecurityException) {
+    throw DeviceFailure(e)
+}
+
+// The source's own I/O failures are this device's; the ZIP's, raised above it, are the archive's.
+private class SourceStream(source: InputStream) : FilterInputStream(source) {
+    override fun read(): Int = deviceSide { super.read() }
+
+    override fun read(b: ByteArray, off: Int, len: Int): Int = deviceSide { super.read(b, off, len) }
+
+    override fun skip(n: Long): Long = deviceSide { super.skip(n) }
+}
 
 private val archiveTextEntries =
     setOf(MANIFEST_ENTRY, ENCOUNTERS_ENTRY, PLACE_CELLS_ENTRY, WALKS_ENTRY, TRACK_POINTS_ENTRY)
