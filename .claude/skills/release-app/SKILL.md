@@ -53,7 +53,7 @@ over the APK — no version bump, no PR, no tag).
    `./gradlew check` locally and confirm it's green — the merge rule is a green local check, not
    waiting on GitHub Actions to finish. Open the PR and run `/code-review` on it (trivial diff,
    but it's still a slice), then merge with a merge commit (`gh pr merge <n> --merge`), never
-   squash — one PR per task, landed with a merge commit, per this project's `CLAUDE.md`.
+   squash — one PR per slice, landed with a merge commit, per this project's `CLAUDE.md`.
 4. **Re-fetch and pin the merge commit.** `git fetch origin main` and read the merge commit's
    SHA off `git log --oneline -1 origin/main` — don't assume it's what you pushed; something
    else may have merged in the gap. Build from that exact SHA (`git checkout --detach <sha>`
