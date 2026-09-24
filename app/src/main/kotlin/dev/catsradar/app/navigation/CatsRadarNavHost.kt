@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -141,6 +142,10 @@ internal fun catsRadarEntries(
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
+    catEntries(backStack, contentPadding)
+}
+
+private fun EntryProviderScope<NavKey>.catEntries(backStack: BottomNavBackStack, contentPadding: PaddingValues) {
     entry<EncounterDetail> { key ->
         EncounterDetailDestination(
             key = key,

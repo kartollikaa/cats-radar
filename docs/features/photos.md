@@ -230,7 +230,8 @@ nothing, which keeps a fixture that large small in the repository.
 
 A photo encounter shows its thumbnail in an Encounters tile or card, the app's full copy when it
 shares a pair row with the photo next to it (see `browsing-cats.md`), and the full copy on the detail
-screen, all loaded from app-private storage with Coil. The mapper resolves the stored **relative**
+screen, all loaded from app-private storage with Coil; a tap on the detail screen's photo opens the
+same copy fullscreen (see [photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens
 to hold. A pair tile with no full copy falls back to its thumbnail.
 

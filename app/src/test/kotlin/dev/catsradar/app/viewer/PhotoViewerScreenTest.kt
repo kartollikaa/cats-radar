@@ -63,12 +63,16 @@ class PhotoViewerScreenTest {
     }
 
     private fun show(onBackClick: () -> Unit = {}) {
-        val photo = File(context.cacheDir, "cat.png").apply {
-            outputStream().use { Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val photo = File(context.cacheDir, "cat.png")
+        photo.outputStream().use { out ->
+            Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, out)
         }
         compose.setContent {
             CatsRadarTheme {
-                PhotoViewerScreen(state = PhotoViewerState.Showing(photoPath = photo.absolutePath), onBackClick = onBackClick)
+                PhotoViewerScreen(
+                    state = PhotoViewerState.Showing(photoPath = photo.absolutePath),
+                    onBackClick = onBackClick,
+                )
             }
         }
         compose.waitUntil(timeoutMillis = 5_000) {
