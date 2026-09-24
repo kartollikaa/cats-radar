@@ -95,7 +95,9 @@ for the statistics to be wrong.
 
 ## Recording the route
 
-With precise location allowed, the walk's route is recorded. The notification is then carried by
+With precise location allowed, the walk's route is recorded, to show later on the map with its outing
+and in Statistics as distance walked (see [map.md](./map.md#an-outings-route) and
+[statistics.md](./statistics.md#walks-distance-and-cats-per-km)). The notification is then carried by
 `WalkRecordingService`, a foreground service of type `location`, which asks for fixes for as long as
 it runs and offers each one to the walk; which of them the route keeps is in `data-model.md`.
 Without location permission there is no service, and the notification is the plain ongoing one it
@@ -244,7 +246,8 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 - `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
 - `app/…/notification/WalkRecordingService.kt` — carries it while the route is recorded
 - `domain/…/usecase/FollowWalkingMode.kt` — holds the walk equal to the flag;
-  `EndInterruptedWalk.kt` — settles a recording cut off; `RecordWalk.kt` — sends fixes to the route
+  `EndInterruptedWalk.kt` — settles a recording cut off; `RecordWalk.kt` — sends fixes to the route;
+  `ObserveWalkTracks.kt` — every walk with its route, read by the map and Statistics
 - `data/…/platform/SharedPreferencesWalkRecordingState.kt` — the mark a running recording leaves
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use

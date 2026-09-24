@@ -61,6 +61,26 @@ The **best outing** is the fastest eligible one, not the one with the most cats.
 **Outings** and **active time** count *every* outing, including ones too short to rate. A lone cat
 is an outing of zero duration: it adds to the count and nothing to the time.
 
+## Walks: distance and cats per km
+
+**Distance walked** is the sum of every walk's recorded route — the great-circle length between its
+points, added across every walk there is, not only the ones long enough to rate. A walk still
+recording counts what it has logged so far, from its start.
+
+**Cats per km pools cats and kilometres**, the same way the overall rate pools cats and time: cats
+and distance are summed across every walk at least `Tuning.MIN_RATE_DISTANCE_METERS` long, then
+divided, rather than averaging each walk's own rate. A walk under that length, and its cats, are left
+out of the pool entirely. A walk that reaches it but saw no cat still counts its kilometres and so
+pulls the rate down; a cat counts toward it if it was logged while the walk covered that moment,
+which for a walk still on reaches back to its start with no end to stop at. Cats per km has one
+display only — there is no per-metre variant the way the overall rate switches between cats per hour
+and cats per minute.
+
+Distance shows as whole metres below one kilometre, kilometres to one decimal from there. Both rows
+are left off the screen when nothing has been walked, so a user who has never allowed location, or
+never started a walk, never reads "0 m walked"; cats per km reads "—" instead of a number when
+nothing measured reaches the threshold.
+
 ## The outing in progress
 
 The current outing is open while another cat would still join it — that is, while the last cat is no
@@ -83,12 +103,16 @@ negative however wrong the clock was.
 - `domain/…/stats/StatsCalculator.kt` — the calculation
 - `domain/…/stats/Streaks.kt` — runs of consecutive days
 - `domain/…/stats/Stats.kt` — `Stats`, `Rate`, `Milestone`, `RatedOuting`, `CurrentOuting`
+- `domain/…/stats/WalkStats.kt` — `WalkStats`, `WalkStatsCalculator` — distance and cats per km
+- `domain/…/walk/WalkSpan.kt` — `Walk.covers`, `Walk.overlaps`, which moments a walk's cats-per-km
+  window counts
 
 ## Where the screen lives
 
 - `presentation/…/statistics/` — `StatisticsState`, `StatisticsStateMapper`, `StatisticsStore`
 - `ui/…/statistics/StatisticsScreen.kt`
-- `domain/…/usecase/ObserveStats.kt`
+- `domain/…/usecase/ObserveStats.kt`, `ObserveWalkStats.kt` — combined by `StatisticsStore`
+- `domain/…/usecase/ObserveWalkTracks.kt` — every walk with its route, which `ObserveWalkStats` sums
 
 The numbers recompute whenever the encounter list changes **and on a ticker**, because the outing in
 progress is measured against "now" and goes stale on its own between cats. `ObserveStats` takes the
@@ -97,4 +121,4 @@ ticker as a constructor parameter so a test can drive it instead of waiting.
 ## Not built yet
 
 Everything is computed from the full list in memory; the spec puts the revisit point at tens of
-thousands of encounters.
+thousands of encounters. Distance is metric only — there is no imperial unit, and none is planned.

@@ -59,17 +59,21 @@ globe, past a pole or the 180th meridian.
 ## An outing's route
 
 "On the map" on an outing's header in the Encounters list switches to the Map tab showing that outing
-alone. Only its cats are on the map, and the view fits around them. A line joins the located ones in
-the order they were seen, with a chip naming the outing above them. Closing the chip, or pressing
-back, returns to every cat and fits the view around them again. A spot's list offers the same action
-for its outings. The line is drawn from cat to cat. It is not the route actually walked, which is
-the walk tracks' job.
+alone. Only its cats are on the map, and the view fits around them and their route. A chip names the
+outing above the map; closing it, or pressing back, returns to every cat and fits the view around
+them again. A spot's list offers the same action for its outings.
+
+The route is the recorded track of every walk that overlaps the outing's time span, drawn whole and
+oldest first — the way to the first cat is part of the walk, not only the stretch between cats. A
+line joining the located cats in the order they were seen stands in when no such walk has a track of
+two points or more. The coat filter never thins either kind of line.
 
 - **No located cat in an outing:** its header offers no map.
 - **The outing changes while it is shown:** a cat added to it or deleted from it moves the line with
   it. If its last located cat is deleted, the map returns to every cat, and stays there even when
   another of its cats gets a location later.
-- **Cats sharing one fix** give the line no length there; their cluster still opens as a spot's list.
+- **Cats sharing one fix** give the cat-to-cat line no length there; their cluster still opens as a
+  spot's list.
 
 ## Heat and coats
 
@@ -91,8 +95,8 @@ Two chips sit at the map's top edge.
   as the map closes in on a street.
 - **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
   shows the cats with none noted. The choice applies to the dots, the clusters, the heat, a
-  focused outing and a spot's list alike; a focused outing's line still runs through all of its
-  cats, since it is the order they were seen in. The view stays where it is when the choice changes, and "Every coat" clears
+  focused outing and a spot's list alike; a focused outing's route is never thinned by it, whichever
+  kind of line it draws. The view stays where it is when the choice changes, and "Every coat" clears
   it. A choice that matches no cat says so, rather than showing a map with nothing on it.
 
 Both last as long as the tab does; leaving the tab clears them.
@@ -119,18 +123,21 @@ Both last as long as the tab does; leaving the tab clears them.
 ## Where the code lives
 
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
-  on), `MapStateMapper`, `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a
-  spot's list
+  on), `MapFocus` (an outing's `MapLine`s, each a list of `MapPosition`), `MapStateMapper`,
+  `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a spot's list
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
   their taps; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
-  `MapFeatures.kt` — cats as map features, and each coat's colour shares; `HeatInk.kt` — the heat's
-  layers, their order and which need a rim; `MapSpotScreen.kt` — a
-  spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
-  `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` — the coat choice
+  `MapFeatures.kt` — cats as map features, and each coat's colour shares; its `routeLines` — a
+  focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's layers, their order and
+  which need a rim; `MapSpotScreen.kt` — a spot's list, drawn by the Encounters tab's own
+  `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` —
+  the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
   back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing
   another tab, or a spot's list, asked the map to show
 
 ## Not built yet
 
-Walk tracks are the next slices of the Map epic (`docs/tbd/decompositions/2026-09-23-map-epic.md`).
+A walk with no located cat of its own cannot be shown: the map only reaches a walk's track through an
+outing's "On the map", and an outing with no located cat offers none. There is no list of walks to
+pick one from directly.

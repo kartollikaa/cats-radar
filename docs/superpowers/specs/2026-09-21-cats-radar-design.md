@@ -306,6 +306,8 @@ truncated to a day; `today` = the device's current local date.
 | Rate-eligible session | `n ≥ 2` and `duration ≥ MIN_RATE_DURATION` (5 min) |
 | Session rate | `n / duration` for an eligible session |
 | Overall rate | `Σ n_i / Σ duration_i` over eligible sessions; "—" when none |
+| Distance walked | `Σ trackLength(w)` over every walk, the great-circle length of its route |
+| Cats per km | `Σ cats(w) / Σ km(w)` over walks with `trackLength ≥ MIN_RATE_DISTANCE_METERS` (500 m), `cats(w)` = live encounters with `w.startedAt ≤ occurredAt ≤ (w.endedAt ?: ∞)`; "—" when none |
 | Rate display | per hour by default; per minute when the value is `≥ 1 / min`. Session detail shows both. |
 | Best session | highest session rate among eligible sessions, with `n`, duration, date |
 | Outings | `|S|`; total active time `Σ duration_i` over all sessions |
@@ -409,11 +411,12 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 - Branches `feature/ | fix/ | tech/`, one PR per task, merge commits.
 - Docs: `docs/superpowers/specs/` (kept), `docs/superpowers/plans/` (archived when shipped),
   `docs/research/` (kept), repo `CLAUDE.md` for conventions.
-- Every constant named here — `SESSION_GAP`, `MIN_RATE_DURATION`, `LOCATION_TIMEOUT`,
-  `LAST_KNOWN_MAX_AGE`, `RECENT_PHOTO_WINDOW`, `UNDO_VISIBLE`, `IMPORT_SUMMARY_VISIBLE`,
-  `PLACE_CELL_PRECISION`, `AREA_PRECISION`, `PHOTO_MAX_SIDE`, `PHOTO_QUALITY`, `THUMB_SIZE`,
-  `GEOCODE_BATCH`, `MAX_GEOCODE_ATTEMPTS`, `PURGE_AFTER`, `IMPORT_BATCH_MAX`, `MILESTONES` — lives in one `Tuning`
-  object in `commonMain`. Values in this spec are initial defaults; code is the source of truth.
+- Every constant named here — `SESSION_GAP`, `MIN_RATE_DURATION`, `MIN_RATE_DISTANCE_METERS`,
+  `LOCATION_TIMEOUT`, `LAST_KNOWN_MAX_AGE`, `RECENT_PHOTO_WINDOW`, `UNDO_VISIBLE`,
+  `IMPORT_SUMMARY_VISIBLE`, `PLACE_CELL_PRECISION`, `AREA_PRECISION`, `PHOTO_MAX_SIDE`,
+  `PHOTO_QUALITY`, `THUMB_SIZE`, `GEOCODE_BATCH`, `MAX_GEOCODE_ATTEMPTS`, `PURGE_AFTER`,
+  `IMPORT_BATCH_MAX`, `MILESTONES` — lives in one `Tuning` object in `commonMain`. Values in this
+  spec are initial defaults; code is the source of truth.
 
 ## 9. Roadmap after v1
 
