@@ -121,6 +121,13 @@ Their counts are what make the tree honest: **the counts of every sibling add up
 parent**, so a drill-down never quietly loses a cat. The countries, a country's cities, and the
 areas of a city or of No city each have a test for it.
 
+**An area lists exactly the cats its row counts.** It remembers what it was listed under — a city,
+No city or Not named yet — and holds only that parent's cats, however many others share its patch:
+a Barcelona area never lists a cat of L'Hospitalet, of No city or of Not named yet that falls in
+the same few kilometres. The parent stays with the area in its navigation key, which is what a
+restored screen is rebuilt from. An area under each of the three parents has a test for it, with
+another parent's cat in the same patch.
+
 An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
 coordinates themselves, so they work with no network and even for cells that were never named or
 never created. A cat with coordinates therefore always lands in an area, even before the repair above
@@ -128,9 +135,8 @@ has run. An area whose cells disagree takes the name most of them agree on.
 
 ## Not built yet
 
-An area remembers only its geohash, not what it was opened from. Its cats are every cat in that
-area, so an area reached from one city can list a cat of another city, or of Not named yet, that
-falls in the same patch; its row's count holds only the parent's own.
+An area's row cannot be opened: the screen draws it as a dead end, so the cats below it are listed
+nowhere, although that level exists and holds exactly the row's cats.
 
 The `Geocoder` call uses the deprecated blocking overload because the listener-based one is API 33+
 and this app supports 29.

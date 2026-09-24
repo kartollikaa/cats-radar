@@ -36,10 +36,12 @@ sealed interface RegionRowLabel {
  * `:domain` and must still be able to say which row was tapped.
  */
 sealed interface RegionRowKey {
+    sealed interface AreaParent : RegionRowKey
+
     data class Country(val countryCode: String) : RegionRowKey
-    data class City(val countryCode: String, val city: String) : RegionRowKey
-    data class Area(val areaHash: String) : RegionRowKey
-    data object Unresolved : RegionRowKey
-    data class NoCity(val countryCode: String) : RegionRowKey
+    data class City(val countryCode: String, val city: String) : AreaParent
+    data class Area(val areaHash: String, val parent: AreaParent) : RegionRowKey
+    data object Unresolved : AreaParent
+    data class NoCity(val countryCode: String) : AreaParent
     data object NoLocation : RegionRowKey
 }

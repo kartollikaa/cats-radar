@@ -32,11 +32,15 @@ class RegionsStateMapper(
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {
         is RegionKey.Country -> RegionRowKey.Country(countryCode)
+        is RegionKey.AreaParent -> toRowParent()
+        is RegionKey.Area -> RegionRowKey.Area(areaHash, parent.toRowParent())
+        RegionKey.NoLocation -> RegionRowKey.NoLocation
+    }
+
+    private fun RegionKey.AreaParent.toRowParent(): RegionRowKey.AreaParent = when (this) {
         is RegionKey.City -> RegionRowKey.City(countryCode, city)
-        is RegionKey.Area -> RegionRowKey.Area(areaHash)
         RegionKey.Unresolved -> RegionRowKey.Unresolved
         is RegionKey.NoCity -> RegionRowKey.NoCity(countryCode)
-        RegionKey.NoLocation -> RegionRowKey.NoLocation
     }
 
     private fun RegionLabel.toRowLabel(): RegionRowLabel = when (this) {
