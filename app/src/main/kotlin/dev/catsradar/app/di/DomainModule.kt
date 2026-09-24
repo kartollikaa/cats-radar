@@ -15,6 +15,7 @@ import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
 import dev.catsradar.domain.usecase.PurgeDeleted
@@ -66,6 +67,7 @@ val domainModule = module {
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
+    factory { ObserveWalkElapsed(walkRepository = get(), clock = get()) }
     // No zone passed: this one outlives a trip across time zones, so it reads the zone each time.
     factory { ObserveTodayCount(encounterRepository = get(), clock = get()) }
     factoryOf(::AttachLocation)

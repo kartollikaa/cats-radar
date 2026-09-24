@@ -9,6 +9,7 @@ import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
@@ -20,6 +21,7 @@ import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -32,6 +34,7 @@ class CounterStore(
     private val undoLastTally: UndoLastTally,
     private val undoImport: UndoImport,
     observeStats: ObserveStats,
+    observeWalkElapsed: ObserveWalkElapsed,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
@@ -62,6 +65,7 @@ class CounterStore(
                         tapBurst = tapBurst,
                         lastCoat = lastCoat,
                         walkingMode = walkingMode,
+                        walkElapsedLabel = walkElapsedLabel,
                         importProgress = importProgress,
                         importSummary = importSummary,
                     )
@@ -69,8 +73,12 @@ class CounterStore(
                 announceMilestone(stats.total)
             }
             .launchIn(viewModelScope)
-        settingsRepository.walkingMode()
-            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
+        combine(settingsRepository.walkingMode(), observeWalkElapsed()) { enabled, elapsed ->
+            enabled to stateMapper.walkElapsedLabel(enabled, elapsed)
+        }
+            .onEach { (enabled, elapsedLabel) ->
+                setState { copy(walkingMode = enabled, walkElapsedLabel = elapsedLabel) }
+            }
             .launchIn(viewModelScope)
     }
 
