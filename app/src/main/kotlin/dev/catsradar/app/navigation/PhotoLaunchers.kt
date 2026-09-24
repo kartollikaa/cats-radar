@@ -11,9 +11,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.photo.PendingCaptures
-import dev.catsradar.presentation.counter.CounterEffect
 
-/** The screen's side of [CounterEffect.OpenCamera]; it owns the file the camera writes to. */
+/** Opens the camera; it owns the file the camera writes to. */
 internal fun interface CameraLauncher {
     fun launch()
 }

@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName") // the file is named for handleCounterEffect, its main declaration
-
 package dev.catsradar.app.navigation
 
 import dev.catsradar.app.permission.LocationPermissionRequester
@@ -7,10 +5,6 @@ import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterEffect
-
-internal fun interface MilestoneAnnouncer {
-    fun announce(value: Int)
-}
 
 // Separated from the LaunchedEffect collector so the mapping from effect to platform action is
 // unit-testable without Compose UI test infrastructure.
@@ -39,4 +33,8 @@ internal fun handleCounterEffect(
         CounterEffect.PickPhotos -> photoPickerLauncher.launch()
         is CounterEffect.StartImport -> importScheduler.start(effect.uris)
     }
+}
+
+internal fun interface MilestoneAnnouncer {
+    fun announce(value: Int)
 }
