@@ -16,6 +16,7 @@ import dev.catsradar.data.platform.AndroidImageResizer
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.platform.AndroidReverseGeocoder
 import dev.catsradar.data.platform.FusedLocationProvider
+import dev.catsradar.data.platform.MediaStoreGalleryItems
 import dev.catsradar.data.platform.MediaStoreGallerySaver
 import dev.catsradar.data.platform.MediaStoreSourceFileTime
 import dev.catsradar.data.platform.RandomIdGenerator
@@ -34,6 +35,7 @@ import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GalleryItems
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.IdGenerator
@@ -78,6 +80,7 @@ val dataModule = module {
     single<ImageResizer> { AndroidImageResizer(androidContext(), get()) }
     single<Digest> { Sha256Digest(androidContext()) }
     single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
+    single<GalleryItems> { MediaStoreGalleryItems(androidContext()) }
     single<SourceFileTime> { MediaStoreSourceFileTime(androidContext()) }
     single<BackupWriter> {
         ZipBackupWriter(
