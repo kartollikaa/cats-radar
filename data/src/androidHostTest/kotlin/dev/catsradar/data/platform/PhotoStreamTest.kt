@@ -7,13 +7,21 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.TimeZone
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
+import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class PhotoStreamTest {
+
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
@@ -65,5 +73,19 @@ class PhotoStreamTest {
         }
 
         assertEquals("redacted", read(galleryPhoto))
+    }
+
+    @Test
+    fun aPhotoWhoseOriginalIsRefusedStillGivesItsExifDate() = runTest {
+        grantMediaLocation()
+        val handedOver = PhotoFixtures.copyTo(temporaryFolder.root, PhotoFixtures.LANDSCAPE_WITH_GPS)
+        resolver.registerInputStreamSupplier(galleryPhoto) { handedOver.inputStream() }
+        resolver.registerInputStreamSupplier(MediaStore.setRequireOriginal(galleryPhoto)) {
+            throw UnsupportedOperationException("Caller must hold ACCESS_MEDIA_LOCATION")
+        }
+
+        val exif = AndroidExifReader(context, deviceZone = { TimeZone.UTC }).read(galleryPhoto.toString())
+
+        assertEquals(Instant.parse("2026-07-14T07:31:12Z"), exif.takenAt)
     }
 }
