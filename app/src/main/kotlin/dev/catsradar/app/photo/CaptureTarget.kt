@@ -15,8 +15,8 @@ private val staleAfter = 1.days
 /**
  * Where the camera writes an original before the app has made its own copies of it.
  *
- * The cache directory, because the original is temporary: once [dev.catsradar.domain.usecase.LogPhoto]
- * has stored a copy and, if the user wants it, handed the original to the gallery, nothing needs it.
+ * The cache directory, because the original is temporary: once the app has stored its own copy
+ * and, if the user wants it, handed the original to the gallery, nothing needs it.
  */
 object CaptureTarget {
 
