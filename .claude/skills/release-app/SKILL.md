@@ -76,9 +76,12 @@ over the APK — no version bump, no PR, no tag).
      script leaves other sessions' installs alone; give it a distinct `app_name` too, or its
      widget is indistinguishable from theirs in the launcher's picker.
    - Rename to the convention before attaching: `cats-radar-<versionName>.apk` (release) /
-     `cats-radar-<versionName>-debug.apk` (debug), and the release build's
-     `app/build/outputs/mapping/release/mapping.txt` → `cats-radar-<versionName>-mapping.txt`.
-     The mapping from any other build does not fit this APK's stack traces.
+     `cats-radar-<versionName>-debug.apk` (debug), and zip the release build's
+     `app/build/outputs/mapping/release/mapping.txt` into `cats-radar-<versionName>-mapping.zip`
+     (plain, it is bigger than the APK). The mapping from any other build does not fit this
+     APK's stack traces.
+   - The release APK installs only on 64-bit ARM (`arm64-v8a`); say so in the release body's
+     `## Install` section. The emulator on an Apple-Silicon Mac is arm64 too.
 6. **Tag and publish.**
    ```
    gh release create v<versionName> --prerelease --target <merge-commit-sha> \

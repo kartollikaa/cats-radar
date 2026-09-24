@@ -1,7 +1,8 @@
 # Static Analysis
 
 Three tools, all wired through `build-logic` so a module gets them by applying its convention plugin.
-`./gradlew check` runs everything below plus unit tests; CI runs the same command.
+`./gradlew check` runs everything below plus unit tests; CI runs the same command, then
+`:app:assembleRelease` so a dependency R8 can no longer process fails there rather than at release time.
 
 | Tool | What it catches | Config |
 |---|---|---|
