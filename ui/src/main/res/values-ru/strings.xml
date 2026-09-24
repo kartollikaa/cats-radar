@@ -57,6 +57,9 @@
     <string name="counter_location_hint">Без доступа к геолокации котики будут без места</string>
     <string name="counter_location_grant">Разрешить</string>
     <string name="counter_location_dismiss">Не надо</string>
+    <string name="counter_coat_prompt_title">Какого окраса котик?</string>
+    <string name="counter_coat_prompt_skip">Не сейчас</string>
+    <string name="counter_coat_prompt_photo">Только что снятое фото</string>
 
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
@@ -167,6 +170,11 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
+    <string name="detail_photo">Фото</string>
+    <string name="detail_take_photo">Сфотографировать</string>
+    <string name="detail_pick_photo">Выбрать из галереи</string>
+    <string name="detail_photo_not_attached">Фото не прикрепилось</string>
+    <string name="detail_photo_attaching">Прикрепляем фото</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>

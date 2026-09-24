@@ -8,4 +8,13 @@ sealed interface EncounterDetailIntent {
 
     /** [coat] of null clears it. */
     data class CoatPicked(val coat: CoatOption?) : EncounterDetailIntent
+
+    data object TakePhotoClicked : EncounterDetailIntent
+    data object PickPhotoClicked : EncounterDetailIntent
+
+    /** [uri] is null when the camera was cancelled. */
+    data class PhotoTaken(val uri: String?) : EncounterDetailIntent
+
+    /** [uri] is null when the picker was dismissed. */
+    data class PhotoPicked(val uri: String?) : EncounterDetailIntent
 }

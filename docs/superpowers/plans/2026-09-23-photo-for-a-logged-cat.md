@@ -1306,3 +1306,78 @@ internal fun EncounterDetailDestination(
   gallery gains nothing; cancel both → nothing; Statistics "With photo" counts both.
 - [ ] **Step 4:** acceptance gate on the P1b criteria; `/code-review`; fix findings; `./gradlew check`.
 - [ ] **Step 5:** push `feature/attach-photo-screen`, open the PR, map row P1b → `in-review`.
+
+---
+
+# P2 — Coat right after a photo
+
+Branch `feature/coat-after-photo`, stacked on P1b. Spec §2 F2, §4.2 step 7. Criteria AC-32…AC-42.
+
+### Task 9: The coat prompt in the Counter Store
+
+**Files:**
+- Modify: `presentation/src/commonMain/kotlin/dev/catsradar/presentation/counter/CounterState.kt`, `CounterIntent.kt`,
+  `CounterStateMapper.kt`, `CounterStore.kt`
+- Modify: `presentation/src/commonTest/kotlin/dev/catsradar/presentation/counter/CounterStoreFixture.kt` (pass `SetCoat` and the mapper's `PhotoStorage`)
+- Modify: `app/src/main/kotlin/dev/catsradar/app/di/PresentationModule.kt` (if `CounterStore` / `CounterStateMapper` are built by hand there)
+- Test: `presentation/src/commonTest/kotlin/dev/catsradar/presentation/counter/CounterStorePhotoPromptTest.kt` (create)
+
+**Interfaces:**
+- Produces: `data class CoatPromptState(val thumbPath: String?)` (absolute path, null when the thumbnail failed);
+  `CounterState.coatPrompt: CoatPromptState? = null`; `CounterIntent.CoatPromptPicked(coat: CoatOption)`,
+  `CounterIntent.CoatPromptDismissed`; `CounterStateMapper(dateTimeFormatter, photoStorage)` with
+  `fun coatPrompt(encounter: Encounter): CoatPromptState` and a `coatPrompt` pass-through parameter on `map(...)`;
+  `CounterStore(..., setCoat: SetCoat, ...)`.
+
+Rules for the Store:
+- On `PhotoResult.Logged` (camera path only — `onPhotoCaptured`), remember the encounter id in a private field and set
+  `coatPrompt = stateMapper.coatPrompt(result.encounter)`. The id stays out of State: the composable needs only the picture.
+- `CoatPromptPicked(coat)`: close the prompt first (`coatPrompt = null`, forget the id), then
+  `runStorageWrite { setCoat(id, coat.toCatCoat()) }` — the sheet never waits on the write, and a failed write still closes it.
+- `CoatPromptDismissed`: close it, write nothing.
+- A newer logged photo replaces the prompt and the remembered id.
+- The stats fold in `init` rebuilds State through `stateMapper.map(...)`: pass `coatPrompt = coatPrompt` there, or every
+  stats emission would drop the prompt.
+- detekt `TooManyFunctions` allows at most one new function in `CounterStore.kt`; handle `CoatPromptDismissed` inline.
+
+- [ ] Tests first (`CounterStorePhotoPromptTest`, via `newCounterStore(...)`; the camera path is `CounterIntent.PhotoCaptured(uri)`):
+  *a logged camera photo asks for its coat* (prompt with `/data/photos/cat_thumb.jpg`, the presentation fakes' thumb resolved by `FakePhotoStorage`);
+  *picking a coat sets it on the photographed cat and closes the prompt* (the encounter in the fake repository has `CatCoat.BLACK`, prompt null);
+  *dismissing the prompt leaves the coat unset*;
+  *no prompt without a logged camera photo* (resizer result null → `PhotoNotSaved`, no prompt; `PhotoCaptured(null)` → no prompt; `Import.PhotosPicked` → no prompt);
+  *a newer photo takes over the prompt* (two captures, pick → only the second cat gets the coat);
+  *the prompt stays open while the counter updates* (a tally tap after the photo → prompt still there);
+  *a failed coat write still closes the prompt* (make the fake repository's coat write throw — add `setCoatShouldThrow` if the fake lacks one).
+- [ ] Implement; run `:presentation:testAndroidHostTest`, `:presentation:detekt`, `:app:testDebugUnitTest` (Koin resolution).
+- [ ] Commit — `The Counter asks for a photo's coat`.
+
+### Task 10: The coat sheet
+
+**Files:**
+- Create: `ui/src/main/kotlin/dev/catsradar/ui/counter/CoatPromptSheet.kt`
+- Modify: `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `ui/src/main/res/values/strings.xml`, `values-ru/strings.xml`
+
+**Interfaces:**
+- Produces: `internal fun CoatPromptSheet(prompt: CoatPromptState, modifier: Modifier = Modifier, onCoatClick: (CoatOption) -> Unit = {}, onDismiss: () -> Unit = {})`;
+  `CounterScreen(..., onCoatPromptPick: (CoatOption) -> Unit = {}, onCoatPromptDismiss: () -> Unit = {})`.
+
+- [ ] Strings (next to the other `counter_*`): `counter_coat_prompt_title` "What coat was it?" / «Какого окраса котик?»;
+  `counter_coat_prompt_skip` "Not now" / «Не сейчас»; `counter_coat_prompt_photo` "The photo you just took" / «Только что снятое фото».
+- [ ] `CoatPromptSheet` follows `ui/map/MapCoatSheet.kt`: `ModalBottomSheet(onDismissRequest = onDismiss)` around a private
+  `CoatPromptContent` — a row with the thumbnail (`AsyncImage`, `contentDescription = counter_coat_prompt_photo`, a small
+  rounded square; a paw/placeholder when `thumbPath` is null is not needed — `AsyncImage` with a null model draws nothing)
+  and the title; `CoatGrid(onCoatClick = onCoatClick)` (single-select overload, nothing highlighted); an end-aligned
+  `TextButton` "Not now" calling `onDismiss`; `navigationBarsPadding()` as the map sheet does.
+  `@ThemePreviews` on `CoatPromptContent` with a null thumb.
+- [ ] `CounterScreen`: `state.coatPrompt?.let { CoatPromptSheet(it, onCoatClick = onCoatPromptPick, onDismiss = onCoatPromptDismiss) }`.
+- [ ] `./gradlew :ui:check`, `:app:compileDebugKotlin`; commit — `A sheet asks for the coat of the photo just taken`.
+
+### Task 11: Wiring, docs, device check
+
+- [ ] `CounterDestination.kt`: `onCoatPromptPick = { coat -> store.dispatch(CounterIntent.CoatPromptPicked(coat)) }`,
+  `onCoatPromptDismiss = { store.dispatch(CounterIntent.CoatPromptDismissed) }`.
+- [ ] `docs/features/coat.md`: a section on the prompt after a photo — why it exists alongside the grid (a tally carries its
+  coat from the grid in the same tap; a photo cannot, and the moment after the shutter is when the coat is known), that
+  dismissing leaves it unset, that it only follows a camera photo (widget and notification Photo included), never an
+  import. `docs/features/photos.md` *Taking one*: one sentence pointing at it.
+- [ ] `./gradlew check`; device check AC-42; commit — `Docs: the coat asked after a photo`.

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.detail.AddPhoto
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
@@ -46,6 +47,8 @@ fun EncounterDetailScreen(
     onDeleteClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
+    onTakePhotoClick: () -> Unit = {},
+    onPickPhotoClick: () -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
         when (state) {
@@ -53,7 +56,9 @@ fun EncounterDetailScreen(
             is EncounterDetailState.Loaded -> LoadedDetail(
                 state,
                 onDeleteClick = onDeleteClick,
-                onCoatClick = onCoatClick
+                onCoatClick = onCoatClick,
+                onTakePhotoClick = onTakePhotoClick,
+                onPickPhotoClick = onPickPhotoClick,
             )
             is EncounterDetailState.Deleted -> DeletedDetail(state, onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing)
@@ -67,12 +72,15 @@ private fun LoadedDetail(
     modifier: Modifier = Modifier,
     onDeleteClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
+    onTakePhotoClick: () -> Unit = {},
+    onPickPhotoClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         val photoPath = state.photoPath
+        val addPhoto = state.addPhoto
         if (photoPath != null) {
             AsyncImage(
                 model = photoPath,
@@ -80,6 +88,8 @@ private fun LoadedDetail(
                 modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.extraLarge),
                 contentScale = ContentScale.Crop,
             )
+        } else if (addPhoto != null) {
+            AddPhotoCard(addPhoto, onTakePhotoClick = onTakePhotoClick, onPickPhotoClick = onPickPhotoClick)
         }
         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
             Text(
@@ -213,4 +223,5 @@ private val sampleNoLocation = EncounterDetailState.Loaded(
     location = LocationLabel.NONE,
     coordinatesLabel = null,
     accuracyMeters = null,
+    addPhoto = AddPhoto.READY,
 )

@@ -4,8 +4,11 @@ import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.time.today
+import dev.catsradar.domain.usecase.AttachPhoto
+import dev.catsradar.domain.usecase.AttachResult
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.PhotoSource
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.Store
@@ -27,6 +30,7 @@ class EncounterDetailStore(
     private val deleteEncounter: DeleteEncounter,
     private val undoDelete: UndoDelete,
     private val setCoat: SetCoat,
+    private val attachPhoto: AttachPhoto,
     private val stateMapper: EncounterDetailStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -35,6 +39,8 @@ class EncounterDetailStore(
     private var lastSeen: Encounter? = null
     private var deletedHere = false
     private var undoTimeoutJob: Job? = null
+    private var attachingPhoto = false
+    private var awaitingPhoto = false
 
     init {
         observeEncounter(encounterId)
@@ -47,7 +53,7 @@ class EncounterDetailStore(
 
     // A null emission after our own delete is the delete taking effect, not the encounter vanishing.
     private fun EncounterDetailState.reduce(encounter: Encounter?): EncounterDetailState = when {
-        encounter != null -> stateMapper.map(encounter, clock.today(timeZone))
+        encounter != null -> stateMapper.map(encounter, clock.today(timeZone), attachingPhoto)
         deletedHere -> this
         else -> EncounterDetailState.Missing
     }
@@ -57,7 +63,42 @@ class EncounterDetailStore(
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
             is EncounterDetailIntent.CoatPicked -> onCoatPicked(intent.coat)
+            EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
+            EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
+            is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.uri, PhotoSource.CAMERA)
+            is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.uri, PhotoSource.GALLERY)
         }
+    }
+
+    private suspend fun requestPhoto(opener: EncounterDetailEffect) {
+        val offered = (state.value as? EncounterDetailState.Loaded)?.addPhoto == AddPhoto.READY
+        if (awaitingPhoto || !offered) return
+        awaitingPhoto = true
+        emit(opener)
+    }
+
+    private suspend fun onPhotoChosen(uri: String?, source: PhotoSource) {
+        awaitingPhoto = false
+        if (uri == null) return
+        attachingPhoto = true
+        refresh()
+        var result: AttachResult? = null
+        runStorageWrite { result = attachPhoto(encounterId, uri, source) }
+        attachingPhoto = false
+        when (result) {
+            // Rendering from lastSeen here would offer a photo again until the flow delivers this one.
+            AttachResult.Attached -> Unit
+            AttachResult.NotAttachable -> refresh()
+            AttachResult.Unreadable, null -> {
+                refresh()
+                emit(EncounterDetailEffect.PhotoNotAttached)
+            }
+        }
+        if (source == PhotoSource.CAMERA) emit(EncounterDetailEffect.DiscardCapture(uri))
+    }
+
+    private fun refresh() {
+        setState { if (this is EncounterDetailState.Loaded) reduce(lastSeen) else this }
     }
 
     private suspend fun onDeleteClicked() {
