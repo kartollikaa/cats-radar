@@ -18,6 +18,43 @@ This replaced an earlier design where a coat strip appeared *after* a tap. Two c
 screen — one to log, one to amend — is one too many, and the amend case already has a home on the
 detail screen.
 
+## Asked after a photo
+
+A photo cannot carry its coat the way a tap on the grid does: the Photo button only opens the
+camera, and nothing in that press says what the cat looked like. So once the photo is saved, the
+Counter asks in a bottom sheet — the photo's thumbnail, the eleven faces, and **Not now**. The
+moment after the shutter is when the coat is known best, with the cat still in front of the lens.
+
+That is not the strip after a tap coming back. A tally already has its coat from the grid, in the
+same tap that logged it, so a second control would only ask again; a photo has no such tap, and the
+sheet is the only place the Counter asks about it.
+
+A face sets that coat on the cat just photographed and closes the sheet
+(`CounterStorePhotoPromptTest`, *picking a coat sets it on the photographed cat and closes the
+prompt*). **Not now**, a swipe down or back closes it with the coat unset (*dismissing the prompt
+leaves the coat unset*); the detail screen can still set it. The cat is saved before the sheet
+appears, so losing the sheet — the app killed in the background, say — loses only the question.
+
+The sheet follows only a photo taken with the Counter's Photo button, which the widget's Photo tile
+and the walking notification's Photo button also press (see [photos.md](./photos.md#taking-one)).
+An import asks nothing, and neither does an unreadable photo or a cancelled camera, since neither
+logs a cat (*no prompt without a logged camera photo*).
+
+### At the edges
+
+- **A newer photo takes the sheet over** — it asks about the newer cat, and the earlier one keeps
+  no coat (*a newer photo takes over the prompt*).
+- **The sheet closes before the coat is written**, so it never waits on storage; a write that fails
+  still closes it and leaves the cat without a coat (*the prompt closes before the coat is written*;
+  *a failed coat write still closes the prompt*).
+- **The count changing underneath leaves it open** — a cat logged from the widget meanwhile, or the
+  undo window closing, keeps the sheet on the same photo (*the prompt stays open while the counter
+  updates*).
+- **A photo whose thumbnail could not be made** still gets the sheet, with no picture in it
+  (`CounterStateMapperTest`, *the coat prompt has no picture when the thumbnail could not be made*).
+- **A photo given to a logged cat on its detail screen asks nothing** — that screen shows the coat
+  picker already.
+
 ## Telling them apart
 
 Every coat is drawn as a **cat's face in that coat's real markings**, with its name beneath it:
@@ -73,13 +110,15 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 - `domain/…/model/CatCoat.kt`, `domain/…/usecase/SetCoat.kt`, `LogTally` (takes a coat)
 - `domain/…/stats/StatsCalculator.kt` — the by-coat counts
 - `presentation/…/coat/CoatOption.kt` — the presentation token, because `:ui` cannot see `:domain`
-- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log) and `CoatPicker` (amend)
+- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, and ask after a photo) and `CoatPicker` (amend)
+- `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo; `CounterStore` opens and closes it
 - `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, and the line around every face
 - `ui/…/coat/CatFace.kt` — the face itself
 
 ## Not built yet
 
-No coat filter anywhere, and no coat on the map — the map is its own epic after v1. The fur colours
+No coat filter outside the Map tab, which colours each cat by its coat and can show only chosen
+coats (see [map.md](./map.md#heat-and-coats)). The fur colours
 are fixed values rather than theme tokens, on purpose: a ginger cat is ginger in both themes. The
 face also leads each coated row in the Encounters list that has no photo, and each coat in the
 statistics' By coat block; a cat without a coat keeps a blank space there, so the names still line
