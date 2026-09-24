@@ -13,9 +13,9 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| P1a | Attaching a photo, in domain and data | `AttachPhoto` and a guarded write that touches only the photo columns of a live cat with no photo; "With photo" counted by the photo itself. Nothing calls it yet. | safe | ~450 | v1 | in-review |
-| P1b | Photo for a logged cat, on screen | "Take photo" / "From gallery" on the detail of a cat with no photo, through a camera launcher shared with the Counter. | safe | ~450 | P1a | in-review |
-| P2 | Coat right after a photo | A photo from the camera asks for its coat in a bottom sheet over the Counter; dismissing leaves it unset. | safe | ~350 | P1b | in-review |
+| P1a | Attaching a photo, in domain and data | `AttachPhoto` and a guarded write that touches only the photo columns of a live cat with no photo; "With photo" counted by the photo itself. Nothing calls it yet. | safe | ~450 | v1 | merged |
+| P1b | Photo for a logged cat, on screen | "Take photo" / "From gallery" on the detail of a cat with no photo, through a camera launcher shared with the Counter. | safe | ~450 | P1a | merged |
+| P2 | Coat right after a photo | A photo from the camera asks for its coat in a bottom sheet over the Counter; dismissing leaves it unset. | safe | ~350 | P1b | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -51,6 +51,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-24: **all three slices merged** — P1a #86, P1b #102, P2 #107, each brought up to date with a
+  moving main by merging it in. Follow-ups left open, listed in the PR bodies: the resizer's
+  half-written files on a failed or cancelled store, the Counter's double-tapped camera, a missing
+  camera app crashing the launch, `CounterStore` at detekt's function ceiling, and the coat sheet
+  closing without its slide.
 - 2026-09-23: owner asked for photos on cats, or a coat when a photo is taken, and chose **both, as
   two PRs**, with the coat asked in a bottom sheet after the shutter rather than by long-pressing a
   coat or by opening the new cat's detail. The Counter's own coat grid stays the only coat control on
