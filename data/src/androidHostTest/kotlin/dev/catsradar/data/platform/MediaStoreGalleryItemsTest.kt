@@ -53,7 +53,7 @@ class MediaStoreGalleryItemsTest {
     }
 
     @Test
-    fun aStringThatIsNotAContentUriIsGoneWithoutAsking() = runTest {
+    fun aStringThatIsNotAContentUriIsGoneWithoutReachingTheGallery() = runTest {
         val gallery = register(Gallery(rows = setOf(SAVED)))
 
         assertFalse(items.exists("not a uri"))

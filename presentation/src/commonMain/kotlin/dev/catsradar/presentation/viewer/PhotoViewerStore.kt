@@ -1,18 +1,22 @@
 package dev.catsradar.presentation.viewer
 
 import androidx.lifecycle.viewModelScope
+import dev.catsradar.domain.usecase.GalleryTarget
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 class PhotoViewerStore(
-    encounterId: String,
+    private val encounterId: String,
     observeEncounter: ObserveEncounter,
+    private val resolveGalleryLink: ResolveGalleryLink,
     private val stateMapper: PhotoViewerStateMapper,
 ) : Store<PhotoViewerState, PhotoViewerIntent, PhotoViewerEffect>(PhotoViewerState.Loading) {
 
     private var closing = false
+    private var resolvingGallery = false
 
     init {
         observeEncounter(encounterId)
@@ -26,6 +30,22 @@ class PhotoViewerStore(
     override suspend fun handle(intent: PhotoViewerIntent) {
         when (intent) {
             PhotoViewerIntent.BackClicked -> close()
+            PhotoViewerIntent.OpenInGalleryClicked -> openInGallery()
+        }
+    }
+
+    private suspend fun openInGallery() {
+        val offered = (state.value as? PhotoViewerState.Showing)?.opensInGallery == true
+        if (resolvingGallery || !offered) return
+        resolvingGallery = true
+        try {
+            when (val target = resolveGalleryLink(encounterId)) {
+                is GalleryTarget.Open -> emit(PhotoViewerEffect.OpenInGallery(target.uri, target.grantRead))
+                GalleryTarget.Gone -> emit(PhotoViewerEffect.GalleryItemGone)
+                GalleryTarget.Unavailable -> Unit
+            }
+        } finally {
+            resolvingGallery = false
         }
     }
 
