@@ -31,6 +31,16 @@ A debug build is signed with the machine's debug key, not this one, so a phone t
 installed has to remove it before the first release build will install. Export a backup first:
 removing the app removes its cats.
 
+## The application id
+
+The app installs as `com.kartollika.catsradar`. Earlier builds installed as `dev.catsradar`, and
+Android treats a different application id as a different app: the new build installs **beside** the
+old one, with no cats, rather than updating it. To move the cats across:
+
+1. In the old app, Settings → Backup → Export.
+2. Install the new build and, in it, Settings → Backup → Import that file.
+3. Check the count, then remove the old app.
+
 ## Cutting one
 
 1. Merge a `tech/release-<version>` pull request that bumps both version values and marks the epic's
