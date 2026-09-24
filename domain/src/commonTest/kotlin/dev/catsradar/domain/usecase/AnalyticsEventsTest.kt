@@ -182,8 +182,12 @@ class AnalyticsEventsTest {
 
     @Test
     fun `an import batch is logged once with what it added, skipped as duplicates and failed`() = runTest {
-        digest.perUri["content://gallery/3"] = "another-photo"
-        resizer.undecodable += "content://gallery/3"
+        val added = listOf("content://gallery/a1", "content://gallery/a2")
+        val duplicate = "content://gallery/a1-again"
+        val broken = listOf("content://gallery/f1", "content://gallery/f2", "content://gallery/f3")
+        (added + broken).forEach { digest.perUri[it] = "sha-$it" }
+        digest.perUri[duplicate] = "sha-${added.first()}"
+        resizer.undecodable += broken
         val importPhotos = ImportPhotos(
             encounterRepository = encounters,
             placeCellRepository = placeCells,
@@ -198,9 +202,9 @@ class AnalyticsEventsTest {
             timeZone = TimeZone.UTC,
         )
 
-        importPhotos(listOf("content://gallery/1", "content://gallery/2", "content://gallery/3"))
+        importPhotos(added + duplicate + broken)
 
-        assertLogged(PhotosImported(added = 1, duplicates = 1, failed = 1))
+        assertLogged(PhotosImported(added = 2, duplicates = 1, failed = 3))
     }
 
     @Test
@@ -267,12 +271,16 @@ class AnalyticsEventsTest {
 
     @Test
     fun `a merged backup is logged with what it added, updated and left alone`() = runTest {
-        storedTally("cat-1")
-        val archived = BackupContents(encounters = listOf(encounterFixture("cat-2", NOW)))
+        val edited = storedTally("cat-1")
+        val kept = listOf(storedTally("cat-2"), storedTally("cat-3"))
+        val archived = BackupContents(
+            encounters = listOf(edited.copy(coat = CatCoat.BLACK, updatedAt = NOW + 1.minutes)) + kept +
+                encounterFixture("cat-4", NOW),
+        )
 
         importBackup(BackupReadResult.Readable(archived))("content://backup")
 
-        assertLogged(BackupImported(added = 1, updated = 0, unchanged = 0))
+        assertLogged(BackupImported(added = 1, updated = 1, unchanged = 2))
     }
 
     @Test
