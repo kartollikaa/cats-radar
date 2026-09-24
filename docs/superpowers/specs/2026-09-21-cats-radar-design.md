@@ -1,6 +1,6 @@
 # Cats Radar — design spec
 
-Date: 2026-09-21. Status: v5 (2026-09-23) — a logged cat can be given a photo; a photo asks for its coat.
+Date: 2026-09-21. Status: v6 (2026-09-24) — the application id is `com.kartollika.catsradar`.
 Research behind this spec: [docs/research/2026-09-21-competitor-scan.md](../../research/2026-09-21-competitor-scan.md).
 
 ## 1. Summary
@@ -55,6 +55,7 @@ country → city → area, and an encounter rate derived from automatically dete
 | Coat after a photo (2026-09-23) | A photo from the camera asks for its coat in a bottom sheet over the Counter right after the shutter; skipping leaves it unset. Gallery import asks nothing. |
 | Colour (2026-09-23) | Material You: the wallpaper's colours on Android 12+, in the app and the widget; the icon-teal palette below 12 and in previews. No in-app switch. |
 | Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
+| Application id (2026-09-24) | `com.kartollika.catsradar`, the id the Firebase project is registered for. Kotlin packages stay `dev.catsradar.*`. A build under the new id installs beside one under the old; cats move by backup export and import. |
 
 ## 2. Users and core flows
 
@@ -406,7 +407,7 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 - Gradle Kotlin DSL; `gradle/libs.versions.toml` is the single source of library versions — this
   spec names libraries, not versions. `minSdk 29`, `targetSdk` = latest stable. Every module applies
   a `build-logic` convention plugin.
-- Package root `dev.catsradar`; `applicationId = dev.catsradar` (placeholder until the owner confirms).
+- Package root `dev.catsradar`; `applicationId = com.kartollika.catsradar`.
 - Strings in EN and RU.
 - Branches `feature/ | fix/ | tech/`, one PR per task, merge commits.
 - Docs: `docs/superpowers/specs/` (kept), `docs/superpowers/plans/` (archived when shipped),
@@ -438,7 +439,8 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 
 ## 10. Open items
 
-- `applicationId` / package name placeholder `dev.catsradar` until confirmed.
+- ~~`applicationId` / package name placeholder `dev.catsradar` until confirmed.~~ Resolved:
+  `com.kartollika.catsradar` (2026-09-24).
 - ~~**EXIF GPS from gallery photos is redacted under scoped storage.**~~ Resolved with
   `ACCESS_MEDIA_LOCATION`: a photo picked through `ACTION_GET_CONTENT` keeps its GPS for an app
   holding it, and a plain MediaStore URI is read through `MediaStore.setRequireOriginal`.
