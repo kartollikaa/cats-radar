@@ -263,9 +263,11 @@ never touched by the app.
    Historical photos never receive today's location.
 4. Compressed copy + thumbnail as §4.2 step 4; `origin = GALLERY`; `galleryUri = null` (already in
    the gallery). Never copies the original to MediaStore.
-5. Runs in `ImportPhotosWorker` (expedited, progress notification). Summary: added / skipped /
-   failed, with "Undo import" (soft-deletes the ids created by this run). The summary closes itself
-   after `IMPORT_SUMMARY_VISIBLE`, as OK does, and the undo lapses with it.
+5. Runs in `ImportPhotosWorker` (expedited, progress notification), which finds the picked URIs in a
+   file keyed by its work id: WorkManager input data has a size cap that a full batch of long URIs
+   outgrows. Summary: added / skipped / failed, with "Undo import" (soft-deletes the ids created by
+   this run). The summary closes itself after `IMPORT_SUMMARY_VISIBLE`, as OK does, and the undo
+   lapses with it.
 
 ### 4.7 Backup export / import (F7)
 
