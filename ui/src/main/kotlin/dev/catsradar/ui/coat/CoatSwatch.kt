@@ -2,18 +2,21 @@ package dev.catsradar.ui.coat
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,9 +38,8 @@ import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 
-private val SwatchSize = 40.dp
-private val FaceSize = 34.dp
-private val SwatchColumnWidth = 68.dp
+private val CellWidth = 70.dp
+private val PickerGap = 12.dp
 private const val CoatsPerRow = 4
 
 /**
@@ -64,14 +67,15 @@ fun CoatGrid(
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         maxItemsInEachRow = CoatsPerRow,
     ) {
         CoatOption.entries.forEach { coat ->
             CoatColumn(
                 coat = coat,
                 selected = coat in selected,
+                modifier = Modifier.fillMaxRowHeight(),
                 onClick = { onCoatClick(coat) },
             )
         }
@@ -86,15 +90,24 @@ fun CoatPicker(
     contentPadding: PaddingValues = PaddingValues(),
     onCoatClick: (CoatOption?) -> Unit = {},
 ) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = contentPadding,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    val coats = CoatOption.entries
+    val coatPitch = with(LocalDensity.current) { CellWidth.roundToPx() + PickerGap.roundToPx() }
+    // Opens one coat before the selected one, so the row visibly scrolls both ways.
+    val scrollState = rememberScrollState(initial = (coats.indexOf(selected) - 1).coerceAtLeast(0) * coatPitch)
+    // Not lazy: every cell is measured, so all of them take the tallest name's height.
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(scrollState)
+            .padding(contentPadding)
+            .height(IntrinsicSize.Max),
+        horizontalArrangement = Arrangement.spacedBy(PickerGap),
     ) {
-        items(items = CoatOption.entries, key = { it.name }) { coat ->
+        coats.forEach { coat ->
             CoatColumn(
                 coat = coat,
                 selected = coat == selected,
+                modifier = Modifier.fillMaxHeight(),
                 onClick = { onCoatClick(coat.takeIf { it != selected }) },
             )
         }
@@ -108,35 +121,24 @@ private fun CoatColumn(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
+    val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     Column(
         modifier = modifier
-            .width(SwatchColumnWidth)
+            .width(CellWidth)
             // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
             .clip(MaterialTheme.shapes.small)
+            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small)
             .selectable(selected = selected, onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(horizontal = 4.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Swatch(coat = coat, selected = selected)
+        CatFace(coat = coat, modifier = Modifier.size(34.dp))
         Text(
             text = stringResource(coat.labelRes()),
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
         )
-    }
-}
-
-@Composable
-private fun Swatch(coat: CoatOption, selected: Boolean, modifier: Modifier = Modifier) {
-    val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
-    Box(
-        modifier = modifier
-            .size(SwatchSize)
-            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small),
-        contentAlignment = Alignment.Center,
-    ) {
-        CatFace(coat = coat, modifier = Modifier.size(FaceSize))
     }
 }
 
