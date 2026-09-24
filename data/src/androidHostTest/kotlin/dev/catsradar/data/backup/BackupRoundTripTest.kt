@@ -3,6 +3,7 @@ package dev.catsradar.data.backup
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.data.db.RoomTransactionRunner
 import dev.catsradar.data.db.TestCatsDatabase
 import dev.catsradar.data.db.buildInMemoryCatsDatabase
 import dev.catsradar.data.platform.AndroidPhotoStorage
@@ -70,8 +71,13 @@ class BackupRoundTripTest {
         photoStorage.prepare(PHOTO).writeText("a cat")
 
         assertTrue(ExportBackup(here.encounters, here.placeCells, here.walks, writer()).invoke(archive))
-        val imported = ImportBackup(elsewhere.encounters, elsewhere.placeCells, elsewhere.walks, reader())
-            .invoke(archive)
+        val imported = ImportBackup(
+            elsewhere.encounters,
+            elsewhere.placeCells,
+            elsewhere.walks,
+            elsewhere.transactions,
+            reader(),
+        ).invoke(archive)
 
         assertEquals(ImportBackupResult.Merged(added = cats.size - 1, updated = 0, unchanged = 0), imported)
         assertEquals(here.stats(), elsewhere.stats())
@@ -82,6 +88,7 @@ class BackupRoundTripTest {
         val encounters = EncounterRepositoryImpl(database.encounterDao())
         val placeCells = PlaceCellRepositoryImpl(database.placeCellDao())
         val walks = WalkRepositoryImpl(database.walkDao(), database.trackPointDao())
+        val transactions = RoomTransactionRunner(database)
 
         suspend fun stats(): Stats =
             StatsCalculator.calculate(encounters.observeAll().first(), today = TODAY, now = NOW)
