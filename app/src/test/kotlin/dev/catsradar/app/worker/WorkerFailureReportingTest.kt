@@ -24,6 +24,7 @@ import org.junit.runner.RunWith
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import java.lang.reflect.Proxy
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.time.Clock
@@ -38,7 +39,6 @@ class WorkerFailureReportingTest {
     private val broken = IllegalStateException("database is gone")
     private val withUri = Data.Builder().putString(BackupWork.KEY_URI, "content://backups/cats.zip").build()
     private val withEncounter = Data.Builder().putString(AttachLocationWorker.KEY_ENCOUNTER_ID, "cat-1").build()
-    private val withPhoto = Data.Builder().putStringArray(ImportPhotosWorker.KEY_URIS, arrayOf("content://1")).build()
 
     private fun useCasesFailingWith(error: Throwable) = module {
         single { AttachLocation(failing(error), failing(error), failing(error), Clock.System) }
@@ -59,9 +59,11 @@ class WorkerFailureReportingTest {
         .setWorkerFactory(KoinWorkerFactory(koinApplication { modules(useCasesFailingWith(error)) }.koin))
         .build()
 
-    private fun importWorker(error: Throwable): CoroutineWorker =
-        TestListenableWorkerBuilder<ImportPhotosWorker>(context)
-            .setInputData(withPhoto)
+    private fun importWorker(error: Throwable): CoroutineWorker {
+        val runId = UUID.randomUUID()
+        ImportBatches(context).replaceWith(runId, listOf("content://media/1"))
+        return TestListenableWorkerBuilder<ImportPhotosWorker>(context)
+            .setId(runId)
             .setWorkerFactory(
                 object : WorkerFactory() {
                     override fun createWorker(
@@ -78,6 +80,7 @@ class WorkerFailureReportingTest {
                 },
             )
             .build()
+    }
 
     @Test
     fun `an unexpected failure attaching a location is recorded and fails the work`() = runTest {
