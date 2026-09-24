@@ -10,14 +10,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -27,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -154,46 +149,6 @@ private fun WhereCard(state: EncounterDetailState.Loaded, modifier: Modifier = M
 }
 
 @Composable
-private fun AddPhotoCard(
-    addPhoto: AddPhoto,
-    modifier: Modifier = Modifier,
-    onTakePhotoClick: () -> Unit = {},
-    onPickPhotoClick: () -> Unit = {},
-) {
-    val enabled = addPhoto == AddPhoto.READY
-    SectionCard(R.string.detail_photo, modifier = modifier) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FilledTonalButton(onClick = onTakePhotoClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_photo_camera),
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Text(
-                    text = stringResource(R.string.detail_take_photo),
-                    modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
-                )
-            }
-            OutlinedButton(onClick = onPickPhotoClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_photo_library),
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Text(
-                    text = stringResource(R.string.detail_pick_photo),
-                    modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
-                )
-            }
-            if (addPhoto == AddPhoto.ATTACHING) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        }
-    }
-}
-
-@Composable
 private fun DeletedDetail(
     state: EncounterDetailState.Deleted,
     modifier: Modifier = Modifier,
@@ -234,10 +189,7 @@ private fun EncounterDetailScreenLoadedPreview() {
 @Composable
 private fun EncounterDetailScreenNoLocationPreview() {
     CatsRadarTheme {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Surface { EncounterDetailScreen(state = sampleNoLocation) }
-            Surface { EncounterDetailScreen(state = sampleNoLocation.copy(addPhoto = AddPhoto.ATTACHING)) }
-        }
+        Surface { EncounterDetailScreen(state = sampleNoLocation) }
     }
 }
 
