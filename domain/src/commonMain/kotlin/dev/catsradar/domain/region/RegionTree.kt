@@ -21,7 +21,7 @@ sealed interface RegionKey {
     /** Encounters in [countryCode] whose cell names neither a locality nor an admin area. */
     data class NoCity(val countryCode: String) : RegionKey
 
-    /** Encounters with no coordinates at all. */
+    /** Encounters with nothing to place them by: neither a geohash nor coordinates. */
     data object NoLocation : RegionKey
 }
 
@@ -135,14 +135,6 @@ object RegionTree {
         }
     }
 
-    // A row with coordinates but no geohash can only be hand-edited; it still has an area to be in.
-    private fun Encounter.areaHash(): String? =
-        (geohash ?: pointOnGlobe(lat, lon)?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) })
-            ?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) }
-
-    // adminArea is the fallback because a rural point often has a region but no locality.
-    private fun PlaceCell.cityName(): String? = locality ?: adminArea
-
     /** A cell counts as naming this encounter only once it is RESOLVED and has a country. */
     private fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
         placeCellId?.let(byCell::get)?.takeIf { it.status == PlaceStatus.RESOLVED && it.countryCode != null }
@@ -153,3 +145,11 @@ object RegionTree {
     private fun pseudoNode(key: RegionKey, label: RegionLabel, count: Int): List<RegionNode> =
         if (count == 0) emptyList() else listOf(RegionNode(key, label, count))
 }
+
+// A row with coordinates but no geohash can only be hand-edited; it still has an area to be in.
+private fun Encounter.areaHash(): String? =
+    (geohash ?: pointOnGlobe(lat, lon)?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) })
+        ?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) }
+
+// adminArea is the fallback because a rural point often has a region but no locality.
+private fun PlaceCell.cityName(): String? = locality ?: adminArea

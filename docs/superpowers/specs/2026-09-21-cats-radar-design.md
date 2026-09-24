@@ -143,10 +143,12 @@ One row per geohash cell of precision `PLACE_CELL_PRECISION = 6` (~1.2 km × 0.6
 | City | `(countryCode, locality ?: adminArea)` | `locality ?: adminArea` | after resolution |
 | Area | `geohash.take(AREA_PRECISION = 5)` (~4.9 km) | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
 
-Pseudo-nodes: **"Unresolved"** (country and city level) holds encounters whose cell is
-`PENDING`/`FAILED`/`UNAVAILABLE`; **"No location"** holds `locationSource = NONE`. Each pseudo-node
-drills down like a real one (Unresolved → its areas; No location → its encounters). Sums across
-siblings always equal the parent.
+Pseudo-nodes: **"Unresolved"** (country level) holds encounters whose cell is
+`PENDING`/`FAILED`/`UNAVAILABLE`; **"No city"** (city level, under its country) holds encounters
+whose resolved cell names neither a locality nor an admin area; **"No location"** holds encounters
+with no area — neither a geohash nor coordinates, which for every row the app writes means
+`locationSource = NONE`. Each pseudo-node drills down like a real one (Unresolved and No city → their
+areas; No location → its encounters). Sums across siblings always equal the parent.
 
 ### 3.5 Session (derived, never stored)
 

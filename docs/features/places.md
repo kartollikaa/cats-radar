@@ -100,9 +100,18 @@ Two pseudo-nodes always come **last**, after every real place, and only when the
   geocoder). It drills into areas like any country would.
 - **No location** — cats with no coordinates at all. It drills straight to the cats.
 
+A country's cities end the same way, with **No city**: the cats whose cell names that country but
+neither a locality nor an admin area, which is what a geocoder answers at sea or in open country.
+It drills into areas like a city does. It is not Not named yet: those cells have a name, just not a
+city's, and a named cell is never looked up again.
+
+What places a cat is its **area**: its geohash, or its coordinates when a hand-edited row has lost
+the geohash. A cat with neither is No location whatever its location source says, so it is never
+counted under a country only to have no area to be in.
+
 Their counts are what make the tree honest: **the counts of every sibling add up to their
-parent**, so a drill-down does not quietly lose a cat, with the two exceptions below. The countries,
-a country's cities and a city's areas each have a test for it.
+parent**, so a drill-down never quietly loses a cat. The countries, a country's cities, and the
+areas of a city or of No city each have a test for it.
 
 An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
 geohash, so they work with no network and even for cells that were never named. An area whose cells
@@ -110,10 +119,9 @@ disagree takes the name most of them agree on.
 
 ## Not built yet
 
-A cat whose cell names a country but neither a locality nor an admin area counts toward its country
-and toward no city, so that country's cities add up to less than it. And a cat with coordinates but
-no geohash counts toward its city or Not named yet and toward none of its areas; the app never
-writes such a row, but a hand-edited one can hold it.
+An area remembers only its geohash, not what it was opened from. Its cats are every cat in that
+area, so an area reached from one city can list a cat of another city, or of Not named yet, that
+falls in the same patch; its row's count holds only the parent's own.
 
 The `Geocoder` call uses the deprecated blocking overload because the listener-based one is API 33+
 and this app supports 29.
