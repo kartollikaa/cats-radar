@@ -65,7 +65,7 @@ over the APK — no version bump, no PR, no tag).
      mapping to Crashlytics**, with `CI` unset (the upload is off whenever `CI` is set) and the
      network up:
      ```
-     env -u CI ./gradlew :app:assembleRelease --console=plain > build/release-build.log 2>&1; echo "exit=$?"
+     mkdir -p build && env -u CI ./gradlew :app:assembleRelease --console=plain > build/release-build.log 2>&1; echo "exit=$?"
      ```
      → `app/build/outputs/apk/release/app-release.apk` and
      `app/build/outputs/mapping/release/mapping.txt`. A rebuild can stamp a new mapping id into
@@ -73,8 +73,8 @@ over the APK — no version bump, no PR, no tag).
      all come from this one run: after it, never rebuild, and never run
      `uploadCrashlyticsMappingFileRelease` on its own "to confirm". Confirm from what this run
      left behind instead:
-     - the log shows `> Task :app:uploadCrashlyticsMappingFileRelease` with no `SKIPPED`,
-       `UP-TO-DATE` or `FAILED` after it;
+     - the log shows `> Task :app:uploadCrashlyticsMappingFileRelease` with nothing after it —
+       `SKIPPED`, `UP-TO-DATE`, `FROM-CACHE`, `NO-SOURCE` or `FAILED` all mean no upload in this run;
      - `aapt2 dump resources app/build/outputs/apk/release/app-release.apk | grep -A1 crashlytics.mapping_file_id`
        (`aapt2` is in the SDK's `build-tools/<version>/`)
        is not `00000000000000000000000000000000` (all zeros means the upload was off).
@@ -89,7 +89,9 @@ over the APK — no version bump, no PR, no tag).
    - The release build is minified by R8, which the debug build never is. Install **that same
      signed APK** and walk the by-name paths listed in `docs/reference/releasing.md` (widget tap,
      a tally, backup export + import, a screen surviving a background kill) before tagging — a
-     missing keep rule shows up nowhere else. Use a throwaway AVD: the shared emulator holds
+     missing keep rule shows up nowhere else. Use a throwaway AVD (copy
+     `~/.android/avd/Pixel_7.avd/config.ini` into a new `<Name>.avd/` plus a `<Name>.ini` pointing at
+     it, boot it on a free port, delete both afterwards): the shared emulator holds
      other sessions' debug-signed `com.kartollika.catsradar`, which a release-signed APK cannot
      update without uninstalling it and their data. An `applicationIdSuffix` build no longer
      compiles — `app/google-services.json` has a client for `com.kartollika.catsradar` only.
@@ -97,8 +99,9 @@ over the APK — no version bump, no PR, no tag).
      build made just to try something runs with `CI=true`, so it uploads nothing.
    - A debug-only release (no signing properties) has no mapping — debug builds are not
      minified — so there is nothing to upload to Crashlytics or zip; say so in the release body.
-   - Rename into `build/` (gitignored; a `.zip` in the repo root is not) before attaching: `cats-radar-<versionName>.apk` (release) /
-     `cats-radar-<versionName>-debug.apk` (debug), and zip the release build's
+   - Rename into `build/` (gitignored; a `.zip` in the repo root is not) before attaching:
+     `cats-radar-<versionName>.apk` (release) / `cats-radar-<versionName>-debug.apk` (debug), and
+     zip the release build's
      `app/build/outputs/mapping/release/mapping.txt` into `cats-radar-<versionName>-mapping.zip`
      (plain, it is bigger than the APK). The mapping from any other build does not fit this
      APK's stack traces.
