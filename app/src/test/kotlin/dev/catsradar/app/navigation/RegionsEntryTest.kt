@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -29,7 +28,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
-import kotlin.time.Clock
+import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class RegionsEntryTest {
@@ -50,15 +49,14 @@ class RegionsEntryTest {
             androidContext(ApplicationProvider.getApplicationContext<Context>())
             modules(domainModule, dataModule, presentationModule, workerModule)
         }.koin
-        runBlocking { koin.get<EncounterRepository>().insert(tally("cat-1", Clock.System.now())) }
+        runBlocking { koin.get<EncounterRepository>().insert(tally("cat-1", Instant.parse("2026-09-21T10:00:00Z"))) }
         val levels = listOf<NavKey>(Counter, Statistics, Regions(), Regions(RegionKind.NO_LOCATION))
         val backStack = BottomNavBackStack(NavBackStack(*levels.toTypedArray()))
         val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), MapFocusRequest())
         compose.setContent { CatsRadarTheme { entries(levels.last()).Content() } }
-        val cats = compose.onAllNodes(hasClickAction())
-        compose.waitUntil { cats.fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil { compose.onAllNodes(hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
 
-        cats.onFirst().performClick()
+        compose.onNode(hasClickAction()).performClick()
 
         assertEquals(levels + EncounterDetail("cat-1"), backStack.toList())
     }

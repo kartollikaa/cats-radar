@@ -64,7 +64,7 @@ class RegionsDrillDownTest {
     }
 
     @Test
-    fun `every cat hands back its own id when tapped, and an outing header is not a button`() {
+    fun `every cat hands back its own id when tapped, and an outing header hands back nothing`() {
         val encounters = persistentListOf(
             OutingHeader(key = "header-evening", label = "Today, 18:40"),
             EncounterListItem.Row(id = "c3", timeLabel = "19:18", location = LocationLabel.FROM_PHOTO),
@@ -79,7 +79,9 @@ class RegionsDrillDownTest {
             }
         }
 
-        listOf("08:22", "19:18", "18:57").forEach { time -> compose.onNodeWithText(time).performClick() }
+        listOf("08:22", "Today, 18:40", "19:18", "Yesterday, 08:15", "18:57").forEach { text ->
+            compose.onNodeWithText(text).performClick()
+        }
 
         assertEquals(listOf("c1", "c3", "c2"), tapped)
         listOf("Today, 18:40", "Yesterday, 08:15").forEach { header ->
