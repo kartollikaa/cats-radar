@@ -4,7 +4,9 @@ Tapping a row in the Encounters list opens that one cat: the day it was logged (
 "Yesterday" — or a calendar date), the time, where its coordinates came from in words, and the
 coordinates themselves when there are any, with the fix's accuracy under them. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
-return to the list, never to the Counter root. The screen scrolls: a photo and the coat picker
+return to the list, never to the Counter root. The same screen opens from a dot on the Map
+([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
+above the screen it was tapped in. The screen scrolls: a photo and the coat picker
 together are taller than most phones, and Delete must never end up below the bottom edge. The coat
 picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
 [coat.md](./coat.md#changing-it-later).

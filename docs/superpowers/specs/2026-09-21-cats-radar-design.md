@@ -74,7 +74,7 @@ on a face sets it, dismissing leaves it unset (§4.2 step 7).
 
 **F3 Import.** Counter screen → the gallery half of the Photo split button (or Settings → Import
 photos) → gallery multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress
-bar, then a summary with "Undo import".
+bar, then a summary with "Undo import" that closes itself after `IMPORT_SUMMARY_VISIBLE`.
 
 **F4 Widget.** Home-screen widget shows today's count and a "+1" button. Tap logs a tally through
 the same path as F1, without opening the app (§4.8).
@@ -264,7 +264,8 @@ never touched by the app.
 4. Compressed copy + thumbnail as §4.2 step 4; `origin = GALLERY`; `galleryUri = null` (already in
    the gallery). Never copies the original to MediaStore.
 5. Runs in `ImportPhotosWorker` (expedited, progress notification). Summary: added / skipped /
-   failed, with "Undo import" (soft-deletes the ids created by this run).
+   failed, with "Undo import" (soft-deletes the ids created by this run). The summary closes itself
+   after `IMPORT_SUMMARY_VISIBLE`, as OK does, and the undo lapses with it.
 
 ### 4.7 Backup export / import (F7)
 
@@ -409,9 +410,9 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 - Docs: `docs/superpowers/specs/` (kept), `docs/superpowers/plans/` (archived when shipped),
   `docs/research/` (kept), repo `CLAUDE.md` for conventions.
 - Every constant named here — `SESSION_GAP`, `MIN_RATE_DURATION`, `LOCATION_TIMEOUT`,
-  `LAST_KNOWN_MAX_AGE`, `RECENT_PHOTO_WINDOW`, `UNDO_VISIBLE`, `PLACE_CELL_PRECISION`,
-  `AREA_PRECISION`, `PHOTO_MAX_SIDE`, `PHOTO_QUALITY`, `THUMB_SIZE`, `GEOCODE_BATCH`,
-  `MAX_GEOCODE_ATTEMPTS`, `PURGE_AFTER`, `IMPORT_BATCH_MAX`, `MILESTONES` — lives in one `Tuning`
+  `LAST_KNOWN_MAX_AGE`, `RECENT_PHOTO_WINDOW`, `UNDO_VISIBLE`, `IMPORT_SUMMARY_VISIBLE`,
+  `PLACE_CELL_PRECISION`, `AREA_PRECISION`, `PHOTO_MAX_SIDE`, `PHOTO_QUALITY`, `THUMB_SIZE`,
+  `GEOCODE_BATCH`, `MAX_GEOCODE_ATTEMPTS`, `PURGE_AFTER`, `IMPORT_BATCH_MAX`, `MILESTONES` — lives in one `Tuning`
   object in `commonMain`. Values in this spec are initial defaults; code is the source of truth.
 
 ## 9. Roadmap after v1

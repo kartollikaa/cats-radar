@@ -6,9 +6,9 @@ not at the time you imported them.
 
 The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
 at its end** asks for access to where photos were taken, then opens the gallery; holding that icon
-names it. The run happens in a worker,
-so it survives leaving the screen; the Counter shows how far it has got, and at the end what was
-added, skipped and failed, with one undo for the whole batch.
+names it. The run happens in a worker, so it survives leaving the screen; the Counter shows how far
+it has got, and at the end, briefly, what was added, skipped and failed, with one undo for the
+whole batch.
 
 ## What an imported photo becomes
 
@@ -67,12 +67,17 @@ takes them back*).
 
 ## At the edges
 
-- **A summary stays until the user deals with it, and never comes back after.** WorkManager keeps
-  a finished run, and the Counter reads it back each time it is shown and again after a restart.
-  So a summary the user walked away from, Undo included, is still there when they come back. A
-  successful Undo, or OK, records that run as dealt with (`SettingsRepository.acknowledgedRun`,
-  kept in DataStore next to the settings). After that, reading the same run back shows nothing and
-  offers no second Undo. A failed Undo records nothing, so the offer survives it.
+- **A summary goes away on its own, and never comes back after.** It stays for
+  `IMPORT_SUMMARY_VISIBLE` from the moment the Counter learns the run has finished, and running out
+  does what OK does: the Undo lapses with it. A successful Undo, OK, or the time running out records
+  that run as dealt with (`SettingsRepository.acknowledgedRun`, kept in DataStore next to the
+  settings). After that, reading the same run back shows nothing and offers no second Undo. A failed
+  Undo records nothing, so the offer survives it until the time runs out; one that fails after the
+  time has run out puts nothing back.
+- **The countdown does not pause in the background.** A run that finishes while the user is in
+  another app can have timed out by the time they return. WorkManager keeps a finished run, and the
+  Counter reads it back each time it is shown and again after a restart, so a summary whose time
+  never ran out — the app was closed or killed first — comes back with a fresh countdown.
 - **A photo keeps its GPS only when the app may see where photos were taken.** Android strips the
   GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION`, so the gallery
   icon asks for it first — the import starts reading photos the moment they are picked — and opens
@@ -82,10 +87,10 @@ takes them back*).
   videos*.
 - **The dialog reads as access to photos and videos** — to photos, media and files before Android
   13 — because Android files this permission under that group. The app declares no permission to
-  read the gallery, so *Allow all* grants it the
-  location of the photos it is handed and nothing else. *Allow limited access* first opens a picker
-  of its own for photos to share; the location access that comes with it is one-time, lapses once
-  the app has been in the background a while, and is asked for again at the next import.
+  read the gallery, so *Allow all* grants it the location of the photos it is handed and nothing
+  else. *Allow limited access* first opens a picker of its own for photos to share; the location
+  access that comes with it is one-time, lapses once the app has been in the background a while,
+  and is asked for again at the next import.
 - **The gallery opens with `ACTION_GET_CONTENT`, not the photo picker's own `ACTION_PICK_IMAGES`.**
   MediaProvider strips GPS from a `PICK_IMAGES` photo whatever the app holds. The one way round it
   there, `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`, works only once the picker's own

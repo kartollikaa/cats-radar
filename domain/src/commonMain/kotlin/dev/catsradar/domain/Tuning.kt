@@ -14,6 +14,7 @@ object Tuning {
     val LAST_KNOWN_MAX_AGE: Duration = 6.hours
     val RECENT_PHOTO_WINDOW: Duration = 1.hours
     val UNDO_VISIBLE: Duration = 5.seconds
+    val IMPORT_SUMMARY_VISIBLE: Duration = 10.seconds
     val PURGE_AFTER: Duration = 30.days
 
     const val GEOHASH_PRECISION: Int = 8
