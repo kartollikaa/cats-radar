@@ -79,22 +79,39 @@ rather than failing the export, because the rest of the archive is still worth h
 On import a photo is restored **only where none is already here** — the local copy is the one the app
 has been rendering, and an archive should not quietly replace it.
 
-**Photos are not part of the merge's transaction.** They are restored while the archive is read,
-before the archive is judged and before any row is merged, and a file cannot join a database
-transaction. An import that fails or is refused writes no rows but can leave behind the photos it
-restored. They are the archive's own bytes, written only where no file was here, so importing the
-same archive again finds them and keeps them.
+**A photo reaches the photo directory only once the whole archive is accepted.** While the archive
+is read, its photos are unpacked beside the photo directory; they move into place only after the
+manifest, every row and every path in them have been judged, and the unpacked copies are deleted
+either way. An archive that is refused, cut off part-way or damaged therefore leaves nothing behind
+— not even the part of a photo it managed to read, which would otherwise stay for good, since a
+photo is only ever restored where none is here.
+
+**Photos are not part of the merge's transaction**, though: a file cannot join a database
+transaction, and the photos are in place before any row is merged. An import whose merge then fails
+writes no rows but can leave behind the photos it restored. They are the archive's own bytes,
+written only where no file was here, so importing the same archive again finds them and keeps them.
 
 ## At the edges
 
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
-  fields this version would silently drop. No row is written (photos: see above). That is why the
-  walks raised the version: an app from before them refuses an archive rather than losing its walks.
+  fields this version would silently drop. Nothing is written. It is judged by its manifest before
+  any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
+  still say "newer version", not "not a backup". That is why the walks raised the version: an app
+  from before them refuses an archive rather than losing its walks.
 - **An archive from before walks** still imports, with no walks in it.
-- **An unreadable archive is refused the same way** — not a ZIP, no manifest, or rows that will not
-  parse. Both reasons reach the caller, which decides what to say.
+- **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
+  parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
+  what to say.
+- **A file cut off between two entries** looks, to a ZIP read entry by entry, like its end. An
+  archive of this version's format always carries all five lists, so one that lacks any of them was
+  cut off and is refused as unreadable. The lists come before the photos, so a clean cut after them
+  can only lose photos: the cats arrive, and those whose photos were past the cut show the
+  placeholder until an archive that has them is imported.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
+- **So does a row whose photo or thumbnail path climbs out of it.** Every screen that shows a cat
+  resolves those paths through photo storage, which refuses them by throwing, so such a row would
+  not be a cat without a photo but a screen that cannot open.
 - **A cat whose location is not a point on the globe is imported without one.** A latitude beyond
   ±90, a longitude beyond ±180, only one of the pair, a source with no coordinates, or coordinates
   on a cat marked `NONE`: the cat arrives at `NONE`, with no coordinates, accuracy, fix time,
