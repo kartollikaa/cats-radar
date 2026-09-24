@@ -47,6 +47,9 @@
     <string name="counter_location_hint">Location permission needed for cat spots</string>
     <string name="counter_location_grant">Grant</string>
     <string name="counter_location_dismiss">Dismiss</string>
+    <string name="counter_coat_prompt_title">What coat was it?</string>
+    <string name="counter_coat_prompt_skip">Not now</string>
+    <string name="counter_coat_prompt_photo">The photo you just took</string>
 
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>

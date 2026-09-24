@@ -1,11 +1,16 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.stats.CurrentOuting
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.toRateState
 
-class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
+class CounterStateMapper(
+    private val dateTimeFormatter: DateTimeFormatter,
+    private val photoStorage: PhotoStorage,
+) {
     fun initial(): CounterState = CounterState(totalLabel = "", count = null, undoVisible = false)
 
     @Suppress("LongParameterList") // one parameter per thing the Counter shows
@@ -19,6 +24,7 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         walkingMode: Boolean = false,
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
+        coatPrompt: CoatPromptState? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         count = count,
@@ -30,6 +36,7 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         walkingMode = walkingMode,
         importProgress = importProgress,
         importSummary = importSummary,
+        coatPrompt = coatPrompt,
     )
 
     fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
@@ -38,6 +45,9 @@ class CounterStateMapper(private val dateTimeFormatter: DateTimeFormatter) {
         failed = failed.takeIf { it > 0 },
         undoable = addedCount > 0,
     )
+
+    fun coatPrompt(encounter: Encounter): CoatPromptState =
+        CoatPromptState(thumbPath = encounter.thumbPath?.let(photoStorage::resolve))
 
     private fun CurrentOuting.toState(): CurrentOutingState = CurrentOutingState(
         count = count,

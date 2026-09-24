@@ -15,7 +15,7 @@
 |---|----------|------------------------|----------|-------------|------------|--------|
 | P1a | Attaching a photo, in domain and data | `AttachPhoto` and a guarded write that touches only the photo columns of a live cat with no photo; "With photo" counted by the photo itself. Nothing calls it yet. | safe | ~450 | v1 | in-review |
 | P1b | Photo for a logged cat, on screen | "Take photo" / "From gallery" on the detail of a cat with no photo, through a camera launcher shared with the Counter. | safe | ~450 | P1a | in-review |
-| P2 | Coat right after a photo | A photo from the camera asks for its coat in a bottom sheet over the Counter; dismissing leaves it unset. | safe | ~350 | P1b | planned |
+| P2 | Coat right after a photo | A photo from the camera asks for its coat in a bottom sheet over the Counter; dismissing leaves it unset. | safe | ~350 | P1b | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
