@@ -1,7 +1,6 @@
 package dev.catsradar.presentation.map
 
 import app.cash.turbine.test
-import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.FakeClock
@@ -18,7 +17,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -56,11 +54,6 @@ class MapStoreTest {
 
     private fun located(id: String, minute: Int) =
         encounterFixture(id, BASE + minute.minutes).copy(lat = 41.39, lon = 2.17)
-
-    private fun spotOf(vararg cats: Encounter) =
-        MapSpot(catCount = cats.size, rows = encountersMapper.map(cats.toList(), TODAY, grid = false).rows)
-
-    private fun MapState.spot(): MapSpot? = assertIs<MapState.Located>(this).spot
 
     @Test
     fun `the map is loading until the cats have been read, then empty with none located`() =
@@ -113,48 +106,30 @@ class MapStoreTest {
                 runCurrent()
                 assertEquals(MapEffect.OpenCat("a"), awaitItem())
             }
-            assertNull(store.state.value.spot())
         }
 
     @Test
-    fun `tapping several cats lists exactly those, grouped as in the list, until dismissed`() =
+    fun `tapping several cats asks to open their spot under the coats chosen at that moment`() =
         runTest(mainDispatcher) {
-            val a = located("a", minute = 0)
-            val b = located("b", minute = 5)
-            repository.insert(a)
-            repository.insert(b)
-            repository.insert(located("elsewhere", minute = 10))
+            repository.insert(located("a", minute = 0))
+            repository.insert(located("b", minute = 5))
             val store = newStore()
             runCurrent()
 
-            store.dispatch(MapIntent.CatsTapped(listOf("a", "b")))
-            runCurrent()
-            assertEquals(spotOf(a, b), store.state.value.spot())
+            store.effects.test {
+                store.dispatch(MapIntent.CatsTapped(listOf("a", "b", "a")))
+                runCurrent()
+                assertEquals(MapEffect.OpenSpot(setOf("a", "b"), coats = emptySet()), awaitItem())
 
-            store.dispatch(MapIntent.SpotDismissed)
-            runCurrent()
-            assertNull(store.state.value.spot())
+                store.dispatch(MapIntent.CoatToggled(CoatOption.GINGER))
+                store.dispatch(MapIntent.CatsTapped(listOf("a", "b")))
+                runCurrent()
+                assertEquals(MapEffect.OpenSpot(setOf("a", "b"), coats = setOf(CoatOption.GINGER)), awaitItem())
+            }
         }
 
     @Test
-    fun `a cat deleted while its spot is open drops out of the list`() = runTest(mainDispatcher) {
-        val a = located("a", minute = 0)
-        val b = located("b", minute = 5)
-        repository.insert(a)
-        repository.insert(b)
-        val store = newStore()
-        runCurrent()
-        store.dispatch(MapIntent.CatsTapped(listOf("a", "b")))
-        runCurrent()
-
-        repository.update(b.copy(deletedAt = BASE + 1.hours))
-        runCurrent()
-
-        assertEquals(spotOf(a), store.state.value.spot())
-    }
-
-    @Test
-    fun `focusing an outing shows it alone and closes a spot, and clearing it shows every cat again`() =
+    fun `focusing an outing shows it alone, and clearing it shows every cat again`() =
         runTest(mainDispatcher) {
             val first = located("first", minute = 0)
             val second = located("second", minute = 5).copy(lat = 41.40)
@@ -163,15 +138,12 @@ class MapStoreTest {
             repository.insert(located("other outing", minute = 180).copy(lat = 41.45))
             val store = newStore()
             runCurrent()
-            store.dispatch(MapIntent.CatsTapped(listOf("first", "second")))
-            runCurrent()
 
             store.dispatch(MapIntent.OutingFocused("second"))
             runCurrent()
             val focused = assertIs<MapState.Located>(store.state.value)
             assertEquals("first", focused.focus?.outingId)
             assertEquals(listOf("first", "second"), focused.points.map { it.id })
-            assertNull(focused.spot)
 
             store.dispatch(MapIntent.FocusCleared)
             runCurrent()
@@ -201,27 +173,6 @@ class MapStoreTest {
 
             assertNull(assertIs<MapState.Located>(store.state.value).focus)
         }
-
-    @Test
-    fun `a spot whose cats are all deleted closes, and restoring one does not reopen it`() = runTest(mainDispatcher) {
-        val a = located("a", minute = 0)
-        val b = located("b", minute = 5)
-        repository.insert(a)
-        repository.insert(b)
-        repository.insert(located("elsewhere", minute = 180))
-        val store = newStore()
-        runCurrent()
-        store.dispatch(MapIntent.CatsTapped(listOf("a", "b")))
-        runCurrent()
-
-        repository.update(a.copy(deletedAt = BASE + 1.hours))
-        repository.update(b.copy(deletedAt = BASE + 1.hours))
-        runCurrent()
-        repository.update(a)
-        runCurrent()
-
-        assertNull(store.state.value.spot())
-    }
 
     @Test
     fun `coats are chosen one at a time and cleared back to every cat, and heat turns on and off`() =
@@ -261,6 +212,5 @@ class MapStoreTest {
 
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
-        val TODAY = LocalDate(2026, 9, 22)
     }
 }

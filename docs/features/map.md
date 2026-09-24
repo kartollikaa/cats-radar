@@ -50,6 +50,11 @@ globe, past a pole or the 180th meridian.
   returns to the list, and a second back closes it. A tap that lands on several dots at once opens
   the same list. A list whose cats are all deleted closes, and restoring one of them does not reopen
   it.
+- **The list is a sheet on the back stack**, its own screen above the map rather than a part of it.
+  It lists the cats it was opened with, under the coat choice the map had then; the choice cannot
+  change while it is open, because it is made on the map beneath. While a cat opened from the list
+  is on top, the list is out of sight: the back gesture from the cat shows the map as the cat shrinks
+  away, and the list slides back up once the gesture lands.
 
 ## An outing's route
 
@@ -111,14 +116,16 @@ Both last as long as the tab does; leaving the tab clears them.
 ## Where the code lives
 
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
-  on), `MapStateMapper`, `MapStore`
+  on), `MapStateMapper`, `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a
+  spot's list
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters, the
   heat and their taps; `CoatDotPainter.kt` — a dot painted in its coat's colours;
-  `MapFeatures.kt` — cats as map features, and each coat's colour shares; `MapSpotSheet.kt` — a
+  `MapFeatures.kt` — cats as map features, and each coat's colour shares; `MapSpotScreen.kt` — a
   spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
   `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` — the coat choice
-- `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapFocusRequest.kt` — the outing
-  another tab asked the map to show
+- `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
+  back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing
+  another tab, or a spot's list, asked the map to show
 
 ## Not built yet
 
