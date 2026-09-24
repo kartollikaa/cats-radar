@@ -34,7 +34,7 @@ class ExportBackupWorker(
             if (exportBackup(target)) Result.success() else Result.failure()
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             reporter.record(e)
             Result.failure()
         }
@@ -58,7 +58,7 @@ class ImportBackupWorker(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             reporter.record(e)
             Result.failure()
         }

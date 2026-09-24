@@ -39,7 +39,7 @@ class ImportPhotosWorker(
         } catch (e: CancellationException) {
             // Stopped, not finished: WorkManager may run this batch again, so its photos stay held.
             throw e
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Never Result.retry(): not every source's read grant outlives the process, and a retry
             // without one would import nothing and report every photo as failed.
             reporter.record(e)

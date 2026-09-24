@@ -96,6 +96,16 @@ class WorkerFailureReportingTest {
     }
 
     @Test
+    fun `running out of memory importing photos is recorded and fails the work`() = runTest {
+        val outOfMemory = OutOfMemoryError("Failed to allocate a 180 MB bitmap")
+
+        val result = importWorker(outOfMemory).doWork()
+
+        assertEquals(ListenableWorker.Result.failure(), result)
+        assertEquals(listOf<Throwable>(outOfMemory), reporter.recorded)
+    }
+
+    @Test
     fun `an unexpected failure exporting a backup is recorded and fails the work`() = runTest {
         val result = worker<ExportBackupWorker>(broken, withUri).doWork()
 

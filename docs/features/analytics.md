@@ -8,10 +8,11 @@ it came from. There is no switch to turn it off.
 
 - **A crash.** Any exception nothing caught: its stack trace, the app version, the phone's model and
   Android version, and Crashlytics' own device state (free memory and disk, orientation). A crash is
-  written to the phone as it happens and sent the next time the app starts.
+  queued on the phone as it happens and sent moments later by a job the system starts on its own, or
+  whenever the network next allows.
 - **A failure the app recovers from.** A few jobs are built to fail quietly and try again later; when
-  one of them fails in a way nobody expected, the exception is sent as a *non-fatal* report and the
-  job carries on exactly as it did before:
+  one of them fails in a way nobody expected — an exception, or an error such as running out of
+  memory — it is sent as a *non-fatal* report and the job carries on exactly as it did before:
   - the two repairs that run at every start — tidying place cells, and rebuilding the app's own copy
     of a photo that has gone missing;
   - every background worker: attaching a location, naming places, purging deleted cats, importing

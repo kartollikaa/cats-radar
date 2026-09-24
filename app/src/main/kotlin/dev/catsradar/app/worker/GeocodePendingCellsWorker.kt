@@ -27,7 +27,7 @@ class GeocodePendingCellsWorker(
         Result.success()
     } catch (e: CancellationException) {
         throw e
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         recordOnFirstAttempt(reporter, e)
         Result.retry()
     }
