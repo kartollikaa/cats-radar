@@ -107,11 +107,11 @@ class ZipBackupReaderRejectionTest {
     }
 
     @Test
-    fun aNewerArchiveWhoseManifestHasChangedShapeIsStillRefusedAsNewer() = runTest {
+    fun aNewerArchiveIsRefusedAsNewerWhateverElseItChanged() = runTest {
         val path = target
         File(path).writeArchive(
             MANIFEST_ENTRY to """{"formatVersion":99,"exportedAt":"2031-01-01T00:00:00Z","device":{"id":"d"}}""",
-            ENCOUNTERS_ENTRY to "[]",
+            "cats.json" to "[]",
         )
 
         assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader.read(path))

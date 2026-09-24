@@ -136,10 +136,11 @@ class ZipBackupReader(
         val manifest = unpacked?.texts?.get(MANIFEST_ENTRY)?.let { ArchiveJson.decodeFromString<ManifestVersion>(it) }
         val encounters = unpacked?.texts?.get(ENCOUNTERS_ENTRY)
         return when {
-            manifest == null || encounters == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
-            // Before any row is decoded, and from the version alone: a newer version's rows, or the rest
-            // of its manifest, may not parse in this one at all.
+            manifest == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
+            // Before anything else is looked at, and from the version alone: a newer version's lists, or
+            // the rest of its manifest, may not be what this one expects at all.
             manifest.formatVersion > BACKUP_FORMAT_VERSION -> BackupReadResult.Rejected(BackupRejection.TOO_NEW)
+            encounters == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
             // This version writes every list, so an archive of its own format that lacks one was cut off.
             manifest.formatVersion == BACKUP_FORMAT_VERSION && !unpacked.texts.keys.containsAll(archiveTextEntries) ->
                 BackupReadResult.Rejected(BackupRejection.UNREADABLE)
