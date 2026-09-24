@@ -42,8 +42,8 @@ a document nobody updates is worse than none.
   things that redraw it.
 - `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the
   one screen that fetches from the network.
-- `analytics.md` — crash reports to Crashlytics and screen views to Analytics: what is sent, what
-  never is, no advertising, the failures the app recovers from that are still reported, and why every
+- `analytics.md` — crash reports to Crashlytics, screen views and product events to Analytics: the
+  event catalogue, what never leaves the phone, no advertising, the failures the app recovers from that are still reported, and why every
   build reports.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

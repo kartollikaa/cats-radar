@@ -62,6 +62,7 @@ val domainModule = module {
             deviceIdProvider = get(),
             clock = get(),
             timeZone = get(),
+            analytics = get(),
         )
     }
     factoryOf(::UndoLastTally)

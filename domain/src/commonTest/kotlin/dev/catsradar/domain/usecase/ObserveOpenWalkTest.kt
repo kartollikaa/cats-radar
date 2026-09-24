@@ -5,6 +5,7 @@ import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeWalkRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,7 +20,13 @@ class ObserveOpenWalkTest {
 
     private val walks = FakeWalkRepository()
     private val ids = FakeIdGenerator()
-    private val startWalk = StartWalk(walks, ids, FakeDeviceIdProvider(), FakeClock(Start))
+    private val startWalk = StartWalk(
+        walks,
+        ids,
+        FakeDeviceIdProvider(),
+        FakeClock(Start),
+        analytics = RecordingAnalytics()
+    )
 
     @Test
     fun `follows a walk from its start to its end`() = runTest {
@@ -29,7 +36,7 @@ class ObserveOpenWalkTest {
             val started = startWalk()
             assertEquals(started, awaitItem())
 
-            EndWalk(walks, FakeClock(Start + 30.minutes))()
+            EndWalk(walks, FakeClock(Start + 30.minutes), analytics = RecordingAnalytics())()
             assertNull(awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -37,8 +44,14 @@ class ObserveOpenWalkTest {
 
     @Test
     fun `a change to a walk already over is not news`() = runTest {
-        val over = startWalk().also { EndWalk(walks, FakeClock(Start + 30.minutes))() }
-        val open = StartWalk(walks, ids, FakeDeviceIdProvider(), FakeClock(Start + 1.hours))()
+        val over = startWalk().also { EndWalk(walks, FakeClock(Start + 30.minutes), RecordingAnalytics())() }
+        val open = StartWalk(
+            walks,
+            ids,
+            FakeDeviceIdProvider(),
+            FakeClock(Start + 1.hours),
+            analytics = RecordingAnalytics()
+        )()
 
         ObserveOpenWalk(walks)().test {
             assertEquals(open, awaitItem())

@@ -1,6 +1,7 @@
 package dev.catsradar.app.architecture
 
 import com.lemonappdev.konsist.api.Konsist
+import com.lemonappdev.konsist.api.declaration.KoClassDeclaration
 import com.lemonappdev.konsist.api.verify.assertFalse
 import org.junit.Test
 
@@ -64,6 +65,23 @@ class ModuleBoundaryTest {
             .excludingGeneratedSources()
             .assertFalse(testName = "domain, presentation and ui files do not import com.google.firebase") { file ->
                 file.hasImport { it.name.startsWith("com.google.firebase") }
+            }
+    }
+
+    @Test
+    fun `analytics events carry no text, fraction or time`() {
+        val forbidden = setOf("String", "Double", "Float", "Instant", "Duration")
+        val events = Konsist.scopeFromPackage(
+            "dev.catsradar.domain.analytics.."
+        ).classesAndObjects(includeNested = true)
+        events.filterIsInstance<KoClassDeclaration>()
+            .flatMap { it.primaryConstructor?.parameters.orEmpty() }
+            .assertFalse(testName = "analytics event constructors carry no text, fraction or time") {
+                it.type.name.removeSuffix("?") in forbidden
+            }
+        events.flatMap { it.properties() }
+            .assertFalse(testName = "analytics event properties carry no text, fraction or time") {
+                it.type?.name?.removeSuffix("?") in forbidden
             }
     }
 

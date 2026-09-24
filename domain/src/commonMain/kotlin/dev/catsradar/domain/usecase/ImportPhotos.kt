@@ -1,6 +1,8 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
@@ -54,6 +56,7 @@ class ImportPhotos(
     private val idGenerator: IdGenerator,
     private val deviceIdProvider: DeviceIdProvider,
     private val clock: Clock,
+    private val analytics: Analytics,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
     suspend operator fun invoke(
@@ -70,6 +73,9 @@ class ImportPhotos(
                 PhotoOutcome.Failed -> failed++
             }
             onProgress(index + 1, sourceUris.size)
+        }
+        if (sourceUris.isNotEmpty()) {
+            analytics.log(AnalyticsEvent.PhotosImported(added = added.size, duplicates = skipped, failed = failed))
         }
         return ImportSummary(added = added, skipped = skipped, failed = failed)
     }

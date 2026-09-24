@@ -29,6 +29,9 @@ Rules, enforced by a Konsist test in `:app` (`app/src/test/kotlin/dev/catsradar/
 - `:data` files do not import `dev.catsradar.presentation` or `dev.catsradar.ui`.
 - `:domain`, `:presentation` and `:ui` files do not import `com.google.firebase`: analytics reaches
   them only as the `Analytics` port, and Firebase stays in `:data` and `:app`.
+- Classes in `dev.catsradar.domain.analytics` take no `String`, `Double`, `Float`, `Instant` or
+  `Duration` in their constructors: an event carries enums, booleans and counts, so it cannot carry a
+  place, a name or a time.
 - Each module's physical files declare that module's package (`dev.catsradar.<module>` or a
   subpackage) — otherwise the rules above, which key on the declared package rather than the
   physical module, would silently stop covering a mis-packaged file.

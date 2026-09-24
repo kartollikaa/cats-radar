@@ -6,6 +6,7 @@ import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeWalkRepository
 import dev.catsradar.domain.testing.MovableClock
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -23,7 +24,7 @@ class ObserveWalkElapsedTest {
     private val walks = FakeWalkRepository()
 
     private suspend fun startWalkAt(at: Instant) {
-        StartWalk(walks, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(at))()
+        StartWalk(walks, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(at), analytics = RecordingAnalytics())()
     }
 
     @Test
@@ -72,7 +73,7 @@ class ObserveWalkElapsedTest {
             assertEquals(Duration.ZERO, awaitItem())
 
             clock.now = Start + 5.minutes
-            EndWalk(walks, clock)()
+            EndWalk(walks, clock, analytics = RecordingAnalytics())()
             assertNull(awaitItem())
             cancelAndIgnoreRemainingEvents()
         }

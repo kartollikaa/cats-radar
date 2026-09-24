@@ -42,8 +42,25 @@ class WorkerFailureReportingTest {
 
     private fun useCasesFailingWith(error: Throwable) = module {
         single { AttachLocation(failing(error), failing(error), failing(error), Clock.System) }
-        single { ExportBackup(failing(error), failing(error), failing(error), failing(error)) }
-        single { ImportBackup(failing(error), failing(error), failing(error), failing(error), failing(error)) }
+        single {
+            ExportBackup(
+                failing(error),
+                failing(error),
+                failing(error),
+                failing(error),
+                analytics = failing(error)
+            )
+        }
+        single {
+            ImportBackup(
+                failing(error),
+                failing(error),
+                failing(error),
+                failing(error),
+                failing(error),
+                analytics = failing(error)
+            )
+        }
         single { ResolvePendingPlaces(failing(error), failing(error), Clock.System) }
         single { PurgeDeleted(failing(error), failing(error), Clock.System) }
         single<NonFatalReporter> { reporter }

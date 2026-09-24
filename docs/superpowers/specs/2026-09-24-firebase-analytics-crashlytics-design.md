@@ -55,7 +55,8 @@ the user property `build_type`; what Firebase Analytics collects on its own — 
 sessions, first open, app and OS updates, device model, OS version, country derived from the IP.
 
 **Never sent.** Latitude, longitude, accuracy, geohash, place-cell ids, country/city/area names, photos
-or any part of them, encounter/walk ids, encounter times, the sync device id; no event parameter holds
+or any part of them, encounter/walk ids, stored encounter times (an event's own timestamp is the
+moment it was logged, which for a tap is roughly when the cat was counted), the sync device id; no event parameter holds
 a file path or URI. A crash report carries the exception's message as it was thrown, so a platform
 file error names the path or URI it failed on — app-private storage or a file the user picked.
 
@@ -88,7 +89,8 @@ Firebase-free, so another application module never needs a `google-services.json
 
 ## 5. Event catalogue
 
-Names and parameter keys are `snake_case`; enum values are sent lowercase. Counts are integers.
+Names and parameter keys are `snake_case`; enum values are sent lowercase, booleans as `true` /
+`false`, counts as integers.
 
 | Event | Parameters | Logged by | When |
 |---|---|---|---|
