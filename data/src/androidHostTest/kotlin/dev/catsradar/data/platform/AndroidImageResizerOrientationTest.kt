@@ -69,6 +69,15 @@ class AndroidImageResizerOrientationTest {
     }
 
     @Test
+    fun aPhotoDecodedShrunkIsStillTurnedUpright() = runTest {
+        val source = PhotoFixtures.copyTo(temporaryFolder.root, PhotoFixtures.LARGE_ROTATED)
+        val stored = assertNotNull(resizer.store(source.path, "cat-large"))
+
+        assertEquals(Quadrant.entries, shownAs(stored.photoPath).quadrants)
+        assertEquals(Quadrant.entries, shownAs(assertNotNull(stored.thumbPath)).quadrants)
+    }
+
+    @Test
     fun anUprightedCopyCarriesNoOrientationTagForAViewerToApplyAgain() = runTest {
         val stored = storeOriented(ExifInterface.ORIENTATION_ROTATE_90)
 

@@ -22,7 +22,7 @@ class AndroidImageResizer(
 
     override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? =
         withContext(ioDispatcher) {
-            val source = decode(sourceUri) ?: return@withContext null
+            val source = context.decodeShrunk(sourceUri, Tuning.PHOTO_MAX_SIDE) ?: return@withContext null
             val turn = uprightTurn(sourceUri)
             try {
                 val photoPath = "$encounterId.jpg"
@@ -34,12 +34,9 @@ class AndroidImageResizer(
                 val thumbWritten = source.writeScaled(Tuning.THUMB_SIZE, turn, photoStorage.prepare(thumbPath))
                 StoredPhoto(photoPath = photoPath, thumbPath = thumbPath.takeIf { thumbWritten })
             } finally {
-                source.recycle()
+                source.bitmap.recycle()
             }
         }
-
-    private fun decode(sourceUri: String): Bitmap? =
-        runCatching { context.openPhotoStream(sourceUri).use(BitmapFactory::decodeStream) }.getOrNull()
 
     // BitmapFactory ignores EXIF Orientation, and the copies carry no EXIF, so the turn goes into the pixels.
     private fun uprightTurn(sourceUri: String): Matrix = Matrix().apply {
@@ -50,12 +47,13 @@ class AndroidImageResizer(
         postRotate(exif.rotationDegrees.toFloat())
     }
 
-    private fun Bitmap.writeScaled(maxSide: Int, turn: Matrix, destination: File): Boolean = runCatching {
+    private fun DecodedPhoto.writeScaled(maxSide: Int, turn: Matrix, destination: File): Boolean = runCatching {
+        // The file's size, not the bitmap's: the decoder rounds the sides of a shrunk bitmap.
         val target = scaleToFit(width, height, maxSide)
-        val scaled = if (target.width == width && target.height == height) {
-            this
+        val scaled = if (target.width == bitmap.width && target.height == bitmap.height) {
+            bitmap
         } else {
-            Bitmap.createScaledBitmap(this, target.width, target.height, true)
+            Bitmap.createScaledBitmap(bitmap, target.width, target.height, true)
         }
         try {
             val upright = if (turn.isIdentity) {
@@ -73,11 +71,35 @@ class AndroidImageResizer(
                 if (upright !== scaled) upright.recycle()
             }
         } finally {
-            if (scaled !== this) scaled.recycle()
+            if (scaled !== bitmap) scaled.recycle()
         }
     }.getOrDefault(false)
 
     private companion object {
         const val THUMB_SUFFIX = "_thumb.jpg"
     }
+}
+
+/** [bitmap] may be smaller than the file; [width] x [height] is the file's own size, before any EXIF turn. */
+internal class DecodedPhoto(val bitmap: Bitmap, val width: Int, val height: Int)
+
+internal fun Context.decodeShrunk(sourceUri: String, minLongestSide: Int): DecodedPhoto? = runCatching {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    openPhotoStream(sourceUri).use { BitmapFactory.decodeStream(it, null, bounds) }
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
+    val shrunk = BitmapFactory.Options().apply {
+        inSampleSize = sampleSizeFor(maxOf(bounds.outWidth, bounds.outHeight), minLongestSide)
+    }
+    openPhotoStream(sourceUri).use { BitmapFactory.decodeStream(it, null, shrunk) }
+        ?.let { DecodedPhoto(it, bounds.outWidth, bounds.outHeight) }
+}.getOrNull()
+
+/**
+ * The largest power of two that leaves [longestSide] at least [minLongestSide]. BitmapFactory rounds any
+ * other sample size down to a power of two.
+ */
+internal fun sampleSizeFor(longestSide: Int, minLongestSide: Int): Int {
+    var sampleSize = 1
+    while (longestSide / (sampleSize * 2) >= minLongestSide) sampleSize *= 2
+    return sampleSize
 }
