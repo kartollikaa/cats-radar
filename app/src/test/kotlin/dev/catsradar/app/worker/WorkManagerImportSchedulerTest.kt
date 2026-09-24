@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Configuration
 import androidx.work.Data
 import androidx.work.ListenableWorker
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
@@ -13,8 +14,10 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.ImportSummary
+import dev.catsradar.domain.usecase.ImportedPhoto
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -23,6 +26,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -106,9 +110,34 @@ class WorkManagerImportSchedulerTest {
         assertEquals(emptyList(), context.noBackupFilesDir.walk().filter(File::isFile).toList())
     }
 
-    private fun WorkManagerImportScheduler.startAndAwaitTheRun(uris: List<String>) = runBlocking {
+    @Test
+    fun aFullBatchReportsEveryPhotoItAdded() {
+        val addedIds = List(Tuning.IMPORT_BATCH_MAX) { UUID.randomUUID().toString() }
+        importPhotos = { _, _ -> ImportSummary(added = addedIds.map { ImportedPhoto(it, needsLocation = false) }) }
+
+        val run = WorkManagerImportScheduler(context).startAndAwaitTheRun(List(Tuning.IMPORT_BATCH_MAX, ::longProviderUri))
+
+        assertEquals(WorkInfo.State.SUCCEEDED, run.state)
+        assertEquals(addedIds, run.outputData.getStringArray(ImportPhotosWorker.KEY_ADDED_IDS)?.toList())
+    }
+
+    @Test
+    fun aPickWhoseBatchCannotBeStoredEndsItsRunInsteadOfCrashing() {
+        val storage = context.noBackupFilesDir
+        storage.setWritable(false)
+        try {
+            val run = WorkManagerImportScheduler(context).startAndAwaitTheRun(List(2, ::longProviderUri))
+
+            assertEquals(WorkInfo.State.SUCCEEDED, run.state)
+            assertEquals(emptyList(), imported)
+        } finally {
+            storage.setWritable(true)
+        }
+    }
+
+    private fun WorkManagerImportScheduler.startAndAwaitTheRun(uris: List<String>): WorkInfo = runBlocking {
         start(uris)
-        withTimeout(RUN_TIMEOUT) { observe().first { it?.state?.isFinished == true } }
+        withTimeout(RUN_TIMEOUT) { observe().filterNotNull().first { it.state.isFinished } }
     }
 
     private fun longProviderUri(index: Int): String =

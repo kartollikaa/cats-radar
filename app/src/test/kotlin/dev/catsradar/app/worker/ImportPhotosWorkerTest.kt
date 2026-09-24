@@ -80,6 +80,18 @@ class ImportPhotosWorkerTest {
     }
 
     @Test
+    fun aRunWhoseBatchCannotBeReadImportsNothingAndLeavesNoBatchBehind() = runTest {
+        storedFiles().single().writeText("[\"content://media/picker_get_content/0/com.andr")
+        val imported = mutableListOf<String>()
+
+        val result = worker { uris, _ -> ImportSummary().also { imported += uris } }.doWork()
+
+        assertEquals(ListenableWorker.Result.Success::class, result::class)
+        assertEquals(emptyList(), imported)
+        assertEquals(emptyList(), storedFiles())
+    }
+
+    @Test
     fun aFinishedRunLetsGoOfItsPhotos() = runTest {
         worker { _, _ -> ImportSummary() }.doWork()
 
