@@ -223,16 +223,21 @@ class RegionTreeTest {
 
     @Test
     fun `a named cell never claims a cat with no point on the globe for its country or city`() {
-        val cell = placeCellFixture(located(41.4, 2.2))
+        val barcelona = located(41.4, 2.2)
+        val cell = placeCellFixture(barcelona)
         val placeless = listOf(
             encounterFixture("no-point", BASE, LocationSource.CURRENT_FIX),
             encounterFixture("off-globe", BASE, LocationSource.CURRENT_FIX, lat = 91.0, lon = 2.0),
             encounterFixture("marked-none", BASE, LocationSource.NONE, lat = 41.4, lon = 2.2),
         ).map { it.copy(placeCellId = cell.cellId) }
+        val all = placeless + barcelona
         val cells = listOf(cell)
 
-        assertEquals(emptyList(), RegionTree.cities("ES", placeless, cells))
-        assertEquals(emptyList(), RegionTree.encountersIn(RegionKey.Country("ES"), placeless, cells))
+        assertEquals(
+            listOf(RegionNode(BARCELONA, RegionLabel.Named("Barcelona"), 1)),
+            RegionTree.cities("ES", all, cells),
+        )
+        assertEquals(listOf(barcelona), RegionTree.encountersIn(RegionKey.Country("ES"), all, cells))
     }
 
     @Test
