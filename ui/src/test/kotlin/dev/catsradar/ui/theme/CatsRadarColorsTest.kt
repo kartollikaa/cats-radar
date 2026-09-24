@@ -5,7 +5,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import dev.catsradar.ui.testing.MIN_TEXT_CONTRAST
-import dev.catsradar.ui.testing.contrast
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
