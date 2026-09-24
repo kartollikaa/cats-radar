@@ -681,6 +681,76 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `an import summary goes away by itself once its time is up`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
+        runCurrent()
+
+        advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE - 1.milliseconds)
+        runCurrent()
+        assertEquals(
+            ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+            store.state.value.importSummary,
+        )
+
+        advanceTimeBy(1.milliseconds)
+        runCurrent()
+        assertNull(store.state.value.importSummary)
+    }
+
+    @Test
+    fun `a timed-out import summary is not shown by a new screen reading it back`() = runTest(mainDispatcher) {
+        val settings = milestonesAlreadyCelebrated()
+        val finished = CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0)
+        val (first, _) = newStore(settingsRepository = settings)
+        first.dispatch(finished)
+        runCurrent()
+        advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE)
+        runCurrent()
+
+        val (second, _) = newStore(settingsRepository = settings)
+        second.dispatch(finished)
+        runCurrent()
+
+        assertNull(second.state.value.importSummary)
+    }
+
+    @Test
+    fun `an undo arriving after the import summary timed out takes nothing back`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter(id = "id-1"))
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
+        runCurrent()
+        advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE)
+        runCurrent()
+
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        assertEquals(emptyList(), repository.softDeleteAllCalls)
+    }
+
+    @Test
+    fun `a newer import summary is not cut short by the earlier one's time running out`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+            store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 1, failed = 0))
+            runCurrent()
+            advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE - 1.seconds)
+            store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a")))
+            store.dispatch(CounterIntent.Import.Finished("run-2", persistentListOf("id-2"), skipped = 0, failed = 0))
+            runCurrent()
+
+            advanceTimeBy(2.seconds)
+            runCurrent()
+
+            assertEquals(
+                ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+                store.state.value.importSummary,
+            )
+        }
+
+    @Test
     fun `progress survives the stats flow re-emitting as each photo lands`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a", "content://b")))
