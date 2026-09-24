@@ -19,6 +19,7 @@ import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
 import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.FollowWalkingMode
+import dev.catsradar.domain.usecase.RegeneratePhotoCopies
 import dev.catsradar.domain.usecase.RepairPlaceCells
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +61,7 @@ class CatsRadarApplication : Application() {
         koin.get<PlaceNamingTrigger>().start(appScope)
         // A repair that fails is retried at the next start; it must never take the app down with it.
         appScope.launch { runCatching { koin.get<RepairPlaceCells>()() } }
+        appScope.launch { runCatching { koin.get<RegeneratePhotoCopies>()() } }
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

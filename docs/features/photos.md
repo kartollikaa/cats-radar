@@ -149,6 +149,15 @@ portrait photo lies on its side in the app while the gallery, which keeps the or
 upright. `ImageDecoder` would shrink to an exact size in one call, but it applies the tag on its own,
 so on top of the resizer's turn it would turn every rotated photo twice.
 
+Copies written before the resizer applied the turn are rebuilt once. At start `RegeneratePhotoCopies`
+writes the copy and thumbnail of every photo with a gallery original again from that original, under
+the names its row already holds, soft-deleted cats included so an undo brings back an upright one.
+It repeats at each start until one pass completes, then never runs again. A photo with no original
+to go back to keeps the copy it has: an import, whose `galleryUri` is always null, a camera photo
+taken with gallery saving off, one whose gallery item has been deleted since, or a row whose copy is
+not a `.jpg` the resizer could have written. A backup restored after the pass brings its photos back
+as they were archived.
+
 The arithmetic — which side is longest, what the other becomes, when to do nothing — is
 `scaleToFit` in `:domain`, a pure function with its own tests. That split is deliberate: see
 *Testing the pixels* below.
@@ -212,6 +221,7 @@ nothing, which keeps a fixture that large small in the repository.
 - `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
 - `domain/…/usecase/AttachPhoto.kt`, `domain/…/model/PhotoStamp.kt` — giving a logged cat a photo
+- `domain/…/usecase/RegeneratePhotoCopies.kt` — the one-time rebuild of copies from gallery originals
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
 - `tools/make-photo-fixtures.py`, `data/src/androidHostTest/resources/photos/`
