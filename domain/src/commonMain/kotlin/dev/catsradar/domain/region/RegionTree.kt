@@ -11,15 +11,19 @@ import dev.catsradar.domain.model.PlaceStatus
 data class RegionNode(val key: RegionKey, val label: RegionLabel, val count: Int)
 
 sealed interface RegionKey {
+    sealed interface AreaParent : RegionKey
+
     data class Country(val countryCode: String) : RegionKey
-    data class City(val countryCode: String, val city: String) : RegionKey
-    data class Area(val areaHash: String) : RegionKey
+    data class City(val countryCode: String, val city: String) : AreaParent
+
+    /** [parent]'s encounters inside [areaHash]; another parent's encounters in the same patch are not in it. */
+    data class Area(val areaHash: String, val parent: AreaParent) : RegionKey
 
     /** Encounters that can be placed but whose cell has no name — pending, failed, or unavailable. */
-    data object Unresolved : RegionKey
+    data object Unresolved : AreaParent
 
     /** Encounters in [countryCode] whose cell names neither a locality nor an admin area. */
-    data class NoCity(val countryCode: String) : RegionKey
+    data class NoCity(val countryCode: String) : AreaParent
 
     /** Encounters with nothing to place them by: neither a geohash nor coordinates. */
     data object NoLocation : RegionKey
@@ -83,7 +87,7 @@ object RegionTree {
      * Areas under a node. Areas come from the geohash, so they work with no network and even for
      * encounters whose cell was never named.
      */
-    fun areas(parent: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
+    fun areas(parent: RegionKey.AreaParent, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
         val byCell = cells.associateBy { it.cellId }
         return encounters
             .filter { it.deletedAt == null }
@@ -92,7 +96,7 @@ object RegionTree {
             .groupBy({ it.first }, { it.second })
             .map { (areaHash, group) ->
                 RegionNode(
-                    key = RegionKey.Area(areaHash),
+                    key = RegionKey.Area(areaHash, parent),
                     label = areaLabel(areaHash, group, byCell),
                     count = group.size,
                 )
@@ -129,7 +133,7 @@ object RegionTree {
             is RegionKey.Country -> cell?.countryCode == parent.countryCode
             is RegionKey.City -> cell?.countryCode == parent.countryCode && cell.cityName() == parent.city
             is RegionKey.NoCity -> cell?.countryCode == parent.countryCode && cell.cityName() == null
-            is RegionKey.Area -> area == parent.areaHash
+            is RegionKey.Area -> area == parent.areaHash && belongsTo(parent.parent, byCell)
             RegionKey.Unresolved -> cell == null
             RegionKey.NoLocation -> false
         }

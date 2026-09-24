@@ -49,8 +49,8 @@ fun locatedFixture(id: String, occurredAt: Instant, lat: Double, lon: Double): E
         .copy(geohash = geohash, placeCellId = Geohash.prefix(geohash, Tuning.PLACE_CELL_PRECISION))
 }
 
-fun areaOf(encounter: Encounter): RegionKey.Area =
-    RegionKey.Area(Geohash.prefix(encounter.geohash!!, Tuning.AREA_PRECISION))
+fun areaOf(encounter: Encounter, parent: RegionKey.AreaParent): RegionKey.Area =
+    RegionKey.Area(Geohash.prefix(encounter.geohash!!, Tuning.AREA_PRECISION), parent)
 
 @Suppress("LongParameterList") // a fixture builder: every parameter is one field of the row
 fun placeCellFixture(
