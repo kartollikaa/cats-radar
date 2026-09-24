@@ -7,9 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.EndWalk
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -18,11 +15,11 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.robolectric.Shadows.shadowOf
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
@@ -54,14 +51,23 @@ class WalkingActionReceiverTest {
     }
 
     @Test
-    fun doneEndsTheWalkItselfRatherThanLeavingItToWhateverFollowsTheMode() = runBlocking {
+    fun doneEndsTheWalkItselfRatherThanLeavingItToWhateverFollowsTheMode() {
         settings.walking.value = true
 
         context.sendBroadcast(Intent(context, WalkingActionReceiver::class.java).setAction(WalkingAction.STOP))
         shadowOf(Looper.getMainLooper()).idle()
+        awaitBroadcastFinished()
 
-        val ended = withTimeout(5.seconds) { walks.walk.first { it.endedAt != null } }
-        assertEquals(WalkStart + 40.minutes, ended.endedAt)
+        assertEquals(WalkStart + 40.minutes, walks.walk.value.endedAt)
         assertFalse(settings.walking.value)
+    }
+
+    // A goAsync() broadcast is over only when its pending result finishes, not at its first visible effect.
+    private fun awaitBroadcastFinished() {
+        val receiver = shadowOf(context).registeredReceivers
+            .map { it.broadcastReceiver }
+            .filterIsInstance<WalkingActionReceiver>()
+            .single()
+        shadowOf(shadowOf(receiver).originalPendingResult).future.get(5, TimeUnit.SECONDS)
     }
 }
