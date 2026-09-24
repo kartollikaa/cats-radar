@@ -90,6 +90,14 @@ pass it on, so the resizer applies the turn, or the mirroring, to the pixels its
 portrait photo lies on its side in the app while the gallery, which keeps the original, shows it
 upright.
 
+Copies written before the resizer applied the turn are rebuilt once. At start `RegeneratePhotoCopies`
+writes the copy and thumbnail of every photo with a gallery original again from that original, under
+the names its row already holds, soft-deleted cats included so an undo brings back an upright one.
+It repeats at each start until one pass completes, then never runs again. A photo with no original
+to go back to keeps the copy it has: an import, whose `galleryUri` is always null, a camera photo
+taken with gallery saving off, or one whose gallery item has been deleted since. A backup restored
+after the pass brings its photos back as they were archived.
+
 The arithmetic — which side is longest, what the other becomes, when to do nothing — is
 `scaleToFit` in `:domain`, a pure function with its own tests. That split is deliberate: see
 *Testing the pixels* below.
@@ -144,6 +152,7 @@ never comes from the code under test.
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
 - `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
+- `domain/…/usecase/RegeneratePhotoCopies.kt` — the one-time rebuild of copies from gallery originals
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
 - `tools/make-photo-fixtures.py`, `data/src/androidHostTest/resources/photos/`

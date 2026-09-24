@@ -52,6 +52,8 @@ internal class FakeWalkingSettings : SettingsRepository {
     override suspend fun setEncountersGrid(enabled: Boolean) = Unit
     override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
+    override fun photoCopiesRegenerated(): Flow<Boolean> = MutableStateFlow(true)
+    override suspend fun setPhotoCopiesRegenerated(done: Boolean) = Unit
 }
 
 /** One walk, on from [WalkStart] until something ends it. */
