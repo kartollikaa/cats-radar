@@ -98,7 +98,8 @@ Two pseudo-nodes always come **last**, after every real place, and only when the
 
 - **Not named yet** — cats with coordinates whose cell has no name (pending, failed, or no
   geocoder). It drills into areas like any country would.
-- **No location** — cats with no coordinates at all. It drills straight to the cats.
+- **No location** — cats with nothing to place them by: no coordinates and no geohash. It drills
+  straight to the cats.
 
 A country's cities end the same way, with **No city**: the cats whose cell names that country but
 neither a locality nor an admin area, which is what a geocoder answers at sea or in open country.

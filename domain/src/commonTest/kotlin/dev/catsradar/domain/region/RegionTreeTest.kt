@@ -191,11 +191,17 @@ class RegionTreeTest {
     @Test
     fun `a cat marked located with nothing to place it by is No location, and listed there`() {
         val intact = located(41.390, 2.170)
-        val placeless = intact.copy(lat = null, lon = null, geohash = null)
+        val placeless = listOf(
+            intact.copy(id = "no-coordinates", lat = null, lon = null, geohash = null),
+            intact.copy(id = "off-the-globe", lat = 91.0, geohash = null),
+        )
         val cells = listOf(placeCellFixture(intact))
 
-        assertEquals(listOf(RegionKey.NoLocation), RegionTree.countries(listOf(placeless), cells).map { it.key })
-        assertEquals(listOf(placeless), RegionTree.encountersIn(RegionKey.NoLocation, listOf(placeless), cells))
+        assertEquals(
+            listOf(RegionNode(RegionKey.NoLocation, RegionLabel.NoLocation, 2)),
+            RegionTree.countries(placeless, cells),
+        )
+        assertEquals(placeless, RegionTree.encountersIn(RegionKey.NoLocation, placeless, cells))
     }
 
     @Test

@@ -141,7 +141,7 @@ One row per geohash cell of precision `PLACE_CELL_PRECISION = 6` (~1.2 km × 0.6
 |---|---|---|---|
 | Country | `countryCode` | `countryName` | after resolution |
 | City | `(countryCode, locality ?: adminArea)` | `locality ?: adminArea` | after resolution |
-| Area | `geohash.take(AREA_PRECISION = 5)` (~4.9 km) | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
+| Area | `geohash.take(AREA_PRECISION = 5)` (~4.9 km); from the coordinates when the geohash is missing or malformed | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
 
 Pseudo-nodes: **"Unresolved"** (country level) holds encounters whose cell is
 `PENDING`/`FAILED`/`UNAVAILABLE`; **"No city"** (city level, under its country) holds encounters
