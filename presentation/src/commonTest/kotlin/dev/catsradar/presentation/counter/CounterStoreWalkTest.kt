@@ -144,4 +144,17 @@ class CounterStoreWalkTest {
 
         assertEquals(5.minutes.toString(), store.state.value.walkElapsedLabel)
     }
+
+    @Test
+    fun `nothing watches the walks while walking mode is off`() = runTest(mainDispatcher) {
+        val settings = milestonesAlreadyCelebrated()
+        val walks = FakeWalkRepository()
+        newStore(settingsRepository = settings, walkRepository = walks)
+        assertEquals(0, walks.watching)
+
+        settings.setWalkingMode(true)
+        runCurrent()
+
+        assertEquals(1, walks.watching)
+    }
 }

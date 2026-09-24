@@ -1,6 +1,7 @@
 package dev.catsradar.app.notification
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,6 +10,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -23,13 +25,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class WalkingNotifierTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val notifier = WalkingNotifier(context)
+    private val notifier = WalkingNotifier(context, WalkClock)
 
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val shadowManager = shadowOf(manager)
@@ -81,6 +84,55 @@ class WalkingNotifierTest {
         assertTrue(posted.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertTrue(posted.extras.getBoolean(Notification.EXTRA_SHOW_WHEN))
         assertFalse(posted.extras.getBoolean(Notification.EXTRA_CHRONOMETER_COUNT_DOWN))
+    }
+
+    @Test
+    fun aStartAheadOfTheClockCountsFromNowRatherThanBelowZero() {
+        val posted = showAndRead(count = 3, startedAt = WalkClock.now() + 10.minutes)
+
+        assertEquals(WalkClock.now().toEpochMilliseconds(), posted.`when`)
+    }
+
+    // The header draws a chronometer even with showWhen off, so beside the Walk metric there must be none.
+    @Test
+    fun fromApi37TheTimeIsAMetricAndTheHeaderShowsNoClock() {
+        grantNotifications()
+        val notifier = WalkingNotifier(context, WalkClock, sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+        notifier.ensureChannel()
+
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = false)
+
+        val posted = assertNotNull(shadowManager.allNotifications.firstOrNull())
+        assertFalse(posted.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertFalse(posted.extras.getBoolean(Notification.EXTRA_SHOW_WHEN))
+        assertEquals("3", NotificationCompat.getShortCriticalText(posted))
+    }
+
+    @SuppressLint("NewApi") // builds the compat style object only; nothing platform-level runs
+    @Test
+    fun theWalkMetricsAreTheCountAndAStopwatchFromTheWalksStart() {
+        val metrics = context.walkMetrics(count = 3, startedAt = WalkStart).metrics
+
+        assertEquals(
+            listOf(R.string.notification_walking_metric_cats, R.string.notification_walking_metric_time)
+                .map(context::getString),
+            metrics.map { it.label.toString() },
+        )
+        assertEquals(3, (metrics[0].value as NotificationCompat.Metric.FixedInt).value)
+        val walk = metrics[1].value as NotificationCompat.Metric.TimeDifference
+        assertTrue(walk.isStopwatch)
+        assertEquals(WalkStart.toEpochMilliseconds(), walk.zeroTime?.toEpochMilli())
+    }
+
+    @SuppressLint("NewApi") // builds the compat style object only; nothing platform-level runs
+    @Test
+    fun beforeItsWalkHasStartedTheOnlyMetricIsTheCount() {
+        val metrics = context.walkMetrics(count = 3, startedAt = null).metrics
+
+        assertEquals(
+            listOf(context.getString(R.string.notification_walking_metric_cats)),
+            metrics.map { it.label.toString() },
+        )
     }
 
     @Test

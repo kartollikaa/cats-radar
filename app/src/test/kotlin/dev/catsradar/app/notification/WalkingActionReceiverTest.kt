@@ -54,7 +54,7 @@ class WalkingActionReceiverTest {
                     single<SettingsRepository> { settings }
                     single<WalkRepository> { walks }
                     single { EndWalk(walks, clock) }
-                    single { WalkingNotifier(context) }
+                    single { WalkingNotifier(context, WalkClock) }
                     single { LogTally(encounters, SequentialIds(), OneDevice, clock) }
                     single { ObserveStats(encounters, clock, TimeZone.UTC) }
                     single<LocationAttachScheduler> { NoLocationAttach }
@@ -85,7 +85,7 @@ class WalkingActionReceiverTest {
     @Test
     fun aCatFromTheNotificationKeepsTheWalksTimeOnIt() {
         shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
-        WalkingNotifier(context).ensureChannel()
+        WalkingNotifier(context, WalkClock).ensureChannel()
 
         context.sendBroadcast(Intent(context, WalkingActionReceiver::class.java).setAction(WalkingAction.TALLY))
         shadowOf(Looper.getMainLooper()).idle()

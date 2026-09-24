@@ -22,10 +22,13 @@ import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList") // one parameter per collaborator
@@ -77,9 +80,12 @@ class CounterStore(
                 announceMilestone(stats.total)
             }
             .launchIn(viewModelScope)
-        combine(settingsRepository.walkingMode(), observeWalkElapsed()) { enabled, elapsed ->
-            enabled to stateMapper.walkElapsedLabel(enabled, elapsed)
-        }
+        settingsRepository.walkingMode()
+            // The walk's clock runs only for the length of a walk.
+            .flatMapLatest { enabled ->
+                val elapsed = if (enabled) observeWalkElapsed().onStart { emit(null) } else flowOf(null)
+                elapsed.map { enabled to stateMapper.walkElapsedLabel(enabled, it) }
+            }
             .onEach { (enabled, elapsedLabel) ->
                 setState { copy(walkingMode = enabled, walkElapsedLabel = elapsedLabel) }
             }

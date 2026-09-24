@@ -121,6 +121,19 @@ class WalkingNotificationSyncTest {
             )
         }
 
+    // Done writes the flag and then ends the walk; the two can reach the sync in either order.
+    @Test
+    fun `a walk ending while the mode still reads on does not put the notification back up`() =
+        runTest(UnconfinedTestDispatcher()) {
+            startSync()
+            settings.walking.value = true
+
+            walks.end()
+            settings.walking.value = false
+
+            assertEquals(listOf(Posted.Clear, Posted.Show(0), Posted.Clear), notifications.actions)
+        }
+
     @Test
     fun `stopping the walk takes the notification away`() = runTest(UnconfinedTestDispatcher()) {
         startSync()
@@ -155,6 +168,10 @@ private class OpenWalkOnly : WalkRepository {
 
     fun start(at: Instant) {
         open.value = Walk("walk-1", startedAt = at, endedAt = null, "device-1", createdAt = at, updatedAt = at)
+    }
+
+    fun end() {
+        open.value = null
     }
 
     override fun observeAll(): Flow<List<Walk>> = open.map { listOfNotNull(it) }

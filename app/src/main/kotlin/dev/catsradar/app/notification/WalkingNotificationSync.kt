@@ -9,16 +9,18 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlin.time.Instant
 
 /**
- * Holds the walking notification equal to the stored flag and to the outing it is counting, for as
- * long as the process lives.
+ * Holds the walking notification equal to the stored flag, to the outing it is counting and to when
+ * the walk began, for as long as the process lives.
  *
  * A screen that posted the notification itself would leave it gone — with the flag still reading on
  * — after a reboot, a force-stop, or a swipe away from the shade.
@@ -37,7 +39,7 @@ class WalkingNotificationSync(
                 if (enabled) {
                     combine(
                         observeStats().map { it.currentOuting?.count ?: 0 },
-                        observeOpenWalk().map { it?.startedAt },
+                        observeOpenWalk().map { it?.startedAt }.keptAfterTheWalkEnds(),
                         appOnScreen,
                         ::Shown,
                     )
@@ -57,4 +59,8 @@ class WalkingNotificationSync(
             .launchIn(scope)
 
     private data class Shown(val count: Int, val startedAt: Instant?, val appOnScreen: Boolean)
+
+    // The mode going off clears the notification; a repost before it would undo a swipe away.
+    private fun Flow<Instant?>.keptAfterTheWalkEnds(): Flow<Instant?> =
+        scan<Instant?, Instant?>(null) { last, start -> start ?: last }.drop(1)
 }

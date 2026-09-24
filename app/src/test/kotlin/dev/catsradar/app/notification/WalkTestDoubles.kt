@@ -21,10 +21,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 internal val WalkStart = Instant.parse("2026-09-23T09:00:00Z")
+
+/** Twenty minutes into the walk that began at [WalkStart]. */
+internal object WalkClock : Clock {
+    override fun now(): Instant = WalkStart + 20.minutes
+}
 
 internal class TrackingOnlyLocationProvider(private val fixes: Flow<LocationFix>) : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? = null

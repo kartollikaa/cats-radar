@@ -43,7 +43,7 @@ class WalkRecordingServiceTest {
     private val walks = OneWalkRepository()
     private val fixes = MutableSharedFlow<LocationFix>()
     private val recordingState = InMemoryRecordingState()
-    private val notifier = WalkingNotifier(context)
+    private val notifier = WalkingNotifier(context, WalkClock)
     private val controllers = mutableListOf<ServiceController<WalkRecordingService>>()
 
     @Before

@@ -17,8 +17,9 @@ the cat on both of them walks.
   first cat. The outing already has its own line on the Counter ("3 cats · 26 min"); the walk is
   the thing the button starts and stops.
 - **On the button it is minutes**: the second line reads *32 min · press and hold* (*32 мин ·
-  удерживайте*, shorter so it still fits at narrow widths), formatted like every other duration on
-  the Counter. It moves within a few seconds of each minute, on the same tick as the outing line.
+  удерживайте*: the hint is cut short so the line stays about as long as the plain hint was),
+  formatted like every other duration on the Counter. It moves within a few seconds of each minute,
+  and nothing keeps it ticking while no walk is on.
 - **In the notification it is a chronometer** counting up from the start, `12:34` then `1:02:03`. The
   system ticks it, so the time moves with no repost and keeps moving while the app's process is
   dead. From API 37 the notification is a `MetricStyle` with two metrics, *Cats* and *Walk*, and
@@ -30,9 +31,15 @@ the cat on both of them walks.
   moment later; in between, the button shows the plain hint and the notification shows no time,
   rather than a clock started from a guess. A **Cat!** from the lock screen reads the walk's start
   again as it re-posts, so the time does not drop off the notification with the tap.
+- **A start ahead of the clock counts from now.** A clock set back after the walk began would
+  otherwise count up from below zero; the button reads *0 min* and the notification starts at zero.
+- **The walk ending is not news to the notification.** **Done** turns the mode off and ends the
+  walk, and the two can arrive in either order; the notification keeps the walk's start until the
+  mode goes off and clears it, rather than being put back up, without a time, a moment after it
+  was swiped away.
 - **The cat walks only while a walk is on.** With no walk it stands on its first frame, legs
-  straight down. The button's loop and the notification's icon play the same eight frames at the
-  same pace; the status bar runs the icon's loop, in the Live Update chip too.
+  straight down. The button's loop and the notification's icon play the same frames at the same
+  pace; the status bar runs the icon's loop, in the Live Update chip too.
 
 ## Stopping takes a hold
 

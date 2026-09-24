@@ -341,6 +341,7 @@ internal class FakeSettingsRepository(
 /** Holds at most the one walk that is on; the Counter only ever reads that one. */
 internal class FakeWalkRepository : WalkRepository {
     private val open = MutableStateFlow<Walk?>(null)
+    val watching: Int get() = open.subscriptionCount.value
 
     fun startAt(at: Instant) {
         open.value = Walk(

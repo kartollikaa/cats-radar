@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -19,6 +20,7 @@ import androidx.core.content.ContextCompat
 import dev.catsradar.app.MainActivity
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.ui.R
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
 
@@ -33,10 +35,17 @@ private const val NOTIFICATION_ID = 2
  * With location allowed it is carried by [WalkRecordingService], which records the walk's route;
  * without, it is a plain ongoing notification, which outlives the app leaving the screen on its own.
  */
-class WalkingNotifier(private val context: Context) : WalkingNotifications {
+class WalkingNotifier(
+    private val context: Context,
+    private val clock: Clock,
+    private val sdkInt: Int = Build.VERSION.SDK_INT,
+) : WalkingNotifications {
 
     private val manager = NotificationManagerCompat.from(context)
     private val recording = WalkRecordingControl(context)
+
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.CINNAMON_BUN)
+    private val hasMetricStyle = sdkInt >= Build.VERSION_CODES.CINNAMON_BUN
 
     fun ensureChannel() {
         manager.deleteNotificationChannel(RETIRED_CHANNEL_ID)
@@ -76,7 +85,8 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
             .setSmallIcon(R.drawable.ic_cat_walking)
             .setContentTitle(context.getString(R.string.notification_walking_title))
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
-            .showWalkTime(count, startedAt)
+            // A start ahead of the clock would count up from below zero.
+            .showWalkTime(count, startedAt?.let { minOf(it, clock.now()) })
             .setOngoing(true)
             .setSilent(true)
             // API 36.1 and up may promote an ongoing notification to the status-bar chip and the
@@ -111,7 +121,7 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
     // The header draws a chronometer even with showWhen off, so beside MetricStyle's stopwatch there is none.
     private fun NotificationCompat.Builder.showWalkTime(count: Int, startedAt: Instant?): NotificationCompat.Builder =
         when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN ->
+            hasMetricStyle ->
                 setShowWhen(false).setStyle(context.walkMetrics(count, startedAt))
             startedAt == null -> setShowWhen(false)
             else -> setWhen(startedAt.toEpochMilliseconds()).setShowWhen(true).setUsesChronometer(true)
@@ -157,7 +167,7 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
 }
 
 @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
-private fun Context.walkMetrics(count: Int, startedAt: Instant?): NotificationCompat.MetricStyle {
+internal fun Context.walkMetrics(count: Int, startedAt: Instant?): NotificationCompat.MetricStyle {
     val style = NotificationCompat.MetricStyle().addMetric(
         NotificationCompat.Metric(
             NotificationCompat.Metric.FixedInt(count),
