@@ -26,7 +26,8 @@ start and gives each located cat the geohash and cell its coordinates imply. Tha
 cats, so an undo brings back a whole row. A missing cell is created pending, like any new one, so it
 gets named. Only those two columns are written, every cat's in one transaction. `updatedAt` stays as it
 was, because the cat itself has not changed. A cat whose coordinates changed while the repair was
-running is left alone. If the repair fails, the next start runs it again. Without the repair such a
+running is left alone. If the repair fails, the next start runs it again, and the failure is reported
+to Crashlytics as a non-fatal (`analytics.md`). Without the repair such a
 cat would sit under "Not named yet" for good, because nothing ever looks up a cell that does not
 exist.
 

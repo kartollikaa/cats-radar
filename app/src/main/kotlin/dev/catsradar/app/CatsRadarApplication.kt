@@ -12,6 +12,8 @@ import dev.catsradar.app.di.workerModule
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.app.reporting.tagCrashReports
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
@@ -33,6 +35,7 @@ import org.koin.core.context.startKoin
 class CatsRadarApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        tagCrashReports(BuildConfig.BUILD_TYPE)
         val koin = startKoin {
             androidLogger()
             androidContext(this@CatsRadarApplication)
@@ -59,9 +62,10 @@ class CatsRadarApplication : Application() {
         }
         koin.get<WidgetRefresh>().start(appScope)
         koin.get<PlaceNamingTrigger>().start(appScope)
-        // A repair that fails is retried at the next start; it must never take the app down with it.
-        appScope.launch { runCatching { koin.get<RepairPlaceCells>()() } }
-        appScope.launch { runCatching { koin.get<RegeneratePhotoCopies>()() } }
+        StartupRepairs(
+            repairs = listOf({ koin.get<RepairPlaceCells>()() }, { koin.get<RegeneratePhotoCopies>()() }),
+            reporter = koin.get<NonFatalReporter>(),
+        ).launchIn(appScope)
         GeocodeWorkScheduler.schedule(this)
         PurgeWorkScheduler.schedule(this)
     }

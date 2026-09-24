@@ -12,6 +12,7 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.ImportSummary
 import dev.catsradar.domain.usecase.ImportedPhoto
@@ -52,7 +53,13 @@ class WorkManagerImportSchedulerTest {
                 workerClassName: String,
                 workerParameters: WorkerParameters,
             ): ListenableWorker =
-                ImportPhotosWorker(appContext, workerParameters, importPhotos, ImportNotifier(appContext))
+                ImportPhotosWorker(
+                    appContext,
+                    workerParameters,
+                    importPhotos,
+                    ImportNotifier(appContext),
+                    RecordingNonFatalReporter(),
+                )
         }
         WorkManagerTestInitHelper.initializeTestWorkManager(
             context,

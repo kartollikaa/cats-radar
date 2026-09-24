@@ -152,7 +152,9 @@ so on top of the resizer's turn it would turn every rotated photo twice.
 Copies written before the resizer applied the turn are rebuilt once. At start `RegeneratePhotoCopies`
 writes the copy and thumbnail of every photo with a gallery original again from that original, under
 the names its row already holds, soft-deleted cats included so an undo brings back an upright one.
-It repeats at each start until one pass completes, then never runs again. A photo with no original
+It repeats at each start until one pass completes, then never runs again; a pass that fails, even by
+running out of memory on one photo, is reported to Crashlytics as a non-fatal (`analytics.md`) and
+never takes the app down. A photo with no original
 to go back to keeps the copy it has: an import, whose `galleryUri` is always null, a camera photo
 taken with gallery saving off, one whose gallery item has been deleted since, or a row whose copy is
 not a `.jpg` the resizer could have written. A backup restored after the pass brings its photos back

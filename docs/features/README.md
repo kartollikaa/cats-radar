@@ -41,6 +41,8 @@ a document nobody updates is worse than none.
 - `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
   things that redraw it.
 - `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the
-  one screen that goes online.
+  one screen that fetches from the network.
+- `analytics.md` — crash reports to Firebase Crashlytics: what is sent, what never is, the failures
+  the app recovers from that are still reported, and why every build reports.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.
