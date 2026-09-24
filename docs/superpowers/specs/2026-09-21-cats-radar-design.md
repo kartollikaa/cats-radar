@@ -1,6 +1,6 @@
 # Cats Radar — design spec
 
-Date: 2026-09-21. Status: v4 (2026-09-22) — coat in v1, Map epic defined for after v1.
+Date: 2026-09-21. Status: v5 (2026-09-23) — a logged cat can be given a photo; a photo asks for its coat.
 Research behind this spec: [docs/research/2026-09-21-competitor-scan.md](../../research/2026-09-21-competitor-scan.md).
 
 ## 1. Summary
@@ -26,7 +26,8 @@ country → city → area, and an encounter rate derived from automatically dete
 - Map view, outing route, personal heatmap, distance-based rates — the **Map epic** that follows v1
   (§9); v1 only stores what that epic needs (coordinates, coat).
 - Quantity per encounter, unique-cat identity ("same cat as yesterday?"), breed identification.
-- Editing an encounter's time or location after the fact; captions/notes. (Coat *is* editable.)
+- Editing an encounter's time or location after the fact; captions/notes; replacing or removing a
+  photo. (Coat *is* editable, and a cat without a photo can be given one — §4.2a.)
 - Manual outing start/stop; tablets/foldables layouts; wearables.
 - iOS target and the shared-UI decision (Compose Multiplatform vs SwiftUI) — deferred until the
   Android app is releasable.
@@ -50,6 +51,8 @@ country → city → area, and an encounter rate derived from automatically dete
 | Architecture | Layered modules `:domain` / `:data` / `:presentation` / `:ui` / `:app`; minimal MVI (`Store` with State/Intent/Effect). |
 | Quality gates | detekt + formatting + compose-rules, Android Lint, Konsist architecture tests; all in `./gradlew check` and CI. |
 | Coat (2026-09-22) | Optional cat coat from a fixed list of eleven, in v1: column in the first schema, picker after a tally or photo, editable in detail, statistics by coat. |
+| Photo for a logged cat (2026-09-23) | A cat logged without a photo can be given one later, from the camera or the gallery, on its detail screen. The cat keeps its time, place and coat. |
+| Coat after a photo (2026-09-23) | A photo from the camera asks for its coat in a bottom sheet over the Counter right after the shutter; skipping leaves it unset. Gallery import asks nothing. |
 | Colour (2026-09-23) | Material You: the wallpaper's colours on Android 12+, in the app and the widget; the icon-teal palette below 12 and in previews. No in-app switch. |
 | Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
 
@@ -66,8 +69,8 @@ attached in the background (§4.3).
 
 **F2 Photo.** Counter screen → tap camera → system camera. On return: original saved to the gallery
 (if enabled), compressed copy + thumbnail stored privately, encounter saved with EXIF location if
-present, else the background location chain. No coat control follows a photo; its coat is set on
-the detail screen (F6).
+present, else the background location chain. Then a bottom sheet asks for the cat's coat — one tap
+on a face sets it, dismissing leaves it unset (§4.2 step 7).
 
 **F3 Import.** Counter screen → the gallery half of the Photo split button (or Settings → Import
 photos) → gallery multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress
@@ -81,7 +84,7 @@ point. Regions drill down Country → City → Area → encounters in that area.
 
 **F6 Encounters.** Chronological list grouped by outing; photos as a grid; tap for detail; delete
 from detail (soft delete, undo snackbar); the detail screen shows the coat swatch and lets it be
-changed or cleared.
+changed or cleared, and gives a cat without a photo one from the camera or the gallery (§4.2a).
 
 **F7 Export / import backup.** Settings → Export creates a ZIP via the system file picker; Import
 merges a ZIP back (§4.7).
@@ -100,10 +103,10 @@ returns to Counter; back from Counter exits.
 | `id` | String (UUIDv4) | PK. Generated on device. |
 | `occurredAt` | Long (epoch ms, UTC) | Tally/camera: now. Gallery: EXIF `DateTimeOriginal` (+ `OffsetTimeOriginal`, else device zone), else file date, else now. |
 | `tzOffsetMinutes` | Int | UTC offset at `occurredAt`. Keeps "today"/streaks stable when travelling. |
-| `kind` | enum `TALLY` \| `PHOTO` | |
+| `kind` | enum `TALLY` \| `PHOTO` | How the cat was logged; a photo attached later does not change it. |
 | `origin` | enum `APP` \| `WIDGET` \| `CAMERA` \| `GALLERY` | How it was logged. Drives import rules (§4.6) and debugging. |
-| `coat` | enum `CatCoat`? | `GINGER`, `GINGER_WHITE`, `WHITE`, `TRICOLOR_MOSTLY_WHITE`, `TRICOLOR_LITTLE_WHITE`, `BROWN`, `BROWN_WHITE`, `GREY`, `GREY_WHITE`, `BLACK`, `BLACK_WHITE`. Null = not specified. The only field editable after creation. |
-| `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null for TALLY. |
+| `coat` | enum `CatCoat`? | `GINGER`, `GINGER_WHITE`, `WHITE`, `TRICOLOR_MOSTLY_WHITE`, `TRICOLOR_LITTLE_WHITE`, `BROWN`, `BROWN_WHITE`, `GREY`, `GREY_WHITE`, `BLACK`, `BLACK_WHITE`. Null = not specified. Editable after creation. |
+| `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null until the cat has a photo; set once, on a TALLY only by §4.2a. |
 | `thumbPath` | String? | Generated thumbnail. |
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
 | `sourceDigest` | String? | SHA-256 of the bytes the source hands over — the picker's redacted copy when location is not shared; duplicate imports are skipped on it. |
@@ -185,6 +188,30 @@ Duration is first-cat-to-last-cat, so rates are optimistic; manual outings (road
 5. Insert the encounter (`origin = CAMERA`, `occurredAt = now`). EXIF GPS → `locationSource = EXIF`;
    otherwise enqueue `AttachLocationWorker`.
 6. Cancelled camera → nothing. Decode failure → no encounter, toast "Photo not saved".
+7. Once the encounter is saved, the Counter shows a bottom sheet with its thumbnail, the eleven
+   coats and "Not now". A coat → `SetCoat`, the sheet closes; swipe, back or "Not now" closes it
+   with the coat unset. The cat is already saved, so losing the sheet (leaving the app, process
+   death) loses nothing but the question.
+
+### 4.2a Photo for a logged cat (F6)
+
+A cat with no photo — a tally from any origin — can be given one on its detail screen, from the
+camera or picked from the gallery (one photo).
+
+1. The app copy and thumbnail as §4.2 step 4, under a name fresh to this attempt rather than the
+   encounter's id, so an attempt that loses the row to another removes only its own files. Decode
+   failure → the cat is unchanged, toast "Photo not attached". Cancelled camera or picker → nothing.
+2. From the camera the original goes to the gallery under §4.2 step 3's setting; from the gallery it
+   does not (`galleryUri = null`, as in §4.6).
+3. The write sets only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`, and
+   only on a live row that still has no photo. A row deleted or given a photo in the meantime is
+   left alone and the files just written are removed. A camera original already handed to the
+   gallery stays there: it is the user's photo either way. A full-row update would resurrect a cat
+   deleted mid-attach and overwrite a location attached mid-attach.
+4. `occurredAt`, location, `kind`, `origin` and `coat` stay: the encounter happened when it was
+   logged, and the photo's EXIF says nothing about that moment.
+5. The same photo may go on more than one cat — one picture of two cats. Its digest is stored, so a
+   later gallery import of it is skipped (§4.6).
 
 ### 4.3 Location precedence
 
@@ -267,7 +294,7 @@ truncated to a day; `today` = the device's current local date.
 |---|---|
 | Total | `|E|` |
 | Today / 7 days / 30 days | count by local date relative to `today` |
-| With photo | `|{e : kind = PHOTO}|` and share of total |
+| With photo | `|{e : photoPath ≠ null}|` and share of total — a tally given a photo counts |
 | By coat | count per `CatCoat` value plus one "Not specified" row for `coat = null`, sorted by count desc; rows with zero are hidden |
 | Current streak | consecutive local dates with ≥ 1 encounter ending `today` or `today − 1`; 0 otherwise |
 | Longest streak | max run of consecutive local dates with ≥ 1 encounter |
@@ -337,6 +364,7 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 |---|---|
 | Location timeout / provider error | fall through §4.3; a tally never shows an error |
 | Camera returns no file / corrupt JPEG | no encounter; toast |
+| Photo attached to a cat is unreadable | the cat is unchanged; toast |
 | MediaStore insert fails | encounter still saved; `galleryUri = null`; one-line toast |
 | Thumbnail decode fails | encounter saved, `thumbPath = null`, placeholder in UI |
 | Geocoder throws / empty | `attempts++`, backoff, `FAILED` after budget; "Unresolved" node |

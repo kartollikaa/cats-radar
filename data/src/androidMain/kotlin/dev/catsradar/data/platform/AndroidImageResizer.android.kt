@@ -20,17 +20,17 @@ class AndroidImageResizer(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ImageResizer {
 
-    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? =
+    override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? =
         withContext(ioDispatcher) {
             val source = decode(sourceUri) ?: return@withContext null
             val turn = uprightTurn(sourceUri)
             try {
-                val photoPath = "$encounterId.jpg"
+                val photoPath = "$baseName.jpg"
                 // No copy is worth keeping without the photo itself, so a failure here fails the call.
                 if (!source.writeScaled(Tuning.PHOTO_MAX_SIDE, turn, photoStorage.prepare(photoPath))) {
                     return@withContext null
                 }
-                val thumbPath = "$encounterId$THUMB_SUFFIX"
+                val thumbPath = "$baseName$THUMB_SUFFIX"
                 val thumbWritten = source.writeScaled(Tuning.THUMB_SIZE, turn, photoStorage.prepare(thumbPath))
                 StoredPhoto(photoPath = photoPath, thumbPath = thumbPath.takeIf { thumbWritten })
             } finally {
