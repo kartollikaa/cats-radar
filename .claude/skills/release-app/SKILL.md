@@ -68,18 +68,27 @@ over the APK — no version bump, no PR, no tag).
      `assembleRelease` still succeeds but produces `app-release-unsigned.apk`, which no phone
      will install — don't attach that; ship debug-only and say so in the release body, the way
      past pre-releases have ("The signed release build will be added to this release").
+   - The release build is minified by R8, which the debug build never is. Install the signed
+     APK and walk the by-name paths listed in `docs/reference/releasing.md` (widget tap, a
+     tally, backup export + import, a screen surviving a background kill) before tagging —
+     a missing keep rule shows up nowhere else. On the shared emulator, a release build signed
+     with the debug key and given an `applicationIdSuffix` through a scratchpad Gradle init
+     script leaves other sessions' installs alone; give it a distinct `app_name` too, or its
+     widget is indistinguishable from theirs in the launcher's picker.
    - Rename to the convention before attaching: `cats-radar-<versionName>.apk` (release) /
-     `cats-radar-<versionName>-debug.apk` (debug).
+     `cats-radar-<versionName>-debug.apk` (debug), and the release build's
+     `app/build/outputs/mapping/release/mapping.txt` → `cats-radar-<versionName>-mapping.txt`.
+     The mapping from any other build does not fit this APK's stack traces.
 6. **Tag and publish.**
    ```
    gh release create v<versionName> --prerelease --target <merge-commit-sha> \
      --title "v<versionName> — <one-line theme>" \
      --notes-file <release-notes.md> \
-     <renamed-apk-path...>
+     <renamed-apk-path...> <renamed-mapping-path>
    ```
    `--target` matters: the tag doesn't exist yet, and without it the release would tag
-   whatever `HEAD` happens to be in the *local* repo, not the merge commit on `main`. A ~90 MB
-   APK upload can exceed the default tool timeout — expect it to run in the background and
+   whatever `HEAD` happens to be in the *local* repo, not the merge commit on `main`. The
+   upload can exceed the default tool timeout — expect it to run in the background and
    don't retry mid-upload.
 
 ## Release notes shape
