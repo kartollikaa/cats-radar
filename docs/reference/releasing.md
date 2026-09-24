@@ -11,9 +11,9 @@ release: Android refuses an update whose version code is not higher than the one
 ## The signing key
 
 A release build is signed with a key that never enters the repository. The keystore and a small
-signing file live together outside it (on this machine, in `~/Projects/Signing/`). The signing file is
-shared by every app signed with that key, not specific to this one; it holds four values, with
-`storeFile` resolved against the signing file's own folder:
+signing file live together outside it. The signing file is shared by every app signed with that key,
+not specific to this one; it holds four values, with `storeFile` resolved against the signing file's
+own folder:
 
 ```
 storeFile=kartollika_key_store.jks
@@ -22,10 +22,10 @@ keyAlias=kartollikaaps
 keyPassword=…
 ```
 
-`~/.gradle/gradle.properties` holds a single line pointing at it, as an absolute path:
+`~/.gradle/gradle.properties` holds a single line pointing at it (a leading `~` means the home folder):
 
 ```
-kartollika.signingFile=/Users/<you>/Projects/Signing/signing.properties
+kartollika.signingFile=~/<folder with the keystore>/signing.properties
 ```
 
 Without that line `assembleRelease` still builds, but leaves `app-release-unsigned.apk`, which no phone will

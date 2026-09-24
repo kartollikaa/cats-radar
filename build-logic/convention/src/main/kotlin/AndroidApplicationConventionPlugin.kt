@@ -57,12 +57,14 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
 // The key never enters the repo: without a signing file a release build is left unsigned.
 private fun ApplicationExtension.signReleaseWithLocalKey(project: Project) {
     val path = project.providers.gradleProperty("kartollika.signingFile").orNull ?: return
-    val signingFile = project.file(path)
+    val signingFile = project.file(path.replaceFirst(Regex("^~(?=/|$)"), System.getProperty("user.home")))
+    require(signingFile.isFile) { "kartollika.signingFile points at $signingFile, which is not a file" }
     val values = Properties().apply {
         val contents = project.providers.fileContents(project.layout.projectDirectory.file(signingFile.absolutePath))
         load(StringReader(contents.asText.get()))
     }
-    fun value(name: String) = requireNotNull(values.getProperty(name)) { "$name is missing from $signingFile" }
+    fun value(name: String) =
+        values.getProperty(name)?.takeIf { it.isNotBlank() } ?: error("$name is missing or empty in $signingFile")
     val key = signingConfigs.create("release") {
         // Resolved against the signing file's folder, so the keystore can sit next to it.
         storeFile = signingFile.parentFile.resolve(value("storeFile"))
