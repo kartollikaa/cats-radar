@@ -1,7 +1,8 @@
 # Static Analysis
 
 Three tools, all wired through `build-logic` so a module gets them by applying its convention plugin.
-`./gradlew check` runs everything below plus unit tests; CI runs the same command.
+`./gradlew check` runs everything below plus unit tests; CI runs the same command, then
+`:app:assembleRelease` so a dependency R8 can no longer process fails there rather than at release time.
 
 | Tool | What it catches | Config |
 |---|---|---|
@@ -72,3 +73,8 @@ Native code inside a dependency. A green `check` says nothing about whether the 
 AndroidX AAR ships are 16 KB page compatible, and `GradleDependency` is disabled, so a version bump
 that reintroduces the problem passes every gate here. The app has to be launched on a 16 KB device
 to find out — see [docs/reference/16kb-page-size.md](../reference/16kb-page-size.md).
+
+What R8 removes from a release build. `check` builds and tests unminified code, so a class a library
+creates from its name, like a Glance action callback, can lose its constructor in the release APK
+while every gate here stays green. Only that APK, launched, shows it — see
+[docs/reference/releasing.md](../reference/releasing.md).
