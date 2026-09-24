@@ -37,22 +37,26 @@ class HeatInkTest {
 
     @Test
     fun aCatWithNoCoatIsASmallerBlueSpotAndEveryCoatIsFullSize() {
-        val inks = inks(CatsRadarLightColors)
-        val unnoted = inks.single { it.key == UNNOTED_HEAT }
-        val blue = unnoted.colour
+        listOf(CatsRadarLightColors, CatsRadarDarkColors).forEach { scheme ->
+            val inks = inks(scheme)
+            val unnoted = inks.single { it.key == UNNOTED_HEAT }
+            val blue = unnoted.colour
 
-        assertTrue("$blue is not blue", blue.blue > maxOf(blue.red, blue.green))
-        assertTrue(unnoted.scale < 1f)
-        assertTrue(inks.filter { it.key != UNNOTED_HEAT }.all { it.scale == 1f })
+            assertTrue("$blue is not blue", blue.blue > maxOf(blue.red, blue.green))
+            assertTrue(unnoted.scale < 1f)
+            assertTrue(inks.filter { it.key != UNNOTED_HEAT }.all { it.scale == 1f })
+        }
     }
 
     @Test
     fun theNoCoatHeatLiesLowestAndLighterFursLieOverDarkerOnes() {
-        val inks = inks(CatsRadarLightColors)
-        val furs = inks.drop(1).map { it.colour.luminance() }
+        listOf(CatsRadarLightColors, CatsRadarDarkColors).forEach { scheme ->
+            val inks = inks(scheme)
+            val furs = inks.drop(1).map { it.colour.luminance() }
 
-        assertEquals(UNNOTED_HEAT, inks.first().key)
-        assertEquals(furs.sorted(), furs)
+            assertEquals(UNNOTED_HEAT, inks.first().key)
+            assertEquals(furs.sorted(), furs)
+        }
     }
 
     private fun inks(scheme: ColorScheme) = heatInks(ground = scheme.surface, edge = scheme.faceRim())

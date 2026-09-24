@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import dev.catsradar.ui.theme.contrast
 
-// Blue rather than grey: a grey spot would read as a grey or black coat.
-private val UnnotedHeatColour = Color(0xFF3D7BE0)
+/** A cat with no coat noted, on its dot and in its heat: blue, since grey would read as a grey or black coat. */
+internal val UnnotedColour = Color(0xFF3D7BE0)
 private const val UnnotedHeatScale = 0.6f
 
 // Below this contrast with the ground a fur's heat melts into the map, so it gets an edge.
@@ -20,6 +20,6 @@ internal data class HeatInk(val key: String, val colour: Color, val edge: Color?
  */
 internal fun heatInks(ground: Color, edge: Color): List<HeatInk> {
     fun edgeFor(colour: Color) = edge.takeIf { contrast(colour, ground) < MELT_CONTRAST }
-    val unnoted = HeatInk(UNNOTED_HEAT, UnnotedHeatColour, edgeFor(UnnotedHeatColour), UnnotedHeatScale)
+    val unnoted = HeatInk(UNNOTED_HEAT, UnnotedColour, edgeFor(UnnotedColour), UnnotedHeatScale)
     return listOf(unnoted) + CoatHeatColours.sortedBy { it.luminance() }.map { HeatInk(heatKey(it), it, edgeFor(it)) }
 }

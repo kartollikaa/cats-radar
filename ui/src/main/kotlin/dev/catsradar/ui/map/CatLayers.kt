@@ -13,26 +13,20 @@ import dev.catsradar.ui.coat.faceRim
 import dev.catsradar.ui.coat.look
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
-import org.maplibre.compose.expressions.dsl.asNumber
 import org.maplibre.compose.expressions.dsl.asString
 import org.maplibre.compose.expressions.dsl.case
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.convertToString
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.format
-import org.maplibre.compose.expressions.dsl.heatmapDensity
 import org.maplibre.compose.expressions.dsl.image
-import org.maplibre.compose.expressions.dsl.interpolate
-import org.maplibre.compose.expressions.dsl.linear
 import org.maplibre.compose.expressions.dsl.not
 import org.maplibre.compose.expressions.dsl.span
 import org.maplibre.compose.expressions.dsl.switch
-import org.maplibre.compose.expressions.dsl.zoom
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.interaction.ClickResult
 import org.maplibre.compose.layers.CircleLayer
-import org.maplibre.compose.layers.HeatmapLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapState
@@ -60,31 +54,11 @@ internal val RimWidth = 1.5.dp
 internal val DotSize = (DotRadius + RimWidth) * 2
 private val ClusterRadius = 16.dp
 private val HalfTouchTarget = 24.dp
-private const val HeatLowDensity = 0.15
-private const val HeatLowAlpha = 0.8f
-private const val HeatOpacity = 0.95f
-private const val EdgeDensity = 0.04
-private const val EdgeFadeDensity = 0.25
-private const val EdgeAlpha = 0.5f
-private const val EdgeReach = 1.12f
-
-// Each cat's heat is sized and weighted by zoom: at one size for every zoom, a city's cats merge into one blob.
-private fun heatRadius(scale: Float) = interpolate(
-    linear(),
-    zoom(),
-    9 to const(8.dp * scale),
-    11 to const(16.dp * scale),
-    14 to const(24.dp * scale),
-    16 to const(30.dp * scale),
-)
-private val HeatIntensity = interpolate(linear(), zoom(), 9 to const(0.7f), 15 to const(1f))
-
 private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
 
 /** Colours read from the theme outside the map, whose layers compose without it. */
 @Immutable
 internal data class CatLayerColors(
-    val unnoted: Color,
     val rim: Color,
     val ground: Color,
     val cluster: Color,
@@ -114,63 +88,12 @@ internal fun CatLayers(
 internal fun catLayerColors(): CatLayerColors {
     val scheme = MaterialTheme.colorScheme
     return CatLayerColors(
-        unnoted = scheme.primary,
         rim = scheme.faceRim(),
         // The map style follows the theme, so its land is about as light or dark as the surface.
         ground = scheme.surface,
         cluster = scheme.primary,
         clusterCount = scheme.onPrimary,
         route = scheme.primary,
-    )
-}
-
-@Composable
-private fun CatHeat(cats: FeatureCollection<Point, JsonObject>, colors: CatLayerColors) {
-    // Its own source, unclustered: over a clustered one, a cluster of ten would weigh as one cat.
-    val source = rememberGeoJsonSource(GeoJsonData.Features(cats))
-    val inks = remember(colors.ground, colors.rim) { heatInks(ground = colors.ground, edge = colors.rim) }
-    // A heatmap colours by density alone, never by a feature, so each fur colour is a layer of its own.
-    inks.forEach { ink -> CoatHeat(source = source, ink = ink) }
-}
-
-@Composable
-private fun CoatHeat(source: GeoJsonSource, ink: HeatInk) {
-    val radius = remember(ink.scale) { heatRadius(ink.scale) }
-    val edgeRadius = remember(ink.scale) { heatRadius(ink.scale * EdgeReach) }
-    // A little wider than the spot and faded out where the spot is dense, so it shows only as a rim.
-    ink.edge?.let { edge ->
-        HeatmapLayer(
-            id = "cat-${ink.key}-edge",
-            source = source,
-            filter = feature.has(ink.key),
-            weight = feature[ink.key].asNumber(),
-            color = interpolate(
-                linear(),
-                heatmapDensity(),
-                0 to const(edge.copy(alpha = 0f)),
-                EdgeDensity to const(edge.copy(alpha = EdgeAlpha)),
-                EdgeFadeDensity to const(edge.copy(alpha = 0f)),
-            ),
-            radius = edgeRadius,
-            intensity = HeatIntensity,
-            opacity = const(HeatOpacity),
-        )
-    }
-    HeatmapLayer(
-        id = "cat-${ink.key}",
-        source = source,
-        filter = feature.has(ink.key),
-        weight = feature[ink.key].asNumber(),
-        color = interpolate(
-            linear(),
-            heatmapDensity(),
-            0 to const(ink.colour.copy(alpha = 0f)),
-            HeatLowDensity to const(ink.colour.copy(alpha = HeatLowAlpha)),
-            1 to const(ink.colour),
-        ),
-        radius = radius,
-        intensity = HeatIntensity,
-        opacity = const(HeatOpacity),
     )
 }
 
@@ -244,12 +167,12 @@ private fun CatDots(
 }
 
 @Composable
-private fun rememberCoatDots(colors: CatLayerColors) = remember(colors.rim, colors.unnoted) {
+private fun rememberCoatDots(colors: CatLayerColors) = remember(colors.rim) {
     fun dot(shares: List<ColourShare>) = image(CoatDotPainter(shares, colors.rim, RimWidth), DpSize(DotSize, DotSize))
     switch(
         feature[CAT_COAT].asString(const("")),
         CoatOption.entries.map { case(it.name, dot(it.look().shares())) },
-        fallback = dot(listOf(ColourShare(colors.unnoted, 1.0))),
+        fallback = dot(listOf(ColourShare(UnnotedColour, 1.0))),
     )
 }
 

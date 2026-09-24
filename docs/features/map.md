@@ -1,9 +1,9 @@
 # Map
 
 The **Map** tab shows every cat that has a location as a dot on a map, in its coat's colours: a ginger
-cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted takes the
-theme's primary colour. The map opens fitted around all of them, and a single cat, or a handful on
-one street, opens on a street-sized area rather than a doorstep.
+cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted is a blue
+dot. The map opens fitted around all of them, and a single cat, or a handful on one street, opens
+on a street-sized area rather than a doorstep.
 
 ## How a dot shows its coat
 
@@ -84,8 +84,8 @@ Two chips sit at the map's top edge.
   where coats mix, the colour with more cats shows most, and at an even split the lighter one covers
   the darker, which shows only at the spot's edge. The heat is a picture of the mix, not a measure
   of it.
-- **Cats with no coat noted** make smaller blue spots, blue rather than grey so they never read as a
-  grey or black coat.
+- **Cats with no coat noted** make smaller spots in the blue of their dots, blue rather than grey
+  so they never read as a grey or black coat.
 - **The heat follows the zoom.** Each cat's heat shrinks and fades as the map zooms out, so a whole
   city shows its neighbourhoods as separate spots rather than one glow over all of it, and grows back
   as the map closes in on a street.
@@ -121,8 +121,8 @@ Both last as long as the tab does; leaving the tab clears them.
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
   on), `MapStateMapper`, `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a
   spot's list
-- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters, the
-  heat and their taps; `CoatDotPainter.kt` — a dot painted in its coat's colours;
+- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
+  their taps; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
   `MapFeatures.kt` — cats as map features, and each coat's colour shares; `HeatInk.kt` — the heat's
   layers, their order and which need a rim; `MapSpotScreen.kt` — a
   spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
