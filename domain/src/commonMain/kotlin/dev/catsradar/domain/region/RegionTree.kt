@@ -3,9 +3,9 @@ package dev.catsradar.domain.region
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
+import dev.catsradar.domain.model.locatedPoint
 
 /** One row of a region list: a real place, or one of the two pseudo-nodes. */
 data class RegionNode(val key: RegionKey, val label: RegionLabel, val count: Int)
@@ -18,7 +18,7 @@ sealed interface RegionKey {
     /** Encounters with coordinates whose cell has no name — pending, failed, or unavailable. */
     data object Unresolved : RegionKey
 
-    /** Encounters with no coordinates at all. */
+    /** Encounters with no location: no point on the globe, or marked as having none. */
     data object NoLocation : RegionKey
 }
 
@@ -40,7 +40,7 @@ object RegionTree {
         val byCell = cells.associateBy { it.cellId }
         val live = encounters.filter { it.deletedAt == null }
 
-        val (located, unlocated) = live.partition { it.locationSource != LocationSource.NONE }
+        val (located, unlocated) = live.partition { it.locatedPoint() != null }
         val (named, unnamed) = located.partition { it.resolvedCell(byCell) != null }
 
         val countries = named
@@ -74,17 +74,15 @@ object RegionTree {
     }
 
     /**
-     * Areas under a node. Areas come from the geohash, so they work with no network and even for
-     * encounters whose cell was never named.
+     * Areas under a node. Areas come from the coordinates, so they work with no network and even for
+     * encounters whose cell was never named or never created.
      */
     fun areas(parent: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
         val byCell = cells.associateBy { it.cellId }
         return encounters
             .filter { it.deletedAt == null }
             .filter { it.belongsTo(parent, byCell) }
-            .mapNotNull { encounter ->
-                encounter.geohash?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) to encounter }
-            }
+            .mapNotNull { encounter -> encounter.areaHash()?.let { it to encounter } }
             .groupBy({ it.first }, { it.second })
             .map { (areaHash, group) ->
                 RegionNode(
@@ -125,16 +123,21 @@ object RegionTree {
             is RegionKey.City ->
                 cell?.countryCode == parent.countryCode &&
                     (cell.locality ?: cell.adminArea) == parent.city
-            is RegionKey.Area ->
-                geohash?.let { Geohash.prefix(it, Tuning.AREA_PRECISION) } == parent.areaHash
-            RegionKey.Unresolved -> locationSource != LocationSource.NONE && cell == null
-            RegionKey.NoLocation -> locationSource == LocationSource.NONE
+            is RegionKey.Area -> areaHash() == parent.areaHash
+            RegionKey.Unresolved -> locatedPoint() != null && cell == null
+            RegionKey.NoLocation -> locatedPoint() == null
         }
     }
 
-    /** A cell counts as naming this encounter only once it is RESOLVED and has a country. */
+    /** A cell names a located encounter only once it is RESOLVED and has a country. */
     private fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
-        placeCellId?.let(byCell::get)?.takeIf { it.status == PlaceStatus.RESOLVED && it.countryCode != null }
+        placeCellId
+            ?.takeIf { locatedPoint() != null }
+            ?.let(byCell::get)
+            ?.takeIf { it.status == PlaceStatus.RESOLVED && it.countryCode != null }
+
+    private fun Encounter.areaHash(): String? =
+        locatedPoint()?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) }
 
     private fun List<Encounter>.countryName(byCell: Map<String, PlaceCell>): String? =
         firstNotNullOfOrNull { it.resolvedCell(byCell)?.countryName }
