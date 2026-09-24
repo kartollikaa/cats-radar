@@ -60,15 +60,23 @@ internal val RimWidth = 1.5.dp
 internal val DotSize = (DotRadius + RimWidth) * 2
 private val ClusterRadius = 16.dp
 private val HalfTouchTarget = 24.dp
-private const val HeatLowDensity = 0.3
-private const val HeatOpacity = 0.85f
-private const val HeatLowAlpha = 0.7f
-private const val HaloDensity = 0.1
-private const val HaloAlpha = 0.35f
+private const val HeatLowDensity = 0.15
+private const val HeatLowAlpha = 0.8f
+private const val HeatOpacity = 0.95f
+private const val EdgeDensity = 0.04
+private const val EdgeFadeDensity = 0.25
+private const val EdgeAlpha = 0.5f
+private const val EdgeReach = 1.12f
 
 // Each cat's heat is sized and weighted by zoom: at one size for every zoom, a city's cats merge into one blob.
-private val HeatRadius =
-    interpolate(linear(), zoom(), 9 to const(8.dp), 11 to const(16.dp), 14 to const(24.dp), 16 to const(30.dp))
+private fun heatRadius(scale: Float) = interpolate(
+    linear(),
+    zoom(),
+    9 to const(8.dp * scale),
+    11 to const(16.dp * scale),
+    14 to const(24.dp * scale),
+    16 to const(30.dp * scale),
+)
 private val HeatIntensity = interpolate(linear(), zoom(), 9 to const(0.7f), 15 to const(1f))
 
 private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
@@ -78,6 +86,7 @@ private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
 internal data class CatLayerColors(
     val unnoted: Color,
     val rim: Color,
+    val ground: Color,
     val cluster: Color,
     val clusterCount: Color,
     val route: Color,
@@ -107,6 +116,8 @@ internal fun catLayerColors(): CatLayerColors {
     return CatLayerColors(
         unnoted = scheme.primary,
         rim = scheme.faceRim(),
+        // The map style follows the theme, so its land is about as light or dark as the surface.
+        ground = scheme.surface,
         cluster = scheme.primary,
         clusterCount = scheme.onPrimary,
         route = scheme.primary,
@@ -117,39 +128,47 @@ internal fun catLayerColors(): CatLayerColors {
 private fun CatHeat(cats: FeatureCollection<Point, JsonObject>, colors: CatLayerColors) {
     // Its own source, unclustered: over a clustered one, a cluster of ten would weigh as one cat.
     val source = rememberGeoJsonSource(GeoJsonData.Features(cats))
+    val inks = remember(colors.ground, colors.rim) { heatInks(ground = colors.ground, edge = colors.rim) }
     // A heatmap colours by density alone, never by a feature, so each fur colour is a layer of its own.
-    HeatmapLayer(
-        id = "cat-heat-halo",
-        source = source,
-        color = interpolate(
-            linear(),
-            heatmapDensity(),
-            0 to const(colors.rim.copy(alpha = 0f)),
-            HaloDensity to const(colors.rim.copy(alpha = HaloAlpha)),
-        ),
-        radius = HeatRadius,
-        intensity = HeatIntensity,
-        opacity = const(HeatOpacity),
-    )
-    CoatHeat(source = source, key = UNNOTED_HEAT, colour = colors.unnoted)
-    CoatHeatColours.forEach { colour -> CoatHeat(source = source, key = heatKey(colour), colour = colour) }
+    inks.forEach { ink -> CoatHeat(source = source, ink = ink) }
 }
 
 @Composable
-private fun CoatHeat(source: GeoJsonSource, key: String, colour: Color) {
+private fun CoatHeat(source: GeoJsonSource, ink: HeatInk) {
+    val radius = remember(ink.scale) { heatRadius(ink.scale) }
+    val edgeRadius = remember(ink.scale) { heatRadius(ink.scale * EdgeReach) }
+    // A little wider than the spot and faded out where the spot is dense, so it shows only as a rim.
+    ink.edge?.let { edge ->
+        HeatmapLayer(
+            id = "cat-${ink.key}-edge",
+            source = source,
+            filter = feature.has(ink.key),
+            weight = feature[ink.key].asNumber(),
+            color = interpolate(
+                linear(),
+                heatmapDensity(),
+                0 to const(edge.copy(alpha = 0f)),
+                EdgeDensity to const(edge.copy(alpha = EdgeAlpha)),
+                EdgeFadeDensity to const(edge.copy(alpha = 0f)),
+            ),
+            radius = edgeRadius,
+            intensity = HeatIntensity,
+            opacity = const(HeatOpacity),
+        )
+    }
     HeatmapLayer(
-        id = "cat-$key",
+        id = "cat-${ink.key}",
         source = source,
-        filter = feature.has(key),
-        weight = feature[key].asNumber(),
+        filter = feature.has(ink.key),
+        weight = feature[ink.key].asNumber(),
         color = interpolate(
             linear(),
             heatmapDensity(),
-            0 to const(colour.copy(alpha = 0f)),
-            HeatLowDensity to const(colour.copy(alpha = HeatLowAlpha)),
-            1 to const(colour),
+            0 to const(ink.colour.copy(alpha = 0f)),
+            HeatLowDensity to const(ink.colour.copy(alpha = HeatLowAlpha)),
+            1 to const(ink.colour),
         ),
-        radius = HeatRadius,
+        radius = radius,
         intensity = HeatIntensity,
         opacity = const(HeatOpacity),
     )

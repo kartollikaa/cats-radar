@@ -2,9 +2,9 @@ package dev.catsradar.ui.coat
 
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.testing.MIN_SHAPE_CONTRAST
-import dev.catsradar.ui.testing.contrast
 import dev.catsradar.ui.theme.CatsRadarDarkColors
 import dev.catsradar.ui.theme.CatsRadarLightColors
+import dev.catsradar.ui.theme.contrast
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
