@@ -1,5 +1,7 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.repository.EncounterRepository
@@ -12,6 +14,7 @@ class ExportBackup(
     private val placeCellRepository: PlaceCellRepository,
     private val walkRepository: WalkRepository,
     private val backupWriter: BackupWriter,
+    private val analytics: Analytics,
 ) {
     /** False when the archive could not be written. */
     suspend operator fun invoke(target: String): Boolean {
@@ -23,6 +26,8 @@ class ExportBackup(
             walks = walkRepository.observeAll().first(),
             trackPoints = walkRepository.loadEveryPoint(),
         )
-        return backupWriter.write(target, contents)
+        val written = backupWriter.write(target, contents)
+        if (written) analytics.log(AnalyticsEvent.BackupExported)
+        return written
     }
 }

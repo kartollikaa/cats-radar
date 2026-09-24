@@ -51,6 +51,9 @@ androidx-work = "2.11.2"
 # RoomDatabase (runtime-scoped in its POM, so Gradle omits it from the compile classpath);
 # work-testing tests that reach WorkManagerImpl.workDatabase need it added explicitly to resolve.
 androidx-room-legacy = "2.7.0"
+firebase-bom = "34.19.0"
+google-services = "4.5.0"
+firebase-crashlytics-gradle = "3.0.8"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -105,6 +108,9 @@ kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-cor
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
 androidx-room-legacy-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room-legacy" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 
 # build-logic classpath
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -122,3 +128,5 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room3", version.ref = "room" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-gradle" }

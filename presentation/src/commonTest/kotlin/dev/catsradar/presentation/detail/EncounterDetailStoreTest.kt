@@ -9,6 +9,7 @@ import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
+import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDigest
 import dev.catsradar.presentation.counter.FakeEncounterRepository
@@ -449,9 +450,9 @@ class EncounterDetailStoreTest {
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
-        deleteEncounter = DeleteEncounter(repository, clock),
-        undoDelete = UndoDelete(repository),
-        setCoat = SetCoat(repository, clock),
+        deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
+        undoDelete = UndoDelete(repository, analytics = NoAnalytics),
+        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
         attachPhoto = AttachPhoto(
             encounterRepository = repository,
             settingsRepository = FakeSettingsRepository(),
@@ -461,6 +462,7 @@ class EncounterDetailStoreTest {
             photoStorage = FakePhotoStorage(),
             idGenerator = FakeIdGenerator(),
             clock = clock,
+            analytics = NoAnalytics,
         ),
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,

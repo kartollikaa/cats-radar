@@ -5,6 +5,7 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
+import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeSettingsRepository
@@ -364,8 +365,8 @@ class EncountersStoreTest {
     private fun newStore(): EncountersStore = EncountersStore(
         observeEncounters = ObserveEncounters(repository),
         settingsRepository = settings,
-        deleteEncounters = DeleteEncounters(repository, clock),
-        undoDeleteEncounters = UndoDeleteEncounters(repository),
+        deleteEncounters = DeleteEncounters(repository, clock, analytics = NoAnalytics),
+        undoDeleteEncounters = UndoDeleteEncounters(repository, analytics = NoAnalytics),
         stateMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,

@@ -4,6 +4,7 @@ import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeSettingsRepository
 import dev.catsradar.domain.testing.FakeWalkRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -23,8 +24,18 @@ class FollowWalkingModeTest {
     private val clock = object : Clock {
         override fun now(): Instant = now
     }
-    private val startWalk = StartWalk(walks, FakeIdGenerator(), FakeDeviceIdProvider(), clock)
-    private val followWalkingMode = FollowWalkingMode(settings, startWalk, EndWalk(walks, clock))
+    private val startWalk = StartWalk(
+        walks,
+        FakeIdGenerator(),
+        FakeDeviceIdProvider(),
+        clock,
+        analytics = RecordingAnalytics()
+    )
+    private val followWalkingMode = FollowWalkingMode(
+        settings,
+        startWalk,
+        EndWalk(walks, clock, analytics = RecordingAnalytics())
+    )
 
     @Test
     fun `the mode turning on opens a walk, and turning off ends it`() = runTest(UnconfinedTestDispatcher()) {

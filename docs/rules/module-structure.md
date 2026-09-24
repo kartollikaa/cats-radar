@@ -27,6 +27,11 @@ Rules, enforced by a Konsist test in `:app` (`app/src/test/kotlin/dev/catsradar/
 - `:ui` files do not import Material's dynamic colour schemes: the wallpaper's colours are `:app`'s
   choice, and `CatsRadarTheme` without a scheme stays deterministic for previews.
 - `:data` files do not import `dev.catsradar.presentation` or `dev.catsradar.ui`.
+- `:domain`, `:presentation` and `:ui` files do not import `com.google.firebase`: analytics reaches
+  them only as the `Analytics` port, and Firebase stays in `:data` and `:app`.
+- Classes in `dev.catsradar.domain.analytics` take no `String`, `Double`, `Float`, `Instant` or
+  `Duration` in their constructors: an event carries enums, booleans and counts, so it cannot carry a
+  place, a name or a time.
 - Each module's physical files declare that module's package (`dev.catsradar.<module>` or a
   subpackage) — otherwise the rules above, which key on the declared package rather than the
   physical module, would silently stop covering a mis-packaged file.
@@ -44,4 +49,6 @@ with fakes; `androidHostTest` is for Robolectric-backed tests (Room DAOs, migrat
 
 Adding a screen: State/Intent/Effect/Store + mapper in `:presentation`, composables in `:ui`,
 `NavKey` + entry + Koin registration in `:app`. Adding a platform capability: interface in
-`:domain`, implementation in `:data/androidMain`, binding in `:app`.
+`:domain`, implementation in `:data/androidMain`, binding in `:app`. A capability only `:app`
+code calls — the non-fatal crash reporter its workers and start-up repairs use — keeps its
+interface and implementation in `:app`; it moves to `:domain` the day a use case needs it.

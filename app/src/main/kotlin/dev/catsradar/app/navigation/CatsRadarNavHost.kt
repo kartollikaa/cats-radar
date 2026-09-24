@@ -6,10 +6,12 @@ import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +36,7 @@ import dev.catsradar.ui.navigation.BottomNavTab
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.settings.SettingsScreen
+import kotlinx.coroutines.flow.filterNotNull
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -44,6 +47,11 @@ import java.time.format.DateTimeFormatter
 fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier) {
     val backStack = rememberBottomNavBackStack()
     val mapFocus = remember { MapFocusRequest() }
+    val screenViews = koinInject<ScreenViewTracker>()
+    LaunchedEffect(backStack, screenViews) {
+        snapshotFlow { backStack.lastOrNull() }.filterNotNull().collect(screenViews::onTop)
+    }
+    DisposableEffect(screenViews) { onDispose(screenViews::onHostGone) }
     LaunchedEffect(cameraRequest.isPending) {
         if (cameraRequest.isPending) backStack.selectTab(BottomNavTab.COUNTER)
     }
