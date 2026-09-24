@@ -1,25 +1,15 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
-
-private class RecordingPhotoStorage : PhotoStorage {
-    val deleted = mutableListOf<String>()
-
-    override fun resolve(relativePath: String): String = "/photos/$relativePath"
-
-    override suspend fun delete(relativePath: String) {
-        deleted += relativePath
-    }
-}
 
 class PurgeDeletedTest {
 

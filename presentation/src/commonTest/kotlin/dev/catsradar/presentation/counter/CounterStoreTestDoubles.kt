@@ -1,10 +1,12 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.PlaceStatus
@@ -44,6 +46,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     var softDeleteAllGate: CompletableDeferred<Unit>? = null
     var undoDeleteAllShouldThrow: Throwable? = null
     var undoDeleteAllGate: CompletableDeferred<Unit>? = null
+    var attachPhotoShouldThrow: Throwable? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -80,6 +83,42 @@ internal class FakeEncounterRepository : EncounterRepository {
                         placeCellId = stamp.placeCellId,
                         updatedAt = stamp.updatedAt,
                     )
+                } else {
+                    encounter
+                }
+            }
+        }
+    }
+
+    // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
+        attachPhotoShouldThrow?.let { throw it }
+        var attached = false
+        encounters.update { list ->
+            attached = false
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
+                    attached = true
+                    encounter.copy(
+                        photoPath = stamp.photoPath,
+                        thumbPath = stamp.thumbPath,
+                        galleryUri = stamp.galleryUri,
+                        sourceDigest = stamp.sourceDigest,
+                        updatedAt = stamp.updatedAt,
+                    )
+                } else {
+                    encounter
+                }
+            }
+        }
+        return attached
+    }
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null) {
+                    encounter.copy(coat = coat, updatedAt = updatedAt)
                 } else {
                     encounter
                 }
@@ -186,7 +225,7 @@ internal class FakeExifReader(var data: ExifData = ExifData()) : ExifReader {
 internal class FakeImageResizer(
     var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
 ) : ImageResizer {
-    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? = result
+    override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? = result
 }
 
 internal class FakeDigest : Digest {

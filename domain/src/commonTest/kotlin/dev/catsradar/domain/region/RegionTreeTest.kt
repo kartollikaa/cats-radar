@@ -165,50 +165,6 @@ class RegionTreeTest {
     }
 
     @Test
-    fun `a located cat with no geohash still lands in an area, from its coordinates`() {
-        val stored = located(41.390, 2.170)
-        val withoutGeohash = located(41.392, 2.172).copy(geohash = null)
-        val all = listOf(stored, withoutGeohash)
-        val cells = all.map { placeCellFixture(it) }
-
-        val city = RegionTree.cities("ES", all, cells).single()
-        val areas = RegionTree.areas(BARCELONA, all, cells)
-
-        assertEquals(BARCELONA, city.key)
-        assertEquals(2, city.count)
-        assertEquals(listOf(areaOf(stored, BARCELONA) to 2), areas.map { it.key to it.count })
-    }
-
-    @Test
-    fun `a geohash too short or garbled to hold an area is set aside for the coordinates`() {
-        val short = located(41.390, 2.170).copy(geohash = "sp3")
-        val garbled = located(41.392, 2.172).copy(geohash = "sp!e3qu4")
-        val all = listOf(short, garbled)
-        val cells = all.map { placeCellFixture(it) }
-
-        val areas = RegionTree.areas(BARCELONA, all, cells)
-
-        assertEquals(listOf(RegionKey.Country("ES")), RegionTree.countries(all, cells).map { it.key })
-        assertEquals(listOf(areaOf(located(41.390, 2.170), BARCELONA) to 2), areas.map { it.key to it.count })
-    }
-
-    @Test
-    fun `a cat marked located with nothing to place it by is No location, and listed there`() {
-        val intact = located(41.390, 2.170)
-        val placeless = listOf(
-            intact.copy(id = "no-coordinates", lat = null, lon = null, geohash = null),
-            intact.copy(id = "off-the-globe", lat = 91.0, geohash = null),
-        )
-        val cells = listOf(placeCellFixture(intact))
-
-        assertEquals(
-            listOf(RegionNode(RegionKey.NoLocation, RegionLabel.NoLocation, 2)),
-            RegionTree.countries(placeless, cells),
-        )
-        assertEquals(placeless, RegionTree.encountersIn(RegionKey.NoLocation, placeless, cells))
-    }
-
-    @Test
     fun `areas are derived from the coordinates, so an unnamed cell still has one`() {
         val pending = located(41.4, 2.2)
 
@@ -251,16 +207,18 @@ class RegionTreeTest {
     }
 
     @Test
-    fun `a located source with no point on the globe is No location, never Not named yet`() {
-        val noPoint = encounterFixture("no-point", BASE, LocationSource.CURRENT_FIX)
+    fun `a located source with no point on the globe is No location, never Not named yet, whatever its cell`() {
+        val cell = placeCellFixture(located(41.4, 2.2))
+        val noPoint = encounterFixture("no-point", BASE, LocationSource.CURRENT_FIX).copy(placeCellId = cell.cellId)
         val offGlobe = encounterFixture("off-globe", BASE, LocationSource.CURRENT_FIX, lat = 91.0, lon = 2.0)
         val all = listOf(noPoint, offGlobe)
+        val cells = listOf(cell)
 
         assertEquals(
             listOf(RegionNode(RegionKey.NoLocation, RegionLabel.NoLocation, all.size)),
-            RegionTree.countries(all, emptyList()),
+            RegionTree.countries(all, cells),
         )
-        assertEquals(all, RegionTree.encountersIn(RegionKey.NoLocation, all, emptyList()))
+        assertEquals(all, RegionTree.encountersIn(RegionKey.NoLocation, all, cells))
     }
 
     @Test

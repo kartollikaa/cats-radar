@@ -2,7 +2,6 @@ package dev.catsradar.domain.stats
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.Session
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.time.localDate
@@ -36,7 +35,7 @@ object StatsCalculator {
             today = days.count { it == today },
             lastSevenDays = days.countWithin(today, WEEK_DAYS),
             lastThirtyDays = days.countWithin(today, MONTH_DAYS),
-            withPhoto = live.count { it.kind == EncounterKind.PHOTO },
+            withPhoto = live.count { it.photoPath != null },
             byCoat = byCoat(live),
             currentStreak = Streaks.current(days.toSet(), today),
             longestStreak = Streaks.longest(days.toSet()),

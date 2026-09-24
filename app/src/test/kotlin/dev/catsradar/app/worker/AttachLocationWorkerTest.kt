@@ -7,11 +7,13 @@ import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import dev.catsradar.domain.location.LocationFix
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.platform.LocationProvider
@@ -71,6 +73,12 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
             }
         }
     }
+
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
+        throw NotImplementedError("unused by this test")
 
     override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
         throw NotImplementedError("unused by this test")
