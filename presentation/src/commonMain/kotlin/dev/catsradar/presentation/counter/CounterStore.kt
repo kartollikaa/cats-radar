@@ -57,6 +57,7 @@ class CounterStore(
     // Not in State: the screen shows how many were added, never which ones.
     private var importedIds: List<String> = emptyList()
     private val importRun = ReportedRun(settingsRepository, ReportedJob.GALLERY_IMPORT)
+    private var importSummaryTimeoutJob: Job? = null
     private var coatPromptEncounterId: String? = null
 
     init {
@@ -210,6 +211,13 @@ class CounterStore(
                         ),
                     )
                 }
+                importSummaryTimeoutJob?.cancel()
+                importSummaryTimeoutJob = viewModelScope.launch {
+                    delay(Tuning.IMPORT_SUMMARY_VISIBLE)
+                    importedIds = emptyList()
+                    setState { copy(importSummary = null) }
+                    importRun.acknowledge(intent.runId)
+                }
             }
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
             CounterIntent.Import.SummaryDismissed -> {
@@ -235,7 +243,7 @@ class CounterStore(
     }
 
     private fun restoreUndoImport(ids: List<String>) {
-        if (importedIds.isNotEmpty()) return
+        if (importedIds.isNotEmpty() || state.value.importSummary == null) return
         importedIds = ids
         setState { copy(importSummary = importSummary?.copy(undoable = true)) }
     }

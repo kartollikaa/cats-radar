@@ -6,8 +6,8 @@ not at the time you imported them.
 
 The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
 at its end** opens the system photo picker; holding that icon names it. The run happens in a worker,
-so it survives leaving the screen; the Counter shows how far it has got, and at the end what was
-added, skipped and failed, with one undo for the whole batch.
+so it survives leaving the screen; the Counter shows how far it has got, and at the end, briefly,
+what was added, skipped and failed, with one undo for the whole batch.
 
 ## What an imported photo becomes
 
@@ -66,12 +66,17 @@ takes them back*).
 
 ## At the edges
 
-- **A summary stays until the user deals with it, and never comes back after.** WorkManager keeps
-  a finished run, and the Counter reads it back each time it is shown and again after a restart.
-  So a summary the user walked away from, Undo included, is still there when they come back. A
-  successful Undo, or OK, records that run as dealt with (`SettingsRepository.acknowledgedRun`,
-  kept in DataStore next to the settings). After that, reading the same run back shows nothing and
-  offers no second Undo. A failed Undo records nothing, so the offer survives it.
+- **A summary goes away on its own, and never comes back after.** It stays for
+  `IMPORT_SUMMARY_VISIBLE` from the moment the Counter learns the run has finished, and running out
+  does what OK does: the Undo lapses with it. A successful Undo, OK, or the time running out records
+  that run as dealt with (`SettingsRepository.acknowledgedRun`, kept in DataStore next to the
+  settings). After that, reading the same run back shows nothing and offers no second Undo. A failed
+  Undo records nothing, so the offer survives it until the time runs out; one that fails after the
+  time has run out puts nothing back.
+- **The countdown does not pause in the background.** A run that finishes while the user is in
+  another app can have timed out by the time they return. WorkManager keeps a finished run, and the
+  Counter reads it back each time it is shown and again after a restart, so a summary whose time
+  never ran out — the app was closed or killed first — comes back with a fresh countdown.
 - **The photo picker strips GPS unless the user shares it.** The import asks for location with
   `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`. The picker then asks *Include location info?*
   once, remembers the answer for this app, and keeps a location button in its corner to change it.
