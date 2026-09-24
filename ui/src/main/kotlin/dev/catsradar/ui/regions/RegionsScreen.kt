@@ -3,10 +3,12 @@ package dev.catsradar.ui.regions
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +26,7 @@ import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsEmptyLabel
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.encounters.labelRes
@@ -38,20 +41,28 @@ fun RegionsScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onRegionClick: (RegionRowKey) -> Unit = {},
 ) {
-    if (state.isEmpty) {
-        Box(modifier = modifier.fillMaxSize().padding(contentPadding), contentAlignment = Alignment.Center) {
-            Text(text = stringResource(R.string.regions_empty), style = MaterialTheme.typography.bodyLarge)
+    when (state) {
+        RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
+        is RegionsState.Empty -> Box(
+            modifier = modifier.fillMaxSize().padding(contentPadding),
+            contentAlignment = Alignment.Center,
+        ) {
+            val words = when (state.label) {
+                RegionsEmptyLabel.NO_PLACES_YET -> R.string.regions_no_places_yet
+                RegionsEmptyLabel.NO_PLACES_HERE -> R.string.regions_no_places_here
+                RegionsEmptyLabel.NO_CATS_HERE -> R.string.regions_no_cats_here
+            }
+            Text(text = stringResource(words), style = MaterialTheme.typography.bodyLarge)
         }
-        return
-    }
-    LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        items(items = state.rows, key = { it.key.toString() }) { row ->
-            RegionRow(row, onClick = { onRegionClick(row.key) })
-        }
-        items(items = state.encounters, key = { it.key }) { item ->
-            when (item) {
-                is OutingHeader -> OutingHeaderRow(item.label)
-                is EncounterListItem.Row -> EncounterRow(item)
+        is RegionsState.Loaded -> LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
+            items(items = state.rows, key = { it.key.toString() }) { row ->
+                RegionRow(row, onClick = { onRegionClick(row.key) })
+            }
+            items(items = state.encounters, key = { it.key }) { item ->
+                when (item) {
+                    is OutingHeader -> OutingHeaderRow(item.label)
+                    is EncounterListItem.Row -> EncounterRow(item)
+                }
             }
         }
     }
@@ -139,11 +150,17 @@ private fun RegionsScreenAreaCatsPreview() {
 @Composable
 private fun RegionsScreenEmptyPreview() {
     CatsRadarTheme {
-        Surface { RegionsScreen(state = RegionsState()) }
+        Surface {
+            Column {
+                RegionsEmptyLabel.entries.forEach { label ->
+                    RegionsScreen(state = RegionsState.Empty(label), modifier = Modifier.height(120.dp))
+                }
+            }
+        }
     }
 }
 
-private val sampleRegions = RegionsState(
+private val sampleRegions = RegionsState.Loaded(
     rows = persistentListOf(
         RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "128"),
         RegionRowState(RegionRowKey.Country("FR"), RegionRowLabel.Named("France"), "14"),
@@ -152,7 +169,7 @@ private val sampleRegions = RegionsState(
     ),
 )
 
-private val sampleCities = RegionsState(
+private val sampleCities = RegionsState.Loaded(
     rows = persistentListOf(
         RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "97"),
         RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "29"),
@@ -162,7 +179,7 @@ private val sampleCities = RegionsState(
 
 private val barcelona = RegionRowKey.City("ES", "Barcelona")
 
-private val sampleAreas = RegionsState(
+private val sampleAreas = RegionsState.Loaded(
     rows = persistentListOf(
         RegionRowState(RegionRowKey.Area("sp3e9", barcelona), RegionRowLabel.Named("Gràcia"), "54"),
         RegionRowState(RegionRowKey.Area("sp3e3", barcelona), RegionRowLabel.Named("Eixample"), "38"),
@@ -170,7 +187,7 @@ private val sampleAreas = RegionsState(
     ),
 )
 
-private val sampleAreaCats = RegionsState(
+private val sampleAreaCats = RegionsState.Loaded(
     encounters = persistentListOf(
         OutingHeader(key = "header-evening", label = "Today, 18:40"),
         EncounterListItem.Row(id = "c3", timeLabel = "19:18", location = LocationLabel.FROM_PHOTO),
