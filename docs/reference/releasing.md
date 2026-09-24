@@ -45,6 +45,29 @@ A backup holds the cats, their photos and their places — not the app around th
 switches start from their defaults, every permission is asked for again, and a home-screen widget
 belongs to the old app and goes with it: add the new one's widget again.
 
+## What a release build is
+
+`assembleRelease` runs R8: it removes the code and resources nothing reaches, optimises what is left,
+and renames classes and members to short names. A debug build does none of this, so a debug run
+proves nothing about a release one.
+
+- **A release stack trace is unreadable without its mapping.** Every build writes
+  `app/build/outputs/mapping/release/mapping.txt`, which fits only the APK built with it, so it is
+  attached, zipped, to the GitHub release next to that APK. `retrace mapping.txt stacktrace.txt` (the
+  `retrace` tool from the SDK's Command-line Tools) turns the short names back. A release built on
+  this machine also uploads its mapping to Crashlytics, so its crash reports arrive in real names; a
+  build with the `CI` variable set (every GitHub Actions run) uploads nothing.
+- **Code that creates a class from its name breaks only at run time.** R8 cannot see that use, so it
+  drops the constructor or the class. Libraries ship rules for what they look up;
+  `app/proguard-rules.pro` covers what theirs miss. No test runs the minified code, which is why a
+  release is launched on a device before it is tagged.
+- **Resources are shrunk in strict mode** (`app/src/main/res/raw/keep.xml`): a resource reached only
+  through a name built at run time (`Resources.getIdentifier`) is removed. Reference resources
+  through `R`.
+- **It carries native libraries for `arm64-v8a` only, compressed.** A phone with a 32-bit ARM or an
+  x86 CPU cannot install it. The libraries are unpacked when the app is installed, which costs
+  storage on the phone and saves it on every download. A debug build keeps every ABI, uncompressed.
+
 ## Cutting one
 
 1. Merge a `tech/release-<version>` pull request that bumps both version values and marks the epic's
@@ -52,5 +75,8 @@ belongs to the old app and goes with it: add the new one's widget again.
 2. On that merge, `./gradlew :app:assembleRelease`.
 3. `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` shows the release
    key's certificate, not `Android Debug`.
-4. `gh release create v<versionName> --prerelease --target <merge commit>`, with the APK attached as
-   `cats-radar-<versionName>.apk`.
+4. Install that APK and go through the paths that work by class name: a tap on the home-screen
+   widget, a tally (a worker attaches its location), a backup export and its import, and a screen
+   other than Counter coming back after the process is killed in the background.
+5. `gh release create v<versionName> --prerelease --target <merge commit>`, with the APK attached as
+   `cats-radar-<versionName>.apk` and its `mapping.txt` zipped as `cats-radar-<versionName>-mapping.zip`.

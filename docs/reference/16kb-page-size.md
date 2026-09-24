@@ -16,7 +16,7 @@ Three things have to hold, and only the third ever failed here:
 
 | | Requirement | State |
 |---|---|---|
-| APK packaging | `.so` entries stored uncompressed, at 16 KB-aligned offsets | already correct — AGP does this |
+| APK packaging | `.so` entries stored uncompressed, at 16 KB-aligned offsets — or compressed and unpacked at install, as a release build does | already correct — AGP does this |
 | ELF load segments | every `PT_LOAD` has `p_align` ≥ 16384 | already correct in every dependency |
 | ELF relocation-read-only segment | `PT_GNU_RELRO` fits the `PT_LOAD` that holds it | **failed** in one dependency |
 

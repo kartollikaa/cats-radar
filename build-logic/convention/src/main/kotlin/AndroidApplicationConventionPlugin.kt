@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import dev.catsradar.buildlogic.configureAndroid
 import dev.catsradar.buildlogic.configureLintSeverity
 import dev.catsradar.buildlogic.libs
@@ -33,7 +34,20 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 configureLintSeverity()
                 checkDependencies = true
             }
+            // Libraries translate into far more languages than the app; their extra words would mix into its UI.
+            androidResources { localeFilters += listOf("en", "ru") }
+            buildTypes.getByName("release") {
+                isMinifyEnabled = true
+                isShrinkResources = true
+                proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+                // Releases go to 64-bit ARM phones only; every other ABI repeats MapLibre's native library.
+                ndk { abiFilters += "arm64-v8a" }
+            }
             signReleaseWithLocalKey(target)
+        }
+        extensions.configure<ApplicationAndroidComponentsExtension> {
+            // A sideloaded APK's download size outweighs unpacking its native libraries at install.
+            onVariants(selector().withBuildType("release")) { it.packaging.jniLibs.useLegacyPackaging.set(true) }
         }
     }
 }

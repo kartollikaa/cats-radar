@@ -91,7 +91,9 @@ ad personalisation, ad storage and ad user data are off by default.
 - **The Firebase config** is `app/google-services.json`, registered for the application id
   `com.kartollika.catsradar`. A build under any other id fails at the google-services step rather
   than reporting into the wrong app.
-- **Minify is off,** so stack traces arrive readable and there is no mapping file to upload.
+- **Release builds are shrunk and renamed by R8.** A release built on this machine uploads its
+  mapping to Crashlytics, so its crash reports arrive in real names with file names and line numbers;
+  a CI build (the `CI` variable set) uploads nothing. Debug builds are not minified.
 - **Only `:data` and `:app` may touch Firebase.** A Konsist rule fails `check` if a file in
   `:domain`, `:presentation` or `:ui` imports `com.google.firebase`; those layers see only the
   `Analytics` port.

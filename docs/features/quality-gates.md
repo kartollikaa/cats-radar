@@ -1,6 +1,6 @@
 # Quality gates
 
-`./gradlew check` (and CI, running the same command) wires together three independent tools
+`./gradlew check` (and CI, running the same command plus a release build) wires together three independent tools
 through `build-logic` convention plugins, so a module gets all of them just by applying its
 convention plugin — `catsradar.kmp.library`, `catsradar.android.library`, and
 `catsradar.android.application` each apply `catsradar.detekt` themselves: detekt (with
@@ -71,5 +71,5 @@ can't see — see `app-shell.md`.
 
 The rest of the design spec's §7 test list has tests. The exception is the on-device smoke test (tap
 the counter, see 1): `:app` has no `src/androidTest` sources, no instrumentation runner and no
-instrumented-test dependencies, and CI runs `./gradlew check` alone, which runs host tests and
-starts no emulator.
+instrumented-test dependencies, and CI runs `./gradlew check` and `:app:assembleRelease`, which run host
+tests and R8 and start no emulator.

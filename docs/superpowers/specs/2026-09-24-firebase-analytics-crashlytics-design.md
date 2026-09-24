@@ -125,7 +125,8 @@ the one failure with its own event.
   on its first attempt, so one persistent failure is one event, not one per backoff.
   `CancellationException` is never recorded.
 - No user id, no custom logs containing user data.
-- Minify is off in every build, so there is no mapping file to upload.
+- Release builds run R8; a local release build uploads its mapping to Crashlytics (off when `CI` is set),
+  and `proguard-rules.pro` keeps file names and line numbers.
 
 ## 7. Testing
 
@@ -152,10 +153,7 @@ the one failure with its own event.
 
 ## 9. Risks
 
-- **Gradle plugins on AGP 9.** The google-services and Crashlytics Gradle plugins must work with the
-  project's AGP; verified first in the Crashlytics slice. If the Crashlytics plugin does not, the app
-  still gets crash reports without it, because minify is off and there is no native code: the manifest
-  sets `com.crashlytics.RequireBuildId` to `false`, without which the SDK refuses to start when the
-  plugin's build id resource is missing.
+- **Gradle plugins on AGP 9.** Resolved: the google-services and Crashlytics Gradle plugins both work with
+  the project's AGP, so the Crashlytics plugin also uploads the release mapping.
 - **Config mismatch.** The google-services plugin fails the build when `google-services.json` has no
   client for the application id; that is the desired failure, not one to work around.
