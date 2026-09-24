@@ -72,7 +72,9 @@ proves nothing about a release one.
 
 1. Merge a `tech/release-<version>` pull request that bumps both version values and marks the epic's
    slices in its decomposition map.
-2. On that merge, `./gradlew :app:assembleRelease`.
+2. On that merge, `./gradlew :app:assembleRelease` with `CI` unset: the same run uploads its mapping to
+   Crashlytics. A rebuild can stamp a new mapping id, so the APK and mapping attached below come from
+   this one run — a rebuild could ship an APK whose crash reports Crashlytics cannot read.
 3. `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` shows the release
    key's certificate, not `Android Debug`.
 4. Install that APK and go through the paths that work by class name: a tap on the home-screen
