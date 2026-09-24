@@ -105,6 +105,12 @@ geohash and needs no network — keeps working. Only country and city names are 
 themselves — a plain list of one row per cat under its outing header, not the Encounters grid.
 Every level is sorted busiest first.
 
+A level draws nothing until its cats have been read, so one sliding in never flashes as empty
+first. A level that holds nothing says what it would have listed: **No places yet** for a level of
+places, **No cats here** for an area or No location, whose children are cats. The first is the
+Places screen with no cat logged. The second is an area whose last cat went away while
+it was open — undone from the walking notification, say.
+
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 
 - **Not named yet** — cats with coordinates whose cell has no name (pending, failed, or no

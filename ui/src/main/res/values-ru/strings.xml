@@ -117,7 +117,8 @@
     <string name="statistics_rate_unavailable">—</string>
     <string name="statistics_places">Места</string>
 
-    <string name="regions_empty">Мест пока нет</string>
+    <string name="regions_empty_places">Мест пока нет</string>
+    <string name="regions_empty_cats">Здесь нет котиков</string>
     <string name="regions_unresolved">Пока без названия</string>
     <string name="regions_no_city">Без города</string>
     <string name="regions_no_location">Без места</string>

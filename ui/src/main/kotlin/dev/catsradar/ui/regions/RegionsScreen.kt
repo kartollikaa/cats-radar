@@ -1,5 +1,6 @@
 package dev.catsradar.ui.regions
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsEmptyLabel
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.encounters.labelRes
@@ -37,23 +39,34 @@ fun RegionsScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onRegionClick: (RegionRowKey) -> Unit = {},
 ) {
-    if (state.isEmpty) {
-        Box(modifier = modifier.fillMaxSize().padding(contentPadding), contentAlignment = Alignment.Center) {
-            Text(text = stringResource(R.string.regions_empty), style = MaterialTheme.typography.bodyLarge)
-        }
-        return
-    }
-    LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        items(items = state.rows, key = { it.key.toString() }) { row ->
-            RegionRow(row, onClick = { onRegionClick(row.key) })
-        }
-        items(items = state.encounters, key = { it.key }) { item ->
-            when (item) {
-                is OutingHeader -> OutingHeaderRow(item.label)
-                is EncounterListItem.Row -> EncounterRow(item)
+    when (state) {
+        RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
+        is RegionsState.Empty -> EmptyRegion(state.label, modifier = modifier.fillMaxSize().padding(contentPadding))
+        is RegionsState.Loaded -> LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
+            items(items = state.rows, key = { it.key.toString() }) { row ->
+                RegionRow(row, onClick = { onRegionClick(row.key) })
+            }
+            items(items = state.encounters, key = { it.key }) { item ->
+                when (item) {
+                    is OutingHeader -> OutingHeaderRow(item.label)
+                    is EncounterListItem.Row -> EncounterRow(item)
+                }
             }
         }
     }
+}
+
+@Composable
+private fun EmptyRegion(label: RegionsEmptyLabel, modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Text(text = stringResource(label.textRes()), style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@StringRes
+private fun RegionsEmptyLabel.textRes(): Int = when (this) {
+    RegionsEmptyLabel.NO_PLACES -> R.string.regions_empty_places
+    RegionsEmptyLabel.NO_CATS -> R.string.regions_empty_cats
 }
 
 @Composable
@@ -122,11 +135,19 @@ private fun RegionsScreenCitiesPreview() {
 @Composable
 private fun RegionsScreenEmptyPreview() {
     CatsRadarTheme {
-        Surface { RegionsScreen(state = RegionsState()) }
+        Surface { RegionsScreen(state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES)) }
     }
 }
 
-private val sampleRegions = RegionsState(
+@ThemePreviews
+@Composable
+private fun RegionsScreenEmptyCatsPreview() {
+    CatsRadarTheme {
+        Surface { RegionsScreen(state = RegionsState.Empty(RegionsEmptyLabel.NO_CATS)) }
+    }
+}
+
+private val sampleRegions = RegionsState.Loaded(
     rows = persistentListOf(
         RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "128", drillable = true),
         RegionRowState(RegionRowKey.Country("FR"), RegionRowLabel.Named("France"), "14", drillable = true),
@@ -135,7 +156,7 @@ private val sampleRegions = RegionsState(
     ),
 )
 
-private val sampleCities = RegionsState(
+private val sampleCities = RegionsState.Loaded(
     rows = persistentListOf(
         RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "97", drillable = true),
         RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "29", drillable = true),

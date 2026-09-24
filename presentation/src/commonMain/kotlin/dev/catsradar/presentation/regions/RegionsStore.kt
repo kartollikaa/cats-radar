@@ -16,7 +16,7 @@ class RegionsStore(
     private val stateMapper: RegionsStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-) : Store<RegionsState, RegionsIntent, RegionsEffect>(RegionsState()) {
+) : Store<RegionsState, RegionsIntent, RegionsEffect>(RegionsState.Loading) {
 
     init {
         observeRegion(parent)

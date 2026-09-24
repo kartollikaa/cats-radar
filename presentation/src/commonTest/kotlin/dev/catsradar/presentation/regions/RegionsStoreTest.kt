@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.regions
 
+import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
@@ -11,6 +12,7 @@ import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakePlaceCellRepository
+import dev.catsradar.presentation.encounters.EncounterListItem
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
@@ -27,6 +29,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -79,12 +82,31 @@ class RegionsStoreTest {
         runCurrent()
 
         assertEquals(
-            persistentListOf(
-                RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2", true),
-                RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "1", true),
+            RegionsState.Loaded(
+                rows = persistentListOf(
+                    RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2", true),
+                    RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "1", true),
+                ),
             ),
-            store.state.value.rows,
+            store.state.value,
         )
+    }
+
+    @Test
+    fun `a level reads as loading, never as empty, until its places arrive`() = runTest(mainDispatcher) {
+        logCat(41.390, 2.170, "ES", "Barcelona")
+        val store = newStore(RegionKey.Country("ES"))
+
+        store.state.test {
+            assertEquals(RegionsState.Loading, awaitItem())
+            val barcelona = RegionRowKey.City("ES", "Barcelona")
+            assertEquals(
+                RegionsState.Loaded(
+                    rows = persistentListOf(RegionRowState(barcelona, RegionRowLabel.Named("Barcelona"), "1", true)),
+                ),
+                awaitItem(),
+            )
+        }
     }
 
     @Test
@@ -96,7 +118,21 @@ class RegionsStoreTest {
         logCat(41.440, 2.190, "ES", "Barcelona")
         runCurrent()
 
-        assertEquals(listOf("2"), store.state.value.rows.map { it.countLabel })
+        assertEquals(listOf("2"), assertIs<RegionsState.Loaded>(store.state.value).rows.map { it.countLabel })
+    }
+
+    @Test
+    fun `an area whose only cat is removed while it is open reads as having no cats`() = runTest(mainDispatcher) {
+        val cat = logCat(41.390, 2.170, "ES", "Barcelona")
+        val areaHash = Geohash.prefix(cat.geohash!!, Tuning.AREA_PRECISION)
+        val store = newStore(RegionKey.Area(areaHash, RegionKey.City("ES", "Barcelona")))
+        runCurrent()
+        assertEquals(listOf(cat.id), assertIs<RegionsState.Loaded>(store.state.value).encounterIds())
+
+        encounters.softDelete(cat.id, NOW)
+        runCurrent()
+
+        assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_CATS), store.state.value)
     }
 
     private fun namedCell(encounter: Encounter, countryCode: String, city: String) = PlaceCell(
@@ -113,6 +149,9 @@ class RegionsStoreTest {
         lastAttemptAt = NOW,
         resolvedAt = NOW,
     )
+
+    private fun RegionsState.Loaded.encounterIds() =
+        encounters.filterIsInstance<EncounterListItem.Row>().map { it.id }
 
     private companion object {
         val NOW = Instant.parse("2026-09-22T10:00:00Z")

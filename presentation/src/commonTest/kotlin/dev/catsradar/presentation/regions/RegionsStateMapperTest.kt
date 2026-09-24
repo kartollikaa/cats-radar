@@ -14,6 +14,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -21,8 +22,8 @@ class RegionsStateMapperTest {
 
     private val mapper = RegionsStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
 
-    private val oneRowPerKey = RegionView(
-        children = listOf(
+    private val oneRowPerKey = RegionView.Places(
+        listOf(
             RegionKey.Country("ES"),
             RegionKey.City("ES", "Barcelona"),
             RegionKey.Area("sp3e3", RegionKey.City("ES", "Barcelona")),
@@ -30,7 +31,6 @@ class RegionsStateMapperTest {
             RegionKey.NoCity("ES"),
             RegionKey.NoLocation,
         ).map { RegionNode(it, RegionLabel.Named("x"), count = 1) },
-        encounters = emptyList(),
     )
 
     @Test
@@ -38,7 +38,7 @@ class RegionsStateMapperTest {
         val base = Instant.parse("2026-09-22T10:00:00Z")
         val older = photoFixture("older", base)
         val newer = photoFixture("newer", base + 5.minutes)
-        val area = RegionView(children = emptyList(), encounters = listOf(older, newer))
+        val area = RegionView.Cats(listOf(older, newer))
 
         val state = mapper.map(area, LocalDate(2026, 9, 22))
 
@@ -48,7 +48,7 @@ class RegionsStateMapperTest {
                 EncounterListItem.Row(id = "newer", timeLabel = "${base + 5.minutes}", location = LocationLabel.NONE),
                 EncounterListItem.Row(id = "older", timeLabel = "$base", location = LocationLabel.NONE),
             ),
-            state.encounters,
+            state.loaded().encounters,
         )
     }
 
@@ -63,17 +63,14 @@ class RegionsStateMapperTest {
                 RegionRowKey.NoCity("ES"),
                 RegionRowKey.NoLocation,
             ),
-            mapper.map(oneRowPerKey, TODAY).rows.map { it.key },
+            mapper.map(oneRowPerKey, TODAY).loaded().rows.map { it.key },
         )
     }
 
     @Test
     fun `an area's row key names the parent it was listed under, each parent its own`() {
         val parents = listOf(RegionKey.City("ES", "Barcelona"), RegionKey.NoCity("ES"), RegionKey.Unresolved)
-        val view = RegionView(
-            children = parents.map { RegionNode(RegionKey.Area("sp3e3", it), RegionLabel.Named("x"), 1) },
-            encounters = emptyList(),
-        )
+        val view = RegionView.Places(parents.map { RegionNode(RegionKey.Area("sp3e3", it), RegionLabel.Named("x"), 1) })
 
         assertEquals(
             listOf(
@@ -81,7 +78,7 @@ class RegionsStateMapperTest {
                 RegionRowKey.Area("sp3e3", RegionRowKey.NoCity("ES")),
                 RegionRowKey.Area("sp3e3", RegionRowKey.Unresolved),
             ),
-            mapper.map(view, TODAY).rows.map { it.key },
+            mapper.map(view, TODAY).loaded().rows.map { it.key },
         )
     }
 
@@ -95,7 +92,7 @@ class RegionsStateMapperTest {
             RegionLabel.NoLocation,
         )
         val area = RegionKey.Area("sp3e3", RegionKey.City("ES", "Barcelona"))
-        val view = RegionView(children = labels.map { RegionNode(area, it, 1) }, emptyList())
+        val view = RegionView.Places(labels.map { RegionNode(area, it, 1) })
 
         assertEquals(
             listOf(
@@ -105,29 +102,28 @@ class RegionsStateMapperTest {
                 RegionRowLabel.NoCity,
                 RegionRowLabel.NoLocation,
             ),
-            mapper.map(view, TODAY).rows.map { it.label },
+            mapper.map(view, TODAY).loaded().rows.map { it.label },
         )
     }
 
     @Test
     fun `every row drills down except an area's, whose cats show in place`() {
-        val drillable = mapper.map(oneRowPerKey, TODAY).rows.map { it.drillable }
+        val drillable = mapper.map(oneRowPerKey, TODAY).loaded().rows.map { it.drillable }
 
         assertEquals(listOf(true, true, false, true, true, true), drillable)
     }
 
     @Test
     fun `a level of rows maps to one whole state`() {
-        val view = RegionView(
-            children = listOf(
+        val view = RegionView.Places(
+            listOf(
                 RegionNode(RegionKey.Country("ES"), RegionLabel.Named("Spain"), 3),
                 RegionNode(RegionKey.NoLocation, RegionLabel.NoLocation, 1),
             ),
-            encounters = emptyList(),
         )
 
         assertEquals(
-            RegionsState(
+            RegionsState.Loaded(
                 rows = persistentListOf(
                     RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "3", drillable = true),
                     RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1", drillable = true),
@@ -137,6 +133,18 @@ class RegionsStateMapperTest {
             mapper.map(view, TODAY),
         )
     }
+
+    @Test
+    fun `an empty level says what it lacks, places or cats, each in its own words`() {
+        val empty = listOf(RegionView.Places(emptyList()), RegionView.Cats(emptyList()))
+
+        assertEquals(
+            listOf(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES), RegionsState.Empty(RegionsEmptyLabel.NO_CATS)),
+            empty.map { mapper.map(it, TODAY) },
+        )
+    }
+
+    private fun RegionsState.loaded() = assertIs<RegionsState.Loaded>(this)
 
     private companion object {
         val TODAY = LocalDate(2026, 9, 22)

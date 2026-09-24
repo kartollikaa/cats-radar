@@ -3,6 +3,7 @@ package dev.catsradar.presentation.regions
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.region.RegionLabel
+import dev.catsradar.domain.region.RegionNode
 import dev.catsradar.domain.usecase.RegionView
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.detail.formatCoordinate
@@ -16,18 +17,24 @@ class RegionsStateMapper(
 ) {
     private val encountersMapper = EncountersStateMapper(dateTimeFormatter, photoStorage)
 
-    fun map(view: RegionView, today: LocalDate): RegionsState = RegionsState(
-        rows = view.children.map { node ->
-            RegionRowState(
-                key = node.key.toRowKey(),
-                label = node.label.toRowLabel(),
-                countLabel = node.count.toString(),
-                // An area's children are its cats, which this screen shows in place rather than
-                // pushing another level; everything above it drills down.
-                drillable = node.key !is RegionKey.Area,
-            )
-        }.toPersistentList(),
-        encounters = encountersMapper.mapList(view.encounters, today),
+    fun map(view: RegionView, today: LocalDate): RegionsState = when (view) {
+        is RegionView.Places -> when {
+            view.children.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES)
+            else -> RegionsState.Loaded(rows = view.children.map { it.toRow() }.toPersistentList())
+        }
+        is RegionView.Cats -> when {
+            view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS)
+            else -> RegionsState.Loaded(encounters = encountersMapper.mapList(view.encounters, today))
+        }
+    }
+
+    private fun RegionNode.toRow() = RegionRowState(
+        key = key.toRowKey(),
+        label = label.toRowLabel(),
+        countLabel = count.toString(),
+        // An area's children are its cats, which this screen shows in place rather than
+        // pushing another level; everything above it drills down.
+        drillable = key !is RegionKey.Area,
     )
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {
