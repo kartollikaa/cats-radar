@@ -9,12 +9,14 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+private val RunId = UUID.fromString("6f1c2b9e-4d7a-4e5b-9c3d-2a8f0e1b7c64")
+
 private fun workInfo(
     state: WorkInfo.State,
     progress: Data = Data.EMPTY,
     output: Data = Data.EMPTY,
 ): WorkInfo = WorkInfo(
-    id = UUID.randomUUID(),
+    id = RunId,
     state = state,
     tags = emptySet(),
     outputData = output,
@@ -56,6 +58,7 @@ class ImportWorkInfoTest {
 
         assertEquals(
             CounterIntent.Import.Finished(
+                runId = RunId.toString(),
                 addedIds = persistentListOf("id-1", "id-2"),
                 skipped = 4,
                 failed = 1,
@@ -68,14 +71,20 @@ class ImportWorkInfoTest {
     fun `a failed run still ends the progress row rather than leaving it spinning`() {
         val intent = workInfo(WorkInfo.State.FAILED).toCounterIntent()
 
-        assertEquals(CounterIntent.Import.Finished(persistentListOf(), skipped = 0, failed = 0), intent)
+        assertEquals(
+            CounterIntent.Import.Finished(RunId.toString(), persistentListOf(), skipped = 0, failed = 0),
+            intent,
+        )
     }
 
     @Test
     fun `a cancelled run ends the same way`() {
         val intent = workInfo(WorkInfo.State.CANCELLED).toCounterIntent()
 
-        assertEquals(CounterIntent.Import.Finished(persistentListOf(), skipped = 0, failed = 0), intent)
+        assertEquals(
+            CounterIntent.Import.Finished(RunId.toString(), persistentListOf(), skipped = 0, failed = 0),
+            intent,
+        )
     }
 
     @Test

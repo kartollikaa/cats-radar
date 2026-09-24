@@ -16,20 +16,18 @@ private const val MAX_LATITUDE = 90.0
 
 class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
 
-    /** A spot or focus in [choices] that matches nothing is ignored. */
+    /** A focus in [choices] that matches nothing is ignored. */
     fun map(encounters: List<Encounter>, today: LocalDate, choices: MapChoices = MapChoices()): MapState {
         val outing = choices.focus?.let { id -> focusedOuting(encounters, id) }
         val shown = outing ?: encounters
         val located = shown.mapNotNull { it.toPoint() }
         if (located.isEmpty()) return MapState.Empty
         val filtering = choices.coats.isNotEmpty()
-        val points = if (filtering) located.filter { it.coat in choices.coats } else located
-        val shownIds = points.mapTo(mutableSetOf()) { it.id }
+        val points = located.filter { choices.coats.shows(it.coat) }
         return MapState.Located(
             points = points.toImmutableList(),
             // Around every located cat, not only the shown ones: a coat filter does not change where the map opens.
             area = areaAround(located),
-            spot = choices.spot?.let { ids -> spotOf(shown.filter { it.id in ids && it.id in shownIds }, today) },
             focus = outing?.let {
                 MapFocus(
                     outingId = it.first().id,
@@ -52,11 +50,6 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
     // The same header the Encounters list gives the outing, so the chip and the list never disagree.
     private fun headerLabel(outing: List<Encounter>, today: LocalDate): String =
         encountersMapper.mapList(outing, today).filterIsInstance<OutingHeader>().first().label
-
-    private fun spotOf(cats: List<Encounter>, today: LocalDate): MapSpot? {
-        if (cats.isEmpty()) return null
-        return MapSpot(catCount = cats.size, rows = encountersMapper.map(cats, today, grid = false).rows)
-    }
 
     private fun Encounter.toPoint(): MapPoint? {
         val latitude = lat

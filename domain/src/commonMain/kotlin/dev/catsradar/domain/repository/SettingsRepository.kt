@@ -22,4 +22,9 @@ interface SettingsRepository {
     fun encountersGrid(): Flow<Boolean>
 
     suspend fun setEncountersGrid(enabled: Boolean)
+
+    /** The last run of [job] whose outcome the user has dealt with; null before the first. */
+    fun acknowledgedRun(job: ReportedJob): Flow<String?>
+
+    suspend fun setAcknowledgedRun(job: ReportedJob, runId: String)
 }

@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import kotlinx.coroutines.flow.Flow
@@ -86,6 +87,9 @@ private class FakeTodayRepository : EncounterRepository {
     }
 
     override fun observeAll(): Flow<List<Encounter>> = rows.map { list -> list.filter { it.deletedAt == null } }
+
+    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
+        throw NotImplementedError("unused by this test")
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
         rows.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }

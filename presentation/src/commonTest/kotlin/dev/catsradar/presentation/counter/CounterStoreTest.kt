@@ -29,6 +29,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CounterStoreTest {
@@ -317,27 +318,33 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `the burst fades once tapping stops, and the window restarts on every tap`() =
-        runTest(mainDispatcher) {
-            val (store, _) = newStore()
+    fun `the plus-one lands before the write does`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insertDelays += 1.seconds
 
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-            advanceTimeBy(Tuning.TAP_BURST_VISIBLE - 1.milliseconds)
-            runCurrent()
-            assertEquals(1, store.state.value.tapBurst, "faded before the window closed")
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
 
-            // A second tap here restarts the window rather than inheriting the first tap's.
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-            advanceTimeBy(Tuning.TAP_BURST_VISIBLE - 1.milliseconds)
-            runCurrent()
-            assertEquals(2, store.state.value.tapBurst)
+        assertEquals(emptyList(), repository.insertedIds)
+        assertEquals(1, store.state.value.tapBurst)
+    }
 
-            advanceTimeBy(1.milliseconds)
-            runCurrent()
-            assertNull(store.state.value.tapBurst)
-        }
+    @Test
+    fun `the burst stays up as long as undo does, and goes with it`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        advanceTimeBy(Tuning.UNDO_VISIBLE - 1.milliseconds)
+        runCurrent()
+        assertTrue(store.state.value.undoVisible)
+        assertEquals(1, store.state.value.tapBurst, "faded while undo was still up")
+
+        advanceTimeBy(1.milliseconds)
+        runCurrent()
+        assertFalse(store.state.value.undoVisible)
+        assertNull(store.state.value.tapBurst)
+    }
 
     @Test
     fun `a new run of taps starts counting from one again`() = runTest(mainDispatcher) {
@@ -345,7 +352,7 @@ class CounterStoreTest {
 
         store.dispatch(CounterIntent.TallyClicked)
         runCurrent()
-        advanceTimeBy(Tuning.TAP_BURST_VISIBLE + 1.milliseconds)
+        advanceTimeBy(Tuning.UNDO_VISIBLE + 1.milliseconds)
         runCurrent()
 
         store.dispatch(CounterIntent.TallyClicked)
@@ -417,12 +424,7 @@ class CounterStoreTest {
             store.dispatch(CounterIntent.TallyClicked)
             runCurrent()
 
-            // The burst and the tick are feedback for the tap itself, so they land either way;
-            // the total comes from the database and stays put because nothing was written.
-            assertEquals(
-                CounterState(totalLabel = "0", count = 0, undoVisible = false, tapBurst = 1),
-                store.state.value,
-            )
+            assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
             store.effects.test {
                 assertEquals(CounterEffect.HapticTick, awaitItem())
                 assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
@@ -463,7 +465,9 @@ class CounterStoreTest {
         store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a")))
         runCurrent()
 
-        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1", "id-2"), skipped = 3, failed = 1))
+        store.dispatch(
+            CounterIntent.Import.Finished("run-1", persistentListOf("id-1", "id-2"), skipped = 3, failed = 1),
+        )
         runCurrent()
 
         assertNull(store.state.value.importProgress)
@@ -476,7 +480,7 @@ class CounterStoreTest {
     @Test
     fun `a run where nothing went wrong says so by omission, not with zeroes`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
-        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1"), skipped = 0, failed = 0))
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
         runCurrent()
 
         assertEquals(
@@ -488,7 +492,7 @@ class CounterStoreTest {
     @Test
     fun `an import that added nothing offers no undo`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
-        store.dispatch(CounterIntent.Import.Finished(persistentListOf(), skipped = 2, failed = 0))
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 2, failed = 0))
         runCurrent()
 
         assertEquals(false, store.state.value.importSummary?.undoable)
@@ -499,7 +503,9 @@ class CounterStoreTest {
         val (store, repository) = newStore()
         repository.insert(externalEncounter(id = "id-1"))
         repository.insert(externalEncounter(id = "id-2"))
-        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1", "id-2"), skipped = 0, failed = 0))
+        store.dispatch(
+            CounterIntent.Import.Finished("run-1", persistentListOf("id-1", "id-2"), skipped = 0, failed = 0),
+        )
         runCurrent()
 
         store.dispatch(CounterIntent.Import.UndoClicked)
@@ -515,7 +521,7 @@ class CounterStoreTest {
         runTest(mainDispatcher) {
             val (store, repository) = newStore()
             repository.insert(externalEncounter(id = "id-1"))
-            store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1"), skipped = 0, failed = 0))
+            store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
             runCurrent()
             repository.softDeleteAllShouldThrow = IllegalStateException("disk full")
 
@@ -535,7 +541,7 @@ class CounterStoreTest {
     fun `undoing an import twice deletes each cat only once`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         repository.insert(externalEncounter(id = "id-1"))
-        store.dispatch(CounterIntent.Import.Finished(persistentListOf("id-1"), skipped = 0, failed = 0))
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))
         runCurrent()
 
         store.dispatch(CounterIntent.Import.UndoClicked)
@@ -544,6 +550,134 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(listOf(listOf("id-1")), repository.softDeleteAllCalls)
+    }
+
+    @Test
+    fun `an undone import is not offered again when its result is read back`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter(id = "id-1"))
+        val finished = CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0)
+        store.dispatch(finished)
+        runCurrent()
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        store.dispatch(finished)
+        runCurrent()
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        assertEquals(false, store.state.value.importSummary?.undoable)
+        assertEquals(listOf(listOf("id-1")), repository.softDeleteAllCalls)
+    }
+
+    @Test
+    fun `an undone import is not reported by a new screen reading it back`() = runTest(mainDispatcher) {
+        val settings = milestonesAlreadyCelebrated()
+        val encounters = FakeEncounterRepository()
+        encounters.insert(externalEncounter(id = "id-1"))
+        val finished = CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0)
+        val (first, _) = newStore(encounterRepository = encounters, settingsRepository = settings)
+        first.dispatch(finished)
+        runCurrent()
+        first.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        val (second, _) = newStore(encounterRepository = encounters, settingsRepository = settings)
+        second.dispatch(finished)
+        runCurrent()
+
+        assertNull(second.state.value.importSummary)
+    }
+
+    @Test
+    fun `a dismissed import summary is not shown by a new screen reading it back`() = runTest(mainDispatcher) {
+        val settings = milestonesAlreadyCelebrated()
+        val finished = CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 2, failed = 0)
+        val (first, _) = newStore(settingsRepository = settings)
+        first.dispatch(finished)
+        runCurrent()
+        first.dispatch(CounterIntent.Import.SummaryDismissed)
+        runCurrent()
+
+        val (second, _) = newStore(settingsRepository = settings)
+        second.dispatch(finished)
+        runCurrent()
+
+        assertNull(second.state.value.importSummary)
+    }
+
+    @Test
+    fun `an import summary nobody has dealt with is shown again by a new screen`() = runTest(mainDispatcher) {
+        val settings = milestonesAlreadyCelebrated()
+        val finished = CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0)
+        val (first, _) = newStore(settingsRepository = settings)
+        first.dispatch(finished)
+        runCurrent()
+
+        val (second, _) = newStore(settingsRepository = settings)
+        second.dispatch(finished)
+        runCurrent()
+
+        assertEquals(
+            ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+            second.state.value.importSummary,
+        )
+    }
+
+    @Test
+    fun `a newer import is reported after an earlier one was dismissed`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 1, failed = 0))
+        runCurrent()
+        store.dispatch(CounterIntent.Import.SummaryDismissed)
+        runCurrent()
+
+        store.dispatch(CounterIntent.Import.Finished("run-2", persistentListOf("id-2"), skipped = 0, failed = 0))
+        runCurrent()
+
+        assertEquals(
+            ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+            store.state.value.importSummary,
+        )
+    }
+
+    @Test
+    fun `a dealt-with import read back again leaves a new import's progress row alone`() =
+        runTest(mainDispatcher) {
+            val (store, _) = newStore()
+            val finished = CounterIntent.Import.Finished("run-1", persistentListOf(), skipped = 1, failed = 0)
+            store.dispatch(finished)
+            runCurrent()
+            store.dispatch(CounterIntent.Import.SummaryDismissed)
+            store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a")))
+            runCurrent()
+
+            store.dispatch(finished)
+            runCurrent()
+
+            assertEquals(ImportProgressState(done = 0, total = 1), store.state.value.importProgress)
+            assertNull(store.state.value.importSummary)
+        }
+
+    @Test
+    fun `a failed undo leaves the import on offer for a new screen`() = runTest(mainDispatcher) {
+        val settings = milestonesAlreadyCelebrated()
+        val encounters = FakeEncounterRepository()
+        encounters.insert(externalEncounter(id = "id-1"))
+        encounters.softDeleteAllShouldThrow = IllegalStateException("disk full")
+        val finished = CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0)
+        val (first, _) = newStore(encounterRepository = encounters, settingsRepository = settings)
+        first.dispatch(finished)
+        runCurrent()
+        first.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+
+        val (second, _) = newStore(encounterRepository = encounters, settingsRepository = settings)
+        second.dispatch(finished)
+        runCurrent()
+
+        assertEquals(true, second.state.value.importSummary?.undoable)
     }
 
     @Test

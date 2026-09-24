@@ -26,10 +26,9 @@ class MapStateMapperTest {
 
     private fun map(
         encounters: List<Encounter>,
-        spot: Set<String>? = null,
         focus: String? = null,
         coats: Set<CoatOption?> = emptySet(),
-    ) = mapper.map(encounters, TODAY, MapChoices(spot = spot, focus = focus, coats = coats))
+    ) = mapper.map(encounters, TODAY, MapChoices(focus = focus, coats = coats))
 
     private fun located(id: String, lat: Double, lon: Double, coat: CatCoat? = null) =
         encounterFixture(id, BASE).copy(lat = lat, lon = lon, coat = coat)
@@ -95,23 +94,6 @@ class MapStateMapperTest {
         assertEquals(2.10, state.area.west)
         assertEquals(2.20, state.area.east)
         assertTrue(abs((state.area.north - state.area.south) - 0.01) < 1e-9)
-    }
-
-    @Test
-    fun `a spot lists its live cats in the list's own grouping, and counts them`() {
-        val a = located("a", 41.39, 2.17)
-        val b = located("b", 41.39, 2.17).copy(occurredAt = BASE + 5.minutes)
-        val gone = located("gone", 41.39, 2.17).copy(deletedAt = BASE + 1.hours)
-        val cats = listOf(a, b, gone, located("elsewhere", 41.40, 2.18))
-
-        val state = assertIs<MapState.Located>(map(cats, spot = setOf("a", "b", "gone")))
-
-        assertEquals(
-            MapSpot(catCount = 2, rows = encountersMapper.map(listOf(a, b), TODAY, grid = false).rows),
-            state.spot,
-        )
-        assertEquals(null, assertIs<MapState.Located>(map(cats)).spot)
-        assertEquals(null, assertIs<MapState.Located>(map(cats, spot = setOf("gone"))).spot)
     }
 
     @Test
@@ -188,21 +170,6 @@ class MapStateMapperTest {
         assertEquals(listOf("ginger"), state.points.map { it.id })
         assertEquals(listOf("ginger", "black"), state.focus?.route?.map { it.id })
         assertEquals(true, state.coatFilterActive)
-    }
-
-    @Test
-    fun `an open spot lists only the cats the coat filter shows`() {
-        val ginger = located("ginger", 41.39, 2.17, CatCoat.GINGER)
-        val black = located("black", 41.39, 2.17, CatCoat.BLACK).copy(occurredAt = BASE + 5.minutes)
-
-        val state = assertIs<MapState.Located>(
-            map(listOf(ginger, black), spot = setOf("ginger", "black"), coats = setOf(CoatOption.GINGER)),
-        )
-
-        assertEquals(
-            MapSpot(catCount = 1, rows = encountersMapper.map(listOf(ginger), TODAY, grid = false).rows),
-            state.spot,
-        )
     }
 
     @Test

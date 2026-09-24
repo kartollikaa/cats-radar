@@ -159,6 +159,7 @@
     <string name="settings_backup_imported">Backup merged with what was already here</string>
     <string name="settings_backup_too_new">That backup is from a newer version of the app</string>
     <string name="settings_backup_unreadable">That file is not a Cats Radar backup</string>
+    <string name="settings_backup_import_failed">The import did not finish. Try again</string>
     <string name="notification_channel_import">Importing photos</string>
     <string name="notification_import_title">Importing photos</string>
     <string name="notification_channel_walking">Walking mode</string>
@@ -174,8 +175,10 @@
     <string name="settings_walking_explained">A notification you can tap to log a cat without unlocking</string>
     <string name="settings_encounters_grid">Grid of cats</string>
     <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
-    <string name="counter_walking_off">Start a walk</string>
-    <string name="counter_walking_on">On a walk</string>
+    <string name="counter_walk_start">Start a walk</string>
+    <string name="counter_walk_start_hint">tap to begin</string>
+    <string name="counter_walk_stop">Stop the walk</string>
+    <string name="counter_walk_stop_hint">press and hold</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">cat today</item>
