@@ -20,9 +20,18 @@ class ImportPhotosWorker(
     private val notifier: ImportNotifier,
 ) : CoroutineWorker(context, params) {
 
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unexpected failure must not crash the process
+    private val batches = ImportBatches(context)
+
     override suspend fun doWork(): Result {
-        val uris = inputData.getStringArray(KEY_URIS)?.toList().orEmpty()
+        val uris = batches.read(id)
+        return import(uris).also {
+            applicationContext.contentResolver.releaseReadAccess(uris.map(Uri::parse))
+            batches.delete(id)
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unexpected failure must not crash the process
+    private suspend fun import(uris: List<String>): Result {
         if (uris.isEmpty()) return Result.success(summaryOf(emptyList(), skipped = 0, failed = 0))
 
         return try {
@@ -45,7 +54,7 @@ class ImportPhotosWorker(
             // Whatever happened, the running commentary stops: an ongoing notification left behind
             // is one the user cannot dismiss.
             notifier.clear()
-        }.also { applicationContext.contentResolver.releaseReadAccess(uris.map(Uri::parse)) }
+        }
     }
 
     private fun summaryOf(addedIds: List<String>, skipped: Int, failed: Int): Data = Data.Builder()
@@ -55,7 +64,6 @@ class ImportPhotosWorker(
         .build()
 
     companion object {
-        const val KEY_URIS = "uris"
         const val KEY_DONE = "done"
         const val KEY_TOTAL = "total"
         const val KEY_ADDED_IDS = "addedIds"
