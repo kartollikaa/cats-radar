@@ -375,6 +375,51 @@ class CounterStoreUndoTest {
     }
 
     @Test
+    fun `an undo while a landed tap's attach waits to be sent still takes that tap back`() =
+        runTest(mainDispatcher) {
+            val (store, repository) = newStore()
+            store.effects.test {
+                store.dispatch(CounterIntent.TallyClicked)
+                runCurrent()
+                cancelAndIgnoreRemainingEvents()
+            }
+            // The effect channel buffers 64; this leaves room for the tap's tick but not its attach.
+            repeat(63) { store.dispatch(CounterIntent.CameraClicked) }
+            repository.insertDelays += 1.seconds
+            store.dispatch(CounterIntent.TallyClicked)
+            advanceTimeBy(1.seconds.inWholeMilliseconds)
+            runCurrent()
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            store.effects.test {
+                runCurrent()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(listOf("id-2"), repository.softDeletedIds)
+        }
+
+    @Test
+    fun `an undo on a tap still being written restarts the window for the cats before it`() =
+        runTest(mainDispatcher) {
+            val (store, repository) = newStore()
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            advanceTimeBy(3.seconds.inWholeMilliseconds)
+            repository.insertDelays += 1.seconds
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            advanceTimeBy((Tuning.UNDO_VISIBLE - 3.seconds + 1.milliseconds).inWholeMilliseconds)
+            runCurrent()
+
+            assertTrue(store.state.value.undoVisible)
+        }
+
+    @Test
     fun `two undos while two taps are being written take both of them back`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         store.dispatch(CounterIntent.TallyClicked)

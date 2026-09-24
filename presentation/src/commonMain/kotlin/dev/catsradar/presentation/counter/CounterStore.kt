@@ -111,25 +111,26 @@ class CounterStore(
             locationPermissionRequestState.markRequested()
             emit(CounterEffect.RequestLocationPermission)
         }
-        var written: UndoableTally? = null
         runStorageWrite {
             val encounter = logTally(coat)
-            if (sequence in undoneWhileWriting) {
+            // Settled before anything suspends: an Undo pressed meanwhile must find the tap in the run.
+            tapsBeingWritten -= sequence
+            if (undoneWhileWriting.remove(sequence)) {
                 undoLastTally(encounter.id)
-            } else {
-                emit(CounterEffect.AttachLocation(encounter.id))
-                written = UndoableTally(sequence, encounter.id, coat?.toOption())
+                return@runStorageWrite
             }
+            // A slow write from a run that has already expired must not reopen the window.
+            if (sequence > expiredThroughSequence) {
+                val tally = UndoableTally(sequence, encounter.id, coat?.toOption())
+                undoableRun += tally
+                // By tap, not by completion: a later tap's insert can resume before an earlier one's.
+                undoableRun.sortBy { it.sequence }
+                if (undoableRun.last() === tally) showNewestUndoable()
+            }
+            emit(CounterEffect.AttachLocation(encounter.id))
         }
         tapsBeingWritten -= sequence
         undoneWhileWriting -= sequence
-        // A slow write from a run that has already expired must not reopen the window.
-        written?.takeIf { sequence > expiredThroughSequence }?.let { tally ->
-            undoableRun += tally
-            // By tap, not by completion: a later tap's insert can resume before an earlier one's.
-            undoableRun.sortBy { it.sequence }
-            if (undoableRun.last() === tally) showNewestUndoable()
-        }
         showBurst()
     }
 
