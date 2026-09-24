@@ -10,9 +10,10 @@ immediately**: one tap, not tap-then-choose. The big button above it logs a cat 
 noted. Both paths are the same tally — same undo, same location attach, same burst.
 
 After a tap the grid rings the coat just used — a line in the theme's primary colour around that
-face — so a run of the same cat down the same street reads back at a glance. An Undo moves the ring
-back to the coat of the newest cat still undoable, and it clears when the undo window closes or the
-last of those cats is undone.
+coat's whole cell, face and name together — so a run of the same cat down the same street reads
+back at a glance. An Undo moves the ring back to the coat of the newest cat still undoable, and it
+clears when the undo window closes or the last of those cats is undone. The cells of one grid row
+share the tallest one's height, so rings side by side — several coats chosen on the map — match.
 
 This replaced an earlier design where a coat strip appeared *after* a tap. Two coat controls on one
 screen — one to log, one to amend — is one too many, and the amend case already has a home on the
@@ -52,6 +53,17 @@ archives hold those names, and renaming what nobody sees would need a migration 
 
 The detail screen shows the coat and lets it be changed, or cleared by tapping the current one
 again. Nothing else needs a "clear" control.
+
+The coats there sit in one row wider than a phone, and the row opens scrolled so the cat's own coat
+is on screen, whole: second from the start with the coat before it showing, or, for the last few
+coats, wherever the row's end leaves it. A cat with no coat opens the row at the first coat
+(`EncounterDetailCoatPickerTest`). Only the opening position is chosen: after that the row stays
+wherever it is scrolled, including when the coat is changed.
+
+The chosen coat is ringed the same way as on the Counter. Every cell in that row takes the tallest
+name's height, so the ring is the same size whichever coat it is on and the row never changes
+height while it scrolls. That is why the row is not lazy: a lazy row measures only the cells on
+screen, and a three-line name scrolling in would grow the card and push Delete down.
 
 ## In the statistics
 
