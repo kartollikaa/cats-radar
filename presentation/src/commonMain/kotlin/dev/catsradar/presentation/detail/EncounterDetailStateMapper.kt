@@ -6,6 +6,7 @@ import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.encounters.toLocationLabel
+import dev.catsradar.presentation.map.isOnTheMap
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
 import kotlin.math.abs
@@ -38,6 +39,7 @@ class EncounterDetailStateMapper(
                 attachingPhoto -> AddPhoto.ATTACHING
                 else -> AddPhoto.READY
             },
+            onTheMap = encounter.isOnTheMap(),
         )
     }
 }

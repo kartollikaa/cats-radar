@@ -20,6 +20,8 @@ sealed interface MapState {
         val shownCoats: ImmutableSet<CoatOption?> = persistentSetOf(),
         val coatFilterActive: Boolean = false,
         val filterMatchesNone: Boolean = false,
+        /** Around the cat the view is to move onto, until it gets there. */
+        val catArea: MapArea? = null,
     ) : MapState
 }
 

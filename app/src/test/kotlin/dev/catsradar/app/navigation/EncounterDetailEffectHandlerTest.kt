@@ -11,6 +11,7 @@ class EncounterDetailEffectHandlerTest {
         effect,
         onNavigateBack = { calls += "back" },
         onOpenPhoto = { calls += "photo" },
+        onOpenMap = { calls += "map" },
         cameraLauncher = { calls += "camera" },
         photoPickerLauncher = { calls += "picker" },
         photoFailureReporter = { calls += "failure" },
@@ -25,7 +26,11 @@ class EncounterDetailEffectHandlerTest {
         handle(EncounterDetailEffect.OpenPhoto)
         handle(EncounterDetailEffect.PhotoNotAttached)
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
+        handle(EncounterDetailEffect.OpenMap)
 
-        assertEquals(listOf("back", "camera", "picker", "photo", "failure", "discard content://captures/1"), calls)
+        assertEquals(
+            listOf("back", "camera", "picker", "photo", "failure", "discard content://captures/1", "map"),
+            calls,
+        )
     }
 }

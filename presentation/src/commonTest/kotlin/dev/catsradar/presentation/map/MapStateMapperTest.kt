@@ -14,6 +14,8 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -28,7 +30,8 @@ class MapStateMapperTest {
         encounters: List<Encounter>,
         focus: String? = null,
         coats: Set<CoatOption?> = emptySet(),
-    ) = mapper.map(encounters, TODAY, MapChoices(focus = focus, coats = coats))
+        cat: String? = null,
+    ) = mapper.map(encounters, TODAY, MapChoices(focus = focus, coats = coats, cat = cat))
 
     private fun located(id: String, lat: Double, lon: Double, coat: CatCoat? = null) =
         encounterFixture(id, BASE).copy(lat = lat, lon = lon, coat = coat)
@@ -170,6 +173,36 @@ class MapStateMapperTest {
         assertEquals(listOf("ginger"), state.points.map { it.id })
         assertEquals(listOf("ginger", "black"), state.focus?.route?.map { it.id })
         assertEquals(true, state.coatFilterActive)
+    }
+
+    @Test
+    fun `a requested cat gets a street-sized area centred on it, and every cat stays on the map`() {
+        val cats = listOf(located("a", 41.30, 2.10), located("b", 41.45, 2.25))
+
+        val state = assertIs<MapState.Located>(map(cats, cat = "b"))
+
+        assertEquals(listOf("a", "b"), state.points.map { it.id })
+        assertEquals(MapArea(south = 41.30, west = 2.10, north = 41.45, east = 2.25), state.area)
+        val around = assertNotNull(state.catArea)
+        assertTrue(abs((around.north - around.south) - 0.01) < 1e-9, "latitude span ${around.north - around.south}")
+        assertTrue(abs((around.east - around.west) - 0.01) < 1e-9, "longitude span ${around.east - around.west}")
+        assertTrue(abs((around.north + around.south) / 2 - 41.45) < 1e-9)
+        assertTrue(abs((around.east + around.west) / 2 - 2.25) < 1e-9)
+    }
+
+    @Test
+    fun `a requested cat that is not drawn gives the view nowhere to go`() {
+        val cats = listOf(
+            located("drawn", 41.39, 2.17),
+            encounterFixture("unlocated", BASE + 5.minutes),
+            located("deleted", 41.40, 2.18).copy(deletedAt = BASE + 1.hours),
+            located("past the pole", 123.4, 2.17),
+        )
+
+        assertNotNull(assertIs<MapState.Located>(map(cats, cat = "drawn")).catArea)
+        listOf("unlocated", "deleted", "past the pole", "no-such-cat").forEach { id ->
+            assertNull(assertIs<MapState.Located>(map(cats, cat = id)).catArea, id)
+        }
     }
 
     @Test

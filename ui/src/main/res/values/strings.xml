@@ -154,6 +154,7 @@
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_attaching">Attaching the photo</string>
     <string name="detail_open_photo">Open full screen</string>
+    <string name="detail_show_on_map">Show on the map</string>
     <string name="viewer_back">Back</string>
 
     <string name="tab_settings">Settings</string>
