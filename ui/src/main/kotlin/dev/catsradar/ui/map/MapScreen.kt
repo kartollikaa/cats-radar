@@ -99,7 +99,7 @@ private fun CatsMap(
 ) {
     val colors = catLayerColors()
     val cats = remember(state.points) { catFeatures(state.points) }
-    val route = remember(state.focus) { state.focus?.let { routeLine(it.route) } }
+    val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
     val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)

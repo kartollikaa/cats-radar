@@ -3,6 +3,7 @@ package dev.catsradar.presentation.map
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.ObserveEncounters
+import dev.catsradar.domain.usecase.ObserveWalkTracks
 import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,7 @@ sealed interface MapEffect {
 
 class MapStore(
     observeEncounters: ObserveEncounters,
+    observeWalkTracks: ObserveWalkTracks,
     private val stateMapper: MapStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -44,8 +46,8 @@ class MapStore(
     private val choices = MutableStateFlow(MapChoices())
 
     init {
-        combine(observeEncounters(), choices) { encounters, chosen ->
-            val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen)
+        combine(observeEncounters(), observeWalkTracks(), choices) { encounters, walks, chosen ->
+            val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen, walks)
             val shown = mapped as? MapState.Located
             // A focus the cats no longer match is let go, so it cannot reopen by itself later.
             if (chosen.focus != null && shown?.focus == null) choices.update { it.copy(focus = null) }

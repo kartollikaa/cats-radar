@@ -1,7 +1,11 @@
 package dev.catsradar.presentation.map
 
 import app.cash.turbine.test
+import dev.catsradar.domain.model.TrackPoint
+import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.usecase.ObserveEncounters
+import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.presentation.StoredWalkRepository
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
@@ -45,8 +49,9 @@ class MapStoreTest {
         Dispatchers.resetMain()
     }
 
-    private fun newStore() = MapStore(
+    private fun newStore(walks: StoredWalkRepository = StoredWalkRepository()) = MapStore(
         observeEncounters = ObserveEncounters(repository),
+        observeWalkTracks = ObserveWalkTracks(walks),
         stateMapper = MapStateMapper(encountersMapper),
         clock = FakeClock(BASE + 3.hours),
         timeZone = TimeZone.UTC,
@@ -172,6 +177,38 @@ class MapStoreTest {
             runCurrent()
 
             assertNull(assertIs<MapState.Located>(store.state.value).focus)
+        }
+
+    @Test
+    fun `focusing an outing whose walk has a track draws it instead of the line joining its cats`() =
+        runTest(mainDispatcher) {
+            val first = located("first", minute = 0)
+            val second = located("second", minute = 5).copy(lat = 41.40)
+            repository.insert(first)
+            repository.insert(second)
+            val walk = Walk(
+                id = "walk-1",
+                startedAt = BASE,
+                endedAt = BASE + 10.minutes,
+                deviceId = "device",
+                createdAt = BASE,
+                updatedAt = BASE,
+            )
+            val points = listOf(
+                TrackPoint(walkId = "walk-1", at = BASE, lat = 41.388, lon = 2.168, accuracyMeters = 5f),
+                TrackPoint(walkId = "walk-1", at = BASE + 1.minutes, lat = 41.395, lon = 2.175, accuracyMeters = 5f),
+            )
+            val store = newStore(StoredWalkRepository(walks = listOf(walk), points = points))
+            runCurrent()
+
+            store.dispatch(MapIntent.OutingFocused("second"))
+            runCurrent()
+
+            val focused = assertIs<MapState.Located>(store.state.value)
+            assertEquals(
+                persistentListOf(MapLine(persistentListOf(MapPosition(41.388, 2.168), MapPosition(41.395, 2.175)))),
+                focused.focus?.lines,
+            )
         }
 
     @Test
