@@ -1,5 +1,6 @@
 package dev.catsradar.data.repository
 
+import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -59,6 +60,18 @@ class EncounterRepositoryImplTest {
             ),
             dao.attachLocationCall,
         )
+    }
+
+    @Test
+    fun setPlaceCellsForwardsEveryAssignmentToTheDao() = runTest {
+        val assignments = listOf(
+            PlaceCellAssignment("id-1", lat = 41.39864, lon = 2.17842, geohash = "sp3e986k", placeCellId = "sp3e98"),
+            PlaceCellAssignment("id-2", lat = 48.8584, lon = 2.2945, geohash = "u09tunqu", placeCellId = "u09tun"),
+        )
+
+        repository.setPlaceCells(assignments)
+
+        assertEquals(assignments, dao.setPlaceCellCalls)
     }
 
     @Test

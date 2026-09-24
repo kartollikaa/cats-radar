@@ -42,7 +42,8 @@ internal fun navMotion(from: Scene<*>, to: Scene<*>): NavMotion = when {
 private val Scene<*>.isTabRoot: Boolean get() = metadata[TabRootKey] == true
 
 private fun Scene<*>.sitsDirectlyOn(other: Scene<*>): Boolean {
-    val below = previousEntries.lastOrNull() ?: return false
+    // A sheet under a screen is drawn as the screen under the sheet, so it is no level of its own.
+    val below = previousEntries.lastOrNull { !it.isSheet } ?: return false
     return below.contentKey == other.entries.last().contentKey
 }
 
