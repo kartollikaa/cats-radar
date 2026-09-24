@@ -51,6 +51,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-24: owner weighed gestures written with Compose modifiers alone against Telephoto and chose
+  **Telephoto for the first version** — it brings the one-finger quick zoom and edge rubber-banding a
+  hand-written viewer would have left out.
 - 2026-09-24: owner asked for a fullscreen zoomable photo and a link back to the gallery item; chose the
   link for **camera photos and future imports** (over camera photos only), accepting the schema change and
   the picker-URI rule, and the action in the **viewer's top bar only**. Three slices, V1 → V2 → V3.
