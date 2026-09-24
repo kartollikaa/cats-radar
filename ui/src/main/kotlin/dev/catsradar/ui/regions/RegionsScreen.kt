@@ -41,7 +41,12 @@ fun RegionsScreen(
 ) {
     when (state) {
         RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
-        is RegionsState.Empty -> EmptyRegion(state.label, modifier = modifier.fillMaxSize().padding(contentPadding))
+        is RegionsState.Empty -> Box(
+            modifier = modifier.fillMaxSize().padding(contentPadding),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = stringResource(state.label.textRes()), style = MaterialTheme.typography.bodyLarge)
+        }
         is RegionsState.Loaded -> LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
             items(items = state.rows, key = { it.key.toString() }) { row ->
                 RegionRow(row, onClick = { onRegionClick(row.key) })
@@ -53,13 +58,6 @@ fun RegionsScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun EmptyRegion(label: RegionsEmptyLabel, modifier: Modifier = Modifier) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Text(text = stringResource(label.textRes()), style = MaterialTheme.typography.bodyLarge)
     }
 }
 
