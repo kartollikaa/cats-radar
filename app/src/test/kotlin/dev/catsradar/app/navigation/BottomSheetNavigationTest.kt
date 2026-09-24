@@ -113,6 +113,7 @@ class BottomSheetNavigationTest {
         settle { backStack.push(SPOT) }
         settle { backStack.push(CAT_KEY) }
         assertFalse(isShown(SHEET), "the sheet stays over the cat")
+        assertFalse(isShown(MAP), "the map stays drawn under the cat")
     }
 
     private fun startBackGesture() = settle {
