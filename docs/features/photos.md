@@ -13,9 +13,10 @@ The Photo button on the counter opens the system camera (the gallery icon at its
 instead — see [import.md](./import.md)). The camera writes its original to a
 `FileProvider` URI under the cache directory. On the way back `LogPhoto` reads the EXIF, stores the
 app's copies, hands the original to the gallery if the setting allows, and saves one encounter with
-`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile and the walking
-notification's Photo button end up on the same path: each opens the app on the counter and does
-what a tap on the camera half does (see [widget.md](./widget.md) and
+`kind = PHOTO`, `origin = CAMERA` and the original's digest. Once that cat is saved, the counter
+asks for its coat (see [coat.md](./coat.md#asked-after-a-photo)). The widget's Photo tile and the
+walking notification's Photo button end up on the same path: each opens the app on the counter and
+does what a tap on the camera half does (see [widget.md](./widget.md) and
 [walking-mode.md](./walking-mode.md#photo)).
 
 The order matters and is deliberate: **the app's own copy is written first**. A gallery item for an
@@ -45,6 +46,46 @@ has both.
   logged without them and goes to the background attach like one with no GPS at all.
   `ExifInterface` applies no range check of its own: a corrupt GPS tag reaches the app as, say,
   200°, and a zero denominator as infinity or, for `0/0`, not a number.
+
+## Giving a cat a photo later
+
+A tally — logged with no photo, from any origin — can be given one afterwards from its detail screen
+(see [encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the
+gallery. `AttachPhoto` stores the app's copy and thumbnail the same way `LogPhoto` does, but under a
+name fresh to this attempt rather than the encounter's id, so an attempt that finds the cat already
+photographed removes only its own files, never the ones the cat now points at (`AttachPhotoTest`,
+*the files are named afresh for the attempt, never after the cat*).
+
+From the camera the original goes to the gallery under the same setting as a photo taken from the
+counter (see *The gallery setting* below); from the gallery it is never copied back in
+(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*).
+
+The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`. The cat
+keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
+photo this way is still a tally (`AttachPhotoTest`, *a cat without a photo gets the copy, thumbnail
+and digest, and keeps everything else*), and it now counts as "With photo" in Statistics like any
+other (see `statistics.md`).
+
+The same photo can go on more than one cat — one picture of two cats together (`AttachPhotoTest`,
+*the same photo can go on two cats*). Each cat stores the photo's digest, so importing that picked
+photo later is skipped while either cat is live (see `import.md`).
+
+### At the edges
+
+- **An undecodable image, or a write that fails,** leaves the cat unchanged and the screen says
+  "Photo not attached"; a failed write's copies are removed (`AttachPhotoTest`, *an undecodable
+  photo leaves the cat as it was and nothing in the gallery*; *a write that fails removes the files
+  it had written*; `EncounterDetailStoreTest`, *an unreadable photo says so and the offer comes
+  back*; *a failed write says the photo was not attached*).
+- **The cat is deleted, or already given a photo some other way, while the attempt is running** — it
+  is left exactly as it was and the attempt's own copies are removed (`AttachPhotoTest`, *a cat
+  deleted while its photo was being copied keeps no files from the attempt*;
+  `EncounterDaoAttachPhotoTest`, *attachPhotoNeverReplacesAPhotoTheRowAlreadyHas*). A camera
+  original already handed to the gallery stays there: it is the user's photo either way.
+- **Leaving mid-attempt** — once the attempt's copies are written, a cancellation before the write
+  lands removes them. Once the write has landed, the files are the cat's and stay
+  (`AttachPhotoTest`, *a cancellation while the original goes to the gallery removes the copies*;
+  *a cancellation after the write has landed keeps the files the cat now points at*).
 
 ## The gallery setting
 
@@ -163,6 +204,7 @@ fixture that large small in the repository.
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
 - `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
+- `domain/…/usecase/AttachPhoto.kt`, `domain/…/model/PhotoStamp.kt` — giving a logged cat a photo
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
 - `tools/make-photo-fixtures.py`, `data/src/androidHostTest/resources/photos/`
@@ -176,12 +218,11 @@ path into an absolute one — the cell carries a path Coil can open, not the pat
 to hold. A pair tile with no full copy falls back to its thumbnail.
 
 A cat with no thumbnail leads with its coat, or a paw when no coat was noted, in a tile the same
-size — covering both a tally, which never had a photo, and a photo whose thumbnail failed to write
-while the copy succeeded. Such a photo never joins a pair: the grid packs it like any cat without
-one.
+size — covering both a tally with no photo yet and a photo whose thumbnail failed to write while
+the copy succeeded. Such a photo never joins a pair: the grid packs it like any cat without one.
 
 ## Not built yet
 
-The gallery-import rules exist but nothing can reach them yet — see `import.md`.
+A cat's photo cannot be replaced or removed — there is no control for either.
 `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.
