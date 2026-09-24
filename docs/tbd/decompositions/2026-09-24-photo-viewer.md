@@ -13,7 +13,7 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | V1 | Fullscreen photo viewer | Tapping a cat's photo opens it fullscreen with pinch, double-tap, pan and fling, above the bottom bar. | safe | ~550 | — | merged |
-| V2 | Open a camera photo in the gallery | The viewer's top bar opens the gallery original the app saved, when this install saved it and it is still there. | safe | ~500 | V1 | in-progress |
+| V2 | Open a camera photo in the gallery | The viewer's top bar opens the gallery original the app saved, when this install saved it and it is still there. | safe | ~500 | V1 | in-review |
 | V3 | Gallery link for imported and picked photos | Imports and gallery attachments remember the MediaStore item they came from, and the viewer opens it. | safe | ~600 | V2, #122 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
