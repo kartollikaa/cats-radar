@@ -45,7 +45,9 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowContentResolver
+import org.robolectric.shadows.ShadowToast
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -110,18 +112,40 @@ class PhotoViewerEntryTest {
 
     @Test
     fun `the gallery button in the nav host's own viewer entry opens the original this install saved`() {
-        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, GalleryHolding(SAVED))
-        val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
-        show(keys, cat = { install -> photographed().copy(galleryUri = SAVED, deviceId = install) })
-        val openInGallery = hasContentDescription(context.getString(R.string.viewer_open_in_gallery))
-        awaitTheDatabase { compose.onAllNodes(openInGallery).fetchSemanticsNodes().isNotEmpty() }
-
-        compose.onNode(openInGallery).performClick()
+        tapOpenInGallery(galleryHolds = SAVED)
         awaitTheDatabase { started != null }
 
         val opened = checkNotNull(started)
         assertEquals(Intent.ACTION_VIEW, opened.action)
         assertEquals(Uri.parse(SAVED), opened.data)
+    }
+
+    @Test
+    fun `an original deleted from the gallery is named as such by the nav host's own viewer entry`() {
+        tapOpenInGallery(galleryHolds = "content://media/external/images/media/7")
+
+        awaitTheDatabase { ShadowToast.getTextOfLatestToast() != null }
+        assertEquals(context.getString(R.string.viewer_gallery_gone), ShadowToast.getTextOfLatestToast())
+        assertNull(started)
+    }
+
+    @Test
+    fun `with no app to show images the nav host's own viewer entry says so`() {
+        shadowOf(context as Application).checkActivities(true)
+
+        tapOpenInGallery(galleryHolds = SAVED)
+
+        awaitTheDatabase { ShadowToast.getTextOfLatestToast() != null }
+        assertEquals(context.getString(R.string.viewer_no_gallery_app), ShadowToast.getTextOfLatestToast())
+    }
+
+    private fun tapOpenInGallery(galleryHolds: String) {
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, GalleryHolding(galleryHolds))
+        val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
+        show(keys, cat = { install -> photographed().copy(galleryUri = SAVED, deviceId = install) })
+        val openInGallery = hasContentDescription(context.getString(R.string.viewer_open_in_gallery))
+        awaitTheDatabase { compose.onAllNodes(openInGallery).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(openInGallery).performClick()
     }
 
     private var started: Intent? = null

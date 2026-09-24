@@ -48,6 +48,15 @@ class GalleryOpenerTest {
     }
 
     @Test
+    fun `an image app that refuses to be started reports that nothing opened instead of crashing`() {
+        val refusingEverything = object : ContextWrapper(activity) {
+            override fun startActivity(intent: Intent): Unit = throw SecurityException("not exported")
+        }
+
+        assertFalse(refusingEverything.openInGallery(SAVED))
+    }
+
+    @Test
     fun `with no app to show an image it reports so instead of crashing`() {
         shadowOf(activity.application).checkActivities(true)
 

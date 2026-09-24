@@ -26,6 +26,9 @@ internal fun Context.openInGallery(uri: String): Boolean {
         true
     } catch (_: ActivityNotFoundException) {
         false
+    } catch (_: SecurityException) {
+        // The app picked to show images refuses to be started by others.
+        false
     }
 }
 

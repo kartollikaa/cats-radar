@@ -35,6 +35,13 @@ class PhotoViewerStateMapperTest {
     }
 
     @Test
+    fun `an original recorded by another install is not offered here`() {
+        val cat = photographedCat().copy(galleryUri = SAVED, deviceId = "another-install")
+
+        assertEquals(false, mapper.map(cat)?.opensInGallery)
+    }
+
+    @Test
     fun `a photo with no original in the gallery offers nothing there`() {
         assertEquals(false, mapper.map(photographedCat())?.opensInGallery)
     }
