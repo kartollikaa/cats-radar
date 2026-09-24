@@ -16,10 +16,17 @@ class RegeneratePhotoCopies(
 ) {
     suspend operator fun invoke() {
         if (settingsRepository.photoCopiesRegenerated().first()) return
-        encounterRepository.loadEvery()
-            // Must match the name the resizer gives an encounter's copy, so a rebuild lands on this row's own file.
-            .filter { it.photoPath == "${it.id}.jpg" }
-            .forEach { encounter -> encounter.galleryUri?.let { imageResizer.store(it, encounter.id) } }
+        encounterRepository.loadEvery().forEach { encounter ->
+            val galleryUri = encounter.galleryUri ?: return@forEach
+            // Must match how the resizer names a copy, so the rebuild lands on the file this row holds.
+            val baseName = encounter.photoPath?.takeIf { it.endsWith(COPY_SUFFIX) }?.removeSuffix(COPY_SUFFIX)
+                ?: return@forEach
+            imageResizer.store(galleryUri, baseName)
+        }
         settingsRepository.setPhotoCopiesRegenerated(true)
+    }
+
+    private companion object {
+        const val COPY_SUFFIX = ".jpg"
     }
 }

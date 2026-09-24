@@ -54,8 +54,17 @@ class RegeneratePhotoCopiesTest {
     }
 
     @Test
-    fun `a photo whose copy is named after another encounter is left alone`() = runTest {
-        repository.insert(cameraPhoto("a", URI_A).copy(photoPath = "b.jpg"))
+    fun `a rebuild is written under the name the row's copy already has, not the cat's id`() = runTest {
+        repository.insert(cameraPhoto("a", URI_A).copy(photoPath = "attached-later.jpg"))
+
+        regenerate()()
+
+        assertEquals(listOf(URI_A to "attached-later"), resizer.requests)
+    }
+
+    @Test
+    fun `a photo whose copy is not a jpeg the resizer wrote is left alone`() = runTest {
+        repository.insert(cameraPhoto("a", URI_A).copy(photoPath = "a.png"))
 
         regenerate()()
 

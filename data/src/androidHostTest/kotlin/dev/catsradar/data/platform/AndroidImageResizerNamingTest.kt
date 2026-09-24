@@ -23,7 +23,7 @@ class AndroidImageResizerNamingTest {
     private val resizer = AndroidImageResizer(context, AndroidPhotoStorage(context))
 
     @Test
-    fun storingAgainForAnEncounterWritesTheSameNamesItsRowHolds() = runTest {
+    fun storingAgainUnderABaseNameWritesTheSameTwoNames() = runTest {
         val source = PhotoFixtures.copyTo(temporaryFolder.root, PhotoFixtures.SMALL_NO_EXIF).path
 
         val first = resizer.store(source, "cat-1")
