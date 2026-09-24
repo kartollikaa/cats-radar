@@ -14,6 +14,7 @@ import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
 import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.FakeSourceFileTime
+import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
@@ -44,6 +45,7 @@ class ImportPhotosTest {
         deviceIdProvider = FakeDeviceIdProvider(),
         clock = FakeClock(NOW),
         timeZone = timeZone,
+        analytics = RecordingAnalytics(),
     )
 
     @Test

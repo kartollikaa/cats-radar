@@ -58,7 +58,7 @@ class PhotoStreamTest {
     @Test
     fun aPhotoOutsideMediaStoreIsReadAsHandedOverEvenWithAccessToMediaLocation() {
         grantMediaLocation()
-        val capture = Uri.parse("content://dev.catsradar.fileprovider/captures/cat.jpg")
+        val capture = Uri.parse("content://com.kartollika.catsradar.fileprovider/captures/cat.jpg")
         serve(capture, redacted = "as handed over", original = "original")
 
         assertEquals("as handed over", read(capture))

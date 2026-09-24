@@ -19,7 +19,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             configureAndroid(this)
             namespace = moduleNamespace()
             defaultConfig {
-                applicationId = "dev.catsradar"
+                applicationId = "com.kartollika.catsradar"
                 targetSdk = libs.version("android-targetSdk").toInt()
                 versionCode = libs.version("app-versionCode").toInt()
                 versionName = libs.version("app-versionName")

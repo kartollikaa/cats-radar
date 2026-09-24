@@ -1,5 +1,7 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.GallerySaver
@@ -37,6 +39,7 @@ class AttachPhoto(
     private val photoStorage: PhotoStorage,
     private val idGenerator: IdGenerator,
     private val clock: Clock,
+    private val analytics: Analytics,
 ) {
     suspend operator fun invoke(encounterId: String, sourceUri: String, source: PhotoSource): AttachResult {
         val target = encounterRepository.observeById(encounterId).first()
@@ -73,6 +76,7 @@ class AttachPhoto(
         } finally {
             if (!attached) withContext(NonCancellable) { discard(stored) }
         }
+        if (attached) analytics.log(AnalyticsEvent.PhotoAttached(source))
         return if (attached) AttachResult.Attached else AttachResult.NotAttachable
     }
 

@@ -31,6 +31,20 @@ A debug build is signed with the machine's debug key, not this one, so a phone t
 installed has to remove it before the first release build will install. Export a backup first:
 removing the app removes its cats.
 
+## The application id
+
+The app installs as `com.kartollika.catsradar`. Earlier builds installed as `dev.catsradar`, and
+Android treats a different application id as a different app: the new build installs **beside** the
+old one, with no cats, rather than updating it. To move the cats across:
+
+1. In the old app, Settings → Backup → Export.
+2. Install the new build and, in it, Settings → Backup → Import that file.
+3. Check the count, then remove the old app.
+
+A backup holds the cats, their photos and their places — not the app around them. The Settings
+switches start from their defaults, every permission is asked for again, and a home-screen widget
+belongs to the old app and goes with it: add the new one's widget again.
+
 ## What a release build is
 
 `assembleRelease` runs R8: it removes the code and resources nothing reaches, optimises what is left,
@@ -40,7 +54,9 @@ proves nothing about a release one.
 - **A release stack trace is unreadable without its mapping.** Every build writes
   `app/build/outputs/mapping/release/mapping.txt`, which fits only the APK built with it, so it is
   attached, zipped, to the GitHub release next to that APK. `retrace mapping.txt stacktrace.txt` (the
-  `retrace` tool from the SDK's Command-line Tools) turns the short names back.
+  `retrace` tool from the SDK's Command-line Tools) turns the short names back. A release built on
+  this machine also uploads its mapping to Crashlytics, so its crash reports arrive in real names; a
+  build with the `CI` variable set (every GitHub Actions run) uploads nothing.
 - **Code that creates a class from its name breaks only at run time.** R8 cannot see that use, so it
   drops the constructor or the class. Libraries ship rules for what they look up;
   `app/proguard-rules.pro` covers what theirs miss. No test runs the minified code, which is why a

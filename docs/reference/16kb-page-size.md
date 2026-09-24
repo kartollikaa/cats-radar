@@ -43,7 +43,7 @@ The platform's own verdict is the check, and the emulator this project uses is a
 image. Install, launch, and read the log:
 
 ```bash
-adb logcat -c && adb shell am force-stop dev.catsradar && adb shell monkey -p dev.catsradar -c android.intent.category.LAUNCHER 1 && sleep 6 && adb logcat -d | grep -c PageSizeMismatchDialog
+adb logcat -c && adb shell am force-stop com.kartollika.catsradar && adb shell monkey -p com.kartollika.catsradar -c android.intent.category.LAUNCHER 1 && sleep 6 && adb logcat -d | grep -c PageSizeMismatchDialog
 ```
 
 `0` is a pass. Anything else prints the offending libraries in the dialog itself.

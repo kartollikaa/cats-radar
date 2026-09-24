@@ -46,5 +46,9 @@ gradlePlugin {
             id = "catsradar.detekt"
             implementationClass = "DetektConventionPlugin"
         }
+        register("firebase") {
+            id = "catsradar.firebase"
+            implementationClass = "FirebaseConventionPlugin"
+        }
     }
 }

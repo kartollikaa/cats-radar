@@ -6,6 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
+import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
@@ -148,7 +150,14 @@ class AttachLocationWorkerTest {
             override fun now(): Instant = Now
         }
         val attachLocation = AttachLocation(repository, FakePlaceCellRepository(), FakeLocationProvider(), clock)
-        val koin = koinApplication { modules(module { single { attachLocation } }) }.koin
+        val koin = koinApplication {
+            modules(
+                module {
+                    single { attachLocation }
+                    single<NonFatalReporter> { RecordingNonFatalReporter() }
+                },
+            )
+        }.koin
 
         val worker = TestListenableWorkerBuilder<AttachLocationWorker>(context)
             .setInputData(Data.Builder().putString(AttachLocationWorker.KEY_ENCOUNTER_ID, "target").build())

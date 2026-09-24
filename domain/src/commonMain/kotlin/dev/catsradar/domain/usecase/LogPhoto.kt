@@ -1,6 +1,8 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.logged
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
@@ -44,6 +46,7 @@ class LogPhoto(
     private val idGenerator: IdGenerator,
     private val deviceIdProvider: DeviceIdProvider,
     private val clock: Clock,
+    private val analytics: Analytics,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
     suspend operator fun invoke(sourceUri: String): PhotoResult {
@@ -86,6 +89,7 @@ class LogPhoto(
             deletedAt = null,
         )
         encounterRepository.insert(encounter)
+        analytics.log(encounter.logged())
         return PhotoResult.Logged(encounter = encounter, needsLocation = exifPoint == null)
     }
 }

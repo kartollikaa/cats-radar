@@ -1,6 +1,7 @@
 plugins {
     id("catsradar.android.application")
     id("catsradar.compose")
+    id("catsradar.firebase")
     alias(libs.plugins.kotlin.serialization)
 }
 

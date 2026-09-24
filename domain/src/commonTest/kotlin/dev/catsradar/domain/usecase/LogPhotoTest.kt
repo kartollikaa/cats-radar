@@ -15,6 +15,7 @@ import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
 import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.FakeSettingsRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlin.test.Test
@@ -47,6 +48,7 @@ class LogPhotoTest {
         deviceIdProvider = FakeDeviceIdProvider(),
         clock = FakeClock(NOW),
         timeZone = TimeZone.UTC,
+        analytics = RecordingAnalytics(),
     )
 
     @Test
