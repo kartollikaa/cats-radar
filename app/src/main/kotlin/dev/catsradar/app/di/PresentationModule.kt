@@ -2,12 +2,15 @@ package dev.catsradar.app.di
 
 import dev.catsradar.presentation.AndroidDateTimeFormatter
 import dev.catsradar.presentation.DateTimeFormatter
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CounterStateMapper
 import dev.catsradar.presentation.counter.CounterStore
 import dev.catsradar.presentation.detail.EncounterDetailStateMapper
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.map.MapSpotStateMapper
+import dev.catsradar.presentation.map.MapSpotStore
 import dev.catsradar.presentation.map.MapStateMapper
 import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.regions.RegionsStateMapper
@@ -29,6 +32,17 @@ val presentationModule = module {
     viewModelOf(::EncountersStore)
     factoryOf(::MapStateMapper)
     viewModelOf(::MapStore)
+    factoryOf(::MapSpotStateMapper)
+    viewModel { (catIds: Set<String>, coats: Set<CoatOption?>) ->
+        MapSpotStore(
+            catIds = catIds,
+            coats = coats,
+            observeEncounters = get(),
+            stateMapper = get(),
+            clock = get(),
+            timeZone = get(),
+        )
+    }
     factoryOf(::EncounterDetailStateMapper)
     factoryOf(::StatisticsStateMapper)
     viewModelOf(::StatisticsStore)

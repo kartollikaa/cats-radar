@@ -5,26 +5,28 @@ import android.content.Context
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.Configuration
+import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.WorkerFactory
+import androidx.work.WorkerParameters
 import androidx.work.impl.WorkManagerImpl
 import androidx.work.impl.model.WorkSpec
 import androidx.work.testing.WorkManagerTestInitHelper
+import kotlinx.coroutines.awaitCancellation
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 // No public WorkInfo field exposes "expedited"; reading it back off the enqueued WorkSpec via
 // WorkManagerImpl's own test database is the documented way to assert on it.
-//
-// USE_TIME_BASED_SCHEDULING, not the legacy SynchronousExecutor mode: under a synchronous
-// executor, GreedyScheduler runs (and fails, since no WorkerFactory here can build
-// AttachLocationWorker) newly enqueued work inline within enqueue() itself, before this test's
-// own cancel() call ever runs - there is no "still pending" state left to cancel.
 @RunWith(AndroidJUnit4::class)
 class WorkManagerLocationAttachSchedulerEnqueueTest {
     private lateinit var context: Context
@@ -34,12 +36,14 @@ class WorkManagerLocationAttachSchedulerEnqueueTest {
         context = ApplicationProvider.getApplicationContext()
         WorkManagerTestInitHelper.initializeTestWorkManager(
             context,
+            Configuration.Builder().setWorkerFactory(ParkingWorkerFactory).build(),
             WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING,
         )
     }
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(context).cancelAllWork().result.get()
         WorkManagerTestInitHelper.closeWorkDatabase()
     }
 
@@ -65,8 +69,7 @@ class WorkManagerLocationAttachSchedulerEnqueueTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWork("encounter-3").get()
-        assertTrue(workInfos.isNotEmpty())
-        assertTrue(workInfos.all { it.state == WorkInfo.State.CANCELLED })
+        assertEquals(listOf(WorkInfo.State.CANCELLED), workInfos.map { it.state })
     }
 
     // getWorkInfosForUniqueWork(id).get() blocks until the enqueue's async DB write has actually
@@ -78,4 +81,18 @@ class WorkManagerLocationAttachSchedulerEnqueueTest {
         val dao = WorkManagerImpl.getInstance(context).workDatabase.workSpecDao()
         return dao.getWorkSpec(workInfo.id.toString())!!
     }
+}
+
+// Time-based scheduling starts unconstrained work on real executors the moment it is enqueued; a run that
+// finished first would leave cancel() nothing to cancel, so every worker here waits until it is stopped.
+private object ParkingWorkerFactory : WorkerFactory() {
+    override fun createWorker(
+        appContext: Context,
+        workerClassName: String,
+        workerParameters: WorkerParameters,
+    ): ListenableWorker = ParkedWorker(appContext, workerParameters)
+}
+
+private class ParkedWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result = awaitCancellation()
 }

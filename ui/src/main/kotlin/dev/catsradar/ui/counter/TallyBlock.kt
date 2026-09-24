@@ -1,18 +1,12 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -24,13 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -43,21 +35,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
-
-private val RollSpring = spring<IntOffset>(
-    dampingRatio = Spring.DampingRatioLowBouncy,
-    stiffness = Spring.StiffnessMedium,
-)
-
-@Immutable
-private data class ShownCount(val label: String, val count: Int?)
 
 /** The count, as a button: squashes under a press, and rolls up on a tally and down on an undo. */
 @Composable
@@ -105,7 +86,8 @@ internal fun TallyBlock(
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 // Mid-roll the old and the new number are both drawn; the block's own label is the total.
                 RollingCount(
-                    shown = ShownCount(totalLabel, count),
+                    label = totalLabel,
+                    count = count,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).clearAndSetSemantics {},
                 )
                 TapBurst(
@@ -114,36 +96,6 @@ internal fun TallyBlock(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun RollingCount(shown: ShownCount, modifier: Modifier = Modifier) {
-    AnimatedContent(
-        targetState = shown,
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-        transitionSpec = {
-            val from = initialState.count
-            val to = targetState.count
-            if (from == null || to == null) {
-                (EnterTransition.None togetherWith ExitTransition.None).using(null)
-            } else {
-                val rising = to >= from
-                val enter = slideInVertically(RollSpring) { height -> if (rising) height else -height } + fadeIn()
-                val exit = slideOutVertically(RollSpring) { height -> if (rising) -height else height } + fadeOut()
-                (enter togetherWith exit).using(SizeTransform(clip = false))
-            }
-        },
-        label = "count",
-    ) { target ->
-        Text(
-            text = target.label,
-            maxLines = 1,
-            softWrap = false,
-            autoSize = TextAutoSize.StepBased(minFontSize = 32.sp, maxFontSize = 112.sp),
-            style = MaterialTheme.typography.displayLarge.copy(lineHeight = 1.em),
-        )
     }
 }
 

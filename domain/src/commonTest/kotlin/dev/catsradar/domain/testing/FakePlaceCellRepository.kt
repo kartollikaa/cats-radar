@@ -7,9 +7,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
-class FakePlaceCellRepository(initial: List<PlaceCell> = emptyList()) : PlaceCellRepository {
+class FakePlaceCellRepository(initial: List<PlaceCell> = emptyList()) :
+    PlaceCellRepository,
+    RollsBack {
     private val cells = MutableStateFlow(initial)
     val upserted = mutableListOf<PlaceCell>()
+
+    override fun checkpoint(): () -> Unit {
+        val saved = cells.value
+        return { cells.value = saved }
+    }
 
     override fun observeAll(): Flow<List<PlaceCell>> = cells
 

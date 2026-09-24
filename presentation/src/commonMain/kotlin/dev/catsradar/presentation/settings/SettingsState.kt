@@ -17,4 +17,5 @@ enum class BackupOutcome {
     IMPORTED,
     IMPORT_REFUSED_TOO_NEW,
     IMPORT_REFUSED_UNREADABLE,
+    IMPORT_FAILED,
 }

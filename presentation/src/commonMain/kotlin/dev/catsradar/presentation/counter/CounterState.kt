@@ -11,7 +11,7 @@ data class CounterState(
     val locationPermissionHintVisible: Boolean = false,
     /** Null when no outing is in progress — the last cat was long enough ago to have closed it. */
     val currentOuting: CurrentOutingState? = null,
-    /** How many cats the current run of taps has added; null once the burst has faded. */
+    /** How many cats the open run of taps holds, taps still being written included; null when it holds none. */
     val tapBurst: Int? = null,
     /** The coat of the cat the undo window belongs to, so the grid can show which one it was. */
     val lastCoat: CoatOption? = null,

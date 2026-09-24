@@ -1,6 +1,7 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.backup.BackupContents
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
@@ -10,13 +11,20 @@ import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.platform.BackupWriter
+import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.repository.PlaceCellRepository
+import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
+import dev.catsradar.domain.testing.FakeTransactionRunner
 import dev.catsradar.domain.testing.FakeWalkRepository
 import dev.catsradar.domain.testing.encounterAt
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Instant
@@ -51,6 +59,56 @@ private class RecordingWriter(private val succeeds: Boolean = true) : BackupWrit
 
 private class StubReader(private val result: BackupReadResult) : BackupReader {
     override suspend fun read(source: String): BackupReadResult = result
+}
+
+private class DiskFullOnSecondUpsert(private val delegate: PlaceCellRepository) : PlaceCellRepository by delegate {
+    private var upserts = 0
+
+    override suspend fun upsert(cell: PlaceCell) {
+        check(++upserts < 2) { "database or disk is full" }
+        delegate.upsert(cell)
+    }
+}
+
+private class ReadsInTransaction(private val transactions: FakeTransactionRunner) {
+    val seen = mutableSetOf<Pair<String, Boolean>>()
+
+    fun record(read: String) {
+        seen += read to transactions.isOpen
+    }
+}
+
+private class WatchedEncounters(
+    private val delegate: EncounterRepository,
+    private val reads: ReadsInTransaction,
+) : EncounterRepository by delegate {
+    override suspend fun loadEvery(): List<Encounter> =
+        delegate.loadEvery().also { reads.record("encounters.loadEvery") }
+}
+
+private class WatchedPlaceCells(
+    private val delegate: PlaceCellRepository,
+    private val reads: ReadsInTransaction,
+) : PlaceCellRepository by delegate {
+    override fun observeAll(): Flow<List<PlaceCell>> =
+        delegate.observeAll().also { reads.record("placeCells.observeAll") }
+
+    override suspend fun loadById(cellId: String): PlaceCell? =
+        delegate.loadById(cellId).also { reads.record("placeCells.loadById") }
+}
+
+private class WatchedWalks(
+    private val delegate: WalkRepository,
+    private val reads: ReadsInTransaction,
+) : WalkRepository by delegate {
+    override fun observeAll(): Flow<List<Walk>> = delegate.observeAll().also { reads.record("walks.observeAll") }
+
+    override suspend fun loadEveryPoint(): List<TrackPoint> =
+        delegate.loadEveryPoint().also { reads.record("walks.loadEveryPoint") }
+}
+
+private class DiskFullOnAppendPoints(delegate: WalkRepository) : WalkRepository by delegate {
+    override suspend fun appendPoints(points: List<TrackPoint>) = error("database or disk is full")
 }
 
 private fun cell(id: String, status: PlaceStatus = PlaceStatus.PENDING) = PlaceCell(
@@ -129,8 +187,73 @@ class ImportBackupTest {
     private val placeCells = FakePlaceCellRepository()
     private val walks = FakeWalkRepository()
 
-    private fun importBackup(result: BackupReadResult) =
-        ImportBackup(encounters, placeCells, walks, StubReader(result))
+    private val transactions = FakeTransactionRunner(encounters, placeCells, walks)
+
+    private fun importBackup(
+        result: BackupReadResult,
+        encounterRepository: EncounterRepository = encounters,
+        placeCellRepository: PlaceCellRepository = placeCells,
+        walkRepository: WalkRepository = walks,
+    ) = ImportBackup(encounterRepository, placeCellRepository, walkRepository, transactions, StubReader(result))
+
+    @Test
+    fun `an import that fails once cats are written leaves every cat and cell as it was`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "known", updatedAt = EARLY))
+        placeCells.upsert(cell(PENDING_HERE))
+        val before = encounters.loadEvery() to placeCells.observeAll().first()
+        val imported = BackupContents(
+            encounters = listOf(encounterAt(EARLY).copy(id = "known", updatedAt = LATE), locatedInMoscow),
+            placeCells = listOf(cell("ucfv0n", PlaceStatus.RESOLVED), cell("ucfv0p", PlaceStatus.RESOLVED)),
+        )
+
+        assertFailsWith<IllegalStateException> {
+            importBackup(BackupReadResult.Readable(imported), placeCellRepository = DiskFullOnSecondUpsert(placeCells))(
+                "content://in.zip",
+            )
+        }
+
+        assertEquals(listOf("known", "cat"), encounters.inserted.map { it.id })
+        assertEquals(listOf(PENDING_HERE, "ucfv0n"), placeCells.upserted.map { it.cellId })
+        assertEquals(before, encounters.loadEvery() to placeCells.observeAll().first())
+    }
+
+    @Test
+    fun `the merge reads what is here inside the transaction it writes in`() = runTest {
+        val reads = ReadsInTransaction(transactions)
+        val imported = BackupContents(encounters = listOf(locatedInMoscow), placeCells = listOf(cell("ucfv0n")))
+
+        importBackup(
+            BackupReadResult.Readable(imported),
+            encounterRepository = WatchedEncounters(encounters, reads),
+            placeCellRepository = WatchedPlaceCells(placeCells, reads),
+            walkRepository = WatchedWalks(walks, reads),
+        )("content://in.zip")
+
+        assertEquals(
+            setOf(
+                "encounters.loadEvery" to true,
+                "placeCells.observeAll" to true,
+                "placeCells.loadById" to true,
+                "walks.observeAll" to true,
+                "walks.loadEveryPoint" to true,
+            ),
+            reads.seen,
+        )
+    }
+
+    @Test
+    fun `an import that fails once walks are written leaves every walk as it was`() = runTest {
+        val archive = BackupContents(walks = listOf(walk("w")), trackPoints = listOf(point("w")))
+
+        assertFailsWith<IllegalStateException> {
+            importBackup(BackupReadResult.Readable(archive), walkRepository = DiskFullOnAppendPoints(walks))(
+                "content://in.zip",
+            )
+        }
+
+        assertEquals(listOf(walk("w")), walks.upserted)
+        assertEquals(emptyList(), walks.walks())
+    }
 
     @Test
     fun `an archive's walks and routes are written, and importing them again writes nothing more`() = runTest {

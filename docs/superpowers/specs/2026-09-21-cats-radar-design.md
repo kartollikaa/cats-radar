@@ -72,9 +72,9 @@ attached in the background (§4.3).
 present, else the background location chain. Then a bottom sheet asks for the cat's coat — one tap
 on a face sets it, dismissing leaves it unset (§4.2 step 7).
 
-**F3 Import.** Counter screen → long-press camera (or Settings → Import photos) → gallery
-multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress bar, then a
-summary with "Undo import".
+**F3 Import.** Counter screen → the gallery half of the Photo split button (or Settings → Import
+photos) → gallery multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress
+bar, then a summary with "Undo import".
 
 **F4 Widget.** Home-screen widget shows today's count and a "+1" button. Tap logs a tally through
 the same path as F1, without opening the app (§4.8).
@@ -90,7 +90,7 @@ changed or cleared, and gives a cat without a photo one from the camera or the g
 merges a ZIP back (§4.7).
 
 Screens (phone only): `Counter`, `Encounters`, `EncounterDetail(id)`, `Statistics`,
-`Regions(level, parentKey)`, `RegionEncounters(areaKey)`, `Settings`. Bottom navigation:
+`Regions(level, parentKey)` (an area's level lists its encounters), `Settings`. Bottom navigation:
 Counter · Encounters · Statistics. Settings from the top bar. Back from Encounters/Statistics
 returns to Counter; back from Counter exits.
 
@@ -109,7 +109,7 @@ returns to Counter; back from Counter exits.
 | `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null until the cat has a photo; set once, on a TALLY only by §4.2a. |
 | `thumbPath` | String? | Generated thumbnail. |
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
-| `sourceDigest` | String? | SHA-256 of the original bytes; duplicate imports are skipped on it. |
+| `sourceDigest` | String? | SHA-256 of the bytes the source hands over — the picker's redacted copy when location is not shared; duplicate imports are skipped on it. |
 | `lat`, `lon` | Double? | WGS84. Both null when no location. |
 | `accuracyMeters` | Float? | From the fix; null for EXIF. |
 | `locationSource` | enum `EXIF` \| `CURRENT_FIX` \| `LAST_KNOWN` \| `BACKFILLED` \| `NONE` | Which rung of §4.3 produced the coordinates. |
@@ -146,12 +146,18 @@ with, so a finished run read back from WorkManager is not reported again.
 |---|---|---|---|
 | Country | `countryCode` | `countryName` | after resolution |
 | City | `(countryCode, locality ?: adminArea)` | `locality ?: adminArea` | after resolution |
-| Area | `geohash.take(AREA_PRECISION = 5)` (~4.9 km) | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
+| Area | the coordinates' geohash at `AREA_PRECISION = 5` (~4.9 km), computed from `lat`/`lon` rather than the stored geohash | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
 
-Pseudo-nodes: **"Unresolved"** (country and city level) holds encounters whose cell is
-`PENDING`/`FAILED`/`UNAVAILABLE`; **"No location"** holds `locationSource = NONE`. Each pseudo-node
-drills down like a real one (Unresolved → its areas; No location → its encounters). Sums across
-siblings always equal the parent.
+Pseudo-nodes: **"Unresolved"** (country level) holds encounters whose cell is
+`PENDING`/`FAILED`/`UNAVAILABLE`; **"No city"** (city level, under its country) holds encounters
+whose resolved cell names neither a locality nor an admin area; **"No location"** holds encounters
+without a location — coordinates missing or off the globe, or `locationSource = NONE`. Each
+pseudo-node drills down like a real one (Unresolved and No city → their areas; No location → its
+encounters). Sums across siblings always equal the parent.
+
+An area belongs to the node it is listed under: its key is that parent (a city, No city or
+Unresolved) plus the area's geohash, and it holds only that parent's encounters in the patch — so
+the encounters an area lists are always exactly the ones its row counts.
 
 ### 3.5 Session (derived, never stored)
 
@@ -266,7 +272,8 @@ never touched by the app.
 - **Import**: `OpenDocument`. Validate `manifest.formatVersion ≤ current`. Merge by `id`: unknown →
   insert; known → keep the row with the newer `updatedAt`; a soft-deleted local row wins over an
   imported live one only if its `deletedAt` is newer. Photos copied when missing; thumbnails
-  regenerated. Place cells merged, `RESOLVED` wins. `ImportBackupWorker`, progress notification,
+  regenerated. Place cells merged, `RESOLVED` wins. The merge reads and writes in one database
+  transaction, so a failure part-way writes no rows. `ImportBackupWorker`, progress notification,
   summary at the end.
 - Round-trip test: export → wipe → import → identical statistics.
 
@@ -316,9 +323,9 @@ maps the spec onto those modules.
 
 | Module | Kind | Holds |
 |---|---|---|
-| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
+| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`, `TransactionRunner`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
 | `:data` | KMP | Room `CatsDatabase`, `EncounterDao`, `PlaceCellDao` (`BundledSQLiteDriver`, `RoomDatabaseConstructor` expect/actual, KSP); DataStore Preferences; repository implementations; entity ↔ domain mappers; backup ZIP (de)serialisation with `kotlinx.serialization`. `androidMain`: FusedLocationProvider, ExifInterface, `Geocoder`, MediaStore saver, SHA-256, bitmap resize. |
-| `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`; `DateTimeFormatter` interface. |
+| `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `Settings`; `DateTimeFormatter` interface. |
 | `:ui` | Android | `CatsRadarTheme`, `@ThemePreviews`, components, one file per screen, previews. Compose Multiplatform-ready: no Android imports beyond Compose. |
 | `:app` | Android app | Navigation 3 host, Koin modules, workers (`AttachLocationWorker`, `GeocodePendingCellsWorker`, `PurgeDeletedWorker`, `ImportPhotosWorker`, `ExportWorker`, `ImportBackupWorker`), Glance widget, `FileProvider`, activity result contracts, string resources (EN, RU). |
 | `:build-logic` | Gradle | Convention plugins: `catsradar.kmp.library`, `catsradar.android.library`, `catsradar.android.application`, `catsradar.compose`, `catsradar.detekt`. |
@@ -326,7 +333,7 @@ maps the spec onto those modules.
 ### 6.2 Navigation (`:app`)
 
 `NavDisplay` over `rememberNavBackStack(Counter)`; `@Serializable NavKey`s `Counter`, `Encounters`,
-`EncounterDetail(id)`, `Statistics`, `Regions(level, parentKey)`, `RegionEncounters(areaKey)`,
+`EncounterDetail(id)`, `Statistics`, `Regions(level, parentKey)` (an area's encounters included),
 `Settings`; `entryProvider` DSL; `rememberViewModelStoreNavEntryDecorator` +
 `rememberSavedStateNavEntryDecorator`. Bottom bar keeps `Counter` as the root: selecting another tab
 makes the stack `[Counter, Tab]`; back pops to Counter. No `Scene` strategies in v1.
@@ -426,7 +433,8 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 ## 10. Open items
 
 - `applicationId` / package name placeholder `dev.catsradar` until confirmed.
-- **EXIF GPS from gallery photos is redacted under scoped storage.** Reading it needs the
-  `ACCESS_MEDIA_LOCATION` runtime permission plus `MediaStore.setRequireOriginal(uri)`; whether that
-  works on Photo Picker URIs must be verified on device in the gallery-import slice. If it does not,
-  import falls back to `NONE` for location (dates still come from EXIF) and the spec is amended.
+- ~~**EXIF GPS from gallery photos is redacted under scoped storage.**~~ Resolved with no runtime
+  permission: the Photo Picker hands GPS over when the launch intent carries
+  `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS` and the user agrees in the picker.
+  Declined, or on a picker without that extra, import falls back to `NONE` for location while dates
+  still come from EXIF — see `docs/features/import.md`.
