@@ -60,8 +60,8 @@ over the APK — no version bump, no PR, no tag).
    in a clean worktree, or check out `main` after a fast-forward pull).
 5. **Build the APK(s).**
    - Debug: `./gradlew :app:assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`.
-   - Release (only when `~/.gradle/gradle.properties` has all four
-     `catsradar.release.*` properties), **one invocation that builds the APK and uploads its
+   - Release (only when `~/.gradle/gradle.properties` has `kartollika.signingFile` and the
+     file it names exists — see `releasing.md` "The signing key"), **one invocation that builds the APK and uploads its
      mapping to Crashlytics**, with `CI` unset (the upload is off whenever `CI` is set) and the
      network up:
      ```
@@ -82,7 +82,7 @@ over the APK — no version bump, no PR, no tag).
      If the upload failed (offline), run the whole command again once online and ship that run's
      APK and mapping. Then confirm the signature with
      `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` — it must
-     show the release key's certificate, not `Android Debug`. Without the properties,
+     show the release key's certificate, not `Android Debug`. Without the signing file,
      `assembleRelease` still succeeds but produces `app-release-unsigned.apk`, which no phone
      will install — don't attach that; ship debug-only and say so in the release body, the way
      past pre-releases have ("The signed release build will be added to this release").
@@ -97,7 +97,7 @@ over the APK — no version bump, no PR, no tag).
      compiles — `app/google-services.json` has a client for `com.kartollika.catsradar` only.
      If the walk finds a bug, fix it through a PR and restart from step 4; any local release
      build made just to try something runs with `CI=true`, so it uploads nothing.
-   - A debug-only release (no signing properties) has no mapping — debug builds are not
+   - A debug-only release (no signing file) has no mapping — debug builds are not
      minified — so there is nothing to upload to Crashlytics or zip; say so in the release body.
    - Rename into `build/` (gitignored; a `.zip` in the repo root is not) before attaching:
      `cats-radar-<versionName>.apk` (release) / `cats-radar-<versionName>-debug.apk` (debug), and
