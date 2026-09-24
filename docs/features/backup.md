@@ -102,10 +102,11 @@ written only where no file was here, so importing the same archive again finds t
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.
-- **A file cut off between two entries reads as the shorter archive it is.** A ZIP is read entry by
-  entry, and a clean break looks like its end. The rows come first in every archive this app
-  writes, so what such a cut can lose is photos: the cats arrive, and those whose photos were past
-  the cut show the placeholder until an archive that has them is imported.
+- **A file cut off between two entries** looks, to a ZIP read entry by entry, like its end. An
+  archive of this version's format always carries all five lists, so one that lacks any of them was
+  cut off and is refused as unreadable. The lists come before the photos, so a clean cut after them
+  can only lose photos: the cats arrive, and those whose photos were past the cut show the
+  placeholder until an archive that has them is imported.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
 - **So does a row whose photo or thumbnail path climbs out of it.** Every screen that shows a cat

@@ -25,7 +25,7 @@ class ZipBackupReaderRejectionTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    private fun reader() = ZipBackupReader(context, AndroidPhotoStorage(context))
+    private val reader get() = ZipBackupReader(context, AndroidPhotoStorage(context))
 
     private val target: String get() = File(temporaryFolder.root, "backup.zip").path
 
@@ -37,7 +37,7 @@ class ZipBackupReaderRejectionTest {
             ENCOUNTERS_ENTRY to "[]",
         )
 
-        val read = reader().read(path)
+        val read = reader.read(path)
 
         assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), read)
     }
@@ -46,7 +46,7 @@ class ZipBackupReaderRejectionTest {
     fun aFileThatIsNotAnArchiveIsRefused() = runTest {
         val path = File(temporaryFolder.root, "notes.txt").also { it.writeText("not a zip") }.path
 
-        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader().read(path))
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(path))
     }
 
     @Test
@@ -54,7 +54,7 @@ class ZipBackupReaderRejectionTest {
         val path = target
         File(path).writeArchive(ENCOUNTERS_ENTRY to "[]")
 
-        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader().read(path))
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(path))
     }
 
     @Test
@@ -65,7 +65,7 @@ class ZipBackupReaderRejectionTest {
             ENCOUNTERS_ENTRY to """[{"id":"a"}]""",
         )
 
-        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader().read(path))
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(path))
     }
 
     @Test
@@ -79,7 +79,7 @@ class ZipBackupReaderRejectionTest {
 
         // The whole archive is refused rather than the entry skipped: an archive that tried this
         // is not one to take rows from either.
-        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader().read(path))
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(path))
         assertTrue(!File(context.filesDir.parentFile, "escaped.txt").exists())
     }
 
@@ -88,7 +88,7 @@ class ZipBackupReaderRejectionTest {
         val path = target
         File(path).writeArchive(MANIFEST_ENTRY to VALID_MANIFEST, ENCOUNTERS_ENTRY to "[]")
 
-        val read = reader().read(path)
+        val read = reader.read(path)
 
         assertIs<BackupReadResult.Readable>(read)
         assertEquals(emptyList(), read.contents.walks)
@@ -103,7 +103,7 @@ class ZipBackupReaderRejectionTest {
             MANIFEST_ENTRY to NEWER_MANIFEST,
         )
 
-        assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader().read(path))
+        assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader.read(path))
     }
 
     @Test
@@ -114,7 +114,19 @@ class ZipBackupReaderRejectionTest {
             ENCOUNTERS_ENTRY to "[]",
         )
 
-        assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader().read(path))
+        assertEquals(BackupReadResult.Rejected(BackupRejection.TOO_NEW), reader.read(path))
+    }
+
+    @Test
+    fun aCurrentArchiveCutOffBetweenItsListsIsRefusedRatherThanReadWithoutThem() = runTest {
+        val path = target
+        File(path).writeArchive(
+            MANIFEST_ENTRY to CurrentManifest,
+            ENCOUNTERS_ENTRY to "[]",
+            PLACE_CELLS_ENTRY to "[]",
+        )
+
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(path))
     }
 
     @Test
@@ -125,7 +137,7 @@ class ZipBackupReaderRejectionTest {
             ENCOUNTERS_ENTRY to "[]",
         )
 
-        val read = reader().read(path)
+        val read = reader.read(path)
 
         assertIs<BackupReadResult.Readable>(read)
         assertEquals(emptyList(), read.contents.placeCells)

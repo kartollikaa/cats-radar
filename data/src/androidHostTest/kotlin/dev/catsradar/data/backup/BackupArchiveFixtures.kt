@@ -11,6 +11,8 @@ import kotlin.time.Instant
 
 internal const val VALID_MANIFEST = """{"formatVersion":1,"exportedAt":0,"deviceId":"d","appVersion":"1"}"""
 internal val Epoch = Instant.fromEpochMilliseconds(0)
+internal val CurrentManifest =
+    """{"formatVersion":$BACKUP_FORMAT_VERSION,"exportedAt":0,"deviceId":"d","appVersion":"1"}"""
 internal const val NEWER_MANIFEST = """{"formatVersion":99,"exportedAt":0,"deviceId":"d","appVersion":"9"}"""
 
 internal fun catWithPhotos(photoPath: String?, thumbPath: String? = null): String {

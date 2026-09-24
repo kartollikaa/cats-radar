@@ -140,6 +140,9 @@ class ZipBackupReader(
             // Before any row is decoded, and from the version alone: a newer version's rows, or the rest
             // of its manifest, may not parse in this one at all.
             manifest.formatVersion > BACKUP_FORMAT_VERSION -> BackupReadResult.Rejected(BackupRejection.TOO_NEW)
+            // This version writes every list, so an archive of its own format that lacks one was cut off.
+            manifest.formatVersion == BACKUP_FORMAT_VERSION && !unpacked.texts.keys.containsAll(archiveTextEntries) ->
+                BackupReadResult.Rejected(BackupRejection.UNREADABLE)
             else -> {
                 val contents = BackupContents(
                     encounters = ArchiveJson.decodeFromString<List<EncounterRecord>>(encounters).map { it.toDomain() },
@@ -147,7 +150,7 @@ class ZipBackupReader(
                     walks = unpacked.decoded<WalkRecord>(WALKS_ENTRY).map { it.toDomain() },
                     trackPoints = unpacked.decoded<TrackPointRecord>(TRACK_POINTS_ENTRY).map { it.toDomain() },
                 )
-                // fileFor throws for a path outside the photo directory wherever the row is later shown.
+                // fileFor throws for a path outside the photo directory, so such a row is refused, not stored.
                 contents.encounters.forEach { cat ->
                     listOfNotNull(cat.photoPath, cat.thumbPath).forEach(photoStorage::fileFor)
                 }
