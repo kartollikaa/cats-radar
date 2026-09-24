@@ -48,6 +48,7 @@ private fun NavKey.analyticsScreen(): AnalyticsScreen? = when (this) {
     Counter -> AnalyticsScreen.COUNTER
     Encounters -> AnalyticsScreen.ENCOUNTERS
     is EncounterDetail -> AnalyticsScreen.ENCOUNTER_DETAIL
+    is PhotoViewer -> AnalyticsScreen.PHOTO_VIEWER
     Statistics -> AnalyticsScreen.STATISTICS
     is Regions -> AnalyticsScreen.REGIONS
     CatsMap -> AnalyticsScreen.MAP

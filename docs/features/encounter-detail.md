@@ -36,7 +36,8 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 ## Giving a cat a photo
 
-A cat with a photo of its own shows the app's copy (see [photos.md](./photos.md#seeing-one)); one
+A cat with a photo of its own shows the app's copy (see [photos.md](./photos.md#seeing-one)), and a
+tap on it opens the photo fullscreen (see [photo-viewer.md](./photo-viewer.md)); one
 without shows a **Photo** section instead, with *Take a photo* and *Choose from gallery* — the system
 camera, or the system picker for a single image. A second tap before the camera or the picker
 answers opens nothing, so a double tap never opens two cameras (`EncounterDetailStoreTest`, *a
@@ -96,8 +97,9 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
-  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`),
-  `PhotoLaunchers.kt` (the camera and gallery-picker launchers)
+  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
+  pushes `PhotoViewer` on the photo's tap), `PhotoLaunchers.kt` (the camera and gallery-picker
+  launchers)
 
 ## Not built yet
 

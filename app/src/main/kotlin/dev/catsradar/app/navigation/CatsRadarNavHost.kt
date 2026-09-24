@@ -16,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
@@ -78,11 +80,12 @@ internal fun CatsRadarNavDisplay(
 ) {
     val density = LocalDensity.current
     val sheets = remember(backStack) { BottomSheetSceneStrategy(backStack) }
+    val dialogs = remember { DialogSceneStrategy<NavKey>() }
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popOrNull() },
-        sceneStrategies = listOf(sheets),
+        sceneStrategies = listOf(sheets, dialogs),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -147,12 +150,20 @@ internal fun catsRadarEntries(
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
+    catEntries(backStack, contentPadding)
+}
+
+private fun EntryProviderScope<NavKey>.catEntries(backStack: BottomNavBackStack, contentPadding: PaddingValues) {
     entry<EncounterDetail> { key ->
         EncounterDetailDestination(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popOrNull() },
+            onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
         )
+    }
+    entry<PhotoViewer>(metadata = photoViewerMetadata()) { key ->
+        PhotoViewerDestination(key = key, onClose = { backStack.popIfOnTop(key) })
     }
 }
 
