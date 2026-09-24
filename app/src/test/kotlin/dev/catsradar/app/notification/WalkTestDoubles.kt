@@ -1,10 +1,19 @@
 package dev.catsradar.app.notification
 
 import dev.catsradar.domain.location.LocationFix
+import dev.catsradar.domain.model.CatCoat
+import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterKind
+import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
+import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.WalkRecordingState
+import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.repository.WalkRepository
@@ -12,10 +21,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 internal val WalkStart = Instant.parse("2026-09-23T09:00:00Z")
+
+/** Twenty minutes into the walk that began at [WalkStart]. */
+internal object WalkClock : Clock {
+    override fun now(): Instant = WalkStart + 20.minutes
+}
 
 internal class TrackingOnlyLocationProvider(private val fixes: Flow<LocationFix>) : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? = null
@@ -89,4 +105,68 @@ internal class OneWalkRepository : WalkRepository {
 
     override suspend fun appendPoints(points: List<TrackPoint>): Unit =
         throw NotImplementedError("unused by these tests")
+}
+
+internal fun tally(id: String, at: Instant): Encounter = Encounter(
+    id = id,
+    occurredAt = at,
+    tzOffsetMinutes = 0,
+    kind = EncounterKind.TALLY,
+    origin = EncounterOrigin.APP,
+    coat = null,
+    photoPath = null,
+    thumbPath = null,
+    galleryUri = null,
+    sourceDigest = null,
+    lat = null,
+    lon = null,
+    accuracyMeters = null,
+    locationSource = LocationSource.NONE,
+    locationFixedAt = null,
+    geohash = null,
+    placeCellId = null,
+    deviceId = "device-1",
+    createdAt = at,
+    updatedAt = at,
+    deletedAt = null,
+)
+
+internal class InMemoryEncounters : EncounterRepository {
+    private val rows = MutableStateFlow(emptyList<Encounter>())
+
+    fun add(id: String, at: Instant) {
+        rows.update { it + tally(id, at) }
+    }
+
+    override fun observeAll(): Flow<List<Encounter>> = rows
+
+    override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by these tests")
+    override suspend fun insert(encounter: Encounter) = rows.update { it + encounter }
+    override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by these tests")
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by these tests")
+    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
+    override suspend fun loadEvery(): List<Encounter> = rows.value
+    override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> = emptyList()
+    override suspend fun purgeDeletedBefore(cutoff: Instant): Int = 0
 }

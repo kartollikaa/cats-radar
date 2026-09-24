@@ -9,6 +9,7 @@ import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
+import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoImport
@@ -22,8 +23,12 @@ import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList") // one parameter per collaborator
@@ -34,6 +39,7 @@ class CounterStore(
     private val undoImport: UndoImport,
     private val setCoat: SetCoat,
     observeStats: ObserveStats,
+    observeWalkElapsed: ObserveWalkElapsed,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
@@ -65,6 +71,7 @@ class CounterStore(
                         tapBurst = tapBurst,
                         lastCoat = lastCoat,
                         walkingMode = walkingMode,
+                        walkElapsedLabel = walkElapsedLabel,
                         importProgress = importProgress,
                         importSummary = importSummary,
                         coatPrompt = coatPrompt,
@@ -74,7 +81,14 @@ class CounterStore(
             }
             .launchIn(viewModelScope)
         settingsRepository.walkingMode()
-            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
+            // Nothing ticks the walk's clock while walking mode is off.
+            .flatMapLatest { enabled ->
+                val elapsed = if (enabled) observeWalkElapsed().onStart { emit(null) } else flowOf(null)
+                elapsed.map { enabled to stateMapper.walkElapsedLabel(enabled, it) }
+            }
+            .onEach { (enabled, elapsedLabel) ->
+                setState { copy(walkingMode = enabled, walkElapsedLabel = elapsedLabel) }
+            }
             .launchIn(viewModelScope)
     }
 

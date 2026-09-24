@@ -4,16 +4,10 @@ import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.stats.Stats
 import dev.catsradar.domain.stats.StatsCalculator
 import dev.catsradar.domain.time.today
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-
-private val TickPeriod = 10.seconds
 
 class ObserveStats(
     private val encounterRepository: EncounterRepository,
@@ -27,11 +21,4 @@ class ObserveStats(
         combine(encounterRepository.observeAll(), ticks) { encounters, _ ->
             StatsCalculator.calculate(encounters, today = clock.today(timeZone), now = clock.now())
         }
-}
-
-private fun ticker(period: Duration): Flow<Unit> = flow {
-    while (true) {
-        emit(Unit)
-        delay(period)
-    }
 }

@@ -22,9 +22,9 @@ import org.koin.dsl.module
 
 val workerModule = module {
     single { ImportNotifier(androidContext()) }
-    single { WalkingNotifier(androidContext()) }
+    single { WalkingNotifier(androidContext(), get()) }
     single<WalkingNotifications> { get<WalkingNotifier>() }
-    single { WalkingNotificationSync(get(), get(), get()) }
+    single { WalkingNotificationSync(get(), get(), get(), get()) }
     single<WidgetRedraw> { WidgetRedraw { CatsRadarWidget().updateAll(androidContext()) } }
     single { WidgetRefresh(get(), get()) }
     single<PlaceNamingScheduler> { PlaceNamingScheduler { GeocodeWorkScheduler.nameUntriedCells(androidContext()) } }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.time.Instant
 
 /** Records the walk's route for as long as it carries the walking notification in the foreground. */
 class WalkRecordingService : Service(), KoinComponent {
@@ -28,10 +29,12 @@ class WalkRecordingService : Service(), KoinComponent {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val count = intent?.getIntExtra(EXTRA_COUNT, 0) ?: 0
+        val startedAt = intent?.takeIf { it.hasExtra(EXTRA_STARTED_AT) }
+            ?.let { Instant.fromEpochMilliseconds(it.getLongExtra(EXTRA_STARTED_AT, 0)) }
         if (intent?.action == ACTION_STOP) {
             stopSelf()
-        } else if (!carryNotification(count)) {
-            notifier.show(count, appOnScreen = false)
+        } else if (!carryNotification(count, startedAt)) {
+            notifier.show(count, startedAt, appOnScreen = false)
             stopSelf()
         } else if (recording == null) {
             recordingState.markRecording()
@@ -50,9 +53,9 @@ class WalkRecordingService : Service(), KoinComponent {
     override fun onBind(intent: Intent?): IBinder? = null
 
     @Suppress("SwallowedException") // refused when the app left the screen, or location went, before this ran
-    private fun carryNotification(count: Int): Boolean =
+    private fun carryNotification(count: Int, startedAt: Instant?): Boolean =
         try {
-            notifier.carry(this, count)
+            notifier.carry(this, count, startedAt)
             true
         } catch (e: IllegalStateException) {
             false
@@ -62,10 +65,13 @@ class WalkRecordingService : Service(), KoinComponent {
 
     companion object {
         const val EXTRA_COUNT = "dev.catsradar.extra.WALK_COUNT"
+        const val EXTRA_STARTED_AT = "dev.catsradar.extra.WALK_STARTED_AT"
         const val ACTION_STOP = "dev.catsradar.action.STOP_RECORDING"
 
-        fun intent(context: Context, count: Int): Intent =
-            Intent(context, WalkRecordingService::class.java).putExtra(EXTRA_COUNT, count)
+        fun intent(context: Context, count: Int, startedAt: Instant?): Intent =
+            Intent(context, WalkRecordingService::class.java)
+                .putExtra(EXTRA_COUNT, count)
+                .apply { if (startedAt != null) putExtra(EXTRA_STARTED_AT, startedAt.toEpochMilliseconds()) }
 
         fun stopIntent(context: Context): Intent =
             Intent(context, WalkRecordingService::class.java).setAction(ACTION_STOP)
@@ -78,9 +84,9 @@ internal class WalkRecordingControl(private val context: Context) {
     private var started = false
 
     @Suppress("SwallowedException") // refused when the app left the screen before the request reached the system
-    fun start(count: Int): Boolean =
+    fun start(count: Int, startedAt: Instant?): Boolean =
         try {
-            ContextCompat.startForegroundService(context, WalkRecordingService.intent(context, count))
+            ContextCompat.startForegroundService(context, WalkRecordingService.intent(context, count, startedAt))
             started = true
             true
         } catch (e: IllegalStateException) {

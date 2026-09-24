@@ -16,6 +16,8 @@ data class CounterState(
     /** The coat of the cat the undo window belongs to, so the grid can show which one it was. */
     val lastCoat: CoatOption? = null,
     val walkingMode: Boolean = false,
+    /** How long the walk has lasted; null unless [walkingMode] is on and its walk has started. */
+    val walkElapsedLabel: String? = null,
     /** Null unless an import is running. */
     val importProgress: ImportProgressState? = null,
     /** Null until an import finishes, and again once it is dismissed. */

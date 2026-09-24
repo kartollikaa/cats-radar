@@ -43,7 +43,7 @@ class WalkRecordingServiceTest {
     private val walks = OneWalkRepository()
     private val fixes = MutableSharedFlow<LocationFix>()
     private val recordingState = InMemoryRecordingState()
-    private val notifier = WalkingNotifier(context)
+    private val notifier = WalkingNotifier(context, WalkClock)
     private val controllers = mutableListOf<ServiceController<WalkRecordingService>>()
 
     @Before
@@ -78,7 +78,10 @@ class WalkRecordingServiceTest {
     }
 
     private fun service(count: Int) =
-        Robolectric.buildService(WalkRecordingService::class.java, WalkRecordingService.intent(context, count))
+        Robolectric.buildService(
+            WalkRecordingService::class.java,
+            WalkRecordingService.intent(context, count, WalkStart),
+        )
             .create()
             .also { controllers += it }
 
@@ -88,6 +91,8 @@ class WalkRecordingServiceTest {
 
         val carried = assertNotNull(shadowOf(service).lastForegroundNotification)
         assertEquals("4", NotificationCompat.getShortCriticalText(carried))
+        assertEquals(WalkStart.toEpochMilliseconds(), carried.`when`)
+        assertTrue(carried.extras.getBoolean(android.app.Notification.EXTRA_SHOW_CHRONOMETER))
         assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION, service.foregroundServiceType)
         assertTrue(recordingState.recording)
     }
@@ -109,7 +114,7 @@ class WalkRecordingServiceTest {
     @Test
     fun aSecondStartUpdatesTheNotificationWithoutASecondRecording() = runBlocking {
         val controller = service(count = 1).startCommand(0, 1)
-        controller.withIntent(WalkRecordingService.intent(context, 2)).startCommand(0, 2)
+        controller.withIntent(WalkRecordingService.intent(context, 2, WalkStart)).startCommand(0, 2)
 
         withTimeout(5.seconds) { fixes.subscriptionCount.first { it >= 1 } }
         assertNull(withTimeoutOrNull(500.milliseconds) { fixes.subscriptionCount.first { it >= 2 } })
