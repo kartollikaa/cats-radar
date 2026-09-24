@@ -52,16 +52,18 @@ it keeps a height at which the number still reads, and the Counter scrolls inste
 switched on only then, because an enabled scroll delays every press and turns a tap that drifts a
 few pixels into a drag: on a screen with room to spare, a tap is only ever a tap.
 
-**The controls do not jump.** Undo has a place of its own at the far end of the walk-chip row,
+**The controls do not jump.** Undo has a place of its own at the far end of the walk button's row,
 outside the count block — inside the block, a follow-up tap on the same spot would land on Undo and
-take a cat away instead of adding one. The walk chip sits in the middle of that row, and Undo
+take a cat away instead of adding one. The walk button sits in the middle of that row, and Undo
 appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
-a longer translation — does the chip step aside toward the start, and past that it shortens its
-label: Undo is never squeezed. The outing line keeps its line, empty when no outing is open, so an outing starting or ending leaves
-the block the same size. The location hint and the import progress and summary appear above the
-count and take their room from it, so the number shrinks and the walk chip, the coat grid and the
-Photo button stay where they are — unless the block is already at its floor, when the Counter
-scrolls instead.
+a longer translation — does the button step aside toward the start, and past that it shortens its
+label: Undo is never squeezed. A tap on the button starts a walk, but stopping one takes a press
+held until a fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)).
+The button keeps one height whether it starts or stops a walk, and the outing line keeps its line,
+empty when no outing is open, so a walk or an outing starting or ending leaves the block the same
+size. The location hint and the import progress and summary appear above the count and take their
+room from it, so the number shrinks and the walk button, the coat grid and the Photo button stay
+where they are — unless the block is already at its floor, when the Counter scrolls instead.
 
 ## Undoing a run of taps
 
@@ -147,7 +149,8 @@ the window closed does not reopen it*).
   `CounterIntent`, `CounterEffect`, `CounterStore`, `CounterStateMapper`
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
   press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
-  block's floor and the scroll past it), `UndoChip.kt`
+  block's floor and the scroll past it), `WalkRow.kt` (the walk button and Undo's place beside it),
+  `UndoChip.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`
 
