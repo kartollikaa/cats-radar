@@ -32,7 +32,8 @@ says which one it came from. There is no switch to turn it off.
 - **A screen view** each time a different screen comes to the top: `screen_view` with `screen_name`
   one of `counter`, `encounters`, `encounter_detail`, `statistics`, `regions`, `map`, `map_spot`,
   `settings`. The same screen again with nothing in between is not counted twice; going back to a
-  screen after another counts it again; turning the phone, which rebuilds the screen, does not.
+  screen after another counts it again, and so does coming back to the app from the background;
+  turning the phone, which rebuilds the screen, does not.
 - **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
   updates, the phone's model and Android version, and the country the phone's network address places
   it in.
@@ -55,9 +56,8 @@ platform names the path or URI it failed on, which is the app's own storage or a
 (a backup, a gallery photo).
 
 **No advertising.** The Advertising ID is not collected; the permissions the Analytics SDK brings in
-to read an ad id (Google's or Android's Privacy Sandbox one), to report ad attribution, and to ask Play
-which campaign installed the app are all removed; ad personalisation, ad storage and ad user data are
-off by default.
+to read an ad id (Google's or Android's Privacy Sandbox one) and to report ad attribution are removed;
+ad personalisation, ad storage and ad user data are off by default.
 
 ## At the edges
 

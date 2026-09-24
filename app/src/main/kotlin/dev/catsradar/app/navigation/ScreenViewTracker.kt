@@ -7,12 +7,34 @@ import dev.catsradar.domain.analytics.AnalyticsScreen
 
 // A process-wide single: a recreated activity puts the same key back on top and must not count again.
 class ScreenViewTracker(private val analytics: Analytics) {
-    private var current: AnalyticsScreen? = null
+    private var topScreen: AnalyticsScreen? = null
+    private var reported: AnalyticsScreen? = null
+    private var resumed = false
 
     fun onTop(key: NavKey) {
-        val screen = key.analyticsScreen() ?: return
-        if (screen == current) return
-        current = screen
+        topScreen = key.analyticsScreen() ?: return
+        report()
+    }
+
+    // Analytics drops a screen view logged before an activity resumes, so reporting waits for it.
+    fun onAppResumed() {
+        resumed = true
+        report()
+    }
+
+    fun onAppPaused() {
+        resumed = false
+    }
+
+    // Only a real stop starts a new visit; a dialog over the app pauses it without one.
+    fun onAppStopped() {
+        reported = null
+    }
+
+    private fun report() {
+        val screen = topScreen ?: return
+        if (!resumed || screen == reported) return
+        reported = screen
         analytics.log(AnalyticsEvent.ScreenViewed(screen))
     }
 }

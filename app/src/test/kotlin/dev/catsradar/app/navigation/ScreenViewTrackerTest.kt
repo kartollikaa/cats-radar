@@ -18,7 +18,7 @@ private class RecordingAnalytics : Analytics {
 
 class ScreenViewTrackerTest {
     private val analytics = RecordingAnalytics()
-    private val tracker = ScreenViewTracker(analytics)
+    private val tracker = ScreenViewTracker(analytics).apply { onAppResumed() }
 
     private val everyKey = mapOf(
         Counter to AnalyticsScreen.COUNTER,
@@ -42,7 +42,7 @@ class ScreenViewTrackerTest {
     fun `every NavKey in the app is covered`() {
         val declared = Konsist.scopeFromPackage("dev.catsradar.app..")
             .classesAndObjects()
-            .filter { it.hasParentWithName("NavKey") }
+            .filter { it.hasParentWithName("NavKey", indirectParents = true) }
             .map { it.name }
             .toSet()
 
@@ -58,6 +58,44 @@ class ScreenViewTrackerTest {
 
         assertEquals<List<AnalyticsEvent>>(
             listOf(ScreenViewed(AnalyticsScreen.COUNTER), ScreenViewed(AnalyticsScreen.ENCOUNTER_DETAIL)),
+            analytics.logged,
+        )
+    }
+
+    @Test
+    fun `coming back to the app reports the screen on top again`() {
+        tracker.onTop(Counter)
+        tracker.onAppPaused()
+        tracker.onAppStopped()
+        tracker.onAppResumed()
+
+        assertEquals<List<AnalyticsEvent>>(
+            listOf(AnalyticsScreen.COUNTER, AnalyticsScreen.COUNTER).map(::ScreenViewed),
+            analytics.logged,
+        )
+    }
+
+    @Test
+    fun `a dialog over the app does not count the screen again`() {
+        tracker.onTop(Counter)
+        tracker.onAppPaused()
+        tracker.onAppResumed()
+
+        assertEquals<List<AnalyticsEvent>>(listOf(ScreenViewed(AnalyticsScreen.COUNTER)), analytics.logged)
+    }
+
+    @Test
+    fun `a screen reached while the app is paused is reported when it resumes`() {
+        tracker.onTop(Counter)
+        tracker.onAppPaused()
+        tracker.onTop(Settings)
+
+        assertEquals<List<AnalyticsEvent>>(listOf(ScreenViewed(AnalyticsScreen.COUNTER)), analytics.logged)
+
+        tracker.onAppResumed()
+
+        assertEquals<List<AnalyticsEvent>>(
+            listOf(AnalyticsScreen.COUNTER, AnalyticsScreen.SETTINGS).map(::ScreenViewed),
             analytics.logged,
         )
     }
