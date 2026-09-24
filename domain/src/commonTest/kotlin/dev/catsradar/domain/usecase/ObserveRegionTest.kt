@@ -19,17 +19,19 @@ class ObserveRegionTest {
     private val barcelona = locatedFixture("barcelona", BASE, 41.390, 2.170)
     private val girona = locatedFixture("girona", BASE, 41.980, 2.820)
     private val paris = locatedFixture("paris", BASE, 48.850, 2.350)
+    private val remote = locatedFixture("remote", BASE, 42.100, 1.400)
     private val pending = locatedFixture("pending", BASE, 41.600, 2.290)
     private val nowhere = encounterFixture("nowhere", BASE)
 
     private suspend fun view(parent: RegionKey?): RegionView {
         val encounters = FakeEncounterRepository()
-        listOf(barcelona, girona, paris, pending, nowhere).forEach { encounters.insert(it) }
+        listOf(barcelona, girona, paris, remote, pending, nowhere).forEach { encounters.insert(it) }
         val cells = FakePlaceCellRepository(
             listOf(
                 placeCellFixture(barcelona),
                 placeCellFixture(girona, locality = "Girona"),
                 placeCellFixture(paris, "FR", "France", "Paris"),
+                placeCellFixture(remote, locality = null),
                 placeCellFixture(pending, null, null, locality = null, status = PlaceStatus.PENDING),
             ),
         )
@@ -52,7 +54,7 @@ class ObserveRegionTest {
         val view = view(RegionKey.Country("ES"))
 
         assertEquals(
-            listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona")),
+            listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona"), RegionKey.NoCity("ES")),
             view.children.map { it.key },
         )
         assertEquals(emptyList(), view.encounters)
@@ -63,6 +65,14 @@ class ObserveRegionTest {
         val view = view(RegionKey.City("ES", "Barcelona"))
 
         assertEquals(listOf(areaOf(barcelona)), view.children.map { it.key })
+        assertEquals(emptyList(), view.encounters)
+    }
+
+    @Test
+    fun `No city opens its areas`() = runTest {
+        val view = view(RegionKey.NoCity("ES"))
+
+        assertEquals(listOf(areaOf(remote)), view.children.map { it.key })
         assertEquals(emptyList(), view.encounters)
     }
 

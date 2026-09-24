@@ -143,12 +143,14 @@ with, so a finished run read back from WorkManager is not reported again.
 |---|---|---|---|
 | Country | `countryCode` | `countryName` | after resolution |
 | City | `(countryCode, locality ?: adminArea)` | `locality ?: adminArea` | after resolution |
-| Area | `geohash.take(AREA_PRECISION = 5)` (~4.9 km) | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
+| Area | the coordinates' geohash at `AREA_PRECISION = 5` (~4.9 km), computed from `lat`/`lon` rather than the stored geohash | most frequent non-null `subLocality` among the area's resolved cells; else `"Area · <lat>, <lon>"` with the area centre rounded to 2 decimals | always |
 
-Pseudo-nodes: **"Unresolved"** (country and city level) holds encounters whose cell is
-`PENDING`/`FAILED`/`UNAVAILABLE`; **"No location"** holds `locationSource = NONE`. Each pseudo-node
-drills down like a real one (Unresolved → its areas; No location → its encounters). Sums across
-siblings always equal the parent.
+Pseudo-nodes: **"Unresolved"** (country level) holds encounters whose cell is
+`PENDING`/`FAILED`/`UNAVAILABLE`; **"No city"** (city level, under its country) holds encounters
+whose resolved cell names neither a locality nor an admin area; **"No location"** holds encounters
+without a location — coordinates missing or off the globe, or `locationSource = NONE`. Each
+pseudo-node drills down like a real one (Unresolved and No city → their areas; No location → its
+encounters). Sums across siblings always equal the parent.
 
 ### 3.5 Session (derived, never stored)
 
