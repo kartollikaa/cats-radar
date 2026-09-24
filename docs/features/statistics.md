@@ -15,7 +15,8 @@ screen full of "0" reads like a broken app, not an empty one.
 - **Total** — every non-deleted encounter.
 - **Today / 7 days / 30 days** — by the encounter's **own** local date, so a cat logged abroad stays
   on the day it was logged. The windows **include today**: "7 days" is today plus the six before it.
-- **With photo** — encounters of kind `PHOTO`.
+- **With photo** — cats that have a photo of their own, whether it was taken, imported, or given
+  later to a cat logged without one.
 
 ## Streaks
 

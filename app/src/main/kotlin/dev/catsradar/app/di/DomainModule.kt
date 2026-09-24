@@ -1,6 +1,7 @@
 package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
+import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.EndInterruptedWalk
@@ -77,6 +78,7 @@ val domainModule = module {
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
     factory { PurgeDeleted(encounterRepository = get(), photoStorage = get(), clock = get()) }
     factoryOf(::SetCoat)
+    factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)

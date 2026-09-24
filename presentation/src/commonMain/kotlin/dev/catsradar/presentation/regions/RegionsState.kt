@@ -4,12 +4,18 @@ import dev.catsradar.presentation.encounters.EncounterListItem
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-data class RegionsState(
-    val rows: ImmutableList<RegionRowState> = persistentListOf(),
-    val encounters: ImmutableList<EncounterListItem> = persistentListOf(),
-) {
-    val isEmpty: Boolean get() = rows.isEmpty() && encounters.isEmpty()
+sealed interface RegionsState {
+    data object Loading : RegionsState
+
+    data class Empty(val label: RegionsEmptyLabel) : RegionsState
+
+    data class Loaded(
+        val rows: ImmutableList<RegionRowState> = persistentListOf(),
+        val encounters: ImmutableList<EncounterListItem> = persistentListOf(),
+    ) : RegionsState
 }
+
+enum class RegionsEmptyLabel { NO_PLACES_YET, NO_PLACES_HERE, NO_CATS_HERE }
 
 /**
  * [key] is the identity the screen hands back when the row is tapped; the callback stays a

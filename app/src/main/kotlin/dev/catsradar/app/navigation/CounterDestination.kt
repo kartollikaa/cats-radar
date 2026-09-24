@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -21,8 +20,6 @@ import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
-import dev.catsradar.app.photo.CaptureTarget
-import dev.catsradar.app.photo.PendingCaptures
 import dev.catsradar.app.photo.PickPhotosWithLocation
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
@@ -49,10 +46,9 @@ internal fun CounterDestination(
     val haptics = koinInject<Haptics>()
     val locationAttachScheduler = koinInject<LocationAttachScheduler>()
     val locationPermissionRequester = rememberLocationPermissionRequester(store)
-    val context = LocalContext.current
-    val cameraLauncher = rememberCameraLauncher(store)
-    val photoFailureReporter = rememberPhotoFailureReporter()
-    val captureDiscarder = remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
+    val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(CounterIntent.PhotoCaptured(uri)) }
+    val photoFailureReporter = rememberPhotoFailureReporter(R.string.counter_photo_not_saved)
+    val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val importScheduler = koinInject<ImportScheduler>()
     val photoPickerLauncher = rememberPhotoPickerLauncher(store)
@@ -98,6 +94,8 @@ internal fun CounterDestination(
         onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
         onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
         onWalkingModeChange = onWalkingModeChange,
+        onCoatPromptPick = { coat -> store.dispatch(CounterIntent.CoatPromptPicked(coat)) },
+        onCoatPromptDismiss = { store.dispatch(CounterIntent.CoatPromptDismissed) },
     )
 }
 
@@ -151,16 +149,6 @@ private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLaunche
 }
 
 @Composable
-private fun rememberPhotoFailureReporter(): PhotoFailureReporter {
-    val context = LocalContext.current
-    return remember(context) {
-        PhotoFailureReporter {
-            Toast.makeText(context, R.string.counter_photo_not_saved, Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
-@Composable
 private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -168,26 +156,6 @@ private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
         MilestoneAnnouncer { value ->
             val text = resources.getQuantityString(R.plurals.counter_milestone, value, value)
             Toast.makeText(context, text, Toast.LENGTH_LONG).show()
-        }
-    }
-}
-
-@Composable
-private fun rememberCameraLauncher(store: CounterStore): CameraLauncher {
-    val context = LocalContext.current
-    // Saveable: the process can die while a camera is in front, and its result says nothing about
-    // where it wrote.
-    val pending = rememberSaveable(saver = PendingCaptures.Saver) { PendingCaptures() }
-    val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val target = pending.answered()
-        store.dispatch(CounterIntent.PhotoCaptured(target.takeIf { saved }))
-        if (!saved && target != null) CaptureTarget.discard(context, target)
-    }
-    return remember(resultLauncher, context, pending) {
-        CameraLauncher {
-            val target = CaptureTarget.newUri(context)
-            pending.launched(target.toString())
-            resultLauncher.launch(target)
         }
     }
 }

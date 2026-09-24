@@ -1,7 +1,9 @@
 package dev.catsradar.domain.repository
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
@@ -18,6 +20,12 @@ interface EncounterRepository {
 
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun attachLocation(id: String, stamp: LocationStamp)
+
+    /** True only when a live row without a photo was written; otherwise writes nothing. */
+    suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean
+
+    /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
+    suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant)
 
     /**
      * One write for all of [assignments]; each sets only the geohash and place cell, and only while its

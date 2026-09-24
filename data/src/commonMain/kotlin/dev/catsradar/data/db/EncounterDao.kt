@@ -5,6 +5,7 @@ import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
@@ -72,6 +73,29 @@ interface EncounterDao {
         placeCellId: String,
         updatedAt: Instant,
     )
+
+    // A full-row update here would resurrect a cat deleted while its photo was being copied.
+    @Suppress("LongParameterList") // Room binds one :placeholder per parameter; no POJO destructuring in a raw @Query
+    @Query(
+        """
+        UPDATE encounters SET
+            photoPath = :photoPath, thumbPath = :thumbPath, galleryUri = :galleryUri,
+            sourceDigest = :sourceDigest, updatedAt = :updatedAt
+        WHERE id = :id AND deletedAt IS NULL AND photoPath IS NULL
+        """
+    )
+    suspend fun attachPhoto(
+        id: String,
+        photoPath: String,
+        thumbPath: String?,
+        galleryUri: String?,
+        sourceDigest: String?,
+        updatedAt: Instant,
+    ): Int
+
+    // A full-row update here would undo a photo or a location attached between the read and this write.
+    @Query("UPDATE encounters SET coat = :coat, updatedAt = :updatedAt WHERE id = :id AND deletedAt IS NULL")
+    suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int
 
     // updatedAt stays: the geohash and cell are derived from the coordinates, so the cat is unchanged.
     @Query(

@@ -8,27 +8,6 @@ import dev.catsradar.presentation.counter.CounterEffect
 
 // Separated from the LaunchedEffect collector so the mapping from effect to platform action is
 // unit-testable without Compose UI test infrastructure.
-/** The screen's side of [CounterEffect.OpenCamera]; it owns the file the camera writes to. */
-internal fun interface CameraLauncher {
-    fun launch()
-}
-
-internal fun interface PhotoFailureReporter {
-    fun report()
-}
-
-internal fun interface CaptureDiscarder {
-    fun discard(uri: String)
-}
-
-internal fun interface MilestoneAnnouncer {
-    fun announce(value: Int)
-}
-
-internal fun interface PhotoPickerLauncher {
-    fun launch()
-}
-
 @Suppress("LongParameterList") // one collaborator per effect the screen has to carry out
 internal fun handleCounterEffect(
     effect: CounterEffect,
@@ -54,4 +33,8 @@ internal fun handleCounterEffect(
         CounterEffect.PickPhotos -> photoPickerLauncher.launch()
         is CounterEffect.StartImport -> importScheduler.start(effect.uris)
     }
+}
+
+internal fun interface MilestoneAnnouncer {
+    fun announce(value: Int)
 }
