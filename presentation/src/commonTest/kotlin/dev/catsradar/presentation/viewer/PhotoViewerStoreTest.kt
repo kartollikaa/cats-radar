@@ -35,9 +35,12 @@ class PhotoViewerStoreTest {
     fun `a cat with a photo shows its copy`() = runTest(mainDispatcher) {
         repository.insert(photographedCat())
         val store = newStore()
-        runCurrent()
 
-        assertEquals(PhotoViewerState.Showing(photoPath = "/data/photos/cat-1.jpg"), store.state.value)
+        store.effects.test {
+            runCurrent()
+            assertEquals(PhotoViewerState.Showing(photoPath = "/data/photos/cat-1.jpg"), store.state.value)
+            expectNoEvents()
+        }
     }
 
     @Test

@@ -1,5 +1,7 @@
 package dev.catsradar.app.navigation
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.Text
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
@@ -19,6 +21,7 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
@@ -30,17 +33,23 @@ class PhotoViewerNavigationTest {
     val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
     private val backStack = BottomNavBackStack(NavBackStack<NavKey>(Counter))
+    private lateinit var screenBack: OnBackPressedDispatcher
+    private lateinit var viewerBack: OnBackPressedDispatcher
 
     @Before
     fun openACat() {
         compose.setContent {
+            screenBack = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
             CatsRadarNavDisplay(
                 backStack = backStack,
                 entryProvider = entryProvider {
                     entry<Counter>(metadata = tabRootMetadata()) { Text(COUNTER) }
                     entry<Encounters>(metadata = tabRootMetadata()) { Text(LIST) }
                     entry<EncounterDetail> { Text(CAT) }
-                    entry<PhotoViewer>(metadata = photoViewerMetadata()) { Text(VIEWER) }
+                    entry<PhotoViewer>(metadata = photoViewerMetadata()) {
+                        viewerBack = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+                        Text(VIEWER)
+                    }
                 },
             )
         }
@@ -60,8 +69,9 @@ class PhotoViewerNavigationTest {
     @Test
     fun `back from the viewer uncovers the cat as it was`() {
         settle { backStack.push(VIEWER_KEY) }
+        assertNotSame(screenBack, viewerBack, "the viewer's back goes to a window of its own")
 
-        settle { backStack.popOrNull() }
+        settle { viewerBack.onBackPressed() }
 
         assertEquals(listOf(Counter, Encounters, CAT_KEY), backStack.toList())
         assertFalse(isShown(VIEWER), "the viewer is gone")
