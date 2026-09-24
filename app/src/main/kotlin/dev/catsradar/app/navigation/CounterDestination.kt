@@ -19,11 +19,9 @@ import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
-import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.toCounterIntent
-import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
@@ -132,19 +130,11 @@ private fun rememberLocationPermissionRequester(store: CounterStore): LocationPe
 @Composable
 private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLauncher {
     val notificationPermission = rememberNotificationPermissionRequest()
-    val galleryLauncher = rememberLauncherForActivityResult(PickGalleryPhotos(Tuning.IMPORT_BATCH_MAX)) { uris ->
+    return rememberGalleryImportPicker { uris ->
         // Asked for after the pick, not before it: a run the user has actually started is the only
         // moment a progress notification is worth a dialog, and a refusal still imports.
         if (uris.isNotEmpty()) notificationPermission()
         store.dispatch(CounterIntent.Import.PhotosPicked(uris.map(Uri::toString).toImmutableList()))
-    }
-    // Settled before the pick, unlike notifications: the import starts reading photos the moment they
-    // are picked. A refusal still opens the gallery; the photos then arrive without their location.
-    val mediaLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        galleryLauncher.launch(Unit)
-    }
-    return remember(mediaLocationLauncher) {
-        PhotoPickerLauncher { mediaLocationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION) }
     }
 }
 

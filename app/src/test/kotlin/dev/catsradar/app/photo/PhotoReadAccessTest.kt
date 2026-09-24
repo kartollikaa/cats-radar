@@ -1,0 +1,38 @@
+package dev.catsradar.app.photo
+
+import android.content.ContentResolver
+import android.content.Context
+import android.net.Uri
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Test
+import org.junit.runner.RunWith
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+@RunWith(AndroidJUnit4::class)
+class PhotoReadAccessTest {
+
+    private val resolver: ContentResolver = ApplicationProvider.getApplicationContext<Context>().contentResolver
+
+    private val photos = listOf(19, 20).map {
+        Uri.parse("content://media/picker_get_content/0/com.android.providers.media.photopicker/media/$it")
+    }
+
+    @Test
+    fun heldPhotosStayReadable() {
+        resolver.holdReadAccess(photos)
+
+        assertEquals(photos, resolver.persistedUriPermissions.map { it.uri })
+        assertTrue(resolver.persistedUriPermissions.all { it.isReadPermission })
+    }
+
+    @Test
+    fun releasedPhotosAreNoLongerHeld() {
+        resolver.holdReadAccess(photos)
+
+        resolver.releaseReadAccess(photos)
+
+        assertEquals(emptyList(), resolver.persistedUriPermissions)
+    }
+}

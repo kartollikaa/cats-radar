@@ -1,5 +1,7 @@
 package dev.catsradar.app.navigation
 
+import android.Manifest
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -11,6 +13,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.photo.PendingCaptures
+import dev.catsradar.app.photo.PickGalleryPhotos
+import dev.catsradar.app.photo.holdReadAccess
+import dev.catsradar.domain.Tuning
 
 /** Opens the camera; it owns the file the camera writes to. */
 internal fun interface CameraLauncher {
@@ -73,4 +78,21 @@ internal fun rememberPhotoFailureReporter(@StringRes messageRes: Int): PhotoFail
 internal fun rememberCaptureDiscarder(): CaptureDiscarder {
     val context = LocalContext.current
     return remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
+}
+
+/** Asks for the location of photos, then opens the gallery whatever the answer. */
+@Composable
+internal fun rememberGalleryImportPicker(onResult: (List<Uri>) -> Unit): PhotoPickerLauncher {
+    val resolver = LocalContext.current.contentResolver
+    val galleryLauncher = rememberLauncherForActivityResult(PickGalleryPhotos(Tuning.IMPORT_BATCH_MAX)) { uris ->
+        resolver.holdReadAccess(uris)
+        onResult(uris)
+    }
+    // Before the gallery, not after the pick: a photo opened while the app lacks it has already lost its GPS.
+    val mediaLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        galleryLauncher.launch(Unit)
+    }
+    return remember(mediaLocationLauncher) {
+        PhotoPickerLauncher { mediaLocationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION) }
+    }
 }

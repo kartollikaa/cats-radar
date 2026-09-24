@@ -1,10 +1,12 @@
 package dev.catsradar.app.worker
 
 import android.content.Context
+import android.net.Uri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.photo.releaseReadAccess
 import dev.catsradar.domain.usecase.ImportPhotos
 import kotlinx.coroutines.CancellationException
 
@@ -32,13 +34,14 @@ class ImportPhotosWorker(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Never Result.retry(): the picker's read grants die with the process, so a retry
-            // after one would import nothing and report every photo as failed.
+            // Never Result.retry(): not every source's read grant outlives the process, and a retry
+            // without one would import nothing and report every photo as failed.
             Result.failure()
         } finally {
             // Whatever happened, the running commentary stops: an ongoing notification left behind
             // is one the user cannot dismiss.
             notifier.clear()
+            applicationContext.contentResolver.releaseReadAccess(uris.map(Uri::parse))
         }
     }
 
