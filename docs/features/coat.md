@@ -55,9 +55,10 @@ The detail screen shows the coat and lets it be changed, or cleared by tapping t
 again. Nothing else needs a "clear" control.
 
 The coats there sit in one row wider than a phone, and the row opens scrolled so the cat's own coat
-is on screen, second from the start with the coat before it showing; a cat with no coat opens the
-row at the first coat (`EncounterDetailCoatPickerTest`). Only the opening position is chosen: after
-that the row stays wherever it is scrolled, including when the coat is changed.
+is on screen, whole: second from the start with the coat before it showing, or, for the last few
+coats, wherever the row's end leaves it. A cat with no coat opens the row at the first coat
+(`EncounterDetailCoatPickerTest`). Only the opening position is chosen: after that the row stays
+wherever it is scrolled, including when the coat is changed.
 
 The chosen coat is ringed the same way as on the Counter. Every cell in that row takes the tallest
 name's height, so the ring is the same size whichever coat it is on and the row never changes

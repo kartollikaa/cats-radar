@@ -65,4 +65,4 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 ## Not built yet
 
-No place name (slice 14) and no map. The coordinates are shown as numbers only.
+No place name and no map. The coordinates are shown as numbers only.
