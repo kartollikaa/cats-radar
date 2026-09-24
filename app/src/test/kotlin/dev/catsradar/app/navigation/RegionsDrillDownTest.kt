@@ -14,7 +14,7 @@ import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
-import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -32,32 +32,28 @@ class RegionsDrillDownTest {
     @Test
     fun `every row kind hands back its own key when tapped, an area's too`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val rows = persistentListOf(
-            RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "12"),
-            RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "9"),
+        val rowsWithShownText = listOf(
+            RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "12") to "Spain",
+            RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "9") to "Barcelona",
             RegionRowState(
                 RegionRowKey.Area("sp3e3", RegionRowKey.City("ES", "Barcelona")),
                 RegionRowLabel.Named("Gràcia"),
                 "5",
-            ),
-            RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "3"),
-            RegionRowState(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2"),
-            RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1"),
+            ) to "Gràcia",
+            RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "3") to
+                context.getString(R.string.regions_unresolved),
+            RegionRowState(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2") to
+                context.getString(R.string.regions_no_city),
+            RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1") to
+                context.getString(R.string.regions_no_location),
         )
-        val shownLabels = listOf(
-            "Spain",
-            "Barcelona",
-            "Gràcia",
-            context.getString(R.string.regions_unresolved),
-            context.getString(R.string.regions_no_city),
-            context.getString(R.string.regions_no_location),
-        )
+        val rows = rowsWithShownText.map { (row, _) -> row }.toPersistentList()
         val tapped = mutableListOf<RegionRowKey>()
         compose.setContent {
             CatsRadarTheme { RegionsScreen(state = RegionsState(rows = rows), onRegionClick = { tapped += it }) }
         }
 
-        shownLabels.forEach { compose.onNodeWithText(it).performClick() }
+        rowsWithShownText.forEach { (_, text) -> compose.onNodeWithText(text).performClick() }
 
         assertEquals(rows.map { it.key }, tapped)
     }

@@ -87,7 +87,7 @@ changed or cleared.
 merges a ZIP back (§4.7).
 
 Screens (phone only): `Counter`, `Encounters`, `EncounterDetail(id)`, `Statistics`,
-`Regions(level, parentKey)`, `RegionEncounters(areaKey)`, `Settings`. Bottom navigation:
+`Regions(level, parentKey)` (an area's level lists its encounters), `Settings`. Bottom navigation:
 Counter · Encounters · Statistics. Settings from the top bar. Back from Encounters/Statistics
 returns to Counter; back from Counter exits.
 
@@ -298,7 +298,7 @@ maps the spec onto those modules.
 |---|---|---|
 | `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`, `TransactionRunner`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
 | `:data` | KMP | Room `CatsDatabase`, `EncounterDao`, `PlaceCellDao` (`BundledSQLiteDriver`, `RoomDatabaseConstructor` expect/actual, KSP); DataStore Preferences; repository implementations; entity ↔ domain mappers; backup ZIP (de)serialisation with `kotlinx.serialization`. `androidMain`: FusedLocationProvider, ExifInterface, `Geocoder`, MediaStore saver, SHA-256, bitmap resize. |
-| `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`; `DateTimeFormatter` interface. |
+| `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `Settings`; `DateTimeFormatter` interface. |
 | `:ui` | Android | `CatsRadarTheme`, `@ThemePreviews`, components, one file per screen, previews. Compose Multiplatform-ready: no Android imports beyond Compose. |
 | `:app` | Android app | Navigation 3 host, Koin modules, workers (`AttachLocationWorker`, `GeocodePendingCellsWorker`, `PurgeDeletedWorker`, `ImportPhotosWorker`, `ExportWorker`, `ImportBackupWorker`), Glance widget, `FileProvider`, activity result contracts, string resources (EN, RU). |
 | `:build-logic` | Gradle | Convention plugins: `catsradar.kmp.library`, `catsradar.android.library`, `catsradar.android.application`, `catsradar.compose`, `catsradar.detekt`. |
@@ -306,7 +306,7 @@ maps the spec onto those modules.
 ### 6.2 Navigation (`:app`)
 
 `NavDisplay` over `rememberNavBackStack(Counter)`; `@Serializable NavKey`s `Counter`, `Encounters`,
-`EncounterDetail(id)`, `Statistics`, `Regions(level, parentKey)`, `RegionEncounters(areaKey)`,
+`EncounterDetail(id)`, `Statistics`, `Regions(level, parentKey)` (an area's encounters included),
 `Settings`; `entryProvider` DSL; `rememberViewModelStoreNavEntryDecorator` +
 `rememberSavedStateNavEntryDecorator`. Bottom bar keeps `Counter` as the root: selecting another tab
 makes the stack `[Counter, Tab]`; back pops to Counter. No `Scene` strategies in v1.
