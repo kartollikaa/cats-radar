@@ -136,6 +136,7 @@ internal fun catsRadarEntries(
             key = key,
             contentPadding = contentPadding,
             onRegionClick = { row -> backStack.push(row.toNavKey()) },
+            onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
     entry<EncounterDetail> { key ->
@@ -201,6 +202,7 @@ private fun RegionsDestination(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onRegionClick: (RegionRowKey) -> Unit = {},
+    onEncounterClick: (String) -> Unit = {},
 ) {
     val store = koinViewModel<RegionsStore> { parametersOf(key.toRegionKey()) }
     val state by store.state.collectAsStateWithLifecycle()
@@ -209,5 +211,6 @@ private fun RegionsDestination(
         modifier = modifier,
         contentPadding = contentPadding,
         onRegionClick = onRegionClick,
+        onEncounterClick = onEncounterClick,
     )
 }
