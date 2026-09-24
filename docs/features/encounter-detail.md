@@ -34,8 +34,10 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 A cat with a photo of its own shows the app's copy (see [photos.md](./photos.md#seeing-one)); one
 without shows a **Photo** section instead, with *Take a photo* and *Choose from gallery* — the system
-camera, or the system picker for a single image. Once the camera or the picker hands a photo back,
-the attempt starts: both buttons disable and a progress bar shows under them, so a tap in the
+camera, or the system picker for a single image. A second tap before the camera or the picker
+answers opens nothing, so a double tap never opens two cameras (`EncounterDetailStoreTest`, *a
+second tap before the camera answers opens nothing*). Once the camera or the picker hands a photo
+back, the attempt starts: both buttons disable and a progress bar shows under them, so a tap in the
 meantime opens nothing (`EncounterDetailStoreTest`, *taking a photo while one is being attached
 opens nothing*).
 

@@ -223,6 +223,7 @@ class EncounterDetailStoreTest {
             store.dispatch(EncounterDetailIntent.TakePhotoClicked)
             runCurrent()
             assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
             store.dispatch(EncounterDetailIntent.PickPhotoClicked)
             runCurrent()
             assertEquals(EncounterDetailEffect.OpenPhotoPicker, awaitItem())
@@ -240,6 +241,27 @@ class EncounterDetailStoreTest {
             store.dispatch(EncounterDetailIntent.PickPhotoClicked)
             runCurrent()
             expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a second tap before the camera answers opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+            expectNoEvents()
+
+            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
         }
     }
 
@@ -340,6 +362,31 @@ class EncounterDetailStoreTest {
             expectNoEvents()
         }
     }
+
+    @Test
+    fun `deleting while a photo is being attached leaves the removed state, and undo brings the offer back`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            resizer.storeDelay = 1.seconds
+            val store = newStore()
+            runCurrent()
+
+            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            runCurrent()
+            store.dispatch(EncounterDetailIntent.DeleteClicked)
+            runCurrent()
+            assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+            advanceTimeBy(2.seconds)
+            runCurrent()
+            assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+            store.dispatch(EncounterDetailIntent.UndoClicked)
+            runCurrent()
+            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            assertEquals(AddPhoto.READY, state.addPhoto)
+            assertEquals(null, state.photoPath)
+        }
 
     @Test
     fun `an unreadable photo says so and the offer comes back`() = runTest(mainDispatcher) {

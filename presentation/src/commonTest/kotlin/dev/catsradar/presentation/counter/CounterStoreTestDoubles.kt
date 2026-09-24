@@ -52,7 +52,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     val insertDelays = ArrayDeque<Duration>()
     var softDeleteDelay: Duration = Duration.ZERO
 
-    /** Applied to every observeById emission but a collector's first, so a `.first()` snapshot stays instant. */
+    /** Delays every emission of an observeById call but that call's first, so a `.first()` snapshot stays instant. */
     var observeDelay: Duration = Duration.ZERO
 
     fun encounters(): List<Encounter> = encounters.value

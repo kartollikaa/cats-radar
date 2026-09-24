@@ -40,6 +40,7 @@ class EncounterDetailStore(
     private var deletedHere = false
     private var undoTimeoutJob: Job? = null
     private var attachingPhoto = false
+    private var awaitingPhoto = false
 
     init {
         observeEncounter(encounterId)
@@ -62,17 +63,22 @@ class EncounterDetailStore(
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
             is EncounterDetailIntent.CoatPicked -> onCoatPicked(intent.coat)
-            EncounterDetailIntent.TakePhotoClicked -> if (photoOffered()) emit(EncounterDetailEffect.OpenCamera)
-            EncounterDetailIntent.PickPhotoClicked -> if (photoOffered()) emit(EncounterDetailEffect.OpenPhotoPicker)
+            EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
+            EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
             is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.uri, PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.uri, PhotoSource.GALLERY)
         }
     }
 
-    private fun photoOffered(): Boolean =
-        (state.value as? EncounterDetailState.Loaded)?.addPhoto == AddPhoto.READY
+    private suspend fun requestPhoto(opener: EncounterDetailEffect) {
+        val offered = (state.value as? EncounterDetailState.Loaded)?.addPhoto == AddPhoto.READY
+        if (awaitingPhoto || !offered) return
+        awaitingPhoto = true
+        emit(opener)
+    }
 
     private suspend fun onPhotoChosen(uri: String?, source: PhotoSource) {
+        awaitingPhoto = false
         if (uri == null) return
         attachingPhoto = true
         refresh()
@@ -80,7 +86,7 @@ class EncounterDetailStore(
         runStorageWrite { result = attachPhoto(encounterId, uri, source) }
         attachingPhoto = false
         when (result) {
-            // The flow's next emission already carries whatever the cat became.
+            // Rendering from lastSeen here would offer a photo again until the flow delivers this one.
             AttachResult.Attached -> Unit
             AttachResult.NotAttachable -> refresh()
             AttachResult.Unreadable, null -> {
