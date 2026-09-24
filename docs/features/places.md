@@ -106,6 +106,14 @@ themselves — a plain list of one row per cat under its outing header, not the 
 Every level is sorted busiest first, and every place row opens the level below it: tapping an area
 lists its cats.
 
+A level draws nothing until its cats have been read, so one sliding in never flashes as empty
+first. A level that holds nothing says what it would have listed. The countries read **No places
+yet**: no cat has been logged at all. Any other level of places — a country's cities, the areas of
+a city, of No city or of Not named yet — reads **No places here**. An area or No location, whose
+children are cats, reads **No cats here**. Below the countries, a level is empty only when its last
+cat went away while it was open, undone from the walking notification, say, or when it is rebuilt
+after its cats were deleted.
+
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 
 - **Not named yet** — cats with coordinates whose cell has no name (pending, failed, or no

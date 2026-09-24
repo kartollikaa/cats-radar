@@ -242,7 +242,8 @@ dismissible one-line hint with a "grant" button. The widget never prompts.
   - a periodic pass, unique with `KEEP`, which retries cells whose lookup failed.
 
   A pass writes a result only if the cell is unchanged since it read it.
-- Statistics read whatever is resolved; the only "loading" state is the Unresolved node.
+- Statistics read whatever is resolved and never wait on the geocoder: a cell not named yet is the
+  Unresolved node.
 
 ### 4.5 Delete and purge
 

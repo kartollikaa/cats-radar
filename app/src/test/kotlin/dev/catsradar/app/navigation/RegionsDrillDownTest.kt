@@ -50,7 +50,7 @@ class RegionsDrillDownTest {
         val rows = rowsWithShownText.map { (row, _) -> row }.toPersistentList()
         val tapped = mutableListOf<RegionRowKey>()
         compose.setContent {
-            CatsRadarTheme { RegionsScreen(state = RegionsState(rows = rows), onRegionClick = { tapped += it }) }
+            CatsRadarTheme { RegionsScreen(state = RegionsState.Loaded(rows = rows), onRegionClick = { tapped += it }) }
         }
 
         rowsWithShownText.forEach { (_, text) -> compose.onNodeWithText(text).performClick() }

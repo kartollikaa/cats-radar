@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.time.Instant
 
 class ObserveRegionTest {
@@ -44,9 +45,8 @@ class ObserveRegionTest {
 
         assertEquals(
             listOf(RegionKey.Country("ES"), RegionKey.Country("FR"), RegionKey.Unresolved, RegionKey.NoLocation),
-            view.children.map { it.key },
+            view.placeKeys(),
         )
-        assertEquals(emptyList(), view.encounters)
     }
 
     @Test
@@ -55,50 +55,46 @@ class ObserveRegionTest {
 
         assertEquals(
             listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona"), RegionKey.NoCity("ES")),
-            view.children.map { it.key },
+            view.placeKeys(),
         )
-        assertEquals(emptyList(), view.encounters)
     }
 
     @Test
     fun `a city opens its own areas`() = runTest {
         val view = view(RegionKey.City("ES", "Barcelona"))
 
-        assertEquals(listOf(areaOf(barcelona, RegionKey.City("ES", "Barcelona"))), view.children.map { it.key })
-        assertEquals(emptyList(), view.encounters)
+        assertEquals(listOf(areaOf(barcelona, RegionKey.City("ES", "Barcelona"))), view.placeKeys())
     }
 
     @Test
     fun `No city opens its areas`() = runTest {
         val view = view(RegionKey.NoCity("ES"))
 
-        assertEquals(listOf(areaOf(remote, RegionKey.NoCity("ES"))), view.children.map { it.key })
-        assertEquals(emptyList(), view.encounters)
+        assertEquals(listOf(areaOf(remote, RegionKey.NoCity("ES"))), view.placeKeys())
     }
 
     @Test
     fun `Not named yet opens its areas`() = runTest {
         val view = view(RegionKey.Unresolved)
 
-        assertEquals(listOf(areaOf(pending, RegionKey.Unresolved)), view.children.map { it.key })
-        assertEquals(emptyList(), view.encounters)
+        assertEquals(listOf(areaOf(pending, RegionKey.Unresolved)), view.placeKeys())
     }
 
     @Test
     fun `an area opens its cats and no more rows`() = runTest {
         val view = view(areaOf(barcelona, RegionKey.City("ES", "Barcelona")))
 
-        assertEquals(emptyList(), view.children)
-        assertEquals(listOf(barcelona), view.encounters)
+        assertEquals(RegionView.Cats(listOf(barcelona)), view)
     }
 
     @Test
     fun `No location opens its cats and no more rows`() = runTest {
         val view = view(RegionKey.NoLocation)
 
-        assertEquals(emptyList(), view.children)
-        assertEquals(listOf(nowhere), view.encounters)
+        assertEquals(RegionView.Cats(listOf(nowhere)), view)
     }
+
+    private fun RegionView.placeKeys() = assertIs<RegionView.Places>(this).children.map { it.key }
 
     private companion object {
         val BASE = Instant.parse("2026-09-22T08:00:00Z")
