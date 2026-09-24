@@ -2,6 +2,7 @@ package dev.catsradar.presentation.detail
 
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
@@ -418,6 +419,32 @@ class EncounterDetailStoreTest {
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
         }
         assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+    }
+
+    @Test
+    fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat without a photo has no viewer to open`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
     }
 
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(

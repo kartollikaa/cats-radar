@@ -117,7 +117,9 @@ collapse onto one token; a `when` arm pointing at the wrong token is otherwise i
 
 - Wrap every screen and preview in `CatsRadarTheme`. It configures Material 3
   `colorScheme`, `typography`, and `shapes`; reference them through `MaterialTheme.*`.
-- No hard-coded colors in screens. A color that isn't in the scheme goes into the theme first.
+- No hard-coded colors in screens — `Color.Transparent`, `Color.Black` and the other `Color`
+  constants included. A color that isn't in the scheme goes into the theme first; a fade of a
+  theme token is that token with its alpha changed.
 - Dynamic color comes from `:app`, never from `:ui`: the activity passes the wallpaper's scheme on
   Android 12+ as `CatsRadarTheme(colorScheme = …)`. Without an argument the theme uses the explicit
   teal light and dark schemes, so previews are deterministic and look the same on every machine.

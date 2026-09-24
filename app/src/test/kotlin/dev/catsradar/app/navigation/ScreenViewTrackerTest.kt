@@ -24,6 +24,7 @@ class ScreenViewTrackerTest {
         Counter to AnalyticsScreen.COUNTER,
         Encounters to AnalyticsScreen.ENCOUNTERS,
         EncounterDetail("cat-1") to AnalyticsScreen.ENCOUNTER_DETAIL,
+        PhotoViewer("cat-1") to AnalyticsScreen.PHOTO_VIEWER,
         Statistics to AnalyticsScreen.STATISTICS,
         Regions(kind = RegionKind.COUNTRY, countryCode = "PT") to AnalyticsScreen.REGIONS,
         CatsMap to AnalyticsScreen.MAP,

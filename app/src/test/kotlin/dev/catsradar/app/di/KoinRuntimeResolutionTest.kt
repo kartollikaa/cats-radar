@@ -23,6 +23,7 @@ import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.regions.RegionsStore
+import dev.catsradar.presentation.viewer.PhotoViewerStore
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -73,6 +74,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ObserveStats>())
         assertNotNull(koin.get<LogPhoto>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
+        assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id") })
         // Both the root (null parent) and a drilled-in level, because they take different paths.
         assertNotNull(koin.get<RegionsStore> { parametersOf(null) })
         assertNotNull(koin.get<RegionsStore> { parametersOf(RegionKey.Country("ES")) })

@@ -30,8 +30,8 @@ says which one it came from. There is no switch to turn it off.
 ### To Analytics
 
 - **A screen view** each time a different screen comes to the top: `screen_view` with `screen_name`
-  one of `counter`, `encounters`, `encounter_detail`, `statistics`, `regions`, `map`, `map_spot`,
-  `settings`. The same screen again with nothing in between is not counted twice; going back to a
+  one of `counter`, `encounters`, `encounter_detail`, `photo_viewer`, `statistics`, `regions`, `map`,
+  `map_spot`, `settings`. The same screen again with nothing in between is not counted twice; going back to a
   screen after another counts it again, and so does coming back to the app from the background;
   turning the phone, which rebuilds the screen, does not.
 - **What was done**, one event per fact, logged only after the fact is written — a failed action
