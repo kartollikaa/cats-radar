@@ -1,6 +1,6 @@
 ---
 name: release-app
-description: Use when asked to cut, ship, or publish a new Cats Radar release, tag a version, or build a release/debug APK for GitHub — covers bumping the version, the tech/release PR, tagging, and gh release create with the APK attached.
+description: Use when asked to cut, ship, or publish a new Cats Radar release, tag a version, build a release/debug APK for GitHub, or get a release's R8 mapping into Crashlytics so release crash reports are readable.
 ---
 
 # Release Cats Radar
@@ -9,7 +9,7 @@ description: Use when asked to cut, ship, or publish a new Cats Radar release, t
 
 Turns `docs/reference/releasing.md` into a runnable checklist. A release is a GitHub
 pre-release tagged `v<versionName>`, cut from a merged `tech/release-<version>` PR, with the
-APK attached. Read that doc for the *why*; this skill is the *how*, including the gotchas that
+APK and its zipped R8 mapping attached, and the same mapping uploaded to Crashlytics. Read that doc for the *why*; this skill is the *how*, including the gotchas that
 doc doesn't cover because they're about the tooling, not the product.
 
 ## When to use
@@ -61,22 +61,47 @@ over the APK — no version bump, no PR, no tag).
 5. **Build the APK(s).**
    - Debug: `./gradlew :app:assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`.
    - Release (only when `~/.gradle/gradle.properties` has all four
-     `catsradar.release.*` properties): `./gradlew :app:assembleRelease` →
-     `app/build/outputs/apk/release/app-release.apk`, then confirm the signature with
+     `catsradar.release.*` properties), **one invocation that builds the APK and uploads its
+     mapping to Crashlytics**, with `CI` unset (the upload is off whenever `CI` is set) and the
+     network up:
+     ```
+     mkdir -p build && env -u CI ./gradlew :app:assembleRelease --console=plain > build/release-build.log 2>&1; echo "exit=$?"
+     ```
+     → `app/build/outputs/apk/release/app-release.apk` and
+     `app/build/outputs/mapping/release/mapping.txt`. A rebuild can stamp a new mapping id into
+     its APK, so the APK you attach, the mapping you zip and the mapping Crashlytics received must
+     all come from this one run: after it, never rebuild, and never run
+     `uploadCrashlyticsMappingFileRelease` on its own "to confirm". Confirm from what this run
+     left behind instead:
+     - the log shows `> Task :app:uploadCrashlyticsMappingFileRelease` with nothing after it —
+       `SKIPPED`, `UP-TO-DATE`, `FROM-CACHE`, `NO-SOURCE` or `FAILED` all mean no upload in this run;
+     - `aapt2 dump resources app/build/outputs/apk/release/app-release.apk | grep -A1 crashlytics.mapping_file_id`
+       (`aapt2` is in the SDK's `build-tools/<version>/`)
+       is not `00000000000000000000000000000000` (all zeros means the upload was off).
+
+     If the upload failed (offline), run the whole command again once online and ship that run's
+     APK and mapping. Then confirm the signature with
      `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` — it must
      show the release key's certificate, not `Android Debug`. Without the properties,
      `assembleRelease` still succeeds but produces `app-release-unsigned.apk`, which no phone
      will install — don't attach that; ship debug-only and say so in the release body, the way
      past pre-releases have ("The signed release build will be added to this release").
-   - The release build is minified by R8, which the debug build never is. Install the signed
-     APK and walk the by-name paths listed in `docs/reference/releasing.md` (widget tap, a
-     tally, backup export + import, a screen surviving a background kill) before tagging —
-     a missing keep rule shows up nowhere else. On the shared emulator, a release build signed
-     with the debug key and given an `applicationIdSuffix` through a scratchpad Gradle init
-     script leaves other sessions' installs alone; give it a distinct `app_name` too, or its
-     widget is indistinguishable from theirs in the launcher's picker.
-   - Rename to the convention before attaching: `cats-radar-<versionName>.apk` (release) /
-     `cats-radar-<versionName>-debug.apk` (debug), and zip the release build's
+   - The release build is minified by R8, which the debug build never is. Install **that same
+     signed APK** and walk the by-name paths listed in `docs/reference/releasing.md` (widget tap,
+     a tally, backup export + import, a screen surviving a background kill) before tagging — a
+     missing keep rule shows up nowhere else. Use a throwaway AVD (copy
+     `~/.android/avd/Pixel_7.avd/config.ini` into a new `<Name>.avd/` plus a `<Name>.ini` pointing at
+     it, boot it on a free port, delete both afterwards): the shared emulator holds
+     other sessions' debug-signed `com.kartollika.catsradar`, which a release-signed APK cannot
+     update without uninstalling it and their data. An `applicationIdSuffix` build no longer
+     compiles — `app/google-services.json` has a client for `com.kartollika.catsradar` only.
+     If the walk finds a bug, fix it through a PR and restart from step 4; any local release
+     build made just to try something runs with `CI=true`, so it uploads nothing.
+   - A debug-only release (no signing properties) has no mapping — debug builds are not
+     minified — so there is nothing to upload to Crashlytics or zip; say so in the release body.
+   - Rename into `build/` (gitignored; a `.zip` in the repo root is not) before attaching:
+     `cats-radar-<versionName>.apk` (release) / `cats-radar-<versionName>-debug.apk` (debug), and
+     zip the release build's
      `app/build/outputs/mapping/release/mapping.txt` into `cats-radar-<versionName>-mapping.zip`
      (plain, it is bigger than the APK). The mapping from any other build does not fit this
      APK's stack traces.
@@ -116,3 +141,8 @@ degrades to. Keep the voice consistent: describing user-visible behaviour, not i
   gate` micro-commit from every PR's internal history; use `--first-parent`.
 - **Forgetting `--target` on `gh release create`.** Tags whatever commit is checked out
   locally instead of the actual merge commit.
+- **Rebuilding after the upload.** The new APK can carry a mapping id that Crashlytics never
+  received, so its crash reports stay obfuscated. One `assembleRelease` run supplies the APK, the
+  zip and the upload.
+- **Building the release with `CI` set** (or from a CI job). The upload is skipped and the APK's
+  mapping id is all zeros — fine for trying a fix, wrong for the build you ship.
