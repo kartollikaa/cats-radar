@@ -89,7 +89,14 @@ haptic tick each*). Because inserts are async, a later tap's write can complete 
 one's; `CounterStore` tracks a monotonically increasing `tapSequence`, captured before the
 suspending insert, and keeps the run in that order rather than the order the writes finish in, so
 Undo always takes back the tap that happened last (*undo follows the order of the taps, not the
-order their writes finished in*). A slow write from a run that has already expired does not reopen
+order their writes finished in*). That holds while the last tap is still being written too: its cat
+has no id to delete yet, so the Undo marks the tap instead. The "+N" takes one off at once, and the
+cat is soft-deleted the moment its write lands, never gets a location fix and never joins the run,
+so the next Undo takes the tap before it (*undo takes back the newest tap even while its write is
+still running*; *a tap undone while being written never joins the run*). The total can tick up and
+straight back as that write lands and is taken back. If the write fails instead, there is nothing to
+delete and the older cats stay undoable (*a tap undone while being written whose write then fails
+leaves the older cat undoable*). A slow write from a run that has already expired does not reopen
 the window (*a tap whose write lands after the window closed does not reopen it*), and one landing
 behind a newer tap's does not stretch it (*an older tap's write landing late does not stretch the
 window of the newer one*). Undo takes its

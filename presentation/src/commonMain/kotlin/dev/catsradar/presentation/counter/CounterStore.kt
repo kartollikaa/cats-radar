@@ -37,9 +37,12 @@ class CounterStore(
 
     private var tapSequence = 0
     private val tapsBeingWritten = mutableSetOf<Int>()
+    private val undoneWhileWriting = mutableSetOf<Int>()
     private val undoableRun = mutableListOf<UndoableTally>()
     private var expiredThroughSequence = 0
     private var undoTimeoutJob: Job? = null
+    private val runTapsBeingWritten: List<Int>
+        get() = tapsBeingWritten.filter { it > expiredThroughSequence && it !in undoneWhileWriting }
 
     // Not in State: the screen shows how many were added, never which ones.
     private var importedIds: List<String> = emptyList()
@@ -111,10 +114,15 @@ class CounterStore(
         var written: UndoableTally? = null
         runStorageWrite {
             val encounter = logTally(coat)
-            emit(CounterEffect.AttachLocation(encounter.id))
-            written = UndoableTally(sequence, encounter.id, coat?.toOption())
+            if (sequence in undoneWhileWriting) {
+                undoLastTally(encounter.id)
+            } else {
+                emit(CounterEffect.AttachLocation(encounter.id))
+                written = UndoableTally(sequence, encounter.id, coat?.toOption())
+            }
         }
         tapsBeingWritten -= sequence
+        undoneWhileWriting -= sequence
         // A slow write from a run that has already expired must not reopen the window.
         written?.takeIf { sequence > expiredThroughSequence }?.let { tally ->
             undoableRun += tally
@@ -192,7 +200,7 @@ class CounterStore(
     }
 
     private fun showBurst() {
-        val cats = undoableRun.size + tapsBeingWritten.count { it > expiredThroughSequence }
+        val cats = undoableRun.size + runTapsBeingWritten.size
         setState { copy(tapBurst = cats.takeIf { it > 0 }) }
     }
 
@@ -214,6 +222,14 @@ class CounterStore(
     }
 
     private suspend fun onUndoClicked() {
+        val newestBeingWritten = runTapsBeingWritten.maxOrNull()
+        if (newestBeingWritten != null && newestBeingWritten > (undoableRun.lastOrNull()?.sequence ?: 0)) {
+            // Its id exists only once the insert returns, so the tap is taken back as soon as it lands.
+            undoneWhileWriting += newestBeingWritten
+            showNewestUndoable()
+            showBurst()
+            return
+        }
         // Taken off before the suspending calls below, so an undo dispatched right behind this one
         // takes the next cat back rather than this one a second time.
         val undone = undoableRun.removeLastOrNull() ?: return

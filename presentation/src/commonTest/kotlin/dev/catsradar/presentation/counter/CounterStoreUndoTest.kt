@@ -291,6 +291,131 @@ class CounterStoreUndoTest {
         }
 
     @Test
+    fun `undo takes back the newest tap even while its write is still running`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        repository.insertDelays += 1.seconds
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+
+        store.dispatch(CounterIntent.UndoClicked)
+        advanceTimeBy(1.seconds.inWholeMilliseconds)
+        runCurrent()
+
+        assertEquals(listOf("id-2"), repository.softDeletedIds)
+        assertEquals(listOf("id-1"), repository.encounters().filter { it.deletedAt == null }.map { it.id })
+    }
+
+    @Test
+    fun `a tap undone while its write is running is left with no location attach`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            repository.insertDelays += 1.seconds
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            store.dispatch(CounterIntent.UndoClicked)
+            advanceTimeBy(1.seconds.inWholeMilliseconds)
+            runCurrent()
+
+            val effects = cancelAndConsumeRemainingEvents()
+                .filterIsInstance<Event.Item<CounterEffect>>()
+                .map { it.value }
+            val attached = effects.filterIsInstance<CounterEffect.AttachLocation>().map { it.encounterId }
+            val cancelled = effects.filterIsInstance<CounterEffect.CancelLocationAttach>().map { it.encounterId }
+            assertEquals(listOf("id-1"), attached - cancelled.toSet())
+        }
+    }
+
+    @Test
+    fun `the burst drops the moment undo lands on a tap still being written`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        repository.insertDelays += 1.seconds
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        assertEquals(2, store.state.value.tapBurst)
+
+        store.dispatch(CounterIntent.UndoClicked)
+        runCurrent()
+        assertEquals(listOf("id-1"), repository.insertedIds)
+        assertEquals(1, store.state.value.tapBurst)
+        assertTrue(store.state.value.undoVisible, "the older cat is still there to undo")
+
+        advanceTimeBy(1.seconds.inWholeMilliseconds)
+        runCurrent()
+        assertEquals(1, store.state.value.tapBurst)
+        assertTrue(store.state.value.undoVisible)
+    }
+
+    @Test
+    fun `a tap undone while being written never joins the run`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        repository.insertDelays += 1.seconds
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        store.dispatch(CounterIntent.UndoClicked)
+        advanceTimeBy(1.seconds.inWholeMilliseconds)
+        runCurrent()
+
+        repeat(2) {
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+        }
+
+        assertEquals(listOf("id-2", "id-1"), repository.softDeletedIds)
+        assertNull(store.state.value.tapBurst)
+        assertFalse(store.state.value.undoVisible)
+    }
+
+    @Test
+    fun `two undos while two taps are being written take both of them back`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        store.dispatch(CounterIntent.TallyClicked)
+        runCurrent()
+        repository.insertDelays += listOf(1.seconds, 1.seconds)
+        repeat(2) { store.dispatch(CounterIntent.TallyClicked) }
+        runCurrent()
+
+        repeat(2) { store.dispatch(CounterIntent.UndoClicked) }
+        runCurrent()
+        assertEquals(1, store.state.value.tapBurst)
+        advanceTimeBy(1.seconds.inWholeMilliseconds)
+        runCurrent()
+
+        assertEquals(setOf("id-2", "id-3"), repository.softDeletedIds.toSet())
+        assertEquals(listOf("id-1"), repository.encounters().filter { it.deletedAt == null }.map { it.id })
+    }
+
+    @Test
+    fun `a tap undone while being written whose write then fails leaves the older cat undoable`() =
+        runTest(mainDispatcher) {
+            val (store, repository) = newStore()
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            repository.insertDelays += 1.seconds
+            repository.insertShouldThrow = IllegalStateException("disk full")
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+            store.dispatch(CounterIntent.UndoClicked)
+            advanceTimeBy(1.seconds.inWholeMilliseconds)
+            runCurrent()
+            assertEquals(emptyList<String>(), repository.softDeletedIds)
+            assertEquals(1, store.state.value.tapBurst)
+
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+
+            assertEquals(listOf("id-1"), repository.softDeletedIds)
+        }
+
+    @Test
     fun `an older tap's write landing late does not stretch the window of the newer one`() =
         runTest(mainDispatcher) {
             val (store, repository) = newStore()
