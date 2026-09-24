@@ -2,6 +2,7 @@ package dev.catsradar.data.backup
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.platform.BackupReadResult
@@ -9,7 +10,6 @@ import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.platform.DeviceIdProvider
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -42,36 +42,40 @@ class ZipBackupWriter(
     private val deviceIdProvider: DeviceIdProvider,
     private val clock: Clock,
     private val appVersion: String,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val openTarget: (String) -> OutputStream? = context::openWrite,
 ) : BackupWriter {
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException") // any I/O failure is the same answer
     override suspend fun write(target: String, contents: BackupContents): Boolean =
-        withContext(ioDispatcher) {
-            try {
-                val stream = context.openWrite(target) ?: return@withContext false
-                ZipOutputStream(stream.buffered()).use { zip ->
-                    zip.putText(MANIFEST_ENTRY, ArchiveJson.encodeToString(manifest()))
-                    zip.putText(
-                        ENCOUNTERS_ENTRY,
-                        ArchiveJson.encodeToString(contents.encounters.map { it.toRecord() }),
-                    )
-                    zip.putText(
-                        PLACE_CELLS_ENTRY,
-                        ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }),
-                    )
-                    zip.putText(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
-                    zip.putText(
-                        TRACK_POINTS_ENTRY,
-                        ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }),
-                    )
-                    contents.encounters.forEach { zip.putPhotos(it.photoPath, it.thumbPath) }
-                }
-                true
+        withContext(Dispatchers.IO) {
+            val written = try {
+                writeArchive(target, contents)
             } catch (e: Exception) {
                 false
             }
+            // The picker creates the document before this runs; left empty or half-written, it would
+            // look like a backup.
+            if (!written) discard(target)
+            written
         }
+
+    private fun writeArchive(target: String, contents: BackupContents): Boolean {
+        val stream = openTarget(target) ?: return false
+        // Its own use: a ZipOutputStream whose final write fails never closes the stream beneath it.
+        stream.use { raw -> ZipOutputStream(raw.buffered()).use { it.putArchive(contents) } }
+        return true
+    }
+
+    private fun ZipOutputStream.putArchive(contents: BackupContents) {
+        putJson(MANIFEST_ENTRY, ArchiveJson.encodeToString(manifest()))
+        putJson(ENCOUNTERS_ENTRY, ArchiveJson.encodeToString(contents.encounters.map { it.toRecord() }))
+        putJson(PLACE_CELLS_ENTRY, ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }))
+        putJson(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
+        putJson(TRACK_POINTS_ENTRY, ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }))
+        contents.encounters.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }.distinct().forEach { path ->
+            readPhoto(path)?.let { putEntry(PHOTOS_PREFIX + path, it) }
+        }
+    }
 
     private fun manifest() = BackupManifest(
         formatVersion = BACKUP_FORMAT_VERSION,
@@ -80,25 +84,29 @@ class ZipBackupWriter(
         appVersion = appVersion,
     )
 
-    private fun ZipOutputStream.putText(name: String, body: String) {
+    private fun ZipOutputStream.putJson(name: String, body: String) = putEntry(name, body.encodeToByteArray())
+
+    private fun ZipOutputStream.putEntry(name: String, bytes: ByteArray) {
         putNextEntry(ZipEntry(name))
-        write(body.encodeToByteArray())
+        write(bytes)
         closeEntry()
     }
 
-    // A photo that has gone missing since the row was written is skipped, not fatal: the rest of
-    // the archive is still worth having, and the row renders a placeholder without it.
+    // A photo that is gone or unreadable is skipped, since the rest is still worth having; it is read
+    // whole first, so a read that fails part-way cannot leave a truncated photo in the archive.
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    private fun ZipOutputStream.putPhotos(vararg paths: String?) {
-        paths.filterNotNull().forEach { path ->
-            try {
-                val file = photoStorage.fileFor(path)
-                if (!file.isFile) return@forEach
-                putNextEntry(ZipEntry(PHOTOS_PREFIX + path))
-                file.inputStream().use { it.copyTo(this) }
-                closeEntry()
-            } catch (e: Exception) {
-                // Already-added duplicates and unreadable files both land here.
+    private fun readPhoto(path: String): ByteArray? = try {
+        photoStorage.fileFor(path).takeIf { it.isFile }?.readBytes()
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun discard(target: String) {
+        runCatching {
+            if (target.startsWith("content://")) {
+                DocumentsContract.deleteDocument(context.contentResolver, Uri.parse(target))
+            } else {
+                File(target).delete()
             }
         }
     }
@@ -107,7 +115,6 @@ class ZipBackupWriter(
 class ZipBackupReader(
     private val context: Context,
     private val photoStorage: AndroidPhotoStorage,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BackupReader {
 
     /**
@@ -115,7 +122,7 @@ class ZipBackupReader(
      * been accepted, and only where none is here.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException") // a malformed archive is not a crash
-    override suspend fun read(source: String): BackupReadResult = withContext(ioDispatcher) {
+    override suspend fun read(source: String): BackupReadResult = withContext(Dispatchers.IO) {
         val staging = File(context.filesDir, STAGING_DIR).apply { deleteRecursively() }
         try {
             readArchive(source, staging)
