@@ -1,12 +1,11 @@
 package dev.catsradar.domain.region
 
-import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.LocationSource
-import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
+import dev.catsradar.domain.testing.areaOf
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.locatedFixture
+import dev.catsradar.domain.testing.placeCellFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -18,49 +17,16 @@ class RegionTreeTest {
 
     private var next = 0
 
-    private fun located(lat: Double, lon: Double, deletedAt: Instant? = null): Encounter {
-        val geohash = Geohash.encode(lat, lon, Tuning.GEOHASH_PRECISION)
-        return encounterFixture("e${next++}", BASE + next.hours, locationSource = LocationSource.CURRENT_FIX)
-            .copy(
-                lat = lat,
-                lon = lon,
-                geohash = geohash,
-                placeCellId = Geohash.prefix(geohash, Tuning.PLACE_CELL_PRECISION),
-                deletedAt = deletedAt,
-            )
-    }
+    private fun located(lat: Double, lon: Double, deletedAt: Instant? = null): Encounter =
+        locatedFixture("e${next++}", BASE + next.hours, lat, lon).copy(deletedAt = deletedAt)
 
     private fun unlocated(): Encounter = encounterFixture("e${next++}", BASE + next.hours)
-
-    @Suppress("LongParameterList") // a fixture builder: every parameter is one field of the row
-    private fun cell(
-        encounter: Encounter,
-        countryCode: String? = "ES",
-        countryName: String? = "Spain",
-        locality: String? = "Barcelona",
-        subLocality: String? = null,
-        adminArea: String? = null,
-        status: PlaceStatus = PlaceStatus.RESOLVED,
-    ) = PlaceCell(
-        cellId = encounter.placeCellId!!,
-        centerLat = encounter.lat!!,
-        centerLon = encounter.lon!!,
-        countryCode = countryCode,
-        countryName = countryName,
-        adminArea = adminArea,
-        locality = locality,
-        subLocality = subLocality,
-        status = status,
-        attempts = 1,
-        lastAttemptAt = BASE,
-        resolvedAt = BASE,
-    )
 
     @Test
     fun `countries are listed busiest first, by name`() {
         val spain = List(3) { located(41.4 + it * 0.001, 2.2) }
         val france = List(1) { located(48.85, 2.35) }
-        val cells = spain.map { cell(it) } + france.map { cell(it, "FR", "France", "Paris") }
+        val cells = spain.map { placeCellFixture(it) } + france.map { placeCellFixture(it, "FR", "France", "Paris") }
 
         val nodes = RegionTree.countries(spain + france, cells)
 
@@ -78,7 +44,7 @@ class RegionTreeTest {
         val pending = located(50.0, 8.0)
         val nowhere = List(3) { unlocated() }
         val all = named + pending + nowhere
-        val cells = named.map { cell(it) } + cell(pending, status = PlaceStatus.PENDING)
+        val cells = named.map { placeCellFixture(it) } + placeCellFixture(pending, status = PlaceStatus.PENDING)
 
         val nodes = RegionTree.countries(all, cells)
 
@@ -89,8 +55,9 @@ class RegionTreeTest {
     @Test
     fun `a cat whose cell has no name yet is Unresolved, not missing`() {
         val pending = located(41.4, 2.2)
+        val cells = listOf(placeCellFixture(pending, status = PlaceStatus.PENDING))
 
-        val nodes = RegionTree.countries(listOf(pending), listOf(cell(pending, status = PlaceStatus.PENDING)))
+        val nodes = RegionTree.countries(listOf(pending), cells)
 
         assertEquals(listOf(RegionKey.Unresolved), nodes.map { it.key })
     }
@@ -107,7 +74,7 @@ class RegionTreeTest {
         val named = located(41.4, 2.2)
         val all = listOf(named, unlocated())
 
-        val keys = RegionTree.countries(all, listOf(cell(named))).map { it.key }
+        val keys = RegionTree.countries(all, listOf(placeCellFixture(named))).map { it.key }
 
         assertEquals(RegionKey.Country("ES"), keys.first())
         assertEquals(RegionKey.NoLocation, keys.last())
@@ -117,7 +84,7 @@ class RegionTreeTest {
     fun `a pseudo-node with nothing in it is not shown at all`() {
         val named = located(41.4, 2.2)
 
-        val nodes = RegionTree.countries(listOf(named), listOf(cell(named)))
+        val nodes = RegionTree.countries(listOf(named), listOf(placeCellFixture(named)))
 
         assertEquals(listOf(RegionKey.Country("ES")), nodes.map { it.key })
     }
@@ -127,7 +94,7 @@ class RegionTreeTest {
         val kept = located(41.4, 2.2)
         val deleted = located(41.4, 2.2, deletedAt = BASE)
 
-        val nodes = RegionTree.countries(listOf(kept, deleted), listOf(cell(kept)))
+        val nodes = RegionTree.countries(listOf(kept, deleted), listOf(placeCellFixture(kept)))
 
         assertEquals(1, nodes.single().count)
     }
@@ -135,7 +102,7 @@ class RegionTreeTest {
     @Test
     fun `a city falls back to the admin area when there is no locality`() {
         val rural = located(42.0, 1.0)
-        val cells = listOf(cell(rural, locality = null, adminArea = "Catalonia"))
+        val cells = listOf(placeCellFixture(rural, locality = null, adminArea = "Catalonia"))
 
         val nodes = RegionTree.cities("ES", listOf(rural), cells)
 
@@ -145,7 +112,7 @@ class RegionTreeTest {
     @Test
     fun `a cell with neither locality nor admin area contributes no city row`() {
         val nameless = located(42.0, 1.0)
-        val cells = listOf(cell(nameless, locality = null, adminArea = null))
+        val cells = listOf(placeCellFixture(nameless, locality = null, adminArea = null))
 
         assertEquals(emptyList(), RegionTree.cities("ES", listOf(nameless), cells))
     }
@@ -157,7 +124,7 @@ class RegionTreeTest {
         val nodes = RegionTree.areas(
             RegionKey.Unresolved,
             listOf(pending),
-            listOf(cell(pending, status = PlaceStatus.PENDING))
+            listOf(placeCellFixture(pending, status = PlaceStatus.PENDING))
         )
 
         val node = nodes.single()
@@ -219,7 +186,10 @@ class RegionTreeTest {
         // Far enough to be its own place cell (~1 km) but inside the same area (~5 km); at 11 m
         // all three would share one cell and the last name written would simply win.
         val other = located(41.41, 2.2)
-        val cells = listOf(cell(gracia.first(), subLocality = "Gracia"), cell(other, subLocality = "Eixample"))
+        val cells = listOf(
+            placeCellFixture(gracia.first(), subLocality = "Gracia"),
+            placeCellFixture(other, subLocality = "Eixample"),
+        )
 
         val nodes = RegionTree.areas(RegionKey.Country("ES"), gracia + other, cells)
 
@@ -227,10 +197,84 @@ class RegionTreeTest {
     }
 
     @Test
+    fun `a country's cities add up to the country when every cell names a city`() {
+        val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
+        val girona = located(41.980, 2.820)
+        val rural = located(42.100, 1.400)
+        val all = barcelona + girona + rural
+        val cells = barcelona.map { placeCellFixture(it) } +
+            placeCellFixture(girona, locality = "Girona") +
+            placeCellFixture(rural, locality = null, adminArea = "Catalonia")
+
+        val spain = RegionTree.countries(all, cells).single { it.key == RegionKey.Country("ES") }
+
+        assertEquals(4, spain.count)
+        assertEquals(spain.count, RegionTree.cities("ES", all, cells).sumOf { it.count })
+    }
+
+    @Test
+    fun `a country's cities come busiest first`() {
+        val girona = located(41.980, 2.820)
+        val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
+        val cells = listOf(placeCellFixture(girona, locality = "Girona")) + barcelona.map { placeCellFixture(it) }
+
+        val cities = RegionTree.cities("ES", listOf(girona) + barcelona, cells)
+
+        assertEquals(listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona")), cities.map { it.key })
+    }
+
+    @Test
+    fun `a city's areas hold only that city's cats`() {
+        val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
+        val girona = located(41.980, 2.820)
+        val cells = barcelona.map { placeCellFixture(it) } + placeCellFixture(girona, locality = "Girona")
+
+        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), barcelona + girona, cells)
+
+        assertEquals(barcelona.map { areaOf(it) }, areas.map { it.key })
+    }
+
+    @Test
+    fun `a city's areas add up to the city`() {
+        val barcelona = listOf(located(41.390, 2.170), located(41.392, 2.172), located(41.440, 2.190))
+        val girona = located(41.980, 2.820)
+        val all = barcelona + girona
+        val cells = barcelona.map { placeCellFixture(it) } + placeCellFixture(girona, locality = "Girona")
+
+        val city = RegionTree.cities("ES", all, cells).single { it.key == RegionKey.City("ES", "Barcelona") }
+
+        assertEquals(3, city.count)
+        assertEquals(city.count, RegionTree.areas(city.key, all, cells).sumOf { it.count })
+    }
+
+    @Test
+    fun `a city's areas come busiest first`() {
+        val lone = located(41.440, 2.190)
+        val pair = listOf(located(41.390, 2.170), located(41.392, 2.172))
+        val all = listOf(lone) + pair
+
+        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), all, all.map { placeCellFixture(it) })
+
+        assertEquals(listOf(areaOf(pair.first()), areaOf(lone)), areas.map { it.key })
+    }
+
+    @Test
+    fun `an area's cats are the live ones inside it, not its neighbour's`() {
+        val inside = listOf(located(41.390, 2.170), located(41.392, 2.172))
+        val deleted = located(41.391, 2.171, deletedAt = BASE)
+        val neighbour = located(41.440, 2.190)
+        val all = inside + deleted + neighbour
+
+        val found = RegionTree.encountersIn(areaOf(inside.first()), all, all.map { placeCellFixture(it) })
+
+        assertEquals(inside.map { it.id }, found.map { it.id })
+    }
+
+    @Test
     fun `drilling into a country returns only that country's cats`() {
         val spain = located(41.4, 2.2)
         val france = located(48.85, 2.35)
-        val cells = listOf(cell(spain), cell(france, "FR", "France", "Paris"))
+        val cells = listOf(placeCellFixture(spain), placeCellFixture(france, "FR", "France", "Paris"))
 
         val found = RegionTree.encountersIn(RegionKey.Country("ES"), listOf(spain, france), cells)
 
@@ -241,8 +285,9 @@ class RegionTreeTest {
     fun `drilling into No location returns exactly the cats without coordinates`() {
         val located = located(41.4, 2.2)
         val nowhere = unlocated()
+        val cells = listOf(placeCellFixture(located))
 
-        val found = RegionTree.encountersIn(RegionKey.NoLocation, listOf(located, nowhere), listOf(cell(located)))
+        val found = RegionTree.encountersIn(RegionKey.NoLocation, listOf(located, nowhere), cells)
 
         assertEquals(listOf(nowhere.id), found.map { it.id })
     }
