@@ -73,8 +73,15 @@ version name — the last being the only thing that could ever explain an archiv
 read.
 
 **Photos are taken from the rows themselves.** The writer reads each encounter's `photoPath` and
-`thumbPath` out of photo storage; a file that has gone missing since the row was written is skipped
-rather than failing the export, because the rest of the archive is still worth having.
+`thumbPath` out of photo storage; a file that has gone missing since the row was written, or that
+cannot be read, is skipped rather than failing the export, because the rest of the archive is still
+worth having. Each photo is read whole before its entry is opened, so the archive never holds an
+empty or truncated one — which would restore as a broken image rather than the placeholder.
+
+**A failed export leaves nothing where the user chose to save it.** The file picker creates the
+document before the export starts, so an export that cannot finish — the disk fills, the provider
+goes away — asks for that document to be deleted again rather than leave an empty or half-written
+file that looks like a backup.
 
 On import a photo is restored **only where none is already here** — the local copy is the one the app
 has been rendering, and an archive should not quietly replace it.
