@@ -18,7 +18,7 @@ data class Regions(
 ) : NavKey
 
 @Serializable
-enum class RegionKind { ROOT, COUNTRY, CITY, AREA, UNRESOLVED, NO_LOCATION }
+enum class RegionKind { ROOT, COUNTRY, CITY, AREA, UNRESOLVED, NO_CITY, NO_LOCATION }
 
 fun Regions.toRegionKey(): RegionKey? = when (kind) {
     RegionKind.ROOT -> null
@@ -26,6 +26,7 @@ fun Regions.toRegionKey(): RegionKey? = when (kind) {
     RegionKind.CITY -> RegionKey.City(countryCode.orEmpty(), city.orEmpty())
     RegionKind.AREA -> RegionKey.Area(areaHash.orEmpty())
     RegionKind.UNRESOLVED -> RegionKey.Unresolved
+    RegionKind.NO_CITY -> RegionKey.NoCity(countryCode.orEmpty())
     RegionKind.NO_LOCATION -> RegionKey.NoLocation
 }
 
@@ -34,5 +35,6 @@ fun RegionRowKey.toNavKey(): Regions = when (this) {
     is RegionRowKey.City -> Regions(RegionKind.CITY, countryCode = countryCode, city = city)
     is RegionRowKey.Area -> Regions(RegionKind.AREA, areaHash = areaHash)
     RegionRowKey.Unresolved -> Regions(RegionKind.UNRESOLVED)
+    is RegionRowKey.NoCity -> Regions(RegionKind.NO_CITY, countryCode = countryCode)
     RegionRowKey.NoLocation -> Regions(RegionKind.NO_LOCATION)
 }

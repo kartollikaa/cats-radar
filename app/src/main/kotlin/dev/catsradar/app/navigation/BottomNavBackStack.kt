@@ -43,6 +43,11 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
         return true
     }
 
+    /** Pops [key] if it is the top entry; a key under another one, or not on the stack, stays put. */
+    fun popIfOnTop(key: NavKey) {
+        if (entries.last() == key) popOrNull()
+    }
+
     // Exhaustive on purpose: a new tab will not compile until it has a destination here.
     private fun BottomNavTab.key(): NavKey = when (this) {
         BottomNavTab.COUNTER -> Counter

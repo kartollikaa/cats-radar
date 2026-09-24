@@ -5,7 +5,9 @@ Tapping a row in the Encounters list opens that one cat: the day it was logged (
 coordinates themselves when there are any, with the fix's accuracy under them. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
 return to the list, never to the Counter root. The screen scrolls: a photo and the coat picker
-together are taller than most phones, and Delete must never end up below the bottom edge.
+together are taller than most phones, and Delete must never end up below the bottom edge. The coat
+picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
+[coat.md](./coat.md#changing-it-later).
 
 Every label is built in `EncounterDetailStateMapper`; the composable renders strings and resolves
 one token (`LocationLabel`) to a resource. An accuracy with no coordinates to qualify is dropped
@@ -63,5 +65,4 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 ## Not built yet
 
-No photo on the detail (slice 11), no coat (slice 22), no place name (slice 14), no map. The
-coordinates are shown as numbers only.
+No place name and no map. The coordinates are shown as numbers only.

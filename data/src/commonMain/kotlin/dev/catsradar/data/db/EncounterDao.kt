@@ -6,6 +6,7 @@ import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
@@ -71,6 +72,21 @@ interface EncounterDao {
         placeCellId: String,
         updatedAt: Instant,
     )
+
+    // updatedAt stays: the geohash and cell are derived from the coordinates, so the cat is unchanged.
+    @Query(
+        """
+        UPDATE encounters SET geohash = :geohash, placeCellId = :placeCellId
+        WHERE id = :id AND lat = :lat AND lon = :lon
+        """
+    )
+    suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String)
+
+    // One transaction, so observers are invalidated once rather than once per row.
+    @Transaction
+    suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>) {
+        assignments.forEach { setPlaceCell(it.encounterId, it.lat, it.lon, it.geohash, it.placeCellId) }
+    }
 
     @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?

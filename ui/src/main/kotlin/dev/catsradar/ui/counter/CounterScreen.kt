@@ -170,7 +170,7 @@ private fun CounterScreenLocationHintVisiblePreview() {
 
 private val sampleCounterStateUnread = CounterState(totalLabel = "", count = null, undoVisible = false)
 private val sampleCounterStateEmpty = CounterState(totalLabel = "0", count = 0, undoVisible = false)
-private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", count = 3, undoVisible = true)
+private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", count = 3, undoVisible = true, tapBurst = 2)
 private val sampleCounterStateLocationHintVisible =
     CounterState(totalLabel = "3", count = 3, undoVisible = false, locationPermissionHintVisible = true)
 private val sampleCounterStateOutingInProgress = CounterState(
@@ -182,5 +182,5 @@ private val sampleCounterStateOutingInProgress = CounterState(
         elapsedLabel = "35 min",
         rate = RateState(value = "6.9", unit = RateUnit.PER_HOUR),
     ),
-    tapBurst = 2,
+    walkingMode = true,
 )

@@ -54,6 +54,22 @@ class BottomNavigationTest {
     }
 
     @Test
+    fun `popping a sheet by its key pops it only while it is on top`() {
+        val spot = MapSpot(setOf("a", "b"), emptySet())
+        val backStack = newStack(Counter, CatsMap, spot, EncounterDetail("a"))
+
+        backStack.popIfOnTop(spot)
+        assertEquals(listOf(Counter, CatsMap, spot, EncounterDetail("a")), backStack.toList())
+
+        backStack.popOrNull()
+        backStack.popIfOnTop(spot)
+        assertEquals(listOf<NavKey>(Counter, CatsMap), backStack.toList())
+
+        backStack.popIfOnTop(spot)
+        assertEquals(listOf<NavKey>(Counter, CatsMap), backStack.toList())
+    }
+
+    @Test
     fun `selecting Encounters from the Counter root pushes it once`() {
         val backStack = newStack(Counter)
 

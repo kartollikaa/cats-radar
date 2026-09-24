@@ -7,7 +7,8 @@ convention plugin — `catsradar.kmp.library`, `catsradar.android.library`, and
 `detekt-formatting` and `compose-rules`) for style, complexity, and Compose-specific rules; Android
 Lint for manifest/resource/API-level/Compose-runtime issues; and Konsist for the architecture and
 naming rules described in `docs/rules/module-structure.md` and `docs/rules/mvi-architecture.md`,
-written as plain JUnit tests under `app/src/test/kotlin/dev/catsradar/app/architecture/`.
+written as plain JUnit tests under `app/src/test/kotlin/dev/catsradar/app/architecture/`. The
+binding rules for all three are `docs/rules/static-analysis.md`.
 
 ## At the edges
 
@@ -40,14 +41,16 @@ today only by there being no `implementation(projects.domain)` in `:ui`'s `build
 no project dependency at all in `:domain`'s; no Konsist test backs either one, so an accidental
 dependency edit would not be caught by `check`.
 
-Beyond the four import-boundary rules, Konsist also checks: every class named `*Store` lives under
+Beyond the import-boundary rules, Konsist also checks: every class named `*Store` lives under
 `dev.catsradar.presentation`; every class named `*State` has no function-typed property (a literal
 lambda type, a `fun interface`, or a typealias for either — the enforcement mechanism behind
 `docs/rules/mvi-architecture.md`'s "State is data, no function types," since detekt/compose-rules
 has no rule for it); every public `@Composable` with a `Modifier` parameter declares
-`modifier: Modifier = Modifier` as its first defaulted parameter; and every `NavKey`
+`modifier: Modifier = Modifier` as its first defaulted parameter; every `NavKey`
 implementation is `@Serializable` (needed for Navigation 3's saved-state restoration, and for
-polymorphic key serialization once a non-JVM target exists). `*Intent`, `*Effect`, and
+polymorphic key serialization once a non-JVM target exists); and `CatsRadarNavHost` takes its
+back stack from `rememberBottomNavBackStack()`, with no other `:app` source building or
+remembering a raw `NavBackStack` (`NavBackStackUsageTest`, see `app-shell.md`). `*Intent`, `*Effect`, and
 `*StateMapper` naming has no Konsist test at all.
 
 The DI graph gets its own two-layer check outside the three formal tools: `KoinModulesTest`
@@ -66,7 +69,7 @@ can't see — see `app-shell.md`.
 
 ## Not handled yet
 
-Instrumented/on-device tests, the backup round-trip test, and most of the design spec's §7 test
-list depend on features that don't exist yet (photos, import/export, statistics).
-`docs/rules/static-analysis.md` is otherwise a complete, current description of what's configured;
-nothing found in the code contradicts it.
+The rest of the design spec's §7 test list has tests. The exception is the on-device smoke test (tap
+the counter, see 1): `:app` has no `src/androidTest` sources, no instrumentation runner and no
+instrumented-test dependencies, and CI runs `./gradlew check` alone, which runs host tests and
+starts no emulator.
