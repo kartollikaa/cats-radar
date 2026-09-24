@@ -106,7 +106,7 @@ returns to Counter; back from Counter exits.
 | `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null for TALLY. |
 | `thumbPath` | String? | Generated thumbnail. |
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
-| `sourceDigest` | String? | SHA-256 of the original bytes; duplicate imports are skipped on it. |
+| `sourceDigest` | String? | SHA-256 of the bytes the source hands over — the picker's redacted copy when location is not shared; duplicate imports are skipped on it. |
 | `lat`, `lon` | Double? | WGS84. Both null when no location. |
 | `accuracyMeters` | Float? | From the fix; null for EXIF. |
 | `locationSource` | enum `EXIF` \| `CURRENT_FIX` \| `LAST_KNOWN` \| `BACKFILLED` \| `NONE` | Which rung of §4.3 produced the coordinates. |

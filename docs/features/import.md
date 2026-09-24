@@ -74,11 +74,12 @@ takes them back*).
 - **The photo picker strips GPS unless the user shares it.** The import asks for location with
   `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`. The picker then asks *Include location info?*
   once, remembers the answer for this app, and keeps a location button in its corner to change it.
-  Declined — or on a picker that predates the request, which reaches phones through Google Play
-  system updates and ignores an extra it does not know — the bytes handed over are a redacted copy:
-  the GPS tags are gone and the photo gets no location. The **date survives** either way, so an
-  imported photo still lands on the day it was taken. No runtime permission is involved: neither
-  `ACCESS_MEDIA_LOCATION` nor `MediaStore.setRequireOriginal`.
+  Declined, the bytes handed over are a redacted copy: the GPS tags are gone and the photo gets no
+  location. A picker that predates the request ignores it and behaves as it always did; the system
+  picker learns the request from its own Google Play system updates, not from an Android release.
+  The **date survives** either way, so an imported photo still lands on the day it was taken. No
+  runtime permission is involved: the app neither requests `ACCESS_MEDIA_LOCATION` nor opens the
+  photo through `MediaStore.setRequireOriginal`.
 - `sourceDigest` is the digest of the bytes the picker handed over, and a redacted copy hashes
   differently from the original. The redaction is deterministic, so picking the same photo twice
   with the same location choice produces the same digest and the second one is skipped. Picked once
