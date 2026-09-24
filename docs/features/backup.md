@@ -61,6 +61,12 @@ A walk is matched by `id`, as a cat is: the later edit wins, and a tie keeps the
   none, because it was being recorded on another phone and cannot carry on here. The exception is
   the walk on here, which stays on. Either way at most one walk is ever on.
 - **A walk ended that way reaches the end** of the longer route a later archive of it brings.
+- **A walk the archive lists more than once is still one walk.** Its copies settle among themselves
+  first — the later edit wins, a tie keeps the one listed first — and only that copy meets the rules
+  above, as for cats. Weighed one by one, every copy newer than the walk here would be written and
+  the last listed would stick, older or not.
+- **A point that is not on the globe is left out**, as a cat off the globe arrives without its
+  location; the walk and the rest of its route arrive.
 
 ## The archive
 
