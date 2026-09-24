@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
@@ -70,11 +71,12 @@ internal fun CatsRadarNavDisplay(
 ) {
     val density = LocalDensity.current
     val sheets = remember(backStack) { BottomSheetSceneStrategy(backStack) }
+    val dialogs = remember { DialogSceneStrategy<NavKey>() }
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popOrNull() },
-        sceneStrategies = listOf(sheets),
+        sceneStrategies = listOf(sheets, dialogs),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -144,7 +146,11 @@ internal fun catsRadarEntries(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popOrNull() },
+            onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
         )
+    }
+    entry<PhotoViewer>(metadata = photoViewerMetadata()) { key ->
+        PhotoViewerDestination(key = key, onClose = { backStack.popIfOnTop(key) })
     }
 }
 

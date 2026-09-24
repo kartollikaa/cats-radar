@@ -175,6 +175,8 @@
     <string name="detail_pick_photo">Выбрать из галереи</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
+    <string name="detail_open_photo">Открыть на весь экран</string>
+    <string name="viewer_back">Назад</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>
