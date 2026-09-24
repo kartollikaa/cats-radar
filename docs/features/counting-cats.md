@@ -29,10 +29,16 @@ known the block is named by what it does.
 The count sits in a large block that **is** the button. It squashes under a press and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen
 compares the number it had with the one it now has, so an undo, or an import finishing while the
-Counter is showing, rolls the right way. The roll follows the database, so it lands a moment after
-the burst: the burst answers the finger, the roll answers the write. The springs are tuned stiff
-enough that the roll starts on the frame the new number arrives rather than easing into motion. The
-squash is drawn only: what a press can land on stays the whole block.
+Counter is showing, rolls the right way. It rolls like an odometer, one digit at a time: only the
+digits that change move, each in its own window, and a carry ripples to the left — 49 to 50 turns
+the units over at once and the tens a beat later, and 99 to 100 rolls a hundreds digit in, which an
+Undo rolls back out. An Undo pressed mid-roll turns the roll back down rather than finishing it
+upward. Every digit is the same width, so a rolling digit never shoves its neighbours, and the
+number reads left to right under a right-to-left language too.
+The roll follows the database, so it lands a moment after the burst: the burst answers the finger,
+the roll answers the write. The units start rolling on the frame the new number arrives rather than
+easing into motion, and settle with a small overshoot. The squash is drawn only: what a press can
+land on stays the whole block.
 
 Two changes are not rolled. The first total after the app starts is not a change, so until it has
 been read the block shows no number at all, rather than a 0 that then rolls up to it. And a change
@@ -139,8 +145,9 @@ the window closed does not reopen it*).
   `ObserveStats.kt`
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/counter/` — `CounterState`,
   `CounterIntent`, `CounterEffect`, `CounterStore`, `CounterStateMapper`
-- `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count, its
-  press and its roll), `FillOrScroll.kt` (the block's floor and the scroll past it), `UndoChip.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
+  press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
+  block's floor and the scroll past it), `UndoChip.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`
 
