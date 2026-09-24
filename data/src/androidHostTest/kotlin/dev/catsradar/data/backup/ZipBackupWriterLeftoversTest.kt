@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.domain.backup.BackupContents
 import kotlinx.coroutines.test.runTest
+import org.junit.Assume.assumeFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -66,6 +67,16 @@ class ZipBackupWriterLeftoversTest {
     }
 
     @Test
+    fun anExportThatFailsPartWayClosesItsTargetEvenWhenTheArchiveCannotBeFinished() = runTest {
+        photoStorage.prepare("cat.jpg").writeBytes(Random(3).nextBytes(64 * 1024))
+        val target = DiskFillsAfter(BYTES_BEFORE_THE_DISK_FILLS, ByteArrayOutputStream())
+
+        writer { target }.write(document, withPhoto)
+
+        assertTrue(target.closed, "the target was left open")
+    }
+
+    @Test
     fun anExportThatCannotOpenItsDocumentAsksForTheEmptyDocumentToBeDeleted() = runTest {
         val written = writer { null }.write(document, BackupContents())
 
@@ -87,7 +98,9 @@ class ZipBackupWriterLeftoversTest {
 
     @Test
     fun aPhotoTheWriterCannotReadIsLeftOutRatherThanArchivedEmpty() = runTest {
-        photoStorage.prepare("cat.jpg").apply { writeText("jpeg bytes") }.setReadable(false)
+        val unreadable = photoStorage.prepare("cat.jpg").apply { writeText("jpeg bytes") }
+        unreadable.setReadable(false)
+        assumeFalse("a process running as root can read the file anyway", unreadable.canRead())
         val target = File(temporaryFolder.root, "backup.zip")
 
         assertTrue(writer { FileOutputStream(it) }.write(target.path, withPhoto))
@@ -99,6 +112,13 @@ class ZipBackupWriterLeftoversTest {
 
 private class DiskFillsAfter(private val budget: Int, sink: OutputStream) : FilterOutputStream(sink) {
     private var written = 0
+    var closed = false
+        private set
+
+    override fun close() {
+        closed = true
+        super.close()
+    }
 
     override fun write(b: Int) {
         if (++written > budget) throw IOException("No space left on device")

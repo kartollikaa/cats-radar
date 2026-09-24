@@ -61,17 +61,20 @@ class ZipBackupWriter(
 
     private fun writeArchive(target: String, contents: BackupContents): Boolean {
         val stream = openTarget(target) ?: return false
-        ZipOutputStream(stream.buffered()).use { zip ->
-            zip.putJson(MANIFEST_ENTRY, ArchiveJson.encodeToString(manifest()))
-            zip.putJson(ENCOUNTERS_ENTRY, ArchiveJson.encodeToString(contents.encounters.map { it.toRecord() }))
-            zip.putJson(PLACE_CELLS_ENTRY, ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }))
-            zip.putJson(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
-            zip.putJson(TRACK_POINTS_ENTRY, ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }))
-            contents.encounters.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }.distinct().forEach { path ->
-                readPhoto(path)?.let { zip.putEntry(PHOTOS_PREFIX + path, it) }
-            }
-        }
+        // Its own use: a ZipOutputStream whose final write fails never closes the stream beneath it.
+        stream.use { raw -> ZipOutputStream(raw.buffered()).use { it.putArchive(contents) } }
         return true
+    }
+
+    private fun ZipOutputStream.putArchive(contents: BackupContents) {
+        putJson(MANIFEST_ENTRY, ArchiveJson.encodeToString(manifest()))
+        putJson(ENCOUNTERS_ENTRY, ArchiveJson.encodeToString(contents.encounters.map { it.toRecord() }))
+        putJson(PLACE_CELLS_ENTRY, ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }))
+        putJson(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
+        putJson(TRACK_POINTS_ENTRY, ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }))
+        contents.encounters.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }.distinct().forEach { path ->
+            readPhoto(path)?.let { putEntry(PHOTOS_PREFIX + path, it) }
+        }
     }
 
     private fun manifest() = BackupManifest(

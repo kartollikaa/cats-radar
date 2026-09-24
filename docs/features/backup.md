@@ -81,7 +81,9 @@ empty or truncated one — which would restore as a broken image rather than the
 **A failed export leaves nothing where the user chose to save it.** The file picker creates the
 document before the export starts, so an export that cannot finish — the disk fills, the provider
 goes away — asks for that document to be deleted again rather than leave an empty or half-written
-file that looks like a backup.
+file that looks like a backup. The one failure it cannot clean up after is its own death: an export
+killed with the app leaves what it had written, and the run WorkManager starts again can neither
+reopen nor delete the document, the picker's grant having died with the process.
 
 On import a photo is restored **only where none is already here** — the local copy is the one the app
 has been rendering, and an archive should not quietly replace it.
