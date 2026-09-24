@@ -7,15 +7,15 @@ mirrors each with an `@Entity` (`EncounterEntity`, `PlaceCellEntity`) and a pair
 layer leaking into the other.
 
 `Encounter`'s fields fall into a few groups: identity (`id`, `deviceId`); when and how it happened
-(`occurredAt`, `tzOffsetMinutes`, `kind`, `origin`); the cat (`coat`, the only field the user can
-edit after creation, see `coat.md`); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
-`sourceDigest`, covered in `photos.md`); location (`lat`, `lon`, `accuracyMeters`, `locationSource`,
-`locationFixedAt`, `geohash`, `placeCellId`, covered in `location.md`); and row lifecycle
-(`createdAt`, `updatedAt`, `deletedAt`). `tzOffsetMinutes` is the UTC offset at the moment the
-encounter happened, not the device's offset now — it is what lets "today" and streak calculations
-stay correct for an encounter logged while travelling (see `docs/rules/date-time.md`). `id` must be
-unique across devices, not just on this one: a backup import reconciles rows by it (see
-`backup.md`).
+(`occurredAt`, `tzOffsetMinutes`, `kind`, `origin`); the cat (`coat`, which the user can change
+after creation, see `coat.md`); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
+`sourceDigest`, covered in `photos.md`; set once — at creation, or later on a cat that had none);
+location (`lat`, `lon`, `accuracyMeters`, `locationSource`, `locationFixedAt`, `geohash`,
+`placeCellId`, covered in `location.md`); and row lifecycle (`createdAt`, `updatedAt`, `deletedAt`).
+`tzOffsetMinutes` is the UTC offset at the moment the encounter happened, not the device's offset
+now — it is what lets "today" and streak calculations stay correct for an encounter logged while
+travelling (see `docs/rules/date-time.md`). `id` must be unique across devices, not just on this
+one: a backup import reconciles rows by it (see `backup.md`).
 
 ## At the edges
 
@@ -25,9 +25,15 @@ soft-deleted rows: `loadEvery` for the backup merge (see `backup.md`) and `loadD
 the purge. `softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
-*reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). Two writes clear `deletedAt` on
-purpose, unguarded: `undoDelete`, because undo is meant to resurrect the row, and a backup import
-whose copy of a cat deleted here was edited after the deletion (see `backup.md`).
+*reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `attachPhoto` is guarded both ways
+at once: it writes only the photo columns and `updatedAt`, and only `WHERE deletedAt IS NULL AND
+photoPath IS NULL`, so giving a cat a photo can neither bring back a deleted one nor replace a photo
+it has (`EncounterDaoAttachPhotoTest`). `setCoat` writes only the `coat` column and `updatedAt`,
+`WHERE deletedAt IS NULL`, so changing a cat's coat can neither resurrect a deleted row nor undo a
+photo or a location attached a moment earlier (`EncounterDaoSetCoatTest`). Two writes clear
+`deletedAt` on purpose, unguarded:
+`undoDelete`, because undo is meant to resurrect the row, and a backup import whose copy of a cat
+deleted here was edited after the deletion (see `backup.md`).
 
 Undoing a batch is guarded, unlike `undoDelete`. `softDeleteAll` stamps every row of a batch with one
 `deletedAt`, and `undoDeleteAll` clears only rows still carrying exactly that instant, so undoing a
@@ -87,7 +93,7 @@ the cat is still there.
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Encounter.kt`, `PlaceCell.kt`,
-  `LocationStamp.kt`, `CatCoat.kt`
+  `LocationStamp.kt`, `PhotoStamp.kt`, `CatCoat.kt`
 - `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterEntity.kt`, `PlaceCellEntity.kt`,
   `EnumConverters.kt`, `InstantConverters.kt`, `CatsDatabase.kt`
 - `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`,
