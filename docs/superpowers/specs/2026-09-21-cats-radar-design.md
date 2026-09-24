@@ -106,7 +106,7 @@ returns to Counter; back from Counter exits.
 | `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null for TALLY. |
 | `thumbPath` | String? | Generated thumbnail. |
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
-| `sourceDigest` | String? | SHA-256 of the original bytes; duplicate imports are skipped on it. |
+| `sourceDigest` | String? | SHA-256 of the bytes the source hands over — the picker's redacted copy when location is not shared; duplicate imports are skipped on it. |
 | `lat`, `lon` | Double? | WGS84. Both null when no location. |
 | `accuracyMeters` | Float? | From the fix; null for EXIF. |
 | `locationSource` | enum `EXIF` \| `CURRENT_FIX` \| `LAST_KNOWN` \| `BACKFILLED` \| `NONE` | Which rung of §4.3 produced the coordinates. |
@@ -239,7 +239,8 @@ never touched by the app.
 - **Import**: `OpenDocument`. Validate `manifest.formatVersion ≤ current`. Merge by `id`: unknown →
   insert; known → keep the row with the newer `updatedAt`; a soft-deleted local row wins over an
   imported live one only if its `deletedAt` is newer. Photos copied when missing; thumbnails
-  regenerated. Place cells merged, `RESOLVED` wins. `ImportBackupWorker`, progress notification,
+  regenerated. Place cells merged, `RESOLVED` wins. The merge reads and writes in one database
+  transaction, so a failure part-way writes no rows. `ImportBackupWorker`, progress notification,
   summary at the end.
 - Round-trip test: export → wipe → import → identical statistics.
 
@@ -289,7 +290,7 @@ maps the spec onto those modules.
 
 | Module | Kind | Holds |
 |---|---|---|
-| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
+| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`, `TransactionRunner`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
 | `:data` | KMP | Room `CatsDatabase`, `EncounterDao`, `PlaceCellDao` (`BundledSQLiteDriver`, `RoomDatabaseConstructor` expect/actual, KSP); DataStore Preferences; repository implementations; entity ↔ domain mappers; backup ZIP (de)serialisation with `kotlinx.serialization`. `androidMain`: FusedLocationProvider, ExifInterface, `Geocoder`, MediaStore saver, SHA-256, bitmap resize. |
 | `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `RegionEncounters`, `Settings`; `DateTimeFormatter` interface. |
 | `:ui` | Android | `CatsRadarTheme`, `@ThemePreviews`, components, one file per screen, previews. Compose Multiplatform-ready: no Android imports beyond Compose. |
@@ -398,7 +399,8 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 ## 10. Open items
 
 - `applicationId` / package name placeholder `dev.catsradar` until confirmed.
-- **EXIF GPS from gallery photos is redacted under scoped storage.** Reading it needs the
-  `ACCESS_MEDIA_LOCATION` runtime permission plus `MediaStore.setRequireOriginal(uri)`; whether that
-  works on Photo Picker URIs must be verified on device in the gallery-import slice. If it does not,
-  import falls back to `NONE` for location (dates still come from EXIF) and the spec is amended.
+- ~~**EXIF GPS from gallery photos is redacted under scoped storage.**~~ Resolved with no runtime
+  permission: the Photo Picker hands GPS over when the launch intent carries
+  `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS` and the user agrees in the picker.
+  Declined, or on a picker without that extra, import falls back to `NONE` for location while dates
+  still come from EXIF — see `docs/features/import.md`.

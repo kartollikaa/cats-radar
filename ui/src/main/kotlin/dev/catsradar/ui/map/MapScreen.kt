@@ -56,8 +56,6 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onCatsTap: (List<String>) -> Unit = {},
-    onSpotDismiss: () -> Unit = {},
-    onOutingFocus: (String) -> Unit = {},
     onFocusClear: () -> Unit = {},
     onHeatToggle: () -> Unit = {},
     onCoatToggle: (CoatOption?) -> Unit = {},
@@ -83,14 +81,6 @@ fun MapScreen(
                     onCoatToggle = onCoatToggle,
                     onClear = onCoatFilterClear,
                     onDismiss = { choosingCoats = false },
-                )
-            }
-            state.spot?.let { spot ->
-                MapSpotSheet(
-                    spot = spot,
-                    onCatClick = { id -> onCatsTap(listOf(id)) },
-                    onOutingMapClick = onOutingFocus,
-                    onDismiss = onSpotDismiss,
                 )
             }
         }

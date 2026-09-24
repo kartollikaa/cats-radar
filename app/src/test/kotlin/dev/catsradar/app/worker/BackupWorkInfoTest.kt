@@ -68,10 +68,28 @@ class BackupWorkInfoTest {
     }
 
     @Test
-    fun `an import that failed without a reason reads as an unreadable file`() {
-        val intent = workInfo(WorkInfo.State.FAILED, ImportBackupWorker::class.java).toSettingsIntent()
+    fun `an archive refused as unreadable says it is not a backup`() {
+        val intent = workInfo(
+            WorkInfo.State.FAILED,
+            ImportBackupWorker::class.java,
+            output = rejection(BackupRejection.UNREADABLE),
+        ).toSettingsIntent()
 
         assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.IMPORT_REFUSED_UNREADABLE), intent)
+    }
+
+    @Test
+    fun `an import that failed without refusing the archive says it did not finish, not that the file is bad`() {
+        val intent = workInfo(WorkInfo.State.FAILED, ImportBackupWorker::class.java).toSettingsIntent()
+
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.IMPORT_FAILED), intent)
+    }
+
+    @Test
+    fun `a cancelled import says it did not finish`() {
+        val intent = workInfo(WorkInfo.State.CANCELLED, ImportBackupWorker::class.java).toSettingsIntent()
+
+        assertEquals(SettingsIntent.Backup.Finished(RunId.toString(), BackupOutcome.IMPORT_FAILED), intent)
     }
 
     @Test

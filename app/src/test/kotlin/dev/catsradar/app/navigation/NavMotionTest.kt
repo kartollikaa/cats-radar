@@ -16,6 +16,7 @@ import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.ui.navigation.BottomNavTab
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NavMotionTest {
@@ -26,6 +27,8 @@ class NavMotionTest {
     private val detail = detail(EncounterDetail("encounter-1"))
     private val places = detail(Regions())
     private val country = detail(Regions(RegionKind.COUNTRY, countryCode = "ES"))
+    private val map = tabRoot(CatsMap)
+    private val spot = sheet(MapSpot(setOf("a", "b"), emptySet()))
 
     @Test
     fun `switching from one tab root to another fades through`() {
@@ -69,6 +72,16 @@ class NavMotionTest {
     }
 
     @Test
+    fun `a cat opened from a sheet moves forward from the screen under the sheet`() {
+        assertEquals(NavMotion.FORWARD, navMotion(scene(counter, map), scene(counter, map, spot, detail)))
+    }
+
+    @Test
+    fun `going back from a cat opened from a sheet moves backward to the screen under the sheet`() {
+        assertEquals(NavMotion.BACKWARD, navMotion(scene(counter, map, spot, detail), scene(counter, map)))
+    }
+
+    @Test
     fun `leaving a detail for another tab fades through`() {
         assertEquals(NavMotion.FADE_THROUGH, navMotion(scene(counter, encounters, detail), scene(counter, statistics)))
     }
@@ -101,6 +114,16 @@ class NavMotionTest {
     }
 
     @Test
+    fun `the nav host draws a spot's list as a sheet and nothing else as one`() {
+        val backStack = BottomNavBackStack(NavBackStack(Counter))
+        val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), MapFocusRequest())
+        val screens = listOf(Counter, Encounters, CatsMap, Statistics, Settings, Regions(), EncounterDetail("a"))
+
+        assertTrue(entries(MapSpot(setOf("a", "b"), emptySet())).isSheet)
+        screens.forEach { key -> assertFalse(entries(key).isSheet, "$key") }
+    }
+
+    @Test
     fun `the back gesture both shrinks and fades the screen it leaves`() {
         val exit = predictivePopTransition(NavigationEvent.EDGE_LEFT).initialContentExit
 
@@ -130,6 +153,9 @@ class NavMotionTest {
     private fun tabRoot(key: NavKey): NavEntry<NavKey> = NavEntry(key, metadata = tabRootMetadata()) {}
 
     private fun detail(key: NavKey): NavEntry<NavKey> = NavEntry(key) {}
+
+    private fun sheet(key: NavKey): NavEntry<NavKey> =
+        NavEntry(key, metadata = BottomSheetSceneStrategy.bottomSheet()) {}
 
     private fun scene(vararg stack: NavEntry<NavKey>): Scene<NavKey> = StackTopScene(stack.toList())
 
