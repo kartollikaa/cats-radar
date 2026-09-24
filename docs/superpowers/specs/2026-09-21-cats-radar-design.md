@@ -69,9 +69,9 @@ attached in the background (§4.3).
 present, else the background location chain. No coat control follows a photo; its coat is set on
 the detail screen (F6).
 
-**F3 Import.** Counter screen → long-press camera (or Settings → Import photos) → gallery
-multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress bar, then a
-summary with "Undo import".
+**F3 Import.** Counter screen → the gallery half of the Photo split button (or Settings → Import
+photos) → gallery multi-select. Each photo becomes a PHOTO encounter dated by EXIF (§4.6). Progress
+bar, then a summary with "Undo import".
 
 **F4 Widget.** Home-screen widget shows today's count and a "+1" button. Tap logs a tally through
 the same path as F1, without opening the app (§4.8).

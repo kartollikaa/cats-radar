@@ -1,22 +1,16 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -80,43 +74,13 @@ fun CounterScreen(
                 onUndoClick = onUndoClick,
             )
             CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-            CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
+            PhotoButton(
+                onCameraClick = onCameraClick,
+                onImportClick = onImportClick,
+                modifier = Modifier.fillMaxWidth(),
+            )
         },
     )
-}
-
-// A long press is the only entry to import, so the button says so out loud: a gesture nothing
-// hints at is a gesture nobody finds.
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun CameraButton(
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier
-            .clip(CircleShape)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-                onLongClickLabel = stringResource(R.string.counter_import),
-            ),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(text = stringResource(R.string.counter_camera), style = MaterialTheme.typography.labelLarge)
-            Text(
-                text = stringResource(R.string.counter_import_hint),
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
-    }
 }
 
 // An empty line of the same style holds its place, so an outing starting or ending leaves the count
