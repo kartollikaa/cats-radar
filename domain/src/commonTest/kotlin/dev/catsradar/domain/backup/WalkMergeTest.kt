@@ -27,6 +27,54 @@ class WalkMergeTest {
     )
 
     @Test
+    fun `a new walk the archive lists twice arrives once, as its later edit listed first`() {
+        val later = walk("w", endedAt = START + 2.hours, updatedAt = START + 2.hours)
+
+        val result = merge(importedWalks = listOf(later, walk("w")))
+
+        assertEquals(listOf(later), result.walks)
+    }
+
+    @Test
+    fun `a new walk the archive lists twice arrives once, as its later edit listed last`() {
+        val later = walk("w", endedAt = START + 2.hours, updatedAt = START + 2.hours)
+
+        val result = merge(importedWalks = listOf(walk("w"), later))
+
+        assertEquals(listOf(later), result.walks)
+    }
+
+    @Test
+    fun `a new walk the archive lists twice with the same edit time arrives as the copy listed first`() {
+        val first = walk("w", endedAt = START + 2.hours)
+        val second = walk("w", endedAt = START + 3.hours)
+
+        val result = merge(importedWalks = listOf(first, second))
+
+        assertEquals(listOf(first), result.walks)
+    }
+
+    @Test
+    fun `a walk here that the archive lists twice takes only its later edit`() {
+        val latest = walk("w", endedAt = START + 3.hours, updatedAt = START + 3.hours)
+        val older = walk("w", endedAt = START + 2.hours, updatedAt = START + 2.hours)
+
+        val result = merge(localWalks = listOf(walk("w")), importedWalks = listOf(latest, older))
+
+        assertEquals(listOf(latest), result.walks)
+    }
+
+    @Test
+    fun `a point that is not on the globe is left out, and the rest of its route arrives`() {
+        val offGlobe = point("w", 2).copy(lat = 95.0)
+
+        val result = merge(importedWalks = listOf(walk("w")), importedPoints = listOf(point("w", 1), offGlobe))
+
+        assertEquals(listOf(walk("w")), result.walks)
+        assertEquals(listOf(point("w", 1)), result.trackPoints)
+    }
+
+    @Test
     fun `a walk this device has never seen arrives with its route`() {
         val result = merge(importedWalks = listOf(walk("w")), importedPoints = listOf(point("w", 1), point("w", 2)))
 

@@ -12,8 +12,8 @@ import dev.catsradar.presentation.settings.SettingsIntent
  */
 internal fun WorkInfo.toSettingsIntent(): SettingsIntent.Backup? = when (state) {
     WorkInfo.State.RUNNING -> SettingsIntent.Backup.Started
-    WorkInfo.State.SUCCEEDED -> SettingsIntent.Backup.Finished(succeededOutcome())
-    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> SettingsIntent.Backup.Finished(failedOutcome())
+    WorkInfo.State.SUCCEEDED -> SettingsIntent.Backup.Finished(id.toString(), succeededOutcome())
+    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> SettingsIntent.Backup.Finished(id.toString(), failedOutcome())
     WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> null
 }
 
@@ -24,9 +24,10 @@ private fun WorkInfo.succeededOutcome(): BackupOutcome =
 
 private fun WorkInfo.failedOutcome(): BackupOutcome = when {
     !isImport() -> BackupOutcome.EXPORT_FAILED
-    outputData.getString(BackupWork.KEY_REJECTION) == BackupRejection.TOO_NEW.name ->
-        BackupOutcome.IMPORT_REFUSED_TOO_NEW
-    // A cancelled import and a corrupt one both land here, and both mean the same to the user:
-    // nothing was written and the archive is not one this app can read.
-    else -> BackupOutcome.IMPORT_REFUSED_UNREADABLE
+    else -> when (outputData.getString(BackupWork.KEY_REJECTION)) {
+        BackupRejection.TOO_NEW.name -> BackupOutcome.IMPORT_REFUSED_TOO_NEW
+        BackupRejection.UNREADABLE.name -> BackupOutcome.IMPORT_REFUSED_UNREADABLE
+        // No refusal: the run was stopped or broke part-way, and the archive may be perfectly good.
+        else -> BackupOutcome.IMPORT_FAILED
+    }
 }

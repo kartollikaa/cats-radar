@@ -15,8 +15,6 @@ import kotlin.time.Clock
 sealed interface MapIntent {
     data class CatsTapped(val ids: List<String>) : MapIntent
 
-    data object SpotDismissed : MapIntent
-
     data class OutingFocused(val encounterId: String) : MapIntent
 
     data object FocusCleared : MapIntent
@@ -31,6 +29,9 @@ sealed interface MapIntent {
 
 sealed interface MapEffect {
     data class OpenCat(val id: String) : MapEffect
+
+    /** Lists [catIds], showing only cats of [coats] as the map does. */
+    data class OpenSpot(val catIds: Set<String>, val coats: Set<CoatOption?>) : MapEffect
 }
 
 class MapStore(
@@ -46,8 +47,7 @@ class MapStore(
         combine(observeEncounters(), choices) { encounters, chosen ->
             val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen)
             val shown = mapped as? MapState.Located
-            // A spot or focus the cats no longer match is let go, so it cannot reopen by itself later.
-            if (chosen.spot != null && shown?.spot == null) choices.update { it.copy(spot = null) }
+            // A focus the cats no longer match is let go, so it cannot reopen by itself later.
             if (chosen.focus != null && shown?.focus == null) choices.update { it.copy(focus = null) }
             setState { mapped }
         }.launchIn(viewModelScope)
@@ -60,11 +60,10 @@ class MapStore(
                 when (cats.size) {
                     0 -> Unit
                     1 -> emit(MapEffect.OpenCat(cats.single()))
-                    else -> choices.update { it.copy(spot = cats) }
+                    else -> emit(MapEffect.OpenSpot(cats, choices.value.coats))
                 }
             }
-            MapIntent.SpotDismissed -> choices.update { it.copy(spot = null) }
-            is MapIntent.OutingFocused -> choices.update { it.copy(spot = null, focus = intent.encounterId) }
+            is MapIntent.OutingFocused -> choices.update { it.copy(focus = intent.encounterId) }
             MapIntent.FocusCleared -> choices.update { it.copy(focus = null) }
             is MapIntent.CoatToggled -> choices.update { chosen ->
                 val coats = if (intent.coat in chosen.coats) chosen.coats - intent.coat else chosen.coats + intent.coat

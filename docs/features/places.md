@@ -20,6 +20,16 @@ a location fix (`AttachLocation`), or a photo's own EXIF, whether the camera jus
 (`ImportBackup`), whose cell the archive may not carry. Coordinates without a cell would be a cat
 that knows exactly where it was and still reads as "no location" in this screen.
 
+A cat stored without them anyway — by an earlier version, or by a restore that took the archive's
+geohash and cell as written — gets them at the next launch. `RepairPlaceCells` runs at every process
+start and gives each located cat the geohash and cell its coordinates imply. That includes deleted
+cats, so an undo brings back a whole row. A missing cell is created pending, like any new one, so it
+gets named. Only those two columns are written, every cat's in one transaction. `updatedAt` stays as it
+was, because the cat itself has not changed. A cat whose coordinates changed while the repair was
+running is left alone. If the repair fails, the next start runs it again. Without the repair such a
+cat would sit under "Not named yet" for good, because nothing ever looks up a cell that does not
+exist.
+
 A cell's centre is the point the geocoder is asked about. Every path that creates a cell takes it
 from the cell's id — an import too, which derives it from the id again rather than reading it from
 the archive. A cell imported before that rule keeps whatever centre it was stored with; nothing
@@ -85,6 +95,7 @@ geohash and needs no network — keeps working. Only country and city names are 
 - `domain/…/platform/ReverseGeocoder.kt` — the interface and its three outcomes
 - `domain/…/usecase/ResolvePendingPlaces.kt` — the state machine, both passes
 - `domain/…/usecase/ObserveUntriedPlaceCells.kt` — which cells are waiting for their first lookup
+- `domain/…/usecase/RepairPlaceCells.kt` — the launch-time repair of located cats with no cell
 - `data/…/androidMain/platform/AndroidReverseGeocoder.android.kt` — the `Geocoder` call
 - `app/…/worker/GeocodePendingCellsWorker.kt`, `GeocodeWorkScheduler.kt`, `PlaceNamingTrigger.kt`
 
@@ -97,18 +108,14 @@ Every level is sorted busiest first.
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 
 - **Not named yet** — cats with coordinates whose cell has no name (pending, failed, or no
-  geocoder). It drills into areas like any country would.
-- **No location** — cats with nothing to place them by: no coordinates and no geohash. It drills
-  straight to the cats.
+  geocoder) or does not exist yet. It drills into areas like any country would.
+- **No location** — cats without a location: no coordinates, coordinates off the globe, or a cat
+  marked as having none. It drills straight to the cats.
 
 A country's cities end the same way, with **No city**: the cats whose cell names that country but
 neither a locality nor an admin area, which is what a geocoder answers at sea or in open country.
 It drills into areas like a city does. It is not Not named yet: those cells have a name, just not a
 city's, and a named cell is never looked up again.
-
-What places a cat is its **area**: its geohash, or its coordinates when a hand-edited row has lost
-the geohash. A cat with neither is No location whatever its location source says, so it is never
-counted under a country only to have no area to be in.
 
 Their counts are what make the tree honest: **the counts of every sibling add up to their
 parent**, so a drill-down never quietly loses a cat. The countries, a country's cities, and the
@@ -122,8 +129,9 @@ restored screen is rebuilt from. An area under each of the three parents has a t
 another parent's cat in the same patch.
 
 An area with no `subLocality` anywhere shows its coordinates instead of a name — areas come from the
-geohash, so they work with no network and even for cells that were never named. An area whose cells
-disagree takes the name most of them agree on.
+coordinates themselves, so they work with no network and even for cells that were never named or
+never created. A cat with coordinates therefore always lands in an area, even before the repair above
+has run. An area whose cells disagree takes the name most of them agree on.
 
 ## Not built yet
 

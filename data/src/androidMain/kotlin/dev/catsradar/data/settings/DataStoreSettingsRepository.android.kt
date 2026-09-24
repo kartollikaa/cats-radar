@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -14,6 +16,8 @@ private val SaveOriginalsToGallery = booleanPreferencesKey("save_originals_to_ga
 private val LastSeenMilestone = intPreferencesKey("last_seen_milestone")
 private val WalkingMode = booleanPreferencesKey("walking_mode")
 private val EncountersGrid = booleanPreferencesKey("encounters_grid")
+private val AcknowledgedImportRun = stringPreferencesKey("acknowledged_import_run")
+private val AcknowledgedBackupRun = stringPreferencesKey("acknowledged_backup_run")
 
 class DataStoreSettingsRepository(
     private val dataStore: DataStore<Preferences>,
@@ -45,4 +49,17 @@ class DataStoreSettingsRepository(
     override suspend fun setEncountersGrid(enabled: Boolean) {
         dataStore.edit { it[EncountersGrid] = enabled }
     }
+
+    override fun acknowledgedRun(job: ReportedJob): Flow<String?> =
+        dataStore.data.map { it[job.acknowledgedRunKey()] }
+
+    override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) {
+        dataStore.edit { it[job.acknowledgedRunKey()] = runId }
+    }
+}
+
+// Spelled out rather than derived from the entry's name, so renaming an entry cannot orphan its value.
+private fun ReportedJob.acknowledgedRunKey(): Preferences.Key<String> = when (this) {
+    ReportedJob.GALLERY_IMPORT -> AcknowledgedImportRun
+    ReportedJob.BACKUP -> AcknowledgedBackupRun
 }

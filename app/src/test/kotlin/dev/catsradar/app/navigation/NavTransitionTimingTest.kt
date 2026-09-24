@@ -1,8 +1,5 @@
 package dev.catsradar.app.navigation
 
-import android.content.ComponentName
-import android.content.Context
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -16,16 +13,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.ui.navigation.BottomNavTab
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
-import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -34,17 +29,8 @@ class NavTransitionTimingTest {
 
     private val compose = createComposeRule()
 
-    // ui-test-manifest reaches a unit test only through debugImplementation, which would ship its activity in the APK.
-    private val componentActivityRegistered = object : ExternalResource() {
-        override fun before() {
-            val context = ApplicationProvider.getApplicationContext<Context>()
-            shadowOf(context.packageManager)
-                .addActivityIfNotPresent(ComponentName(context, ComponentActivity::class.java))
-        }
-    }
-
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(componentActivityRegistered).around(compose)
+    val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
     private val backStack = BottomNavBackStack(NavBackStack<NavKey>(Counter))
 

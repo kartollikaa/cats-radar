@@ -4,8 +4,10 @@ Your cats are yours: an archive you can write somewhere of your choosing and rea
 device or another one. No account, no server, no sync.
 
 **Settings → Backup** has an Export and an Import button. Both run in a worker, so leaving the
-screen mid-run cannot leave a half-written archive or a half-merged database, and the screen
-reads the run's state back rather than remembering it.
+screen mid-run cannot leave a half-written archive, and the screen reads the run's state back
+rather than remembering it. Nor can an import leave a half-merged database: it reads, merges and
+writes every row inside one transaction, so an import that fails part-way — an SQLite error, a full
+disk, a stopped worker, a killed process — leaves the database exactly as it found it.
 
 ## What goes in
 
@@ -59,6 +61,12 @@ A walk is matched by `id`, as a cat is: the later edit wins, and a tie keeps the
   none, because it was being recorded on another phone and cannot carry on here. The exception is
   the walk on here, which stays on. Either way at most one walk is ever on.
 - **A walk ended that way reaches the end** of the longer route a later archive of it brings.
+- **A walk the archive lists more than once is still one walk.** Its copies settle among themselves
+  first — the later edit wins, a tie keeps the one listed first — and only that copy meets the rules
+  above, as for cats. Weighed one by one, every copy newer than the walk here would be written and
+  the last listed would stick, older or not.
+- **A point that is not on the globe is left out**, as a cat off the globe arrives without its
+  location; the walk and the rest of its route arrive.
 
 ## The archive
 
@@ -71,22 +79,61 @@ version name — the last being the only thing that could ever explain an archiv
 read.
 
 **Photos are taken from the rows themselves.** The writer reads each encounter's `photoPath` and
-`thumbPath` out of photo storage; a file that has gone missing since the row was written is skipped
-rather than failing the export, because the rest of the archive is still worth having.
+`thumbPath` out of photo storage; a file that has gone missing since the row was written, or that
+cannot be read, is skipped rather than failing the export, because the rest of the archive is still
+worth having. Each photo is read whole before its entry is opened, so the archive never holds an
+empty or truncated one — which would restore as a broken image rather than the placeholder.
+
+**A failed export leaves nothing where the user chose to save it.** The file picker creates the
+document before the export starts, so an export that cannot finish — the disk fills, the provider
+goes away — asks for that document to be deleted again rather than leave an empty or half-written
+file that looks like a backup. The one failure it cannot clean up after is its own death: an export
+killed with the app leaves what it had written, and the run WorkManager starts again can neither
+reopen nor delete the document, the picker's grant having died with the process.
 
 On import a photo is restored **only where none is already here** — the local copy is the one the app
 has been rendering, and an archive should not quietly replace it.
 
+**A photo reaches the photo directory only once the whole archive is accepted.** While the archive
+is read, its photos are unpacked beside the photo directory; they move into place only after the
+manifest, every row and every path in them have been judged, and the unpacked copies are deleted
+either way. An archive that is refused, cut off part-way or damaged therefore leaves nothing behind
+— not even the part of a photo it managed to read, which would otherwise stay for good, since a
+photo is only ever restored where none is here.
+
+**Photos are not part of the merge's transaction**, though: a file cannot join a database
+transaction, and the photos are in place before any row is merged. An import whose merge then fails
+writes no rows but can leave behind the photos it restored. They are the archive's own bytes,
+written only where no file was here, so importing the same archive again finds them and keeps them.
+
 ## At the edges
 
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
-  fields this version would silently drop. Nothing is written. That is why the walks raised the
-  version: an app from before them refuses an archive rather than losing its walks.
+  fields this version would silently drop. Nothing is written. It is judged by its manifest before
+  any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
+  still say "newer version", not "not a backup". That is why the walks raised the version: an app
+  from before them refuses an archive rather than losing its walks.
 - **An archive from before walks** still imports, with no walks in it.
-- **An unreadable archive is refused the same way** — not a ZIP, no manifest, or rows that will not
-  parse. Both reasons reach the caller, which decides what to say.
+- **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
+  parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
+  what to say.
+- **A file cut off between two entries** looks, to a ZIP read entry by entry, like its end. An
+  archive of this version's format always carries all five lists, so one that lacks any of them was
+  cut off and is refused as unreadable. The lists come before the photos, so a clean cut after them
+  can only lose photos: the cats arrive, and those whose photos were past the cut show the
+  placeholder until an archive that has them is imported.
+- **A failure on this device's side fails the import instead of refusing the archive**: a file it
+  cannot open (the picker's grant may have died with the app), a stream that breaks part-way (a
+  cloud document whose download dropped), photos it has no room to unpack or cannot put in place.
+  None of them says anything about the archive, so none is reported as a file this app cannot read:
+  the read throws the failure it met. Whatever the archive itself gets wrong still refuses it, as
+  the bullets around this one say. A failure while photos are being put in place can leave those
+  already moved; they are the archive's own bytes, and importing it again keeps them.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
+- **So does a row whose photo or thumbnail path climbs out of it.** Every screen that shows a cat
+  resolves those paths through photo storage, which refuses them by throwing, so such a row would
+  not be a cat without a photo but a screen that cannot open.
 - **A cat whose location is not a point on the globe is imported without one.** A latitude beyond
   ±90, a longitude beyond ±180, only one of the pair, a source with no coordinates, or coordinates
   on a cat marked `NONE`: the cat arrives at `NONE`, with no coordinates, accuracy, fix time,
@@ -114,6 +161,13 @@ has been rendering, and an archive should not quietly replace it.
 - **An archive that lists one cat more than once imports it once.** Taken row by row, a cat new here
   would be inserted twice, and the second insert would fail the import with every cat before it
   already written; a cat already here would end up as whichever row came last, older or not.
+- **An import that fails part-way writes no rows at all.** Without the transaction, the cats and
+  walks written before the failure would stay, place cells could be missing for cats that point at
+  them, a walk could arrive without its route, and the worker would still report the import as
+  failed.
+- **The merge reads what is here inside the same transaction it writes in.** A change landing
+  between the read and the writes — a cat deleted here while the import runs — would otherwise be
+  overwritten by a decision made without it. Instead, that write waits until the import has finished.
 - **Reading the local side uses `loadEvery`**, which returns soft-deleted rows too. The live reads
   hide them, and a merge that could not see a deletion would let an old archive reinsert the cat as
   if it were new.
@@ -128,14 +182,17 @@ has been rendering, and an archive should not quietly replace it.
 - `domain/…/backup/ImportedPlaceCell.kt` — which archived cells are cells at all, where each one is,
   and what an unnamed one leaves behind
 - `domain/…/usecase/ExportBackup.kt`, `ImportBackup.kt`
+- `domain/…/repository/TransactionRunner.kt` — the one-unit-of-work seam the import runs inside;
+  `data/…/db/RoomTransactionRunner.kt` is Room's write transaction behind it
 - `domain/…/platform/BackupArchive.kt` — the reader/writer seam
 - `data/…/backup/BackupRecords.kt`, `WalkRecords.kt` — the serialized shape and its mappers
 - `data/…/androidMain/backup/ZipBackupArchive.android.kt` — the ZIP itself
 
 ## At the edges, on screen
 
-- **Export and import share one work name**, so they cannot run at once: importing while an export
-  is still reading would archive a half-merged database.
+- **Export and import share one work name**, so they cannot run at once. An export reads cats, cells
+  and walks one query at a time, so an import landing between two of those reads would give an
+  archive whose rows come from different sides of the merge.
 - **Neither worker retries.** The file picker's grant dies with the process, so a retry would write
   nothing and report success for an archive that does not exist.
 - **Both buttons are unavailable while a run is in progress**, and a finished run replaces the
@@ -143,6 +200,20 @@ has been rendering, and an archive should not quietly replace it.
   own tag so an outcome never says "exported" about an import.
 - **The suggested filename carries the date**, which is what stops a second export silently offering
   to overwrite the first.
+- **An import that stops is not blamed on the file unless the reader refused it.** An archive the
+  reader refused says so: one from a newer version says it comes from a newer version of the app,
+  and one it could not read says it is not a Cats Radar backup. Anything else that stopped the
+  import — a failure on this device's side (a file it could not open, no room to unpack a photo),
+  one that broke once the archive was accepted (a database error), or a cancelled run — says it did
+  not finish and to try again, because the archive may be perfectly good and the user should not be
+  told to throw it away.
+- **An outcome stays until it is dismissed, and never comes back after.** WorkManager keeps a
+  finished run, and the screen reads it back every time it opens. Coming back from another tab
+  builds a new screen, and so does a restart, so an outcome the user has not seen yet is still
+  waiting for them. OK records that run as dealt with (`SettingsRepository.acknowledgedRun`, kept
+  in DataStore next to the settings), and the write completes even if the screen is left straight
+  after. After that, reading the same run back shows nothing. `ReportedRun` in `:presentation` holds
+  the rule.
 
 ## Not built yet
 

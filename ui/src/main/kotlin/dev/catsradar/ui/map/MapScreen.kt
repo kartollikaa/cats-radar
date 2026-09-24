@@ -56,8 +56,6 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onCatsTap: (List<String>) -> Unit = {},
-    onSpotDismiss: () -> Unit = {},
-    onOutingFocus: (String) -> Unit = {},
     onFocusClear: () -> Unit = {},
     onHeatToggle: () -> Unit = {},
     onCoatToggle: (CoatOption?) -> Unit = {},
@@ -85,14 +83,6 @@ fun MapScreen(
                     onDismiss = { choosingCoats = false },
                 )
             }
-            state.spot?.let { spot ->
-                MapSpotSheet(
-                    spot = spot,
-                    onCatClick = { id -> onCatsTap(listOf(id)) },
-                    onOutingMapClick = onOutingFocus,
-                    onDismiss = onSpotDismiss,
-                )
-            }
         }
     }
 }
@@ -108,7 +98,7 @@ private fun CatsMap(
     onCoatsClick: () -> Unit = {},
 ) {
     val colors = catLayerColors()
-    val cats = remember(state.points, colors.unnoted) { catFeatures(state.points, colors.unnoted) }
+    val cats = remember(state.points) { catFeatures(state.points) }
     val route = remember(state.focus) { state.focus?.let { routeLine(it.route) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
