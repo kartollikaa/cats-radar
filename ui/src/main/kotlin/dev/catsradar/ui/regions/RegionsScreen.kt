@@ -40,6 +40,7 @@ fun RegionsScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onRegionClick: (RegionRowKey) -> Unit = {},
+    onEncounterClick: (String) -> Unit = {},
 ) {
     when (state) {
         RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
@@ -61,7 +62,7 @@ fun RegionsScreen(
             items(items = state.encounters, key = { it.key }) { item ->
                 when (item) {
                     is OutingHeader -> OutingHeaderRow(item.label)
-                    is EncounterListItem.Row -> EncounterRow(item)
+                    is EncounterListItem.Row -> EncounterRow(item, onClick = { onEncounterClick(item.id) })
                 }
             }
         }
@@ -101,9 +102,12 @@ private fun OutingHeaderRow(label: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifier) {
+private fun EncounterRow(row: EncounterListItem.Row, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = row.timeLabel, style = MaterialTheme.typography.bodyLarge)

@@ -1,12 +1,16 @@
 package dev.catsradar.app.navigation
 
 import android.content.Context
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.LocationLabel
+import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
@@ -14,6 +18,7 @@ import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.junit.Rule
 import org.junit.Test
@@ -56,5 +61,31 @@ class RegionsDrillDownTest {
         rowsWithShownText.forEach { (_, text) -> compose.onNodeWithText(text).performClick() }
 
         assertEquals(rows.map { it.key }, tapped)
+    }
+
+    @Test
+    fun `every cat hands back its own id when tapped, and an outing header hands back nothing`() {
+        val encounters = persistentListOf(
+            OutingHeader(key = "header-evening", label = "Today, 18:40"),
+            EncounterListItem.Row(id = "c3", timeLabel = "19:18", location = LocationLabel.FROM_PHOTO),
+            EncounterListItem.Row(id = "c2", timeLabel = "18:57", location = LocationLabel.CURRENT),
+            OutingHeader(key = "header-morning", label = "Yesterday, 08:15"),
+            EncounterListItem.Row(id = "c1", timeLabel = "08:22", location = LocationLabel.FROM_OUTING),
+        )
+        val tapped = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                RegionsScreen(state = RegionsState.Loaded(encounters = encounters), onEncounterClick = { tapped += it })
+            }
+        }
+
+        listOf("08:22", "Today, 18:40", "19:18", "Yesterday, 08:15", "18:57").forEach { text ->
+            compose.onNodeWithText(text).performClick()
+        }
+
+        assertEquals(listOf("c1", "c3", "c2"), tapped)
+        listOf("Today, 18:40", "Yesterday, 08:15").forEach { header ->
+            compose.onNodeWithText(header).assertHasNoClickAction()
+        }
     }
 }
