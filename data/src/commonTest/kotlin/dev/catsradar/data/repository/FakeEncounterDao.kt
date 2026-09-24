@@ -4,6 +4,7 @@ import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.EncounterEntity
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Instant
@@ -49,6 +50,7 @@ internal class FakeEncounterDao : EncounterDao {
     var attachPhotoResult: Int = 1
     var attachPhotoCall: AttachPhotoCall? = null
     var setCoatCall: SetCoatCall? = null
+    val setPlaceCellCalls = mutableListOf<PlaceCellAssignment>()
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
     var loadDeletedBeforeCall: Instant? = null
@@ -113,6 +115,10 @@ internal class FakeEncounterDao : EncounterDao {
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int {
         setCoatCall = SetCoatCall(id, coat, updatedAt)
         return 1
+    }
+
+    override suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String) {
+        setPlaceCellCalls += PlaceCellAssignment(id, lat, lon, geohash, placeCellId)
     }
 
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {

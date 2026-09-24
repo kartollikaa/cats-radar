@@ -14,13 +14,18 @@ import dev.catsradar.presentation.encounters.EncountersIntent
 import dev.catsradar.presentation.encounters.EncountersStore
 import dev.catsradar.presentation.map.MapEffect
 import dev.catsradar.presentation.map.MapIntent
+import dev.catsradar.presentation.map.MapSpotEffect
+import dev.catsradar.presentation.map.MapSpotIntent
+import dev.catsradar.presentation.map.MapSpotStore
 import dev.catsradar.presentation.map.MapState
 import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.statistics.StatisticsStore
 import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.map.MapScreen
+import dev.catsradar.ui.map.MapSpotScreen
 import dev.catsradar.ui.statistics.StatisticsScreen
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 internal fun EncountersDestination(
@@ -58,11 +63,13 @@ internal fun MapDestination(
     contentPadding: PaddingValues,
     focusRequest: MapFocusRequest,
     onOpenCat: (String) -> Unit,
+    onOpenSpot: (MapSpot) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val store = koinViewModel<MapStore>()
     val state by store.state.collectAsStateWithLifecycle()
     val openCat by rememberUpdatedState(onOpenCat)
+    val openSpot by rememberUpdatedState(onOpenSpot)
     LaunchedEffect(store, focusRequest.outing) {
         focusRequest.consume()?.let { store.dispatch(MapIntent.OutingFocused(it)) }
     }
@@ -71,6 +78,7 @@ internal fun MapDestination(
         store.effects.collect { effect ->
             when (effect) {
                 is MapEffect.OpenCat -> openCat(effect.id)
+                is MapEffect.OpenSpot -> openSpot(MapSpot(effect.catIds, effect.coats))
             }
         }
     }
@@ -79,12 +87,40 @@ internal fun MapDestination(
         modifier = modifier,
         contentPadding = contentPadding,
         onCatsTap = { ids -> store.dispatch(MapIntent.CatsTapped(ids)) },
-        onSpotDismiss = { store.dispatch(MapIntent.SpotDismissed) },
-        onOutingFocus = { id -> store.dispatch(MapIntent.OutingFocused(id)) },
         onFocusClear = { store.dispatch(MapIntent.FocusCleared) },
         onHeatToggle = { store.dispatch(MapIntent.HeatToggled) },
         onCoatToggle = { coat -> store.dispatch(MapIntent.CoatToggled(coat)) },
         onCoatFilterClear = { store.dispatch(MapIntent.CoatFilterCleared) },
+    )
+}
+
+@Composable
+internal fun MapSpotDestination(
+    key: MapSpot,
+    onOpenCat: (String) -> Unit,
+    onFocusOuting: (String) -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val store = koinViewModel<MapSpotStore> { parametersOf(key.catIds, key.coats) }
+    val state by store.state.collectAsStateWithLifecycle()
+    val openCat by rememberUpdatedState(onOpenCat)
+    val focusOuting by rememberUpdatedState(onFocusOuting)
+    val close by rememberUpdatedState(onClose)
+    LaunchedEffect(store) {
+        store.effects.collect { effect ->
+            when (effect) {
+                is MapSpotEffect.OpenCat -> openCat(effect.id)
+                is MapSpotEffect.FocusOuting -> focusOuting(effect.encounterId)
+                MapSpotEffect.Close -> close()
+            }
+        }
+    }
+    MapSpotScreen(
+        state = state,
+        modifier = modifier,
+        onCatClick = { id -> store.dispatch(MapSpotIntent.CatClicked(id)) },
+        onOutingMapClick = { id -> store.dispatch(MapSpotIntent.OutingMapClicked(id)) },
     )
 }
 

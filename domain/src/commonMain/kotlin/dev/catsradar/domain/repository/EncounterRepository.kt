@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PhotoStamp
+import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
@@ -25,6 +26,12 @@ interface EncounterRepository {
 
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant)
+
+    /**
+     * One write for all of [assignments]; each sets only the geohash and place cell, and only while its
+     * row, deleted or not, still sits at the coordinates it names.
+     */
+    suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>)
 
     suspend fun softDelete(id: String, deletedAt: Instant)
 

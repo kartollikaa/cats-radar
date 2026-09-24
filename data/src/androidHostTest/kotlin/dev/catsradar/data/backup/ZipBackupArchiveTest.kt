@@ -15,7 +15,6 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.platform.BackupReadResult
-import dev.catsradar.domain.platform.DeviceIdProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -26,20 +25,11 @@ import java.util.zip.ZipFile
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 private val ExportedAt = Instant.parse("2026-09-22T12:00:00Z")
-
-private class FixedClock : Clock {
-    override fun now(): Instant = ExportedAt
-}
-
-private class StubDeviceId : DeviceIdProvider {
-    override val deviceId: String = "device-1"
-}
 
 private fun encounter(id: String, photoPath: String? = null, thumbPath: String? = null) = Encounter(
     id = id,
@@ -93,7 +83,7 @@ class ZipBackupArchiveTest {
         context = context,
         photoStorage = photoStorage,
         deviceIdProvider = StubDeviceId(),
-        clock = FixedClock(),
+        clock = FixedClock(ExportedAt),
         appVersion = "1.0",
     )
 

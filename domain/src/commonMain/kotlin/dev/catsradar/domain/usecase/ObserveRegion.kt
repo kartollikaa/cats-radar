@@ -24,8 +24,7 @@ class ObserveRegion(
                     RegionTree.cities(parent.countryCode, encounters, cells),
                     emptyList()
                 )
-                is RegionKey.City, RegionKey.Unresolved ->
-                    RegionView(RegionTree.areas(parent, encounters, cells), emptyList())
+                is RegionKey.AreaParent -> RegionView(RegionTree.areas(parent, encounters, cells), emptyList())
                 // An area and "no location" are the bottom: below them are the cats themselves.
                 is RegionKey.Area, RegionKey.NoLocation ->
                     RegionView(emptyList(), RegionTree.encountersIn(parent, encounters, cells))

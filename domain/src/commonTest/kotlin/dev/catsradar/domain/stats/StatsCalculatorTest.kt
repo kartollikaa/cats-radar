@@ -1,10 +1,14 @@
 package dev.catsradar.domain.stats
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.UtcOffset
+import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -15,6 +19,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.DurationUnit
 import kotlin.time.Instant
 
 class StatsCalculatorTest {
@@ -24,6 +29,12 @@ class StatsCalculatorTest {
 
     private fun at(instant: Instant, id: String = "e-$instant", kind: EncounterKind = EncounterKind.TALLY) =
         encounterFixture(id, instant).copy(kind = kind)
+
+    private fun coated(id: String, coat: CatCoat?) = at(NOON, id).copy(coat = coat)
+
+    private fun loggedAt(localTime: String, offset: UtcOffset) =
+        at(LocalDateTime.parse(localTime).toInstant(offset), id = "$localTime$offset")
+            .copy(tzOffsetMinutes = offset.totalSeconds / 60)
 
     @Test
     fun `no encounters gives zeroes, no rate and no current outing`() {
@@ -81,6 +92,43 @@ class StatsCalculatorTest {
     }
 
     @Test
+    fun `coats are listed busiest first, and the unnoted ones last however many there are`() {
+        val encounters = listOf(
+            coated("g", CatCoat.GINGER),
+            coated("b1", CatCoat.BLACK),
+            coated("b2", CatCoat.BLACK),
+            coated("n1", coat = null),
+            coated("n2", coat = null),
+            coated("n3", coat = null),
+        )
+
+        assertEquals(listOf(CatCoat.BLACK, CatCoat.GINGER, null), stats(encounters).byCoat.map { it.coat })
+    }
+
+    @Test
+    fun `a coat's share is its cats over every cat still here`() {
+        val encounters = listOf(
+            coated("g", CatCoat.GINGER),
+            coated("b1", CatCoat.BLACK),
+            coated("b2", CatCoat.BLACK),
+            coated("b3", CatCoat.BLACK),
+            coated("gone", CatCoat.BLACK).copy(deletedAt = NOW),
+        )
+
+        assertEquals(
+            listOf(CoatCount(CatCoat.BLACK, 3, 0.75), CoatCount(CatCoat.GINGER, 1, 0.25)),
+            stats(encounters).byCoat,
+        )
+    }
+
+    @Test
+    fun `a coat seen only on a deleted cat has no row`() {
+        val encounters = listOf(coated("g", CatCoat.GINGER), coated("gone", CatCoat.WHITE).copy(deletedAt = NOW))
+
+        assertEquals(listOf(CatCoat.GINGER), stats(encounters).byCoat.map { it.coat })
+    }
+
+    @Test
     fun `a streak ending today counts, and so does one ending yesterday`() {
         val endingToday = stats(listOf(at(NOON), at(NOON - 1.days), at(NOON - 2.days)))
         assertEquals(3, endingToday.currentStreak)
@@ -106,6 +154,53 @@ class StatsCalculatorTest {
 
         assertEquals(4, stats.longestStreak)
         assertEquals(2, stats.currentStreak)
+    }
+
+    @Test
+    fun `each day window starts at the local midnight of the place a cat was logged`() {
+        val encounters = listOf(
+            loggedAt("2026-09-22T00:01", PLUS_TWO),
+            loggedAt("2026-09-21T23:59", PLUS_TWO),
+            loggedAt("2026-09-16T00:01", PLUS_TWO),
+            loggedAt("2026-09-15T23:59", PLUS_TWO),
+            loggedAt("2026-08-24T00:01", PLUS_TWO),
+            loggedAt("2026-08-23T23:59", PLUS_TWO),
+        )
+
+        val stats = stats(encounters)
+
+        assertEquals(1, stats.today)
+        assertEquals(3, stats.lastSevenDays)
+        assertEquals(5, stats.lastThirtyDays)
+    }
+
+    @Test
+    fun `cats a minute either side of local midnight make a two-day streak`() {
+        val encounters = listOf(loggedAt("2026-09-21T23:59", PLUS_TWO), loggedAt("2026-09-22T00:01", PLUS_TWO))
+
+        assertEquals(2, stats(encounters).currentStreak)
+    }
+
+    @Test
+    fun `a streak follows the local days of a trip across zones, not their UTC dates`() {
+        // Their UTC dates are the 20th and the 23rd: only the local dates are consecutive.
+        val encounters = listOf(loggedAt("2026-09-21T01:00", MOSCOW), loggedAt("2026-09-22T20:00", NEW_YORK))
+
+        val stats = stats(encounters, now = Instant.parse("2026-09-23T02:00:00Z"))
+
+        assertEquals(2, stats.currentStreak)
+        assertEquals(2, stats.longestStreak)
+    }
+
+    @Test
+    fun `a cat logged last evening in another zone is not today's, though here it is already today`() {
+        // 22:00 on the 21st in New York is already the morning of the 22nd in Moscow, where today is.
+        val lastEvening = loggedAt("2026-09-21T22:00", NEW_YORK)
+
+        val stats = stats(listOf(lastEvening), now = Instant.parse("2026-09-22T06:00:00Z"))
+
+        assertEquals(0, stats.today)
+        assertEquals(1, stats.lastSevenDays)
     }
 
     @Test
@@ -150,6 +245,16 @@ class StatsCalculatorTest {
         assertEquals(1, stats.outings)
         assertNull(stats.overallRate)
         assertNull(stats.bestOuting)
+    }
+
+    @Test
+    fun `an outing exactly as long as the minimum is measured`() {
+        val start = NOON - 2.hours
+        val minimal = listOf(at(start, "a"), at(start + Tuning.MIN_RATE_DURATION, "b"))
+
+        val rate = assertNotNull(stats(minimal).overallRate)
+
+        assertEquals(2 / Tuning.MIN_RATE_DURATION.toDouble(DurationUnit.HOURS), rate.perHour, 1e-9)
     }
 
     @Test
@@ -245,6 +350,15 @@ class StatsCalculatorTest {
     }
 
     @Test
+    fun `a current outing exactly as old as the minimum has a live rate`() {
+        val current = assertNotNull(
+            stats(listOf(at(NOW - Tuning.MIN_RATE_DURATION, "a"), at(NOW, "b"))).currentOuting,
+        )
+
+        assertNotNull(current.rate)
+    }
+
+    @Test
     fun `a cat dated ahead of now has not been seen for a negative length of time`() {
         // A photo imported from a device whose clock runs fast, or any clock skew at all: the
         // encounter is real and belongs to the current outing, but it cannot have lasted -26 min.
@@ -280,5 +394,8 @@ class StatsCalculatorTest {
         val NOW = Instant.parse("2026-09-22T18:00:00Z")
         val NOON = Instant.parse("2026-09-22T12:00:00Z")
         val TODAY = LocalDate(2026, 9, 22)
+        val PLUS_TWO = UtcOffset(hours = 2)
+        val MOSCOW = UtcOffset(hours = 3)
+        val NEW_YORK = UtcOffset(hours = -5)
     }
 }
