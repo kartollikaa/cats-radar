@@ -25,7 +25,7 @@ class RegionsStateMapperTest {
         children = listOf(
             RegionKey.Country("ES"),
             RegionKey.City("ES", "Barcelona"),
-            RegionKey.Area("sp3e3"),
+            RegionKey.Area("sp3e3", RegionKey.City("ES", "Barcelona")),
             RegionKey.Unresolved,
             RegionKey.NoCity("ES"),
             RegionKey.NoLocation,
@@ -58,12 +58,30 @@ class RegionsStateMapperTest {
             listOf(
                 RegionRowKey.Country("ES"),
                 RegionRowKey.City("ES", "Barcelona"),
-                RegionRowKey.Area("sp3e3"),
+                RegionRowKey.Area("sp3e3", RegionRowKey.City("ES", "Barcelona")),
                 RegionRowKey.Unresolved,
                 RegionRowKey.NoCity("ES"),
                 RegionRowKey.NoLocation,
             ),
             mapper.map(oneRowPerKey, TODAY).rows.map { it.key },
+        )
+    }
+
+    @Test
+    fun `an area's row key names the parent it was listed under, each parent its own`() {
+        val parents = listOf(RegionKey.City("ES", "Barcelona"), RegionKey.NoCity("ES"), RegionKey.Unresolved)
+        val view = RegionView(
+            children = parents.map { RegionNode(RegionKey.Area("sp3e3", it), RegionLabel.Named("x"), 1) },
+            encounters = emptyList(),
+        )
+
+        assertEquals(
+            listOf(
+                RegionRowKey.Area("sp3e3", RegionRowKey.City("ES", "Barcelona")),
+                RegionRowKey.Area("sp3e3", RegionRowKey.NoCity("ES")),
+                RegionRowKey.Area("sp3e3", RegionRowKey.Unresolved),
+            ),
+            mapper.map(view, TODAY).rows.map { it.key },
         )
     }
 
@@ -76,7 +94,8 @@ class RegionsStateMapperTest {
             RegionLabel.NoCity,
             RegionLabel.NoLocation,
         )
-        val view = RegionView(children = labels.map { RegionNode(RegionKey.Area("sp3e3"), it, 1) }, emptyList())
+        val area = RegionKey.Area("sp3e3", RegionKey.City("ES", "Barcelona"))
+        val view = RegionView(children = labels.map { RegionNode(area, it, 1) }, emptyList())
 
         assertEquals(
             listOf(

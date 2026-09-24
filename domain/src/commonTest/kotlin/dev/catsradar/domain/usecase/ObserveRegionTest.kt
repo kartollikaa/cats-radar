@@ -64,7 +64,7 @@ class ObserveRegionTest {
     fun `a city opens its own areas`() = runTest {
         val view = view(RegionKey.City("ES", "Barcelona"))
 
-        assertEquals(listOf(areaOf(barcelona)), view.children.map { it.key })
+        assertEquals(listOf(areaOf(barcelona, RegionKey.City("ES", "Barcelona"))), view.children.map { it.key })
         assertEquals(emptyList(), view.encounters)
     }
 
@@ -72,7 +72,7 @@ class ObserveRegionTest {
     fun `No city opens its areas`() = runTest {
         val view = view(RegionKey.NoCity("ES"))
 
-        assertEquals(listOf(areaOf(remote)), view.children.map { it.key })
+        assertEquals(listOf(areaOf(remote, RegionKey.NoCity("ES"))), view.children.map { it.key })
         assertEquals(emptyList(), view.encounters)
     }
 
@@ -80,13 +80,13 @@ class ObserveRegionTest {
     fun `Not named yet opens its areas`() = runTest {
         val view = view(RegionKey.Unresolved)
 
-        assertEquals(listOf(areaOf(pending)), view.children.map { it.key })
+        assertEquals(listOf(areaOf(pending, RegionKey.Unresolved)), view.children.map { it.key })
         assertEquals(emptyList(), view.encounters)
     }
 
     @Test
     fun `an area opens its cats and no more rows`() = runTest {
-        val view = view(areaOf(barcelona))
+        val view = view(areaOf(barcelona, RegionKey.City("ES", "Barcelona")))
 
         assertEquals(emptyList(), view.children)
         assertEquals(listOf(barcelona), view.encounters)
