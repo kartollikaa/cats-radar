@@ -83,7 +83,7 @@ class PhotoViewerEntryTest {
         assertEquals(levels, backStack.toList())
     }
 
-    // Robolectric's paused main looper delivers the database's answer only when idled, and a still screen never idles it.
+    // Robolectric's paused main looper delivers the database's answer only when idled; a still screen never idles it.
     private fun awaitTheDatabase(condition: () -> Boolean) = compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) {
         shadowOf(Looper.getMainLooper()).idle()
         condition()

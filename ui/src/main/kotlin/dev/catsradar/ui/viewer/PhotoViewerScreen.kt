@@ -123,5 +123,4 @@ private fun PhotoViewerScreenLoadingPreview() {
     CatsRadarTheme { PhotoViewerScreen(state = PhotoViewerState.Loading) }
 }
 
-private val sampleShowing =
-    PhotoViewerState.Showing(photoPath = "/data/user/0/dev.catsradar/files/photos/5f1c2d9e-4b7a.jpg")
+private val sampleShowing = PhotoViewerState.Showing(photoPath = "photos/5f1c2d9e-4b7a.jpg")
