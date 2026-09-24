@@ -80,8 +80,9 @@ takes them back*).
   that access still lands on the day it was taken; it just gets no location. Android stops asking
   after a second refusal; the switch then lives in the app's system permissions under *Photos and
   videos*.
-- **The dialog reads as access to photos and videos**, because Android files this permission under
-  that group. The app declares no permission to read the gallery, so *Allow all* grants it the
+- **The dialog reads as access to photos and videos** — to photos, media and files before Android
+  13 — because Android files this permission under that group. The app declares no permission to
+  read the gallery, so *Allow all* grants it the
   location of the photos it is handed and nothing else. *Allow limited access* first opens a picker
   of its own for photos to share; the location access that comes with it is one-time, lapses once
   the app has been in the background a while, and is asked for again at the next import.
@@ -95,6 +96,10 @@ takes them back*).
   `GET_CONTENT` with a plain `content://media/…` URI, whose GPS MediaStore hands over only through
   `MediaStore.setRequireOriginal`. With the permission held, the digest, the EXIF read and the copy
   all ask for the original first, and take the bytes as handed over when the provider refuses.
+- **The picked photos stay readable for the whole run.** A read grant handed back by
+  `GET_CONTENT` belongs to the activity that received it, so finishing the app mid-import would
+  otherwise cut the worker off from every photo it had not read yet. Where the source offers it, the
+  grant is persisted on pick and released when the run ends, however it ends.
 - **A pick keeps its first `IMPORT_BATCH_MAX` photos.** `GET_CONTENT` has no limit of its own, and
   the picked URIs reach the worker as WorkManager input data, which has a fixed size cap; the photos
   past the batch are left out of the run.
@@ -119,7 +124,9 @@ takes them back*).
 - `domain/…/region/PlaceCells.kt` — shared with `AttachLocation`: coordinates always get a cell
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
 - `presentation/…/ReportedRun.kt` — which finished run the summary reports, shared with Backup
+- `app/…/navigation/PhotoLaunchers.kt` (`rememberGalleryImportPicker`) — the permission, then the gallery
 - `app/…/photo/PickGalleryPhotos.kt` — the gallery, opened so that photos can keep their GPS
+- `app/…/photo/PhotoReadAccess.kt` — the picked photos' read grants, held for the run
 - `data/…/androidMain/platform/PhotoStream.android.kt` — how every photo is opened, original first
 
 ## Walking away mid-import
