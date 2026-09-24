@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1025229446289",
+    "project_id": "cats-radar",
+    "storage_bucket": "cats-radar.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1025229446289:android:8ffbad35025760a06e3330",
+        "android_client_info": {
+          "package_name": "com.kartollika.catsradar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-AicVuP3p92X4KW2TEgZoSIHCM0cjI6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

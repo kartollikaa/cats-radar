@@ -7,6 +7,7 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.photo.releaseReadAccess
+import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.domain.usecase.ImportSummary
 import kotlinx.coroutines.CancellationException
 
@@ -18,9 +19,10 @@ class ImportPhotosWorker(
     params: WorkerParameters,
     private val importPhotos: PhotoImport,
     private val notifier: ImportNotifier,
+    private val reporter: NonFatalReporter,
 ) : CoroutineWorker(context, params) {
 
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unexpected failure must not crash the process
+    @Suppress("TooGenericExceptionCaught") // an unexpected failure must not crash the process
     override suspend fun doWork(): Result {
         val uris = inputData.getStringArray(KEY_URIS)?.toList().orEmpty()
         if (uris.isEmpty()) return Result.success(summaryOf(emptyList(), skipped = 0, failed = 0))
@@ -40,6 +42,7 @@ class ImportPhotosWorker(
         } catch (e: Exception) {
             // Never Result.retry(): not every source's read grant outlives the process, and a retry
             // without one would import nothing and report every photo as failed.
+            reporter.record(e)
             Result.failure()
         } finally {
             // Whatever happened, the running commentary stops: an ongoing notification left behind

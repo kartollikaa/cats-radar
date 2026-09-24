@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.photo.holdReadAccess
+import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.usecase.ImportSummary
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
@@ -45,7 +46,13 @@ class ImportPhotosWorkerTest {
                         workerClassName: String,
                         workerParameters: WorkerParameters,
                     ): ListenableWorker =
-                        ImportPhotosWorker(appContext, workerParameters, importPhotos, ImportNotifier(appContext))
+                        ImportPhotosWorker(
+                            appContext,
+                            workerParameters,
+                            importPhotos,
+                            ImportNotifier(appContext),
+                            RecordingNonFatalReporter(),
+                        )
                 },
             )
             .build()

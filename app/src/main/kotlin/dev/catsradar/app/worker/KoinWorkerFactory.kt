@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
@@ -23,22 +24,28 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
         workerParameters: WorkerParameters,
     ): ListenableWorker? = when (workerClassName) {
         AttachLocationWorker::class.java.name ->
-            AttachLocationWorker(appContext, workerParameters, koin.get<AttachLocation>())
+            AttachLocationWorker(appContext, workerParameters, koin.get<AttachLocation>(), koin.get<NonFatalReporter>())
         ImportPhotosWorker::class.java.name ->
             ImportPhotosWorker(
                 appContext,
                 workerParameters,
                 koin.get<ImportPhotos>()::invoke,
                 koin.get<ImportNotifier>(),
+                koin.get<NonFatalReporter>(),
             )
         ExportBackupWorker::class.java.name ->
-            ExportBackupWorker(appContext, workerParameters, koin.get<ExportBackup>())
+            ExportBackupWorker(appContext, workerParameters, koin.get<ExportBackup>(), koin.get<NonFatalReporter>())
         ImportBackupWorker::class.java.name ->
-            ImportBackupWorker(appContext, workerParameters, koin.get<ImportBackup>())
+            ImportBackupWorker(appContext, workerParameters, koin.get<ImportBackup>(), koin.get<NonFatalReporter>())
         GeocodePendingCellsWorker::class.java.name ->
-            GeocodePendingCellsWorker(appContext, workerParameters, koin.get<ResolvePendingPlaces>())
+            GeocodePendingCellsWorker(
+                appContext,
+                workerParameters,
+                koin.get<ResolvePendingPlaces>(),
+                koin.get<NonFatalReporter>(),
+            )
         PurgeDeletedWorker::class.java.name ->
-            PurgeDeletedWorker(appContext, workerParameters, koin.get<PurgeDeleted>())
+            PurgeDeletedWorker(appContext, workerParameters, koin.get<PurgeDeleted>(), koin.get<NonFatalReporter>())
         else -> null
     }
 }

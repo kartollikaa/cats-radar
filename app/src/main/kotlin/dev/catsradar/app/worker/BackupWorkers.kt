@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.domain.platform.BackupRejection
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
@@ -21,9 +22,10 @@ class ExportBackupWorker(
     context: Context,
     params: WorkerParameters,
     private val exportBackup: ExportBackup,
+    private val reporter: NonFatalReporter,
 ) : CoroutineWorker(context, params) {
 
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unexpected failure must not crash
+    @Suppress("TooGenericExceptionCaught") // an unexpected failure must not crash
     override suspend fun doWork(): Result {
         val target = inputData.getString(BackupWork.KEY_URI) ?: return Result.failure()
         return try {
@@ -33,6 +35,7 @@ class ExportBackupWorker(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            reporter.record(e)
             Result.failure()
         }
     }
@@ -42,9 +45,10 @@ class ImportBackupWorker(
     context: Context,
     params: WorkerParameters,
     private val importBackup: ImportBackup,
+    private val reporter: NonFatalReporter,
 ) : CoroutineWorker(context, params) {
 
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unexpected failure must not crash
+    @Suppress("TooGenericExceptionCaught") // an unexpected failure must not crash
     override suspend fun doWork(): Result {
         val source = inputData.getString(BackupWork.KEY_URI) ?: return Result.failure()
         return try {
@@ -55,6 +59,7 @@ class ImportBackupWorker(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            reporter.record(e)
             Result.failure()
         }
     }
