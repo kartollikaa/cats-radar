@@ -29,7 +29,7 @@ internal class StoredWalkRepository(
     override fun observeTrack(walkId: String): Flow<List<TrackPoint>> =
         flowOf(points.filter { it.walkId == walkId }.sortedBy { it.at })
 
-    override suspend fun loadEveryPoint(): List<TrackPoint> = points
+    override suspend fun loadEveryPoint(): List<TrackPoint> = points.sortedWith(compareBy({ it.walkId }, { it.at }))
 
     override fun observeEveryPoint(): Flow<List<TrackPoint>> =
         flowOf(points.sortedWith(compareBy({ it.walkId }, { it.at })))

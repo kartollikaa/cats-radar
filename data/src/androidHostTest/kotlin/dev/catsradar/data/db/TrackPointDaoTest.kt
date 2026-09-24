@@ -85,7 +85,7 @@ class TrackPointDaoTest {
     }
 
     @Test
-    fun everyPointComesBackGroupedByWalkInTimeOrderAndAgainAfterAnInsert() = runTest {
+    fun everyPointComesBackGroupedByWalkInTimeOrderAndANewSubscriptionSeesAnInsertedPoint() = runTest {
         walks.upsert(walkEntity("b"))
         walks.upsert(walkEntity("a"))
         dao.insert(trackPointEntity("b", second = 10, lat = 41.3))

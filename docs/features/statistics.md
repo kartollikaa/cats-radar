@@ -115,8 +115,9 @@ negative however wrong the clock was.
 - `domain/…/usecase/ObserveWalkTracks.kt` — every walk with its route, which `ObserveWalkStats` sums
 
 The numbers recompute whenever the encounter list changes **and on a ticker**, because the outing in
-progress is measured against "now" and goes stale on its own between cats. `ObserveStats` takes the
-ticker as a constructor parameter so a test can drive it instead of waiting.
+progress is measured against "now" and goes stale on its own between cats; the walk rows recompute on
+top of that whenever a walk starts, ends, or gains a point. `ObserveStats` takes the ticker as a
+constructor parameter so a test can drive it instead of waiting.
 
 ## Not built yet
 

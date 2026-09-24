@@ -236,7 +236,8 @@ class MapStateMapperTest {
             walkTrack("after", start = BASE + 15.minutes, end = BASE + 25.minutes, 41.36 to 2.16, 41.37 to 2.17)
 
         val state = assertIs<MapState.Located>(
-            map(listOf(first, second), focus = "first", walks = listOf(before, acrossStart, acrossEnd, after)),
+            // Given newest-first, so a passing test proves the mapper's own sort rather than the input order.
+            map(listOf(first, second), focus = "first", walks = listOf(after, acrossEnd, acrossStart, before)),
         )
 
         assertEquals(

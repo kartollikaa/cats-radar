@@ -315,7 +315,8 @@ truncated to a day; `today` = the device's current local date.
 | Regions | counts per node of §3.4, children sorted by count desc, pseudo-nodes last |
 
 All of it is computed by a pure `StatsCalculator(encounters, placeCells, now, settings)` in
-`commonMain` from the full list — no SQL aggregates in v1. Revisit if `|E|` grows past what a phone
+`commonMain` from the full list, except distance walked and cats per km, which `WalkStatsCalculator`
+computes from the walk tracks — no SQL aggregates in v1. Revisit if `|E|` grows past what a phone
 reads in a few ms (tens of thousands).
 
 ## 6. Architecture

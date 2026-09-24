@@ -74,6 +74,8 @@ two points or more. The coat filter never thins either kind of line.
   another of its cats gets a location later.
 - **Cats sharing one fix** give the cat-to-cat line no length there; their cluster still opens as a
   spot's list.
+- **A walk still recording** grows on the map as its points arrive; the view does not refit to it — it
+  fits once, when the outing is focused.
 
 ## Heat and coats
 

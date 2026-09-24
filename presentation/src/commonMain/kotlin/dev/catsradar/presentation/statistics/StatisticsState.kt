@@ -21,7 +21,7 @@ data class StatisticsState(
     /** Null when no outing was long enough or busy enough to measure. */
     val overallRate: RateState? = null,
     val bestOuting: BestOutingState? = null,
-    /** Null when no walk has a recorded route, so the screen leaves the walk rows out. */
+    /** Null when nothing walked has any length. */
     val walked: WalkedState? = null,
 )
 
