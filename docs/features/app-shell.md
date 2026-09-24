@@ -5,7 +5,7 @@
 request that sends the nav host back to the Counter (see [widget.md](./widget.md)). A launcher start
 that Android stacks on the app's own task as a second copy finishes at once. The nav host owns a
 Navigation 3 `NavDisplay` over a back stack rooted at `Counter`, with the selected bottom-navigation
-tab above it and any detail above that. The tab-to-destination mapping is exhaustive over
+tab above it and any detail or sheet above that. The tab-to-destination mapping is exhaustive over
 `BottomNavTab`, so a new tab does not compile until it has a destination, and the selected tab is
 read back out of the stack rather than stored — a detail pushed above a tab still reports the tab it
 belongs to. `CatsRadarApplication.onCreate()` starts Koin with four modules (`domainModule`,
@@ -114,9 +114,10 @@ slides in from the right as the old one slides away to the left, and going back 
 one-level step moves along the axis. Leaving a detail for another tab, or tapping a tab from two
 levels down its stack, fades through like any tab switch, although the stack underneath only pushed
 or popped. The motion is decided from the two screens alone: each tab's entry carries a tab-root
-marker in its Navigation 3 metadata, and a detail is recognised by what sits directly under it
-(`NavMotionTest`). The test builds the nav host's own entry for every `BottomNavTab`, so a tab added
-without the marker fails rather than silently sliding like a detail.
+marker in its Navigation 3 metadata, and a detail is recognised by what sits directly under it, a
+sheet in between not counting as a level (`NavMotionTest`). The test builds the nav host's own
+entry for every `BottomNavTab`, so a tab added without the marker fails rather than silently sliding
+like a detail.
 
 **The back gesture** follows the finger. The current screen shrinks toward the side the finger is
 moving to and fades as it goes; the screen it returns to starts fading in once the current one is
@@ -125,6 +126,15 @@ predictive back — shrinks the screen toward its centre. Releasing plays the re
 the edge cancels and restores the screen. The app sets all three specs because Navigation 3's
 defaults are a long cross-fade for every change and a back gesture that shrinks the screen without
 fading it, leaving it fully opaque over the one coming in until it vanishes at the end.
+
+**Sheets are destinations.** A bottom sheet is an entry on the back stack whose metadata carries
+`BottomSheetSceneStrategy.bottomSheet()`; the strategy draws it in a Material `ModalBottomSheet` over
+the entries under it, and dismissing the sheet pops it. A screen opened from a sheet goes on top of
+it, and the sheet stays on the stack under that screen. Navigation 3 would take the sheet as the
+screen a back gesture returns to, and the sheet's window then opens over the screen being dragged
+away and takes the gesture from it, so no navigation happens. While a screen covers it, the
+strategy draws a sheet as the scene under it instead: the gesture uncovers that scene, and the sheet
+slides back up once the gesture lands (`BottomSheetNavigationTest`).
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
@@ -173,7 +183,7 @@ run.
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/Store.kt`
 - `app/src/main/kotlin/dev/catsradar/app/CatsRadarApplication.kt`, `MainActivity.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`, `NavMotion.kt`,
-  `Counter.kt`, `CounterEffectHandler.kt`
+  `BottomSheetSceneStrategy.kt`, `Counter.kt`, `CounterEffectHandler.kt`
 - `app/src/main/kotlin/dev/catsradar/app/di/DomainModule.kt`, `DataModule.kt`,
   `PresentationModule.kt`, `WorkerModule.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`,

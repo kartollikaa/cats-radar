@@ -26,6 +26,8 @@ class NavMotionTest {
     private val detail = detail(EncounterDetail("encounter-1"))
     private val places = detail(Regions())
     private val country = detail(Regions(RegionKind.COUNTRY, countryCode = "ES"))
+    private val map = tabRoot(CatsMap)
+    private val spot = sheet(MapSpot(setOf("a", "b"), emptySet()))
 
     @Test
     fun `switching from one tab root to another fades through`() {
@@ -66,6 +68,16 @@ class NavMotionTest {
         val to = scene(counter, statistics, places)
 
         assertEquals(NavMotion.BACKWARD, navMotion(from, to))
+    }
+
+    @Test
+    fun `a cat opened from a sheet moves forward from the screen under the sheet`() {
+        assertEquals(NavMotion.FORWARD, navMotion(scene(counter, map), scene(counter, map, spot, detail)))
+    }
+
+    @Test
+    fun `going back from a cat opened from a sheet moves backward to the screen under the sheet`() {
+        assertEquals(NavMotion.BACKWARD, navMotion(scene(counter, map, spot, detail), scene(counter, map)))
     }
 
     @Test
@@ -130,6 +142,9 @@ class NavMotionTest {
     private fun tabRoot(key: NavKey): NavEntry<NavKey> = NavEntry(key, metadata = tabRootMetadata()) {}
 
     private fun detail(key: NavKey): NavEntry<NavKey> = NavEntry(key) {}
+
+    private fun sheet(key: NavKey): NavEntry<NavKey> =
+        NavEntry(key, metadata = BottomSheetSceneStrategy.bottomSheet()) {}
 
     private fun scene(vararg stack: NavEntry<NavKey>): Scene<NavKey> = StackTopScene(stack.toList())
 
