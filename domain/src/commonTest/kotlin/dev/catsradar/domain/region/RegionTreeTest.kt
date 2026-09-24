@@ -1,6 +1,9 @@
 package dev.catsradar.domain.region
 
+import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.testing.areaOf
 import dev.catsradar.domain.testing.encounterFixture
@@ -150,7 +153,7 @@ class RegionTreeTest {
         val cellNeverCreated = located(41.41, 2.2)
         val bare = located(48.85, 2.35).copy(geohash = null, placeCellId = null)
         val all = listOf(pending, cellNeverCreated, bare)
-        val cells = listOf(cell(pending, status = PlaceStatus.PENDING))
+        val cells = listOf(placeCellFixture(pending, status = PlaceStatus.PENDING))
 
         val unresolved = RegionTree.countries(all, cells).single { it.key == RegionKey.Unresolved }
 
