@@ -200,6 +200,13 @@ written only where no file was here, so importing the same archive again finds t
   own tag so an outcome never says "exported" about an import.
 - **The suggested filename carries the date**, which is what stops a second export silently offering
   to overwrite the first.
+- **An import that stops is not blamed on the file unless the reader refused it.** An archive the
+  reader refused says so: one from a newer version says it comes from a newer version of the app,
+  and one it could not read says it is not a Cats Radar backup. Anything else that stopped the
+  import — a failure on this device's side (a file it could not open, no room to unpack a photo),
+  one that broke once the archive was accepted (a database error), or a cancelled run — says it did
+  not finish and to try again, because the archive may be perfectly good and the user should not be
+  told to throw it away.
 - **An outcome stays until it is dismissed, and never comes back after.** WorkManager keeps a
   finished run, and the screen reads it back every time it opens. Coming back from another tab
   builds a new screen, and so does a restart, so an outcome the user has not seen yet is still
