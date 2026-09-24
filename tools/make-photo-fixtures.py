@@ -120,8 +120,8 @@ def main():
     small_no_exif(f"{OUT}/small_no_exif.jpg")
     for orientation in range(1, 9):
         oriented(f"{OUT}/orientation_{orientation}.jpg", orientation)
-    # More than twice the resizer's cap on its longest side, so the decode has to shrink it. Odd sides
-    # round differently once halved, so a copy sized from the shrunk decode comes out a pixel off.
+    # Over twice the resizer's cap, so the decode has to shrink it. The odd long side rounds up once
+    # halved, and at exactly this size that puts a copy sized from the shrunk decode a pixel off.
     oriented(f"{OUT}/large_orientation_6.jpg", 6, size=(3082, 4099))
     with open(f"{OUT}/landscape_with_gps.jpg", "rb") as source:
         head = source.read(400)
