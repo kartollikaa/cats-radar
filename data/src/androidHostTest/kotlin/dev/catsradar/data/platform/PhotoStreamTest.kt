@@ -65,6 +65,23 @@ class PhotoStreamTest {
     }
 
     @Test
+    fun aFileUriIsReadAsHandedOverEvenWithAccessToMediaLocation() {
+        grantMediaLocation()
+        val file = Uri.parse("file:///sdcard/Pictures/cat.jpg")
+        serve(file, redacted = "as handed over", original = "original")
+
+        assertEquals("as handed over", read(file))
+    }
+
+    @Test
+    fun aPathIsReadFromItsFileEvenWithAccessToMediaLocation() {
+        grantMediaLocation()
+        val photo = temporaryFolder.newFile("cat.jpg").apply { writeText("from the file") }
+
+        assertEquals("from the file", context.openPhotoStream(photo.path).use { it.readBytes().decodeToString() })
+    }
+
+    @Test
     fun anOriginalTheProviderRefusesFallsBackToThePhotoAsHandedOver() {
         grantMediaLocation()
         resolver.registerInputStream(galleryPhoto, "redacted".byteInputStream())
