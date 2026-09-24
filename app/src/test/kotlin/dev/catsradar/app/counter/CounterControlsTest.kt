@@ -151,6 +151,13 @@ class CounterControlsTest {
     }
 
     @Test
+    fun `during a walk the button shows how long it has lasted, and still that it has to be held`() {
+        show(walking = true, elapsedLabel = "32 min")
+
+        compose.onNodeWithText(context.getString(R.string.counter_walk_stop_hint_timed, "32 min")).assertIsDisplayed()
+    }
+
+    @Test
     fun `an accessibility click stops the walk without the hold`() {
         show(walking = true)
 
@@ -174,11 +181,17 @@ class CounterControlsTest {
         assertEquals(hidden, countHeight())
     }
 
-    private fun show(walking: Boolean) {
+    private fun show(walking: Boolean, elapsedLabel: String? = null) {
         compose.setContent {
             CatsRadarTheme {
                 CounterScreen(
-                    state = CounterState(totalLabel = "3", count = 3, undoVisible = false, walkingMode = walking),
+                    state = CounterState(
+                        totalLabel = "3",
+                        count = 3,
+                        undoVisible = false,
+                        walkingMode = walking,
+                        walkElapsedLabel = elapsedLabel,
+                    ),
                     onWalkingModeChange = { requested += it },
                 )
             }

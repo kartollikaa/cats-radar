@@ -18,12 +18,14 @@ import androidx.core.content.ContextCompat
 import dev.catsradar.app.MainActivity
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.ui.R
-import dev.catsradar.app.R as AppR
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 // Android lets an app lower a channel's importance but never raise it; a raised one needs a new id.
 private const val CHANNEL_ID = "walking_lock_screen"
 private const val RETIRED_CHANNEL_ID = "walking"
 private const val NOTIFICATION_ID = 2
+private const val METRIC_STYLE_API = 37
 
 /**
  * The walking notification: one tap logs a cat without unlocking the phone or opening the app.
@@ -48,18 +50,18 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         )
     }
 
-    override fun show(count: Int, appOnScreen: Boolean) {
+    override fun show(count: Int, startedAt: Instant?, appOnScreen: Boolean) {
         // A service may only gain location access while the app is on screen; one running keeps it.
-        val recorded = appOnScreen && context.hasPreciseLocation() && recording.start(count)
-        if (!recorded) post(build(count))
+        val recorded = appOnScreen && context.hasPreciseLocation() && recording.start(count, startedAt)
+        if (!recorded) post(build(count, startedAt))
     }
 
     /** Makes the notification [service]'s own, running it in the foreground with location access. */
-    fun carry(service: Service, count: Int) {
+    fun carry(service: Service, count: Int, startedAt: Instant?) {
         ServiceCompat.startForeground(
             service,
             NOTIFICATION_ID,
-            build(count),
+            build(count, startedAt),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
         )
     }
@@ -69,11 +71,12 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         manager.cancel(NOTIFICATION_ID)
     }
 
-    private fun build(count: Int): Notification =
+    private fun build(count: Int, startedAt: Instant?): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(AppR.drawable.ic_notification_cat)
+            .setSmallIcon(R.drawable.ic_cat_walking)
             .setContentTitle(context.getString(R.string.notification_walking_title))
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
+            .showWalkTime(count, startedAt)
             .setOngoing(true)
             .setSilent(true)
             // API 36.1 and up may promote an ongoing notification to the status-bar chip and the
@@ -103,6 +106,27 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
                 broadcast(WalkingAction.STOP),
             )
             .build()
+
+    // Both clocks are ticked by the system, so the time moves with no repost and no process alive.
+    private fun NotificationCompat.Builder.showWalkTime(count: Int, startedAt: Instant?): NotificationCompat.Builder {
+        val cats = NotificationCompat.Metric(
+            NotificationCompat.Metric.FixedInt(count),
+            context.getString(R.string.notification_walking_metric_cats),
+        )
+        if (startedAt == null) return setShowWhen(false).setStyle(NotificationCompat.MetricStyle().addMetric(cats))
+        val walk = NotificationCompat.Metric(
+            NotificationCompat.Metric.TimeDifference.forStopwatch(
+                startedAt.toJavaInstant(),
+                NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
+            ),
+            context.getString(R.string.notification_walking_metric_time),
+        )
+        return setWhen(startedAt.toEpochMilliseconds())
+            // MetricStyle's own stopwatch shows the time from API 37; a second one in the header would repeat it.
+            .setShowWhen(Build.VERSION.SDK_INT < METRIC_STYLE_API)
+            .setUsesChronometer(true)
+            .setStyle(NotificationCompat.MetricStyle().addMetric(cats).addMetric(walk))
+    }
 
     private fun broadcast(action: String): PendingIntent = PendingIntent.getBroadcast(
         context,

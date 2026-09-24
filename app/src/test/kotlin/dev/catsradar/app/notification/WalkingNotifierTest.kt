@@ -23,7 +23,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import dev.catsradar.app.R as AppR
+import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class WalkingNotifierTest {
@@ -44,10 +44,10 @@ class WalkingNotifierTest {
         shadowApplication.grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    private fun showAndRead(count: Int): Notification {
+    private fun showAndRead(count: Int, startedAt: Instant? = WalkStart): Notification {
         grantNotifications()
         notifier.ensureChannel()
-        notifier.show(count, appOnScreen = false)
+        notifier.show(count, startedAt, appOnScreen = false)
         return assertNotNull(shadowManager.allNotifications.firstOrNull())
     }
 
@@ -67,10 +67,29 @@ class WalkingNotifierTest {
     }
 
     @Test
-    fun theStatusBarIconIsTheCatFace() {
+    fun theStatusBarIconIsTheWalkingCat() {
         val posted = showAndRead(count = 3)
 
-        assertEquals(AppR.drawable.ic_notification_cat, posted.smallIcon.resId)
+        assertEquals(R.drawable.ic_cat_walking, posted.smallIcon.resId)
+    }
+
+    // The system ticks a chronometer by itself, so the time moves with no repost and no process alive.
+    @Test
+    fun aWalkCountsUpFromItsStart() {
+        val posted = showAndRead(count = 3, startedAt = WalkStart)
+
+        assertEquals(WalkStart.toEpochMilliseconds(), posted.`when`)
+        assertTrue(posted.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertTrue(posted.extras.getBoolean(Notification.EXTRA_SHOW_WHEN))
+        assertFalse(posted.extras.getBoolean(Notification.EXTRA_CHRONOMETER_COUNT_DOWN))
+    }
+
+    @Test
+    fun beforeItsWalkHasStartedTheNotificationShowsNoTime() {
+        val posted = showAndRead(count = 3, startedAt = null)
+
+        assertFalse(posted.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertFalse(posted.extras.getBoolean(Notification.EXTRA_SHOW_WHEN))
     }
 
     @Test
@@ -129,8 +148,8 @@ class WalkingNotifierTest {
         grantNotifications()
         notifier.ensureChannel()
 
-        notifier.show(count = 3, appOnScreen = false)
-        notifier.show(count = 4, appOnScreen = false)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = false)
+        notifier.show(count = 4, startedAt = WalkStart, appOnScreen = false)
 
         assertEquals(1, shadowManager.size())
         val posted = assertNotNull(shadowManager.allNotifications.firstOrNull())
@@ -165,7 +184,7 @@ class WalkingNotifierTest {
     fun withoutPermissionToPostNothingReachesTheShade() {
         notifier.ensureChannel()
 
-        notifier.show(count = 1, appOnScreen = false)
+        notifier.show(count = 1, startedAt = WalkStart, appOnScreen = false)
 
         assertEquals(0, shadowManager.size())
     }
@@ -176,11 +195,12 @@ class WalkingNotifierTest {
         grantLocation()
         notifier.ensureChannel()
 
-        notifier.show(count = 3, appOnScreen = true)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = true)
 
         val started = assertNotNull(shadowApplication.nextStartedService)
         assertEquals(ComponentName(context, WalkRecordingService::class.java), started.component)
         assertEquals(3, started.getIntExtra(WalkRecordingService.EXTRA_COUNT, -1))
+        assertEquals(WalkStart.toEpochMilliseconds(), started.getLongExtra(WalkRecordingService.EXTRA_STARTED_AT, -1))
         assertEquals(0, shadowManager.size())
     }
 
@@ -189,7 +209,7 @@ class WalkingNotifierTest {
         grantNotifications()
         notifier.ensureChannel()
 
-        notifier.show(count = 3, appOnScreen = true)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = true)
 
         assertNull(shadowApplication.nextStartedService)
         assertEquals(1, shadowManager.size())
@@ -201,7 +221,7 @@ class WalkingNotifierTest {
         grantLocation()
         notifier.ensureChannel()
 
-        notifier.show(count = 3, appOnScreen = false)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = false)
 
         assertNull(shadowApplication.nextStartedService)
         assertEquals(1, shadowManager.size())
@@ -213,7 +233,7 @@ class WalkingNotifierTest {
         shadowApplication.grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
         notifier.ensureChannel()
 
-        notifier.show(count = 3, appOnScreen = true)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = true)
 
         assertNull(shadowApplication.nextStartedService)
         assertEquals(1, shadowManager.size())
@@ -224,7 +244,7 @@ class WalkingNotifierTest {
         grantNotifications()
         grantLocation()
         notifier.ensureChannel()
-        notifier.show(count = 3, appOnScreen = true)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = true)
         shadowApplication.nextStartedService
 
         notifier.clear()
@@ -237,7 +257,7 @@ class WalkingNotifierTest {
     fun clearingWithNoRecordingTakesTheNotificationAwayAndStartsNothing() {
         grantNotifications()
         notifier.ensureChannel()
-        notifier.show(count = 3, appOnScreen = false)
+        notifier.show(count = 3, startedAt = WalkStart, appOnScreen = false)
 
         notifier.clear()
 

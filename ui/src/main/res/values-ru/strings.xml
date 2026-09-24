@@ -188,6 +188,8 @@
     <string name="notification_walking_tally">Котик!</string>
     <string name="notification_walking_stop">Хватит</string>
     <string name="notification_walking_photo">Фото</string>
+    <string name="notification_walking_metric_cats">Котики</string>
+    <string name="notification_walking_metric_time">Прогулка</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d котик за прогулку</item>
         <item quantity="few">%1$d котика за прогулку</item>
@@ -202,6 +204,7 @@
     <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
     <string name="counter_walk_stop">Закончить прогулку</string>
     <string name="counter_walk_stop_hint">нажмите и удерживайте</string>
+    <string name="counter_walk_stop_hint_timed">%1$s · удерживайте</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик сегодня</item>

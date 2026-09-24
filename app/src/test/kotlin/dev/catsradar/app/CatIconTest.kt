@@ -38,9 +38,4 @@ class CatIconTest {
     fun theThemedLauncherCatIsTheCoatFaceWithItsEyesAndNoseCutOut() {
         assertFaceSilhouetteWithEyesAndNoseCutOut("ic_launcher_monochrome")
     }
-
-    @Test
-    fun theNotificationCatIsTheCoatFaceWithItsEyesAndNoseCutOut() {
-        assertFaceSilhouetteWithEyesAndNoseCutOut("ic_notification_cat")
-    }
 }

@@ -1,6 +1,7 @@
 package dev.catsradar.app.notification
 
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlin.time.Instant
 
 /**
  * Holds the walking notification equal to the stored flag and to the outing it is counting, for as
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.onEach
  */
 class WalkingNotificationSync(
     private val settingsRepository: SettingsRepository,
+    private val walkRepository: WalkRepository,
     private val observeStats: ObserveStats,
     private val notifications: WalkingNotifications,
 ) {
@@ -32,17 +35,26 @@ class WalkingNotificationSync(
             // Nothing observes the encounters while the mode is off, which is nearly always.
             .flatMapLatest { enabled ->
                 if (enabled) {
-                    combine(observeStats().map { it.currentOuting?.count ?: 0 }, appOnScreen, ::Shown)
+                    combine(
+                        observeStats().map { it.currentOuting?.count ?: 0 },
+                        walkRepository.observeOpen().map { it?.startedAt },
+                        appOnScreen,
+                        ::Shown,
+                    )
                 } else {
                     flowOf(null)
                 }
             }
-            // The stats flow ticks to keep elapsed time moving; the notification carries no time.
+            // The stats flow ticks to keep elapsed time moving; the notification's clock ticks by itself.
             .distinctUntilChanged()
             .onEach { shown ->
-                if (shown == null) notifications.clear() else notifications.show(shown.count, shown.appOnScreen)
+                if (shown == null) {
+                    notifications.clear()
+                } else {
+                    notifications.show(shown.count, shown.startedAt, shown.appOnScreen)
+                }
             }
             .launchIn(scope)
 
-    private data class Shown(val count: Int, val appOnScreen: Boolean)
+    private data class Shown(val count: Int, val startedAt: Instant?, val appOnScreen: Boolean)
 }

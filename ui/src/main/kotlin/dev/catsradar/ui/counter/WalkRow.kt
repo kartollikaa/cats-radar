@@ -17,6 +17,7 @@ import dev.catsradar.ui.theme.ThemePreviews
 @Composable
 internal fun WalkRow(
     walkingMode: Boolean,
+    walkElapsedLabel: String?,
     undoVisible: Boolean,
     modifier: Modifier = Modifier,
     onWalkingModeChange: (Boolean) -> Unit = {},
@@ -24,7 +25,13 @@ internal fun WalkRow(
 ) {
     Layout(
         contents = listOf(
-            { WalkButton(walking = walkingMode, onWalkingChange = onWalkingModeChange) },
+            {
+                WalkButton(
+                    walking = walkingMode,
+                    elapsedLabel = walkElapsedLabel,
+                    onWalkingChange = onWalkingModeChange,
+                )
+            },
             { UndoChip(visible = undoVisible, onClick = onUndoClick) },
         ),
         modifier = modifier.fillMaxWidth(),
@@ -61,9 +68,9 @@ private fun undoReserve(undoWidth: Int, gap: Int): Int = if (undoWidth == 0) 0 e
 private fun WalkRowPreview() {
     CatsRadarTheme {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
-            WalkRow(walkingMode = false, undoVisible = false)
-            WalkRow(walkingMode = false, undoVisible = true)
-            WalkRow(walkingMode = true, undoVisible = true)
+            WalkRow(walkingMode = false, walkElapsedLabel = null, undoVisible = false)
+            WalkRow(walkingMode = false, walkElapsedLabel = null, undoVisible = true)
+            WalkRow(walkingMode = true, walkElapsedLabel = "32 min", undoVisible = true)
         }
     }
 }
@@ -73,8 +80,9 @@ private fun WalkRowPreview() {
 private fun WalkRowCrampedPreview() {
     CatsRadarTheme {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
-            WalkRow(walkingMode = false, undoVisible = false)
-            WalkRow(walkingMode = false, undoVisible = true)
+            WalkRow(walkingMode = false, walkElapsedLabel = null, undoVisible = false)
+            WalkRow(walkingMode = false, walkElapsedLabel = null, undoVisible = true)
+            WalkRow(walkingMode = true, walkElapsedLabel = "1 ч 5 мин", undoVisible = true)
         }
     }
 }

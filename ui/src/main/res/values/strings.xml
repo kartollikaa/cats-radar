@@ -166,6 +166,8 @@
     <string name="notification_walking_tally">Cat!</string>
     <string name="notification_walking_stop">Done</string>
     <string name="notification_walking_photo">Photo</string>
+    <string name="notification_walking_metric_cats">Cats</string>
+    <string name="notification_walking_metric_time">Walk</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d cat this outing</item>
         <item quantity="other">%1$d cats this outing</item>
@@ -178,6 +180,7 @@
     <string name="counter_walk_start_hint">tap to begin</string>
     <string name="counter_walk_stop">Stop the walk</string>
     <string name="counter_walk_stop_hint">press and hold</string>
+    <string name="counter_walk_stop_hint_timed">%1$s · press and hold</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">cat today</item>

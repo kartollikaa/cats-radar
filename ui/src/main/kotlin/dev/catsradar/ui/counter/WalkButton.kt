@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,7 +33,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
@@ -59,6 +57,7 @@ private val HoldToStop = 1.seconds
 @Composable
 internal fun WalkButton(
     walking: Boolean,
+    elapsedLabel: String?,
     modifier: Modifier = Modifier,
     onWalkingChange: (Boolean) -> Unit = {},
 ) {
@@ -99,11 +98,21 @@ internal fun WalkButton(
     } else {
         Modifier.clickable(role = Role.Button) { onWalkingChange(true) }
     }
-    WalkButtonSurface(walking = walking, fill = { fill.value }, modifier = modifier.clip(CircleShape).then(gesture))
+    WalkButtonSurface(
+        walking = walking,
+        elapsedLabel = elapsedLabel,
+        fill = { fill.value },
+        modifier = modifier.clip(CircleShape).then(gesture),
+    )
 }
 
 @Composable
-private fun WalkButtonSurface(walking: Boolean, fill: () -> Float, modifier: Modifier = Modifier) {
+private fun WalkButtonSurface(
+    walking: Boolean,
+    elapsedLabel: String?,
+    fill: () -> Float,
+    modifier: Modifier = Modifier,
+) {
     val colors = MaterialTheme.colorScheme
     val fillColor = colors.tertiary.copy(alpha = 0.4f)
     Surface(
@@ -119,11 +128,7 @@ private fun WalkButtonSurface(walking: Boolean, fill: () -> Float, modifier: Mod
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_directions_walk),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
+            WalkingCat(walking = walking, modifier = Modifier.size(20.dp))
             Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
                     text = stringResource(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start),
@@ -132,9 +137,11 @@ private fun WalkButtonSurface(walking: Boolean, fill: () -> Float, modifier: Mod
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = stringResource(
-                        if (walking) R.string.counter_walk_stop_hint else R.string.counter_walk_start_hint,
-                    ),
+                    text = when {
+                        !walking -> stringResource(R.string.counter_walk_start_hint)
+                        elapsedLabel == null -> stringResource(R.string.counter_walk_stop_hint)
+                        else -> stringResource(R.string.counter_walk_stop_hint_timed, elapsedLabel)
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -155,9 +162,10 @@ private fun DrawScope.drawFill(filled: Float, color: Color) {
 private fun WalkButtonPreview() {
     CatsRadarTheme {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
-            WalkButton(walking = false)
-            WalkButton(walking = true)
-            WalkButtonSurface(walking = true, fill = { 0.4f })
+            WalkButton(walking = false, elapsedLabel = null)
+            WalkButton(walking = true, elapsedLabel = null)
+            WalkButton(walking = true, elapsedLabel = "32 min")
+            WalkButtonSurface(walking = true, elapsedLabel = "1 h 5 min", fill = { 0.4f })
         }
     }
 }
