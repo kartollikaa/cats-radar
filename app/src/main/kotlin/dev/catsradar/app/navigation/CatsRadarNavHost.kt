@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier
     LaunchedEffect(backStack, screenViews) {
         snapshotFlow { backStack.lastOrNull() }.filterNotNull().collect(screenViews::onTop)
     }
+    DisposableEffect(screenViews) { onDispose(screenViews::onHostGone) }
     LaunchedEffect(cameraRequest.isPending) {
         if (cameraRequest.isPending) backStack.selectTab(BottomNavTab.COUNTER)
     }

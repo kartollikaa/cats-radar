@@ -31,6 +31,11 @@ class ScreenViewTracker(private val analytics: Analytics) {
         reported = null
     }
 
+    // The process can outlive its activity; a new one starts from its own back stack, not the last one's top.
+    fun onHostGone() {
+        topScreen = null
+    }
+
     private fun report() {
         val screen = topScreen ?: return
         if (!resumed || screen == reported) return

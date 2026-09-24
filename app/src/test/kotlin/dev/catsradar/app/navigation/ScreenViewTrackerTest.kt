@@ -101,6 +101,30 @@ class ScreenViewTrackerTest {
     }
 
     @Test
+    fun `a new activity in a surviving process reports only its own top`() {
+        tracker.onTop(Settings)
+        tracker.onAppPaused()
+        tracker.onAppStopped()
+        tracker.onHostGone()
+        tracker.onAppResumed()
+        tracker.onTop(Counter)
+
+        assertEquals<List<AnalyticsEvent>>(
+            listOf(AnalyticsScreen.SETTINGS, AnalyticsScreen.COUNTER).map(::ScreenViewed),
+            analytics.logged,
+        )
+    }
+
+    @Test
+    fun `turning the phone does not count the screen again`() {
+        tracker.onTop(Settings)
+        tracker.onHostGone()
+        tracker.onTop(Settings)
+
+        assertEquals<List<AnalyticsEvent>>(listOf(ScreenViewed(AnalyticsScreen.SETTINGS)), analytics.logged)
+    }
+
+    @Test
     fun `coming back to a screen reports it again`() {
         tracker.onTop(CatsMap)
         tracker.onTop(MapSpot(catIds = setOf("cat-1"), coats = emptySet()))
