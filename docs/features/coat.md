@@ -75,9 +75,16 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 - `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, and the line around every face
 - `ui/…/coat/CatFace.kt` — the face itself
 
+## On the map
+
+A cat's dot on the map is painted in its coat's colours: the fur over the top half, the markings
+sliced below it. Its heat takes the same colours in the same shares, so a black-and-white cat is
+half black heat and half white. The faces and the tabby stripes are too small to draw there; see
+[map.md](./map.md).
+
 ## Not built yet
 
-No coat filter anywhere, and no coat on the map — the map is its own epic after v1. The fur colours
+No coat filter outside the map. The fur colours
 are fixed values rather than theme tokens, on purpose: a ginger cat is ginger in both themes. The
 face also leads each coated row in the Encounters list that has no photo, and each coat in the
 statistics' By coat block; a cat without a coat keeps a blank space there, so the names still line

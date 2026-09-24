@@ -3,22 +3,31 @@ package dev.catsradar.ui.map
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.coat.faceRim
+import dev.catsradar.ui.coat.look
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
+import org.maplibre.compose.expressions.dsl.asNumber
+import org.maplibre.compose.expressions.dsl.asString
+import org.maplibre.compose.expressions.dsl.case
 import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.convertToString
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.format
 import org.maplibre.compose.expressions.dsl.heatmapDensity
+import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.expressions.dsl.interpolate
 import org.maplibre.compose.expressions.dsl.linear
 import org.maplibre.compose.expressions.dsl.not
 import org.maplibre.compose.expressions.dsl.span
+import org.maplibre.compose.expressions.dsl.switch
+import org.maplibre.compose.expressions.dsl.zoom
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.interaction.ClickResult
@@ -47,12 +56,20 @@ private const val CLUSTER_RADIUS = 40
 private const val COUNT_FONT = "Noto Sans Bold"
 
 private val DotRadius = 7.dp
+private val RimWidth = 1.5.dp
+private val DotSize = (DotRadius + RimWidth) * 2
 private val ClusterRadius = 16.dp
 private val HalfTouchTarget = 24.dp
-private val HeatRadius = 28.dp
 private const val HeatLowDensity = 0.3
 private const val HeatOpacity = 0.85f
-private const val HeatLowAlpha = 0.5f
+private const val HeatLowAlpha = 0.7f
+private const val HaloDensity = 0.1
+private const val HaloAlpha = 0.35f
+
+// Each cat's heat is sized and weighted by zoom: at one size for every zoom, a city's cats merge into one blob.
+private val HeatRadius =
+    interpolate(linear(), zoom(), 9 to const(8.dp), 11 to const(16.dp), 14 to const(24.dp), 16 to const(30.dp))
+private val HeatIntensity = interpolate(linear(), zoom(), 9 to const(0.7f), 15 to const(1f))
 
 private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
 
@@ -64,8 +81,6 @@ internal data class CatLayerColors(
     val cluster: Color,
     val clusterCount: Color,
     val route: Color,
-    val heatLow: Color,
-    val heatHigh: Color,
 )
 
 internal data class ClusterTap(val source: GeoJsonSource, val cluster: Feature<*, JsonObject?>)
@@ -95,25 +110,47 @@ internal fun catLayerColors(): CatLayerColors {
         cluster = scheme.primary,
         clusterCount = scheme.onPrimary,
         route = scheme.primary,
-        heatLow = scheme.primary.copy(alpha = HeatLowAlpha),
-        heatHigh = scheme.tertiary,
     )
 }
 
 @Composable
 private fun CatHeat(cats: FeatureCollection<Point, JsonObject>, colors: CatLayerColors) {
     // Its own source, unclustered: over a clustered one, a cluster of ten would weigh as one cat.
+    val source = rememberGeoJsonSource(GeoJsonData.Features(cats))
+    // A heatmap colours by density alone, never by a feature, so each fur colour is a layer of its own.
     HeatmapLayer(
-        id = "cat-heat",
-        source = rememberGeoJsonSource(GeoJsonData.Features(cats)),
+        id = "cat-heat-halo",
+        source = source,
         color = interpolate(
             linear(),
             heatmapDensity(),
-            0 to const(Color.Transparent),
-            HeatLowDensity to const(colors.heatLow),
-            1 to const(colors.heatHigh),
+            0 to const(colors.rim.copy(alpha = 0f)),
+            HaloDensity to const(colors.rim.copy(alpha = HaloAlpha)),
         ),
-        radius = const(HeatRadius),
+        radius = HeatRadius,
+        intensity = HeatIntensity,
+        opacity = const(HeatOpacity),
+    )
+    CoatHeat(source = source, key = UNNOTED_HEAT, colour = colors.unnoted)
+    CoatHeatColours.forEach { colour -> CoatHeat(source = source, key = heatKey(colour), colour = colour) }
+}
+
+@Composable
+private fun CoatHeat(source: GeoJsonSource, key: String, colour: Color) {
+    HeatmapLayer(
+        id = "cat-$key",
+        source = source,
+        filter = feature.has(key),
+        weight = feature[key].asNumber(),
+        color = interpolate(
+            linear(),
+            heatmapDensity(),
+            0 to const(colour.copy(alpha = 0f)),
+            HeatLowDensity to const(colour.copy(alpha = HeatLowAlpha)),
+            1 to const(colour),
+        ),
+        radius = HeatRadius,
+        intensity = HeatIntensity,
         opacity = const(HeatOpacity),
     )
 }
@@ -152,7 +189,7 @@ private fun CatDots(
         color = const(colors.cluster),
         radius = const(ClusterRadius),
         strokeColor = const(colors.rim),
-        strokeWidth = const(1.5.dp),
+        strokeWidth = const(RimWidth),
         hitPadding = HalfTouchTarget - ClusterRadius,
         onClick = { features ->
             features.firstOrNull()?.let { onClusterTap(ClusterTap(source, it)) }
@@ -171,20 +208,29 @@ private fun CatDots(
         textAllowOverlap = const(true),
         textIgnorePlacement = const(true),
     )
-    CircleLayer(
+    SymbolLayer(
         id = "cats",
         source = source,
         filter = !isCluster,
         visible = visible,
-        color = feature[CAT_COLOR].convertToColor(),
-        radius = const(DotRadius),
-        strokeColor = const(colors.rim),
-        strokeWidth = const(1.5.dp),
-        hitPadding = HalfTouchTarget - DotRadius,
+        iconImage = rememberCoatDots(colors),
+        iconAllowOverlap = const(true),
+        iconIgnorePlacement = const(true),
+        hitPadding = HalfTouchTarget - DotSize / 2,
         onClick = { features ->
             onCatsTap(tappedCatIds(features))
             ClickResult.Consume
         },
+    )
+}
+
+@Composable
+private fun rememberCoatDots(colors: CatLayerColors) = remember(colors.rim, colors.unnoted) {
+    fun dot(shares: List<ColourShare>) = image(CoatDotPainter(shares, colors.rim, RimWidth), DpSize(DotSize, DotSize))
+    switch(
+        feature[CAT_COAT].asString(const("")),
+        CoatOption.entries.map { case(it.name, dot(it.look().shares())) },
+        fallback = dot(listOf(ColourShare(colors.unnoted, 1.0))),
     )
 }
 
