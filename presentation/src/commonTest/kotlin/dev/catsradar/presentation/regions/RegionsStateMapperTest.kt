@@ -27,6 +27,7 @@ class RegionsStateMapperTest {
             RegionKey.City("ES", "Barcelona"),
             RegionKey.Area("sp3e3"),
             RegionKey.Unresolved,
+            RegionKey.NoCity("ES"),
             RegionKey.NoLocation,
         ).map { RegionNode(it, RegionLabel.Named("x"), count = 1) },
         encounters = emptyList(),
@@ -59,6 +60,7 @@ class RegionsStateMapperTest {
                 RegionRowKey.City("ES", "Barcelona"),
                 RegionRowKey.Area("sp3e3"),
                 RegionRowKey.Unresolved,
+                RegionRowKey.NoCity("ES"),
                 RegionRowKey.NoLocation,
             ),
             mapper.map(oneRowPerKey, TODAY).rows.map { it.key },
@@ -71,6 +73,7 @@ class RegionsStateMapperTest {
             RegionLabel.Named("Gràcia"),
             RegionLabel.Coordinates(lat = 41.398644, lon = 2.178419),
             RegionLabel.Unresolved,
+            RegionLabel.NoCity,
             RegionLabel.NoLocation,
         )
         val view = RegionView(children = labels.map { RegionNode(RegionKey.Area("sp3e3"), it, 1) }, emptyList())
@@ -80,6 +83,7 @@ class RegionsStateMapperTest {
                 RegionRowLabel.Named("Gràcia"),
                 RegionRowLabel.Coordinates("41.39864, 2.17842"),
                 RegionRowLabel.Unresolved,
+                RegionRowLabel.NoCity,
                 RegionRowLabel.NoLocation,
             ),
             mapper.map(view, TODAY).rows.map { it.label },
@@ -88,7 +92,9 @@ class RegionsStateMapperTest {
 
     @Test
     fun `every row drills down except an area's, whose cats show in place`() {
-        assertEquals(listOf(true, true, false, true, true), mapper.map(oneRowPerKey, TODAY).rows.map { it.drillable })
+        val drillable = mapper.map(oneRowPerKey, TODAY).rows.map { it.drillable }
+
+        assertEquals(listOf(true, true, false, true, true, true), drillable)
     }
 
     @Test

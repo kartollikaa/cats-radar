@@ -106,6 +106,7 @@
 
     <string name="regions_empty">No places yet</string>
     <string name="regions_unresolved">Not named yet</string>
+    <string name="regions_no_city">No city</string>
     <string name="regions_no_location">No location</string>
     <string name="regions_area_at">Around %1$s</string>
 

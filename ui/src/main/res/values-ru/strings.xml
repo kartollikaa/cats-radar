@@ -120,6 +120,7 @@
 
     <string name="regions_empty">Мест пока нет</string>
     <string name="regions_unresolved">Пока без названия</string>
+    <string name="regions_no_city">Без города</string>
     <string name="regions_no_location">Без места</string>
     <string name="regions_area_at">Рядом с %1$s</string>
 

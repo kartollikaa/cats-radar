@@ -35,6 +35,7 @@ class RegionsStateMapper(
         is RegionKey.City -> RegionRowKey.City(countryCode, city)
         is RegionKey.Area -> RegionRowKey.Area(areaHash)
         RegionKey.Unresolved -> RegionRowKey.Unresolved
+        is RegionKey.NoCity -> RegionRowKey.NoCity(countryCode)
         RegionKey.NoLocation -> RegionRowKey.NoLocation
     }
 
@@ -43,6 +44,7 @@ class RegionsStateMapper(
         is RegionLabel.Coordinates ->
             RegionRowLabel.Coordinates("${formatCoordinate(lat)}, ${formatCoordinate(lon)}")
         RegionLabel.Unresolved -> RegionRowLabel.Unresolved
+        RegionLabel.NoCity -> RegionRowLabel.NoCity
         RegionLabel.NoLocation -> RegionRowLabel.NoLocation
     }
 }
