@@ -3,12 +3,18 @@ package dev.catsradar.presentation.detail
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.counter.FakeClock
+import dev.catsradar.presentation.counter.FakeDigest
 import dev.catsradar.presentation.counter.FakeEncounterRepository
+import dev.catsradar.presentation.counter.FakeGallerySaver
+import dev.catsradar.presentation.counter.FakeIdGenerator
+import dev.catsradar.presentation.counter.FakeImageResizer
+import dev.catsradar.presentation.counter.FakeSettingsRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
@@ -40,6 +46,7 @@ class EncounterDetailStoreTest {
     private val mainDispatcher = StandardTestDispatcher()
     private val repository = FakeEncounterRepository()
     private val clock = FakeClock(NOW)
+    private val resizer = FakeImageResizer()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(mainDispatcher)
@@ -206,12 +213,145 @@ class EncounterDetailStoreTest {
             }
         }
 
+    @Test
+    fun `take a photo opens the camera and choose from gallery opens the picker`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat that already has a photo opens neither`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a photo from the camera lands on the cat and its original is discarded`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
+        }
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals("/data/photos/cat.jpg", state.photoPath)
+        assertEquals(null, state.addPhoto)
+    }
+
+    @Test
+    fun `a photo from the gallery lands on the cat and nothing is discarded`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            runCurrent()
+            expectNoEvents()
+        }
+        assertEquals("/data/photos/cat.jpg", assertIs<EncounterDetailState.Loaded>(store.state.value).photoPath)
+    }
+
+    @Test
+    fun `a cancelled camera or picker changes nothing`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+        val before = store.state.value
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(null))
+            runCurrent()
+            expectNoEvents()
+        }
+        assertEquals(before, store.state.value)
+    }
+
+    @Test
+    fun `the offer shows the photo being attached until it lands`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+        assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+
+        advanceTimeBy(2.seconds)
+        runCurrent()
+        assertEquals(null, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+    }
+
+    @Test
+    fun `an unreadable photo says so and the offer comes back`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.result = null
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
+            assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
+        }
+        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+    }
+
+    @Test
+    fun `a failed write says the photo was not attached`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.attachPhotoShouldThrow = IllegalStateException("disk full")
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
+        }
+        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+    }
+
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
         deleteEncounter = DeleteEncounter(repository, clock),
         undoDelete = UndoDelete(repository),
         setCoat = SetCoat(repository, clock),
+        attachPhoto = AttachPhoto(
+            encounterRepository = repository,
+            settingsRepository = FakeSettingsRepository(),
+            imageResizer = resizer,
+            digest = FakeDigest(),
+            gallerySaver = FakeGallerySaver(),
+            photoStorage = FakePhotoStorage(),
+            idGenerator = FakeIdGenerator(),
+            clock = clock,
+        ),
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,
@@ -221,6 +361,8 @@ class EncounterDetailStoreTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val CAPTURE = "content://captures/1"
+        const val PICKED = "content://picker/1"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }

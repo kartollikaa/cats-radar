@@ -217,6 +217,11 @@ private fun EncounterDetailDestination(
         store.effects.collect { effect ->
             when (effect) {
                 EncounterDetailEffect.NavigateBack -> currentOnNavigateBack()
+                EncounterDetailEffect.OpenCamera,
+                EncounterDetailEffect.OpenPhotoPicker,
+                EncounterDetailEffect.PhotoNotAttached,
+                is EncounterDetailEffect.DiscardCapture,
+                -> Unit
             }
         }
     }
