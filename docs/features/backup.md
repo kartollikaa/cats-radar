@@ -126,8 +126,9 @@ written only where no file was here, so importing the same archive again finds t
   cannot open (the picker's grant may have died with the app), a stream that breaks part-way (a
   cloud document whose download dropped), photos it has no room to unpack or cannot put in place.
   None of them says anything about the archive, so none is reported as a file this app cannot read:
-  the read throws the failure it met. Only a damaged ZIP, a cut-off one or rows that will not parse
-  refuse the archive.
+  the read throws the failure it met. Whatever the archive itself gets wrong still refuses it, as
+  the bullets around this one say. A failure while photos are being put in place can leave those
+  already moved; they are the archive's own bytes, and importing it again keeps them.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
 - **So does a row whose photo or thumbnail path climbs out of it.** Every screen that shows a cat

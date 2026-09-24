@@ -9,6 +9,8 @@ import android.os.ParcelFileDescriptor
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
+import dev.catsradar.domain.platform.BackupReadResult
+import dev.catsradar.domain.platform.BackupRejection
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assume.assumeFalse
@@ -22,6 +24,7 @@ import java.io.File
 import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
@@ -63,6 +66,22 @@ class ZipBackupReaderDeviceFailureTest {
     }
 
     @Test
+    fun anArchiveCutOffInsideItsRowsIsStillTheArchivesFault() = runTest {
+        val rows = (1..400).joinToString(",", "[", "]") { i ->
+            """{"id":"cat-$i","occurredAt":${i * 7919},"tzOffsetMinutes":0,"kind":"TALLY","origin":"APP",""" +
+                """"locationSource":"NONE","deviceId":"d${i * 104729}","createdAt":$i,"updatedAt":$i}"""
+        }
+        val whole = File(temporaryFolder.root, "whole.zip").apply {
+            writeArchive(MANIFEST_ENTRY to VALID_MANIFEST, ENCOUNTERS_ENTRY to rows)
+        }
+        val cut = File(temporaryFolder.root, "cut.zip").apply {
+            writeBytes(whole.readBytes().copyOf(whole.length().toInt() / 2))
+        }
+
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(cut.path))
+    }
+
+    @Test
     fun aSourceThatGivesNoStreamFailsTheReadRatherThanBeingCalledUnreadable() = runTest {
         val noStream = ZipBackupReader(context, photoStorage) { null }
 
@@ -94,6 +113,7 @@ class ZipBackupReaderDeviceFailureTest {
                 "${PHOTOS_PREFIX}cat.jpg" to "jpeg bytes",
             )
         }
+        File(context.filesDir, "photos").mkdirs()
         context.filesDir.setWritable(false)
         assumeFalse("a process running as root writes anyway", context.filesDir.canWrite())
 
