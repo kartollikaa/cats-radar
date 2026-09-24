@@ -97,6 +97,10 @@ dependency off `:app`'s classpath.
 The switch renders what is *stored*, not what was last tapped: it follows the settings flow rather
 than keeping its own optimistic state, so a failed write cannot leave the two disagreeing.
 
+The `galleryUri` a saved original leaves on its cat is also what the photo viewer's *Open in gallery*
+opens, on the installation that saved it and while the gallery still holds the item (see
+[photo-viewer.md](./photo-viewer.md#open-in-gallery)).
+
 ## Reading a photo's metadata
 
 `ExifReader` returns latitude, longitude, the moment the shutter fired, and the UTC offset the

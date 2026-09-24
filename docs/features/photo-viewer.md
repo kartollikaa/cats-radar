@@ -52,15 +52,47 @@ cat*). The detail screen stays drawn underneath.
 The key holds only the cat's id, so after the process is killed the restored viewer loads the cat
 again and shows the same photo.
 
+## Open in gallery
+
+**When it is offered.** A cat whose camera original the app saved to `Pictures/Cats Radar` (see
+[photos.md](./photos.md#the-gallery-setting)) shows a gallery button at the other end of the top bar.
+A tap hands that item to whatever app the phone opens images with — the user's default gallery, or
+the system's choice — with the app's own read access passed on. Whether that gallery lets the user
+swipe on to the photos around it is its own behaviour. A camera photo taken with saving to the gallery
+turned off, and a photo imported or picked from the gallery, offer nothing: the app kept no link to
+where they are (`PhotoViewerStateMapperTest`, *a photo with no original in the gallery offers nothing
+there*).
+
+**The install rule.** The button appears only on the installation that saved the original
+(`GalleryLinkTest`, *an original recorded by another install is never a link here*). A gallery item
+is known by an id that is only meaningful on the phone that made it, so on another phone — after a
+backup was restored there — the same id may be a different picture, possibly another cat the app saved
+there. A reinstall is another installation too, and Android takes away an uninstalled app's hold on
+the items it saved, so there is nothing the app could check either.
+
+**A deleted original.** The item is checked at the tap, not when the viewer opens: MediaStore shows an
+app only the items it owns, and hides one moved to the trash, so an item the query no longer returns
+is gone. Then nothing opens and a message says the photo is no longer in the gallery
+(`ResolveGalleryLinkTest`, *an original deleted from the gallery is gone*; `MediaStoreGalleryItemsTest`
+— a refused query or an unparseable URI reads as gone, never as a crash).
+
+**No gallery app.** A phone with nothing that shows images gets a message that no app can show the
+photo (`GalleryOpenerTest`, *with no app to show an image it reports so instead of crashing*).
+
+**A second tap** while the first is being checked opens the gallery once (`PhotoViewerStoreTest`, *a
+second tap while the first is being checked opens the gallery once*).
+
 ## Where the code lives
 
 - `presentation/…/viewer/` — `PhotoViewerState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/viewer/PhotoViewerScreen.kt`; `ui/…/theme/ViewerColors.kt` — the black stage, whatever the
   app's theme
 - `app/…/navigation/PhotoViewer.kt` (the key and its dialog metadata), `PhotoViewerDestination.kt`,
-  wired into `CatsRadarNavHost.kt` next to `EncounterDetail`
+  wired into `CatsRadarNavHost.kt` next to `EncounterDetail`; `GalleryOpener.kt` — `ACTION_VIEW`
+- `domain/…/model/GalleryLink.kt` — whether a cat has a link here; `domain/…/usecase/ResolveGalleryLink.kt`;
+  `domain/…/platform/GalleryItems.kt`, answered by `data/…/androidMain/platform/MediaStoreGalleryItems.android.kt`
 
 ## Not built yet
 
-Opening the photo in the gallery app. Swiping down to close, swiping to the next cat, sharing, and
-opening the viewer from an Encounters tile or the Map.
+Opening an imported or gallery-picked photo in the gallery. Swiping down to close, swiping to the
+next cat, sharing, and opening the viewer from an Encounters tile or the Map.

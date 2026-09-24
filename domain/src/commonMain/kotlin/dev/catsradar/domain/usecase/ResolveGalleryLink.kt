@@ -24,6 +24,9 @@ class ResolveGalleryLink(
     suspend operator fun invoke(encounterId: String): GalleryTarget {
         val link = encounterRepository.observeById(encounterId).first()?.galleryLink(deviceIdProvider.deviceId)
             ?: return GalleryTarget.Unavailable
-        return if (galleryItems.exists(link.uri)) GalleryTarget.Open(uri = link.uri, grantRead = true) else GalleryTarget.Gone
+        return when {
+            galleryItems.exists(link.uri) -> GalleryTarget.Open(uri = link.uri, grantRead = true)
+            else -> GalleryTarget.Gone
+        }
     }
 }
