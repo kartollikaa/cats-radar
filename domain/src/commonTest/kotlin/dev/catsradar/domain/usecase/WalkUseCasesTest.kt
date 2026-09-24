@@ -7,6 +7,7 @@ import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeWalkRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
@@ -24,7 +25,13 @@ import kotlin.time.Instant
 class WalkUseCasesTest {
 
     private val repository = FakeWalkRepository()
-    private val startWalk = StartWalk(repository, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(START))
+    private val startWalk = StartWalk(
+        repository,
+        FakeIdGenerator(),
+        FakeDeviceIdProvider(),
+        FakeClock(START),
+        analytics = RecordingAnalytics()
+    )
     private val recordTrackPoint = RecordTrackPoint(repository)
 
     private fun fix(atSecond: Int, latOffset: Double = 0.0, accuracy: Float? = 8f) =
@@ -44,11 +51,11 @@ class WalkUseCasesTest {
     fun `ending ends the walk that is on, and a walk can start again afterwards`() = runTest {
         val walk = startWalk()
 
-        val ended = EndWalk(repository, FakeClock(START + 30.minutes))()
+        val ended = EndWalk(repository, FakeClock(START + 30.minutes), analytics = RecordingAnalytics())()
 
         assertEquals(walk.copy(endedAt = START + 30.minutes, updatedAt = START + 30.minutes), ended)
         assertEquals(ended, repository.walks().single())
-        assertNull(EndWalk(repository, FakeClock(START + 31.minutes))())
+        assertNull(EndWalk(repository, FakeClock(START + 31.minutes), analytics = RecordingAnalytics())())
 
         startWalk()
         assertEquals(2, repository.walks().size)
@@ -58,7 +65,7 @@ class WalkUseCasesTest {
     fun `a clock set back before the start ends the walk at its start`() = runTest {
         startWalk()
 
-        val ended = EndWalk(repository, FakeClock(START - 5.minutes))()
+        val ended = EndWalk(repository, FakeClock(START - 5.minutes), analytics = RecordingAnalytics())()
 
         assertEquals(START, assertNotNull(ended).endedAt)
         assertEquals(START - 5.minutes, ended.updatedAt)
@@ -68,12 +75,12 @@ class WalkUseCasesTest {
     @Test
     fun `an end another call already made is not reported as this one's`() = runTest {
         val walk = startWalk()
-        EndWalk(repository, FakeClock(START + 30.minutes))()
+        EndWalk(repository, FakeClock(START + 30.minutes), analytics = RecordingAnalytics())()
         val stale = object : WalkRepository by repository {
             override suspend fun openWalk() = walk
         }
 
-        assertNull(EndWalk(stale, FakeClock(START + 31.minutes))())
+        assertNull(EndWalk(stale, FakeClock(START + 31.minutes), analytics = RecordingAnalytics())())
         assertEquals(START + 30.minutes, repository.walks().single().endedAt)
     }
 

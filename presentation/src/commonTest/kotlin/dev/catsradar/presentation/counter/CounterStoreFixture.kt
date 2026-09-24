@@ -9,6 +9,7 @@ import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
+import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,7 +40,14 @@ internal fun TestScope.newCounterStore(
     val clock = FakeClock(CounterNow)
     val idGenerator = FakeIdGenerator()
     val store = CounterStore(
-        logTally = LogTally(encounterRepository, idGenerator, FakeDeviceIdProvider(), clock, TimeZone.UTC),
+        logTally = LogTally(
+            encounterRepository,
+            idGenerator,
+            FakeDeviceIdProvider(),
+            clock,
+            analytics = NoAnalytics,
+            TimeZone.UTC
+        ),
         logPhoto = LogPhoto(
             encounterRepository = encounterRepository,
             placeCellRepository = FakePlaceCellRepository(),
@@ -52,10 +60,11 @@ internal fun TestScope.newCounterStore(
             deviceIdProvider = FakeDeviceIdProvider(),
             clock = clock,
             timeZone = TimeZone.UTC,
+            analytics = NoAnalytics,
         ),
-        undoLastTally = UndoLastTally(encounterRepository, clock),
-        undoImport = UndoImport(encounterRepository, clock),
-        setCoat = SetCoat(encounterRepository, clock),
+        undoLastTally = UndoLastTally(encounterRepository, clock, analytics = NoAnalytics),
+        undoImport = UndoImport(encounterRepository, clock, analytics = NoAnalytics),
+        setCoat = SetCoat(encounterRepository, clock, analytics = NoAnalytics),
         observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
         observeWalkElapsed = ObserveWalkElapsed(ObserveOpenWalk(walkRepository), clock, ticks = ticks),
         settingsRepository = settingsRepository,

@@ -60,6 +60,12 @@ A token with no `when` arm is a compile error, because the `when` is exhaustive 
 its result is used. Adding a label therefore cannot be half-done: the resource, the token and the
 arm all have to exist before the module compiles.
 
+Only English and Russian reach the APK. AndroidX and Material ship their own words (a dialog's
+"Cancel", a picker's labels) in many more languages, and `localeFilters` in the application
+convention plugin drops all but these two. A phone set to German therefore shows the whole screen in
+English rather than German component labels next to English app text. A third language has to be
+added there as well as in `values-<lang>/`.
+
 A string added to `values/` and forgotten in `values-ru/` is caught by Android Lint's
 `MissingTranslation`, which `:app` runs with `warningsAsErrors = true`. That is the only build-time
 guard on the pair staying complete.

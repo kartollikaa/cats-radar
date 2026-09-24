@@ -28,4 +28,5 @@ jobs:
         with:
           path: ~/.m2/repository/org/robolectric
           key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
-      - run: ./gradlew check --console=plain
+      # check never runs R8, and only a release build shows a dependency that R8 can no longer process.
+      - run: ./gradlew check :app:assembleRelease --console=plain

@@ -2,12 +2,14 @@ package dev.catsradar.presentation.detail
 
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
+import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDigest
 import dev.catsradar.presentation.counter.FakeEncounterRepository
@@ -419,12 +421,38 @@ class EncounterDetailStoreTest {
         assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
     }
 
+    @Test
+    fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat without a photo has no viewer to open`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
-        deleteEncounter = DeleteEncounter(repository, clock),
-        undoDelete = UndoDelete(repository),
-        setCoat = SetCoat(repository, clock),
+        deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
+        undoDelete = UndoDelete(repository, analytics = NoAnalytics),
+        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
         attachPhoto = AttachPhoto(
             encounterRepository = repository,
             settingsRepository = FakeSettingsRepository(),
@@ -434,6 +462,7 @@ class EncounterDetailStoreTest {
             photoStorage = FakePhotoStorage(),
             idGenerator = FakeIdGenerator(),
             clock = clock,
+            analytics = NoAnalytics,
         ),
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,

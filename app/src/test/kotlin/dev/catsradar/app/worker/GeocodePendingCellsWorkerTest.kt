@@ -6,6 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
+import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.platform.GeocodeResult
 import dev.catsradar.domain.platform.ReverseGeocoder
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
@@ -33,7 +35,14 @@ class GeocodePendingCellsWorkerTest {
             override suspend fun resolve(lat: Double, lon: Double): GeocodeResult = GeocodeResult.Failed
         }
         val resolve = ResolvePendingPlaces(cells, failingGeocoder, clock)
-        val koin = koinApplication { modules(module { single { resolve } }) }.koin
+        val koin = koinApplication {
+            modules(
+                module {
+                    single { resolve }
+                    single<NonFatalReporter> { RecordingNonFatalReporter() }
+                },
+            )
+        }.koin
         return TestListenableWorkerBuilder<GeocodePendingCellsWorker>(context)
             .setInputData(inputData)
             .setWorkerFactory(KoinWorkerFactory(koin))

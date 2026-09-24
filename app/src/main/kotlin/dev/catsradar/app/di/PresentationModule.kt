@@ -18,6 +18,8 @@ import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.statistics.StatisticsStateMapper
 import dev.catsradar.presentation.statistics.StatisticsStore
+import dev.catsradar.presentation.viewer.PhotoViewerStateMapper
+import dev.catsradar.presentation.viewer.PhotoViewerStore
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
@@ -50,6 +52,10 @@ val presentationModule = module {
     viewModelOf(::SettingsStore)
     viewModel { (parent: dev.catsradar.domain.region.RegionKey?) ->
         RegionsStore(parent = parent, observeRegion = get(), stateMapper = get(), clock = get(), timeZone = get())
+    }
+    factoryOf(::PhotoViewerStateMapper)
+    viewModel { (encounterId: String) ->
+        PhotoViewerStore(encounterId = encounterId, observeEncounter = get(), stateMapper = get())
     }
     viewModel { (encounterId: String) ->
         EncounterDetailStore(

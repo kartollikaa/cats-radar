@@ -152,7 +152,9 @@ so on top of the resizer's turn it would turn every rotated photo twice.
 Copies written before the resizer applied the turn are rebuilt once. At start `RegeneratePhotoCopies`
 writes the copy and thumbnail of every photo with a gallery original again from that original, under
 the names its row already holds, soft-deleted cats included so an undo brings back an upright one.
-It repeats at each start until one pass completes, then never runs again. A photo with no original
+It repeats at each start until one pass completes, then never runs again; a pass that fails, even by
+running out of memory on one photo, is reported to Crashlytics as a non-fatal (`analytics.md`) and
+never takes the app down. A photo with no original
 to go back to keeps the copy it has: an import, whose `galleryUri` is always null, a camera photo
 taken with gallery saving off, one whose gallery item has been deleted since, or a row whose copy is
 not a `.jpg` the resizer could have written. A backup restored after the pass brings its photos back
@@ -230,7 +232,8 @@ nothing, which keeps a fixture that large small in the repository.
 
 A photo encounter shows its thumbnail in an Encounters tile or card, the app's full copy when it
 shares a pair row with the photo next to it (see `browsing-cats.md`), and the full copy on the detail
-screen, all loaded from app-private storage with Coil. The mapper resolves the stored **relative**
+screen, all loaded from app-private storage with Coil; a tap on the detail screen's photo opens the
+same copy fullscreen (see [photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens
 to hold. A pair tile with no full copy falls back to its thumbnail.
 

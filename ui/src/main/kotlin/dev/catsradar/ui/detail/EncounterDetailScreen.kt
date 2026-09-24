@@ -2,6 +2,7 @@ package dev.catsradar.ui.detail
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,6 +51,7 @@ fun EncounterDetailScreen(
     onCoatClick: (CoatOption?) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
+    onPhotoClick: () -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
         when (state) {
@@ -59,6 +62,7 @@ fun EncounterDetailScreen(
                 onCoatClick = onCoatClick,
                 onTakePhotoClick = onTakePhotoClick,
                 onPickPhotoClick = onPickPhotoClick,
+                onPhotoClick = onPhotoClick,
             )
             is EncounterDetailState.Deleted -> DeletedDetail(state, onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing)
@@ -74,6 +78,7 @@ private fun LoadedDetail(
     onCoatClick: (CoatOption?) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
+    onPhotoClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -85,7 +90,15 @@ private fun LoadedDetail(
             AsyncImage(
                 model = photoPath,
                 contentDescription = stringResource(R.string.detail_photo_description),
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.extraLarge),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(MaterialTheme.shapes.extraLarge)
+                    .clickable(
+                        onClickLabel = stringResource(R.string.detail_open_photo),
+                        role = Role.Image,
+                        onClick = onPhotoClick,
+                    ),
                 contentScale = ContentScale.Crop,
             )
         } else if (addPhoto != null) {

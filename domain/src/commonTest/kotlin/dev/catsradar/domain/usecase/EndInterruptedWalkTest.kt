@@ -7,6 +7,7 @@ import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeSettingsRepository
 import dev.catsradar.domain.testing.FakeWalkRecordingState
 import dev.catsradar.domain.testing.FakeWalkRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,7 +25,13 @@ class EndInterruptedWalkTest {
     private val recording = FakeWalkRecordingState(recording = true)
     private val endInterruptedWalk = EndInterruptedWalk(walks, settings, recording, FakeClock(START + 2.hours))
 
-    private suspend fun startWalk() = StartWalk(walks, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(START))()
+    private suspend fun startWalk() = StartWalk(
+        walks,
+        FakeIdGenerator(),
+        FakeDeviceIdProvider(),
+        FakeClock(START),
+        analytics = RecordingAnalytics()
+    )()
 
     private fun point(walkId: String, at: Instant) = TrackPoint(walkId, at, 41.3851, 2.1734, 8f)
 

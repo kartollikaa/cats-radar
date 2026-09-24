@@ -1,13 +1,14 @@
 # Static Analysis
 
 Three tools, all wired through `build-logic` so a module gets them by applying its convention plugin.
-`./gradlew check` runs everything below plus unit tests; CI runs the same command.
+`./gradlew check` runs everything below plus unit tests; CI runs the same command, then
+`:app:assembleRelease` so a dependency R8 can no longer process fails there rather than at release time.
 
 | Tool | What it catches | Config |
 |---|---|---|
 | **detekt** with `detekt-formatting` and `compose-rules` | Style and complexity; ktlint-equivalent formatting; Compose-specific rules (modifier order and defaults, unstable collection parameters, `remember` misuse, preview naming) | `config/detekt/detekt.yml`; **no baseline file** — `config/detekt/baseline.xml` is never created, a finding on existing code is fixed, not suppressed |
 | **Android Lint** | Manifest, resource, API-level and Compose runtime issues, **`:app` and `:ui` only** — AGP's Kotlin Multiplatform Android Library plugin has no lint-report task, so `:domain`/`:data`/`:presentation` are configured but not actually checked | Gradle DSL only (`lint { }` in the convention plugins); no root `lint.xml` — the DSL covers everything needed; `warningsAsErrors = true`, `abortOnError = true` |
-| **Konsist** | The five import-boundary rules and the composable-Modifier, `*Store`, `*State` naming rules below — **not** `*Intent`/`*Effect`/`*StateMapper` naming, which has no test | Plain unit tests under `app/src/test/…/architecture` |
+| **Konsist** | The six import-boundary rules, the analytics-event field rule, and the composable-Modifier, `*Store`, `*State` naming rules below — **not** `*Intent`/`*Effect`/`*StateMapper` naming, which has no test | Plain unit tests under `app/src/test/…/architecture` |
 
 ## detekt conventions
 
@@ -72,3 +73,8 @@ Native code inside a dependency. A green `check` says nothing about whether the 
 AndroidX AAR ships are 16 KB page compatible, and `GradleDependency` is disabled, so a version bump
 that reintroduces the problem passes every gate here. The app has to be launched on a 16 KB device
 to find out — see [docs/reference/16kb-page-size.md](../reference/16kb-page-size.md).
+
+What R8 removes from a release build. `check` builds and tests unminified code, so a class a library
+creates from its name, like a Glance action callback, can lose its constructor in the release APK
+while every gate here stays green. Only that APK, launched, shows it — see
+[docs/reference/releasing.md](../reference/releasing.md).

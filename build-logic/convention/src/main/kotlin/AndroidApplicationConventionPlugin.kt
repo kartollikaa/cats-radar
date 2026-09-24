@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import dev.catsradar.buildlogic.configureAndroid
 import dev.catsradar.buildlogic.configureLintSeverity
 import dev.catsradar.buildlogic.libs
@@ -8,6 +9,8 @@ import dev.catsradar.buildlogic.version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import java.io.StringReader
+import java.util.Properties
 
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -18,7 +21,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             configureAndroid(this)
             namespace = moduleNamespace()
             defaultConfig {
-                applicationId = "dev.catsradar"
+                applicationId = "com.kartollika.catsradar"
                 targetSdk = libs.version("android-targetSdk").toInt()
                 versionCode = libs.version("app-versionCode").toInt()
                 versionName = libs.version("app-versionName")
@@ -33,20 +36,41 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 configureLintSeverity()
                 checkDependencies = true
             }
+            // Libraries translate into far more languages than the app; their extra words would mix into its UI.
+            androidResources { localeFilters += listOf("en", "ru") }
+            buildTypes.getByName("release") {
+                isMinifyEnabled = true
+                isShrinkResources = true
+                proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+                // Releases go to 64-bit ARM phones only; every other ABI repeats MapLibre's native library.
+                ndk { abiFilters += "arm64-v8a" }
+            }
             signReleaseWithLocalKey(target)
+        }
+        extensions.configure<ApplicationAndroidComponentsExtension> {
+            // A sideloaded APK's download size outweighs unpacking its native libraries at install.
+            onVariants(selector().withBuildType("release")) { it.packaging.jniLibs.useLegacyPackaging.set(true) }
         }
     }
 }
 
-// The key never enters the repo: without these properties a release build is left unsigned.
+// The key never enters the repo: without a signing file a release build is left unsigned.
 private fun ApplicationExtension.signReleaseWithLocalKey(project: Project) {
-    fun property(name: String) = project.providers.gradleProperty("catsradar.release.$name")
-    val storeFile = property("storeFile").orNull ?: return
+    val path = project.providers.gradleProperty("kartollika.signingFile").orNull ?: return
+    val signingFile = project.file(path.replaceFirst(Regex("^~(?=/|$)"), System.getProperty("user.home")))
+    require(signingFile.isFile) { "kartollika.signingFile points at $signingFile, which is not a file" }
+    val values = Properties().apply {
+        val contents = project.providers.fileContents(project.layout.projectDirectory.file(signingFile.absolutePath))
+        load(StringReader(contents.asText.get()))
+    }
+    fun value(name: String) =
+        values.getProperty(name)?.takeIf { it.isNotBlank() } ?: error("$name is missing or empty in $signingFile")
     val key = signingConfigs.create("release") {
-        this.storeFile = project.file(storeFile)
-        storePassword = property("storePassword").get()
-        keyAlias = property("keyAlias").get()
-        keyPassword = property("keyPassword").get()
+        // Resolved against the signing file's folder, so the keystore can sit next to it.
+        storeFile = signingFile.parentFile.resolve(value("storeFile"))
+        storePassword = value("storePassword")
+        keyAlias = value("keyAlias")
+        keyPassword = value("keyPassword")
     }
     buildTypes.getByName("release").signingConfig = key
 }
