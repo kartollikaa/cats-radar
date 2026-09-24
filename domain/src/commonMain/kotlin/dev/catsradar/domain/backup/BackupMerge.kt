@@ -89,8 +89,8 @@ object BackupMerge {
         val offeredAt = offered.resolvedAt ?: return false
         return keptAt == null || offeredAt > keptAt
     }
-
-    // An archive is a file, not a table: nothing stops it listing one row twice.
-    private fun <T, K> List<T>.oneRowPer(key: (T) -> K, beats: (offered: T, kept: T) -> Boolean): List<T> =
-        groupingBy(key).reduce { _, kept, offered -> if (beats(offered, kept)) offered else kept }.values.toList()
 }
+
+// An archive is a file, not a table: nothing stops it listing one row twice.
+internal fun <T, K> List<T>.oneRowPer(key: (T) -> K, beats: (offered: T, kept: T) -> Boolean): List<T> =
+    groupingBy(key).reduce { _, kept, offered -> if (beats(offered, kept)) offered else kept }.values.toList()

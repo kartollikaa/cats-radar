@@ -1,5 +1,6 @@
 package dev.catsradar.domain.backup
 
+import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
 import kotlin.time.Instant
@@ -11,10 +12,12 @@ import kotlin.time.Instant
 internal object WalkMerge {
 
     fun merge(local: BackupContents, imported: BackupContents): Pair<List<Walk>, List<TrackPoint>> {
+        val importedWalks = imported.walks.oneRowPer(Walk::id) { offered, kept -> offered.updatedAt > kept.updatedAt }
         val localWalks = local.walks.associateBy { it.id }
-        val known = localWalks.keys + imported.walks.map { it.id }
+        val known = localWalks.keys + importedWalks.map { it.id }
         val here = local.trackPoints.mapTo(mutableSetOf()) { it.walkId to it.at }
         val newPoints = imported.trackPoints
+            .filter { pointOnGlobe(it.lat, it.lon) != null }
             .distinctBy { it.walkId to it.at }
             .filter { (it.walkId to it.at) !in here && it.walkId in known }
         val lastPointAt = (local.trackPoints + newPoints)
@@ -22,7 +25,7 @@ internal object WalkMerge {
             .mapValues { (_, points) -> points.maxOf { it.at } }
         val onHere = local.walks.firstOrNull { it.endedAt == null }?.id
 
-        val walks = imported.walks.mapNotNull { candidate ->
+        val walks = importedWalks.mapNotNull { candidate ->
             val existing = localWalks[candidate.id]
             val winner = if (existing == null || candidate.updatedAt > existing.updatedAt) candidate else existing
             val settled = winner.settle(isOnHere = winner.id == onHere, lastPointAt = lastPointAt[winner.id])
