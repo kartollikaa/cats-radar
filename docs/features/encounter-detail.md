@@ -30,6 +30,30 @@ communication the MVI rules forbid — or a shell-level snackbar whose window li
 timing and cannot be tested with virtual time. Keeping the window in `EncounterDetailStore` makes
 "undo is available for exactly this long, then the screen closes" a plain unit test.
 
+## Giving a cat a photo
+
+A cat with no photo of its own shows a **Photo** section instead, with *Take a photo* and *Choose
+from gallery* — the system camera, or the system picker for a single image. Tapping either starts an
+attempt: both buttons disable and a progress bar takes their place, so a second tap cannot start a
+second attempt over the first (`EncounterDetailStoreTest`, *taking a photo while one is being
+attached opens nothing*).
+
+The buttons do not come back the instant an attempt succeeds. On success the Store deliberately does
+nothing with `AttachPhoto`'s own result: the row it has been observing since the screen opened will
+emit the new `photoPath` on its own, and only that emission swaps the offer for the photo. Acting on
+the write's own result instead would show the photo, or reopen the offer, a moment before either is
+really true (`EncounterDetailStoreTest`, *a successful attach stays in progress until the photo
+arrives, never offering again*).
+
+A cancelled camera or a dismissed picker leaves the screen exactly as it was — no attempt starts
+(`EncounterDetailStoreTest`, *a cancelled camera or picker changes nothing*). A camera capture that
+does start has its temporary file removed once the attempt finishes, whatever the outcome
+(`PhotoLaunchers.kt`); a photo picked from the gallery was never copied anywhere first, so there is
+nothing of the picker's to remove (`EncounterDetailStoreTest`, *a photo from the camera lands on the
+cat and its original is discarded*; *a photo from the gallery lands on the cat and nothing is
+discarded*). See [photos.md](./photos.md) for what the attempt itself does with the files, the
+gallery setting, and an image it cannot decode.
+
 ## At the edges
 
 - **Pressing delete twice soft-deletes once.** The Store flips its own flag before the suspending
@@ -52,16 +76,23 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
   the window is bound to the screen, and the Counter offers the same trade.
 - **Pushing the same detail twice** — a double-tap on a row — puts one entry on the back stack, not
   two (`BottomNavigationTest`, *pushing a key already on the stack leaves the stack unchanged*).
+- **The cat is deleted, or already given a photo some other way, while an attempt is running** — the
+  attempt's own files are removed and the row is left as it is, with no separate message: the screen
+  already shows whatever the cat became, the same as any other change made elsewhere while it is
+  open (see [photos.md](./photos.md)).
+- **Setting the coat while a photo is being attached** keeps both; the coat write only ever touches
+  the `coat` column (see [coat.md](./coat.md#at-the-edges)).
 
 ## Where the code lives
 
 - `domain/…/usecase/ObserveEncounter.kt`, `DeleteEncounter.kt`, `UndoDelete.kt`
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`
+- `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
-  `CatsRadarNavHost.kt` (`EncounterDetailDestination`)
+  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`),
+  `PhotoLaunchers.kt` (the camera and gallery-picker launchers)
 
 ## Not built yet
 
-No photo on the detail (slice 11), no coat (slice 22), no place name (slice 14), no map. The
-coordinates are shown as numbers only.
+No place name and no map yet — coordinates are shown as numbers only. A photo already on a cat
+cannot be replaced or removed from this screen (see `photos.md`).
