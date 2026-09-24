@@ -7,16 +7,23 @@ import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.model.locatedPoint
 
-/** One row of a region list: a real place, or one of the two pseudo-nodes. */
+/** One row of a region list: a real place, or one of the pseudo-nodes. */
 data class RegionNode(val key: RegionKey, val label: RegionLabel, val count: Int)
 
 sealed interface RegionKey {
+    sealed interface AreaParent : RegionKey
+
     data class Country(val countryCode: String) : RegionKey
-    data class City(val countryCode: String, val city: String) : RegionKey
-    data class Area(val areaHash: String) : RegionKey
+    data class City(val countryCode: String, val city: String) : AreaParent
+
+    /** [parent]'s encounters inside [areaHash]; another parent's encounters in the same patch are not in it. */
+    data class Area(val areaHash: String, val parent: AreaParent) : RegionKey
 
     /** Encounters with coordinates whose cell has no name — pending, failed, or unavailable. */
-    data object Unresolved : RegionKey
+    data object Unresolved : AreaParent
+
+    /** Encounters in [countryCode] whose cell names neither a locality nor an admin area. */
+    data class NoCity(val countryCode: String) : AreaParent
 
     /** Encounters with no location: no point on the globe, or marked as having none. */
     data object NoLocation : RegionKey
@@ -30,6 +37,7 @@ sealed interface RegionLabel {
     data class Named(val name: String) : RegionLabel
     data class Coordinates(val lat: Double, val lon: Double) : RegionLabel
     data object Unresolved : RegionLabel
+    data object NoCity : RegionLabel
     data object NoLocation : RegionLabel
 }
 
@@ -58,26 +66,28 @@ object RegionTree {
             pseudoNode(RegionKey.NoLocation, RegionLabel.NoLocation, unlocated.size)
     }
 
-    /** Cities within one country, busiest first. */
+    /** Cities within one country, busiest first; then No city, for the cats whose cell names none. */
     fun cities(countryCode: String, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
         val byCell = cells.associateBy { it.cellId }
-        return encounters
+        val cityNames = encounters
             .filter { it.deletedAt == null }
             .mapNotNull { it.resolvedCell(byCell) }
             .filter { it.countryCode == countryCode }
-            // adminArea is the fallback because a rural point often has a region but no locality.
-            .mapNotNull { it.locality ?: it.adminArea }
+            .map { it.cityName() }
+        val cities = cityNames
+            .filterNotNull()
             .groupingBy { it }
             .eachCount()
             .map { (city, count) -> RegionNode(RegionKey.City(countryCode, city), RegionLabel.Named(city), count) }
             .sortedByDescending { it.count }
+        return cities + pseudoNode(RegionKey.NoCity(countryCode), RegionLabel.NoCity, cityNames.count { it == null })
     }
 
     /**
      * Areas under a node. Areas come from the coordinates, so they work with no network and even for
      * encounters whose cell was never named or never created.
      */
-    fun areas(parent: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
+    fun areas(parent: RegionKey.AreaParent, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
         val byCell = cells.associateBy { it.cellId }
         return encounters
             .filter { it.deletedAt == null }
@@ -86,7 +96,7 @@ object RegionTree {
             .groupBy({ it.first }, { it.second })
             .map { (areaHash, group) ->
                 RegionNode(
-                    key = RegionKey.Area(areaHash),
+                    key = RegionKey.Area(areaHash, parent),
                     label = areaLabel(areaHash, group, byCell),
                     count = group.size,
                 )
@@ -120,10 +130,9 @@ object RegionTree {
         val cell = resolvedCell(byCell)
         return when (parent) {
             is RegionKey.Country -> cell?.countryCode == parent.countryCode
-            is RegionKey.City ->
-                cell?.countryCode == parent.countryCode &&
-                    (cell.locality ?: cell.adminArea) == parent.city
-            is RegionKey.Area -> areaHash() == parent.areaHash
+            is RegionKey.City -> cell?.countryCode == parent.countryCode && cell.cityName() == parent.city
+            is RegionKey.NoCity -> cell?.countryCode == parent.countryCode && cell.cityName() == null
+            is RegionKey.Area -> areaHash() == parent.areaHash && belongsTo(parent.parent, byCell)
             RegionKey.Unresolved -> locatedPoint() != null && cell == null
             RegionKey.NoLocation -> locatedPoint() == null
         }
@@ -145,3 +154,6 @@ object RegionTree {
     private fun pseudoNode(key: RegionKey, label: RegionLabel, count: Int): List<RegionNode> =
         if (count == 0) emptyList() else listOf(RegionNode(key, label, count))
 }
+
+// adminArea is the fallback because a rural point often has a region but no locality.
+private fun PlaceCell.cityName(): String? = locality ?: adminArea

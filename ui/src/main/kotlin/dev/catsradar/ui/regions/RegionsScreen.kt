@@ -75,6 +75,7 @@ private fun RegionRowLabel.text(): String = when (this) {
     is RegionRowLabel.Named -> name
     is RegionRowLabel.Coordinates -> stringResource(R.string.regions_area_at, text)
     RegionRowLabel.Unresolved -> stringResource(R.string.regions_unresolved)
+    RegionRowLabel.NoCity -> stringResource(R.string.regions_no_city)
     RegionRowLabel.NoLocation -> stringResource(R.string.regions_no_location)
 }
 
@@ -111,6 +112,14 @@ private fun RegionsScreenPreview() {
 
 @ThemePreviews
 @Composable
+private fun RegionsScreenCitiesPreview() {
+    CatsRadarTheme {
+        Surface { RegionsScreen(state = sampleCities) }
+    }
+}
+
+@ThemePreviews
+@Composable
 private fun RegionsScreenEmptyPreview() {
     CatsRadarTheme {
         Surface { RegionsScreen(state = RegionsState()) }
@@ -123,5 +132,13 @@ private val sampleRegions = RegionsState(
         RegionRowState(RegionRowKey.Country("FR"), RegionRowLabel.Named("France"), "14", drillable = true),
         RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "6", drillable = true),
         RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "3", drillable = true),
+    ),
+)
+
+private val sampleCities = RegionsState(
+    rows = persistentListOf(
+        RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "97", drillable = true),
+        RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "29", drillable = true),
+        RegionRowState(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2", drillable = true),
     ),
 )

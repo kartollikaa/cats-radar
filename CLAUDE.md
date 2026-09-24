@@ -22,8 +22,9 @@ Personal cat-encounter counter. Android-first Kotlin Multiplatform; design spec 
   convention plugin from `build-logic` and configures nothing else.
 - Package root `dev.catsradar`. Module packages: `dev.catsradar.domain`, `.data`, `.presentation`,
   `.ui`, `.app`.
-- Tests first (`commonTest` with fakes; Robolectric only for Room). `./gradlew check` must be green
-  before a PR.
+- Tests first (`commonTest` with fakes). Robolectric only where the subject is Android itself — Room,
+  resources, a `Bundle`, a widget — never for logic a plain JVM test reaches. `./gradlew check` must
+  be green before a PR.
 - Every slice ends with an independent code review (`/code-review` on the PR) and the acceptance
   gate against its frozen criteria; findings are fixed before the PR is marked ready.
 - **Every change to a feature's behaviour updates that feature's document in `docs/features/` in the

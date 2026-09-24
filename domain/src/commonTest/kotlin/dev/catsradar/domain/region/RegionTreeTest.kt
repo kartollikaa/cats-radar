@@ -113,11 +113,99 @@ class RegionTreeTest {
     }
 
     @Test
-    fun `a cell with neither locality nor admin area contributes no city row`() {
+    fun `a cell that names no city puts its cat under No city, not nowhere`() {
         val nameless = located(42.0, 1.0)
         val cells = listOf(placeCellFixture(nameless, locality = null, adminArea = null))
 
-        assertEquals(emptyList(), RegionTree.cities("ES", listOf(nameless), cells))
+        assertEquals(
+            listOf(RegionNode(RegionKey.NoCity("ES"), RegionLabel.NoCity, 1)),
+            RegionTree.cities("ES", listOf(nameless), cells),
+        )
+    }
+
+    @Test
+    fun `No city comes after every real city, even when it holds more cats`() {
+        val barcelona = located(41.390, 2.170)
+        val nameless = listOf(located(42.100, 1.400), located(42.300, 1.200))
+        val cells = listOf(placeCellFixture(barcelona)) + nameless.map { placeCellFixture(it, locality = null) }
+
+        val cities = RegionTree.cities("ES", nameless + barcelona, cells)
+
+        assertEquals(listOf(BARCELONA, RegionKey.NoCity("ES")), cities.map { it.key })
+    }
+
+    @Test
+    fun `No city opens the areas of its own country's city-less cats only`() {
+        val nameless = located(42.100, 1.400)
+        val barcelona = located(41.390, 2.170)
+        val french = located(48.850, 2.350)
+        val cells = listOf(
+            placeCellFixture(nameless, locality = null),
+            placeCellFixture(barcelona),
+            placeCellFixture(french, "FR", "France", locality = null),
+        )
+
+        val areas = RegionTree.areas(RegionKey.NoCity("ES"), listOf(nameless, barcelona, french), cells)
+
+        assertEquals(listOf(areaOf(nameless, RegionKey.NoCity("ES"))), areas.map { it.key })
+    }
+
+    @Test
+    fun `No city's areas add up to it`() {
+        val nameless = listOf(located(42.100, 1.400), located(42.300, 1.200))
+        val rural = located(42.000, 1.000)
+        val all = nameless + rural
+        val cells = nameless.map { placeCellFixture(it, locality = null) } +
+            placeCellFixture(rural, locality = null, adminArea = "Catalonia")
+
+        val noCity = RegionTree.cities("ES", all, cells).single { it.key == RegionKey.NoCity("ES") }
+
+        assertEquals(2, noCity.count)
+        assertEquals(noCity.count, RegionTree.areas(RegionKey.NoCity("ES"), all, cells).sumOf { it.count })
+    }
+
+    @Test
+    fun `a located cat with no geohash still lands in an area, from its coordinates`() {
+        val stored = located(41.390, 2.170)
+        val withoutGeohash = located(41.392, 2.172).copy(geohash = null)
+        val all = listOf(stored, withoutGeohash)
+        val cells = all.map { placeCellFixture(it) }
+
+        val city = RegionTree.cities("ES", all, cells).single()
+        val areas = RegionTree.areas(BARCELONA, all, cells)
+
+        assertEquals(BARCELONA, city.key)
+        assertEquals(2, city.count)
+        assertEquals(listOf(areaOf(stored, BARCELONA) to 2), areas.map { it.key to it.count })
+    }
+
+    @Test
+    fun `a geohash too short or garbled to hold an area is set aside for the coordinates`() {
+        val short = located(41.390, 2.170).copy(geohash = "sp3")
+        val garbled = located(41.392, 2.172).copy(geohash = "sp!e3qu4")
+        val all = listOf(short, garbled)
+        val cells = all.map { placeCellFixture(it) }
+
+        val areas = RegionTree.areas(BARCELONA, all, cells)
+
+        assertEquals(listOf(RegionKey.Country("ES")), RegionTree.countries(all, cells).map { it.key })
+        assertEquals(listOf(areaOf(located(41.390, 2.170), BARCELONA) to 2), areas.map { it.key to it.count })
+    }
+
+    @Test
+    fun `a cat marked located with nothing to place it by is No location, and listed there`() {
+        val intact = located(41.390, 2.170)
+        val placeless = listOf(
+            intact.copy(id = "no-coordinates", lat = null, lon = null, geohash = null),
+            intact.copy(id = "off-the-globe", lat = 91.0, geohash = null),
+        )
+        val cells = listOf(placeCellFixture(intact))
+
+        assertEquals(
+            listOf(RegionNode(RegionKey.NoLocation, RegionLabel.NoLocation, 2)),
+            RegionTree.countries(placeless, cells),
+        )
+        assertEquals(placeless, RegionTree.encountersIn(RegionKey.NoLocation, placeless, cells))
     }
 
     @Test
@@ -142,7 +230,8 @@ class RegionTreeTest {
 
         val nodes = RegionTree.areas(RegionKey.Unresolved, listOf(bare), emptyList())
 
-        assertEquals(listOf(RegionKey.Area(Geohash.encode(41.4, 2.2, Tuning.AREA_PRECISION))), nodes.map { it.key })
+        val impliedArea = RegionKey.Area(Geohash.encode(41.4, 2.2, Tuning.AREA_PRECISION), RegionKey.Unresolved)
+        assertEquals(listOf(impliedArea), nodes.map { it.key })
         val inArea = RegionTree.encountersIn(nodes.single().key, listOf(bare), emptyList())
         assertEquals(listOf(bare.id), inArea.map { it.id })
     }
@@ -194,24 +283,26 @@ class RegionTreeTest {
             placeCellFixture(other, subLocality = "Eixample"),
         )
 
-        val nodes = RegionTree.areas(RegionKey.Country("ES"), gracia + other, cells)
+        val nodes = RegionTree.areas(BARCELONA, gracia + other, cells)
 
         assertEquals(RegionLabel.Named("Gracia"), nodes.first().label)
     }
 
     @Test
-    fun `a country's cities add up to the country when every cell names a city`() {
+    fun `a country's cities add up to the country, a cell that names no city included`() {
         val barcelona = listOf(located(41.390, 2.170), located(41.440, 2.190))
         val girona = located(41.980, 2.820)
         val rural = located(42.100, 1.400)
-        val all = barcelona + girona + rural
+        val atSea = located(41.000, 3.000)
+        val all = barcelona + girona + rural + atSea
         val cells = barcelona.map { placeCellFixture(it) } +
             placeCellFixture(girona, locality = "Girona") +
-            placeCellFixture(rural, locality = null, adminArea = "Catalonia")
+            placeCellFixture(rural, locality = null, adminArea = "Catalonia") +
+            placeCellFixture(atSea, locality = null)
 
         val spain = RegionTree.countries(all, cells).single { it.key == RegionKey.Country("ES") }
 
-        assertEquals(4, spain.count)
+        assertEquals(5, spain.count)
         assertEquals(spain.count, RegionTree.cities("ES", all, cells).sumOf { it.count })
     }
 
@@ -223,7 +314,7 @@ class RegionTreeTest {
 
         val cities = RegionTree.cities("ES", listOf(girona) + barcelona, cells)
 
-        assertEquals(listOf(RegionKey.City("ES", "Barcelona"), RegionKey.City("ES", "Girona")), cities.map { it.key })
+        assertEquals(listOf(BARCELONA, RegionKey.City("ES", "Girona")), cities.map { it.key })
     }
 
     @Test
@@ -232,9 +323,9 @@ class RegionTreeTest {
         val girona = located(41.980, 2.820)
         val cells = barcelona.map { placeCellFixture(it) } + placeCellFixture(girona, locality = "Girona")
 
-        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), barcelona + girona, cells)
+        val areas = RegionTree.areas(BARCELONA, barcelona + girona, cells)
 
-        assertEquals(barcelona.map { areaOf(it) }, areas.map { it.key })
+        assertEquals(barcelona.map { areaOf(it, BARCELONA) }, areas.map { it.key })
     }
 
     @Test
@@ -244,10 +335,10 @@ class RegionTreeTest {
         val all = barcelona + girona
         val cells = barcelona.map { placeCellFixture(it) } + placeCellFixture(girona, locality = "Girona")
 
-        val city = RegionTree.cities("ES", all, cells).single { it.key == RegionKey.City("ES", "Barcelona") }
+        val city = RegionTree.cities("ES", all, cells).single { it.key == BARCELONA }
 
         assertEquals(3, city.count)
-        assertEquals(city.count, RegionTree.areas(city.key, all, cells).sumOf { it.count })
+        assertEquals(city.count, RegionTree.areas(BARCELONA, all, cells).sumOf { it.count })
     }
 
     @Test
@@ -256,9 +347,9 @@ class RegionTreeTest {
         val pair = listOf(located(41.390, 2.170), located(41.392, 2.172))
         val all = listOf(lone) + pair
 
-        val areas = RegionTree.areas(RegionKey.City("ES", "Barcelona"), all, all.map { placeCellFixture(it) })
+        val areas = RegionTree.areas(BARCELONA, all, all.map { placeCellFixture(it) })
 
-        assertEquals(listOf(areaOf(pair.first()), areaOf(lone)), areas.map { it.key })
+        assertEquals(listOf(areaOf(pair.first(), BARCELONA), areaOf(lone, BARCELONA)), areas.map { it.key })
     }
 
     @Test
@@ -268,9 +359,39 @@ class RegionTreeTest {
         val neighbour = located(41.440, 2.190)
         val all = inside + deleted + neighbour
 
-        val found = RegionTree.encountersIn(areaOf(inside.first()), all, all.map { placeCellFixture(it) })
+        val found = RegionTree.encountersIn(areaOf(inside.first(), BARCELONA), all, all.map { placeCellFixture(it) })
 
         assertEquals(inside.map { it.id }, found.map { it.id })
+    }
+
+    @Test
+    fun `a city's area lists exactly the cats its row counts, not another parent's in the same patch`() {
+        val patch = SharedPatch()
+
+        val (row, listing) = patch.openAreaOf(BARCELONA)
+
+        assertEquals(patch.barcelona.map { it.id }, listing.map { it.id })
+        assertEquals(row.count, listing.size)
+    }
+
+    @Test
+    fun `No city's area lists exactly the cats its row counts, not another parent's in the same patch`() {
+        val patch = SharedPatch()
+
+        val (row, listing) = patch.openAreaOf(RegionKey.NoCity("ES"))
+
+        assertEquals(listOf(patch.cityless.id), listing.map { it.id })
+        assertEquals(row.count, listing.size)
+    }
+
+    @Test
+    fun `Not named yet's area lists exactly the cats its row counts, not another parent's in the same patch`() {
+        val patch = SharedPatch()
+
+        val (row, listing) = patch.openAreaOf(RegionKey.Unresolved)
+
+        assertEquals(listOf(patch.unnamed.id), listing.map { it.id })
+        assertEquals(row.count, listing.size)
     }
 
     @Test
@@ -300,7 +421,31 @@ class RegionTreeTest {
         assertTrue(RegionTree.countries(emptyList(), emptyList()).isEmpty())
     }
 
+    private inner class SharedPatch {
+        val barcelona = listOf(located(41.390, 2.170), located(41.392, 2.172))
+        val hospitalet = located(41.364, 2.165)
+        val cityless = located(41.370, 2.160)
+        val unnamed = located(41.381, 2.176)
+        val all = barcelona + hospitalet + cityless + unnamed
+        val cells = barcelona.map { placeCellFixture(it) } +
+            placeCellFixture(hospitalet, locality = "L'Hospitalet de Llobregat") +
+            placeCellFixture(cityless, locality = null) +
+            placeCellFixture(unnamed, null, null, locality = null, status = PlaceStatus.PENDING)
+
+        init {
+            val areaHashes = all.map { Geohash.encode(it.lat!!, it.lon!!, Tuning.AREA_PRECISION) }
+            check(areaHashes.distinct().size == 1) { "the patch is not one area" }
+            check(cells.map { it.cellId }.distinct().size == cells.size) { "two cats share a place cell" }
+        }
+
+        fun openAreaOf(parent: RegionKey.AreaParent): Pair<RegionNode, List<Encounter>> {
+            val row = RegionTree.areas(parent, all, cells).single()
+            return row to RegionTree.encountersIn(row.key, all, cells)
+        }
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-22T08:00:00Z")
+        val BARCELONA = RegionKey.City("ES", "Barcelona")
     }
 }
