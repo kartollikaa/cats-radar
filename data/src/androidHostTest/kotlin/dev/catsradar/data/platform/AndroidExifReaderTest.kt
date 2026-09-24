@@ -1,6 +1,10 @@
 package dev.catsradar.data.platform
 
+import android.Manifest
+import android.app.Application
 import android.content.Context
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
@@ -9,6 +13,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import java.io.File
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -93,6 +99,19 @@ class AndroidExifReaderTest {
     @Test
     fun aPathThatDoesNotExistReadsAsEmptyInsteadOfThrowing() = runTest {
         assertEquals(null, reader().read("${temporaryFolder.root}/nothing-here.jpg").takenAt)
+    }
+
+    @Test
+    fun aGalleryPhotoWhoseOriginalIsRefusedStillGivesItsDate() = runTest {
+        shadowOf(context as Application).grantPermissions(Manifest.permission.ACCESS_MEDIA_LOCATION)
+        val photo = Uri.parse("content://media/external/images/media/42")
+        val handedOver = File(fixture(PhotoFixtures.LANDSCAPE_WITH_GPS))
+        shadowOf(context.contentResolver).registerInputStreamSupplier(photo) { handedOver.inputStream() }
+        shadowOf(context.contentResolver).registerInputStreamSupplier(MediaStore.setRequireOriginal(photo)) {
+            throw UnsupportedOperationException("Caller must hold ACCESS_MEDIA_LOCATION")
+        }
+
+        assertEquals(Instant.parse("2026-07-14T07:31:12Z"), reader().read(photo.toString()).takenAt)
     }
 
     private companion object {
