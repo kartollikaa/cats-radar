@@ -18,7 +18,9 @@ private val WalkingMode = booleanPreferencesKey("walking_mode")
 private val EncountersGrid = booleanPreferencesKey("encounters_grid")
 private val AcknowledgedImportRun = stringPreferencesKey("acknowledged_import_run")
 private val AcknowledgedBackupRun = stringPreferencesKey("acknowledged_backup_run")
+private val PhotoCopiesRegenerated = booleanPreferencesKey("photo_copies_regenerated")
 
+@Suppress("TooManyFunctions") // one getter and one setter per stored preference
 class DataStoreSettingsRepository(
     private val dataStore: DataStore<Preferences>,
 ) : SettingsRepository {
@@ -55,6 +57,12 @@ class DataStoreSettingsRepository(
 
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) {
         dataStore.edit { it[job.acknowledgedRunKey()] = runId }
+    }
+
+    override fun photoCopiesRegenerated(): Flow<Boolean> = dataStore.data.map { it[PhotoCopiesRegenerated] ?: false }
+
+    override suspend fun setPhotoCopiesRegenerated(done: Boolean) {
+        dataStore.edit { it[PhotoCopiesRegenerated] = done }
     }
 }
 

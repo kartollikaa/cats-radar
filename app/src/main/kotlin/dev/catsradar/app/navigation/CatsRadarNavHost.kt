@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -24,15 +23,11 @@ import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.toSettingsIntent
-import dev.catsradar.presentation.detail.EncounterDetailEffect
-import dev.catsradar.presentation.detail.EncounterDetailIntent
-import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsEffect
 import dev.catsradar.presentation.settings.SettingsIntent
 import dev.catsradar.presentation.settings.SettingsStore
-import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.navigation.BottomNavTab
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
 import dev.catsradar.ui.regions.RegionsScreen
@@ -214,32 +209,5 @@ private fun RegionsDestination(
         modifier = modifier,
         contentPadding = contentPadding,
         onRegionClick = onRegionClick,
-    )
-}
-
-@Composable
-private fun EncounterDetailDestination(
-    key: EncounterDetail,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    onNavigateBack: () -> Unit = {},
-) {
-    val store = koinViewModel<EncounterDetailStore> { parametersOf(key.id) }
-    val state by store.state.collectAsStateWithLifecycle()
-    val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
-    LaunchedEffect(store) {
-        store.effects.collect { effect ->
-            when (effect) {
-                EncounterDetailEffect.NavigateBack -> currentOnNavigateBack()
-            }
-        }
-    }
-    EncounterDetailScreen(
-        state = state,
-        modifier = modifier,
-        contentPadding = contentPadding,
-        onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
-        onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
-        onCoatClick = { coat -> store.dispatch(EncounterDetailIntent.CoatPicked(coat)) },
     )
 }

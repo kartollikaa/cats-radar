@@ -22,7 +22,12 @@ data class CounterState(
     val importProgress: ImportProgressState? = null,
     /** Null until an import finishes, and again once it is dismissed. */
     val importSummary: ImportSummaryState? = null,
+    /** Null unless a photo just taken is waiting for its coat. */
+    val coatPrompt: CoatPromptState? = null,
 )
+
+/** [thumbPath] is absolute; null when no thumbnail could be made from the photo. */
+data class CoatPromptState(val thumbPath: String?)
 
 data class ImportProgressState(val done: Int, val total: Int)
 

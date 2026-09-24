@@ -56,6 +56,9 @@ Three tools, all wired through `build-logic` so a module gets them by applying i
 
 - `disable += "GradleDependency"` (`AndroidCommon.kt`) — the version catalog is updated
   deliberately, not on lint's schedule.
+- `disable += "AndroidGradlePluginVersion"` (`AndroidCommon.kt`) — same reasoning, scoped to AGP
+  itself: the catalog can pin an AGP older than lint's idea of latest (e.g. to match the IDE's
+  supported range) without that pin failing `check`.
 
 ## Suppressions
 

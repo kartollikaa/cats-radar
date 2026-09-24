@@ -31,8 +31,8 @@ a document nobody updates is worse than none.
   overall rate pools cats and time instead of averaging outings.
 - `places.md` — how coordinates become a country, city and area: place cells, the geocoding
   worker, and what happens on a device with no geocoder.
-- `coat.md` — the eleven coats: logging a cat by tapping one, why the swatches carry a name and
-  a shape, and the by-coat statistics.
+- `coat.md` — the eleven coats: logging a cat by tapping one, the question after a photo, why the
+  swatches carry a name and a shape, and the by-coat statistics.
 - `backup.md` — the archive: what it carries, and how importing one merges with what is
   already here instead of replacing it.
 - `walking-mode.md` — the lock-screen tally: one tap from the notification, why a silent channel

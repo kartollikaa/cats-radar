@@ -1,14 +1,17 @@
 package dev.catsradar.presentation.counter
 
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import dev.catsradar.presentation.encounters.FakePhotoStorage
+import dev.catsradar.presentation.encounters.photoFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 class CounterStateMapperTest {
 
-    private val mapper = CounterStateMapper(FakeDateTimeFormatter())
+    private val mapper = CounterStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
 
     @Test
     fun `before the total is read there is no number, not a zero`() {
@@ -52,5 +55,20 @@ class CounterStateMapperTest {
             CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true, walkElapsedLabel = "5m"),
             mapper.map(count = 0, undoVisible = false, walkingMode = true, walkElapsedLabel = "5m"),
         )
+    }
+
+    @Test
+    fun `the coat prompt shows the photo's thumbnail from the photo directory`() {
+        val photo = photoFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
+
+        assertEquals(CoatPromptState(thumbPath = "/data/photos/cat-7_thumb.jpg"), mapper.coatPrompt(photo))
+    }
+
+    @Test
+    fun `the coat prompt has no picture when the thumbnail could not be made`() {
+        val photo = photoFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
+            .copy(thumbPath = null)
+
+        assertEquals(CoatPromptState(thumbPath = null), mapper.coatPrompt(photo))
     }
 }

@@ -47,6 +47,9 @@
     <string name="counter_location_hint">Location permission needed for cat spots</string>
     <string name="counter_location_grant">Grant</string>
     <string name="counter_location_dismiss">Dismiss</string>
+    <string name="counter_coat_prompt_title">What coat was it?</string>
+    <string name="counter_coat_prompt_skip">Not now</string>
+    <string name="counter_coat_prompt_photo">The photo you just took</string>
 
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
@@ -103,7 +106,9 @@
     <string name="statistics_rate_unavailable">—</string>
     <string name="statistics_places">Places</string>
 
-    <string name="regions_empty">No places yet</string>
+    <string name="regions_no_places_yet">No places yet</string>
+    <string name="regions_no_places_here">No places here</string>
+    <string name="regions_no_cats_here">No cats here</string>
     <string name="regions_unresolved">Not named yet</string>
     <string name="regions_no_city">No city</string>
     <string name="regions_no_location">No location</string>
@@ -143,6 +148,11 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Where</string>
     <string name="detail_coat">Coat</string>
+    <string name="detail_photo">Photo</string>
+    <string name="detail_take_photo">Take a photo</string>
+    <string name="detail_pick_photo">Choose from gallery</string>
+    <string name="detail_photo_not_attached">Photo not attached</string>
+    <string name="detail_photo_attaching">Attaching the photo</string>
 
     <string name="tab_settings">Settings</string>
     <string name="settings_save_originals">Keep photos in the gallery</string>

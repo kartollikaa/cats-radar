@@ -1,6 +1,7 @@
 package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
+import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.EndInterruptedWalk
@@ -22,6 +23,7 @@ import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
+import dev.catsradar.domain.usecase.RegeneratePhotoCopies
 import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
@@ -76,9 +78,11 @@ val domainModule = module {
     factoryOf(::ResolvePendingPlaces)
     factoryOf(::ObserveUntriedPlaceCells)
     factoryOf(::RepairPlaceCells)
+    factoryOf(::RegeneratePhotoCopies)
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
     factory { PurgeDeleted(encounterRepository = get(), photoStorage = get(), clock = get()) }
     factoryOf(::SetCoat)
+    factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)

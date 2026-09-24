@@ -13,9 +13,10 @@ The Photo button on the counter opens the system camera (the gallery icon at its
 instead — see [import.md](./import.md)). The camera writes its original to a
 `FileProvider` URI under the cache directory. On the way back `LogPhoto` reads the EXIF, stores the
 app's copies, hands the original to the gallery if the setting allows, and saves one encounter with
-`kind = PHOTO`, `origin = CAMERA` and the original's digest. The widget's Photo tile and the walking
-notification's Photo button end up on the same path: each opens the app on the counter and does
-what a tap on the camera half does (see [widget.md](./widget.md) and
+`kind = PHOTO`, `origin = CAMERA` and the original's digest. Once that cat is saved, the counter
+asks for its coat (see [coat.md](./coat.md#asked-after-a-photo)). The widget's Photo tile and the
+walking notification's Photo button end up on the same path: each opens the app on the counter and
+does what a tap on the camera half does (see [widget.md](./widget.md) and
 [walking-mode.md](./walking-mode.md#photo)).
 
 The order matters and is deliberate: **the app's own copy is written first**. A gallery item for an
@@ -45,6 +46,46 @@ has both.
   logged without them and goes to the background attach like one with no GPS at all.
   `ExifInterface` applies no range check of its own: a corrupt GPS tag reaches the app as, say,
   200°, and a zero denominator as infinity or, for `0/0`, not a number.
+
+## Giving a cat a photo later
+
+A tally — logged with no photo, from any origin — can be given one afterwards from its detail screen
+(see [encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the
+gallery. `AttachPhoto` stores the app's copy and thumbnail the same way `LogPhoto` does, but under a
+name fresh to this attempt rather than the encounter's id, so an attempt that finds the cat already
+photographed removes only its own files, never the ones the cat now points at (`AttachPhotoTest`,
+*the files are named afresh for the attempt, never after the cat*).
+
+From the camera the original goes to the gallery under the same setting as a photo taken from the
+counter (see *The gallery setting* below); from the gallery it is never copied back in
+(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*).
+
+The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`. The cat
+keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
+photo this way is still a tally (`AttachPhotoTest`, *a cat without a photo gets the copy, thumbnail
+and digest, and keeps everything else*), and it now counts as "With photo" in Statistics like any
+other (see `statistics.md`).
+
+The same photo can go on more than one cat — one picture of two cats together (`AttachPhotoTest`,
+*the same photo can go on two cats*). Each cat stores the photo's digest, so importing that picked
+photo later is skipped while either cat is live (see `import.md`).
+
+### At the edges
+
+- **An undecodable image, or a write that fails,** leaves the cat unchanged and the screen says
+  "Photo not attached"; a failed write's copies are removed (`AttachPhotoTest`, *an undecodable
+  photo leaves the cat as it was and nothing in the gallery*; *a write that fails removes the files
+  it had written*; `EncounterDetailStoreTest`, *an unreadable photo says so and the offer comes
+  back*; *a failed write says the photo was not attached*).
+- **The cat is deleted, or already given a photo some other way, while the attempt is running** — it
+  is left exactly as it was and the attempt's own copies are removed (`AttachPhotoTest`, *a cat
+  deleted while its photo was being copied keeps no files from the attempt*;
+  `EncounterDaoAttachPhotoTest`, *attachPhotoNeverReplacesAPhotoTheRowAlreadyHas*). A camera
+  original already handed to the gallery stays there: it is the user's photo either way.
+- **Leaving mid-attempt** — once the attempt's copies are written, a cancellation before the write
+  lands removes them. Once the write has landed, the files are the cat's and stay
+  (`AttachPhotoTest`, *a cancellation while the original goes to the gallery removes the copies*;
+  *a cancellation after the write has landed keeps the files the cat now points at*).
 
 ## The gallery setting
 
@@ -83,12 +124,39 @@ left alone — enlarging costs bytes and quality and adds no detail.
 
 Neither copy carries the original's metadata. The app republishes nobody's GPS.
 
+The original is never decoded larger than it needs to be. A phone camera's photo can run to
+hundreds of megapixels, and holding one whole in memory fails on a phone; a decode that fails reads
+as an unreadable photo, and the cat goes unsaved. The resizer reads the file's
+dimensions first and has `BitmapFactory` shrink the decode by the largest power of two that still
+leaves the longest side at or above the copy's cap, so the bitmap in memory is never more than
+twice the cap on a side, whatever the camera.
+
+- **Powers of two** because the JPEG decoder shrinks by those while decoding, averaging the pixels
+  it drops. `BitmapFactory` accepts any other factor too, but meets it by skipping pixels, which
+  turns fine detail such as fur into false patterns.
+- **The step is chosen rounding down.** JPEG rounds a shrunk side up while other formats may round
+  it down, and only rounding down keeps every format at or above the cap, so a copy is never
+  enlarged.
+- **Both copies are sized from the file's own dimensions,** not from the shrunk bitmap. The decoder
+  rounds a halved odd side, and sizing from its result would put a copy a pixel off the original's
+  proportions.
+
 Both copies are stored the way the photo is meant to be seen. A phone camera usually saves the
 sensor's pixels as they came off it plus an EXIF Orientation tag saying how to turn them — for a
-phone held upright, a quarter turn. The decoder ignores that tag, and the copies have no EXIF to
+phone held upright, a quarter turn. `BitmapFactory` ignores that tag, and the copies have no EXIF to
 pass it on, so the resizer applies the turn, or the mirroring, to the pixels itself. Without it a
 portrait photo lies on its side in the app while the gallery, which keeps the original, shows it
-upright.
+upright. `ImageDecoder` would shrink to an exact size in one call, but it applies the tag on its own,
+so on top of the resizer's turn it would turn every rotated photo twice.
+
+Copies written before the resizer applied the turn are rebuilt once. At start `RegeneratePhotoCopies`
+writes the copy and thumbnail of every photo with a gallery original again from that original, under
+the names its row already holds, soft-deleted cats included so an undo brings back an upright one.
+It repeats at each start until one pass completes, then never runs again. A photo with no original
+to go back to keeps the copy it has: an import, whose `galleryUri` is always null, a camera photo
+taken with gallery saving off, one whose gallery item has been deleted since, or a row whose copy is
+not a `.jpg` the resizer could have written. A backup restored after the pass brings its photos back
+as they were archived.
 
 The arithmetic — which side is longest, what the other becomes, when to do nothing — is
 `scaleToFit` in `:domain`, a pure function with its own tests. That split is deliberate: see
@@ -139,11 +207,21 @@ corners after JPEG and resampling tell apart less reliably. The generator checks
 Pillow's `ImageOps.exif_transpose` before keeping it, so the answer `AndroidImageResizerOrientationTest` expects
 never comes from the code under test.
 
+One of them is phone-sized: the quarter-turn case at more than twice the copy's cap on its longest
+side, so its decode has to shrink. `AndroidImageResizerLargePhotoTest` checks the decode itself —
+shrunk, but never below the cap — and the sizes of both copies. The fixture's size is picked on
+purpose: its long side is odd, so halving rounds it up, and at this size that moves the copy's short
+side by a pixel. A copy sized from the shrunk bitmap instead of the file comes out a pixel narrower,
+and the size test fails; most sizes, odd or not, would hide that. Flat quadrants compress to almost
+nothing, which keeps a fixture that large small in the repository.
+
 ## Where the code lives
 
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
 - `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
+- `domain/…/usecase/AttachPhoto.kt`, `domain/…/model/PhotoStamp.kt` — giving a logged cat a photo
+- `domain/…/usecase/RegeneratePhotoCopies.kt` — the one-time rebuild of copies from gallery originals
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
 - `tools/make-photo-fixtures.py`, `data/src/androidHostTest/resources/photos/`
@@ -157,12 +235,11 @@ path into an absolute one — the cell carries a path Coil can open, not the pat
 to hold. A pair tile with no full copy falls back to its thumbnail.
 
 A cat with no thumbnail leads with its coat, or a paw when no coat was noted, in a tile the same
-size — covering both a tally, which never had a photo, and a photo whose thumbnail failed to write
-while the copy succeeded. Such a photo never joins a pair: the grid packs it like any cat without
-one.
+size — covering both a tally with no photo yet and a photo whose thumbnail failed to write while
+the copy succeeded. Such a photo never joins a pair: the grid packs it like any cat without one.
 
 ## Not built yet
 
-The gallery-import rules exist but nothing can reach them yet — see `import.md`.
+A cat's photo cannot be replaced or removed — there is no control for either.
 `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.

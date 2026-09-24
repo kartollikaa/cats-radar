@@ -16,11 +16,11 @@ class RegionsStore(
     private val stateMapper: RegionsStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-) : Store<RegionsState, RegionsIntent, RegionsEffect>(RegionsState()) {
+) : Store<RegionsState, RegionsIntent, RegionsEffect>(RegionsState.Loading) {
 
     init {
         observeRegion(parent)
-            .onEach { view -> setState { stateMapper.map(view, clock.today(timeZone)) } }
+            .onEach { view -> setState { stateMapper.map(view, clock.today(timeZone), topLevel = parent == null) } }
             .launchIn(viewModelScope)
     }
 

@@ -1,9 +1,9 @@
 # Map
 
 The **Map** tab shows every cat that has a location as a dot on a map, in its coat's colours: a ginger
-cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted takes the
-theme's primary colour. The map opens fitted around all of them, and a single cat, or a handful on
-one street, opens on a street-sized area rather than a doorstep.
+cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted is a blue
+dot. The map opens fitted around all of them, and a single cat, or a handful on one street, opens
+on a street-sized area rather than a doorstep.
 
 ## How a dot shows its coat
 
@@ -77,12 +77,15 @@ Two chips sit at the map's top edge.
 
 - **Heatmap** draws where cats are seen most, weighing every cat alike, and hides the dots while it
   is on. Its heat is drawn from the cats themselves, not from their clusters, so ten cats at one
-  spot weigh ten times one. The heat is in the cats' colours: a street of ginger cats glows ginger,
-  one of black cats glows black, and where both were seen the two colours lie over each other, the
-  one with more cats showing most. A cat gives its heat in the same shares as its dot, so a
-  black-and-white cat is half black heat and half white. Each colour is its own layer laid over the
-  others in a fixed order, so at an even split the colour laid last leans ahead; the heat is a
-  picture of the mix, not a measure of it.
+  spot weigh ten times one. The heat is in the cats' own fur colours: a street of ginger cats glows
+  ginger, one of white cats glows white, one of black cats glows black. A cat gives its heat in the
+  same shares as its dot, so a black-and-white cat is half black heat and half white. Each colour
+  is its own layer, nearly opaque so the spots stay bright, and lighter furs lie over darker ones:
+  where coats mix, the colour with more cats shows most, and at an even split the lighter one covers
+  the darker, which shows only at the spot's edge. The heat is a picture of the mix, not a measure
+  of it.
+- **Cats with no coat noted** make smaller spots in the blue of their dots, blue rather than grey
+  so they never read as a grey or black coat.
 - **The heat follows the zoom.** Each cat's heat shrinks and fades as the map zooms out, so a whole
   city shows its neighbourhoods as separate spots rather than one glow over all of it, and grows back
   as the map closes in on a street.
@@ -109,18 +112,19 @@ Both last as long as the tab does; leaving the tab clears them.
 - **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
   world: the fitted area runs west to east the long way round. Every dot is still on screen.
 - **White cats on a light street:** each dot has the same outline the coat faces carry, so a white
-  cat's dot does not disappear into the map. The heat has a faint haze of that outline's colour
-  under it for the same reason: white heat on the light map, and black heat on the dark one, still
-  have an edge.
+  cat's dot does not disappear into the map. A fur whose heat would melt into the map's own shade —
+  white on the light map, black on the dark one — gets a thin rim of that outline's colour around
+  its spots, and no other fur does, so the rest keep their colour clean.
 
 ## Where the code lives
 
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
   on), `MapStateMapper`, `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a
   spot's list
-- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters, the
-  heat and their taps; `CoatDotPainter.kt` — a dot painted in its coat's colours;
-  `MapFeatures.kt` — cats as map features, and each coat's colour shares; `MapSpotScreen.kt` — a
+- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
+  their taps; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
+  `MapFeatures.kt` — cats as map features, and each coat's colour shares; `HeatInk.kt` — the heat's
+  layers, their order and which need a rim; `MapSpotScreen.kt` — a
   spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
   `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` — the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the

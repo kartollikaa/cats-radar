@@ -5,6 +5,7 @@ import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.platform.ExifReader
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.ImageResizer
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.SourceFileTime
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.ReportedJob
@@ -30,11 +31,22 @@ class FakeImageResizer(
     var calls = 0
         private set
 
+    /** Every call's source and base name, in order. */
+    val requests = mutableListOf<Pair<String, String>>()
+
     /** Sources that cannot be decoded, however [result] is set. */
     val undecodable = mutableSetOf<String>()
 
-    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? {
+    val baseNames = mutableListOf<String>()
+
+    /** Runs while the copy is being made, for what else happens to the cat in the meantime. */
+    var duringStore: suspend () -> Unit = {}
+
+    override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
         calls++
+        requests += sourceUri to baseName
+        baseNames += baseName
+        duringStore()
         return result.takeIf { sourceUri !in undecodable }
     }
 
@@ -59,8 +71,12 @@ class FakeGallerySaver(var result: String? = URI) : GallerySaver {
     var calls = 0
         private set
 
+    /** Runs while the original is being copied to the gallery. */
+    var duringSave: suspend () -> Unit = {}
+
     override suspend fun save(sourceUri: String, displayName: String): String? {
         calls++
+        duringSave()
         return result
     }
 
@@ -110,4 +126,22 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
     override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
 
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
+
+    private val copiesRegenerated = MutableStateFlow(false)
+
+    override fun photoCopiesRegenerated(): Flow<Boolean> = copiesRegenerated
+
+    override suspend fun setPhotoCopiesRegenerated(done: Boolean) {
+        copiesRegenerated.value = done
+    }
+}
+
+class RecordingPhotoStorage : PhotoStorage {
+    val deleted = mutableListOf<String>()
+
+    override fun resolve(relativePath: String): String = "/photos/$relativePath"
+
+    override suspend fun delete(relativePath: String) {
+        deleted += relativePath
+    }
 }

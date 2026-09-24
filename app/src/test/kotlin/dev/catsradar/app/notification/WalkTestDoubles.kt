@@ -1,11 +1,13 @@
 package dev.catsradar.app.notification
 
 import dev.catsradar.domain.location.LocationFix
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
@@ -59,6 +61,8 @@ internal class FakeWalkingSettings : SettingsRepository {
     override suspend fun setEncountersGrid(enabled: Boolean) = Unit
     override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
+    override fun photoCopiesRegenerated(): Flow<Boolean> = MutableStateFlow(true)
+    override suspend fun setPhotoCopiesRegenerated(done: Boolean) = Unit
 }
 
 /** One walk, on from [WalkStart] until something ends it. */
@@ -133,6 +137,12 @@ internal class InMemoryEncounters : EncounterRepository {
     override suspend fun insert(encounter: Encounter) = rows.update { it + encounter }
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by these tests")
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
+        throw NotImplementedError("unused by these tests")
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
         throw NotImplementedError("unused by these tests")
 
     override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =

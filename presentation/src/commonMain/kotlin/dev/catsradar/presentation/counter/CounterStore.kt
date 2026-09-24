@@ -11,6 +11,7 @@ import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.PhotoResult
+import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.ReportedRun
@@ -33,6 +34,7 @@ class CounterStore(
     private val logPhoto: LogPhoto,
     private val undoLastTally: UndoLastTally,
     private val undoImport: UndoImport,
+    private val setCoat: SetCoat,
     observeStats: ObserveStats,
     observeWalkElapsed: ObserveWalkElapsed,
     private val settingsRepository: SettingsRepository,
@@ -52,6 +54,7 @@ class CounterStore(
     // Not in State: the screen shows how many were added, never which ones.
     private var importedIds: List<String> = emptyList()
     private val importRun = ReportedRun(settingsRepository, ReportedJob.GALLERY_IMPORT)
+    private var coatPromptEncounterId: String? = null
 
     init {
         observeStats()
@@ -68,6 +71,7 @@ class CounterStore(
                         walkElapsedLabel = walkElapsedLabel,
                         importProgress = importProgress,
                         importSummary = importSummary,
+                        coatPrompt = coatPrompt,
                     )
                 }
                 announceMilestone(stats.total)
@@ -102,6 +106,15 @@ class CounterStore(
                 runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
+            is CounterIntent.CoatPromptPicked, CounterIntent.CoatPromptDismissed -> {
+                val encounterId = coatPromptEncounterId
+                // Closed before the write: the prompt never waits on storage, and a failed write still closes it.
+                coatPromptEncounterId = null
+                setState { copy(coatPrompt = null) }
+                if (intent is CounterIntent.CoatPromptPicked && encounterId != null) {
+                    runStorageWrite { setCoat(encounterId, intent.coat.toCatCoat()) }
+                }
+            }
             is CounterIntent.LocationPermissionResult ->
                 setState { copy(locationPermissionHintVisible = !intent.granted) }
             CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
@@ -150,8 +163,11 @@ class CounterStore(
         if (uri == null) return
         runStorageWrite {
             when (val result = logPhoto(uri)) {
-                is PhotoResult.Logged ->
+                is PhotoResult.Logged -> {
+                    coatPromptEncounterId = result.encounter.id
+                    setState { copy(coatPrompt = stateMapper.coatPrompt(result.encounter)) }
                     if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
+                }
                 PhotoResult.Unreadable -> emit(CounterEffect.PhotoNotSaved)
             }
             // Whatever the outcome, the full-size original has served its purpose; leaving it

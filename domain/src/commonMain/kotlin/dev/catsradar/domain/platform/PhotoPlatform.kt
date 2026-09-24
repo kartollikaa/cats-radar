@@ -5,11 +5,11 @@ data class StoredPhoto(val photoPath: String, val thumbPath: String?)
 
 interface ImageResizer {
     /**
-     * Writes a downscaled copy and a thumbnail of [sourceUri] for [encounterId], stripped of
+     * Writes a downscaled copy and a thumbnail of [sourceUri], named after [baseName], stripped of
      * metadata. Null when the source cannot be decoded; a null [StoredPhoto.thumbPath] means the
      * copy was written but the thumbnail was not.
      */
-    suspend fun store(sourceUri: String, encounterId: String): StoredPhoto?
+    suspend fun store(sourceUri: String, baseName: String): StoredPhoto?
 }
 
 interface Digest {

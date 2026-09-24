@@ -1,10 +1,12 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
+import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.PlaceStatus
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -48,16 +51,26 @@ internal class FakeEncounterRepository : EncounterRepository {
     var softDeleteAllGate: CompletableDeferred<Unit>? = null
     var undoDeleteAllShouldThrow: Throwable? = null
     var undoDeleteAllGate: CompletableDeferred<Unit>? = null
+    var attachPhotoShouldThrow: Throwable? = null
+    var setCoatShouldThrow: Throwable? = null
+    var setCoatGate: CompletableDeferred<Unit>? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
     var softDeleteDelay: Duration = Duration.ZERO
 
+    /** Delays every emission of an observeById call but that call's first, so a `.first()` snapshot stays instant. */
+    var observeDelay: Duration = Duration.ZERO
+
     fun encounters(): List<Encounter> = encounters.value
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
-    override fun observeById(id: String): Flow<Encounter?> =
-        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
+    override fun observeById(id: String): Flow<Encounter?> {
+        var firstEmission = true
+        return encounters
+            .map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
+            .onEach { if (firstEmission) firstEmission = false else delay(observeDelay) }
+    }
 
     override suspend fun insert(encounter: Encounter) {
         insertDelays.removeFirstOrNull()?.let { delay(it) }
@@ -84,6 +97,44 @@ internal class FakeEncounterRepository : EncounterRepository {
                         placeCellId = stamp.placeCellId,
                         updatedAt = stamp.updatedAt,
                     )
+                } else {
+                    encounter
+                }
+            }
+        }
+    }
+
+    // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
+    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
+        attachPhotoShouldThrow?.let { throw it }
+        var attached = false
+        encounters.update { list ->
+            attached = false
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
+                    attached = true
+                    encounter.copy(
+                        photoPath = stamp.photoPath,
+                        thumbPath = stamp.thumbPath,
+                        galleryUri = stamp.galleryUri,
+                        sourceDigest = stamp.sourceDigest,
+                        updatedAt = stamp.updatedAt,
+                    )
+                } else {
+                    encounter
+                }
+            }
+        }
+        return attached
+    }
+
+    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
+        setCoatGate?.await()
+        setCoatShouldThrow?.let { throw it }
+        encounters.update { list ->
+            list.map { encounter ->
+                if (encounter.id == id && encounter.deletedAt == null) {
+                    encounter.copy(coat = coat, updatedAt = updatedAt)
                 } else {
                     encounter
                 }
@@ -190,7 +241,12 @@ internal class FakeExifReader(var data: ExifData = ExifData()) : ExifReader {
 internal class FakeImageResizer(
     var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
 ) : ImageResizer {
-    override suspend fun store(sourceUri: String, encounterId: String): StoredPhoto? = result
+    var storeDelay: Duration = Duration.ZERO
+
+    override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
+        delay(storeDelay)
+        return result
+    }
 }
 
 internal class FakeDigest : Digest {
@@ -276,6 +332,10 @@ internal class FakeSettingsRepository(
         check(!writesFail) { "preferences unwritable" }
         acknowledgedRuns.update { it + (job to runId) }
     }
+
+    override fun photoCopiesRegenerated(): Flow<Boolean> = MutableStateFlow(true)
+
+    override suspend fun setPhotoCopiesRegenerated(done: Boolean) = Unit
 }
 
 /** Holds at most the one walk that is on; the Counter only ever reads that one. */

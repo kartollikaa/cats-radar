@@ -9,8 +9,11 @@ import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-/** One level of the region drill-down: its child regions, or its cats when it has no children. */
-data class RegionView(val children: List<RegionNode>, val encounters: List<Encounter>)
+/** One level of the region drill-down: its child regions, or at the bottom of the tree its cats. */
+sealed interface RegionView {
+    data class Places(val children: List<RegionNode>) : RegionView
+    data class Cats(val encounters: List<Encounter>) : RegionView
+}
 
 class ObserveRegion(
     private val encounterRepository: EncounterRepository,
@@ -19,15 +22,11 @@ class ObserveRegion(
     operator fun invoke(parent: RegionKey?): Flow<RegionView> =
         combine(encounterRepository.observeAll(), placeCellRepository.observeAll()) { encounters, cells ->
             when (parent) {
-                null -> RegionView(RegionTree.countries(encounters, cells), emptyList())
-                is RegionKey.Country -> RegionView(
-                    RegionTree.cities(parent.countryCode, encounters, cells),
-                    emptyList()
-                )
-                is RegionKey.AreaParent -> RegionView(RegionTree.areas(parent, encounters, cells), emptyList())
-                // An area and "no location" are the bottom: below them are the cats themselves.
+                null -> RegionView.Places(RegionTree.countries(encounters, cells))
+                is RegionKey.Country -> RegionView.Places(RegionTree.cities(parent.countryCode, encounters, cells))
+                is RegionKey.AreaParent -> RegionView.Places(RegionTree.areas(parent, encounters, cells))
                 is RegionKey.Area, RegionKey.NoLocation ->
-                    RegionView(emptyList(), RegionTree.encountersIn(parent, encounters, cells))
+                    RegionView.Cats(RegionTree.encountersIn(parent, encounters, cells))
             }
         }
 }
