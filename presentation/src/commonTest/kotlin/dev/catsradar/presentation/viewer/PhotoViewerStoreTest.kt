@@ -2,7 +2,6 @@ package dev.catsradar.presentation.viewer
 
 import app.cash.turbine.test
 import dev.catsradar.domain.model.EncounterKind
-import dev.catsradar.domain.platform.GalleryItems
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
@@ -104,7 +103,7 @@ class PhotoViewerStoreTest {
     }
 
     @Test
-    fun `a cat whose original is still in the gallery opens it there with a read grant`() = runTest(mainDispatcher) {
+    fun `a cat whose original is still in the gallery opens it there`() = runTest(mainDispatcher) {
         repository.insert(photographedCat(galleryUri = SAVED))
         galleryItems.present += SAVED
         val store = newStore()
@@ -113,7 +112,7 @@ class PhotoViewerStoreTest {
         store.effects.test {
             store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
             runCurrent()
-            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED, grantRead = true), awaitItem())
+            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED), awaitItem())
         }
     }
 
@@ -145,7 +144,7 @@ class PhotoViewerStoreTest {
             runCurrent()
             galleryItems.gate?.complete(Unit)
             runCurrent()
-            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED, grantRead = true), awaitItem())
+            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED), awaitItem())
             expectNoEvents()
         }
     }
@@ -170,7 +169,7 @@ class PhotoViewerStoreTest {
     private fun newStore() = PhotoViewerStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
-        resolveGalleryLink = ResolveGalleryLink(repository, galleryItems, FakeDeviceIdProvider(INSTALL)),
+        resolveGalleryLink = ResolveGalleryLink(galleryItems, FakeDeviceIdProvider(INSTALL)),
         stateMapper = PhotoViewerStateMapper(FakePhotoStorage(root = "/data/photos"), FakeDeviceIdProvider(INSTALL)),
     )
 
@@ -179,19 +178,5 @@ class PhotoViewerStoreTest {
         const val INSTALL = "device-1"
         const val SAVED = "content://media/external/images/media/42"
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
-    }
-}
-
-internal class FakeGalleryItems : GalleryItems {
-    val present = mutableSetOf<String>()
-    val asked = mutableListOf<String>()
-
-    /** When set, every check waits for it, as a real query would wait on the disk. */
-    var gate: CompletableDeferred<Unit>? = null
-
-    override suspend fun exists(uri: String): Boolean {
-        asked += uri
-        gate?.await()
-        return uri in present
     }
 }

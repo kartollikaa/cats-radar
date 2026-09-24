@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.viewer
 
 import androidx.lifecycle.viewModelScope
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.usecase.GalleryTarget
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ResolveGalleryLink
@@ -9,12 +10,13 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 class PhotoViewerStore(
-    private val encounterId: String,
+    encounterId: String,
     observeEncounter: ObserveEncounter,
     private val resolveGalleryLink: ResolveGalleryLink,
     private val stateMapper: PhotoViewerStateMapper,
 ) : Store<PhotoViewerState, PhotoViewerIntent, PhotoViewerEffect>(PhotoViewerState.Loading) {
 
+    private var shown: Encounter? = null
     private var closing = false
     private var resolvingGallery = false
 
@@ -22,6 +24,7 @@ class PhotoViewerStore(
         observeEncounter(encounterId)
             .onEach { encounter ->
                 val showing = encounter?.let(stateMapper::map)
+                shown = encounter.takeIf { showing != null }
                 if (showing != null) setState { showing } else close()
             }
             .launchIn(viewModelScope)
@@ -35,11 +38,12 @@ class PhotoViewerStore(
     }
 
     private suspend fun openInGallery() {
-        if (resolvingGallery) return
+        val encounter = shown
+        if (resolvingGallery || encounter == null) return
         resolvingGallery = true
         try {
-            when (val target = resolveGalleryLink(encounterId)) {
-                is GalleryTarget.Open -> emit(PhotoViewerEffect.OpenInGallery(target.uri, target.grantRead))
+            when (val target = resolveGalleryLink(encounter)) {
+                is GalleryTarget.Open -> emit(PhotoViewerEffect.OpenInGallery(target.uri))
                 GalleryTarget.Gone -> emit(PhotoViewerEffect.GalleryItemGone)
                 GalleryTarget.Unavailable -> Unit
             }

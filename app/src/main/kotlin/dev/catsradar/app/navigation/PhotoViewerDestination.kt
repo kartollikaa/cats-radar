@@ -23,8 +23,7 @@ internal fun handlePhotoViewerEffect(
 ) {
     when (effect) {
         PhotoViewerEffect.Close -> onClose()
-        is PhotoViewerEffect.OpenInGallery ->
-            if (!galleryOpener.open(effect.uri, effect.grantRead)) noGalleryAppReporter.report()
+        is PhotoViewerEffect.OpenInGallery -> if (!galleryOpener.open(effect.uri)) noGalleryAppReporter.report()
         PhotoViewerEffect.GalleryItemGone -> galleryGoneReporter.report()
     }
 }

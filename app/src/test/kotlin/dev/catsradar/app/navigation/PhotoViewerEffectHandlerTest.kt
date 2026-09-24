@@ -10,8 +10,8 @@ class PhotoViewerEffectHandlerTest {
     private fun handle(effect: PhotoViewerEffect, galleryOpens: Boolean = true) = handlePhotoViewerEffect(
         effect,
         onClose = { calls += "close" },
-        galleryOpener = { uri, grantRead ->
-            calls += "open $uri grant=$grantRead"
+        galleryOpener = { uri ->
+            calls += "open $uri"
             galleryOpens
         },
         galleryGoneReporter = { calls += "gone" },
@@ -21,17 +21,17 @@ class PhotoViewerEffectHandlerTest {
     @Test
     fun `each effect reaches exactly its own collaborator`() {
         handle(PhotoViewerEffect.Close)
-        handle(PhotoViewerEffect.OpenInGallery(SAVED, grantRead = true))
+        handle(PhotoViewerEffect.OpenInGallery(SAVED))
         handle(PhotoViewerEffect.GalleryItemGone)
 
-        assertEquals(listOf("close", "open $SAVED grant=true", "gone"), calls)
+        assertEquals(listOf("close", "open $SAVED", "gone"), calls)
     }
 
     @Test
     fun `a gallery that cannot be opened says no app can show the photo`() {
-        handle(PhotoViewerEffect.OpenInGallery(SAVED, grantRead = true), galleryOpens = false)
+        handle(PhotoViewerEffect.OpenInGallery(SAVED), galleryOpens = false)
 
-        assertEquals(listOf("open $SAVED grant=true", "no app"), calls)
+        assertEquals(listOf("open $SAVED", "no app"), calls)
     }
 
     private companion object {

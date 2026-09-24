@@ -10,15 +10,19 @@ import androidx.core.net.toUri
 
 internal fun interface GalleryOpener {
     /** False when no app on the phone can show an image. */
-    fun open(uri: String, grantRead: Boolean): Boolean
+    fun open(uri: String): Boolean
 }
 
-// Granting access the app does not hold throws SecurityException, so the grant is only ever asked for.
-internal fun Context.openInGallery(uri: String, grantRead: Boolean): Boolean {
-    val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri.toUri(), IMAGE_TYPE)
-    if (grantRead) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+// Granting read access the app does not hold (any longer) throws SecurityException; the gallery can
+// still open the item with its own access, so the view goes out again without the grant.
+internal fun Context.openInGallery(uri: String): Boolean {
+    val view = Intent(Intent.ACTION_VIEW).setDataAndType(uri.toUri(), IMAGE_TYPE)
     return try {
-        startActivity(intent)
+        try {
+            startActivity(Intent(view).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+        } catch (_: SecurityException) {
+            startActivity(view)
+        }
         true
     } catch (_: ActivityNotFoundException) {
         false
