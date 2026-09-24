@@ -107,13 +107,6 @@ class RegionsStateMapperTest {
     }
 
     @Test
-    fun `every row drills down except an area's, whose cats show in place`() {
-        val drillable = mapper.map(oneRowPerKey, TODAY).loaded().rows.map { it.drillable }
-
-        assertEquals(listOf(true, true, false, true, true, true), drillable)
-    }
-
-    @Test
     fun `a level of rows maps to one whole state`() {
         val view = RegionView.Places(
             listOf(
@@ -125,8 +118,8 @@ class RegionsStateMapperTest {
         assertEquals(
             RegionsState.Loaded(
                 rows = persistentListOf(
-                    RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "3", drillable = true),
-                    RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1", drillable = true),
+                    RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "3"),
+                    RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1"),
                 ),
                 encounters = persistentListOf(),
             ),

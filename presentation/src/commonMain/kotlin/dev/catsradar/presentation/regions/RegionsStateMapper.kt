@@ -32,9 +32,6 @@ class RegionsStateMapper(
         key = key.toRowKey(),
         label = label.toRowLabel(),
         countLabel = count.toString(),
-        // An area's children are its cats, which this screen shows in place rather than
-        // pushing another level; everything above it drills down.
-        drillable = key !is RegionKey.Area,
     )
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {

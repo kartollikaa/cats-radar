@@ -103,7 +103,8 @@ geohash and needs no network — keeps working. Only country and city names are 
 
 **Statistics → Places** opens the drill-down: countries, then cities, then areas, then the cats
 themselves — a plain list of one row per cat under its outing header, not the Encounters grid.
-Every level is sorted busiest first.
+Every level is sorted busiest first, and every place row opens the level below it: tapping an area
+lists its cats.
 
 A level draws nothing until its cats have been read, so one sliding in never flashes as empty
 first. A level that holds nothing says what it would have listed: **No places yet** for a level of
@@ -141,8 +142,7 @@ has run. An area whose cells disagree takes the name most of them agree on.
 
 ## Not built yet
 
-An area's row cannot be opened: the screen draws it as a dead end, so the cats below it are listed
-nowhere, although that level exists and holds exactly the row's cats.
+A cat's row at the bottom of the drill-down does not open that cat; its detail opens from Encounters.
 
 The `Geocoder` call uses the deprecated blocking overload because the listener-based one is API 33+
 and this app supports 29.

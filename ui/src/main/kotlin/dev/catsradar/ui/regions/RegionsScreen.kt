@@ -1,13 +1,14 @@
 package dev.catsradar.ui.regions
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
@@ -45,7 +47,11 @@ fun RegionsScreen(
             modifier = modifier.fillMaxSize().padding(contentPadding),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = stringResource(state.label.textRes()), style = MaterialTheme.typography.bodyLarge)
+            val words = when (state.label) {
+                RegionsEmptyLabel.NO_PLACES -> R.string.regions_empty_places
+                RegionsEmptyLabel.NO_CATS -> R.string.regions_empty_cats
+            }
+            Text(text = stringResource(words), style = MaterialTheme.typography.bodyLarge)
         }
         is RegionsState.Loaded -> LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
             items(items = state.rows, key = { it.key.toString() }) { row ->
@@ -61,18 +67,12 @@ fun RegionsScreen(
     }
 }
 
-@StringRes
-private fun RegionsEmptyLabel.textRes(): Int = when (this) {
-    RegionsEmptyLabel.NO_PLACES -> R.string.regions_empty_places
-    RegionsEmptyLabel.NO_CATS -> R.string.regions_empty_cats
-}
-
 @Composable
 private fun RegionRow(row: RegionRowState, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (row.drillable) Modifier.clickable(onClick = onClick) else Modifier)
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -131,33 +131,67 @@ private fun RegionsScreenCitiesPreview() {
 
 @ThemePreviews
 @Composable
-private fun RegionsScreenEmptyPreview() {
+private fun RegionsScreenAreasPreview() {
     CatsRadarTheme {
-        Surface { RegionsScreen(state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES)) }
+        Surface { RegionsScreen(state = sampleAreas) }
     }
 }
 
 @ThemePreviews
 @Composable
-private fun RegionsScreenEmptyCatsPreview() {
+private fun RegionsScreenAreaCatsPreview() {
     CatsRadarTheme {
-        Surface { RegionsScreen(state = RegionsState.Empty(RegionsEmptyLabel.NO_CATS)) }
+        Surface { RegionsScreen(state = sampleAreaCats) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun RegionsScreenEmptyPreview() {
+    CatsRadarTheme {
+        Surface {
+            Column {
+                RegionsEmptyLabel.entries.forEach { label ->
+                    RegionsScreen(state = RegionsState.Empty(label), modifier = Modifier.height(120.dp))
+                }
+            }
+        }
     }
 }
 
 private val sampleRegions = RegionsState.Loaded(
     rows = persistentListOf(
-        RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "128", drillable = true),
-        RegionRowState(RegionRowKey.Country("FR"), RegionRowLabel.Named("France"), "14", drillable = true),
-        RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "6", drillable = true),
-        RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "3", drillable = true),
+        RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "128"),
+        RegionRowState(RegionRowKey.Country("FR"), RegionRowLabel.Named("France"), "14"),
+        RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "6"),
+        RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "3"),
     ),
 )
 
 private val sampleCities = RegionsState.Loaded(
     rows = persistentListOf(
-        RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "97", drillable = true),
-        RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "29", drillable = true),
-        RegionRowState(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2", drillable = true),
+        RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "97"),
+        RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "29"),
+        RegionRowState(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2"),
+    ),
+)
+
+private val barcelona = RegionRowKey.City("ES", "Barcelona")
+
+private val sampleAreas = RegionsState.Loaded(
+    rows = persistentListOf(
+        RegionRowState(RegionRowKey.Area("sp3e9", barcelona), RegionRowLabel.Named("Gràcia"), "54"),
+        RegionRowState(RegionRowKey.Area("sp3e3", barcelona), RegionRowLabel.Named("Eixample"), "38"),
+        RegionRowState(RegionRowKey.Area("sp3sb", barcelona), RegionRowLabel.Coordinates("41.40123, 2.20456"), "5"),
+    ),
+)
+
+private val sampleAreaCats = RegionsState.Loaded(
+    encounters = persistentListOf(
+        OutingHeader(key = "header-evening", label = "Today, 18:40"),
+        EncounterListItem.Row(id = "c3", timeLabel = "19:18", location = LocationLabel.FROM_PHOTO),
+        EncounterListItem.Row(id = "c2", timeLabel = "18:57", location = LocationLabel.CURRENT),
+        OutingHeader(key = "header-morning", label = "Yesterday, 08:15"),
+        EncounterListItem.Row(id = "c1", timeLabel = "08:22", location = LocationLabel.FROM_OUTING),
     ),
 )
