@@ -200,9 +200,9 @@ private fun defaultBackupName(): String =
 private fun RegionsDestination(
     key: Regions,
     contentPadding: PaddingValues,
+    onRegionClick: (RegionRowKey) -> Unit,
+    onEncounterClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onRegionClick: (RegionRowKey) -> Unit = {},
-    onEncounterClick: (String) -> Unit = {},
 ) {
     val store = koinViewModel<RegionsStore> { parametersOf(key.toRegionKey()) }
     val state by store.state.collectAsStateWithLifecycle()

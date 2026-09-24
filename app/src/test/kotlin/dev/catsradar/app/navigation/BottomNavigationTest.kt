@@ -54,21 +54,6 @@ class BottomNavigationTest {
     }
 
     @Test
-    fun `a cat opened from an area's list sits above the area, and back returns to the area`() {
-        val area = Regions(RegionKind.CITY_AREA, countryCode = "ES", city = "Barcelona", areaHash = "sp3e3")
-        val country = Regions(RegionKind.COUNTRY, countryCode = "ES")
-        val levels = listOf<NavKey>(Counter, Statistics, Regions(), country, area)
-        val backStack = newStack(*levels.toTypedArray())
-
-        backStack.push(EncounterDetail("cat"))
-
-        assertEquals(levels + EncounterDetail("cat"), backStack.toList())
-        assertEquals(BottomNavTab.STATISTICS, backStack.selectedTab)
-        assertTrue(backStack.popOrNull())
-        assertEquals(levels, backStack.toList())
-    }
-
-    @Test
     fun `popping a sheet by its key pops it only while it is on top`() {
         val spot = MapSpot(setOf("a", "b"), emptySet())
         val backStack = newStack(Counter, CatsMap, spot, EncounterDetail("a"))

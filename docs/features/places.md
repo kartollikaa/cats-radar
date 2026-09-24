@@ -106,16 +106,17 @@ themselves — a plain list of one row per cat under its outing header, not the 
 Every level is sorted busiest first, and every place row opens the level below it: tapping an area
 lists its cats. Tapping a cat opens that cat, the same screen as from Encounters (see
 [encounter-detail.md](./encounter-detail.md)), pushed above the list it was tapped in: the bottom bar
-still shows Stats, and back returns to that list, not to the top of the drill-down. A cat deleted
-there comes back to a list that no longer holds it. Outing headers are labels, not buttons.
+still shows Stats, and back returns to that list, not to the top of the drill-down. The Stats tab,
+like from any level of the drill-down, goes back to Stats itself. Outing headers are labels, not
+buttons.
 
 A level draws nothing until its cats have been read, so one sliding in never flashes as empty
 first. A level that holds nothing says what it would have listed. The countries read **No places
 yet**: no cat has been logged at all. Any other level of places — a country's cities, the areas of
 a city, of No city or of Not named yet — reads **No places here**. An area or No location, whose
 children are cats, reads **No cats here**. Below the countries, a level is empty only when its last
-cat went away while it was open, undone from the walking notification, say, or when it is rebuilt
-after its cats were deleted.
+cat went away while it was open — deleted from its own detail, or undone from the walking
+notification — or when it is rebuilt after its cats were deleted.
 
 Two pseudo-nodes always come **last**, after every real place, and only when they hold something:
 
