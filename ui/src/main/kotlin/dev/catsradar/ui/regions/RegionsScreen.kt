@@ -48,8 +48,9 @@ fun RegionsScreen(
             contentAlignment = Alignment.Center,
         ) {
             val words = when (state.label) {
-                RegionsEmptyLabel.NO_PLACES -> R.string.regions_empty_places
-                RegionsEmptyLabel.NO_CATS -> R.string.regions_empty_cats
+                RegionsEmptyLabel.NO_PLACES_YET -> R.string.regions_no_places_yet
+                RegionsEmptyLabel.NO_PLACES_HERE -> R.string.regions_no_places_here
+                RegionsEmptyLabel.NO_CATS_HERE -> R.string.regions_no_cats_here
             }
             Text(text = stringResource(words), style = MaterialTheme.typography.bodyLarge)
         }

@@ -40,7 +40,7 @@ class RegionsStateMapperTest {
         val newer = photoFixture("newer", base + 5.minutes)
         val area = RegionView.Cats(listOf(older, newer))
 
-        val state = mapper.map(area, LocalDate(2026, 9, 22))
+        val state = mapper.map(area, LocalDate(2026, 9, 22), topLevel = false)
 
         assertEquals(
             persistentListOf(
@@ -63,7 +63,7 @@ class RegionsStateMapperTest {
                 RegionRowKey.NoCity("ES"),
                 RegionRowKey.NoLocation,
             ),
-            mapper.map(oneRowPerKey, TODAY).loaded().rows.map { it.key },
+            mapper.map(oneRowPerKey, TODAY, topLevel = false).loaded().rows.map { it.key },
         )
     }
 
@@ -78,7 +78,7 @@ class RegionsStateMapperTest {
                 RegionRowKey.Area("sp3e3", RegionRowKey.NoCity("ES")),
                 RegionRowKey.Area("sp3e3", RegionRowKey.Unresolved),
             ),
-            mapper.map(view, TODAY).loaded().rows.map { it.key },
+            mapper.map(view, TODAY, topLevel = false).loaded().rows.map { it.key },
         )
     }
 
@@ -102,7 +102,7 @@ class RegionsStateMapperTest {
                 RegionRowLabel.NoCity,
                 RegionRowLabel.NoLocation,
             ),
-            mapper.map(view, TODAY).loaded().rows.map { it.label },
+            mapper.map(view, TODAY, topLevel = false).loaded().rows.map { it.label },
         )
     }
 
@@ -123,17 +123,25 @@ class RegionsStateMapperTest {
                 ),
                 encounters = persistentListOf(),
             ),
-            mapper.map(view, TODAY),
+            mapper.map(view, TODAY, topLevel = false),
         )
     }
 
     @Test
-    fun `an empty level says what it lacks, places or cats, each in its own words`() {
-        val empty = listOf(RegionView.Places(emptyList()), RegionView.Cats(emptyList()))
+    fun `an empty level says what it lacks, each in its own words`() {
+        val noPlaces = RegionView.Places(emptyList())
 
         assertEquals(
-            listOf(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES), RegionsState.Empty(RegionsEmptyLabel.NO_CATS)),
-            empty.map { mapper.map(it, TODAY) },
+            listOf(
+                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET),
+                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE),
+                RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE),
+            ),
+            listOf(
+                mapper.map(noPlaces, TODAY, topLevel = true),
+                mapper.map(noPlaces, TODAY, topLevel = false),
+                mapper.map(RegionView.Cats(emptyList()), TODAY, topLevel = false),
+            ),
         )
     }
 

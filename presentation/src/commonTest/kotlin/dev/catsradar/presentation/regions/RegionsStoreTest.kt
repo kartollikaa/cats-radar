@@ -119,8 +119,38 @@ class RegionsStoreTest {
         logCat(41.440, 2.190, "ES", "Barcelona")
         runCurrent()
 
-        assertEquals(listOf("2"), assertIs<RegionsState.Loaded>(store.state.value).rows.map { it.countLabel })
+        assertEquals(
+            RegionsState.Loaded(
+                rows = persistentListOf(
+                    RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2"),
+                ),
+            ),
+            store.state.value,
+        )
     }
+
+    @Test
+    fun `the top level with no cat logged reads as having no places yet`() = runTest(mainDispatcher) {
+        val store = newStore(parent = null)
+
+        runCurrent()
+
+        assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET), store.state.value)
+    }
+
+    @Test
+    fun `a country whose only cat is removed while it is open reads as having no places here`() =
+        runTest(mainDispatcher) {
+            val cat = logCat(41.390, 2.170, "ES", "Barcelona")
+            val store = newStore(RegionKey.Country("ES"))
+            runCurrent()
+            assertEquals(listOf("1"), assertIs<RegionsState.Loaded>(store.state.value).rows.map { it.countLabel })
+
+            encounters.softDelete(cat.id, NOW)
+            runCurrent()
+
+            assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE), store.state.value)
+        }
 
     @Test
     fun `an area whose only cat is removed while it is open reads as having no cats`() = runTest(mainDispatcher) {
@@ -133,7 +163,7 @@ class RegionsStoreTest {
         encounters.softDelete(cat.id, NOW)
         runCurrent()
 
-        assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_CATS), store.state.value)
+        assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE), store.state.value)
     }
 
     private fun namedCell(encounter: Encounter, countryCode: String, city: String) = PlaceCell(

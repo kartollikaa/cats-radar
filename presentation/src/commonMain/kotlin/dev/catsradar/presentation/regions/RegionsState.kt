@@ -15,8 +15,7 @@ sealed interface RegionsState {
     ) : RegionsState
 }
 
-/** What an empty level would have listed. */
-enum class RegionsEmptyLabel { NO_PLACES, NO_CATS }
+enum class RegionsEmptyLabel { NO_PLACES_YET, NO_PLACES_HERE, NO_CATS_HERE }
 
 /**
  * [key] is the identity the screen hands back when the row is tapped; the callback stays a

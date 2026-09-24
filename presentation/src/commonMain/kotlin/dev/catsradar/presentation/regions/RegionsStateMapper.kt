@@ -17,13 +17,14 @@ class RegionsStateMapper(
 ) {
     private val encountersMapper = EncountersStateMapper(dateTimeFormatter, photoStorage)
 
-    fun map(view: RegionView, today: LocalDate): RegionsState = when (view) {
+    fun map(view: RegionView, today: LocalDate, topLevel: Boolean): RegionsState = when (view) {
         is RegionView.Places -> when {
-            view.children.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES)
+            view.children.isEmpty() && topLevel -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
+            view.children.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE)
             else -> RegionsState.Loaded(rows = view.children.map { it.toRow() }.toPersistentList())
         }
         is RegionView.Cats -> when {
-            view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS)
+            view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE)
             else -> RegionsState.Loaded(encounters = encountersMapper.mapList(view.encounters, today))
         }
     }

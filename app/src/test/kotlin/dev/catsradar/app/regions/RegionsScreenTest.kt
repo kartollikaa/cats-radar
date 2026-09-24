@@ -21,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class RegionsScreenTest {
@@ -39,19 +40,25 @@ class RegionsScreenTest {
         val words = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
         words.assertCountEquals(0)
 
-        state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES)
+        state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
 
         words.assertCountEquals(1)
     }
 
     @Test
-    fun `an empty level of places and an empty level of cats each read in their own words`() {
-        show(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES))
-        compose.onNodeWithText(context.getString(R.string.regions_empty_places)).assertExists()
+    fun `each kind of empty level reads in words of its own`() {
+        val words = mapOf(
+            RegionsEmptyLabel.NO_PLACES_YET to R.string.regions_no_places_yet,
+            RegionsEmptyLabel.NO_PLACES_HERE to R.string.regions_no_places_here,
+            RegionsEmptyLabel.NO_CATS_HERE to R.string.regions_no_cats_here,
+        )
+        assertEquals(RegionsEmptyLabel.entries.toSet(), words.keys)
+        show(RegionsState.Loading)
 
-        state = RegionsState.Empty(RegionsEmptyLabel.NO_CATS)
-
-        compose.onNodeWithText(context.getString(R.string.regions_empty_cats)).assertExists()
+        words.forEach { (label, text) ->
+            state = RegionsState.Empty(label)
+            compose.onNodeWithText(context.getString(text)).assertExists()
+        }
     }
 
     private fun show(initial: RegionsState) {
