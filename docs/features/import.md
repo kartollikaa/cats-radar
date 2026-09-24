@@ -99,7 +99,9 @@ takes them back*).
 - **The picked photos stay readable for the whole run.** A read grant handed back by
   `GET_CONTENT` belongs to the activity that received it, so finishing the app mid-import would
   otherwise cut the worker off from every photo it had not read yet. Where the source offers it, the
-  grant is persisted on pick and released when the run ends, however it ends.
+  grant is persisted on pick and released once the run finishes, successfully or not. A run the
+  system stops keeps it for WorkManager's next attempt, and a new pick lets go of whatever an
+  earlier batch still holds.
 - **A pick keeps its first `IMPORT_BATCH_MAX` photos.** `GET_CONTENT` has no limit of its own, and
   the picked URIs reach the worker as WorkManager input data, which has a fixed size cap; the photos
   past the batch are left out of the run.
