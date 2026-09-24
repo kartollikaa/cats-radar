@@ -19,11 +19,12 @@ and the Undo that takes back the run's last cat takes the badge with it. When th
 out, the badge goes with the chip, and the next tap starts again from one. Like the haptic, a tap's
 one lands before the write rather than after it succeeds, so holding the button down still counts up
 smoothly. So a tap whose write is still running is on the badge before it is in the run: it keeps
-its one when an Undo or the window closing empties the run around it, and joins or opens a run when
-it lands. If the write fails, the tap takes its one back off: it added no cat, and the total, read
-back from the database, does not move either. It is a badge rather than bare text because a wide
-number in a short block reaches that corner; TalkBack reads the total as the block's own label, and
-before the total is known the block is named by what it does.
+its one when the window closing, or an Undo of a newer tap, empties the run around it, and joins or
+opens a run when it lands, unless an Undo takes it back first (see *At the edges*). If the write
+fails, the tap takes its one back off: it added no cat, and the total, read back from the database,
+does not move either. It is a badge rather than bare text because a wide number in a short block
+reaches that corner; TalkBack reads the total as the block's own label, and before the total is
+known the block is named by what it does.
 
 The count sits in a large block that **is** the button. It squashes under a press and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen
@@ -59,10 +60,12 @@ scrolls instead.
 ## Undoing a run of taps
 
 The undo window belongs to a run of taps, not to one tap. Every tap made while the chip is up joins
-the run and restarts the window; every Undo soft-deletes the newest cat still in the run, cancels
-its location attach, and restarts the window again. So five mistaken taps come back off with five
-Undos, and the chip stays up until the last of them is gone, the "+N" badge counting down with it. A
-tap after an Undo joins the same run and counts on from what the badge has left.
+the run and restarts the window; every Undo takes back the newest tap of the run, soft-deleting its
+cat and cancelling its location attach — or, for a tap still being written, deleting it the moment
+it lands, before it ever gets one (see *At the edges*) — and restarts the window again. So five
+mistaken taps come back off with five Undos, and the chip stays up until the last of them is gone,
+the "+N" badge counting down with it. A tap after an Undo joins the same run and counts on from what
+the badge has left.
 Once the window runs out with nothing pressed, the run is closed: the chip goes, and nothing brings
 it back except a fresh tap. The coat grid's ring follows the run as well — after an Undo it rings the
 coat of the newest cat still in it (`coat.md`). The cases below that concern undo are in
@@ -89,13 +92,20 @@ haptic tick each*). Because inserts are async, a later tap's write can complete 
 one's; `CounterStore` tracks a monotonically increasing `tapSequence`, captured before the
 suspending insert, and keeps the run in that order rather than the order the writes finish in, so
 Undo always takes back the tap that happened last (*undo follows the order of the taps, not the
-order their writes finished in*). A slow write from a run that has already expired does not reopen
+order their writes finished in*). That holds while the last tap is still being written too: its cat
+has no id to delete yet, so the Undo marks the tap instead. The "+N" takes one off at once, and the
+cat is soft-deleted the moment its write lands, never gets a location fix and never joins the run,
+so the next Undo takes the tap before it (*undo takes back the newest tap even while its write is
+still running*; *a tap undone while being written never joins the run*). The total can tick up and
+straight back as that write lands and is taken back. If the write fails instead, there is nothing to
+delete and the older cats stay undoable (*a tap undone while being written whose write then fails
+leaves the older cat undoable*). A slow write from a run that has already expired does not reopen
 the window (*a tap whose write lands after the window closed does not reopen it*), and one landing
 behind a newer tap's does not stretch it (*an older tap's write landing late does not stretch the
 window of the newer one*). Undo takes its
 cat off the run before the suspending delete runs, so two Undos pressed back to back take back two
 different cats, never the same one twice (*two undos dispatched back to back take away two
-different cats*); an Undo with the run empty does nothing (*undo walks a run of taps back newest
+different cats*); an Undo with nothing left to take back does nothing (*undo walks a run of taps back newest
 first until every cat of it is gone*).
 
 A tap or an Undo while the chip is showing restarts the window rather than stacking a second timer
