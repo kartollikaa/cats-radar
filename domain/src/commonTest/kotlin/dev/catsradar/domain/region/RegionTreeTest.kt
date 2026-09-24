@@ -151,7 +151,7 @@ class RegionTreeTest {
     }
 
     @Test
-    fun `areas are derived from the geohash, so an unnamed cell still has one`() {
+    fun `areas are derived from the coordinates, so an unnamed cell still has one`() {
         val pending = located(41.4, 2.2)
 
         val nodes = RegionTree.areas(
@@ -164,6 +164,53 @@ class RegionTreeTest {
         assertIs<RegionKey.Area>(node.key)
         // No name anywhere, so the label carries coordinates for the platform to format.
         assertIs<RegionLabel.Coordinates>(node.label)
+    }
+
+    @Test
+    fun `a located cat with no geohash or cell sits in the area its coordinates imply`() {
+        val bare = located(41.4, 2.2).copy(geohash = null, placeCellId = null)
+
+        val nodes = RegionTree.areas(RegionKey.Unresolved, listOf(bare), emptyList())
+
+        assertEquals(listOf(RegionKey.Area(Geohash.encode(41.4, 2.2, Tuning.AREA_PRECISION))), nodes.map { it.key })
+        val inArea = RegionTree.encountersIn(nodes.single().key, listOf(bare), emptyList())
+        assertEquals(listOf(bare.id), inArea.map { it.id })
+    }
+
+    @Test
+    fun `the cats under Not named yet add up across its areas`() {
+        val pending = located(41.4, 2.2)
+        val cellNeverCreated = located(41.41, 2.2)
+        val bare = located(48.85, 2.35).copy(geohash = null, placeCellId = null)
+        val all = listOf(pending, cellNeverCreated, bare)
+        val cells = listOf(cell(pending, status = PlaceStatus.PENDING))
+
+        val unresolved = RegionTree.countries(all, cells).single { it.key == RegionKey.Unresolved }
+
+        assertEquals(all.size, unresolved.count)
+        assertEquals(unresolved.count, RegionTree.areas(RegionKey.Unresolved, all, cells).sumOf { it.count })
+    }
+
+    @Test
+    fun `a located source with no point on the globe is No location, never Not named yet`() {
+        val noPoint = encounterFixture("no-point", BASE, LocationSource.CURRENT_FIX)
+        val offGlobe = encounterFixture("off-globe", BASE, LocationSource.CURRENT_FIX, lat = 91.0, lon = 2.0)
+        val all = listOf(noPoint, offGlobe)
+
+        assertEquals(
+            listOf(RegionNode(RegionKey.NoLocation, RegionLabel.NoLocation, all.size)),
+            RegionTree.countries(all, emptyList()),
+        )
+        assertEquals(all, RegionTree.encountersIn(RegionKey.NoLocation, all, emptyList()))
+    }
+
+    @Test
+    fun `a cat marked NONE is No location even when it holds coordinates`() {
+        val markedNone = encounterFixture("marked-none", BASE, LocationSource.NONE, lat = 41.4, lon = 2.2)
+
+        val nodes = RegionTree.countries(listOf(markedNone), emptyList())
+        assertEquals(listOf(RegionKey.NoLocation), nodes.map { it.key })
+        assertTrue(RegionTree.areas(RegionKey.Unresolved, listOf(markedNone), emptyList()).isEmpty())
     }
 
     @Test

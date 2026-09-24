@@ -3,6 +3,7 @@ package dev.catsradar.data.repository
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.EncounterEntity
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Instant
@@ -34,6 +35,7 @@ internal class FakeEncounterDao : EncounterDao {
     var clearDeletedAtCall: String? = null
     val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
+    val setPlaceCellCalls = mutableListOf<PlaceCellAssignment>()
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
     var loadDeletedBeforeCall: Instant? = null
@@ -80,6 +82,10 @@ internal class FakeEncounterDao : EncounterDao {
         attachLocationCall = AttachLocationCall(
             id, lat, lon, accuracyMeters, locationSource, locationFixedAt, geohash, placeCellId, updatedAt,
         )
+    }
+
+    override suspend fun setPlaceCell(id: String, lat: Double, lon: Double, geohash: String, placeCellId: String) {
+        setPlaceCellCalls += PlaceCellAssignment(id, lat, lon, geohash, placeCellId)
     }
 
     override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {
