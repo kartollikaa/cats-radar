@@ -83,15 +83,16 @@ left alone — enlarging costs bytes and quality and adds no detail.
 
 Neither copy carries the original's metadata. The app republishes nobody's GPS.
 
-The original is never decoded at its full size. A phone camera's photo can run to hundreds of
-megapixels, and holding one whole in memory fails on a phone; that failure used to reach the user
-as an unreadable photo, and the cat went unsaved. The resizer reads the file's dimensions first and
-has `BitmapFactory` shrink the decode by the largest power of two that still leaves the longest side
-at or above the copy's cap, so the bitmap in memory stays under twice the cap on each side whatever
-the camera. Powers of two because those are the only factors `BitmapFactory` honours; anything else
-it rounds down. Both copies are then sized from the file's own dimensions, not from the shrunk
-bitmap: the decoder rounds a halved odd side, and sizing from its result would put a copy a pixel
-off the original's proportions.
+The original is never decoded larger than it needs to be. A phone camera's photo can run to
+hundreds of megapixels, and holding one whole in memory fails on a phone; that failure used to
+reach the user as an unreadable photo, and the cat went unsaved. The resizer reads the file's
+dimensions first and has `BitmapFactory` shrink the decode by the largest power of two that still
+leaves the longest side at or above the copy's cap, so the bitmap in memory stays under twice the
+cap on each side whatever the camera. Powers of two because the JPEG decoder shrinks by those while
+decoding, averaging the pixels it drops; `BitmapFactory` accepts any other factor too, but meets it
+by skipping pixels, which turns fine detail such as fur into false patterns. Both copies are then
+sized from the file's own dimensions, not from the shrunk bitmap: the decoder rounds a halved odd
+side, and sizing from its result would put a copy a pixel off the original's proportions.
 
 Both copies are stored the way the photo is meant to be seen. A phone camera usually saves the
 sensor's pixels as they came off it plus an EXIF Orientation tag saying how to turn them — for a
@@ -152,10 +153,10 @@ never comes from the code under test.
 
 One of them is phone-sized: the quarter-turn case at more than twice the copy's cap on its longest
 side, so its decode has to shrink. `AndroidImageResizerLargePhotoTest` checks the decode itself —
-shrunk, but never below the cap — and the sizes of both copies. The fixture's sides are odd on purpose: halving
-rounds them, so a copy sized from the shrunk bitmap instead of the file comes out a pixel narrower,
-and the size test fails. Flat quadrants compress to almost nothing, which keeps a fixture that large
-small in the repository.
+shrunk, but never below the cap — and the sizes of both copies. The fixture's sides are odd on
+purpose: halving rounds them, so a copy sized from the shrunk bitmap instead of the file comes out
+a pixel narrower, and the size test fails. Flat quadrants compress to almost nothing, which keeps a
+fixture that large small in the repository.
 
 ## Where the code lives
 

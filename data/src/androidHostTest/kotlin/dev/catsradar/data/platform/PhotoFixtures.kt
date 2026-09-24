@@ -16,7 +16,7 @@ internal object PhotoFixtures {
     /** Portrait, with [Quadrant.entries] in reading order, once turned the way its EXIF Orientation says. */
     fun oriented(orientation: Int) = "orientation_$orientation.jpg"
 
-    /** As [oriented] with orientation 6, but 4099x3082 as stored: large enough to be decoded shrunk. */
+    /** As [oriented] with orientation 6, but over twice the copy's cap on its longest side, so decoded shrunk. */
     const val LARGE_ROTATED = "large_orientation_6.jpg"
 
     /** Copied out of the jar because ExifInterface and BitmapFactory want a real file. */

@@ -2,6 +2,7 @@ package dev.catsradar.data.platform
 
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class SampleSizeTest {
 
@@ -13,5 +14,10 @@ class SampleSizeTest {
 
         val expected = mapOf(800 to 1, 2048 to 1, 4095 to 1, 4096 to 2, 8160 to 2, 8191 to 2, 8192 to 4, 16320 to 4)
         assertEquals(expected, sampleSizes)
+    }
+
+    @Test
+    fun aMinimumThatIsNotPositiveIsRejected() {
+        assertFailsWith<IllegalArgumentException> { sampleSizeFor(longestSide = 4000, minLongestSide = 0) }
     }
 }

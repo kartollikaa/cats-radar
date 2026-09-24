@@ -48,8 +48,8 @@ class AndroidImageResizer(
     }
 
     private fun DecodedPhoto.writeScaled(maxSide: Int, turn: Matrix, destination: File): Boolean = runCatching {
-        // The file's size, not the bitmap's: the decoder rounds the sides of a shrunk bitmap.
-        val target = scaleToFit(width, height, maxSide)
+        // Not the bitmap's size: the decoder rounds the sides of a shrunk one.
+        val target = scaleToFit(fileWidth, fileHeight, maxSide)
         val scaled = if (target.width == bitmap.width && target.height == bitmap.height) {
             bitmap
         } else {
@@ -80,8 +80,8 @@ class AndroidImageResizer(
     }
 }
 
-/** [bitmap] may be smaller than the file; [width] x [height] is the file's own size, before any EXIF turn. */
-internal class DecodedPhoto(val bitmap: Bitmap, val width: Int, val height: Int)
+/** [bitmap] may be shrunk; neither it nor [fileWidth] x [fileHeight] has the EXIF turn applied. */
+internal class DecodedPhoto(val bitmap: Bitmap, val fileWidth: Int, val fileHeight: Int)
 
 internal fun Context.decodeShrunk(sourceUri: String, minLongestSide: Int): DecodedPhoto? = runCatching {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -95,10 +95,11 @@ internal fun Context.decodeShrunk(sourceUri: String, minLongestSide: Int): Decod
 }.getOrNull()
 
 /**
- * The largest power of two that leaves [longestSide] at least [minLongestSide]. BitmapFactory rounds any
- * other sample size down to a power of two.
+ * The largest power of two that leaves [longestSide] at least [minLongestSide]. Only a power of two is shrunk
+ * inside the JPEG decoder, which averages; BitmapFactory honours any other value by skipping pixels.
  */
 internal fun sampleSizeFor(longestSide: Int, minLongestSide: Int): Int {
+    require(minLongestSide > 0) { "minLongestSide must be positive, was $minLongestSide" }
     var sampleSize = 1
     while (longestSide / (sampleSize * 2) >= minLongestSide) sampleSize *= 2
     return sampleSize
