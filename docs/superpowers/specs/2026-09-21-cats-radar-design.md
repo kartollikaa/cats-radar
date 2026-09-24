@@ -331,7 +331,7 @@ maps the spec onto those modules.
 
 | Module | Kind | Holds |
 |---|---|---|
-| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`, `TransactionRunner`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
+| `:domain` | KMP | `Encounter`, `PlaceCell`, `Session`, `RegionNode`, `Stats`, `Tuning`; `Geohash`, `SessionSplitter`, `StatsCalculator`, `LocationPolicy`, `ImportRules`, backup merge rules; repository interfaces (`EncounterRepository`, `PlaceCellRepository`, `SettingsRepository`, `TransactionRunner`); platform interfaces (`LocationProvider`, `PhotoStorage`, `GallerySaver`, `ExifReader`, `ImageResizer`, `Digest`, `ReverseGeocoder`, `IdGenerator`, `DeviceIdProvider`, `Haptics`); the `Analytics` port and its event catalogue; use cases (`LogTally`, `LogPhoto`, `ImportPhotos`, `AttachLocation`, `ResolvePendingPlaces`, `ObserveStats`, `ObserveEncounters`, `ObserveRegion`, `DeleteEncounter`, `UndoDelete`, `ExportBackup`, `ImportBackup`, `PurgeDeleted`). `kotlin.time.Clock` injected. |
 | `:data` | KMP | Room `CatsDatabase`, `EncounterDao`, `PlaceCellDao` (`BundledSQLiteDriver`, `RoomDatabaseConstructor` expect/actual, KSP); DataStore Preferences; repository implementations; entity ↔ domain mappers; backup ZIP (de)serialisation with `kotlinx.serialization`. `androidMain`: FusedLocationProvider, ExifInterface, `Geocoder`, MediaStore saver, SHA-256, bitmap resize. |
 | `:presentation` | KMP | `Store` base; per screen `State`/`Intent`/`Effect`/`Store` + `*StateMapper` for `Counter`, `Encounters`, `EncounterDetail`, `Statistics`, `Regions`, `Settings`; `DateTimeFormatter` interface. |
 | `:ui` | Android | `CatsRadarTheme`, `@ThemePreviews`, components, one file per screen, previews. Compose Multiplatform-ready: no Android imports beyond Compose. |
@@ -363,7 +363,8 @@ screen or the process (location attach, geocoding, import, export, purge) is a W
 Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP), DataStore (KMP),
 `kotlinx-datetime`, `kotlinx-serialization`, `kotlinx-collections-immutable`, Koin, Coil 3,
 `play-services-location` + `kotlinx-coroutines-play-services`, `androidx.exifinterface`,
-`androidx.glance`, `androidx.work`, `androidx.activity` result contracts, Firebase Crashlytics
+`androidx.glance`, `androidx.work`, `androidx.activity` result contracts, Firebase Crashlytics and
+Google Analytics for Firebase
 ([Firebase spec](./2026-09-24-firebase-analytics-crashlytics-design.md)). Versions only in
 `gradle/libs.versions.toml`.
 

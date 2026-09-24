@@ -26,8 +26,8 @@ cookie. Its light style follows the light theme and its dark style the dark one.
 OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in.
 
 **This is the one screen that fetches content from the network.** Until the map, the app declared no
-`INTERNET` permission at all: geocoding runs through the platform. Crash reports go to Firebase as
-well (`analytics.md`), but no screen waits on them. Tiles are fetched as the map is looked at,
+`INTERNET` permission at all: geocoding runs through the platform. Crash reports and screen views go to
+Firebase as well (`analytics.md`), but no screen waits on them. Tiles are fetched as the map is looked at,
 so the tile server learns which area is on screen and from which address, as with any web map, and
 because the map opens fitted around your cats, the first area it asks for is the one around where
 you have seen them. No cat is sent: the dots are drawn on the phone from the phone's own database.

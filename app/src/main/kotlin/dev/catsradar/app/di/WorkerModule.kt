@@ -1,6 +1,7 @@
 package dev.catsradar.app.di
 
 import androidx.glance.appwidget.updateAll
+import dev.catsradar.app.navigation.ScreenViewTracker
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifications
@@ -35,4 +36,5 @@ val workerModule = module {
     single<ImportScheduler> { WorkManagerImportScheduler(androidContext()) }
     single<BackupScheduler> { WorkManagerBackupScheduler(androidContext()) }
     single<NonFatalReporter> { CrashlyticsNonFatalReporter() }
+    single { ScreenViewTracker(get()) }
 }

@@ -60,8 +60,9 @@ a file path or URI. A crash report carries the exception's message as it was thr
 file error names the path or URI it failed on — app-private storage or a file the user picked.
 
 **Advertising.** The Advertising ID is not collected (`google_analytics_adid_collection_enabled` off),
-the `com.google.android.gms.permission.AD_ID` permission the SDK merges in is removed, and ad
-personalisation signals are off by default.
+the permissions the SDK merges in for ad ids and attribution (`com.google.android.gms.permission.AD_ID`,
+`ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`) are removed, and ad personalisation, ad
+storage and ad user data are off by default.
 
 Events queue on the phone while offline and are sent when the network allows; logging never waits on
 the network and never fails a user action.
@@ -104,7 +105,7 @@ Names and parameter keys are `snake_case`; enum values are sent lowercase. Count
 | `backup_rejected` | `reason` (a `BackupRejection` value) | `ImportBackup` | the archive is refused |
 | `walk_started` | — | `StartWalk` | the walk is recorded |
 | `walk_ended` | `minutes` | `EndWalk` | the walk is closed |
-| `screen_view` | `screen_name` (counter, encounters, encounter_detail, statistics, regions, map, map_spot, settings) | `:app` navigation | the top of the back stack changes |
+| `screen_view` | `screen_name` (counter, encounters, encounter_detail, statistics, regions, map, map_spot, settings) | `:app` navigation | a different screen reaches the top of the back stack, or the app returns from the background |
 
 `screen_view` is Firebase's predefined event. Automatic screen reporting is turned off: the app is one
 activity, so it would only ever report that activity. `regions` carries no level and no place.

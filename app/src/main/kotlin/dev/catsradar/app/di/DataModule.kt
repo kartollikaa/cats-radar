@@ -1,6 +1,7 @@
 package dev.catsradar.app.di
 
 import dev.catsradar.app.BuildConfig
+import dev.catsradar.data.analytics.FirebaseAnalyticsReporter
 import dev.catsradar.data.backup.ZipBackupReader
 import dev.catsradar.data.backup.ZipBackupWriter
 import dev.catsradar.data.db.CatsDatabase
@@ -27,6 +28,7 @@ import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
+import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.platform.DeviceIdProvider
@@ -54,6 +56,7 @@ val dataModule = module {
     single { createCatsDatabase(androidContext()) }
     single<EncounterDao> { get<CatsDatabase>().encounterDao() }
     single<EncounterRepository> { EncounterRepositoryImpl(get()) }
+    single<Analytics> { FirebaseAnalyticsReporter(androidContext()) }
     single<PlaceCellDao> { get<CatsDatabase>().placeCellDao() }
     single<PlaceCellRepository> { PlaceCellRepositoryImpl(get()) }
     single<WalkDao> { get<CatsDatabase>().walkDao() }
