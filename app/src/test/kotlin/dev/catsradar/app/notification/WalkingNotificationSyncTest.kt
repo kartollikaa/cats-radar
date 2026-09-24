@@ -3,10 +3,12 @@ package dev.catsradar.app.notification
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.repository.WalkRepository
+import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -32,7 +34,7 @@ class WalkingNotificationSyncTest {
         ticks.tryEmit(Unit)
         WalkingNotificationSync(
             settingsRepository = settings,
-            walkRepository = walks,
+            observeOpenWalk = ObserveOpenWalk(walks),
             observeStats = ObserveStats(
                 encounterRepository = encounters,
                 clock = object : Clock {
@@ -147,18 +149,17 @@ private class RecordingWalkingNotifications : WalkingNotifications {
     }
 }
 
-/** Only the open walk, which is all the sync reads. */
+/** At most the one open walk, which is all the sync reads. */
 private class OpenWalkOnly : WalkRepository {
     private val open = MutableStateFlow<Walk?>(null)
 
     fun start(at: Instant) {
-        open.value = Walk(id = "walk-1", startedAt = at, endedAt = null, deviceId = "device-1", createdAt = at, updatedAt = at)
+        open.value = Walk("walk-1", startedAt = at, endedAt = null, "device-1", createdAt = at, updatedAt = at)
     }
 
-    override fun observeOpen(): Flow<Walk?> = open
+    override fun observeAll(): Flow<List<Walk>> = open.map { listOfNotNull(it) }
     override suspend fun openWalk(): Walk? = open.value
 
-    override fun observeAll(): Flow<List<Walk>> = throw NotImplementedError("unused by this test")
     override suspend fun startIfNoneOpen(walk: Walk): Walk = throw NotImplementedError("unused by this test")
     override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean =
         throw NotImplementedError("unused by this test")

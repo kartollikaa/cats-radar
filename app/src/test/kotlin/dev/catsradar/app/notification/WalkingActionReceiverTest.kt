@@ -91,7 +91,8 @@ class WalkingActionReceiverTest {
         shadowOf(Looper.getMainLooper()).idle()
         awaitBroadcastFinished()
 
-        val posted = assertNotNull(shadowOf(context.getSystemService(NotificationManager::class.java)).allNotifications.single())
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val posted = assertNotNull(shadowOf(manager).allNotifications.single())
         assertEquals(WalkStart.toEpochMilliseconds(), posted.`when`)
         assertTrue(posted.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
     }

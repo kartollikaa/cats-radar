@@ -1,7 +1,7 @@
 package dev.catsradar.app.notification
 
 import dev.catsradar.domain.repository.SettingsRepository
-import dev.catsradar.domain.repository.WalkRepository
+import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +25,7 @@ import kotlin.time.Instant
  */
 class WalkingNotificationSync(
     private val settingsRepository: SettingsRepository,
-    private val walkRepository: WalkRepository,
+    private val observeOpenWalk: ObserveOpenWalk,
     private val observeStats: ObserveStats,
     private val notifications: WalkingNotifications,
 ) {
@@ -37,7 +37,7 @@ class WalkingNotificationSync(
                 if (enabled) {
                     combine(
                         observeStats().map { it.currentOuting?.count ?: 0 },
-                        walkRepository.observeOpen().map { it?.startedAt },
+                        observeOpenWalk().map { it?.startedAt },
                         appOnScreen,
                         ::Shown,
                     )

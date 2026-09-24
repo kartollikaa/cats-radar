@@ -26,13 +26,12 @@ class WalkRepositoryImplTest {
     }
 
     @Test
-    fun observeAllAndTheOpenWalkMapEveryField() = runTest {
+    fun observeAllAndOpenWalkMapEveryField() = runTest {
         dao.observeAllResult = listOf(distinctWalkEntity)
         dao.loadOpenResult = distinctWalkEntity
 
         assertEquals(listOf(distinctWalk), repository.observeAll().first())
         assertEquals(distinctWalk, repository.openWalk())
-        assertEquals(distinctWalk, repository.observeOpen().first())
     }
 
     @Test

@@ -28,7 +28,7 @@ class ObserveWalkElapsedTest {
 
     @Test
     fun `with no walk on there is no walk time`() = runTest {
-        ObserveWalkElapsed(walks, FakeClock(Start), ticks = flowOf(Unit))().test {
+        ObserveWalkElapsed(ObserveOpenWalk(walks), FakeClock(Start), ticks = flowOf(Unit))().test {
             assertNull(awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -38,7 +38,7 @@ class ObserveWalkElapsedTest {
     fun `a walk on is measured from its start to now`() = runTest {
         startWalkAt(Start)
 
-        ObserveWalkElapsed(walks, FakeClock(Start + 32.minutes), ticks = flowOf(Unit))().test {
+        ObserveWalkElapsed(ObserveOpenWalk(walks), FakeClock(Start + 32.minutes), ticks = flowOf(Unit))().test {
             assertEquals(32.minutes, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -50,7 +50,7 @@ class ObserveWalkElapsedTest {
         val clock = MovableClock(Start + 1.minutes)
         val ticks = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
-        ObserveWalkElapsed(walks, clock, ticks)().test {
+        ObserveWalkElapsed(ObserveOpenWalk(walks), clock, ticks)().test {
             assertEquals(1.minutes, awaitItem())
 
             clock.now = Start + 2.minutes
@@ -65,7 +65,7 @@ class ObserveWalkElapsedTest {
     fun `a walk that starts or ends is followed`() = runTest {
         val clock = MovableClock(Start)
 
-        ObserveWalkElapsed(walks, clock, ticks = flowOf(Unit))().test {
+        ObserveWalkElapsed(ObserveOpenWalk(walks), clock, ticks = flowOf(Unit))().test {
             assertNull(awaitItem())
 
             startWalkAt(Start)
@@ -83,7 +83,7 @@ class ObserveWalkElapsedTest {
     fun `a start ahead of the clock reads as no time rather than negative`() = runTest {
         startWalkAt(Start + 10.minutes)
 
-        ObserveWalkElapsed(walks, FakeClock(Start), ticks = flowOf(Unit))().test {
+        ObserveWalkElapsed(ObserveOpenWalk(walks), FakeClock(Start), ticks = flowOf(Unit))().test {
             assertEquals(Duration.ZERO, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }

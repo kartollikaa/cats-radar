@@ -78,7 +78,10 @@ class WalkRecordingServiceTest {
     }
 
     private fun service(count: Int) =
-        Robolectric.buildService(WalkRecordingService::class.java, WalkRecordingService.intent(context, count, WalkStart))
+        Robolectric.buildService(
+            WalkRecordingService::class.java,
+            WalkRecordingService.intent(context, count, WalkStart),
+        )
             .create()
             .also { controllers += it }
 

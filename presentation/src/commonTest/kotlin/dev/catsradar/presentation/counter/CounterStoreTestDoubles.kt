@@ -293,7 +293,6 @@ internal class FakeWalkRepository : WalkRepository {
         )
     }
 
-    override fun observeOpen(): Flow<Walk?> = open
     override suspend fun openWalk(): Walk? = open.value
     override fun observeAll(): Flow<List<Walk>> = open.map { listOfNotNull(it) }
     override suspend fun startIfNoneOpen(walk: Walk): Walk = open.value ?: walk.also { open.value = it }

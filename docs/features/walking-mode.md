@@ -4,9 +4,36 @@ A cat seen on a walk should cost one tap. Walking mode puts an ongoing notificat
 on the lock screen with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and
 goes back — no unlock, no app launch, no hunting for the right screen.
 
-Started from the **Counter** — a button with a walking figure, centred under the count, that reads
+Started from the **Counter** — a button with a small cat, centred under the count, that reads
 *Start a walk*, then *Stop the walk* — because that is the screen someone is on when they set out.
 The same switch is in **Settings → Walking mode** for finding it again later.
+
+## How long the walk has lasted
+
+While a walk is on, the Counter's button and the notification both say how long it has lasted, and
+the cat on both of them walks.
+
+- **It counts from the walk's start**, the moment the walk was turned on, not from the outing's
+  first cat. The outing already has its own line on the Counter ("3 cats · 26 min"); the walk is
+  the thing the button starts and stops.
+- **On the button it is minutes**: the second line reads *32 min · press and hold* (*32 мин ·
+  удерживайте*, shorter so it still fits at narrow widths), formatted like every other duration on
+  the Counter. It moves within a few seconds of each minute, on the same tick as the outing line.
+- **In the notification it is a chronometer** counting up from the start, `12:34` then `1:02:03`. The
+  system ticks it, so the time moves with no repost and keeps moving while the app's process is
+  dead. From API 37 the notification is a `MetricStyle` with two metrics, *Cats* and *Walk*, and
+  the header leaves its own time out rather than show it twice.
+- **The Live Update chip keeps the count.** A chip shows one thing, and the count is what the
+  walk is for; the time is one glance further, in the card. `setShortCriticalText` outranks both
+  the metrics and the chronometer as the chip's content, so nothing else can take its place there.
+- **Until the walk exists there is no time.** The flag goes on first and the walk follows it a
+  moment later; in between, the button shows the plain hint and the notification shows no time,
+  rather than a clock started from a guess. A **Cat!** from the lock screen reads the walk's start
+  again as it re-posts, so the time does not drop off the notification with the tap.
+- **The cat walks only while a walk is on.** With no walk it stands on its first frame, legs
+  straight down. The button's loop and the status-bar icon play the same eight frames at the same
+  pace. The notification's icon moves only in the status bar: Android draws it static in the shade
+  and on the always-on display.
 
 ## Stopping takes a hold
 
@@ -15,7 +42,8 @@ and the button sits just under the count, where a thumb tallying cats can slip o
 a phone going back into a pocket. So while a walk is on the button has to be held until a fill has
 crossed it (`HoldToStop` in `WalkButton.kt`); the walk stops the moment it has, with a haptic, before
 the finger lifts. Let go earlier, or drift off the button, and the fill drains back and nothing changes. The
-button's second line reads *press and hold* meanwhile: a gesture nothing hints at is one nobody finds.
+button's second line says *press and hold* meanwhile, after the walk's time: a gesture nothing hints at
+is one nobody finds.
 
 Starting stays one tap, because a walk started by mistake loses nothing.
 
@@ -122,11 +150,11 @@ Channel importance is not one of them either; it matters for the lock screen ins
 Promotion is prominence, not capability — which is why it could be a separate slice from the feature
 itself.
 
-The icon beside that number, and in the shade, is the cat's face: the coat picker's head with the
-eyes and nose cut out, the same silhouette as the themed launcher icon. Android draws a
-notification's icon from its alpha alone, so the face's colours cannot carry over; the cut-outs are
-what keep it a face rather than a blob with ears. How its paths stay equal to the face's is in
-[app-shell.md](./app-shell.md#look).
+The icon beside that number, and in the shade, is the walking cat: an `animation-list` of the same
+frames the Counter's button plays, which the status bar runs as a loop. Android draws a
+notification's icon from its alpha alone, so the cat is a plain silhouette. The frames come from
+`tools/make-walking-cat.py`; `WalkingCatTest` fails if the button's frame list or pace stops
+matching the animation-list.
 
 ### It does not come back after it is dismissed
 
@@ -192,7 +220,8 @@ activity, so from a locked phone Android asks for the unlock first and the camer
   — but nothing is done with the answer: there is no degraded mode to fall back to and nothing
   useful to say about a setting the user just chose.
 - **The notification is `VISIBILITY_PUBLIC`** — its text shows on the lock screen, because tallying
-  without unlocking is the whole feature. It says how many cats this outing, and nothing more. The
+  without unlocking is the whole feature. It says how many cats this outing and how long the walk has
+lasted, and nothing more. The
   visibility is set on the notification, not the channel: Android discards `VISIBILITY_PUBLIC` on a
   channel an app creates.
 - **A tally from here is `origin = NOTIFICATION`**, distinct from the app, the widget and the two
@@ -204,7 +233,8 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 ## Where the code lives
 
 - `app/…/notification/WalkingNotifier.kt` — the notification, its channel and its actions
-- `app/…/res/drawable/ic_notification_cat.xml` — its icon, the face's silhouette
+- `ui/…/res/drawable/ic_cat_walking.xml` and `cat_walk_*.xml` — its icon and the button's cat,
+  generated by `tools/make-walking-cat.py`; `ui/…/counter/WalkingCat.kt` — the button's loop
 - `app/…/photo/TakePhotoShortcut.kt` — the Photo intent, shared with the widget
 - `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
 - `app/…/notification/WalkRecordingService.kt` — carries it while the route is recorded
@@ -214,6 +244,7 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use
 - `ui/…/counter/WalkButton.kt` — the Counter's button and its hold
+- `domain/…/usecase/ObserveWalkElapsed.kt` — how long the open walk has lasted, for the button
 - `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the switch survives a restart
 
 ## Not built yet

@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
@@ -25,7 +26,6 @@ import kotlin.time.toJavaInstant
 private const val CHANNEL_ID = "walking_lock_screen"
 private const val RETIRED_CHANNEL_ID = "walking"
 private const val NOTIFICATION_ID = 2
-private const val METRIC_STYLE_API = 37
 
 /**
  * The walking notification: one tap logs a cat without unlocking the phone or opening the app.
@@ -109,23 +109,10 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
 
     // Both clocks are ticked by the system, so the time moves with no repost and no process alive.
     private fun NotificationCompat.Builder.showWalkTime(count: Int, startedAt: Instant?): NotificationCompat.Builder {
-        val cats = NotificationCompat.Metric(
-            NotificationCompat.Metric.FixedInt(count),
-            context.getString(R.string.notification_walking_metric_cats),
-        )
-        if (startedAt == null) return setShowWhen(false).setStyle(NotificationCompat.MetricStyle().addMetric(cats))
-        val walk = NotificationCompat.Metric(
-            NotificationCompat.Metric.TimeDifference.forStopwatch(
-                startedAt.toJavaInstant(),
-                NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
-            ),
-            context.getString(R.string.notification_walking_metric_time),
-        )
-        return setWhen(startedAt.toEpochMilliseconds())
-            // MetricStyle's own stopwatch shows the time from API 37; a second one in the header would repeat it.
-            .setShowWhen(Build.VERSION.SDK_INT < METRIC_STYLE_API)
-            .setUsesChronometer(true)
-            .setStyle(NotificationCompat.MetricStyle().addMetric(cats).addMetric(walk))
+        if (startedAt != null) setWhen(startedAt.toEpochMilliseconds()).setUsesChronometer(true)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return setShowWhen(startedAt != null)
+        // MetricStyle shows the time as one of its metrics; a second clock in the header would repeat it.
+        return setShowWhen(false).setStyle(context.walkMetrics(count, startedAt))
     }
 
     private fun broadcast(action: String): PendingIntent = PendingIntent.getBroadcast(
@@ -165,6 +152,26 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         }
         manager.notify(NOTIFICATION_ID, notification)
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
+private fun Context.walkMetrics(count: Int, startedAt: Instant?): NotificationCompat.MetricStyle {
+    val style = NotificationCompat.MetricStyle().addMetric(
+        NotificationCompat.Metric(
+            NotificationCompat.Metric.FixedInt(count),
+            getString(R.string.notification_walking_metric_cats),
+        ),
+    )
+    if (startedAt == null) return style
+    return style.addMetric(
+        NotificationCompat.Metric(
+            NotificationCompat.Metric.TimeDifference.forStopwatch(
+                startedAt.toJavaInstant(),
+                NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
+            ),
+            getString(R.string.notification_walking_metric_time),
+        ),
+    )
 }
 
 // Approximate location alone gives fixes too rough for any of them to join a route.

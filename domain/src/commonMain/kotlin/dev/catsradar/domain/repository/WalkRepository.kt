@@ -12,9 +12,6 @@ interface WalkRepository {
     /** The walk that has not ended, or null; there is never more than one. */
     suspend fun openWalk(): Walk?
 
-    /** [openWalk], again each time a walk starts or ends. */
-    fun observeOpen(): Flow<Walk?>
-
     /** Starts [walk] unless a walk is already open, atomically; returns whichever walk is now open. */
     suspend fun startIfNoneOpen(walk: Walk): Walk
 

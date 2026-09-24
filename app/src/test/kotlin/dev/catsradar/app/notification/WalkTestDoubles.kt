@@ -18,7 +18,6 @@ import dev.catsradar.domain.repository.WalkRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -78,7 +77,6 @@ internal class OneWalkRepository : WalkRepository {
 
     override fun observeAll(): Flow<List<Walk>> = flowOf(listOf(walk.value))
     override suspend fun openWalk(): Walk? = walk.value.takeIf { it.endedAt == null }
-    override fun observeOpen(): Flow<Walk?> = walk.map { it.takeIf { open -> open.endedAt == null } }
     override suspend fun startIfNoneOpen(walk: Walk): Walk = this.walk.value
 
     override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean {

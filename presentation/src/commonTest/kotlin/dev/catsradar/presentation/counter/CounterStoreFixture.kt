@@ -3,6 +3,7 @@ package dev.catsradar.presentation.counter
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
+import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.UndoImport
@@ -52,7 +53,7 @@ internal fun TestScope.newCounterStore(
         undoLastTally = UndoLastTally(encounterRepository, clock),
         undoImport = UndoImport(encounterRepository, clock),
         observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
-        observeWalkElapsed = ObserveWalkElapsed(walkRepository, clock, ticks = ticks),
+        observeWalkElapsed = ObserveWalkElapsed(ObserveOpenWalk(walkRepository), clock, ticks = ticks),
         settingsRepository = settingsRepository,
         stateMapper = CounterStateMapper(FakeDateTimeFormatter()),
         locationPermissionRequestState = locationPermissionRequestState,
