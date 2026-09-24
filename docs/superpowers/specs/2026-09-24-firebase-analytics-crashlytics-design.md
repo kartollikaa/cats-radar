@@ -78,9 +78,9 @@ fact is logged in exactly one place.
 A Konsist rule keeps `com.google.firebase` imports inside `dev.catsradar.data..` and
 `dev.catsradar.app..`.
 
-The Firebase SDK wiring lives in the `catsradar.android.application` convention plugin plus a new
-`catsradar.firebase` convention plugin applied by `:app` (google-services, Crashlytics, BoM), so
-`app/build.gradle.kts` keeps configuring nothing itself.
+The Firebase build wiring (google-services and Crashlytics plugins, the BoM) lives in a new
+`catsradar.firebase` convention plugin that only `:app` applies; `catsradar.android.application` stays
+Firebase-free, so another application module never needs a `google-services.json`.
 
 ## 5. Event catalogue
 
@@ -88,7 +88,7 @@ Names and parameter keys are `snake_case`; enum values are sent lowercase. Count
 
 | Event | Parameters | Logged by | When |
 |---|---|---|---|
-| `cat_logged` | `kind` (tally, photo), `origin` (app, widget, notification, camera, gallery), `has_coat` | `LogTally`, `LogPhoto` | the encounter is inserted |
+| `cat_logged` | `kind` (tally, photo), `origin` (app, widget, notification for a tally; camera for a photo), `has_coat` | `LogTally`, `LogPhoto` | the encounter is inserted |
 | `tally_undone` | — | `UndoLastTally` | the tally is removed |
 | `coat_set` | `coat` (a `CatCoat` value, or `none` when cleared) | `SetCoat` | the coat is written |
 | `photo_attached` | `source` (camera, gallery) | `AttachPhoto` | the photo is attached |
@@ -97,7 +97,8 @@ Names and parameter keys are `snake_case`; enum values are sent lowercase. Count
 | `cats_deleted` | `count` | `DeleteEncounter`, `DeleteEncounters` | the deletion is written |
 | `delete_undone` | `count` | `UndoDelete`, `UndoDeleteEncounters` | the deletion is reverted |
 | `backup_exported` | — | `ExportBackup` | the archive is written |
-| `backup_imported` | `added`, `updated`, `unchanged` | `ImportBackup` | a merge is written (a rejection logs `backup_rejected` with `reason`) |
+| `backup_imported` | `added`, `updated`, `unchanged` | `ImportBackup` | a merge is written |
+| `backup_rejected` | `reason` (a `BackupRejection` value) | `ImportBackup` | the archive is refused |
 | `walk_started` | — | `StartWalk` | the walk is recorded |
 | `walk_ended` | `minutes` | `EndWalk` | the walk is closed |
 | `screen_view` | `screen_name` (counter, encounters, encounter_detail, statistics, regions, map, map_spot, settings) | `:app` navigation | the top of the back stack changes |
@@ -105,15 +106,18 @@ Names and parameter keys are `snake_case`; enum values are sent lowercase. Count
 `screen_view` is Firebase's predefined event. Automatic screen reporting is turned off: the app is one
 activity, so it would only ever report that activity. `regions` carries no level and no place.
 
-A failed action logs nothing: an unreadable photo, a refused attach, a rejected backup (except as
-`backup_rejected`) leave the catalogue untouched.
+Gallery photos are counted by `photos_imported`, not one `cat_logged` each. A failed action logs
+nothing: an unreadable photo or a refused attach leaves the catalogue untouched; a refused backup is
+the one failure with its own event.
 
 ## 6. Crashlytics
 
 - Uncaught exceptions: automatic once the SDK is in the app.
 - Custom key `build_type` (`debug` / `release`), set at process start before anything else can fail.
 - Non-fatals: the startup repairs (`RepairPlaceCells`, `RegeneratePhotoCopies`) and every worker's
-  catch-all branch record the exception they swallow. `CancellationException` is never recorded.
+  catch-all branch record the exception they swallow. A worker that answers with a retry records only
+  on its first attempt, so one persistent failure is one event, not one per backoff.
+  `CancellationException` is never recorded.
 - No user id, no custom logs containing user data.
 - Minify is off in every build, so there is no mapping file to upload.
 
@@ -144,7 +148,8 @@ A failed action logs nothing: an unreadable photo, a refused attach, a rejected 
 
 - **Gradle plugins on AGP 9.** The google-services and Crashlytics Gradle plugins must work with the
   project's AGP; verified first in the Crashlytics slice. If the Crashlytics plugin does not, the app
-  still gets crash reports without it, because minify is off and there is no native code: the build id
-  it would inject is supplied through a manifest placeholder instead.
+  still gets crash reports without it, because minify is off and there is no native code: the manifest
+  sets `com.crashlytics.RequireBuildId` to `false`, without which the SDK refuses to start when the
+  plugin's build id resource is missing.
 - **Config mismatch.** The google-services plugin fails the build when `google-services.json` has no
   client for the application id; that is the desired failure, not one to work around.

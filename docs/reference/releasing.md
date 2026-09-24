@@ -41,6 +41,10 @@ old one, with no cats, rather than updating it. To move the cats across:
 2. Install the new build and, in it, Settings → Backup → Import that file.
 3. Check the count, then remove the old app.
 
+A backup holds the cats, their photos and their places — not the app around them. The Settings
+switches start from their defaults, every permission is asked for again, and a home-screen widget
+belongs to the old app and goes with it: add the new one's widget again.
+
 ## Cutting one
 
 1. Merge a `tech/release-<version>` pull request that bumps both version values and marks the epic's
