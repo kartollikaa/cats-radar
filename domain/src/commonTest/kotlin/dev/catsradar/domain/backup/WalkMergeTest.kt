@@ -45,6 +45,16 @@ class WalkMergeTest {
     }
 
     @Test
+    fun `a new walk the archive lists twice with the same edit time arrives as the copy listed first`() {
+        val first = walk("w", endedAt = START + 2.hours)
+        val second = walk("w", endedAt = START + 3.hours)
+
+        val result = merge(importedWalks = listOf(first, second))
+
+        assertEquals(listOf(first), result.walks)
+    }
+
+    @Test
     fun `a walk here that the archive lists twice takes only its later edit`() {
         val latest = walk("w", endedAt = START + 3.hours, updatedAt = START + 3.hours)
         val older = walk("w", endedAt = START + 2.hours, updatedAt = START + 2.hours)

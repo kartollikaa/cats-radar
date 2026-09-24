@@ -12,7 +12,7 @@ import kotlin.time.Instant
 internal object WalkMerge {
 
     fun merge(local: BackupContents, imported: BackupContents): Pair<List<Walk>, List<TrackPoint>> {
-        val importedWalks = imported.walks.oneRowPer(Walk::id) { offered, kept -> offered.updatedAt > kept.updatedAt }
+        val importedWalks = imported.walks.oneRowPer(Walk::id, ::isLaterEdit)
         val localWalks = local.walks.associateBy { it.id }
         val known = localWalks.keys + importedWalks.map { it.id }
         val here = local.trackPoints.mapTo(mutableSetOf()) { it.walkId to it.at }
@@ -27,12 +27,14 @@ internal object WalkMerge {
 
         val walks = importedWalks.mapNotNull { candidate ->
             val existing = localWalks[candidate.id]
-            val winner = if (existing == null || candidate.updatedAt > existing.updatedAt) candidate else existing
+            val winner = existing?.takeUnless { isLaterEdit(offered = candidate, kept = it) } ?: candidate
             val settled = winner.settle(isOnHere = winner.id == onHere, lastPointAt = lastPointAt[winner.id])
             settled.takeIf { it != existing }
         }
         return walks to newPoints
     }
+
+    private fun isLaterEdit(offered: Walk, kept: Walk): Boolean = offered.updatedAt > kept.updatedAt
 
     // A walk still on in an archive was being recorded on another phone and cannot go on here, so it
     // arrives ended; and a walk ended that way reaches the last point any later archive brings.
