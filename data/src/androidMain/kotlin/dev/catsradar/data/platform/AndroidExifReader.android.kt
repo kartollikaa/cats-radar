@@ -65,10 +65,3 @@ class AndroidExifReader(
         const val SECONDS_PER_MINUTE = 60
     }
 }
-
-internal fun Context.openPhotoStream(uri: String) = when {
-    uri.startsWith("content://") || uri.startsWith("file://") ->
-        contentResolver.openInputStream(android.net.Uri.parse(uri))
-            ?: error("no stream for $uri")
-    else -> java.io.FileInputStream(uri)
-}

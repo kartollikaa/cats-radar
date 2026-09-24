@@ -5,9 +5,10 @@ cat. Import turns picked photos into encounters that sit in the history at the t
 not at the time you imported them.
 
 The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
-at its end** opens the system photo picker; holding that icon names it. The run happens in a worker,
-so it survives leaving the screen; the Counter shows how far it has got, and at the end, briefly,
-what was added, skipped and failed, with one undo for the whole batch.
+at its end** asks for access to where photos were taken, then opens the gallery; holding that icon
+names it. The run happens in a worker, so it survives leaving the screen; the Counter shows how far
+it has got, and at the end, briefly, what was added, skipped and failed, with one undo for the
+whole batch.
 
 ## What an imported photo becomes
 
@@ -35,7 +36,7 @@ describes a timestamp we do not have says nothing about the file's date.
   geohashed, with `locationFixedAt` set to when the photo was taken rather than when it was
   imported. The place cell they fall in is created at the same moment, so the photo can be named
   like any other located cat — no worker runs for these, and nothing else would create it. The
-  picker hands the coordinates over only when the user agrees to share them — see below.
+  coordinates reach the app only when it may see where photos were taken — see below.
 - No usable coordinates, and taken within `RECENT_PHOTO_WINDOW` of now → the photo was probably just taken
   where the phone is standing, so it is worth asking for a fix.
 - Otherwise → no location, ever. **A historical photo never receives today's location**; that is the
@@ -77,19 +78,42 @@ takes them back*).
   another app can have timed out by the time they return. WorkManager keeps a finished run, and the
   Counter reads it back each time it is shown and again after a restart, so a summary whose time
   never ran out — the app was closed or killed first — comes back with a fresh countdown.
-- **The photo picker strips GPS unless the user shares it.** The import asks for location with
-  `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`. The picker then asks *Include location info?*
-  once, remembers the answer for this app, and keeps a location button in its corner to change it.
-  Declined, the bytes handed over are a redacted copy: the GPS tags are gone and the photo gets no
-  location. A picker that predates the request ignores it and behaves as it always did; the system
-  picker learns the request from its own Google Play system updates, not from an Android release.
-  The **date survives** either way, so an imported photo still lands on the day it was taken. No
-  runtime permission is involved: the app neither requests `ACCESS_MEDIA_LOCATION` nor opens the
-  photo through `MediaStore.setRequireOriginal`.
-- `sourceDigest` is the digest of the bytes the picker handed over, and a redacted copy hashes
+- **A photo keeps its GPS only when the app may see where photos were taken.** Android strips the
+  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION`, so the gallery
+  icon asks for it first — the import starts reading photos the moment they are picked — and opens
+  the gallery whatever the answer. The **date survives** either way, so a photo imported without
+  that access still lands on the day it was taken; it just gets no location. Android stops asking
+  after a second refusal; the switch then lives in the app's system permissions under *Photos and
+  videos*.
+- **The dialog reads as access to photos and videos** — to photos, media and files before Android
+  13 — because Android files this permission under that group. The app declares no permission to
+  read the gallery, so *Allow all* grants it the location of the photos it is handed and nothing
+  else. *Allow limited access* first opens a picker of its own for photos to share; the location
+  access that comes with it is one-time, lapses once the app has been in the background a while,
+  and is asked for again at the next import.
+- **The gallery opens with `ACTION_GET_CONTENT`, not the photo picker's own `ACTION_PICK_IMAGES`.**
+  MediaProvider strips GPS from a `PICK_IMAGES` photo whatever the app holds. The one way round it
+  there, `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`, works only once the picker's own
+  update has switched that feature on, and the app cannot tell whether it has. A `GET_CONTENT` photo
+  keeps its GPS for an app holding the permission, and `GET_CONTENT` for images is still served by
+  the system photo picker wherever the phone has one.
+- **Every photo is read as its original where MediaStore allows it.** A gallery app may answer
+  `GET_CONTENT` with a plain `content://media/…` URI, whose GPS MediaStore hands over only through
+  `MediaStore.setRequireOriginal`. With the permission held, the digest, the EXIF read and the copy
+  all ask for the original first, and take the bytes as handed over when the provider refuses.
+- **The picked photos stay readable for the whole run.** A read grant handed back by
+  `GET_CONTENT` belongs to the activity that received it, so finishing the app mid-import would
+  otherwise cut the worker off from every photo it had not read yet. Where the source offers it, the
+  grant is persisted on pick and released once the run finishes, successfully or not. A run the
+  system stops keeps it for WorkManager's next attempt, and a new pick lets go of whatever an
+  earlier batch still holds.
+- **A pick keeps its first `IMPORT_BATCH_MAX` photos.** `GET_CONTENT` has no limit of its own, and
+  the picked URIs reach the worker as WorkManager input data, which has a fixed size cap; the photos
+  past the batch are left out of the run.
+- `sourceDigest` is the digest of the bytes the app was handed, and a redacted copy hashes
   differently from the original. The redaction is deterministic, so picking the same photo twice
-  with the same location choice produces the same digest and the second one is skipped. Picked once
-  without location and once with it, the same photo has two digests and imports twice: importing a
+  with the same access produces the same digest and the second one is skipped. Picked once without
+  location access and once with it, the same photo has two digests and imports twice: importing a
   cat again does not add a location to the copy already there. A digest also never matches the same
   photo imported through some other path.
 - **A Photo Picker URI serves a narrow projection** and throws on columns it does not recognise, so
@@ -107,7 +131,10 @@ takes them back*).
 - `domain/…/region/PlaceCells.kt` — shared with `AttachLocation`: coordinates always get a cell
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
 - `presentation/…/ReportedRun.kt` — which finished run the summary reports, shared with Backup
-- `app/…/photo/PickPhotosWithLocation.kt` — the picker, asked for each photo's location
+- `app/…/navigation/PhotoLaunchers.kt` (`rememberGalleryImportPicker`) — the permission, then the gallery
+- `app/…/photo/PickGalleryPhotos.kt` — the gallery, opened so that photos can keep their GPS
+- `app/…/photo/PhotoReadAccess.kt` — the picked photos' read grants, held for the run
+- `data/…/androidMain/platform/PhotoStream.android.kt` — how every photo is opened, original first
 
 ## Walking away mid-import
 
@@ -128,4 +155,5 @@ buy a notification that the OS, rather than the app, keeps alive — for a job t
 **No Settings entry point** — the gallery half of the Photo button is the only way in.
 
 **No repair for cats imported without a location.** A cat that arrived redacted keeps no location;
-picking its photo again with location shared adds a second cat rather than filling in the first.
+picking its photo again with location access granted adds a second cat rather than filling in the
+first.

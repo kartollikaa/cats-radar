@@ -35,8 +35,7 @@ class WorkManagerImportScheduler(
         if (shouldExpedite(sdkInt)) {
             requestBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
         }
-        // REPLACE, not KEEP: the user picking a second batch means they want that batch, and the
-        // picker's read grants are per-process anyway, so a queued older run has nothing to lose.
+        // REPLACE, not KEEP: the user picking a second batch means they want that batch.
         workManager.enqueueUniqueWork(UNIQUE_NAME, ExistingWorkPolicy.REPLACE, requestBuilder.build())
     }
 

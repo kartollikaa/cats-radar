@@ -28,7 +28,7 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
             ImportPhotosWorker(
                 appContext,
                 workerParameters,
-                koin.get<ImportPhotos>(),
+                koin.get<ImportPhotos>()::invoke,
                 koin.get<ImportNotifier>(),
             )
         ExportBackupWorker::class.java.name ->
