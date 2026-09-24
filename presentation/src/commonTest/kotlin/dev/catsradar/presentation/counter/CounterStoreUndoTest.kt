@@ -364,14 +364,24 @@ class CounterStoreUndoTest {
         advanceTimeBy(1.seconds.inWholeMilliseconds)
         runCurrent()
 
-        repeat(2) {
+        store.effects.test {
             store.dispatch(CounterIntent.UndoClicked)
             runCurrent()
-        }
+            assertEquals(listOf("id-2", "id-1"), repository.softDeletedIds)
+            assertNull(store.state.value.tapBurst)
+            assertFalse(store.state.value.undoVisible)
 
-        assertEquals(listOf("id-2", "id-1"), repository.softDeletedIds)
-        assertNull(store.state.value.tapBurst)
-        assertFalse(store.state.value.undoVisible)
+            store.dispatch(CounterIntent.UndoClicked)
+            runCurrent()
+            assertEquals(listOf("id-2", "id-1"), repository.softDeletedIds)
+            assertEquals(
+                listOf(CounterEffect.CancelLocationAttach("id-1")),
+                cancelAndConsumeRemainingEvents()
+                    .filterIsInstance<Event.Item<CounterEffect>>()
+                    .map { it.value }
+                    .filterIsInstance<CounterEffect.CancelLocationAttach>(),
+            )
+        }
     }
 
     @Test
