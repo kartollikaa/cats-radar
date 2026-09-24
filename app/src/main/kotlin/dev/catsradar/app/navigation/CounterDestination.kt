@@ -93,6 +93,8 @@ internal fun CounterDestination(
         onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
         onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
         onWalkingModeChange = onWalkingModeChange,
+        onCoatPromptPick = { coat -> store.dispatch(CounterIntent.CoatPromptPicked(coat)) },
+        onCoatPromptDismiss = { store.dispatch(CounterIntent.CoatPromptDismissed) },
     )
 }
 
