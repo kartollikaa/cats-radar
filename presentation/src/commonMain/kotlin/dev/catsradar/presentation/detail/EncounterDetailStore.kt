@@ -65,6 +65,7 @@ class EncounterDetailStore(
             is EncounterDetailIntent.CoatPicked -> onCoatPicked(intent.coat)
             EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
             EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
+            EncounterDetailIntent.PhotoClicked -> onPhotoClicked()
             is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.uri, PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.uri, PhotoSource.GALLERY)
         }
@@ -75,6 +76,10 @@ class EncounterDetailStore(
         if (awaitingPhoto || !offered) return
         awaitingPhoto = true
         emit(opener)
+    }
+
+    private suspend fun onPhotoClicked() {
+        if ((state.value as? EncounterDetailState.Loaded)?.photoPath != null) emit(EncounterDetailEffect.OpenPhoto)
     }
 
     private suspend fun onPhotoChosen(uri: String?, source: PhotoSource) {
