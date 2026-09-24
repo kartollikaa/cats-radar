@@ -211,24 +211,19 @@ class CounterStore(
                         ),
                     )
                 }
-                expireImportSummary(intent.runId)
+                importSummaryTimeoutJob?.cancel()
+                importSummaryTimeoutJob = viewModelScope.launch {
+                    delay(Tuning.IMPORT_SUMMARY_VISIBLE)
+                    importedIds = emptyList()
+                    setState { copy(importSummary = null) }
+                    importRun.acknowledge(intent.runId)
+                }
             }
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
             CounterIntent.Import.SummaryDismissed -> {
-                importSummaryTimeoutJob?.cancel()
                 setState { copy(importSummary = null) }
                 importRun.acknowledge()
             }
-        }
-    }
-
-    private fun expireImportSummary(runId: String) {
-        importSummaryTimeoutJob?.cancel()
-        importSummaryTimeoutJob = viewModelScope.launch {
-            delay(Tuning.IMPORT_SUMMARY_VISIBLE)
-            importedIds = emptyList()
-            setState { copy(importSummary = null) }
-            importRun.acknowledge(runId)
         }
     }
 
