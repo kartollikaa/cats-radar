@@ -73,8 +73,8 @@ class PhotoViewerEntryTest {
 
         awaitTheDatabase { compose.onAllNodes(arrow and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty() }
 
-        val detailPhoto = photoMatcher() and hasClickAction() and !hasAnyAncestor(isDialog())
-        assertTrue(compose.onAllNodes(detailPhoto).fetchSemanticsNodes().isNotEmpty(), "the cat is drawn under the viewer")
+        val detailPhoto = compose.onAllNodes(photoMatcher() and hasClickAction() and !hasAnyAncestor(isDialog()))
+        assertTrue(detailPhoto.fetchSemanticsNodes().isNotEmpty(), "the cat is drawn under the viewer")
     }
 
     @Test

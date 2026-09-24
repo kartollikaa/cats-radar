@@ -44,6 +44,16 @@ sealed interface AnalyticsEvent {
     data class WalkEnded(val minutes: Long) : AnalyticsEvent
 }
 
-enum class AnalyticsScreen { COUNTER, ENCOUNTERS, ENCOUNTER_DETAIL, STATISTICS, REGIONS, MAP, MAP_SPOT, SETTINGS }
+enum class AnalyticsScreen {
+    COUNTER,
+    ENCOUNTERS,
+    ENCOUNTER_DETAIL,
+    PHOTO_VIEWER,
+    STATISTICS,
+    REGIONS,
+    MAP,
+    MAP_SPOT,
+    SETTINGS,
+}
 
 internal fun Encounter.logged() = AnalyticsEvent.CatLogged(kind, origin, hasCoat = coat != null)

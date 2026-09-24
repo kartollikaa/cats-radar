@@ -64,6 +64,7 @@ class AnalyticsEncodingTest {
             AnalyticsScreen.COUNTER to "counter",
             AnalyticsScreen.ENCOUNTERS to "encounters",
             AnalyticsScreen.ENCOUNTER_DETAIL to "encounter_detail",
+            AnalyticsScreen.PHOTO_VIEWER to "photo_viewer",
             AnalyticsScreen.STATISTICS to "statistics",
             AnalyticsScreen.REGIONS to "regions",
             AnalyticsScreen.MAP to "map",
