@@ -109,7 +109,7 @@ returns to Counter; back from Counter exits.
 | `photoPath` | String? | Compressed copy, relative to app-private photos dir. Null until the cat has a photo; set once, on a TALLY only by §4.2a. |
 | `thumbPath` | String? | Generated thumbnail. |
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
-| `sourceDigest` | String? | SHA-256 of the bytes the source hands over — the picker's redacted copy when location is not shared; duplicate imports are skipped on it. |
+| `sourceDigest` | String? | SHA-256 of the bytes the source hands over — a redacted copy when the app may not see where photos were taken; duplicate imports are skipped on it. |
 | `lat`, `lon` | Double? | WGS84. Both null when no location. |
 | `accuracyMeters` | Float? | From the fix; null for EXIF. |
 | `locationSource` | enum `EXIF` \| `CURRENT_FIX` \| `LAST_KNOWN` \| `BACKFILLED` \| `NONE` | Which rung of §4.3 produced the coordinates. |
@@ -253,7 +253,9 @@ never touched by the app.
 
 ### 4.6 Gallery import (F3)
 
-1. `PickMultipleVisualMedia(maxItems = IMPORT_BATCH_MAX)`; single pick is the same path with one item.
+1. Ask for `ACCESS_MEDIA_LOCATION`, then open `ACTION_GET_CONTENT` for `image/*`, multiple, keeping
+   the first `IMPORT_BATCH_MAX`; single pick is the same path with one item. A refusal still opens
+   the gallery.
 2. Per photo: compute `sourceDigest`; skip if an encounter with that digest exists (counted as
    "skipped" in the summary). Read EXIF; `occurredAt` as in §3.1.
 3. Location: EXIF GPS → `EXIF`. No EXIF GPS and `now − occurredAt ≤ RECENT_PHOTO_WINDOW` (1 h) →
@@ -434,8 +436,8 @@ Compose BOM + Material 3, Navigation 3, `lifecycle-viewmodel` (KMP), Room (KMP),
 ## 10. Open items
 
 - `applicationId` / package name placeholder `dev.catsradar` until confirmed.
-- ~~**EXIF GPS from gallery photos is redacted under scoped storage.**~~ Resolved with no runtime
-  permission: the Photo Picker hands GPS over when the launch intent carries
-  `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS` and the user agrees in the picker.
-  Declined, or on a picker without that extra, import falls back to `NONE` for location while dates
-  still come from EXIF — see `docs/features/import.md`.
+- ~~**EXIF GPS from gallery photos is redacted under scoped storage.**~~ Resolved with
+  `ACCESS_MEDIA_LOCATION`: a photo picked through `ACTION_GET_CONTENT` keeps its GPS for an app
+  holding it, and a plain MediaStore URI is read through `MediaStore.setRequireOriginal`.
+  `ACTION_PICK_IMAGES` photos are redacted whatever the app holds. Refused, import falls back to
+  `NONE` for location while dates still come from EXIF — see `docs/features/import.md`.
