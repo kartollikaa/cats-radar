@@ -31,9 +31,8 @@ the cat on both of them walks.
   rather than a clock started from a guess. A **Cat!** from the lock screen reads the walk's start
   again as it re-posts, so the time does not drop off the notification with the tap.
 - **The cat walks only while a walk is on.** With no walk it stands on its first frame, legs
-  straight down. The button's loop and the status-bar icon play the same eight frames at the same
-  pace. The notification's icon moves only in the status bar: Android draws it static in the shade
-  and on the always-on display.
+  straight down. The button's loop and the notification's icon play the same eight frames at the
+  same pace; the status bar runs the icon's loop, in the Live Update chip too.
 
 ## Stopping takes a hold
 

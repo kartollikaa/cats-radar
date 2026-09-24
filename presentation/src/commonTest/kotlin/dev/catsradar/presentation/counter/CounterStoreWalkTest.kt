@@ -104,7 +104,6 @@ class CounterStoreWalkTest {
         assertEquals(32.minutes.toString(), store.state.value.walkElapsedLabel)
     }
 
-    // The flag leads and the walk row follows it; until the row exists there is no start to count from.
     @Test
     fun `walking mode just turned on shows no time until its walk has started`() = runTest(mainDispatcher) {
         val settings = FakeSettingsRepository()

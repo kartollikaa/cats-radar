@@ -108,12 +108,14 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
             .build()
 
     // Both clocks are ticked by the system, so the time moves with no repost and no process alive.
-    private fun NotificationCompat.Builder.showWalkTime(count: Int, startedAt: Instant?): NotificationCompat.Builder {
-        if (startedAt != null) setWhen(startedAt.toEpochMilliseconds()).setUsesChronometer(true)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return setShowWhen(startedAt != null)
-        // MetricStyle shows the time as one of its metrics; a second clock in the header would repeat it.
-        return setShowWhen(false).setStyle(context.walkMetrics(count, startedAt))
-    }
+    // The header draws a chronometer even with showWhen off, so beside MetricStyle's stopwatch there is none.
+    private fun NotificationCompat.Builder.showWalkTime(count: Int, startedAt: Instant?): NotificationCompat.Builder =
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN ->
+                setShowWhen(false).setStyle(context.walkMetrics(count, startedAt))
+            startedAt == null -> setShowWhen(false)
+            else -> setWhen(startedAt.toEpochMilliseconds()).setShowWhen(true).setUsesChronometer(true)
+        }
 
     private fun broadcast(action: String): PendingIntent = PendingIntent.getBroadcast(
         context,

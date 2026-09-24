@@ -73,7 +73,6 @@ class WalkingNotifierTest {
         assertEquals(R.drawable.ic_cat_walking, posted.smallIcon.resId)
     }
 
-    // The system ticks a chronometer by itself, so the time moves with no repost and no process alive.
     @Test
     fun aWalkCountsUpFromItsStart() {
         val posted = showAndRead(count = 3, startedAt = WalkStart)
