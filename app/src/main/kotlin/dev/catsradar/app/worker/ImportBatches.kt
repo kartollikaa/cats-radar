@@ -5,12 +5,12 @@ import org.json.JSONArray
 import java.io.File
 import java.util.UUID
 
-/** The photos each import run was handed, kept on disk under the run's work id. */
 internal class ImportBatches(context: Context) {
 
+    // Not cacheDir: the system may clear it while a stopped run waits for its next attempt.
     private val directory = File(context.noBackupFilesDir, "import-batches")
 
-    /** Stores [uris] as run [runId]'s batch; an earlier run's batch goes, as that run is being replaced. */
+    /** Stores [uris] as run [runId]'s batch and removes every other run's. */
     fun replaceWith(runId: UUID, uris: List<String>) {
         directory.listFiles()?.forEach(File::delete)
         directory.mkdirs()
