@@ -108,12 +108,15 @@ takes them back*).
   system stops keeps it for WorkManager's next attempt, and a new pick lets go of whatever an
   earlier batch still holds.
 - **A pick keeps its first `IMPORT_BATCH_MAX` photos.** `GET_CONTENT` has no limit of its own; the
-  photos past the batch are left out of the run.
+  photos past the batch are left out of the run. The cap also bounds the run's summary, whose added
+  ids come back through WorkManager's output data, which has a fixed size cap of its own.
 - **The picked photos reach the worker in a file, not in WorkManager's input data.** Input data has
-  a fixed size cap, and enqueueing past it throws. A full batch of long URIs outgrows it: Google
-  Photos' own, or the photo picker's cloud items. The list is stored under `noBackupFilesDir`, keyed
-  by the run's work id, and removed once the run finishes, successfully or not. A run the system
-  stops keeps it for WorkManager's next attempt, and a new pick removes whatever an earlier run left.
+  the same fixed size cap, and enqueueing past it throws. A full batch of long URIs outgrows it:
+  Google Photos' own, or the photo picker's cloud items. The list is stored under
+  `noBackupFilesDir`, keyed by the run's work id, and removed once the run finishes, successfully or
+  not. A run the system stops keeps it for WorkManager's next attempt, and a new pick removes
+  whatever an earlier run left. A batch that cannot be written (a full disk) or read back counts as
+  empty: its run imports nothing and ends, so the progress row still clears.
 - `sourceDigest` is the digest of the bytes the app was handed, and a redacted copy hashes
   differently from the original. The redaction is deterministic, so picking the same photo twice
   with the same access produces the same digest and the second one is skipped. Picked once without
