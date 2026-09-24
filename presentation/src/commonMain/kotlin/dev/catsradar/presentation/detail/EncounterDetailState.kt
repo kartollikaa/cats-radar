@@ -13,7 +13,7 @@ sealed interface EncounterDetailState {
         val location: LocationLabel,
         val coordinatesLabel: String?,
         val accuracyMeters: Int?,
-        /** Absolute path of the app's copy, or null when this cat was a tally. */
+        /** Absolute path of the app's copy, or null when the cat has no photo. */
         val photoPath: String? = null,
         val coat: CoatOption? = null,
         /** Null when the cat has a photo of its own, which is never replaced. */

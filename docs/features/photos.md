@@ -49,13 +49,13 @@ has both.
 A tally — logged with no photo, from any origin — can be given one afterwards from its detail screen
 (see [encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the
 gallery. `AttachPhoto` stores the app's copy and thumbnail the same way `LogPhoto` does, but under a
-name fresh to this attempt rather than the encounter's id, so an attempt that loses the row to another
-removes only its own files (`AttachPhotoTest`, *the files are named afresh for the attempt, never
-after the cat*).
+name fresh to this attempt rather than the encounter's id, so an attempt that finds the cat already
+photographed removes only its own files, never the ones the cat now points at (`AttachPhotoTest`,
+*the files are named afresh for the attempt, never after the cat*).
 
-From the camera the original goes to the gallery under the same setting a photo cat uses; from the
-gallery it is never copied back in (`AttachPhotoTest`, *a photo from the gallery is never copied back
-into it*).
+From the camera the original goes to the gallery under the same setting as a photo taken from the
+counter (see *The gallery setting* below); from the gallery it is never copied back in
+(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*).
 
 The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`. The cat
 keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
@@ -63,19 +63,26 @@ photo this way is still a tally (`AttachPhotoTest`, *a cat without a photo gets 
 and digest, and keeps everything else*), and it now counts as "With photo" in Statistics like any
 other (see `statistics.md`).
 
-The same photo can go on more than one cat — one picture of two cats together. Its digest is stored
-either way, so a later gallery import of that file is skipped (`AttachPhotoTest`, *the same photo can
-go on two cats*; see `import.md`).
+The same photo can go on more than one cat — one picture of two cats together (`AttachPhotoTest`,
+*the same photo can go on two cats*). Each cat stores the photo's digest, so importing that picked
+photo later is skipped while either cat is live (see `import.md`).
 
 ### At the edges
 
-- **An undecodable image** leaves the cat unchanged; the screen says "Photo not attached"
-  (`AttachPhotoTest`, *an undecodable photo leaves the cat as it was and nothing in the gallery*).
+- **An undecodable image, or a write that fails,** leaves the cat unchanged and the screen says
+  "Photo not attached"; a failed write's copies are removed (`AttachPhotoTest`, *an undecodable
+  photo leaves the cat as it was and nothing in the gallery*; *a write that fails removes the files
+  it had written*; `EncounterDetailStoreTest`, *an unreadable photo says so and the offer comes
+  back*; *a failed write says the photo was not attached*).
 - **The cat is deleted, or already given a photo some other way, while the attempt is running** — it
-  is left exactly as it was and the attempt's own copies are removed. A camera original already
-  handed to the gallery stays there: it is the user's photo either way (`AttachPhotoTest`, *a cat
-  deleted while its photo was being copied keeps no files from the attempt*; *a cat that already has
-  a photo keeps it and nothing is copied*).
+  is left exactly as it was and the attempt's own copies are removed (`AttachPhotoTest`, *a cat
+  deleted while its photo was being copied keeps no files from the attempt*;
+  `EncounterDaoAttachPhotoTest`, *attachPhotoNeverReplacesAPhotoTheRowAlreadyHas*). A camera
+  original already handed to the gallery stays there: it is the user's photo either way.
+- **Leaving mid-attempt** — once the attempt's copies are written, a cancellation before the write
+  lands removes them. Once the write has landed, the files are the cat's and stay
+  (`AttachPhotoTest`, *a cancellation while the original goes to the gallery removes the copies*;
+  *a cancellation after the write has landed keeps the files the cat now points at*).
 
 ## The gallery setting
 
@@ -194,7 +201,6 @@ the copy succeeded. Such a photo never joins a pair: the grid packs it like any 
 
 ## Not built yet
 
-A cat's photo, once attached, cannot be replaced or removed — there is no control for either.
-The gallery-import rules exist but nothing can reach them yet — see `import.md`.
+A cat's photo cannot be replaced or removed — there is no control for either.
 `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.
