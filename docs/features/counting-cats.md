@@ -27,7 +27,9 @@ compares the number it had with the one it now has, so an undo, or an import fin
 Counter is showing, rolls the right way. It rolls like an odometer, one digit at a time: only the
 digits that change move, each in its own window, and a carry ripples to the left — 49 to 50 turns
 the units over at once and the tens a beat later, and 99 to 100 rolls a hundreds digit in, which an
-Undo rolls back out. Every digit is the same width, so a rolling digit never shoves its neighbours.
+Undo rolls back out. An Undo pressed mid-roll turns the roll back down rather than finishing it
+upward. Every digit is the same width, so a rolling digit never shoves its neighbours, and the
+number reads left to right under a right-to-left language too.
 The roll follows the database, so it lands a moment after the burst: the burst answers the finger,
 the roll answers the write. The units start rolling on the frame the new number arrives rather than
 easing into motion, and settle with a small overshoot. The squash is drawn only: what a press can

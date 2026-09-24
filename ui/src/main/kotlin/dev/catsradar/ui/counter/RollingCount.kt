@@ -16,15 +16,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.em
@@ -32,9 +37,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 private val MaxCountSize = 112.sp
-private val MinCountSize = 32.sp
 private const val RollMillis = 450
-private const val CarryStaggerMillis = 60
 
 @Immutable
 internal data class DigitSlot(val place: Int, val digit: Char?)
@@ -45,7 +48,15 @@ internal fun digitSlots(label: String): List<DigitSlot> {
     return cells.mapIndexed { index, digit -> DigitSlot(place = cells.lastIndex - index, digit = digit) }
 }
 
-internal fun carryDelayMillis(place: Int): Int = place * CarryStaggerMillis
+internal fun carryDelayMillis(place: Int): Int = place * 60
+
+internal enum class Roll { UP, DOWN, NONE }
+
+internal fun rollBetween(previous: Int?, current: Int?): Roll = when {
+    previous == null || current == null -> Roll.NONE
+    current >= previous -> Roll.UP
+    else -> Roll.DOWN
+}
 
 internal fun fitScale(width: Int, height: Int, maxWidth: Int, maxHeight: Int, minScale: Float): Float {
     fun room(max: Int, size: Int) = if (size == 0) 1f else max.toFloat() / size
@@ -55,40 +66,59 @@ internal fun fitScale(width: Int, height: Int, maxWidth: Int, maxHeight: Int, mi
 @Immutable
 private data class DigitFrame(val digit: Char?, val count: Int?)
 
+private class ShownCount(var value: Int? = null)
+
 /** The total with every digit rolling on its own: up on a rise, down on a fall, a carry rippling left. */
 @Composable
 internal fun RollingCount(label: String, count: Int?, modifier: Modifier = Modifier) {
+    // Against the number last shown: an interrupted roll's transition still starts from the one before.
+    val roll = rollBetween(rememberShownCount(count), count)
     val style = MaterialTheme.typography.displayLarge.copy(
         fontSize = MaxCountSize,
         lineHeight = 1.em,
         // Tabular figures: every digit is one width, so a rolling digit never shoves its neighbours.
         fontFeatureSettings = "tnum",
     )
-    ShrinkToFit(minScale = MinCountSize.value / MaxCountSize.value, modifier = modifier) {
-        Row {
-            digitSlots(label).forEach { slot ->
-                key(slot.place) {
-                    RollingDigit(frame = DigitFrame(slot.digit, count), place = slot.place, style = style)
+    ShrinkToFit(minScale = 32.sp.value / MaxCountSize.value, modifier = modifier) {
+        // A number reads left to right in every locale; under RTL a Row would put the units first.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row {
+                digitSlots(label).forEach { slot ->
+                    key(slot.place) {
+                        RollingDigit(
+                            frame = DigitFrame(slot.digit, count),
+                            roll = roll,
+                            place = slot.place,
+                            style = style,
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+/** The count the last applied composition showed, or null on the first. */
 @Composable
-private fun RollingDigit(frame: DigitFrame, place: Int, style: TextStyle, modifier: Modifier = Modifier) {
+private fun rememberShownCount(count: Int?): Int? {
+    val shown = remember { ShownCount() }
+    val previous = shown.value
+    SideEffect { shown.value = count }
+    return previous
+}
+
+@Composable
+private fun RollingDigit(frame: DigitFrame, roll: Roll, place: Int, style: TextStyle, modifier: Modifier = Modifier) {
     AnimatedContent(
         targetState = frame,
         modifier = modifier,
         contentKey = { it.digit },
         contentAlignment = Alignment.Center,
         transitionSpec = {
-            val from = initialState.count
-            val to = targetState.count
-            if (from == null || to == null) {
+            if (roll == Roll.NONE) {
                 (EnterTransition.None togetherWith ExitTransition.None).using(null)
             } else {
-                val rising = to >= from
+                val rising = roll == Roll.UP
                 val delay = carryDelayMillis(place)
                 val slide = tween<IntOffset>(RollMillis, delay, EaseOutBack)
                 val fade = tween<Float>(RollMillis / 2, delay)
@@ -104,7 +134,6 @@ private fun RollingDigit(frame: DigitFrame, place: Int, style: TextStyle, modifi
     }
 }
 
-/** Lays [content] out at its natural size, then scales it down to fit, never below [minScale]. */
 @Composable
 private fun ShrinkToFit(minScale: Float, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->

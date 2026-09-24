@@ -37,6 +37,18 @@ class RollingCountTest {
     }
 
     @Test
+    fun aRiseRollsUpAndAFallRollsDown() {
+        assertEquals(Roll.UP, rollBetween(previous = 49, current = 50))
+        assertEquals(Roll.DOWN, rollBetween(previous = 50, current = 49))
+    }
+
+    @Test
+    fun theFirstTotalDoesNotRoll() {
+        assertEquals(Roll.NONE, rollBetween(previous = null, current = 42))
+        assertEquals(Roll.NONE, rollBetween(previous = 42, current = null))
+    }
+
+    @Test
     fun aNumberThatFitsIsDrawnAtFullSize() {
         assertEquals(1f, fitScale(width = 300, height = 100, maxWidth = 600, maxHeight = 200, minScale = MIN), DELTA)
     }
