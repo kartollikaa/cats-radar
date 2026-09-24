@@ -88,11 +88,12 @@ one keeps the other install's `deviceId`, so its new photo offers no link.
 
 ### Opening
 
-`Encounter.galleryLink(thisInstall)` in `:domain` is the one decision — `Owned(uri)`,
-`Picked(uri)`, or null — used both by the viewer's mapper (show the action or not) and by the use
-case that resolves a tap. `ResolveGalleryLink(encounterId)` loads the cat, applies the rule, and for
-an `Owned` link asks `GalleryItems.exists(uri)`; it returns `Open(uri, grantRead)`, `Gone`, or
-`Unavailable`. The Store turns those into `OpenInGallery(uri, grantRead)` or a
+`Encounter.galleryLink(thisInstall)` in `:domain` is the one decision — a
+`GalleryLink(uri, ownedByApp)` or null — used both by the viewer's mapper (show the action or not)
+and by the use case that resolves a tap. `ResolveGalleryLink(encounterId)` loads the cat, applies the
+rule, and for a link the app owns asks `GalleryItems.exists(uri)`; it returns `Open(uri, grantRead)`,
+`Gone`, or `Unavailable`. A second tap while one is being resolved opens nothing, so the gallery never
+opens twice. The Store turns those into `OpenInGallery(uri, grantRead)` or a
 `GalleryItemGone` message. `:app` starts `ACTION_VIEW` with the image MIME type; no activity to
 handle it is a *No app can show this photo* message, never a crash.
 

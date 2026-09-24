@@ -12,8 +12,8 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| V1 | Fullscreen photo viewer | Tapping a cat's photo opens it fullscreen with pinch, double-tap, pan and fling, above the bottom bar. | safe | ~550 | — | in-review |
-| V2 | Open a camera photo in the gallery | The viewer's top bar opens the gallery original the app saved, when this install saved it and it is still there. | safe | ~500 | V1 | planned |
+| V1 | Fullscreen photo viewer | Tapping a cat's photo opens it fullscreen with pinch, double-tap, pan and fling, above the bottom bar. | safe | ~550 | — | merged |
+| V2 | Open a camera photo in the gallery | The viewer's top bar opens the gallery original the app saved, when this install saved it and it is still there. | safe | ~500 | V1 | in-progress |
 | V3 | Gallery link for imported and picked photos | Imports and gallery attachments remember the MediaStore item they came from, and the viewer opens it. | safe | ~600 | V2, #122 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -51,6 +51,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-25: **V1 merged** as #128, brought up to date with main twice by merging it in. On the way it gained
+  the `photo_viewer` analytics screen, which main's screen-view tracking requires of every `NavKey`. Left for
+  the owner's phone: pinch zoom, and the dialog's bar colours below API 35.
 - 2026-09-24: owner weighed gestures written with Compose modifiers alone against Telephoto and chose
   **Telephoto for the first version** — it brings the one-finger quick zoom and edge rubber-banding a
   hand-written viewer would have left out.
