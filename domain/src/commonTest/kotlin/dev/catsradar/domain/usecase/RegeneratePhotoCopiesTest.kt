@@ -54,6 +54,15 @@ class RegeneratePhotoCopiesTest {
     }
 
     @Test
+    fun `a photo whose copy is named after another encounter is left alone`() = runTest {
+        repository.insert(cameraPhoto("a", URI_A).copy(photoPath = "b.jpg"))
+
+        regenerate()()
+
+        assertEquals(emptyList(), resizer.requests)
+    }
+
+    @Test
     fun `no row is rewritten, whatever paths the rebuilt copies come back with`() = runTest {
         repository.insert(cameraPhoto("a", URI_A))
         resizer.result = StoredPhoto(photoPath = "elsewhere.jpg", thumbPath = null)

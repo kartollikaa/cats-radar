@@ -16,10 +16,10 @@ class RegeneratePhotoCopies(
 ) {
     suspend operator fun invoke() {
         if (settingsRepository.photoCopiesRegenerated().first()) return
-        // Rows stay as they are: the resizer names each copy after its encounter, the name the row holds.
-        encounterRepository.loadEvery().forEach { encounter ->
-            encounter.galleryUri?.let { imageResizer.store(it, encounter.id) }
-        }
+        encounterRepository.loadEvery()
+            // Must match the name the resizer gives an encounter's copy, so a rebuild lands on this row's own file.
+            .filter { it.photoPath == "${it.id}.jpg" }
+            .forEach { encounter -> encounter.galleryUri?.let { imageResizer.store(it, encounter.id) } }
         settingsRepository.setPhotoCopiesRegenerated(true)
     }
 }
