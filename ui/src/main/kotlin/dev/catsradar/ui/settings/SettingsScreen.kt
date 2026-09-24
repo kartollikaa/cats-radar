@@ -176,6 +176,7 @@ private fun BackupOutcome.messageRes(): Int = when (this) {
     BackupOutcome.IMPORTED -> R.string.settings_backup_imported
     BackupOutcome.IMPORT_REFUSED_TOO_NEW -> R.string.settings_backup_too_new
     BackupOutcome.IMPORT_REFUSED_UNREADABLE -> R.string.settings_backup_unreadable
+    BackupOutcome.IMPORT_FAILED -> R.string.settings_backup_import_failed
 }
 
 @ThemePreviews
