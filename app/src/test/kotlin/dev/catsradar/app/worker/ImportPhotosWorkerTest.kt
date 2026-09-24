@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
@@ -20,6 +19,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import java.util.UUID
 import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
@@ -31,13 +32,15 @@ class ImportPhotosWorkerTest {
         Uri.parse("content://media/picker_get_content/0/com.android.providers.media.photopicker/media/$it")
     }
 
-    private val pickedUris = Array<String?>(photos.size) { photos[it].toString() }
+    private val runId = UUID.randomUUID()
+
+    private val batches = ImportBatches(context)
 
     private fun held(): Set<Uri> = context.contentResolver.persistedUriPermissions.map { it.uri }.toSet()
 
     private fun worker(importPhotos: PhotoImport): ImportPhotosWorker =
         TestListenableWorkerBuilder<ImportPhotosWorker>(context)
-            .setInputData(Data.Builder().putStringArray(ImportPhotosWorker.KEY_URIS, pickedUris).build())
+            .setId(runId)
             .setWorkerFactory(
                 object : WorkerFactory() {
                     override fun createWorker(
@@ -51,8 +54,29 @@ class ImportPhotosWorkerTest {
             .build()
 
     @Before
-    fun holdThePickedPhotos() {
+    fun pickThePhotos() {
         context.contentResolver.holdReadAccess(photos)
+        batches.replaceWith(runId, photos.map(Uri::toString))
+    }
+
+    @Test
+    fun aRunImportsTheBatchStoredUnderItsId() = runTest {
+        val imported = mutableListOf<String>()
+
+        worker { uris, _ -> ImportSummary().also { imported += uris } }.doWork()
+
+        assertEquals(photos.map(Uri::toString), imported)
+    }
+
+    @Test
+    fun aRunWithNoStoredBatchImportsNothing() = runTest {
+        batches.delete(runId)
+        val imported = mutableListOf<String>()
+
+        val result = worker { uris, _ -> ImportSummary().also { imported += uris } }.doWork()
+
+        assertEquals(ListenableWorker.Result.Success::class, result::class)
+        assertEquals(emptyList(), imported)
     }
 
     @Test
@@ -60,6 +84,13 @@ class ImportPhotosWorkerTest {
         worker { _, _ -> ImportSummary() }.doWork()
 
         assertEquals(emptySet(), held())
+    }
+
+    @Test
+    fun aFinishedRunLeavesNoBatchBehind() = runTest {
+        worker { _, _ -> ImportSummary() }.doWork()
+
+        assertEquals(emptyList(), storedFiles())
     }
 
     @Test
@@ -71,6 +102,13 @@ class ImportPhotosWorkerTest {
     }
 
     @Test
+    fun aRunThatFailsLeavesNoBatchBehind() = runTest {
+        worker { _, _ -> error("the disk is full") }.doWork()
+
+        assertEquals(emptyList(), storedFiles())
+    }
+
+    @Test
     fun aStoppedRunKeepsItsPhotosForWorkManagersNextAttempt() = runTest {
         val worker = worker { _, _ -> awaitCancellation() }
         val run = launch(start = CoroutineStart.UNDISPATCHED) { worker.doWork() }
@@ -79,4 +117,17 @@ class ImportPhotosWorkerTest {
 
         assertEquals(photos.toSet(), held())
     }
+
+    @Test
+    fun aStoppedRunKeepsItsBatchForWorkManagersNextAttempt() = runTest {
+        val worker = worker { _, _ -> awaitCancellation() }
+        val run = launch(start = CoroutineStart.UNDISPATCHED) { worker.doWork() }
+
+        run.cancelAndJoin()
+
+        assertEquals(photos.map(Uri::toString), batches.read(runId))
+        assertEquals(1, storedFiles().size)
+    }
+
+    private fun storedFiles(): List<File> = context.noBackupFilesDir.walk().filter(File::isFile).toList()
 }
