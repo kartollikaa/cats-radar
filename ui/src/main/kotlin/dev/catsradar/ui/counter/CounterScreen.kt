@@ -46,6 +46,8 @@ fun CounterScreen(
     onUndoImportClick: () -> Unit = {},
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
+    onCoatPromptPick: (CoatOption) -> Unit = {},
+    onCoatPromptDismiss: () -> Unit = {},
 ) {
     // A large font or a small phone must never leave the tally button zero pixels tall.
     FillOrScroll(
@@ -83,6 +85,9 @@ fun CounterScreen(
             CameraButton(onClick = onCameraClick, onLongClick = onImportClick, modifier = Modifier.fillMaxWidth())
         },
     )
+    state.coatPrompt?.let {
+        CoatPromptSheet(prompt = it, onCoatClick = onCoatPromptPick, onDismiss = onCoatPromptDismiss)
+    }
 }
 
 // A long press is the only entry to import, so the button says so out loud: a gesture nothing
