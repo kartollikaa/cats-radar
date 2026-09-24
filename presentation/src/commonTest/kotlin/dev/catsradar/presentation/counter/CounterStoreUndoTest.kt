@@ -393,7 +393,7 @@ class CounterStoreUndoTest {
                 runCurrent()
                 cancelAndIgnoreRemainingEvents()
             }
-            // The effect channel buffers 64; this leaves room for the tap's tick but not its attach.
+            // One short of the effect channel's default buffer: the tap's tick still fits, its attach waits.
             repeat(63) { store.dispatch(CounterIntent.CameraClicked) }
             repository.insertDelays += 1.seconds
             store.dispatch(CounterIntent.TallyClicked)

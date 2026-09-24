@@ -225,7 +225,7 @@ class CounterStore(
     private suspend fun onUndoClicked() {
         val newestBeingWritten = runTapsBeingWritten.maxOrNull()
         if (newestBeingWritten != null && newestBeingWritten > (undoableRun.lastOrNull()?.sequence ?: 0)) {
-            // Its id exists only once the insert returns, so the tap is taken back as soon as it lands.
+            // The store learns its id only when the insert returns, so the tap is taken back as it lands.
             undoneWhileWriting += newestBeingWritten
             showNewestUndoable()
             showBurst()

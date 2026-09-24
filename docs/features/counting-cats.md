@@ -63,9 +63,9 @@ The undo window belongs to a run of taps, not to one tap. Every tap made while t
 the run and restarts the window; every Undo takes back the newest tap of the run, soft-deleting its
 cat and cancelling its location attach — or, for a tap still being written, deleting it the moment
 it lands, before it ever gets one (see *At the edges*) — and restarts the window again. So five
-mistaken taps come back off with five
-Undos, and the chip stays up until the last of them is gone, the "+N" badge counting down with it. A
-tap after an Undo joins the same run and counts on from what the badge has left.
+mistaken taps come back off with five Undos, and the chip stays up until the last of them is gone,
+the "+N" badge counting down with it. A tap after an Undo joins the same run and counts on from what
+the badge has left.
 Once the window runs out with nothing pressed, the run is closed: the chip goes, and nothing brings
 it back except a fresh tap. The coat grid's ring follows the run as well — after an Undo it rings the
 coat of the newest cat still in it (`coat.md`). The cases below that concern undo are in
