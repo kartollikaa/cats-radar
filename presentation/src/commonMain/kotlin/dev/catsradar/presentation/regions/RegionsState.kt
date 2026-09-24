@@ -19,7 +19,6 @@ data class RegionRowState(
     val key: RegionRowKey,
     val label: RegionRowLabel,
     val countLabel: String,
-    val drillable: Boolean,
 )
 
 /** A row's name, or the pieces the platform needs to build one. */
