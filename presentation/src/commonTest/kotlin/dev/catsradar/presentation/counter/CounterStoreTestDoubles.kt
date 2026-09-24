@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -51,11 +52,18 @@ internal class FakeEncounterRepository : EncounterRepository {
     val insertDelays = ArrayDeque<Duration>()
     var softDeleteDelay: Duration = Duration.ZERO
 
+    /** Applied to every observeById emission but a collector's first, so a `.first()` snapshot stays instant. */
+    var observeDelay: Duration = Duration.ZERO
+
     fun encounters(): List<Encounter> = encounters.value
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
-    override fun observeById(id: String): Flow<Encounter?> =
-        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
+    override fun observeById(id: String): Flow<Encounter?> {
+        var firstEmission = true
+        return encounters
+            .map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
+            .onEach { if (firstEmission) firstEmission = false else delay(observeDelay) }
+    }
 
     override suspend fun insert(encounter: Encounter) {
         insertDelays.removeFirstOrNull()?.let { delay(it) }

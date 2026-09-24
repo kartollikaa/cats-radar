@@ -74,17 +74,24 @@ class EncounterDetailStore(
 
     private suspend fun onPhotoChosen(uri: String?, source: PhotoSource) {
         if (uri == null) return
-        showAttaching(true)
+        attachingPhoto = true
+        refresh()
         var result: AttachResult? = null
         runStorageWrite { result = attachPhoto(encounterId, uri, source) }
-        showAttaching(false)
-        // NotAttachable means the cat was deleted or given a photo meanwhile; the screen already shows that.
-        if (result == null || result == AttachResult.Unreadable) emit(EncounterDetailEffect.PhotoNotAttached)
+        attachingPhoto = false
+        when (result) {
+            // The flow's next emission already carries whatever the cat became.
+            AttachResult.Attached -> Unit
+            AttachResult.NotAttachable -> refresh()
+            AttachResult.Unreadable, null -> {
+                refresh()
+                emit(EncounterDetailEffect.PhotoNotAttached)
+            }
+        }
         if (source == PhotoSource.CAMERA) emit(EncounterDetailEffect.DiscardCapture(uri))
     }
 
-    private fun showAttaching(attaching: Boolean) {
-        attachingPhoto = attaching
+    private fun refresh() {
         setState { if (this is EncounterDetailState.Loaded) reduce(lastSeen) else this }
     }
 

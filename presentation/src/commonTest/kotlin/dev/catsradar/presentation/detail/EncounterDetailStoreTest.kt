@@ -306,6 +306,42 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `a successful attach stays in progress until the photo arrives, never offering again`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+            repository.observeDelay = 5.seconds
+
+            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            runCurrent()
+            assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+
+            advanceTimeBy(6.seconds)
+            runCurrent()
+            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            assertEquals(null, state.addPhoto)
+            assertEquals("/data/photos/cat.jpg", state.photoPath)
+        }
+
+    @Test
+    fun `taking a photo while one is being attached opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `an unreadable photo says so and the offer comes back`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         resizer.result = null
