@@ -22,9 +22,6 @@ class RegionsStateMapper(
                 key = node.key.toRowKey(),
                 label = node.label.toRowLabel(),
                 countLabel = node.count.toString(),
-                // An area's children are its cats, which this screen shows in place rather than
-                // pushing another level; everything above it drills down.
-                drillable = node.key !is RegionKey.Area,
             )
         }.toPersistentList(),
         encounters = encountersMapper.mapList(view.encounters, today),

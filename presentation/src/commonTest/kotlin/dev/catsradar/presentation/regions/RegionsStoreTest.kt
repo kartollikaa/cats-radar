@@ -80,8 +80,8 @@ class RegionsStoreTest {
 
         assertEquals(
             persistentListOf(
-                RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2", true),
-                RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "1", true),
+                RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2"),
+                RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "1"),
             ),
             store.state.value.rows,
         )
