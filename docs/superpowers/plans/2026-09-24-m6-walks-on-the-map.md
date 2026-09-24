@@ -4,7 +4,7 @@
 
 **Goal:** Show a walk's recorded track on the map when its outing is focused, and show distance walked and cats per kilometre in Statistics next to cats per hour.
 
-**Architecture:** A read model, `WalkTrack` (a walk with its points), is observed through a new `ObserveWalkTracks` use case over one new repository stream. `StatsCalculator` derives walked distance and cats per km from it as pure functions; `MapStateMapper` chooses the walked tracks over the cat-to-cat line for a focused outing. No schema change, no new permission.
+**Architecture:** A read model, `WalkTrack` (a walk with its points), is observed through a new `ObserveWalkTracks` use case over one new repository stream. A pure `WalkStatsCalculator` derives walked distance and cats per km from it, observed apart from `ObserveStats` so the Counter never watches walks; `MapStateMapper` chooses the walked tracks over the cat-to-cat line for a focused outing. No schema change, no new permission.
 
 **Tech Stack:** Kotlin Multiplatform (`:domain`, `:data`, `:presentation`), Room 3 (`androidx.room3`), Koin, Jetpack Compose + Material 3, maplibre-compose, kotlinx-coroutines, turbine.
 
@@ -28,11 +28,12 @@
 1. **The track reaches the map through M3's outing focus.** A focused outing draws the recorded tracks of the walks that overlap its time span instead of the cat-to-cat line; the cat-to-cat line stays when no overlapping walk has a track of at least two points. Cost if wrong: the route choice in `MapStateMapper`.
 2. **A walk's whole track is drawn**, not clipped to the outing's first-to-last-cat window: the way to the first cat is part of the route walked. Cost if wrong: a clip in the mapper.
 3. **A walk still on has no end yet**: it covers every moment from its start, so no clock is needed. Cost if wrong: one comparison in `WalkSpan.kt`.
-4. **Distance walked** is the sum of every walk's track length. **Cats per km** pools cats and kilometres over walks at least `Tuning.MIN_RATE_DISTANCE_METERS` (500 m) long, counting live cats whose `occurredAt` falls within the walk; a walk with no cats counts and lowers the rate. This mirrors how the overall rate pools cats and time over eligible outings. Cost if wrong: `StatsCalculator` and one constant.
+4. **Distance walked** is the sum of every walk's track length. **Cats per km** pools cats and kilometres over walks at least `Tuning.MIN_RATE_DISTANCE_METERS` (500 m) long, counting live cats whose `occurredAt` falls within the walk; a walk with no cats counts and lowers the rate. This mirrors how the overall rate pools cats and time over eligible outings. Cost if wrong: `WalkStatsCalculator` and one constant.
 5. **Display:** whole metres below one kilometre, else kilometres with one decimal; cats per km with one decimal as "x / km"; kilometres only. The two rows are left out when nothing walked has any length, so a user without location permission never reads "0 m". Cost if wrong: the mapper and five strings.
 6. **A focused outing's view fits around its track as well as its cats.** Cost if wrong: `areaAround`'s input.
 7. **One line style** for both kinds of route; `map.md` says which one is drawn. Cost if wrong: a second `LineLayer`.
 8. **Every point is read into memory**, as the spec's in-memory statistics already are. Cost if wrong: a per-walk query later.
+9. **Walk statistics are observed apart from `ObserveStats`** (`WalkStats`, `ObserveWalkStats`), combined only by the Statistics store: the Counter observes `ObserveStats` and must not watch walks, or every track point, while walking mode is off. Cost if wrong: folding `WalkStats` into `Stats` later.
 
 ## File structure
 
@@ -43,10 +44,10 @@
 | `domain/…/repository/WalkRepository.kt` | + `observeEveryPoint()` |
 | `domain/…/usecase/ObserveWalkTracks.kt` (new) | walks joined with their points |
 | `data/…/db/TrackPointDao.kt`, `data/…/repository/WalkRepositoryImpl.kt` | the stream behind `observeEveryPoint()` |
-| `domain/…/Tuning.kt`, `domain/…/stats/Stats.kt`, `domain/…/stats/StatsCalculator.kt`, `domain/…/usecase/ObserveStats.kt` | distance walked, cats per km |
-| `presentation/…/statistics/StatisticsState.kt`, `StatisticsStateMapper.kt`; `ui/…/statistics/StatisticsScreen.kt`; strings | the two Statistics rows |
+| `domain/…/Tuning.kt`, `domain/…/stats/WalkStats.kt` (new), `domain/…/usecase/ObserveWalkStats.kt` (new) | distance walked, cats per km |
+| `presentation/…/statistics/StatisticsState.kt`, `StatisticsStateMapper.kt`, `StatisticsStore.kt`; `ui/…/statistics/StatisticsScreen.kt`; strings | the two Statistics rows |
 | `presentation/…/map/MapState.kt`, `MapStateMapper.kt`, `MapStore.kt`; `ui/…/map/MapFeatures.kt`, `MapScreen.kt` | the track on a focused map |
-| `app/…/di/DomainModule.kt` | `ObserveWalkTracks`, `ObserveStats` wiring |
+| `app/…/di/DomainModule.kt` | `ObserveWalkTracks`, `ObserveWalkStats` bindings |
 | `docs/features/*.md`, spec §5, map epic | docs |
 
 ---
@@ -253,7 +254,7 @@ class ObserveWalkTracks(private val walkRepository: WalkRepository) {
 
 Test doubles: the domain `FakeWalkRepository` returns its stored points sorted by `walkId`, then `at`:
 `override fun observeEveryPoint(): Flow<List<TrackPoint>> = points.map { all -> all.sortedWith(compareBy({ it.walkId }, { it.at })) }`.
-Every other double returns its stored points if it keeps any, else `flowOf(emptyList())`. **Each must emit at least once**: `combine` over a stream that never emits never emits, and later tasks combine this stream into statistics the Counter tests read. `FakeTrackPointDao` gets `observeEvery()` the same way.
+Every other double returns its stored points if it keeps any, else `flowOf(emptyList())`. **Each must emit at least once**: `combine` over a stream that never emits never emits, and later tasks combine this stream into the Map and Statistics stores. `FakeTrackPointDao` gets `observeEvery()` the same way.
 
 - [ ] **Step 8: Add the data-layer tests**
 
@@ -291,30 +292,54 @@ git commit -m "Walk tracks as a read model: every walk with its route"
 
 ---
 
-### Task 2: Distance walked and cats per km, in the statistics
+### Task 2: Distance walked and cats per km, in the domain
 
 **Files:**
 - Modify: `domain/src/commonMain/kotlin/dev/catsradar/domain/Tuning.kt`
-- Modify: `domain/src/commonMain/kotlin/dev/catsradar/domain/stats/Stats.kt`
-- Modify: `domain/src/commonMain/kotlin/dev/catsradar/domain/stats/StatsCalculator.kt`
-- Modify: `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveStats.kt`
+- Create: `domain/src/commonMain/kotlin/dev/catsradar/domain/stats/WalkStats.kt`
+- Create: `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveWalkStats.kt`
 - Modify: `app/src/main/kotlin/dev/catsradar/app/di/DomainModule.kt`
-- Modify the `ObserveStats(...)` call sites in tests: `app/src/test/…/notification/WalkingActionReceiverTest.kt:59`, `app/src/test/…/notification/WalkingNotificationSyncTest.kt:38`, `presentation/src/commonTest/…/counter/CounterStoreFixture.kt:59`
-- Test: `domain/src/commonTest/kotlin/dev/catsradar/domain/stats/StatsCalculatorTest.kt`
+- Test: `domain/src/commonTest/kotlin/dev/catsradar/domain/stats/WalkStatsCalculatorTest.kt` (new),
+  `domain/src/commonTest/kotlin/dev/catsradar/domain/usecase/ObserveWalkStatsTest.kt` (new)
+
+`Stats`, `StatsCalculator` and `ObserveStats` are **not** touched: the Counter observes `ObserveStats`,
+and it must not watch walks while walking mode is off (`CounterStoreWalkTest` — "nothing watches the
+walks while walking mode is off").
 
 **Interfaces:**
-- Consumes (Task 1): `WalkTrack`, `Walk.covers(at)`, `ObserveWalkTracks`, and existing `trackLengthMeters(points)` in `dev.catsradar.domain.geo`.
+- Consumes (Task 1): `WalkTrack`, `Walk.covers(at)`, `ObserveWalkTracks`; existing `trackLengthMeters(points)` in `dev.catsradar.domain.geo`.
 - Produces:
   - `Tuning.MIN_RATE_DISTANCE_METERS: Double = 500.0`
-  - `Stats.walkedMeters: Double` (default `0.0`) and `Stats.catsPerKm: Double?` (default `null`), the last two properties of `Stats`
-  - `StatsCalculator.calculate(encounters, today, now, walks: List<WalkTrack> = emptyList(), gap, minRateDuration, minRateDistanceMeters = Tuning.MIN_RATE_DISTANCE_METERS)`
-  - `ObserveStats(encounterRepository, observeWalkTracks: ObserveWalkTracks, clock, timeZone, ticks)`
+  - `data class WalkStats(val walkedMeters: Double, val catsPerKm: Double?)` in `dev.catsradar.domain.stats`
+  - `object WalkStatsCalculator { fun calculate(encounters: List<Encounter>, walks: List<WalkTrack>, minRateDistanceMeters: Double = Tuning.MIN_RATE_DISTANCE_METERS): WalkStats }`
+  - `class ObserveWalkStats(encounterRepository: EncounterRepository, observeWalkTracks: ObserveWalkTracks)` with `operator fun invoke(): Flow<WalkStats>`
+  - Koin: `factoryOf(::ObserveWalkTracks)`, `factoryOf(::ObserveWalkStats)` in `DomainModule.kt`
 
 - [ ] **Step 1: Write the failing calculator tests**
 
-In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres runs due north from Barcelona; its expected length is read back from `trackLengthMeters`, so no test depends on the Earth's radius:
+`WalkStatsCalculatorTest.kt`. A track of `km` kilometres runs due north from Barcelona; each expected
+length is read back from `trackLengthMeters`, so no test depends on the Earth's radius. Cats come from
+the domain fixture `encounterFixture(id, occurredAt)` (`dev.catsradar.domain.testing`).
 
 ```kotlin
+package dev.catsradar.domain.stats
+
+import dev.catsradar.domain.geo.trackLengthMeters
+import dev.catsradar.domain.model.TrackPoint
+import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.model.WalkTrack
+import dev.catsradar.domain.testing.encounterFixture
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+
+class WalkStatsCalculatorTest {
+
     private fun walk(id: String, start: Instant, end: Instant? = start + 1.hours) =
         Walk(id, start, end, "device", start, end ?: start)
 
@@ -327,15 +352,14 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
         ),
     )
 
-    private fun walked(encounters: List<Encounter>, vararg walks: WalkTrack) =
-        StatsCalculator.calculate(encounters, today = TODAY, now = NOW, walks = walks.toList())
+    private fun cat(id: String, at: Instant) = encounterFixture(id, at)
+
+    private fun calculate(cats: List<dev.catsradar.domain.model.Encounter>, vararg walks: WalkTrack) =
+        WalkStatsCalculator.calculate(cats, walks.toList())
 
     @Test
     fun `with no walk, nothing is walked and cats per km is unmeasured`() {
-        val stats = stats(listOf(at(NOON)))
-
-        assertEquals(0.0, stats.walkedMeters)
-        assertNull(stats.catsPerKm)
+        assertEquals(WalkStats(walkedMeters = 0.0, catsPerKm = null), calculate(listOf(cat("a", NOON))))
     }
 
     @Test
@@ -344,7 +368,7 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
         val short = track(walk("short", NOON - 1.hours), km = 0.1)
         val open = track(walk("open", NOON, end = null), km = 1.0)
 
-        val stats = walked(emptyList(), long, short, open)
+        val stats = calculate(emptyList(), long, short, open)
 
         val expected = listOf(long, short, open).sumOf { trackLengthMeters(it.points) }
         assertEquals(expected, stats.walkedMeters, absoluteTolerance = 1e-6)
@@ -355,11 +379,11 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
         val first = track(walk("first", NOON - 3.hours), km = 1.0)
         val second = track(walk("second", NOON - 1.hours), km = 3.0)
         val cats = listOf(
-            at(NOON - 170.minutes, "a"), at(NOON - 160.minutes, "b"), at(NOON - 150.minutes, "c"),
-            at(NOON - 30.minutes, "d"),
+            cat("a", NOON - 170.minutes), cat("b", NOON - 160.minutes), cat("c", NOON - 150.minutes),
+            cat("d", NOON - 30.minutes),
         )
 
-        val stats = walked(cats, first, second)
+        val stats = calculate(cats, first, second)
 
         val km = (trackLengthMeters(first.points) + trackLengthMeters(second.points)) / 1000
         assertEquals(4 / km, assertNotNull(stats.catsPerKm), absoluteTolerance = 1e-9)
@@ -369,7 +393,7 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
     fun `a walk shorter than the minimum adds distance but is left out of cats per km`() {
         val short = track(walk("short", NOON - 1.hours), km = 0.3)
 
-        val stats = walked(listOf(at(NOON - 30.minutes)), short)
+        val stats = calculate(listOf(cat("a", NOON - 30.minutes)), short)
 
         assertTrue(stats.walkedMeters > 0.0)
         assertNull(stats.catsPerKm)
@@ -379,9 +403,9 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
     fun `a walk with no cats lowers cats per km`() {
         val busy = track(walk("busy", NOON - 3.hours), km = 1.0)
         val quiet = track(walk("quiet", NOON - 1.hours), km = 1.0)
-        val cats = listOf(at(NOON - 170.minutes, "a"), at(NOON - 160.minutes, "b"))
+        val cats = listOf(cat("a", NOON - 170.minutes), cat("b", NOON - 160.minutes))
 
-        val stats = walked(cats, busy, quiet)
+        val stats = calculate(cats, busy, quiet)
 
         val km = (trackLengthMeters(busy.points) + trackLengthMeters(quiet.points)) / 1000
         assertEquals(2 / km, assertNotNull(stats.catsPerKm), absoluteTolerance = 1e-9)
@@ -391,14 +415,14 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
     fun `only live cats inside a walk count, its first and last moments included`() {
         val route = track(walk("w", NOON - 1.hours, end = NOON), km = 1.0)
         val cats = listOf(
-            at(NOON - 1.hours, "at start"),
-            at(NOON, "at end"),
-            at(NOON - 61.minutes, "before"),
-            at(NOON + 1.minutes, "after"),
-            at(NOON - 30.minutes, "deleted").copy(deletedAt = NOW),
+            cat("at start", NOON - 1.hours),
+            cat("at end", NOON),
+            cat("before", NOON - 61.minutes),
+            cat("after", NOON + 1.minutes),
+            cat("deleted", NOON - 30.minutes).copy(deletedAt = NOON),
         )
 
-        val stats = walked(cats, route)
+        val stats = calculate(cats, route)
 
         val km = trackLengthMeters(route.points) / 1000
         assertEquals(2 / km, assertNotNull(stats.catsPerKm), absoluteTolerance = 1e-9)
@@ -408,14 +432,21 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
     fun `a walk still on counts every cat since it started`() {
         val open = track(walk("open", NOON - 1.hours, end = null), km = 1.0)
 
-        val stats = walked(listOf(at(NOON - 30.minutes, "a"), at(NOW, "b")), open)
+        val stats = calculate(listOf(cat("a", NOON - 30.minutes), cat("b", NOON + 6.hours)), open)
 
         val km = trackLengthMeters(open.points) / 1000
         assertEquals(2 / km, assertNotNull(stats.catsPerKm), absoluteTolerance = 1e-9)
     }
+
+    private companion object {
+        val NOON = Instant.parse("2026-09-22T12:00:00Z")
+    }
+}
 ```
 
-- [ ] **Step 2: Run** `:domain:testAndroidHostTest --tests 'dev.catsradar.domain.stats.StatsCalculatorTest'`; expect compile failure.
+(Import `Encounter` properly rather than the qualified name above.)
+
+- [ ] **Step 2: Run** `:domain:testAndroidHostTest --tests 'dev.catsradar.domain.stats.WalkStatsCalculatorTest'`; expect compile failure.
 
 - [ ] **Step 3: Implement**
 
@@ -426,25 +457,38 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
     const val MIN_RATE_DISTANCE_METERS: Double = 500.0
 ```
 
-`Stats.kt`, as the last two properties:
+`WalkStats.kt`:
 
 ```kotlin
+package dev.catsradar.domain.stats
+
+import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.geo.trackLengthMeters
+import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.WalkTrack
+import dev.catsradar.domain.walk.covers
+
+data class WalkStats(
     /** The length of every walk's recorded route, in metres. */
-    val walkedMeters: Double = 0.0,
+    val walkedMeters: Double,
     /** Null when no walk was long enough to measure — see [Tuning.MIN_RATE_DISTANCE_METERS]. */
-    val catsPerKm: Double? = null,
-```
+    val catsPerKm: Double?,
+)
 
-(import `dev.catsradar.domain.Tuning` for the KDoc link.)
+object WalkStatsCalculator {
 
-`StatsCalculator.kt`: add the `walks` and `minRateDistanceMeters` parameters and:
-
-```kotlin
+    fun calculate(
+        encounters: List<Encounter>,
+        walks: List<WalkTrack>,
+        minRateDistanceMeters: Double = Tuning.MIN_RATE_DISTANCE_METERS,
+    ): WalkStats {
+        val live = encounters.filter { it.deletedAt == null }
+        return WalkStats(
             walkedMeters = walks.sumOf { trackLengthMeters(it.points) },
             catsPerKm = catsPerKm(live, walks, minRateDistanceMeters),
-```
+        )
+    }
 
-```kotlin
     // Pooled like the overall rate: one short lucky walk must not outweigh a long ordinary one.
     private fun catsPerKm(live: List<Encounter>, walks: List<WalkTrack>, minDistanceMeters: Double): Double? {
         val measured = walks
@@ -457,34 +501,45 @@ In `StatsCalculatorTest.kt`, add helpers and tests. A track of `km` kilometres r
     }
 
     private const val METERS_PER_KM = 1000.0
+}
 ```
 
-`ObserveStats.kt`:
+- [ ] **Step 4: Run the calculator tests; expect PASS.**
+
+- [ ] **Step 5: Write the failing use-case test**
+
+`ObserveWalkStatsTest.kt`, with the domain `FakeEncounterRepository` and `FakeWalkRepository`
+(`dev.catsradar.domain.testing`) and turbine: a stored walk of one ended hour with two points about
+1 km apart and one live cat inside it emits `WalkStats` whose `catsPerKm` is `1 / (trackLengthMeters / 1000)`;
+appending a third point emits again with a longer `walkedMeters`. Write both assertions in full.
+
+- [ ] **Step 6: Implement** `ObserveWalkStats.kt`:
 
 ```kotlin
-class ObserveStats(
+package dev.catsradar.domain.usecase
+
+import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.stats.WalkStats
+import dev.catsradar.domain.stats.WalkStatsCalculator
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+
+class ObserveWalkStats(
     private val encounterRepository: EncounterRepository,
     private val observeWalkTracks: ObserveWalkTracks,
-    private val clock: Clock,
-    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    // (keep the existing comment on ticks)
-    private val ticks: Flow<Unit> = ticker(TickPeriod),
 ) {
-    operator fun invoke(): Flow<Stats> =
-        combine(encounterRepository.observeAll(), observeWalkTracks(), ticks) { encounters, walks, _ ->
-            StatsCalculator.calculate(encounters, today = clock.today(timeZone), now = clock.now(), walks = walks)
+    operator fun invoke(): Flow<WalkStats> =
+        combine(encounterRepository.observeAll(), observeWalkTracks()) { encounters, walks ->
+            WalkStatsCalculator.calculate(encounters, walks)
         }
 }
 ```
 
-`DomainModule.kt`: `factoryOf(::ObserveWalkTracks)` and
-`factory { ObserveStats(encounterRepository = get(), observeWalkTracks = get(), clock = get(), timeZone = get()) }`.
+and in `DomainModule.kt`: `factoryOf(::ObserveWalkTracks)` and `factoryOf(::ObserveWalkStats)`.
 
-Test call sites pass `ObserveWalkTracks(<that test's walk repository double>)`; `CounterStoreFixture` already has a `walkRepository` parameter.
+- [ ] **Step 7: Run** `:domain:testAndroidHostTest --rerun`, then `./gradlew check --console=plain`. Expected: green (Koin's module check, if any, resolves both).
 
-- [ ] **Step 4: Run** `:domain:testAndroidHostTest --rerun :presentation:testAndroidHostTest --rerun :app:testDebugUnitTest --rerun`, then `./gradlew check --console=plain`. Expected: green.
-
-- [ ] **Step 5: Commit** — `git commit -m "Statistics: distance walked and cats per km"`
+- [ ] **Step 8: Commit** — `git commit -m "Walk statistics: distance walked and cats per km"`
 
 ---
 
@@ -493,57 +548,65 @@ Test call sites pass `ObserveWalkTracks(<that test's walk repository double>)`; 
 **Files:**
 - Modify: `presentation/src/commonMain/kotlin/dev/catsradar/presentation/statistics/StatisticsState.kt`
 - Modify: `presentation/src/commonMain/kotlin/dev/catsradar/presentation/statistics/StatisticsStateMapper.kt`
+- Modify: `presentation/src/commonMain/kotlin/dev/catsradar/presentation/statistics/StatisticsStore.kt`
+- Create: `presentation/src/commonTest/kotlin/dev/catsradar/presentation/StoredWalkRepository.kt` (read-only test double, reused by Task 4)
 - Modify: `ui/src/main/kotlin/dev/catsradar/ui/statistics/StatisticsScreen.kt`
 - Modify: `ui/src/main/res/values/strings.xml`, `ui/src/main/res/values-ru/strings.xml`
-- Test: `presentation/src/commonTest/kotlin/dev/catsradar/presentation/statistics/StatisticsStateMapperTest.kt`
+- Test: `presentation/src/commonTest/kotlin/dev/catsradar/presentation/statistics/StatisticsStateMapperTest.kt`,
+  `presentation/src/commonTest/kotlin/dev/catsradar/presentation/statistics/StatisticsStoreTest.kt` (new)
 
 **Interfaces:**
-- Consumes (Task 2): `Stats.walkedMeters`, `Stats.catsPerKm`.
+- Consumes (Task 2): `WalkStats`, `ObserveWalkStats` (bound in Koin).
 - Produces:
   - `StatisticsState.walked: WalkedState? = null`
   - `data class WalkedState(val distance: DistanceState, val catsPerKm: String?)`
   - `data class DistanceState(val value: String, val unit: DistanceUnit)`, `enum class DistanceUnit { METERS, KILOMETERS }`
+  - `StatisticsStateMapper.map(stats: Stats, walks: WalkStats = WalkStats(walkedMeters = 0.0, catsPerKm = null))`
+  - `StatisticsStore(observeStats, observeWalkStats: ObserveWalkStats, stateMapper)`
+  - `internal class StoredWalkRepository(walks: List<Walk> = emptyList(), points: List<TrackPoint> = emptyList()) : WalkRepository` in `dev.catsradar.presentation` (commonTest): reads return what it was built with (`observeAll` newest start first, `observeEveryPoint` sorted by walk then time — both via `flowOf`, so each emits once); every write throws `error("read-only")`.
 
 - [ ] **Step 1: Write the failing mapper tests**
 
-Give the test's `stats(...)` helper `walkedMeters: Double = 0.0` and `catsPerKm: Double? = null` parameters passed through to `Stats`. Then:
-
 ```kotlin
+    private fun walked(meters: Double, catsPerKm: Double? = null) = WalkStats(walkedMeters = meters, catsPerKm = catsPerKm)
+
     @Test
     fun `with nothing walked the walk rows are left out`() {
-        assertNull(mapper.map(stats(total = 3, walkedMeters = 0.0)).walked)
+        assertNull(mapper.map(stats(total = 3), walked(0.0)).walked)
+        assertNull(mapper.map(stats(total = 3)).walked)
     }
 
     @Test
     fun `under a kilometre the distance reads in whole metres`() {
-        val state = mapper.map(stats(total = 1, walkedMeters = 350.4))
+        val state = mapper.map(stats(total = 1), walked(350.4))
 
         assertEquals(WalkedState(DistanceState("350", DistanceUnit.METERS), catsPerKm = null), state.walked)
     }
 
     @Test
     fun `a distance that rounds to a thousand metres reads as a kilometre`() {
-        assertEquals(DistanceState("999", DistanceUnit.METERS), mapper.map(stats(total = 1, walkedMeters = 999.4)).walked?.distance)
-        assertEquals(DistanceState("1.0", DistanceUnit.KILOMETERS), mapper.map(stats(total = 1, walkedMeters = 999.6)).walked?.distance)
+        assertEquals(DistanceState("999", DistanceUnit.METERS), mapper.map(stats(total = 1), walked(999.4)).walked?.distance)
+        assertEquals(DistanceState("1.0", DistanceUnit.KILOMETERS), mapper.map(stats(total = 1), walked(999.6)).walked?.distance)
     }
 
     @Test
     fun `from a kilometre the distance reads in kilometres to one decimal`() {
-        assertEquals(DistanceState("12.4", DistanceUnit.KILOMETERS), mapper.map(stats(total = 1, walkedMeters = 12_449.0)).walked?.distance)
+        assertEquals(DistanceState("12.4", DistanceUnit.KILOMETERS), mapper.map(stats(total = 1), walked(12_449.0)).walked?.distance)
     }
 
     @Test
     fun `cats per km reads to one decimal, and stays unmeasured without a long enough walk`() {
-        assertEquals("3.3", mapper.map(stats(total = 1, walkedMeters = 4_000.0, catsPerKm = 3.26)).walked?.catsPerKm)
-        assertNull(mapper.map(stats(total = 1, walkedMeters = 300.0, catsPerKm = null)).walked?.catsPerKm)
+        assertEquals("3.3", mapper.map(stats(total = 1), walked(4_000.0, catsPerKm = 3.26)).walked?.catsPerKm)
+        assertNull(mapper.map(stats(total = 1), walked(300.0, catsPerKm = null)).walked?.catsPerKm)
     }
 ```
 
-(`kotlin.math.round` rounds ties to even: keep test values off exact halves.) The metres and kilometres cases are the token test the rules ask for: each unit asserted, and they cannot collapse onto one token.
+(`kotlin.math.round` rounds ties to even: keep test values off exact halves.) The metres and kilometres
+cases are the token test the rules ask for: each unit asserted, and they cannot collapse onto one token.
 
 - [ ] **Step 2: Run** `:presentation:testAndroidHostTest --tests '*StatisticsStateMapperTest'`; expect compile failure.
 
-- [ ] **Step 3: Implement**
+- [ ] **Step 3: Implement state and mapper**
 
 `StatisticsState.kt`: add after `overallRate`
 
@@ -564,15 +627,17 @@ data class DistanceState(val value: String, val unit: DistanceUnit)
 enum class DistanceUnit { METERS, KILOMETERS }
 ```
 
-`StatisticsStateMapper.kt`: in `map`
+`StatisticsStateMapper.kt`: `fun map(stats: Stats, walks: WalkStats = NothingWalked): StatisticsState`
+with `private val NothingWalked = WalkStats(walkedMeters = 0.0, catsPerKm = null)` at file level, and in
+the state:
 
 ```kotlin
-        walked = stats.walkedMeters.takeIf { it > 0.0 }?.let { meters ->
-            WalkedState(distance = meters.toDistanceState(), catsPerKm = stats.catsPerKm?.oneDecimal())
+        walked = walks.walkedMeters.takeIf { it > 0.0 }?.let { meters ->
+            WalkedState(distance = meters.toDistanceState(), catsPerKm = walks.catsPerKm?.oneDecimal())
         },
 ```
 
-and beside `toRateState`
+beside `toRateState`:
 
 ```kotlin
 private const val METERS_PER_KM = 1000
@@ -586,6 +651,35 @@ private fun Double.toDistanceState(): DistanceState {
     }
 }
 ```
+
+- [ ] **Step 4: Write the failing store test, then wire the store**
+
+`StoredWalkRepository.kt` as described under Interfaces. `StatisticsStoreTest.kt` (`runTest` with the
+module's main-dispatcher setup, as other store tests do): a store over a `FakeEncounterRepository`
+holding one cat inside a stored ended walk whose two points are about 2 km apart shows
+`state.walked?.distance == DistanceState("2.0", DistanceUnit.KILOMETERS)`; over an empty
+`StoredWalkRepository` it shows `walked == null`.
+
+`StatisticsStore.kt`:
+
+```kotlin
+class StatisticsStore(
+    observeStats: ObserveStats,
+    observeWalkStats: ObserveWalkStats,
+    private val stateMapper: StatisticsStateMapper,
+) : Store<StatisticsState, StatisticsIntent, StatisticsEffect>(StatisticsState()) {
+
+    init {
+        combine(observeStats(), observeWalkStats()) { stats, walks -> stateMapper.map(stats, walks) }
+            .onEach { state -> setState { state } }
+            .launchIn(viewModelScope)
+    }
+    ...
+```
+
+`viewModelOf(::StatisticsStore)` resolves the new parameter from Task 2's binding.
+
+- [ ] **Step 5: Strings and screen**
 
 Strings, after `statistics_rate_unavailable`:
 
@@ -621,11 +715,12 @@ private fun WalkedState.catsPerKmLabel(): String =
         ?: stringResource(R.string.statistics_rate_unavailable)
 ```
 
-Add `walked = WalkedState(DistanceState("42.7", DistanceUnit.KILOMETERS), catsPerKm = "3.1")` to the preview's sample state.
+Add `walked = WalkedState(DistanceState("42.7", DistanceUnit.KILOMETERS), catsPerKm = "3.1")` to the
+preview's sample state.
 
-- [ ] **Step 4: Run** `:presentation:testAndroidHostTest --rerun`, then `./gradlew check --console=plain` (Lint checks the RU strings). Expected: green.
+- [ ] **Step 6: Run** `:presentation:testAndroidHostTest --rerun :app:testDebugUnitTest --rerun`, then `./gradlew check --console=plain` (Lint checks the RU strings). Expected: green.
 
-- [ ] **Step 5: Commit** — `git commit -m "Statistics screen: distance walked and cats per km"`
+- [ ] **Step 7: Commit** — `git commit -m "Statistics screen: distance walked and cats per km"`
 
 ---
 
@@ -642,7 +737,7 @@ Add `walked = WalkedState(DistanceState("42.7", DistanceUnit.KILOMETERS), catsPe
   `ui/src/test/kotlin/dev/catsradar/ui/map/MapFeaturesTest.kt`
 
 **Interfaces:**
-- Consumes (Task 1): `WalkTrack`, `Walk.overlaps(from, to)`, `ObserveWalkTracks` (bound in Koin by Task 2).
+- Consumes (Task 1): `WalkTrack`, `Walk.overlaps(from, to)`, `ObserveWalkTracks` (bound in Koin by Task 2); (Task 3) the test double `StoredWalkRepository` in `dev.catsradar.presentation`.
 - Produces:
   - `data class MapPosition(val latitude: Double, val longitude: Double)`
   - `data class MapLine(val positions: ImmutableList<MapPosition>)`
@@ -733,7 +828,7 @@ data class MapPosition(val latitude: Double, val longitude: Double)
             ...
 ```
 
-Koin: `viewModelOf(::MapStore)` resolves the new parameter from `factoryOf(::ObserveWalkTracks)` (Task 2); nothing else changes. `MapStoreTest.newStore()` passes `ObserveWalkTracks(FakeWalkRepository())` (the presentation test double in `…/counter/CounterStoreTestDoubles.kt`, `internal`, visible module-wide).
+Koin: `viewModelOf(::MapStore)` resolves the new parameter from `factoryOf(::ObserveWalkTracks)` (Task 2); nothing else changes. `MapStoreTest.newStore()` takes a `walks: StoredWalkRepository = StoredWalkRepository()` parameter and passes `ObserveWalkTracks(walks)`.
 
 - [ ] **Step 4: Update the UI**
 
@@ -754,7 +849,7 @@ internal fun routeLines(lines: ImmutableList<MapLine>): FeatureCollection<LineSt
 
 `MapFeaturesTest.kt`: replace the two `routeLine` tests with: two lines become two features whose coordinates are longitude-first in order; a line of one position is dropped; all lines too short gives null.
 
-- [ ] **Step 5: Add a store test**: focusing an outing while its walk has a track gives `focus.lines` from the track (seed the fake walk repository with an ended walk and two points).
+- [ ] **Step 5: Add a store test**: focusing an outing while its walk has a track gives `focus.lines` from the track (a `StoredWalkRepository` built with an ended walk and two points).
 
 - [ ] **Step 6: Run** `:presentation:testAndroidHostTest --rerun :ui:testDebugUnitTest --rerun :app:testDebugUnitTest --rerun`, then `./gradlew check --console=plain`. Expected: green.
 
@@ -766,7 +861,7 @@ internal fun routeLines(lines: ImmutableList<MapLine>): FeatureCollection<LineSt
 
 **Files:**
 - Modify: `docs/features/map.md` — *An outing's route*: the line is the recorded track of every walk the outing overlaps, drawn whole, oldest first; the cat-to-cat line stands in when no such walk has a track of two points or more; the view fits the track too; the coat filter never thins it. Replace "It is not the route actually walked, which is the walk tracks' job." Update *Where the code lives* (`MapLine`, `MapPosition`, `routeLines`) and *Not built yet* (no walk tracks slice left; nothing shows a walk with no cats).
-- Modify: `docs/features/statistics.md` — a section *Walks: distance and cats per km* stating rulings 4 and 5 (sum of every walk; pooled over walks of at least `Tuning.MIN_RATE_DISTANCE_METERS`; a walk with no cats lowers it; a walk still on counts from its start; metres below a kilometre; rows left out when nothing was walked; "—" when unmeasured). *Where the code lives* gains `WalkSpan.kt`, `ObserveWalkTracks.kt`.
+- Modify: `docs/features/statistics.md` — a section *Walks: distance and cats per km* stating rulings 4 and 5 (sum of every walk; pooled over walks of at least `Tuning.MIN_RATE_DISTANCE_METERS`; a walk with no cats lowers it; a walk still on counts from its start; metres below a kilometre; rows left out when nothing was walked; "—" when unmeasured). *Where the code lives* gains `stats/WalkStats.kt`, `walk/WalkSpan.kt`, `usecase/ObserveWalkStats.kt`, `usecase/ObserveWalkTracks.kt`.
 - Modify: `docs/features/walking-mode.md` — *Recording the route*: one sentence that the route appears on the map with its outing and in Statistics' distance; *Where the code lives*: `ObserveWalkTracks.kt`.
 - Modify: `docs/superpowers/specs/2026-09-21-cats-radar-design.md` §5 table — two rows after *Overall rate*:
   - `Distance walked` — `Σ trackLength(w)` over every walk, the great-circle length of its route
