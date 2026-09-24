@@ -128,12 +128,18 @@ The original is never decoded larger than it needs to be. A phone camera's photo
 hundreds of megapixels, and holding one whole in memory fails on a phone; that failure used to
 reach the user as an unreadable photo, and the cat went unsaved. The resizer reads the file's
 dimensions first and has `BitmapFactory` shrink the decode by the largest power of two that still
-leaves the longest side at or above the copy's cap, so the bitmap in memory stays under twice the
-cap on each side whatever the camera. Powers of two because the JPEG decoder shrinks by those while
-decoding, averaging the pixels it drops; `BitmapFactory` accepts any other factor too, but meets it
-by skipping pixels, which turns fine detail such as fur into false patterns. Both copies are then
-sized from the file's own dimensions, not from the shrunk bitmap: the decoder rounds a halved odd
-side, and sizing from its result would put a copy a pixel off the original's proportions.
+leaves the longest side at or above the copy's cap, so the bitmap in memory is never more than
+twice the cap on a side, whatever the camera.
+
+- **Powers of two** because the JPEG decoder shrinks by those while decoding, averaging the pixels
+  it drops. `BitmapFactory` accepts any other factor too, but meets it by skipping pixels, which
+  turns fine detail such as fur into false patterns.
+- **The step is chosen rounding down.** JPEG rounds a shrunk side up while other formats may round
+  it down, and only rounding down keeps every format at or above the cap, so a copy is never
+  enlarged.
+- **Both copies are sized from the file's own dimensions,** not from the shrunk bitmap. The decoder
+  rounds a halved odd side, and sizing from its result would put a copy a pixel off the original's
+  proportions.
 
 Both copies are stored the way the photo is meant to be seen. A phone camera usually saves the
 sensor's pixels as they came off it plus an EXIF Orientation tag saying how to turn them — for a

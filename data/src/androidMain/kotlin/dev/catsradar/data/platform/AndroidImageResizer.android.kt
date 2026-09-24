@@ -101,6 +101,7 @@ internal fun Context.decodeShrunk(sourceUri: String, minLongestSide: Int): Decod
 internal fun sampleSizeFor(longestSide: Int, minLongestSide: Int): Int {
     require(minLongestSide > 0) { "minLongestSide must be positive, was $minLongestSide" }
     var sampleSize = 1
+    // Rounds down: JPEG rounds a shrunk side up, other formats may round it down, and both must reach the minimum.
     while (longestSide / (sampleSize * 2) >= minLongestSide) sampleSize *= 2
     return sampleSize
 }

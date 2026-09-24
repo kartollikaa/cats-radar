@@ -39,7 +39,7 @@ class AndroidImageResizerLargePhotoTest {
         val decoded = assertNotNull(context.decodeShrunk(largePhoto(), Tuning.PHOTO_MAX_SIDE))
 
         val longestSide = maxOf(decoded.bitmap.width, decoded.bitmap.height)
-        assertTrue(longestSide in Tuning.PHOTO_MAX_SIDE until 2 * Tuning.PHOTO_MAX_SIDE, "decoded at $longestSide")
+        assertTrue(longestSide in Tuning.PHOTO_MAX_SIDE..2 * Tuning.PHOTO_MAX_SIDE, "decoded at $longestSide")
         assertEquals(4099 to 3082, decoded.fileWidth to decoded.fileHeight)
     }
 
