@@ -12,10 +12,10 @@ import androidx.work.testing.TestListenableWorkerBuilder
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.photo.holdReadAccess
 import dev.catsradar.domain.usecase.ImportSummary
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -31,13 +31,13 @@ class ImportPhotosWorkerTest {
         Uri.parse("content://media/picker_get_content/0/com.android.providers.media.photopicker/media/$it")
     }
 
+    private val pickedUris = Array<String?>(photos.size) { photos[it].toString() }
+
     private fun held(): Set<Uri> = context.contentResolver.persistedUriPermissions.map { it.uri }.toSet()
 
     private fun worker(importPhotos: PhotoImport): ImportPhotosWorker =
         TestListenableWorkerBuilder<ImportPhotosWorker>(context)
-            .setInputData(
-                Data.Builder().putStringArray(ImportPhotosWorker.KEY_URIS, photos.map(Uri::toString).toTypedArray()).build(),
-            )
+            .setInputData(Data.Builder().putStringArray(ImportPhotosWorker.KEY_URIS, pickedUris).build())
             .setWorkerFactory(
                 object : WorkerFactory() {
                     override fun createWorker(
@@ -73,8 +73,7 @@ class ImportPhotosWorkerTest {
     @Test
     fun aStoppedRunKeepsItsPhotosForWorkManagersNextAttempt() = runTest {
         val worker = worker { _, _ -> awaitCancellation() }
-        val run = launch { worker.doWork() }
-        runCurrent()
+        val run = launch(start = CoroutineStart.UNDISPATCHED) { worker.doWork() }
 
         run.cancelAndJoin()
 

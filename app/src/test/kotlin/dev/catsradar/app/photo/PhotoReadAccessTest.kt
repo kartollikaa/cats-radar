@@ -39,6 +39,15 @@ class PhotoReadAccessTest {
     }
 
     @Test
+    fun anEmptyPickLeavesTheEarlierBatchItsPhotos() {
+        resolver.holdReadAccess(photos)
+
+        resolver.holdReadAccess(emptyList())
+
+        assertEquals(photos.toSet(), resolver.persistedUriPermissions.map { it.uri }.toSet())
+    }
+
+    @Test
     fun releasedPhotosAreNoLongerHeld() {
         resolver.holdReadAccess(photos)
 

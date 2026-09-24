@@ -88,6 +88,20 @@ class GalleryImportPickerTest {
         assertEquals(listOf(photo), picked)
         assertEquals(listOf(photo), resolver.persistedUriPermissions.map { it.uri })
     }
+
+    @Test
+    fun aGalleryClosedWithoutAPickLeavesTheRunningImportItsPhotos() {
+        compose.runOnIdle {
+            picker.launch()
+            registry.answer(true)
+            registry.answer(listOf(photo))
+            picker.launch()
+            registry.answer(true)
+            registry.answer(emptyList<Uri>())
+        }
+
+        assertEquals(listOf(photo), resolver.persistedUriPermissions.map { it.uri })
+    }
 }
 
 private class RecordingRegistry : ActivityResultRegistry(), ActivityResultRegistryOwner {
