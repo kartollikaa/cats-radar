@@ -60,8 +60,9 @@ a file path or URI. A crash report carries the exception's message as it was thr
 file error names the path or URI it failed on — app-private storage or a file the user picked.
 
 **Advertising.** The Advertising ID is not collected (`google_analytics_adid_collection_enabled` off),
-the `com.google.android.gms.permission.AD_ID` permission the SDK merges in is removed, and ad
-personalisation signals are off by default.
+the permissions the SDK merges in for ad ids and attribution (`com.google.android.gms.permission.AD_ID`,
+`ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`, the Play install referrer) are removed, and
+ad personalisation, ad storage and ad user data are off by default.
 
 Events queue on the phone while offline and are sent when the network allows; logging never waits on
 the network and never fails a user action.

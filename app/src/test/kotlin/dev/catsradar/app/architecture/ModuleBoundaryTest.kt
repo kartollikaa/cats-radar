@@ -54,6 +54,20 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    fun `domain, presentation and ui files do not import firebase`() {
+        (
+            Konsist.scopeFromPackage("dev.catsradar.domain..") +
+                Konsist.scopeFromPackage("dev.catsradar.presentation..") +
+                Konsist.scopeFromPackage("dev.catsradar.ui..")
+            )
+            .files
+            .excludingGeneratedSources()
+            .assertFalse(testName = "domain, presentation and ui files do not import com.google.firebase") { file ->
+                file.hasImport { it.name.startsWith("com.google.firebase") }
+            }
+    }
+
+    @Test
     fun `data files do not import dev catsradar presentation or dev catsradar ui`() {
         Konsist.scopeFromPackage("dev.catsradar.data..")
             .files

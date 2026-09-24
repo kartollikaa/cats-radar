@@ -27,6 +27,8 @@ Rules, enforced by a Konsist test in `:app` (`app/src/test/kotlin/dev/catsradar/
 - `:ui` files do not import Material's dynamic colour schemes: the wallpaper's colours are `:app`'s
   choice, and `CatsRadarTheme` without a scheme stays deterministic for previews.
 - `:data` files do not import `dev.catsradar.presentation` or `dev.catsradar.ui`.
+- `:domain`, `:presentation` and `:ui` files do not import `com.google.firebase`: analytics reaches
+  them only as the `Analytics` port, and Firebase stays in `:data` and `:app`.
 - Each module's physical files declare that module's package (`dev.catsradar.<module>` or a
   subpackage) — otherwise the rules above, which key on the declared package rather than the
   physical module, would silently stop covering a mis-packaged file.

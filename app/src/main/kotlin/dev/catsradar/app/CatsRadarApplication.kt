@@ -13,7 +13,7 @@ import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
-import dev.catsradar.app.reporting.tagCrashReports
+import dev.catsradar.app.reporting.tagReports
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
@@ -35,7 +35,7 @@ import org.koin.core.context.startKoin
 class CatsRadarApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        tagCrashReports(BuildConfig.BUILD_TYPE)
+        tagReports(this, BuildConfig.BUILD_TYPE)
         val koin = startKoin {
             androidLogger()
             androidContext(this@CatsRadarApplication)

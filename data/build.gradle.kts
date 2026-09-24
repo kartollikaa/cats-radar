@@ -28,6 +28,8 @@ kotlin {
             implementation(libs.androidx.exifinterface)
             implementation(libs.play.services.location)
             implementation(libs.kotlinx.coroutines.play.services)
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.analytics)
         }
         getByName("androidHostTest").dependencies {
             implementation(libs.kotlin.test)

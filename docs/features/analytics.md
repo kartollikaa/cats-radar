@@ -1,10 +1,13 @@
 # Crash reports and analytics
 
 The app reports its crashes to Firebase Crashlytics, so a failure on a phone is seen without anyone
-having to describe it. Every build reports, debug and release alike, and each report says which one
-it came from. There is no switch to turn it off.
+having to describe it, and counts which screens are opened in Google Analytics for Firebase, so it is
+clear which parts of the app are used. Every build reports, debug and release alike, and each report
+says which one it came from. There is no switch to turn it off.
 
 ## What is sent
+
+### To Crashlytics
 
 - **A crash.** Any exception nothing caught: its stack trace, the app version, the phone's model and
   Android version, and Crashlytics' own device state (free memory and disk, orientation). A crash is
@@ -23,46 +26,80 @@ it came from. There is no switch to turn it off.
 - **An app that stops responding** (an ANR), reported like a crash.
 - **App sessions.** Crashlytics' session tracking sends when the app starts and moves between the
   foreground and the background, so a crash can be counted against how often the app is used.
+
+### To Analytics
+
+- **A screen view** each time a different screen comes to the top: `screen_view` with `screen_name`
+  one of `counter`, `encounters`, `encounter_detail`, `statistics`, `regions`, `map`, `map_spot`,
+  `settings`. The same screen again with nothing in between is not counted twice; going back to a
+  screen after another counts it again; turning the phone, which rebuilds the screen, does not.
+- **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
+  updates, the phone's model and Android version, and the country the phone's network address places
+  it in.
+
+### To both
+
 - **A Firebase installation id**, random and made on the phone at install time; it ties one
   install's reports together and is not tied to a person or an account.
-- **`build_type`**, a custom key on every report: `debug` or `release`.
+- **`build_type`** — `debug` or `release` — as a custom key on every crash report and a user property
+  on every analytics event.
 
 ## What is never sent
 
-No coordinate, geohash, place, country or city name; no photo or any part of one; no cat's id, time
-or coat; the device id the backup format uses. Crashlytics is given no user id, no custom keys but
-`build_type`, and no log lines. A stack trace names code, not data; an exception's *message*,
-though, goes as whoever threw it wrote it — a file error from the platform names the path or URI it
-failed on, which is the app's own storage or a file the user picked (a backup, a gallery photo).
+No coordinate, geohash, place, country or city name the app knows; no photo or any part of one; no
+cat's id, time or coat; the device id the backup format uses. A screen view names the screen, never
+what is on it: `regions` does not say which country or city was open. Neither service is given a user
+id, and Crashlytics gets no custom keys but `build_type` and no log lines. A stack trace names code,
+not data; an exception's *message*, though, goes as whoever threw it wrote it — a file error from the
+platform names the path or URI it failed on, which is the app's own storage or a file the user picked
+(a backup, a gallery photo).
+
+**No advertising.** The Advertising ID is not collected; the permissions the Analytics SDK brings in
+to read an ad id (Google's or Android's Privacy Sandbox one), to report ad attribution, and to ask Play
+which campaign installed the app are all removed; ad personalisation, ad storage and ad user data are
+off by default.
 
 ## At the edges
 
-- **Offline.** Reports wait on the phone and go when the network allows; nothing the user does waits
-  for them.
-- **No Play Services.** Crashlytics does not need them; reports still go.
+- **Offline.** Reports and events wait on the phone and go when the network allows; nothing the user
+  does waits for them.
+- **No Play Services.** Neither service needs them; reports and events still go.
 - **A debug build installed from a computer** reports like any other, tagged `debug`.
 - **The Firebase config** is `app/google-services.json`, registered for the application id
   `com.kartollika.catsradar`. A build under any other id fails at the google-services step rather
   than reporting into the wrong app.
 - **Minify is off,** so stack traces arrive readable and there is no mapping file to upload.
+- **Only `:data` and `:app` may touch Firebase.** A Konsist rule fails `check` if a file in
+  `:domain`, `:presentation` or `:ui` imports `com.google.firebase`; those layers see only the
+  `Analytics` port.
 
 ## Where the code lives
 
 - `build-logic/convention/src/main/kotlin/FirebaseConventionPlugin.kt` — `catsradar.firebase`:
   the google-services and Crashlytics Gradle plugins and the Firebase libraries. Only `:app`
-  applies it.
+  applies it; `:data` adds the Analytics library to its `androidMain` itself.
 - `app/google-services.json` — the Firebase project's config for this application id.
+- `app/src/main/AndroidManifest.xml` — the advertising switches, the removed `AD_ID` permission, and
+  automatic screen reporting turned off (one activity hosts every screen, so it would only ever name
+  that activity).
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/analytics/Analytics.kt` — the `Analytics` port,
+  the `AnalyticsEvent` catalogue and `AnalyticsScreen`.
+- `data/src/commonMain/kotlin/dev/catsradar/data/analytics/EncodedEvent.kt` — an event turned into
+  Firebase's name and parameters; `data/src/androidMain/…/FirebaseAnalyticsReporter.kt` hands it over.
+- `app/src/main/kotlin/dev/catsradar/app/navigation/ScreenViewTracker.kt` — which key is which
+  screen, and not counting the same screen twice in a row; `CatsRadarNavHost` feeds it the top of the
+  back stack.
 - `app/src/main/kotlin/dev/catsradar/app/reporting/` — `NonFatalReporter` (the port the app
-  reports through, with `recordFailureOf`), `Crashlytics.kt` (its Crashlytics implementation and
-  the `build_type` tag).
+  reports through, with `recordFailureOf`), `CrashlyticsNonFatalReporter`, and `BuildTypeTag.kt`
+  (`build_type` on both services, set first thing at start).
 - `app/src/main/kotlin/dev/catsradar/app/StartupRepairs.kt` — runs the start-up repairs, each on
   its own, recording a failure instead of throwing it.
 - `app/src/main/kotlin/dev/catsradar/app/worker/` — each worker's catch-all, and
   `WorkerFailures.kt` (`recordOnFirstAttempt`) for the ones that retry.
-- Tests: `app/src/test/kotlin/dev/catsradar/app/StartupRepairsTest.kt`,
-  `app/src/test/kotlin/dev/catsradar/app/worker/WorkerFailureReportingTest.kt`.
+- Tests: `StartupRepairsTest`, `WorkerFailureReportingTest`, `ScreenViewTrackerTest` (`:app`),
+  `AnalyticsEncodingTest` (`:data`), and the Firebase rule in `ModuleBoundaryTest`.
 
 ## Not handled yet
 
-- Product usage events (which features are used, from where).
+- Product events beyond screen views (cats logged by origin, coats, imports, backups, walks).
 - A setting to turn reporting off (the owner chose always on).
