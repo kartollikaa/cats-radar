@@ -16,6 +16,9 @@ interface WalkDao {
     @Query("SELECT * FROM walks WHERE endedAt IS NULL LIMIT 1")
     suspend fun loadOpen(): WalkEntity?
 
+    @Query("SELECT * FROM walks WHERE endedAt IS NULL LIMIT 1")
+    fun observeOpen(): Flow<WalkEntity?>
+
     @Insert
     suspend fun insert(walk: WalkEntity)
 

@@ -71,4 +71,15 @@ class WalkDaoTest {
         assertEquals(walkStart + 12.minutes, ended.updatedAt)
         assertNull(dao.loadOpen())
     }
+
+    @Test
+    fun theOpenWalkIsObservedFromItsStartToItsEnd() = runTest {
+        assertNull(dao.observeOpen().first())
+
+        val started = dao.startIfNoneOpen(walkEntity("walk"))
+        assertEquals(started, dao.observeOpen().first())
+
+        dao.end("walk", walkStart + 10.minutes, updatedAt = walkStart + 10.minutes)
+        assertNull(dao.observeOpen().first())
+    }
 }

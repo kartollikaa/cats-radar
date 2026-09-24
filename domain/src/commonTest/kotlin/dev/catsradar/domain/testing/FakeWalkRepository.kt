@@ -33,6 +33,8 @@ class FakeWalkRepository :
 
     override suspend fun openWalk(): Walk? = walks.value.firstOrNull { it.endedAt == null }
 
+    override fun observeOpen(): Flow<Walk?> = walks.map { all -> all.firstOrNull { it.endedAt == null } }
+
     override suspend fun startIfNoneOpen(walk: Walk): Walk =
         openWalk() ?: walk.also { started -> walks.update { it + started } }
 

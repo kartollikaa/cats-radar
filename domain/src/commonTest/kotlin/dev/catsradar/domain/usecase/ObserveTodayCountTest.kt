@@ -3,20 +3,16 @@ package dev.catsradar.domain.usecase
 import app.cash.turbine.test
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.MovableClock
 import dev.catsradar.domain.testing.encounterAt
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 private val Noon = Instant.parse("2026-09-22T12:00:00Z")
-
-private class MovableClock(var now: Instant) : Clock {
-    override fun now(): Instant = now
-}
 
 class ObserveTodayCountTest {
 

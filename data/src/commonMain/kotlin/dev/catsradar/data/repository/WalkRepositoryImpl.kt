@@ -16,6 +16,8 @@ class WalkRepositoryImpl(private val dao: WalkDao, private val points: TrackPoin
 
     override suspend fun openWalk(): Walk? = dao.loadOpen()?.toDomain()
 
+    override fun observeOpen(): Flow<Walk?> = dao.observeOpen().map { it?.toDomain() }
+
     override suspend fun startIfNoneOpen(walk: Walk): Walk = dao.startIfNoneOpen(walk.toEntity()).toDomain()
 
     override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean =

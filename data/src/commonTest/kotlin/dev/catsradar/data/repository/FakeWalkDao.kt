@@ -20,6 +20,8 @@ class FakeWalkDao : WalkDao {
 
     override suspend fun loadOpen(): WalkEntity? = loadOpenResult
 
+    override fun observeOpen(): Flow<WalkEntity?> = flowOf(loadOpenResult)
+
     override suspend fun insert(walk: WalkEntity) {
         inserted += walk
         loadOpenResult = walk
