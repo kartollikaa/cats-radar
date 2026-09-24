@@ -9,6 +9,8 @@ import dev.catsradar.buildlogic.version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import java.io.StringReader
+import java.util.Properties
 
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -52,15 +54,21 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
     }
 }
 
-// The key never enters the repo: without these properties a release build is left unsigned.
+// The key never enters the repo: without a signing file a release build is left unsigned.
 private fun ApplicationExtension.signReleaseWithLocalKey(project: Project) {
-    fun property(name: String) = project.providers.gradleProperty("catsradar.release.$name")
-    val storeFile = property("storeFile").orNull ?: return
+    val path = project.providers.gradleProperty("kartollika.signingFile").orNull ?: return
+    val signingFile = project.file(path)
+    val values = Properties().apply {
+        val contents = project.providers.fileContents(project.layout.projectDirectory.file(signingFile.absolutePath))
+        load(StringReader(contents.asText.get()))
+    }
+    fun value(name: String) = requireNotNull(values.getProperty(name)) { "$name is missing from $signingFile" }
     val key = signingConfigs.create("release") {
-        this.storeFile = project.file(storeFile)
-        storePassword = property("storePassword").get()
-        keyAlias = property("keyAlias").get()
-        keyPassword = property("keyPassword").get()
+        // Resolved against the signing file's folder, so the keystore can sit next to it.
+        storeFile = signingFile.parentFile.resolve(value("storeFile"))
+        storePassword = value("storePassword")
+        keyAlias = value("keyAlias")
+        keyPassword = value("keyPassword")
     }
     buildTypes.getByName("release").signingConfig = key
 }
