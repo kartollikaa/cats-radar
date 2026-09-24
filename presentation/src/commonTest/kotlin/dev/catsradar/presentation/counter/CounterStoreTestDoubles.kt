@@ -328,8 +328,4 @@ internal class FakeSettingsRepository(
         check(!writesFail) { "preferences unwritable" }
         acknowledgedRuns.update { it + (job to runId) }
     }
-
-    override fun photoCopiesRegenerated(): Flow<Boolean> = MutableStateFlow(true)
-
-    override suspend fun setPhotoCopiesRegenerated(done: Boolean) = Unit
 }

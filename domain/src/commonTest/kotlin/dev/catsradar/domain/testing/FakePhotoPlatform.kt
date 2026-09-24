@@ -31,9 +31,6 @@ class FakeImageResizer(
     var calls = 0
         private set
 
-    /** Every call's source and base name, in order. */
-    val requests = mutableListOf<Pair<String, String>>()
-
     /** Sources that cannot be decoded, however [result] is set. */
     val undecodable = mutableSetOf<String>()
 
@@ -44,7 +41,6 @@ class FakeImageResizer(
 
     override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
         calls++
-        requests += sourceUri to baseName
         baseNames += baseName
         duringStore()
         return result.takeIf { sourceUri !in undecodable }
@@ -126,14 +122,6 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
     override fun acknowledgedRun(job: ReportedJob): Flow<String?> = MutableStateFlow(null)
 
     override suspend fun setAcknowledgedRun(job: ReportedJob, runId: String) = Unit
-
-    private val copiesRegenerated = MutableStateFlow(false)
-
-    override fun photoCopiesRegenerated(): Flow<Boolean> = copiesRegenerated
-
-    override suspend fun setPhotoCopiesRegenerated(done: Boolean) {
-        copiesRegenerated.value = done
-    }
 }
 
 class RecordingPhotoStorage : PhotoStorage {
