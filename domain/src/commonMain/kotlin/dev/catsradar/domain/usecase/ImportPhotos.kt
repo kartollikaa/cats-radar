@@ -74,7 +74,9 @@ class ImportPhotos(
             }
             onProgress(index + 1, sourceUris.size)
         }
-        analytics.log(AnalyticsEvent.PhotosImported(added = added.size, duplicates = skipped, failed = failed))
+        if (sourceUris.isNotEmpty()) {
+            analytics.log(AnalyticsEvent.PhotosImported(added = added.size, duplicates = skipped, failed = failed))
+        }
         return ImportSummary(added = added, skipped = skipped, failed = failed)
     }
 

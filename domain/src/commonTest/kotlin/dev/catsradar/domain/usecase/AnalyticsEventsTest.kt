@@ -181,6 +181,25 @@ class AnalyticsEventsTest {
     }
 
     @Test
+    fun `an import of nothing logs nothing`() = runTest {
+        ImportPhotos(
+            encounterRepository = encounters,
+            placeCellRepository = placeCells,
+            exifReader = FakeExifReader(),
+            imageResizer = resizer,
+            digest = digest,
+            sourceFileTime = FakeSourceFileTime(),
+            idGenerator = FakeIdGenerator(),
+            deviceIdProvider = FakeDeviceIdProvider(),
+            clock = clock,
+            analytics = analytics,
+            timeZone = TimeZone.UTC,
+        )(emptyList())
+
+        assertLogged()
+    }
+
+    @Test
     fun `undoing an import is logged with how many cats it removed`() = runTest {
         storedTally("cat-1")
         storedTally("cat-2")

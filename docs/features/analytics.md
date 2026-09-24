@@ -69,8 +69,9 @@ says which one it came from. There is no switch to turn it off.
 ## What is never sent
 
 No coordinate, geohash, place, country or city name the app knows; no photo or any part of one; no
-cat's id or time — a cat's coat goes only as the word for it, never tied to where or when; the device
-id the backup format uses. A screen view names the screen, never
+cat's id, and no encounter time from the database — a cat's coat goes only as the word for it; the
+device id the backup format uses. Analytics does stamp every event with the moment it was logged, so a
+`cat_logged` from a tap says roughly when that cat was counted — never where. A screen view names the screen, never
 what is on it: `regions` does not say which country or city was open. Neither service is given a user
 id, and Crashlytics gets no custom keys but `build_type` and no log lines. A stack trace names code,
 not data; an exception's *message*, though, goes as whoever threw it wrote it — a file error from the
