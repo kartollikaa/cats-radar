@@ -48,6 +48,8 @@ internal class FakeEncounterRepository : EncounterRepository {
     var undoDeleteAllShouldThrow: Throwable? = null
     var undoDeleteAllGate: CompletableDeferred<Unit>? = null
     var attachPhotoShouldThrow: Throwable? = null
+    var setCoatShouldThrow: Throwable? = null
+    var setCoatGate: CompletableDeferred<Unit>? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -123,6 +125,8 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
+        setCoatGate?.await()
+        setCoatShouldThrow?.let { throw it }
         encounters.update { list ->
             list.map { encounter ->
                 if (encounter.id == id && encounter.deletedAt == null) {

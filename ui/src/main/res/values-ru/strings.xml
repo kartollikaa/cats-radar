@@ -57,6 +57,9 @@
     <string name="counter_location_hint">Без доступа к геолокации котики будут без места</string>
     <string name="counter_location_grant">Разрешить</string>
     <string name="counter_location_dismiss">Не надо</string>
+    <string name="counter_coat_prompt_title">Какого окраса котик?</string>
+    <string name="counter_coat_prompt_skip">Не сейчас</string>
+    <string name="counter_coat_prompt_photo">Только что снятое фото</string>
 
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
