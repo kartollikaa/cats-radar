@@ -165,6 +165,11 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
+    <string name="detail_photo">Фото</string>
+    <string name="detail_take_photo">Сфотографировать</string>
+    <string name="detail_pick_photo">Выбрать из галереи</string>
+    <string name="detail_photo_not_attached">Фото не прикрепилось</string>
+    <string name="detail_photo_attaching">Прикрепляем фото</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>

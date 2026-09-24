@@ -32,6 +32,34 @@ communication the MVI rules forbid — or a shell-level snackbar whose window li
 timing and cannot be tested with virtual time. Keeping the window in `EncounterDetailStore` makes
 "undo is available for exactly this long, then the screen closes" a plain unit test.
 
+## Giving a cat a photo
+
+A cat with a photo of its own shows the app's copy (see [photos.md](./photos.md#seeing-one)); one
+without shows a **Photo** section instead, with *Take a photo* and *Choose from gallery* — the system
+camera, or the system picker for a single image. A second tap before the camera or the picker
+answers opens nothing, so a double tap never opens two cameras (`EncounterDetailStoreTest`, *a
+second tap before the camera answers opens nothing*). Once the camera or the picker hands a photo
+back, the attempt starts: both buttons disable and a progress bar shows under them, so a tap in the
+meantime opens nothing (`EncounterDetailStoreTest`, *taking a photo while one is being attached
+opens nothing*).
+
+A successful attempt never brings the buttons back: the progress bar stays until the observed row
+emits the new `photoPath`, and that emission replaces the section with the photo. Redrawing on
+`AttachPhoto`'s result instead would redraw from the last row seen, which has no photo yet, and
+flash the offer back for a moment (`EncounterDetailStoreTest`, *a successful attach stays in
+progress until the photo arrives, never offering again*).
+
+A cancelled camera or a dismissed picker leaves the screen exactly as it was — no attempt starts
+(`EncounterDetailStoreTest`, *a cancelled camera or picker changes nothing*). A photo the camera
+hands back is a temporary file, and `EncounterDetailStore` asks for it to be discarded once its
+attempt ends, attached or not (*a photo from the camera lands on the cat and its original is
+discarded*; *an unreadable photo says so and the offer comes back*). Leaving the screen mid-attempt
+cancels the Store before it asks, so that file waits for the start-up cleanup (see
+[photos.md](./photos.md), *A camera whose answer never comes*). A photo picked from the gallery was
+never copied anywhere first, so there is nothing of the picker's to remove (*a photo from the
+gallery lands on the cat and nothing is discarded*). See [photos.md](./photos.md) for what the
+attempt itself does with the files, the gallery setting, and an image it cannot decode.
+
 ## At the edges
 
 - **Pressing delete twice soft-deletes once.** The Store flips its own flag before the suspending
@@ -54,15 +82,22 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
   the window is bound to the screen, and the Counter offers the same trade.
 - **Pushing the same detail twice** — a double-tap on a row — puts one entry on the back stack, not
   two (`BottomNavigationTest`, *pushing a key already on the stack leaves the stack unchanged*).
+- **The cat is deleted, or given a photo some other way, while an attempt is running** — the screen
+  shows no message of its own, since it already shows what the cat became: the "removed" state,
+  *Missing*, or the other photo (see [photos.md](./photos.md) for the attempt's files).
+- **Setting the coat while a photo is being attached** keeps both (see
+  [coat.md](./coat.md#at-the-edges)).
 
 ## Where the code lives
 
 - `domain/…/usecase/ObserveEncounter.kt`, `DeleteEncounter.kt`, `UndoDelete.kt`
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`
+- `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
-  `CatsRadarNavHost.kt` (`EncounterDetailDestination`)
+  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`),
+  `PhotoLaunchers.kt` (the camera and gallery-picker launchers)
 
 ## Not built yet
 
-No place name and no map. The coordinates are shown as numbers only.
+No place name and no map. The coordinates are shown as numbers only. A photo already on a cat
+cannot be replaced or removed from this screen (see `photos.md`).

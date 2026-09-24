@@ -76,8 +76,8 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 - **Setting the coat that is already set does nothing** — no write, no new `updatedAt`.
 - **A soft-deleted cat cannot be edited**: `observeById` hides it, so the write returns early rather
   than resurrecting a row.
-- **A coat set while a photo or a location is being attached keeps both** — only the coat is
-  written.
+- **A coat set while a photo or a location is being attached keeps both** — only the coat and its
+  `updatedAt` are written.
 - **A failed write leaves the shown coat as it was**, because the screen re-reads it from the flow.
 
 ## Where the code lives

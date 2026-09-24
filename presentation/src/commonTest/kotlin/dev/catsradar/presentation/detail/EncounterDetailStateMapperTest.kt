@@ -29,6 +29,7 @@ class EncounterDetailStateMapperTest {
                 location = LocationLabel.CURRENT,
                 coordinatesLabel = "41.39864, 2.17842",
                 accuracyMeters = 12,
+                addPhoto = AddPhoto.READY,
             ),
             state,
         )
@@ -78,6 +79,22 @@ class EncounterDetailStateMapperTest {
         offsetMapper.map(encounterFixture("west", justAfterMidnightUtc, tzOffsetMinutes = -60), today)
 
         assertEquals(LocalDate(2026, 9, 21), formatter.dayHeaderCalls.single())
+    }
+
+    @Test
+    fun `a cat without a photo is offered one, and shows one being attached`() {
+        val tally = encounterFixture("e1", OCCURRED)
+
+        assertEquals(AddPhoto.READY, mapper.map(tally, today).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.map(tally, today, attachingPhoto = true).addPhoto)
+    }
+
+    @Test
+    fun `a cat with a photo is never offered another, even while one is being attached`() {
+        val photo = encounterFixture("e1", OCCURRED).copy(photoPath = "e1.jpg")
+
+        assertEquals(null, mapper.map(photo, today).addPhoto)
+        assertEquals(null, mapper.map(photo, today, attachingPhoto = true).addPhoto)
     }
 
     @Test
