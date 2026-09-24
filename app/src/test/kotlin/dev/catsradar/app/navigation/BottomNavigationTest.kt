@@ -56,7 +56,8 @@ class BottomNavigationTest {
     @Test
     fun `a cat opened from an area's list sits above the area, and back returns to the area`() {
         val area = Regions(RegionKind.CITY_AREA, countryCode = "ES", city = "Barcelona", areaHash = "sp3e3")
-        val levels = listOf<NavKey>(Counter, Statistics, Regions(), Regions(RegionKind.COUNTRY, countryCode = "ES"), area)
+        val country = Regions(RegionKind.COUNTRY, countryCode = "ES")
+        val levels = listOf<NavKey>(Counter, Statistics, Regions(), country, area)
         val backStack = newStack(*levels.toTypedArray())
 
         backStack.push(EncounterDetail("cat"))
