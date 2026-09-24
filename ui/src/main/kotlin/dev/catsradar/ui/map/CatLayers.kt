@@ -56,8 +56,8 @@ private const val CLUSTER_RADIUS = 40
 private const val COUNT_FONT = "Noto Sans Bold"
 
 private val DotRadius = 7.dp
-private val RimWidth = 1.5.dp
-private val DotSize = (DotRadius + RimWidth) * 2
+internal val RimWidth = 1.5.dp
+internal val DotSize = (DotRadius + RimWidth) * 2
 private val ClusterRadius = 16.dp
 private val HalfTouchTarget = 24.dp
 private const val HeatLowDensity = 0.3

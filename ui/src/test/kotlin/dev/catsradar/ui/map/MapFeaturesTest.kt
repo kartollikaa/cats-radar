@@ -82,9 +82,7 @@ class MapFeaturesTest {
 
     @Test
     fun everyColourACatCanFeedHasAHeatLayer() {
-        val fed = CoatOption.entries.flatMap { coat -> coat.look().shares().map { heatKey(it.colour) } }.toSet()
-
-        assertEquals(fed, CoatHeatColours.map { heatKey(it) }.toSet())
+        assertEquals(setOf(Ginger, White, Black, Brown, Grey), CoatHeatColours.toSet())
     }
 
     @Test

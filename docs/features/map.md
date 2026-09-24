@@ -2,8 +2,8 @@
 
 The **Map** tab shows every cat that has a location as a dot on a map, in its coat's colours: a ginger
 cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted takes the
-theme's teal. The map opens fitted around all of them, and a single cat, or a handful on one street,
-opens on a street-sized area rather than a doorstep.
+theme's primary colour. The map opens fitted around all of them, and a single cat, or a handful on
+one street, opens on a street-sized area rather than a doorstep.
 
 ## How a dot shows its coat
 
@@ -16,7 +16,7 @@ The fur fills the top half of the dot and the markings share the bottom half, ea
 
 The dots are the colours of the coat faces (see [coat.md](./coat.md)), without the faces' tabby
 stripes, which a dot is too small to carry: a brown dot and a black one differ by shade alone.
-Clusters keep the theme's teal, whatever coats they hold.
+Clusters keep the theme's primary colour, whatever coats they hold.
 
 ## Where the map comes from
 
@@ -115,9 +115,8 @@ Both last as long as the tab does; leaving the tab clears them.
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters, the
   heat and their taps; `CoatDotPainter.kt` — a dot painted in its coat's colours;
   `MapFeatures.kt` — cats as map features, and each coat's colour shares; `MapSpotSheet.kt` — a
-  spot's list, drawn by
-  the Encounters tab's own `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map;
-  `MapCoatSheet.kt` — the coat choice
+  spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
+  `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` — the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapFocusRequest.kt` — the outing
   another tab asked the map to show
 
