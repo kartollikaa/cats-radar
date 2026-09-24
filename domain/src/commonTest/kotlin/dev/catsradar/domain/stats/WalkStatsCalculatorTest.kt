@@ -69,6 +69,23 @@ class WalkStatsCalculatorTest {
     }
 
     @Test
+    fun `a walk under the minimum contributes neither its cats nor its distance to cats per km`() {
+        val long = track(walk("long", NOON - 3.hours), km = 1.0)
+        val short = track(walk("short", NOON - 1.hours), km = 0.3)
+        val cats = listOf(
+            cat("in long", NOON - 170.minutes),
+            cat("in short 1", NOON - 55.minutes),
+            cat("in short 2", NOON - 50.minutes),
+            cat("in short 3", NOON - 45.minutes),
+        )
+
+        val stats = calculate(cats, long, short)
+
+        val km = trackLengthMeters(long.points) / 1000
+        assertEquals(1 / km, assertNotNull(stats.catsPerKm), absoluteTolerance = 1e-9)
+    }
+
+    @Test
     fun `a walk shorter than the minimum adds distance but is left out of cats per km`() {
         val short = track(walk("short", NOON - 1.hours), km = 0.3)
 

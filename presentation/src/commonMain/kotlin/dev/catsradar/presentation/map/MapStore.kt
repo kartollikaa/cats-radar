@@ -8,7 +8,11 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
@@ -46,8 +50,11 @@ class MapStore(
     private val choices = MutableStateFlow(MapChoices())
 
     init {
-        combine(observeEncounters(), observeWalkTracks(), choices) { encounters, walks, chosen ->
-            val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen, walks)
+        // A route is only ever drawn for a focused outing, so nothing subscribes to walk tracks until one is chosen.
+        val walks = choices.map { it.focus != null }.distinctUntilChanged()
+            .flatMapLatest { focused -> if (focused) observeWalkTracks() else flowOf(emptyList()) }
+        combine(observeEncounters(), walks, choices) { encounters, tracks, chosen ->
+            val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen, tracks)
             val shown = mapped as? MapState.Located
             // A focus the cats no longer match is let go, so it cannot reopen by itself later.
             if (chosen.focus != null && shown?.focus == null) choices.update { it.copy(focus = null) }

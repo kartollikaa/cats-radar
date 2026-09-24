@@ -3,6 +3,7 @@ package dev.catsradar.presentation.map
 import app.cash.turbine.test
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveWalkTracks
 import dev.catsradar.presentation.StoredWalkRepository
@@ -16,6 +17,9 @@ import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -49,7 +53,7 @@ class MapStoreTest {
         Dispatchers.resetMain()
     }
 
-    private fun newStore(walks: StoredWalkRepository = StoredWalkRepository()) = MapStore(
+    private fun newStore(walks: WalkRepository = StoredWalkRepository()) = MapStore(
         observeEncounters = ObserveEncounters(repository),
         observeWalkTracks = ObserveWalkTracks(walks),
         stateMapper = MapStateMapper(encountersMapper),
@@ -212,6 +216,33 @@ class MapStoreTest {
         }
 
     @Test
+    fun `an unfocused store never collects walk tracks, and focusing an outing starts collecting them`() =
+        runTest(mainDispatcher) {
+            val walk = Walk(
+                id = "walk-1",
+                startedAt = BASE,
+                endedAt = BASE + 10.minutes,
+                deviceId = "device",
+                createdAt = BASE,
+                updatedAt = BASE,
+            )
+            val points = listOf(
+                TrackPoint(walkId = "walk-1", at = BASE, lat = 41.388, lon = 2.168, accuracyMeters = 5f),
+                TrackPoint(walkId = "walk-1", at = BASE + 1.minutes, lat = 41.395, lon = 2.175, accuracyMeters = 5f),
+            )
+            val walks = CountingWalkRepository(walks = listOf(walk), points = points)
+            repository.insert(located("first", minute = 0))
+            val store = newStore(walks)
+            runCurrent()
+            assertEquals(0, walks.everyPointCollections)
+
+            store.dispatch(MapIntent.OutingFocused("first"))
+            runCurrent()
+
+            assertEquals(1, walks.everyPointCollections)
+        }
+
+    @Test
     fun `coats are chosen one at a time and cleared back to every cat, and heat turns on and off`() =
         runTest(mainDispatcher) {
             repository.insert(located("a", minute = 0))
@@ -250,4 +281,37 @@ class MapStoreTest {
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
     }
+}
+
+/** A read-only stand-in that counts how many times [observeEveryPoint] is collected. */
+private class CountingWalkRepository(
+    private val walks: List<Walk> = emptyList(),
+    private val points: List<TrackPoint> = emptyList(),
+) : WalkRepository {
+
+    var everyPointCollections = 0
+        private set
+
+    override fun observeAll(): Flow<List<Walk>> = flowOf(walks.sortedByDescending { it.startedAt })
+
+    override suspend fun openWalk(): Walk? = error("not needed by this test")
+
+    override suspend fun startIfNoneOpen(walk: Walk): Walk = error("read-only")
+
+    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean = error("read-only")
+
+    override suspend fun appendPoint(point: TrackPoint): Unit = error("read-only")
+
+    override suspend fun lastPoint(walkId: String): TrackPoint? = error("not needed by this test")
+
+    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = error("not needed by this test")
+
+    override suspend fun loadEveryPoint(): List<TrackPoint> = error("not needed by this test")
+
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> =
+        flowOf(points.sortedWith(compareBy({ it.walkId }, { it.at }))).onStart { everyPointCollections++ }
+
+    override suspend fun upsert(walk: Walk): Unit = error("read-only")
+
+    override suspend fun appendPoints(points: List<TrackPoint>): Unit = error("read-only")
 }
