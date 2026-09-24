@@ -64,8 +64,12 @@ class WalkRecordingServiceTest {
         }
     }
 
+    // A recording resolves RecordWalk from Koin as it starts; stopping Koin before it listens for fixes throws.
     @After
     fun tearDown() {
+        if (recordingState.recording) {
+            runBlocking { withTimeout(5.seconds) { fixes.subscriptionCount.first { it >= 1 } } }
+        }
         controllers.forEach { it.destroy() }
         stopKoin()
     }
