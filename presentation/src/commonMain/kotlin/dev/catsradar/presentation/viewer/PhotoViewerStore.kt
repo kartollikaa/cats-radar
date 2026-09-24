@@ -35,8 +35,7 @@ class PhotoViewerStore(
     }
 
     private suspend fun openInGallery() {
-        val offered = (state.value as? PhotoViewerState.Showing)?.opensInGallery == true
-        if (resolvingGallery || !offered) return
+        if (resolvingGallery) return
         resolvingGallery = true
         try {
             when (val target = resolveGalleryLink(encounterId)) {

@@ -62,7 +62,29 @@ class PhotoViewerScreenTest {
         assertEquals(1, backs)
     }
 
-    private fun show(onBackClick: () -> Unit = {}) {
+    @Test
+    fun `a photo whose original is in the gallery offers it there, and the tap reports`() {
+        var opens = 0
+        show(opensInGallery = true, onOpenInGalleryClick = { opens++ })
+
+        openInGallery().assertIsDisplayed().performClick()
+
+        assertEquals(1, opens)
+    }
+
+    @Test
+    fun `a photo with no original in the gallery offers nothing there`() {
+        show(opensInGallery = false)
+
+        back().assertIsDisplayed()
+        openInGallery().assertDoesNotExist()
+    }
+
+    private fun show(
+        opensInGallery: Boolean = false,
+        onBackClick: () -> Unit = {},
+        onOpenInGalleryClick: () -> Unit = {},
+    ) {
         val photo = File(context.cacheDir, "cat.png")
         photo.outputStream().use { out ->
             Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -70,8 +92,9 @@ class PhotoViewerScreenTest {
         compose.setContent {
             CatsRadarTheme {
                 PhotoViewerScreen(
-                    state = PhotoViewerState.Showing(photoPath = photo.absolutePath),
+                    state = PhotoViewerState.Showing(photoPath = photo.absolutePath, opensInGallery = opensInGallery),
                     onBackClick = onBackClick,
+                    onOpenInGalleryClick = onOpenInGalleryClick,
                 )
             }
         }
@@ -88,6 +111,9 @@ class PhotoViewerScreenTest {
     }
 
     private fun back() = compose.onNodeWithContentDescription(context.getString(R.string.viewer_back))
+
+    private fun openInGallery() =
+        compose.onNodeWithContentDescription(context.getString(R.string.viewer_open_in_gallery))
 
     private val photoOnScreen: SemanticsMatcher
         get() = hasContentDescription(context.getString(R.string.detail_photo_description)) and
