@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/** The walk chip centred across the row, Undo at its end; where the two would meet, the chip gives way. */
+/** The walk button centred across the row, Undo at its end; where the two would meet, the button gives way. */
 @Composable
 internal fun WalkRow(
     walkingMode: Boolean,
@@ -24,7 +24,7 @@ internal fun WalkRow(
 ) {
     Layout(
         contents = listOf(
-            { WalkingModeChip(checked = walkingMode, onCheckedChange = onWalkingModeChange) },
+            { WalkButton(walking = walkingMode, onWalkingChange = onWalkingModeChange) },
             { UndoChip(visible = undoVisible, onClick = onUndoClick) },
         ),
         modifier = modifier.fillMaxWidth(),
@@ -34,20 +34,25 @@ internal fun WalkRow(
         // A hidden Undo leaves no layout node behind, not a zero-width one.
         val undo = undoItems.firstOrNull()?.measure(Constraints(maxWidth = rowWidth))
         val undoWidth = undo?.width ?: 0
-        val walk = walkItems.single().measure(Constraints(maxWidth = walkChipMaxWidth(rowWidth, undoWidth, gap)))
+        val walkMaxWidth = walkButtonMaxWidth(rowWidth, undoWidth, gap)
+        val walk = walkItems.single().measure(
+            Constraints(minWidth = walkButtonMinWidth(rowWidth, walkMaxWidth), maxWidth = walkMaxWidth),
+        )
         val height = maxOf(walk.height, undo?.height ?: 0)
         layout(rowWidth, height) {
-            walk.placeRelative(walkChipStart(rowWidth, walk.width, undoWidth, gap), (height - walk.height) / 2)
+            walk.placeRelative(walkButtonStart(rowWidth, walk.width, undoWidth, gap), (height - walk.height) / 2)
             undo?.placeRelative(rowWidth - undoWidth, (height - undo.height) / 2)
         }
     }
 }
 
-internal fun walkChipMaxWidth(rowWidth: Int, undoWidth: Int, gap: Int): Int =
+internal fun walkButtonMaxWidth(rowWidth: Int, undoWidth: Int, gap: Int): Int =
     (rowWidth - undoReserve(undoWidth, gap)).coerceAtLeast(0)
 
-internal fun walkChipStart(rowWidth: Int, chipWidth: Int, undoWidth: Int, gap: Int): Int =
-    minOf((rowWidth - chipWidth) / 2, rowWidth - undoReserve(undoWidth, gap) - chipWidth).coerceAtLeast(0)
+internal fun walkButtonMinWidth(rowWidth: Int, maxWidth: Int): Int = minOf(rowWidth / 2, maxWidth)
+
+internal fun walkButtonStart(rowWidth: Int, buttonWidth: Int, undoWidth: Int, gap: Int): Int =
+    minOf((rowWidth - buttonWidth) / 2, rowWidth - undoReserve(undoWidth, gap) - buttonWidth).coerceAtLeast(0)
 
 private fun undoReserve(undoWidth: Int, gap: Int): Int = if (undoWidth == 0) 0 else undoWidth + gap
 

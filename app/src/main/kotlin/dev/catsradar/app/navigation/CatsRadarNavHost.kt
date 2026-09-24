@@ -69,10 +69,12 @@ internal fun CatsRadarNavDisplay(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
+    val sheets = remember(backStack) { BottomSheetSceneStrategy(backStack) }
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popOrNull() },
+        sceneStrategies = listOf(sheets),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -108,6 +110,18 @@ internal fun catsRadarEntries(
             contentPadding = contentPadding,
             focusRequest = mapFocus,
             onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
+            onOpenSpot = { spot -> backStack.push(spot) },
+        )
+    }
+    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { key ->
+        MapSpotDestination(
+            key = key,
+            onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
+            onFocusOuting = { id ->
+                mapFocus.post(id)
+                backStack.popIfOnTop(key)
+            },
+            onClose = { backStack.popIfOnTop(key) },
         )
     }
     entry<Statistics>(metadata = tabRootMetadata()) {

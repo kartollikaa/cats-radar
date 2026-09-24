@@ -64,10 +64,17 @@ class WalkRecordingServiceTest {
         }
     }
 
+    // A started recording has not settled until it listens for fixes; stopping Koin before then can throw off-thread.
     @After
     fun tearDown() {
-        controllers.forEach { it.destroy() }
-        stopKoin()
+        try {
+            if (recordingState.recording) {
+                runBlocking { withTimeout(5.seconds) { fixes.subscriptionCount.first { it >= 1 } } }
+            }
+        } finally {
+            controllers.forEach { it.destroy() }
+            stopKoin()
+        }
     }
 
     private fun service(count: Int) =

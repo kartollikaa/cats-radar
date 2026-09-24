@@ -176,7 +176,7 @@ class CounterStorePhotoPromptTest {
 
         repository.insert(externalEncounter(id = "widget-cat"))
         runCurrent()
-        advanceTimeBy(maxOf(Tuning.UNDO_VISIBLE, Tuning.TAP_BURST_VISIBLE) + 1.milliseconds)
+        advanceTimeBy(Tuning.UNDO_VISIBLE + 1.milliseconds)
         runCurrent()
         assertEquals("2", store.state.value.totalLabel)
         assertEquals(prompt, store.state.value.coatPrompt)

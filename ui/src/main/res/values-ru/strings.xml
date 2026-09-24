@@ -33,7 +33,6 @@
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
     <string name="counter_import">Импорт из галереи</string>
-    <string name="counter_import_hint">удерживайте — импорт из галереи</string>
     <string name="counter_import_progress">%1$d из %2$d</string>
     <string name="counter_import_ok">Понятно</string>
     <plurals name="counter_import_added">
@@ -123,6 +122,7 @@
 
     <string name="regions_empty">Мест пока нет</string>
     <string name="regions_unresolved">Пока без названия</string>
+    <string name="regions_no_city">Без города</string>
     <string name="regions_no_location">Без места</string>
     <string name="regions_area_at">Рядом с %1$s</string>
 
@@ -188,6 +188,7 @@
     <string name="settings_backup_imported">Копия объединена с тем, что уже было</string>
     <string name="settings_backup_too_new">Эта копия из более новой версии приложения</string>
     <string name="settings_backup_unreadable">Это не резервная копия Cats Radar</string>
+    <string name="settings_backup_import_failed">Импорт не завершился. Попробуйте ещё раз</string>
     <string name="notification_channel_import">Импорт фото</string>
     <string name="notification_import_title">Импорт фото</string>
     <string name="notification_channel_walking">Режим прогулки</string>
@@ -205,8 +206,10 @@
     <string name="settings_walking_explained">Уведомление, из которого котик отмечается без разблокировки</string>
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
-    <string name="counter_walking_off">Начать прогулку</string>
-    <string name="counter_walking_on">На прогулке</string>
+    <string name="counter_walk_start">Начать прогулку</string>
+    <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
+    <string name="counter_walk_stop">Закончить прогулку</string>
+    <string name="counter_walk_stop_hint">нажмите и удерживайте</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик сегодня</item>

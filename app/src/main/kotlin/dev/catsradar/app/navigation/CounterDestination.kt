@@ -20,6 +20,7 @@ import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
+import dev.catsradar.app.photo.PickPhotosWithLocation
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.toCounterIntent
@@ -132,9 +133,7 @@ private fun rememberLocationPermissionRequester(store: CounterStore): LocationPe
 @Composable
 private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLauncher {
     val notificationPermission = rememberNotificationPermissionRequest()
-    val resultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(Tuning.IMPORT_BATCH_MAX),
-    ) { uris ->
+    val resultLauncher = rememberLauncherForActivityResult(PickPhotosWithLocation(Tuning.IMPORT_BATCH_MAX)) { uris ->
         // Asked for after the pick, not before it: a run the user has actually started is the only
         // moment a progress notification is worth a dialog, and a refusal still imports.
         if (uris.isNotEmpty()) notificationPermission()
