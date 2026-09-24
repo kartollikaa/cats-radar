@@ -12,14 +12,18 @@ request; a later denial surfaces as a dismissible one-line hint on the counter s
 
 ## Feedback for the tap
 
-Each tap raises a **"+N"** badge in the count block's top corner that grows while you keep tapping
-and fades `Tuning.TAP_BURST_VISIBLE` after the last one — the window restarts on every tap, so a run
-of taps is one burst rather than a flicker per tap, and a later run starts again from one. Like the
-haptic, it lands before the write rather than after it succeeds, so holding the button down still
-counts up smoothly. If the write then fails the total does not move: the burst is feedback for the
-*tap*, and the number is read back from the database. It is a badge rather than bare text because a
-wide number in a short block reaches that corner; TalkBack reads the total as the block's own label,
-and before the total is known the block is named by what it does.
+Each tap raises a **"+N"** badge in the count block's top corner that counts the cats of the current
+run of taps, the same run Undo walks back (below), and stays up for as long as that run is open.
+Every tap adds one and every Undo takes one off: three taps read "+3", an Undo turns it into "+2",
+and the Undo that takes back the run's last cat takes the badge with it. When the undo window runs
+out, the badge goes with the chip, and the next tap starts again from one. Like the haptic, a tap's
+one lands before the write rather than after it succeeds, so holding the button down still counts up
+smoothly. So a tap whose write is still running is on the badge before it is in the run: it keeps
+its one when an Undo or the window closing empties the run around it, and joins or opens a run when
+it lands. If the write fails, the tap takes its one back off: it added no cat, and the total, read
+back from the database, does not move either. It is a badge rather than bare text because a wide
+number in a short block reaches that corner; TalkBack reads the total as the block's own label, and
+before the total is known the block is named by what it does.
 
 The count sits in a large block that **is** the button. It squashes under a press and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen
@@ -57,7 +61,8 @@ scrolls instead.
 The undo window belongs to a run of taps, not to one tap. Every tap made while the chip is up joins
 the run and restarts the window; every Undo soft-deletes the newest cat still in the run, cancels
 its location attach, and restarts the window again. So five mistaken taps come back off with five
-Undos, and the chip stays up until the last of them is gone. A tap after an Undo joins the same run.
+Undos, and the chip stays up until the last of them is gone, the "+N" badge counting down with it. A
+tap after an Undo joins the same run and counts on from what the badge has left.
 Once the window runs out with nothing pressed, the run is closed: the chip goes, and nothing brings
 it back except a fresh tap. The coat grid's ring follows the run as well — after an Undo it rings the
 coat of the newest cat still in it (`coat.md`). The cases below that concern undo are in
@@ -111,7 +116,12 @@ does not re-request an already-requested permission*). The explicit "Grant" butt
 bypasses that flag and always re-requests. A failed insert (disk full, for instance) is swallowed:
 the tap still ticks and, on the very first tap, still asks for location permission, but no row is
 written and no undo chip appears (*a failed insert is swallowed instead of crashing the store, but
-the tap still ticks*).
+the tap still ticks*); inside a run, the failed tap's one comes back off the "+N" and the rest of the
+run stays undoable (*a tap whose write fails takes its one back off the burst*). A tap whose write
+is still running when the window closes keeps its one on the badge until it lands and opens a run of
+its own (*a tap still being written when the window closes keeps its place on the burst*), while a
+tap from the closed run whose write lands late leaves nothing behind (*a tap whose write lands after
+the window closed does not reopen it*).
 
 ## Where the code lives
 

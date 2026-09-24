@@ -38,10 +38,10 @@ class CounterStore(
 ) : Store<CounterState, CounterIntent, CounterEffect>(stateMapper.initial()) {
 
     private var tapSequence = 0
+    private val tapsBeingWritten = mutableSetOf<Int>()
     private val undoableRun = mutableListOf<UndoableTally>()
     private var expiredThroughSequence = 0
     private var undoTimeoutJob: Job? = null
-    private var burstJob: Job? = null
 
     // Not in State: the screen shows how many were added, never which ones.
     private var importedIds: List<String> = emptyList()
@@ -100,6 +100,7 @@ class CounterStore(
 
     private suspend fun onTallyClicked(coat: CatCoat? = null) {
         val sequence = ++tapSequence
+        tapsBeingWritten += sequence
         // The tap must feel instant: the tick and the "+N" land before the write, not after it
         // succeeds, so holding the button down still counts up smoothly.
         emit(CounterEffect.HapticTick)
@@ -110,18 +111,21 @@ class CounterStore(
             locationPermissionRequestState.markRequested()
             emit(CounterEffect.RequestLocationPermission)
         }
+        var written: UndoableTally? = null
         runStorageWrite {
             val encounter = logTally(coat)
             emit(CounterEffect.AttachLocation(encounter.id))
-            // A slow write from a run that has already expired must not reopen the window.
-            if (sequence > expiredThroughSequence) {
-                val tally = UndoableTally(sequence, encounter.id, coat?.toOption())
-                undoableRun += tally
-                // By tap, not by completion: a later tap's insert can resume before an earlier one's.
-                undoableRun.sortBy { it.sequence }
-                if (undoableRun.last() === tally) showNewestUndoable()
-            }
+            written = UndoableTally(sequence, encounter.id, coat?.toOption())
         }
+        tapsBeingWritten -= sequence
+        // A slow write from a run that has already expired must not reopen the window.
+        written?.takeIf { sequence > expiredThroughSequence }?.let { tally ->
+            undoableRun += tally
+            // By tap, not by completion: a later tap's insert can resume before an earlier one's.
+            undoableRun.sortBy { it.sequence }
+            if (undoableRun.last() === tally) showNewestUndoable()
+        }
+        showBurst()
     }
 
     private suspend fun onPhotoCaptured(uri: String?) {
@@ -198,12 +202,8 @@ class CounterStore(
     }
 
     private fun showBurst() {
-        setState { copy(tapBurst = (tapBurst ?: 0) + 1) }
-        burstJob?.cancel()
-        burstJob = viewModelScope.launch {
-            delay(Tuning.TAP_BURST_VISIBLE)
-            setState { copy(tapBurst = null) }
-        }
+        val cats = undoableRun.size + tapsBeingWritten.count { it > expiredThroughSequence }
+        setState { copy(tapBurst = cats.takeIf { it > 0 }) }
     }
 
     private fun showNewestUndoable() {
@@ -219,6 +219,7 @@ class CounterStore(
             expiredThroughSequence = newest.sequence
             undoableRun.clear()
             setState { copy(undoVisible = false, lastCoat = null) }
+            showBurst()
         }
     }
 
@@ -227,6 +228,7 @@ class CounterStore(
         // takes the next cat back rather than this one a second time.
         val undone = undoableRun.removeLastOrNull() ?: return
         showNewestUndoable()
+        showBurst()
         emit(CounterEffect.CancelLocationAttach(undone.encounterId))
         runStorageWrite { undoLastTally(undone.encounterId) }
     }
