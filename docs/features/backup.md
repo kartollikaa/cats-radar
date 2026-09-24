@@ -144,11 +144,11 @@ has been rendering, and an archive should not quietly replace it.
 - **The suggested filename carries the date**, which is what stops a second export silently offering
   to overwrite the first.
 - **An import that stops while merging is not blamed on the file.** An archive the reader refused
-  says so: one from a newer version says it needs a newer app, and one it could not read says it is
-  not a Cats Radar backup. An import that broke once the archive was accepted — a database error,
-  a full disk while the rows were written — or that was cancelled says it did not finish and to try
-  again, because the archive may be perfectly good and the user should not be told to throw it away.
-  A file that cannot even be opened is still reported as unreadable.
+  says so: one from a newer version says it comes from a newer version of the app, and one it could
+  not read says it is not a Cats Radar backup. An import that broke once the archive was accepted —
+  a database error, a full disk while the rows were written — or that was cancelled says it did not
+  finish and to try again, because the archive may be perfectly good and the user should not be told
+  to throw it away. A file that cannot even be opened is still reported as unreadable.
 - **An outcome stays until it is dismissed, and never comes back after.** WorkManager keeps a
   finished run, and the screen reads it back every time it opens. Coming back from another tab
   builds a new screen, and so does a restart, so an outcome the user has not seen yet is still
