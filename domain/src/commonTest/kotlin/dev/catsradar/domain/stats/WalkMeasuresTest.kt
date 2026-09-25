@@ -30,7 +30,7 @@ class WalkMeasuresTest {
     private fun cats(vararg minutes: Int) =
         CatTimes.of(minutes.map { encounterFixture("cat-$it", START + it.minutes) })
 
-    private fun kept(walk: Walk, points: Int) = MeasuredWalk(walk, points, meters = KEPT_METERS, cats = KEPT_CATS)
+    private fun kept(walk: Walk, pointCount: Int) = MeasuredWalk(walk, pointCount, meters = KEPT_METERS, cats = KEPT_CATS)
 
     @Test
     fun `a first measure gives every walk its route's length and the cats logged during it`() {
@@ -44,7 +44,7 @@ class WalkMeasuresTest {
     @Test
     fun `a route with as many points as before keeps the length measured then`() {
         val route = track(walk(), 0.0, 1.0)
-        val previous = WalkMeasures(cats(10), listOf(kept(route.walk, points = 2)))
+        val previous = WalkMeasures(cats(10), listOf(kept(route.walk, pointCount = 2)))
 
         val measures = previous.next(cats(10), listOf(route))
 
@@ -54,18 +54,18 @@ class WalkMeasuresTest {
     @Test
     fun `an ended walk whose route gained points, as a backup import can give it, is measured again`() {
         val grown = track(walk(), 0.0, 1.0, 2.0)
-        val previous = WalkMeasures(cats(10), listOf(kept(grown.walk, points = 2)))
+        val previous = WalkMeasures(cats(10), listOf(kept(grown.walk, pointCount = 2)))
 
         val measures = previous.next(cats(10), listOf(grown))
 
         assertEquals(trackLengthMeters(grown.points), measures.walks.single().meters)
-        assertEquals(3, measures.walks.single().points)
+        assertEquals(3, measures.walks.single().pointCount)
     }
 
     @Test
     fun `a walk over the same span keeps its cat count among equal cats`() {
         val route = track(walk(), 0.0, 1.0)
-        val previous = WalkMeasures(cats(10), listOf(kept(route.walk, points = 2)))
+        val previous = WalkMeasures(cats(10), listOf(kept(route.walk, pointCount = 2)))
 
         val measures = previous.next(cats(10), listOf(route))
 
@@ -75,7 +75,7 @@ class WalkMeasuresTest {
     @Test
     fun `a walk has its cats counted again once the cats change`() {
         val route = track(walk(), 0.0, 1.0)
-        val previous = WalkMeasures(cats(10), listOf(kept(route.walk, points = 2)))
+        val previous = WalkMeasures(cats(10), listOf(kept(route.walk, pointCount = 2)))
 
         val measures = previous.next(cats(10, 20), listOf(route))
 
@@ -95,8 +95,8 @@ class WalkMeasuresTest {
 
     @Test
     fun `walk stats from measured walks pool their kept lengths and counts`() {
-        val long = MeasuredWalk(walk(), points = 2, meters = 1500.0, cats = 3)
-        val short = MeasuredWalk(walk().copy(id = "short"), points = 2, meters = 100.0, cats = 5)
+        val long = MeasuredWalk(walk(), pointCount = 2, meters = 1500.0, cats = 3)
+        val short = MeasuredWalk(walk().copy(id = "short"), pointCount = 2, meters = 100.0, cats = 5)
 
         val stats = WalkStatsCalculator.calculate(listOf(long, short), minRateDistanceMeters = 500.0)
 

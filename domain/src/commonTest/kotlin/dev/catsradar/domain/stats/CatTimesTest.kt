@@ -3,7 +3,6 @@ package dev.catsradar.domain.stats
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.testing.encounterFixture
-import dev.catsradar.domain.walk.covers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.hours
@@ -18,7 +17,10 @@ class CatTimesTest {
     private fun cat(id: String, at: Instant) = encounterFixture(id, at)
 
     private fun assertCounts(expected: Int, walk: Walk, cats: List<Encounter>) {
-        val scanned = cats.count { it.deletedAt == null && walk.covers(it.occurredAt) }
+        val scanned = cats.count { cat ->
+            val at = cat.occurredAt
+            cat.deletedAt == null && at >= walk.startedAt && walk.endedAt.let { it == null || at <= it }
+        }
         assertEquals(expected, scanned, "the fixture does not show what its test claims")
         assertEquals(expected, CatTimes.of(cats).countWithin(walk.startedAt, walk.endedAt))
     }

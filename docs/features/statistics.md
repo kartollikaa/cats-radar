@@ -104,8 +104,8 @@ negative however wrong the clock was.
 - `domain/…/stats/Streaks.kt` — runs of consecutive days
 - `domain/…/stats/Stats.kt` — `Stats`, `Rate`, `Milestone`, `RatedOuting`, `CurrentOuting`
 - `domain/…/stats/WalkStats.kt` — `WalkStats`, `WalkStatsCalculator` — distance and cats per km
-- `domain/…/walk/WalkSpan.kt` — `Walk.covers`, `Walk.overlaps`, which moments a walk's cats-per-km
-  window counts
+- `domain/…/stats/CatTimes.kt` — the cats a walk's cats-per-km window counts, from its start to its
+  end, both included, and with no end for a walk still on
 
 ## Where the screen lives
 

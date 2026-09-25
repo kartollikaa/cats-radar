@@ -4,8 +4,8 @@ import dev.catsradar.domain.geo.trackLengthMeters
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.model.WalkTrack
 
-/** A walk's route length in metres, taken over [points] recorded points, and how many cats it covers. */
-data class MeasuredWalk(val walk: Walk, val points: Int, val meters: Double, val cats: Int)
+/** A walk's route length in metres, taken over [pointCount] recorded points, and how many cats it covers. */
+data class MeasuredWalk(val walk: Walk, val pointCount: Int, val meters: Double, val cats: Int)
 
 /** Every walk measured among [cats]. */
 data class WalkMeasures(val cats: CatTimes, val walks: List<MeasuredWalk>) {
@@ -22,9 +22,9 @@ data class WalkMeasures(val cats: CatTimes, val walks: List<MeasuredWalk>) {
             val known = before[walk.id]
             MeasuredWalk(
                 walk = walk,
-                points = track.points.size,
+                pointCount = track.points.size,
                 // Routes only ever gain points, so an unchanged count is an unchanged route.
-                meters = known?.takeIf { it.points == track.points.size }?.meters
+                meters = known?.takeIf { it.pointCount == track.points.size }?.meters
                     ?: trackLengthMeters(track.points),
                 cats = known?.takeIf { sameCats && it.walk.spansAs(walk) }?.cats
                     ?: cats.countWithin(walk.startedAt, walk.endedAt),
