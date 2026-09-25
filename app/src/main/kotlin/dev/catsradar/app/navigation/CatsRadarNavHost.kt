@@ -151,7 +151,7 @@ private fun EntryProviderScope<NavKey>.catEntries(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popIfOnTop(key) },
-            onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
+            onOpenPhoto = { photoId -> backStack.push(PhotoViewer(key.id, photoId)) },
             onOpenMap = {
                 mapFocus.postCat(key.id)
                 backStack.selectTab(BottomNavTab.MAP)

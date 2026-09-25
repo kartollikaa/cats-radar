@@ -49,8 +49,9 @@ has both.
 
 ## Giving a cat a photo later
 
-A cat can be given a photo afterwards — a tally with none from its detail screen (see
-[encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the gallery.
+A cat can be given a photo afterwards from its detail screen, whether it has photos or not (see
+[encounter-detail.md](./encounter-detail.md#its-photos)): the camera, or a single image picked from the
+gallery.
 `AttachPhoto` adds a photo to any live cat, one that already has photos included: the new one goes after
 the others (`AttachPhotoTest`, *a cat that has a photo gets another after it and keeps the first*). It
 stores the app's copy and thumbnail the same way `LogPhoto` does, under the new photo's own id rather
@@ -59,8 +60,10 @@ attempt, never after the cat*).
 
 **The same photo twice on one cat is not added.** The photo's digest is taken before any copy is
 written; if one of this cat's photos already carries it, the attempt stops there, with no copy and
-nothing sent to the gallery (*a photo this cat already has is not added again and costs no disk*). A
-photo whose digest cannot be read is never taken for a duplicate.
+nothing sent to the gallery (*a photo this cat already has is not added again and costs no disk*), and
+the detail screen says the photo is already on this cat (`EncounterDetailStoreTest`, *a picked photo the
+cat already has is not added again, and the screen says so*). A photo whose digest cannot be read is
+never taken for a duplicate.
 
 From the camera the original goes to the gallery under the same setting as a photo taken from the
 counter (see *The gallery setting* below); from the gallery it is never copied back in
@@ -237,10 +240,11 @@ nothing, which keeps a fixture that large small in the repository.
 
 ## Seeing one
 
-A photo encounter shows its thumbnail in an Encounters tile or card, the app's full copy when it
-shares a pair row with the photo next to it (see `browsing-cats.md`), and the full copy on the detail
-screen, all loaded from app-private storage with Coil; a tap on the detail screen's photo opens the
-same copy fullscreen (see [photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
+A photographed cat shows its cover's thumbnail in an Encounters tile or card, the cover's full copy
+when it shares a pair row with the photo next to it (see `browsing-cats.md`), and every photo's full
+copy in a pager on the detail screen, all loaded from app-private storage with Coil; a tap on one on
+the detail screen opens it fullscreen (see [encounter-detail.md](./encounter-detail.md#its-photos) and
+[photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens
 to hold. A pair tile with no full copy falls back to its thumbnail.
 
@@ -250,6 +254,7 @@ the copy succeeded. Such a photo never joins a pair: the grid packs it like any 
 
 ## Not built yet
 
-A cat's photo cannot be replaced or removed — there is no control for either.
+A cat's photos cannot be removed or reordered, and its cover is always the oldest — there is no control
+for any of it.
 `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.
