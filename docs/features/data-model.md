@@ -137,8 +137,9 @@ cat from versions 1 and 2 through every migration in between.
 Version 5 adds `shotId` and its index to `encounter_photos`, by a hand-written migration
 (`MigrationFrom4To5`) that runs only those two statements, so every photo already stored starts a shot of
 its own. Room's own auto-migration would rebuild the table and then check its foreign keys, which throws on
-a photo row whose cat is gone and would stop the app at start-up
-(`CatsDatabaseMigrationTest.aPhotoWhoseCatIsGoneDoesNotStopTheMigrationToFive`).
+a photo row whose cat is gone and would stop the app at start-up. Such a row, which no read reaches, comes
+through as it was (`CatsDatabaseMigrationTest.aPhotoWhoseCatIsGoneDoesNotStopTheMigrationToFive`); the purge
+never finds it, since it looks for photos through their deleted cats.
 `CatsDatabaseMigrationTest.versionFourBecomesFiveKeepingEveryCatAndPhotoWithNoShot` migrates every kind of
 photo a cat can have and finds each cat and photo unchanged, with no shot; the app's own builder brings a
 photographed cat from versions 1, 2 and 3 to 5 (`PhotosMigrationTest`).

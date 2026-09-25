@@ -81,7 +81,7 @@ class DatabaseSchemaTest {
     }
 
     @Test
-    fun encounterPhotosAreIndexedByShot() = runTest {
+    fun encounterPhotosAreIndexedByTheirCatTheirDigestAndTheirShot() = runTest {
         val indices = database.schemaProbeDao().indexList(
             RoomRawQuery("SELECT name FROM pragma_index_list('encounter_photos') WHERE origin = 'c' ORDER BY name"),
         )

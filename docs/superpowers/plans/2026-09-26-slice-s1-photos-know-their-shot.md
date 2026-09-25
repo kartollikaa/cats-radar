@@ -154,11 +154,11 @@ git commit -m "A photo knows the shot it belongs to"
     )
 ```
 
-`EncounterDaoPhotosTest.eachWayAPhotoRowIsWrittenKeepsItsShot` — `insertWithPhotos` for three cats of one shot (`p1` with `shotId = null`, `p2` and `p3` with `"p1"`), `addPhoto` for a fourth live cat (`p4`, `"p1"`), `addPhotos` for a fifth (`p5`, `"p1"`); `loadEvery()` returns each photo with the `shotId` it was written with. The entity fixture in `EncounterEntityFixtures.kt` takes `shotId: String? = null`.
+`EncounterDaoPhotosTest.eachWayAPhotoIsWrittenKeepsItsShot` — through `EncounterRepositoryImpl`, so the mapping is in the path: `insert` for three cats of one shot (`p1` with `shotId = null`, `p2` and `p3` with `"p1"`), `addPhoto` for a fourth live cat (`p4`, `"p1"`), `addPhotos` for a fifth (`p5`, `"p1"`); `loadEvery()` returns each photo with the `shotId` it was written with. (A first version read entities straight from the DAO and survived both mapping mutants.) The entity fixture in `EncounterEntityFixtures.kt` takes `shotId: String? = null`.
 
 - [ ] **Step 2: Write the failing schema and migration tests**
 
-`DatabaseSchemaTest.encounterPhotosTableHasEveryColumnWithExpectedNullability` gains `"shotId" to false`; a new `encounterPhotosAreIndexedByShot` asserts `pragma_index_list('encounter_photos')` created indices (`origin = 'c'`) are exactly `index_encounter_photos_encounterId`, `index_encounter_photos_shotId`, `index_encounter_photos_sourceDigest`.
+`DatabaseSchemaTest.encounterPhotosTableHasEveryColumnWithExpectedNullability` gains `"shotId" to false`; a new `encounterPhotosAreIndexedByTheirCatTheirDigestAndTheirShot` asserts `pragma_index_list('encounter_photos')` created indices (`origin = 'c'`) are exactly `index_encounter_photos_encounterId`, `index_encounter_photos_shotId`, `index_encounter_photos_sourceDigest`.
 
 `CatsDatabaseMigrationTest`:
 
@@ -253,11 +253,11 @@ Commit first (done). For each mutant: edit, run the named class, read its JUnit 
 
 | Mutant | Edit | Must fail |
 |---|---|---|
-| entity → domain drops it | `EncounterPhotoEntity.toDomain()` passes `shotId = null` | `EncounterMapperTest.thePhotosOfOneShotKeepTheirShotBothWays`, `EncounterDaoPhotosTest.eachWayAPhotoRowIsWrittenKeepsItsShot` |
+| entity → domain drops it | `EncounterPhotoEntity.toDomain()` passes `shotId = null` | `EncounterMapperTest.thePhotosOfOneShotKeepTheirShotBothWays`, `EncounterDaoPhotosTest.eachWayAPhotoIsWrittenKeepsItsShot` |
 | domain → entity drops it | `EncounterPhoto.toEntity()` passes `shotId = null` | same two |
 | migration loses a row | in the migration test only, pass `listOf(object : Migration(4, 5) { … the generated SQL plus DELETE FROM encounter_photos WHERE id = 'camera' })` to `runMigrationsAndValidate` | `versionFourBecomesFive…` |
 | migration invents a shot | the same stand-in migration, with `UPDATE encounter_photos SET shotId = id` instead of the delete | `versionFourBecomesFive…` |
-| index missing | drop `Index("shotId")` from the entity (and let KSP regenerate) | `DatabaseSchemaTest.encounterPhotosAreIndexedByShot` |
+| index missing | drop `Index("shotId")` from the entity (and let KSP regenerate) | `DatabaseSchemaTest.encounterPhotosAreIndexedByTheirCatTheirDigestAndTheirShot` |
 
 Expected: each listed test red on its mutant, green again after the restore.
 
