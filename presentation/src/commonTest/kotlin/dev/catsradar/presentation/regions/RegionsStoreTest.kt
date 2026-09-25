@@ -84,7 +84,7 @@ class RegionsStoreTest {
 
         assertEquals(
             RegionsState.Places(
-                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 3),
+                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 3, flag = "🇪🇸"),
                 section = RegionsSection.CITIES,
                 rows = persistentListOf(
                     cityRow("Barcelona", count = 2, share = 2f / 3),
@@ -104,7 +104,7 @@ class RegionsStoreTest {
             assertEquals(RegionsState.Loading, awaitItem())
             assertEquals(
                 RegionsState.Places(
-                    header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 1),
+                    header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 1, flag = "🇪🇸"),
                     section = RegionsSection.CITIES,
                     rows = persistentListOf(cityRow("Barcelona", count = 1, share = 1f)),
                 ),
@@ -124,7 +124,7 @@ class RegionsStoreTest {
 
         assertEquals(
             RegionsState.Places(
-                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 2),
+                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 2, flag = "🇪🇸"),
                 section = RegionsSection.CITIES,
                 rows = persistentListOf(cityRow("Barcelona", count = 2, share = 1f)),
             ),
