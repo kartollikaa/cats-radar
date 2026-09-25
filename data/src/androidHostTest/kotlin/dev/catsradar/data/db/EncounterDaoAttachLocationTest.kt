@@ -48,7 +48,7 @@ class EncounterDaoAttachLocationTest {
             updatedAt = Instant.parse("2026-09-21T09:05:00Z"),
         )
 
-        val updated = dao.observeById(entity.id).first()!!
+        val updated = dao.observeById(entity.id).first()!!.encounter
         assertEquals(expected = 1.23, actual = updated.lat)
         assertEquals(expected = 4.56, actual = updated.lon)
         assertEquals(LocationSource.LAST_KNOWN, updated.locationSource)
@@ -86,6 +86,6 @@ class EncounterDaoAttachLocationTest {
         assertNull(database.schemaProbeDao().rawEncounterLat(entity.id))
         assertEquals("NONE", database.schemaProbeDao().rawEncounterLocationSource(entity.id))
         assertEquals(entity.deletedAt, rawDeletedAt?.let(Instant::fromEpochMilliseconds))
-        assertNull(dao.observeById(entity.id).first())
+        assertNull(dao.observeById(entity.id).first()?.encounter)
     }
 }

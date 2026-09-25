@@ -1,20 +1,10 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -22,7 +12,6 @@ import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
-import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -86,43 +75,6 @@ fun CounterScreen(
     )
     state.coatPrompt?.let {
         CoatPromptSheet(prompt = it, onCoatClick = onCoatPromptPick, onDismiss = onCoatPromptDismiss)
-    }
-}
-
-// An empty line of the same style holds its place, so an outing starting or ending leaves the count
-// above it the same size at any font scale.
-@Composable
-private fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        if (state == null) {
-            Text(text = "", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.clearAndSetSemantics {})
-        } else {
-            CurrentOuting(state)
-        }
-    }
-}
-
-@Composable
-private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-    ) {
-        Text(
-            text = pluralStringResource(R.plurals.counter_outing_now, state.count, state.count, state.elapsedLabel),
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        state.rate?.let {
-            val rateRes = if (it.unit == RateUnit.PER_MINUTE) {
-                R.string.statistics_rate_per_minute
-            } else {
-                R.string.statistics_rate_per_hour
-            }
-            Text(text = stringResource(rateRes, it.value), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-        }
     }
 }
 

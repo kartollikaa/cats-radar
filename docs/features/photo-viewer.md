@@ -19,9 +19,15 @@ carries no native code, so the 16 KB page-size check has nothing new to look at.
 
 ## Chrome
 
-A back arrow sits at the top over a dark scrim. A single tap on the photo hides it together with the
-status and navigation bars; the next tap brings all three back (`PhotoViewerScreenTest`, *a tap on
-the photo hides the top bar and a second tap brings it back*). A single tap counts only once the
+A bar sits at the top over a dark scrim: the back arrow at the start, the gallery button at the end
+when there is one (see *Open in gallery* below), and centred on the screen between them when the cat
+was logged — the time, with the day under it. Both are the detail screen's own labels: the time where
+the cat was logged, and the day it was there, "Today" and "Yesterday" included
+(`PhotoViewerStateMapperTest`, *the day comes from the cat's own offset, not the phone's*;
+`PhotoViewerScreenTest`, *the bar names when the photo was taken, the time over the day, centred on
+the screen*). A single tap on the photo hides the bar together with the status and navigation bars;
+the next tap brings all three back (`PhotoViewerScreenTest`, *a tap on the photo hides the top bar
+and a second tap brings it back*). A single tap counts only once the
 double-tap window has passed, since a second tap in it zooms instead. Until the photo has loaded,
 Telephoto takes no taps at all, so a photo whose file cannot be read shows black with the arrow still
 there to leave by. Whether the chrome shows is the screen's own view state, kept across a rotation;
@@ -102,7 +108,7 @@ second tap while the first is being checked opens the gallery once*).
 
 - `presentation/…/viewer/` — `PhotoViewerState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/viewer/PhotoViewerScreen.kt`; `ui/…/theme/ViewerColors.kt` — the black stage, whatever the
-  app's theme
+  app's theme; `ui/…/components/CenterAppBar.kt` — the bar, shared with the detail screen
 - `app/…/navigation/PhotoViewer.kt` (the key and its dialog metadata), `PhotoViewerDestination.kt`,
   wired into `CatsRadarNavHost.kt` next to `EncounterDetail`; `GalleryOpener.kt` — `ACTION_VIEW`
 - `domain/…/model/GalleryLink.kt` — whether a photo has a link here; `domain/…/usecase/ResolveGalleryLink.kt`;

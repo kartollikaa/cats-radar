@@ -2,6 +2,7 @@ package dev.catsradar.app.widget
 
 import android.content.Context
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,12 +17,12 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
+import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
-import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.color.ColorProviders
@@ -43,6 +44,7 @@ import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.ui.R
@@ -51,6 +53,7 @@ import dev.catsradar.ui.theme.CatsRadarLightColors
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import dev.catsradar.app.R as AppR
 
 private val TealWidgetColors = ColorProviders(light = CatsRadarLightColors, dark = CatsRadarDarkColors)
 
@@ -75,7 +78,15 @@ internal object WidgetLayout {
 }
 
 private val TileGap = 4.dp
-private val TileCorner = 16.dp
+
+/** A tile's outline: fully round on its own, and less round on the side it shares with the other tile. */
+internal enum class TileShape(@DrawableRes val background: Int, @DrawableRes val ripple: Int) {
+    ALONE(AppR.drawable.widget_tile, AppR.drawable.widget_tile_ripple),
+    TOP(AppR.drawable.widget_tile_top, AppR.drawable.widget_tile_top_ripple),
+    BOTTOM(AppR.drawable.widget_tile_bottom, AppR.drawable.widget_tile_bottom_ripple),
+    START(AppR.drawable.widget_tile_start, AppR.drawable.widget_tile_start_ripple),
+    END(AppR.drawable.widget_tile_end, AppR.drawable.widget_tile_end_ripple),
+}
 
 /** The count is the button: a cat on a walk should not cost aim. */
 class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
@@ -105,31 +116,31 @@ internal fun WidgetContent(count: Int) {
         size.height >= WidgetSizes.Tall.height -> Column(
             modifier = GlanceModifier.fillMaxSize().semantics { testTag = WidgetLayout.STACKED },
         ) {
-            CountTile(count, GlanceModifier.fillMaxWidth().defaultWeight())
+            CountTile(count, TileShape.TOP, GlanceModifier.fillMaxWidth().defaultWeight())
             Spacer(GlanceModifier.height(TileGap))
-            PhotoTile(GlanceModifier.fillMaxWidth().defaultWeight())
+            PhotoTile(TileShape.BOTTOM, GlanceModifier.fillMaxWidth().defaultWeight())
         }
         size.width >= WidgetSizes.Wide.width -> Row(
             modifier = GlanceModifier.fillMaxSize().semantics { testTag = WidgetLayout.SIDE_BY_SIDE },
         ) {
-            CountTile(count, GlanceModifier.fillMaxHeight().defaultWeight())
+            CountTile(count, TileShape.START, GlanceModifier.fillMaxHeight().defaultWeight())
             Spacer(GlanceModifier.width(TileGap))
-            PhotoTile(GlanceModifier.fillMaxHeight().defaultWeight())
+            PhotoTile(TileShape.END, GlanceModifier.fillMaxHeight().defaultWeight())
         }
-        else -> CountTile(count, GlanceModifier.fillMaxSize())
+        else -> CountTile(count, TileShape.ALONE, GlanceModifier.fillMaxSize())
     }
 }
 
 @Composable
-private fun CountTile(count: Int, modifier: GlanceModifier = GlanceModifier) {
+private fun CountTile(count: Int, shape: TileShape, modifier: GlanceModifier = GlanceModifier) {
     val context = LocalContext.current
     Column(
-        modifier = modifier
-            .background(GlanceTheme.colors.primaryContainer)
-            .cornerRadius(TileCorner)
-            .padding(8.dp)
-            .clickable(actionRunCallback<TallyAction>())
-            .semantics { contentDescription = context.getString(R.string.widget_tally) },
+        modifier = modifier.tile(
+            shape = shape,
+            color = GlanceTheme.colors.primaryContainer,
+            onClick = actionRunCallback<TallyAction>(),
+            description = context.getString(R.string.widget_tally),
+        ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -149,15 +160,15 @@ private fun CountTile(count: Int, modifier: GlanceModifier = GlanceModifier) {
 }
 
 @Composable
-private fun PhotoTile(modifier: GlanceModifier = GlanceModifier) {
+private fun PhotoTile(shape: TileShape, modifier: GlanceModifier = GlanceModifier) {
     val context = LocalContext.current
     Column(
-        modifier = modifier
-            .background(GlanceTheme.colors.primary)
-            .cornerRadius(TileCorner)
-            .padding(8.dp)
-            .clickable(actionStartActivity(TakePhotoShortcut.intent(context)))
-            .semantics { contentDescription = context.getString(R.string.widget_photo_action) },
+        modifier = modifier.tile(
+            shape = shape,
+            color = GlanceTheme.colors.primary,
+            onClick = actionStartActivity(TakePhotoShortcut.intent(context)),
+            description = context.getString(R.string.widget_photo_action),
+        ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -172,3 +183,12 @@ private fun PhotoTile(modifier: GlanceModifier = GlanceModifier) {
         )
     }
 }
+
+private fun GlanceModifier.tile(shape: TileShape, color: ColorProvider, onClick: Action, description: String) =
+    background(ImageProvider(shape.background), colorFilter = ColorFilter.tint(color))
+        .padding(8.dp)
+        .clickable(onClick, rippleOverride = shape.ripple)
+        .semantics {
+            contentDescription = description
+            testTag = shape.name
+        }

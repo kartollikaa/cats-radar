@@ -30,7 +30,7 @@ Android: 16 (API 36)
 ABIs: arm64-v8a
 Locale: ru-RU
 Time zone: Europe/Moscow
-Database: 3
+Database: 4
 ```
 
 - **Its keys are English in every language**, so a developer can read a report from any phone; the

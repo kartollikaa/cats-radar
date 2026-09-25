@@ -70,6 +70,7 @@ class ImportBackup(
                 encounterRepository.insert(encounter)
             }
         }
+        encounterRepository.addPhotos(merged.photos)
         merged.placeCells.forEach { placeCellRepository.upsert(it) }
         merged.encounters.mapNotNullTo(mutableSetOf()) { it.geohash }
             .forEach { PlaceCells.remember(placeCellRepository, it) }
