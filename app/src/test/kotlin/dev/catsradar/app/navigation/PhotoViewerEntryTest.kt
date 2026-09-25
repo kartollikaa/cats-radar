@@ -75,7 +75,7 @@ class PhotoViewerEntryTest {
         compose.onNode(photoMatcher() and hasClickAction()).performClick()
         compose.waitForIdle()
 
-        assertEquals(levels + PhotoViewer(ID), backStack.toList())
+        assertEquals(levels + PhotoViewer(ID, photoId = PHOTO_ID), backStack.toList())
     }
 
     @Test
@@ -181,7 +181,7 @@ class PhotoViewerEntryTest {
     private fun photographed(install: String = "device-1", galleryUri: String? = null): Encounter {
         val cat = tally(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, deviceId = install)
         val photo = EncounterPhoto(
-            id = ID,
+            id = PHOTO_ID,
             encounterId = ID,
             photoPath = "photos/$ID.jpg",
             thumbPath = "thumbs/$ID.jpg",
@@ -220,6 +220,7 @@ class PhotoViewerEntryTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val PHOTO_ID = "photo-of-cat-1"
         const val SAVED = "content://media/external/images/media/42"
         const val LOAD_TIMEOUT_MS = 5_000L
         val OCCURRED = Instant.parse("2026-09-21T10:00:00Z")

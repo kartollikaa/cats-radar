@@ -154,10 +154,11 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Where</string>
     <string name="detail_coat">Coat</string>
-    <string name="detail_photo">Photo</string>
+    <string name="detail_photo">Add a photo</string>
     <string name="detail_take_photo">Take a photo</string>
     <string name="detail_pick_photo">Choose from gallery</string>
     <string name="detail_photo_not_attached">Photo not attached</string>
+    <string name="detail_photo_already_there">This photo is already on this cat</string>
     <string name="detail_photo_attaching">Attaching the photo</string>
     <string name="detail_open_photo">Open full screen</string>
     <string name="detail_back">Back</string>
