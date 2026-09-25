@@ -448,6 +448,47 @@ class EncounterDetailStoreTest {
         }
     }
 
+    @Test
+    fun `a tap on the coordinates of a cat on the map opens the map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenMap, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat that is not on the map opens no map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 123.4, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a removed cat opens no map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),

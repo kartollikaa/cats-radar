@@ -6,10 +6,10 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
 import android.os.SystemClock
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import dev.catsradar.domain.Tuning
@@ -26,12 +26,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Instant
 
-class FusedLocationProvider(context: Context, private val clock: Clock) : LocationProvider {
+class FusedLocationProvider(
+    context: Context,
+    client: Lazy<FusedLocationProviderClient>,
+    private val clock: Clock,
+) : LocationProvider {
     private val appContext = context.applicationContext
-
-    // Lazy: constructing this must not touch Play Services (Koin resolves this eagerly for
-    // DI-graph checks; the connection should only ever be attempted from a real location call).
-    private val client by lazy { LocationServices.getFusedLocationProviderClient(appContext) }
+    private val client by client
 
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? {
         if (!hasPermission()) return null

@@ -51,6 +51,9 @@ class FakeWalkRepository :
 
     override suspend fun loadEveryPoint(): List<TrackPoint> = points.value
 
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> =
+        points.map { all -> all.sortedWith(compareBy({ it.walkId }, { it.at })) }
+
     override suspend fun upsert(walk: Walk) {
         upserted += walk
         walks.update { all -> all.filterNot { it.id == walk.id } + walk }

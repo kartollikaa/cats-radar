@@ -104,6 +104,11 @@
     <string name="statistics_rate_per_hour">%1$s / h</string>
     <string name="statistics_rate_per_minute">%1$s / min</string>
     <string name="statistics_rate_unavailable">—</string>
+    <string name="statistics_walked">Walked</string>
+    <string name="statistics_cats_per_km">Cats per km</string>
+    <string name="statistics_distance_meters">%1$s m</string>
+    <string name="statistics_distance_kilometers">%1$s km</string>
+    <string name="statistics_rate_per_km">%1$s / km</string>
     <string name="statistics_places">Places</string>
 
     <string name="regions_no_places_yet">No places yet</string>
@@ -154,6 +159,7 @@
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_attaching">Attaching the photo</string>
     <string name="detail_open_photo">Open full screen</string>
+    <string name="detail_show_on_map">Show on the map</string>
     <string name="viewer_back">Back</string>
     <string name="viewer_open_in_gallery">Open in gallery</string>
     <string name="viewer_gallery_gone">This photo is no longer in the gallery</string>

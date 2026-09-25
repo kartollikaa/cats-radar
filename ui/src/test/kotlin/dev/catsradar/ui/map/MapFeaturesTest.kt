@@ -1,7 +1,9 @@
 package dev.catsradar.ui.map
 
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.map.MapLine
 import dev.catsradar.presentation.map.MapPoint
+import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.coat.Black
 import dev.catsradar.ui.coat.Brown
 import dev.catsradar.ui.coat.Ginger
@@ -9,7 +11,6 @@ import dev.catsradar.ui.coat.Grey
 import dev.catsradar.ui.coat.White
 import dev.catsradar.ui.coat.look
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.double
@@ -86,20 +87,43 @@ class MapFeaturesTest {
     }
 
     @Test
-    fun aRouteRunsThroughItsCatsInTheOrderGivenAndOneCatMakesNoRoute() {
-        val points = persistentListOf(
-            MapPoint("first", 41.39, 2.17, coat = null),
-            MapPoint("second", 41.40, 2.18, coat = null),
-            MapPoint("third", 41.38, 2.19, coat = null),
+    fun twoLinesBecomeTwoFeaturesWhoseCoordinatesAreLongitudeFirstInOrder() {
+        val lines = persistentListOf(
+            MapLine(persistentListOf(MapPosition(41.39, 2.17), MapPosition(41.40, 2.18))),
+            MapLine(persistentListOf(MapPosition(41.38, 2.19), MapPosition(41.37, 2.20))),
         )
 
-        val route = routeLine(points)
+        val features = routeLines(lines)?.features
 
         assertEquals(
-            listOf(Position(2.17, 41.39), Position(2.18, 41.40), Position(2.19, 41.38)),
-            route?.features?.single()?.geometry?.coordinates,
+            listOf(
+                listOf(Position(2.17, 41.39), Position(2.18, 41.40)),
+                listOf(Position(2.19, 41.38), Position(2.20, 41.37)),
+            ),
+            features?.map { it.geometry.coordinates },
         )
-        assertNull(routeLine(points.subList(0, 1).toPersistentList()))
+    }
+
+    @Test
+    fun aLineOfOnePositionIsDropped() {
+        val lines = persistentListOf(
+            MapLine(persistentListOf(MapPosition(41.39, 2.17), MapPosition(41.40, 2.18))),
+            MapLine(persistentListOf(MapPosition(41.38, 2.19))),
+        )
+
+        val features = routeLines(lines)?.features
+
+        assertEquals(listOf(Position(2.17, 41.39), Position(2.18, 41.40)), features?.single()?.geometry?.coordinates)
+    }
+
+    @Test
+    fun allLinesTooShortGivesNull() {
+        val lines = persistentListOf(
+            MapLine(persistentListOf(MapPosition(41.39, 2.17))),
+            MapLine(persistentListOf()),
+        )
+
+        assertNull(routeLines(lines))
     }
 
     @Test

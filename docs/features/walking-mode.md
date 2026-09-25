@@ -47,9 +47,12 @@ On the Counter a tap starts a walk but never stops one. A stop ends the walk and
 and the button sits just under the count, where a thumb tallying cats can slip onto it, and so can
 a phone going back into a pocket. So while a walk is on the button has to be held until a fill has
 crossed it (`HoldToStop` in `WalkButton.kt`); the walk stops the moment it has, with a haptic, before
-the finger lifts. Let go earlier, or drift off the button, and the fill drains back and nothing changes. The
-button's second line says *press and hold* meanwhile, after the walk's time: a gesture nothing hints at
-is one nobody finds.
+the finger lifts. On the way the fill is cut into `TicksPerHold` even steps, and the phone ticks softly
+as each one fills, so the hold can be felt working without looking at it; the last step gives the
+stop's haptic instead of a tick. A press that picks the fill up mid-drain ticks on from where it is
+rather than from the start. Let go earlier, or drift off the button, and the ticks stop, the fill
+drains back and nothing changes. The button's second line says *press and hold* meanwhile, after the
+walk's time: a gesture nothing hints at is one nobody finds.
 
 Starting stays one tap, because a walk started by mistake loses nothing.
 
@@ -95,7 +98,9 @@ for the statistics to be wrong.
 
 ## Recording the route
 
-With precise location allowed, the walk's route is recorded. The notification is then carried by
+With precise location allowed, the walk's route is recorded, to show later on the map with its outing
+and in Statistics as distance walked (see [map.md](./map.md#an-outings-route) and
+[statistics.md](./statistics.md#walks-distance-and-cats-per-km)). The notification is then carried by
 `WalkRecordingService`, a foreground service of type `location`, which asks for fixes for as long as
 it runs and offers each one to the walk; which of them the route keeps is in `data-model.md`.
 Without location permission there is no service, and the notification is the plain ongoing one it
@@ -244,7 +249,8 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 - `app/…/notification/WalkingNotificationSync.kt` — holds it equal to the flag and the outing
 - `app/…/notification/WalkRecordingService.kt` — carries it while the route is recorded
 - `domain/…/usecase/FollowWalkingMode.kt` — holds the walk equal to the flag;
-  `EndInterruptedWalk.kt` — settles a recording cut off; `RecordWalk.kt` — sends fixes to the route
+  `EndInterruptedWalk.kt` — settles a recording cut off; `RecordWalk.kt` — sends fixes to the route;
+  `ObserveWalkTracks.kt` — every walk with its route, read by the map and Statistics
 - `data/…/platform/SharedPreferencesWalkRecordingState.kt` — the mark a running recording leaves
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use

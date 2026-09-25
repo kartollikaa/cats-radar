@@ -53,6 +53,8 @@ class FakeTrackPointDao : TrackPointDao {
 
     override suspend fun loadEvery(): List<TrackPointEntity> = everyResult
 
+    override fun observeEvery(): Flow<List<TrackPointEntity>> = flowOf(everyResult)
+
     override suspend fun loadLast(walkId: String): TrackPointEntity? {
         lastCall = walkId
         return lastResult

@@ -1,13 +1,11 @@
 package dev.catsradar.data.platform
 
-import android.content.Context
+import android.content.SharedPreferences
 import dev.catsradar.domain.platform.WalkRecordingState
 
-private const val PREFS_NAME = "walk_recording"
 private const val KEY_RECORDING = "recording"
 
-class SharedPreferencesWalkRecordingState(context: Context) : WalkRecordingState {
-    private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+class SharedPreferencesWalkRecordingState(private val prefs: SharedPreferences) : WalkRecordingState {
 
     override val recording: Boolean
         get() = prefs.getBoolean(KEY_RECORDING, false)

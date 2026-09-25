@@ -30,6 +30,7 @@ class EncounterDetailStateMapperTest {
                 coordinatesLabel = "41.39864, 2.17842",
                 accuracyMeters = 12,
                 addPhoto = AddPhoto.READY,
+                onTheMap = true,
             ),
             state,
         )
@@ -44,6 +45,16 @@ class EncounterDetailStateMapperTest {
         assertEquals(LocationLabel.NONE, state.location)
         assertEquals(null, state.coordinatesLabel)
         assertEquals(null, state.accuracyMeters)
+    }
+
+    @Test
+    fun `a cat without coordinates, or with coordinates that are no place on Earth, is not on the map`() {
+        val unlocated = encounterFixture("e1", OCCURRED)
+        val pastThePole = encounterFixture("e2", OCCURRED).copy(lat = 123.4, lon = 2.17)
+
+        assertEquals(false, mapper.map(unlocated, today).onTheMap)
+        assertEquals("123.40000, 2.17000", mapper.map(pastThePole, today).coordinatesLabel)
+        assertEquals(false, mapper.map(pastThePole, today).onTheMap)
     }
 
     @Test

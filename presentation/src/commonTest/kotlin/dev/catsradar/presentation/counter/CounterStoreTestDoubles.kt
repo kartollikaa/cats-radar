@@ -369,6 +369,7 @@ internal class FakeWalkRepository : WalkRepository {
     override suspend fun lastPoint(walkId: String): TrackPoint? = null
     override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = flowOf(emptyList())
     override suspend fun loadEveryPoint(): List<TrackPoint> = emptyList()
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> = flowOf(emptyList())
     override suspend fun upsert(walk: Walk) = Unit
     override suspend fun appendPoints(points: List<TrackPoint>) = Unit
 }

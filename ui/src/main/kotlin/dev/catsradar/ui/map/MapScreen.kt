@@ -35,6 +35,9 @@ import dev.catsradar.presentation.map.MapState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
@@ -60,6 +63,7 @@ fun MapScreen(
     onHeatToggle: () -> Unit = {},
     onCoatToggle: (CoatOption?) -> Unit = {},
     onCoatFilterClear: () -> Unit = {},
+    onCatReach: () -> Unit = {},
 ) {
     when (state) {
         MapState.Loading -> Box(modifier = modifier.fillMaxSize())
@@ -74,6 +78,7 @@ fun MapScreen(
                 onFocusClear = onFocusClear,
                 onHeatToggle = onHeatToggle,
                 onCoatsClick = { choosingCoats = true },
+                onCatReach = onCatReach,
             )
             if (choosingCoats) {
                 MapCoatSheet(
@@ -96,10 +101,11 @@ private fun CatsMap(
     onFocusClear: () -> Unit = {},
     onHeatToggle: () -> Unit = {},
     onCoatsClick: () -> Unit = {},
+    onCatReach: () -> Unit = {},
 ) {
     val colors = catLayerColors()
     val cats = remember(state.points) { catFeatures(state.points) }
-    val route = remember(state.focus) { state.focus?.let { routeLine(it.route) } }
+    val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
     val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)
@@ -108,7 +114,13 @@ private fun CatsMap(
     val mapState = rememberMapState(baseStyle = style) {
         CatLayers(cats, route, state.heat, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
     }
-    FitOncePerFocus(mapState, area = state.area, focus = state.focus?.outingId)
+    MapCamera(
+        mapState,
+        area = state.area,
+        focus = state.focus?.outingId,
+        catArea = state.catArea,
+        onCatReach = onCatReach,
+    )
     LaunchedEffect(clusterTap) {
         val tap = clusterTap ?: return@LaunchedEffect
         mapState.open(tap, tapCats)
@@ -130,22 +142,52 @@ private fun CatsMap(
     }
 }
 
-// Fitted once per map and focus, saved across recreation: the map restores its own camera, and a cat
-// located while it is up must not pull the view off where it was panned.
+// Fitted once per map and focus, and moved once per requested cat, saved across recreation: the map restores
+// its own camera, and a cat located while it is up must not pull the view off where it was panned.
 @Composable
-private fun FitOncePerFocus(mapState: MaplibreMapState, area: MapArea, focus: String?) {
+private fun MapCamera(
+    mapState: MaplibreMapState,
+    area: MapArea,
+    focus: String?,
+    catArea: MapArea?,
+    onCatReach: () -> Unit,
+) {
     var fitted by rememberSaveable { mutableStateOf(false) }
     var fittedFocus by rememberSaveable { mutableStateOf<String?>(null) }
     val latestArea by rememberUpdatedState(area)
-    LaunchedEffect(mapState, focus) {
-        if (fitted && fittedFocus == focus) return@LaunchedEffect
-        if (fitted) {
-            mapState.animateCameraToBounds(latestArea.toBoundingBox(), padding = FitPadding)
-        } else {
-            mapState.fitCameraToBounds(latestArea.toBoundingBox(), padding = FitPadding)
+    val catReach by rememberUpdatedState(onCatReach)
+    LaunchedEffect(mapState, focus, catArea) {
+        if (catArea != null) {
+            moveOntoCat(move = { mapState.moveTo(catArea, animate = fitted) }) {
+                fitted = true
+                fittedFocus = focus
+                catReach()
+            }
+            return@LaunchedEffect
         }
+        if (fitted && fittedFocus == focus) return@LaunchedEffect
+        mapState.moveTo(latestArea, animate = fitted)
         fitted = true
         fittedFocus = focus
+    }
+}
+
+// A pan cancels only the map's own camera call and still ends the request, or a later focus change would
+// resume it. A cancelled caller is the map leaving mid-move, which reports nothing.
+internal suspend fun moveOntoCat(move: suspend () -> Unit, onReach: () -> Unit) {
+    try {
+        move()
+    } catch (interrupted: CancellationException) {
+        if (!currentCoroutineContext().isActive) throw interrupted
+    }
+    onReach()
+}
+
+private suspend fun MaplibreMapState.moveTo(area: MapArea, animate: Boolean) {
+    if (animate) {
+        animateCameraToBounds(area.toBoundingBox(), padding = FitPadding)
+    } else {
+        fitCameraToBounds(area.toBoundingBox(), padding = FitPadding)
     }
 }
 

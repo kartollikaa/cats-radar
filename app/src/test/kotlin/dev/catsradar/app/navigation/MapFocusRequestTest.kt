@@ -1,5 +1,6 @@
 package dev.catsradar.app.navigation
 
+import dev.catsradar.presentation.map.MapIntent
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -10,19 +11,29 @@ class MapFocusRequestTest {
     fun `a posted outing is handed over once`() {
         val request = MapFocusRequest()
 
-        request.post("first")
+        request.postOuting("first")
 
-        assertEquals("first", request.consume())
+        assertEquals(MapIntent.OutingFocused("first"), request.consume())
         assertNull(request.consume())
     }
 
     @Test
-    fun `the outing posted last is the one handed over`() {
+    fun `a posted cat is handed over once`() {
         val request = MapFocusRequest()
 
-        request.post("first")
-        request.post("second")
+        request.postCat("first")
 
-        assertEquals("second", request.consume())
+        assertEquals(MapIntent.CatRequested("first"), request.consume())
+        assertNull(request.consume())
+    }
+
+    @Test
+    fun `the request posted last is the one handed over`() {
+        val request = MapFocusRequest()
+
+        request.postOuting("first")
+        request.postCat("second")
+
+        assertEquals(MapIntent.CatRequested("second"), request.consume())
     }
 }

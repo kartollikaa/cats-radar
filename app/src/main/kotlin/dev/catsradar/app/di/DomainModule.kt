@@ -20,6 +20,8 @@ import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
 import dev.catsradar.domain.usecase.ObserveWalkElapsed
+import dev.catsradar.domain.usecase.ObserveWalkStats
+import dev.catsradar.domain.usecase.ObserveWalkTracks
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
@@ -75,6 +77,8 @@ val domainModule = module {
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factory { ObserveOpenWalk(walkRepository = get()) }
     factory { ObserveWalkElapsed(observeOpenWalk = get(), clock = get()) }
+    factoryOf(::ObserveWalkTracks)
+    factoryOf(::ObserveWalkStats)
     // No zone passed: this one outlives a trip across time zones, so it reads the zone each time.
     factory { ObserveTodayCount(encounterRepository = get(), clock = get()) }
     factoryOf(::AttachLocation)

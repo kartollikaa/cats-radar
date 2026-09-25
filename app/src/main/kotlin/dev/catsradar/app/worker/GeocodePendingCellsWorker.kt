@@ -2,16 +2,16 @@ package dev.catsradar.app.worker
 
 import android.content.Context
 import androidx.work.CoroutineWorker
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import kotlinx.coroutines.CancellationException
 
 class GeocodePendingCellsWorker(
-    private val context: Context,
+    context: Context,
     params: WorkerParameters,
     private val resolvePendingPlaces: ResolvePendingPlaces,
+    private val geocodeWorkScheduler: GeocodeWorkScheduler,
     private val reporter: NonFatalReporter,
 ) : CoroutineWorker(context, params) {
 
@@ -22,7 +22,7 @@ class GeocodePendingCellsWorker(
         if (!geocoderPresent) {
             // No geocoder on this device, and there never will be: waking up on a schedule to
             // find that out again would cost battery for nothing.
-            WorkManager.getInstance(context).cancelUniqueWork(GeocodeWorkScheduler.UNIQUE_NAME)
+            geocodeWorkScheduler.unschedule()
         }
         Result.success()
     } catch (e: CancellationException) {

@@ -32,6 +32,7 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
                 appContext,
                 workerParameters,
                 koin.get<ImportPhotos>()::invoke,
+                koin.get<ImportBatches>(),
                 koin.get<ImportNotifier>(),
                 reporter,
             )
@@ -40,7 +41,13 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
         ImportBackupWorker::class.java.name ->
             ImportBackupWorker(appContext, workerParameters, koin.get<ImportBackup>(), reporter)
         GeocodePendingCellsWorker::class.java.name ->
-            GeocodePendingCellsWorker(appContext, workerParameters, koin.get<ResolvePendingPlaces>(), reporter)
+            GeocodePendingCellsWorker(
+                appContext,
+                workerParameters,
+                koin.get<ResolvePendingPlaces>(),
+                koin.get<GeocodeWorkScheduler>(),
+                reporter,
+            )
         PurgeDeletedWorker::class.java.name ->
             PurgeDeletedWorker(appContext, workerParameters, koin.get<PurgeDeleted>(), reporter)
         else -> null

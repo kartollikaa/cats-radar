@@ -118,6 +118,11 @@
     <string name="statistics_rate_per_hour">%1$s / ч</string>
     <string name="statistics_rate_per_minute">%1$s / мин</string>
     <string name="statistics_rate_unavailable">—</string>
+    <string name="statistics_walked">Пройдено</string>
+    <string name="statistics_cats_per_km">Котиков на км</string>
+    <string name="statistics_distance_meters">%1$s м</string>
+    <string name="statistics_distance_kilometers">%1$s км</string>
+    <string name="statistics_rate_per_km">%1$s / км</string>
     <string name="statistics_places">Места</string>
 
     <string name="regions_no_places_yet">Мест пока нет</string>
@@ -176,6 +181,7 @@
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
+    <string name="detail_show_on_map">Показать на карте</string>
     <string name="viewer_back">Назад</string>
     <string name="viewer_open_in_gallery">Открыть в галерее</string>
     <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
