@@ -2,11 +2,13 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.encounters.toLocationLabel
 import dev.catsradar.presentation.map.isOnTheMap
+import dev.catsradar.presentation.regions.countryFlag
 import dev.catsradar.presentation.time
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
@@ -19,7 +21,12 @@ class EncounterDetailStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounter: Encounter, today: LocalDate, attachingPhoto: Boolean = false): EncounterDetailState.Loaded {
+    fun map(
+        encounter: Encounter,
+        today: LocalDate,
+        attachingPhoto: Boolean = false,
+        place: EncounterPlace? = null,
+    ): EncounterDetailState.Loaded {
         val lat = encounter.lat
         val lon = encounter.lon
         return EncounterDetailState.Loaded(
@@ -40,6 +47,13 @@ class EncounterDetailStateMapper(
                 else -> AddPhoto.READY
             },
             onTheMap = encounter.isOnTheMap(),
+            place = place?.let {
+                DetailPlace(
+                    title = it.city ?: it.country,
+                    country = it.country.takeIf { _ -> it.city != null },
+                    flag = countryFlag(it.countryCode),
+                )
+            },
         )
     }
 }

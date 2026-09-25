@@ -7,7 +7,10 @@ import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
@@ -18,6 +21,7 @@ import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeGallerySaver
 import dev.catsradar.presentation.counter.FakeIdGenerator
 import dev.catsradar.presentation.counter.FakeImageResizer
+import dev.catsradar.presentation.counter.FakePlaceCellRepository
 import dev.catsradar.presentation.counter.FakeSettingsRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
@@ -50,6 +54,7 @@ class EncounterDetailStoreTest {
 
     private val mainDispatcher = StandardTestDispatcher()
     private val repository = FakeEncounterRepository()
+    private val cells = FakePlaceCellRepository()
     private val clock = FakeClock(NOW)
     private val resizer = FakeImageResizer()
 
@@ -564,6 +569,7 @@ class EncounterDetailStoreTest {
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
+        observeEncounterPlace = ObserveEncounterPlace(repository, cells),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
@@ -583,6 +589,39 @@ class EncounterDetailStoreTest {
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,
+    )
+
+    @Test
+    fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
+        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
+            .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q")
+        repository.insert(located)
+        val store = newStore()
+        runCurrent()
+        assertEquals(null, (store.state.value as EncounterDetailState.Loaded).place)
+
+        cells.upsert(namedCell("sp3e3q"))
+        runCurrent()
+
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            (store.state.value as EncounterDetailState.Loaded).place,
+        )
+    }
+
+    private fun namedCell(cellId: String) = PlaceCell(
+        cellId = cellId,
+        centerLat = 41.39,
+        centerLon = 2.17,
+        countryCode = "ES",
+        countryName = "Spain",
+        adminArea = null,
+        locality = "Barcelona",
+        subLocality = null,
+        status = PlaceStatus.RESOLVED,
+        attempts = 1,
+        lastAttemptAt = NOW,
+        resolvedAt = NOW,
     )
 
     private suspend fun <T> Flow<T>.value(): T = first()

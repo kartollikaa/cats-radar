@@ -19,6 +19,8 @@ sealed interface EncounterDetailState {
         /** Null when the cat has a photo of its own, which is never replaced. */
         val addPhoto: AddPhoto? = null,
         val onTheMap: Boolean = false,
+        /** Null while the cat has no named place: no location, or its cell not named yet. */
+        val place: DetailPlace? = null,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */
@@ -29,3 +31,6 @@ sealed interface EncounterDetailState {
 }
 
 enum class AddPhoto { READY, ATTACHING }
+
+/** [title] is the city, or the country when no city is known; [country] is set only under a city. */
+data class DetailPlace(val title: String, val country: String?, val flag: String?)

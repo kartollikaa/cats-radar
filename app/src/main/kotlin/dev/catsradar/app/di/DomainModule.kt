@@ -13,6 +13,7 @@ import dev.catsradar.domain.usecase.ImportPhotos
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveOutingTracks
@@ -72,6 +73,7 @@ val domainModule = module {
     }
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounters)
+    factoryOf(::ObserveEncounterPlace)
     factory {
         ObserveRegion(encounterRepository = get(), placeCellRepository = get(), computeDispatcher = Dispatchers.Default)
     }
