@@ -53,7 +53,8 @@ class ZipBackupReaderOlderFormatTest {
             MANIFEST_ENTRY to FORMAT_THREE_MANIFEST,
             ENCOUNTERS_ENTRY to "[" +
                 """{"id":"a","occurredAt":0,"tzOffsetMinutes":0,"kind":"PHOTO","origin":"GALLERY",""" +
-                """"locationSource":"NONE","deviceId":"cat-install","createdAt":5,"updatedAt":9,"photoPath":"a.jpg",""" +
+                """"locationSource":"NONE","deviceId":"cat-install","createdAt":5,"updatedAt":9,""" +
+                """"photoPath":"a.jpg",""" +
                 """"thumbPath":"a_thumb.jpg","sourceMediaUri":"content://media/external/images/media/7",""" +
                 """"sourceDigest":"sha"},""" +
                 """{"id":"b","occurredAt":0,"tzOffsetMinutes":0,"kind":"TALLY","origin":"APP",""" +
