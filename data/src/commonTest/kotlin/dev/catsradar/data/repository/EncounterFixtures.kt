@@ -66,7 +66,6 @@ internal fun Encounter.withPhoto(
     galleryUri: String? = null,
     sourceMediaUri: String? = null,
     sourceDigest: String? = null,
-    shotId: String? = null,
 ): Encounter = copy(
     photos = listOf(
         EncounterPhoto(
@@ -79,10 +78,13 @@ internal fun Encounter.withPhoto(
             sourceDigest = sourceDigest,
             deviceId = deviceId,
             addedAt = createdAt,
-            shotId = shotId,
+            shotId = null,
         ),
     ),
 )
+
+internal fun Encounter.inShotOf(firstPhotoId: String): Encounter =
+    copy(photos = photos.map { it.copy(shotId = firstPhotoId) })
 
 /** The cat as its row and photo rows read back together. */
 internal fun Encounter.toRelation(): EncounterWithPhotos = EncounterWithPhotos(toEntity(), photos.map { it.toEntity() })

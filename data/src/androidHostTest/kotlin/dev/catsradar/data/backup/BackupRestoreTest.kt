@@ -11,6 +11,7 @@ import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
+import dev.catsradar.data.repository.inShotOf
 import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
@@ -257,8 +258,7 @@ private fun shotOfThree(): List<Encounter> = SHOT.mapIndexed { index, id ->
         thumbPath = "${id}_thumb.jpg",
         galleryUri = "content://media/external/images/media/77",
         sourceDigest = "d-shot",
-        shotId = if (index == 0) null else SHOT.first(),
-    )
+    ).let { cat -> if (index == 0) cat else cat.inShotOf(SHOT.first()) }
 }
 
 private fun tally(id: String, at: Instant) = Encounter(

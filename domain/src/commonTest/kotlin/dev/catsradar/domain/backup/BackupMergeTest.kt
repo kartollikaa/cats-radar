@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.inShotOf
 import dev.catsradar.domain.testing.withPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,8 +47,8 @@ private fun cell(
 
 private fun shotOfThree() = Triple(
     encounter("first", MIDDLE).copy(coat = CatCoat.GINGER).withPhoto(),
-    encounter("second", MIDDLE).copy(coat = CatCoat.GINGER).withPhoto(shotId = "first"),
-    encounter("third", MIDDLE).withPhoto(shotId = "first"),
+    encounter("second", MIDDLE).copy(coat = CatCoat.GINGER).withPhoto().inShotOf("first"),
+    encounter("third", MIDDLE).withPhoto().inShotOf("first"),
 )
 
 class BackupMergeTest {
