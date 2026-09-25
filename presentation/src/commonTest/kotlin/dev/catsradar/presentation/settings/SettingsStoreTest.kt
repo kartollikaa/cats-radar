@@ -3,6 +3,7 @@ package dev.catsradar.presentation.settings
 import app.cash.turbine.test
 import dev.catsradar.domain.about.BuildInfo
 import dev.catsradar.domain.platform.BuildInfoReader
+import dev.catsradar.domain.platform.InstallPermission
 import dev.catsradar.domain.platform.UpdateSource
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
@@ -44,6 +45,7 @@ class SettingsStoreTest {
         repository: SettingsRepository = FakeSettingsRepository(),
         buildInfoReader: BuildInfoReader = BuildInfoReader { pixelBuildInfo },
         updateSource: UpdateSource = UpdateSource { ReleaseFeed.Listed(emptyList()) },
+        installPermission: InstallPermission = InstallPermission { true },
     ) = SettingsStore(
         settingsRepository = repository,
         buildInfoReader = buildInfoReader,
@@ -51,6 +53,7 @@ class SettingsStoreTest {
         checkForUpdate = CheckForUpdate(updateSource, pixelBuildInfo.app),
         updateStateMapper = UpdateStateMapper(),
         installed = pixelBuildInfo.app,
+        installPermission = installPermission,
     )
 
     @Test
@@ -574,5 +577,80 @@ class SettingsStoreTest {
         runCurrent()
 
         assertEquals(UpdateState(UpdateStatus.Idle, UpdateAction.Check), store.state.value.update)
+    }
+
+    @Test
+    fun `an install without the permission opens its system page instead`() = runTest(mainDispatcher) {
+        val store = settingsStore(installPermission = InstallPermission { false })
+        store.effects.test {
+            store.dispatch(downloaded)
+            store.dispatch(SettingsIntent.Update.InstallClicked)
+            runCurrent()
+
+            assertEquals(SettingsEffect.OpenInstallPermission, awaitItem())
+            assertEquals(
+                UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls),
+                store.state.value.update,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a download this screen started opens the page as soon as it finishes`() = runTest(mainDispatcher) {
+        val store = settingsStore(updateSource = newerFeed, installPermission = InstallPermission { false })
+        store.effects.test {
+            store.dispatch(SettingsIntent.Update.CheckClicked)
+            runCurrent()
+            awaitItem()
+
+            store.dispatch(downloaded)
+            runCurrent()
+
+            assertEquals(SettingsEffect.OpenInstallPermission, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `coming back with the permission installs without another tap`() = runTest(mainDispatcher) {
+        var allowed = false
+        val store = settingsStore(installPermission = InstallPermission { allowed })
+        store.effects.test {
+            store.dispatch(downloaded)
+            store.dispatch(SettingsIntent.Update.InstallClicked)
+            runCurrent()
+            awaitItem()
+
+            allowed = true
+            store.dispatch(SettingsIntent.Update.InstallPermissionReturned)
+            runCurrent()
+
+            assertEquals(SettingsEffect.InstallUpdate("/cache/updates/1.5.0-beta.apk"), awaitItem())
+            assertEquals(UpdateState(UpdateStatus.Installing("1.5.0-beta"), UpdateAction.Busy), store.state.value.update)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `coming back without the permission offers its page again`() = runTest(mainDispatcher) {
+        val store = settingsStore(installPermission = InstallPermission { false })
+        store.effects.test {
+            store.dispatch(downloaded)
+            store.dispatch(SettingsIntent.Update.InstallClicked)
+            runCurrent()
+            awaitItem()
+
+            store.dispatch(SettingsIntent.Update.InstallPermissionReturned)
+            runCurrent()
+            expectNoEvents()
+            assertEquals(UpdateAction.AllowInstalls, store.state.value.update.action)
+
+            store.dispatch(SettingsIntent.Update.AllowInstallsClicked)
+            runCurrent()
+
+            assertEquals(SettingsEffect.OpenInstallPermission, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

@@ -231,6 +231,8 @@
     <string name="settings_updates_download_failed">Загрузка не завершилась или файл повреждён. Попробуйте ещё раз</string>
     <string name="settings_updates_install_failed">Версия %1$s не установлена. Попробуйте ещё раз</string>
     <string name="settings_updates_install">Установить %1$s</string>
+    <string name="settings_updates_needs_permission">Разрешите Cats Radar устанавливать приложения, чтобы установить %1$s</string>
+    <string name="settings_updates_allow_installs">Открыть настройки</string>
     <string name="settings_updates_offline">Не удалось связаться с GitHub. Проверьте подключение и попробуйте ещё раз</string>
     <string name="settings_updates_source_unavailable">GitHub не отдал список версий. Попробуйте позже</string>
     <string name="settings_updates_unreadable">Не удалось разобрать ответ GitHub. Попробуйте позже</string>

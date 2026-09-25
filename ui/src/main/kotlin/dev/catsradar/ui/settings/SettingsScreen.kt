@@ -54,6 +54,7 @@ fun SettingsScreen(
     onBackupOutcomeDismiss: () -> Unit = {},
     onCheckForUpdatesClick: () -> Unit = {},
     onInstallUpdateClick: () -> Unit = {},
+    onAllowInstallsClick: () -> Unit = {},
     onCopyBuildInfoClick: () -> Unit = {},
 ) {
     Column(
@@ -93,6 +94,7 @@ fun SettingsScreen(
                 update = state.update,
                 onCheckClick = onCheckForUpdatesClick,
                 onInstallClick = onInstallUpdateClick,
+                onAllowInstallsClick = onAllowInstallsClick,
             )
         }
         state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
@@ -105,6 +107,7 @@ private fun UpdatesSection(
     modifier: Modifier = Modifier,
     onCheckClick: () -> Unit = {},
     onInstallClick: () -> Unit = {},
+    onAllowInstallsClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -132,6 +135,9 @@ private fun UpdatesSection(
             is UpdateAction.Install -> Button(onClick = onInstallClick) {
                 Text(text = stringResource(R.string.settings_updates_install, action.version))
             }
+            UpdateAction.AllowInstalls -> Button(onClick = onAllowInstallsClick) {
+                Text(text = stringResource(R.string.settings_updates_allow_installs))
+            }
         }
     }
 }
@@ -143,6 +149,7 @@ private fun UpdateStatus.message(): String = when (this) {
     is UpdateStatus.DownloadStarting -> stringResource(R.string.settings_updates_downloading, version)
     is UpdateStatus.Downloading -> stringResource(R.string.settings_updates_downloading_percent, version, percent)
     is UpdateStatus.ReadyToInstall -> stringResource(R.string.settings_updates_ready, version)
+    is UpdateStatus.NeedsInstallPermission -> stringResource(R.string.settings_updates_needs_permission, version)
     is UpdateStatus.Installing -> stringResource(R.string.settings_updates_installing, version)
     is UpdateStatus.InstallFailed -> stringResource(R.string.settings_updates_install_failed, version)
     is UpdateStatus.Failed -> stringResource(

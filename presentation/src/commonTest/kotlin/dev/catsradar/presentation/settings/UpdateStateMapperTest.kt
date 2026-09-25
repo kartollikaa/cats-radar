@@ -101,4 +101,12 @@ class UpdateStateMapperTest {
         )
         assertEquals(tokens.size, tokens.toSet().size)
     }
+
+    @Test
+    fun `an install waiting for the permission offers its page`() {
+        assertEquals(
+            UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls),
+            mapper.needsInstallPermission("1.5.0-beta"),
+        )
+    }
 }

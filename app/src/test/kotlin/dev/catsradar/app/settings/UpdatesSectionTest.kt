@@ -39,6 +39,7 @@ class UpdatesSectionTest {
     private var update: UpdateState by mutableStateOf(UpdateState())
     private var checks = 0
     private var installs = 0
+    private var permissionPages = 0
 
     private fun text(id: Int, vararg args: Any) = context.getString(id, *args)
 
@@ -52,6 +53,7 @@ class UpdatesSectionTest {
             UpdateStatus.DownloadStarting(v) to text(R.string.settings_updates_downloading, v),
             UpdateStatus.Downloading(v, percent = 45) to text(R.string.settings_updates_downloading_percent, v, 45),
             UpdateStatus.ReadyToInstall(v) to text(R.string.settings_updates_ready, v),
+            UpdateStatus.NeedsInstallPermission(v) to text(R.string.settings_updates_needs_permission, v),
             UpdateStatus.Installing(v) to text(R.string.settings_updates_installing, v),
             UpdateStatus.InstallFailed(v) to text(R.string.settings_updates_install_failed, v),
             UpdateStatus.Failed(UpdateFailure.OFFLINE) to text(R.string.settings_updates_offline),
@@ -90,6 +92,17 @@ class UpdatesSectionTest {
         assertEquals(0, checks)
     }
 
+    @Test
+    fun `an install waiting for the permission opens its page from its own button`() {
+        show()
+        update = UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls)
+
+        compose.onNodeWithText(text(R.string.settings_updates_allow_installs)).performScrollTo().performClick()
+
+        assertEquals(1, permissionPages)
+        assertEquals(0, installs)
+    }
+
     private fun show() {
         compose.setContent {
             CatsRadarTheme {
@@ -97,6 +110,7 @@ class UpdatesSectionTest {
                     state = SettingsState(update = update),
                     onCheckForUpdatesClick = { checks++ },
                     onInstallUpdateClick = { installs++ },
+                    onAllowInstallsClick = { permissionPages++ },
                 )
             }
         }

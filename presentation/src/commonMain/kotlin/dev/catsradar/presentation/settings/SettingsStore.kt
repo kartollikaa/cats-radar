@@ -3,6 +3,7 @@ package dev.catsradar.presentation.settings
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.about.InstalledApp
 import dev.catsradar.domain.platform.BuildInfoReader
+import dev.catsradar.domain.platform.InstallPermission
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.update.UpdateCheck
@@ -21,6 +22,7 @@ class SettingsStore(
     private val checkForUpdate: CheckForUpdate,
     private val updateStateMapper: UpdateStateMapper,
     private val installed: InstalledApp,
+    private val installPermission: InstallPermission,
 ) : Store<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
 
     private val backupRun = ReportedRun(settingsRepository, ReportedJob.BACKUP)
@@ -62,6 +64,8 @@ class SettingsStore(
         when (intent) {
             SettingsIntent.Update.CheckClicked -> checkForUpdates()
             SettingsIntent.Update.InstallClicked -> installDownloaded()
+            SettingsIntent.Update.AllowInstallsClicked -> emit(SettingsEffect.OpenInstallPermission)
+            SettingsIntent.Update.InstallPermissionReturned -> permissionReturned()
             is SettingsIntent.Update.DownloadProgressed -> if (downloadShowable(intent.version)) {
                 setState { copy(update = updateStateMapper.downloading(intent.version, intent.fraction)) }
             }
@@ -112,9 +116,21 @@ class SettingsStore(
         downloadedPath?.let { install(action.version, it) }
     }
 
+    // Asked before every install: without it Android shows a refusal instead of its confirmation.
     private suspend fun install(version: String, path: String) {
+        if (!installPermission.granted()) {
+            setState { copy(update = updateStateMapper.needsInstallPermission(version)) }
+            emit(SettingsEffect.OpenInstallPermission)
+            return
+        }
         setState { copy(update = updateStateMapper.installing(version)) }
         emit(SettingsEffect.InstallUpdate(path))
+    }
+
+    private suspend fun permissionReturned() {
+        val waiting = state.value.update.status as? UpdateStatus.NeedsInstallPermission ?: return
+        val path = downloadedPath ?: return
+        if (installPermission.granted()) install(waiting.version, path)
     }
 
     private fun installFinished(outcome: InstallOutcome) {

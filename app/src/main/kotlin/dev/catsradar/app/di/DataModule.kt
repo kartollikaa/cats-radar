@@ -39,6 +39,7 @@ import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
+import dev.catsradar.data.update.AndroidInstallPermission
 import dev.catsradar.data.update.GitHubReleaseFeed
 import dev.catsradar.data.update.HttpPackageDownloader
 import dev.catsradar.domain.about.InstalledApp
@@ -55,6 +56,7 @@ import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
+import dev.catsradar.domain.platform.InstallPermission
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PackageDownloader
@@ -144,6 +146,7 @@ val dataModule = module {
     }
     // A cache folder: Android may clear it, which costs only a download.
     single<PackageDownloader> { HttpPackageDownloader(File(androidContext().cacheDir, "updates")) }
+    single<InstallPermission> { AndroidInstallPermission(androidContext().packageManager) }
 }
 
 // A preferences file's name is where its data lives: renaming one loses everything stored in it.

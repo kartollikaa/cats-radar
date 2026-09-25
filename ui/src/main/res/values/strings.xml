@@ -207,6 +207,8 @@
     <string name="settings_updates_download_failed">The download didn\'t finish or arrived damaged. Try again</string>
     <string name="settings_updates_install_failed">%1$s wasn\'t installed. Try again</string>
     <string name="settings_updates_install">Install %1$s</string>
+    <string name="settings_updates_needs_permission">Allow Cats Radar to install apps to install %1$s</string>
+    <string name="settings_updates_allow_installs">Open settings</string>
     <string name="settings_updates_offline">Couldn\'t reach GitHub. Check the connection and try again</string>
     <string name="settings_updates_source_unavailable">GitHub didn\'t share the releases. Try again later</string>
     <string name="settings_updates_unreadable">GitHub\'s answer couldn\'t be read. Try again later</string>

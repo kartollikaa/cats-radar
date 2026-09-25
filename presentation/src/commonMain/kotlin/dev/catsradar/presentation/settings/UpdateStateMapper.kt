@@ -26,6 +26,9 @@ class UpdateStateMapper {
     fun ready(version: String): UpdateState =
         UpdateState(UpdateStatus.ReadyToInstall(version), UpdateAction.Install(version))
 
+    fun needsInstallPermission(version: String): UpdateState =
+        UpdateState(UpdateStatus.NeedsInstallPermission(version), UpdateAction.AllowInstalls)
+
     fun installing(version: String): UpdateState = UpdateState(UpdateStatus.Installing(version), UpdateAction.Busy)
 
     // A new check downloads the package again: offering the same one could fail the same way forever.
