@@ -101,6 +101,16 @@ class PhotoViewerScreenTest {
     }
 
     @Test
+    fun `the bar's buttons keep the screens' content inset from the edges`() {
+        show(photos = listOf(Photo("cover", opensInGallery = true)))
+        val screen = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        val inset = with(compose.density) { 16.dp.toPx() }
+
+        assertEquals(screen.left + inset, back().fetchSemanticsNode().boundsInRoot.left, 1f)
+        assertEquals(screen.right - inset, openInGallery().fetchSemanticsNode().boundsInRoot.right, 1f)
+    }
+
+    @Test
     fun `a photo with no original in the gallery offers nothing there`() {
         show(photos = listOf(Photo("cover", opensInGallery = false)))
 

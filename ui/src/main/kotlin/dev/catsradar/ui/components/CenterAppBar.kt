@@ -32,7 +32,7 @@ fun CenterAppBar(
     title: (@Composable () -> Unit)? = null,
     startContent: @Composable () -> Unit = {},
     endContent: @Composable () -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(horizontal = 4.dp),
+    contentPadding: PaddingValues = CenterAppBarDefaults.ContentPadding,
     titlePadding: PaddingValues = PaddingValues(horizontal = 64.dp),
 ) {
     Box(
@@ -62,6 +62,9 @@ fun CenterAppBar(
 
 object CenterAppBarDefaults {
     val Height = 56.dp
+
+    // Leaves an icon button's visible edge, 4dp inside its touch target, on the screens' 16dp content inset.
+    val ContentPadding = PaddingValues(horizontal = 12.dp)
 }
 
 @ThemePreviews
