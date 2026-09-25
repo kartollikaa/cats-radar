@@ -123,9 +123,10 @@ not rebuild the table the way Room's own migrations do: a rebuild drops `encount
 foreign keys are on that `DROP TABLE` first deletes every cat and the cascade takes every photo just
 copied. Room runs migrations before it turns foreign keys on, so that never fires today, and
 `PhotosMigrationTest` runs the migration with them on to keep it so
-(*theMigrationKeepsEveryPhotoOnAConnectionWithForeignKeysOn*). The same class migrates databases from
-versions 1, 2 and 3 holding every kind of photo a cat could have — a camera original, a picked item, no
-thumbnail, a deleted cat, another install's cat — and opens the result with the app's own builder.
+(*theMigrationKeepsEveryPhotoOnAConnectionWithForeignKeysOn*). The same class migrates a version 3 database
+holding every kind of photo a cat could have — a camera original, a picked item, no thumbnail, a deleted
+cat, another install's cat — and opens the result with the app's own builder, and brings a photographed
+cat from versions 1 and 2 through every migration in between.
 
 ## Where the code lives
 

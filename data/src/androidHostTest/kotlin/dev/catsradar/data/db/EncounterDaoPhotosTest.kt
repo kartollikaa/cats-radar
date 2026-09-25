@@ -65,15 +65,15 @@ class EncounterDaoPhotosTest {
         dao.insertWithPhotos(
             fullEncounterEntity(id = "cat"),
             listOf(
-                photoEntity("cat", id = "late", addedAt = early + 60_000.milliseconds),
+                photoEntity("cat", id = "a-late", addedAt = early + 60_000.milliseconds),
+                photoEntity("cat", id = "c-tie", addedAt = early),
                 photoEntity("cat", id = "b-tie", addedAt = early),
-                photoEntity("cat", id = "a-tie", addedAt = early),
             ),
         )
 
         val photos = EncounterRepositoryImpl(dao).observeById("cat").first()?.photos
 
-        assertEquals(listOf("a-tie", "b-tie", "late"), photos?.map { it.id })
+        assertEquals(listOf("b-tie", "c-tie", "a-late"), photos?.map { it.id })
     }
 
     @Test
