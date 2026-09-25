@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.presentation.DelayedWalkRepository
 import dev.catsradar.presentation.StoredWalkRepository
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.FakeClock
@@ -17,10 +18,7 @@ import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -38,7 +36,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -361,68 +358,16 @@ class MapStoreTest {
     }
 }
 
-/** A read-only stand-in whose [observeEveryPoint] answers only after [answerAfter] of virtual time, like Room. */
-private class DelayedWalkRepository(
-    private val walks: List<Walk> = emptyList(),
-    private val points: List<TrackPoint> = emptyList(),
-    private val answerAfter: Duration = 1.seconds,
-) : WalkRepository {
-
-    override fun observeAll(): Flow<List<Walk>> = flowOf(walks.sortedByDescending { it.startedAt })
-
-    override suspend fun openWalk(): Walk? = error("not needed by this test")
-
-    override suspend fun startIfNoneOpen(walk: Walk): Walk = error("read-only")
-
-    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean = error("read-only")
-
-    override suspend fun appendPoint(point: TrackPoint): Unit = error("read-only")
-
-    override suspend fun lastPoint(walkId: String): TrackPoint? = error("not needed by this test")
-
-    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = error("not needed by this test")
-
-    override suspend fun loadEveryPoint(): List<TrackPoint> = error("not needed by this test")
-
-    override fun observeEveryPoint(): Flow<List<TrackPoint>> = flow {
-        delay(answerAfter)
-        emit(points.sortedWith(compareBy({ it.walkId }, { it.at })))
-    }
-
-    override suspend fun upsert(walk: Walk): Unit = error("read-only")
-
-    override suspend fun appendPoints(points: List<TrackPoint>): Unit = error("read-only")
-}
-
 /** A read-only stand-in that counts how many times [observeEveryPoint] is collected. */
 private class CountingWalkRepository(
-    private val walks: List<Walk> = emptyList(),
-    private val points: List<TrackPoint> = emptyList(),
-) : WalkRepository {
+    walks: List<Walk> = emptyList(),
+    points: List<TrackPoint> = emptyList(),
+    private val delegate: WalkRepository = StoredWalkRepository(walks, points),
+) : WalkRepository by delegate {
 
     var everyPointCollections = 0
         private set
 
-    override fun observeAll(): Flow<List<Walk>> = flowOf(walks.sortedByDescending { it.startedAt })
-
-    override suspend fun openWalk(): Walk? = error("not needed by this test")
-
-    override suspend fun startIfNoneOpen(walk: Walk): Walk = error("read-only")
-
-    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean = error("read-only")
-
-    override suspend fun appendPoint(point: TrackPoint): Unit = error("read-only")
-
-    override suspend fun lastPoint(walkId: String): TrackPoint? = error("not needed by this test")
-
-    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = error("not needed by this test")
-
-    override suspend fun loadEveryPoint(): List<TrackPoint> = error("not needed by this test")
-
     override fun observeEveryPoint(): Flow<List<TrackPoint>> =
-        flowOf(points.sortedWith(compareBy({ it.walkId }, { it.at }))).onStart { everyPointCollections++ }
-
-    override suspend fun upsert(walk: Walk): Unit = error("read-only")
-
-    override suspend fun appendPoints(points: List<TrackPoint>): Unit = error("read-only")
+        delegate.observeEveryPoint().onStart { everyPointCollections++ }
 }

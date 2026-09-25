@@ -28,7 +28,10 @@ data class MapPoint(val id: String, val latitude: Double, val longitude: Double,
 /** The part of the world the map opens on, in degrees. */
 data class MapArea(val south: Double, val west: Double, val north: Double, val east: Double)
 
-/** An outing shown alone, with the [lines] drawn for it — see [MapStateMapper] for which route that is. */
+/**
+ * An outing shown alone, with the [lines] drawn for it: the tracks of the walks it overlaps, else its cats
+ * in the order they were seen.
+ */
 data class MapFocus(val outingId: String, val label: String, val lines: ImmutableList<MapLine>)
 
 data class MapLine(val positions: ImmutableList<MapPosition>)
