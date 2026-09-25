@@ -41,9 +41,11 @@ import kotlinx.coroutines.isActive
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
+import org.maplibre.compose.overlay.include
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.compose.map.MapState as MaplibreMapState
+import org.maplibre.compose.overlay.MapOverlay as LibraryOverlay
 
 // Vector tiles of OpenStreetMap data, free and keyless; the attribution the overlay draws is required.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
@@ -129,7 +131,12 @@ private fun CatsMap(
     val styleFailed = mapState.style.loadState is StyleLoadState.Failed
     val summary = pluralStringResource(R.plurals.map_summary, state.points.size, state.points.size)
     Box(modifier = modifier.semantics { contentDescription = summary }) {
-        MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
+        MaplibreMap(
+            modifier = Modifier.fillMaxSize(),
+            state = mapState,
+            cameraPadding = contentPadding,
+            overlay = { include(LibraryOverlay.AttributionOnly) },
+        )
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
         MapOverlay(
             state = state,
