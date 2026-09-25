@@ -45,9 +45,9 @@ import org.maplibre.compose.overlay.include
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.compose.map.MapState as MaplibreMapState
-import org.maplibre.compose.overlay.MapOverlay as LibraryOverlay
+import org.maplibre.compose.overlay.MapOverlay as MaplibreMapOverlay
 
-// Vector tiles of OpenStreetMap data, free and keyless; the attribution the overlay draws is required.
+// Vector tiles of OpenStreetMap data, free and keyless; their licence requires the library's attribution overlay.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
 private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
@@ -135,7 +135,7 @@ private fun CatsMap(
             modifier = Modifier.fillMaxSize(),
             state = mapState,
             cameraPadding = contentPadding,
-            overlay = { include(LibraryOverlay.AttributionOnly) },
+            overlay = { include(MaplibreMapOverlay.AttributionOnly) },
         )
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
         MapOverlay(

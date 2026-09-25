@@ -138,8 +138,10 @@ opening the map (above).
 - **No connection:** the dots sit on the map's style, so without the style there is nothing to draw
   them on. An area already seen loads from the cache; a first look with no connection says the map
   could not load, rather than showing an empty canvas.
-- **No compass and no scale:** the map draws only the attribution. Two fingers still turn it as on
-  any map, but nothing points north or turns it back; turning it back is by hand.
+- **No compass and no scale:** only the MapLibre logo and the attribution sit over the map. Two
+  fingers still turn and tilt it as on any map, and no control sets it straight; the view comes back
+  north-up and flat whenever it is fitted again, as when an outing is focused or let go, a cat's
+  coordinates open it, or the tab is left and reopened.
 - **TalkBack** hears how many cats the map shows; the dots themselves are not reachable yet, and a
   spot's list is read like the Encounters tab.
 - **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
