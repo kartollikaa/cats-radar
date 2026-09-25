@@ -36,7 +36,7 @@ class EncounterDaoTest {
         val original = fullEncounterEntity()
 
         dao.insert(original)
-        val loaded = dao.observeById(original.id).first()
+        val loaded = dao.observeById(original.id).first()?.encounter
 
         assertEquals(original, loaded)
     }
@@ -55,7 +55,7 @@ class EncounterDaoTest {
         val entity = fullEncounterEntity(id = "soft-deleted", deletedAt = Instant.parse("2026-09-21T00:00:00Z"))
         dao.insert(entity)
 
-        assertNull(dao.observeById(entity.id).first())
+        assertNull(dao.observeById(entity.id).first()?.encounter)
     }
 
     @Test
@@ -84,7 +84,7 @@ class EncounterDaoTest {
 
         assertEquals(
             mapOf("a" to batchAt, "b" to batchAt, "gone" to earlier, "untouched" to null),
-            dao.loadEvery().associate { it.id to it.deletedAt },
+            dao.loadEvery().map { it.encounter }.associate { it.id to it.deletedAt },
         )
     }
 
@@ -102,7 +102,7 @@ class EncounterDaoTest {
 
         assertEquals(
             mapOf("a" to null, "b" to null, "gone" to earlier),
-            dao.loadEvery().associate { it.id to it.deletedAt },
+            dao.loadEvery().map { it.encounter }.associate { it.id to it.deletedAt },
         )
     }
 

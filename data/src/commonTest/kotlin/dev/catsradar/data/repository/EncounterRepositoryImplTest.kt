@@ -1,7 +1,6 @@
 package dev.catsradar.data.repository
 
 import dev.catsradar.domain.model.CatCoat
-import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -15,92 +14,47 @@ class EncounterRepositoryImplTest {
 
     @Test
     fun observeAllMapsEntitiesToDomain() = runTest {
-        dao.observeAllResult = listOf(distinctEncounter().toEntity())
+        dao.observeAllResult = listOf(distinctEncounter().toRelation())
 
         assertEquals(listOf(distinctEncounter()), repository.observeAll().first())
     }
 
     @Test
     fun observeByIdDelegatesAndMaps() = runTest {
-        dao.observeByIdResult = distinctEncounter().toEntity()
+        dao.observeByIdResult = distinctEncounter().toRelation()
 
         assertEquals(distinctEncounter(), repository.observeById("encounter-id-1").first())
         assertEquals("encounter-id-1", dao.observeByIdCall)
     }
 
     @Test
-    fun insertMapsDomainToEntity() = runTest {
-        repository.insert(distinctEncounter())
+    fun insertWritesTheCatAndEveryPhotoOfIt() = runTest {
+        val cover = distinctEncounter().cover!!
+        val second = cover.copy(id = "photo-2", photoPath = "photos/b.jpg")
+        val cat = distinctEncounter().copy(photos = listOf(cover, second))
 
-        assertEquals(listOf(distinctEncounter().toEntity()), dao.inserted)
+        repository.insert(cat)
+
+        assertEquals(listOf(cat.toEntity()), dao.inserted)
+        assertEquals(listOf(cover.toEntity(), second.toEntity()), dao.insertedPhotos)
     }
 
     @Test
-    fun updateMapsDomainToEntity() = runTest {
-        dao.loadByIdResult = distinctEncounter().toEntity()
-
+    fun updateWritesOnlyTheCatsOwnRow() = runTest {
         repository.update(distinctEncounter())
 
         assertEquals(listOf(distinctEncounter().toEntity()), dao.updated)
+        assertEquals(emptyList(), dao.insertedPhotos + dao.addedPhotos)
     }
 
     @Test
-    fun updateKeepsThePhotoTheRowHasWhateverTheCatCarries() = runTest {
-        val here = distinctEncounter().toEntity()
-        dao.loadByIdResult = here
-        val offered = distinctEncounter().copy(photos = emptyList(), updatedAt = Instant.parse("2026-03-01T00:00:00Z"))
-
-        repository.update(offered)
-
-        assertEquals(
-            listOf(
-                offered.toEntity().copy(
-                    photoPath = here.photoPath,
-                    thumbPath = here.thumbPath,
-                    galleryUri = here.galleryUri,
-                    sourceMediaUri = here.sourceMediaUri,
-                    sourceDigest = here.sourceDigest,
-                )
-            ),
-            dao.updated,
-        )
-    }
-
-    @Test
-    fun updateOfARowThatIsGoneWritesNothing() = runTest {
-        repository.update(distinctEncounter())
-
-        assertEquals(emptyList(), dao.updated)
-    }
-
-    @Test
-    fun addPhotosRestoresEachPhotoOntoItsCatWithoutTouchingUpdatedAt() = runTest {
+    fun addPhotosHandsEveryPhotoToTheDao() = runTest {
         val first = distinctEncounter().cover!!
-        val second = first.copy(id = "encounter-id-2", encounterId = "encounter-id-2", photoPath = "photos/b.jpg")
+        val second = first.copy(id = "photo-2", encounterId = "encounter-id-2", photoPath = "photos/b.jpg")
 
         repository.addPhotos(listOf(first, second))
 
-        assertEquals(
-            listOf(
-                RestorePhotoCall(
-                    "encounter-id-1",
-                    first.photoPath,
-                    first.thumbPath,
-                    first.galleryUri,
-                    first.sourceMediaUri,
-                    first.sourceDigest,
-                ),
-                RestorePhotoCall(
-                    "encounter-id-2",
-                    "photos/b.jpg",
-                    first.thumbPath,
-                    first.galleryUri,
-                    first.sourceMediaUri,
-                    first.sourceDigest,
-                ),
-            ),
-            dao.restorePhotoCalls,
-        )
+        assertEquals(listOf(first.toEntity(), second.toEntity()), dao.addedPhotos)
     }
 
     @Test
@@ -126,34 +80,13 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
-    fun addPhotoForwardsEveryPhotoFieldToItsCatAndReportsWhetherARowWasWritten() = runTest {
-        val photo = EncounterPhoto(
-            id = "id-1",
-            encounterId = "id-1",
-            photoPath = "p.jpg",
-            thumbPath = "p_thumb.jpg",
-            galleryUri = "content://gallery/7",
-            sourceMediaUri = "content://media/external/images/media/7",
-            sourceDigest = "sha",
-            deviceId = "device-1",
-            addedAt = Instant.parse("2026-02-01T00:00:00Z"),
-        )
+    fun addPhotoHandsThePhotoOverStampedWithItsOwnTimeAndReportsWhetherItWasWritten() = runTest {
+        val photo = distinctEncounter().cover!!
 
         assertEquals(true, repository.addPhoto(photo))
-        assertEquals(
-            AttachPhotoCall(
-                "id-1",
-                "p.jpg",
-                "p_thumb.jpg",
-                "content://gallery/7",
-                "content://media/external/images/media/7",
-                "sha",
-                photo.addedAt,
-            ),
-            dao.attachPhotoCall,
-        )
+        assertEquals(AddPhotoCall(photo.toEntity(), photo.addedAt), dao.addPhotoCall)
 
-        dao.attachPhotoResult = 0
+        dao.addPhotoResult = false
         assertEquals(false, repository.addPhoto(photo))
     }
 
@@ -206,7 +139,7 @@ class EncounterRepositoryImplTest {
 
     @Test
     fun findBySourceDigestDelegatesAndMaps() = runTest {
-        dao.findBySourceDigestResult = distinctEncounter().toEntity()
+        dao.findBySourceDigestResult = distinctEncounter().toRelation()
 
         assertEquals(distinctEncounter(), repository.findBySourceDigest("digest-1"))
         assertEquals("digest-1", dao.findBySourceDigestCall)
