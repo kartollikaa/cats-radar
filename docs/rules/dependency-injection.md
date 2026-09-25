@@ -27,13 +27,15 @@ single<Haptics> { VibratorHaptics(androidContext().getSystemService(Vibrator::cl
 
 **Obtaining a collaborator** — banned outside the composition root:
 
-- a system service: `getSystemService(...)`, `NotificationManagerCompat.from(...)`;
+- a system service: `getSystemService(...)` or its KTX form `getSystemService<T>()`,
+  `NotificationManagerCompat.from(...)`;
 - an SDK singleton: `WorkManager.getInstance(...)`, `FirebaseAnalytics.getInstance(...)`,
-  `FirebaseCrashlytics.getInstance()`, any `*Manager.getInstance(...)`;
+  `FirebaseCrashlytics.getInstance()`, `Firebase.analytics`, any `*Manager.getInstance(...)`;
 - a client or store built from a `Context`: `LocationServices.get…Client(...)`, `Geocoder(context)`,
   `getSharedPreferences(...)`;
-- a class the Koin graph provides: a `*StateMapper`, a `*Store`, or any class with its own binding.
-  A mapper that needs another mapper takes it as a parameter.
+- a class the Koin graph provides: a `*StateMapper`, a `*Store`, or any class with its own binding —
+  by calling its constructor or by passing a reference to it (`::EncountersStateMapper`). A mapper
+  that needs another mapper takes it as a parameter.
 
 **`Context` is a dependency, not a locator.** Using its own members — resources and strings, files
 and directories, permission checks, `contentResolver`, starting a service — is fine. Using it to get
@@ -68,8 +70,11 @@ another service object is the case above.
 - **A supplier `() -> T`** — when every use needs a fresh instance: a `Geocoder` keeps the locale it
   was built with, so `AndroidReverseGeocoder` builds one per lookup.
 
-A platform object more than one class uses gets its own `single` (`WorkManager`,
-`NotificationManagerCompat`); one used by a single class is obtained inline in that class's binding.
+A platform object is obtained inline in its user's binding unless something must find it by type:
+it gets its own `single` when several classes take it (`WorkManager`, `NotificationManagerCompat`),
+when it reaches its user through `inject()` or `by inject()` (the Play Services client,
+`ActivityManager`), or when its user is bound by class so that `verify()` can check it
+(`FirebaseCrashlytics`).
 A `SharedPreferences` file is opened in the binding; its name is where its data lives, so it never
 changes.
 
@@ -88,12 +93,15 @@ worker takes constructor parameters like any other class.
   constructs a `*StateMapper` or `*Store`.
 - `KoinModulesTest` (`verify()`) proves every constructor parameter has a binding. It reads the
   constructor of the class a definition names; a definition bound to an interface
-  (`single<Haptics> { … }`) is not reflected.
+  (`single<Haptics> { … }`) is not reflected. A class that takes `Lazy<T>` is therefore bound by its
+  class (`single { FusedLocationProvider(…) } bind LocationProvider::class`): nothing opens the lazy
+  while the graph is built, so `verify()` is the only check that `T` has a binding.
 - `KoinRuntimeResolutionTest` starts the real modules, with WorkManager running as it is in the app,
   and resolves every type obtained by hand, so a missing binding fails a JVM test. It runs without
-  `FirebaseApp`, where `FirebaseCrashlytics` cannot be created, so the class that takes it is bound
-  by its class (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`) and
-  `verify()` covers it instead.
+  `FirebaseApp`, where `FirebaseCrashlytics` cannot be created: `NonFatalReporter` is proven bound by
+  its resolution reaching Crashlytics and failing there, and its user is bound by class
+  (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`) so that `verify()`
+  checks the `FirebaseCrashlytics` binding.
 
 No test sees a hand-built instance of a plain class with its own binding (`ImportBatches(context)`
 inside a scheduler); review catches that one.
@@ -102,6 +110,7 @@ inside a scheduler); review catches that one.
 
 1. Add it to the class's primary constructor.
 2. Bind it in the module for its layer; a platform object is obtained there, never in the class.
-3. Pass `Lazy<T>` only for an instance that is costly to create and may never be needed.
+3. Pass `Lazy<T>` only for an instance that is costly to create and may never be needed, and bind
+   the class that takes it by its class.
 4. If the class is resolved by hand (`koin.get()`, `by inject()`, `koinInject()`, `inject()`), add it
    to `KoinRuntimeResolutionTest`.

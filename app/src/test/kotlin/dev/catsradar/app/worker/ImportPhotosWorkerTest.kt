@@ -2,14 +2,13 @@ package dev.catsradar.app.worker
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
-import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.notification.importNotifier
 import dev.catsradar.app.photo.holdReadAccess
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.usecase.ImportSummary
@@ -55,7 +54,7 @@ class ImportPhotosWorkerTest {
                             workerParameters,
                             importPhotos,
                             batches,
-                            ImportNotifier(appContext, NotificationManagerCompat.from(appContext)),
+                            importNotifier(appContext),
                             RecordingNonFatalReporter(),
                         )
                 },

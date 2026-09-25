@@ -52,9 +52,10 @@ polymorphic key serialization once a non-JVM target exists); and `CatsRadarNavHo
 back stack from `rememberBottomNavBackStack()`, with no other `:app` source building or
 remembering a raw `NavBackStack` (`NavBackStackUsageTest`, see `app-shell.md`). And outside the
 composition root (`:app`'s `di` package and `CatsRadarApplication`) no production file looks up a
-platform service or SDK singleton — `getSystemService`, `getSharedPreferences`, `Geocoder(...)`,
-`LocationServices`, `WorkManager`/`NotificationManagerCompat`/Firebase `getInstance`/`from` — or
-constructs a `*StateMapper` or `*Store` (`DependencyLookupTest`, see
+platform service or SDK singleton — `getSystemService` (either form), `getSharedPreferences`,
+`Geocoder(...)`, `LocationServices`, `WorkManager`/`NotificationManagerCompat`/Firebase
+`getInstance`/`from`, `Firebase.analytics`/`crashlytics` — or constructs a `*StateMapper` or
+`*Store`, by call or by constructor reference (`DependencyLookupTest`, see
 `docs/rules/dependency-injection.md`). `*Intent`, `*Effect`, and `*StateMapper` naming has no Konsist
 test at all.
 

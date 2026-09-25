@@ -60,6 +60,7 @@ import dev.catsradar.domain.repository.TransactionRunner
 import dev.catsradar.domain.repository.WalkRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
@@ -82,7 +83,7 @@ val dataModule = module {
     single<Haptics> { VibratorHaptics(androidContext().getSystemService(Vibrator::class.java)) }
     single<FusedLocationProviderClient> { LocationServices.getFusedLocationProviderClient(androidContext()) }
     // Lazy: building the client reaches Play Services, which only a real location call should do.
-    single<LocationProvider> { FusedLocationProvider(androidContext(), inject(), get()) }
+    single { FusedLocationProvider(androidContext(), inject(), get()) } bind LocationProvider::class
     single<LocationPermissionRequestState> {
         SharedPreferencesLocationPermissionRequestState(preferences("location_permission"))
     }

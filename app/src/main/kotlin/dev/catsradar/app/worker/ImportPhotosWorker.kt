@@ -14,7 +14,7 @@ import kotlinx.coroutines.CancellationException
 typealias PhotoImport =
     suspend (sourceUris: List<String>, onProgress: (done: Int, total: Int) -> Unit) -> ImportSummary
 
-class ImportPhotosWorker(
+class ImportPhotosWorker internal constructor(
     context: Context,
     params: WorkerParameters,
     private val importPhotos: PhotoImport,

@@ -16,7 +16,7 @@ interface ImportScheduler {
     fun observe(): Flow<WorkInfo?>
 }
 
-class WorkManagerImportScheduler(
+class WorkManagerImportScheduler internal constructor(
     private val workManager: WorkManager,
     private val batches: ImportBatches,
     private val sdkInt: Int = Build.VERSION.SDK_INT,

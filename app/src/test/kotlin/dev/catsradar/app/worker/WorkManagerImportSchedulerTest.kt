@@ -1,7 +1,6 @@
 package dev.catsradar.app.worker
 
 import android.content.Context
-import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Configuration
@@ -12,7 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.WorkManagerTestInitHelper
-import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.notification.importNotifier
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.ImportSummary
@@ -60,7 +59,7 @@ class WorkManagerImportSchedulerTest {
                     workerParameters,
                     importPhotos,
                     batches,
-                    ImportNotifier(appContext, NotificationManagerCompat.from(appContext)),
+                    importNotifier(appContext),
                     RecordingNonFatalReporter(),
                 )
         }

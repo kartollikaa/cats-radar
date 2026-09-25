@@ -3,7 +3,6 @@ package dev.catsradar.app.notification
 import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
-import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -17,7 +16,7 @@ import kotlin.test.assertTrue
 class ImportNotifierTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val notifier = ImportNotifier(context, NotificationManagerCompat.from(context))
+    private val notifier = importNotifier(context)
 
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val shadowManager = shadowOf(manager)

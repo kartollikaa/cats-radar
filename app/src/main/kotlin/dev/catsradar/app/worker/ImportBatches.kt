@@ -5,7 +5,7 @@ import org.json.JSONArray
 import java.io.File
 import java.util.UUID
 
-class ImportBatches(context: Context) {
+internal class ImportBatches(context: Context) {
 
     // Not cacheDir: the system may clear it while a stopped run waits for its next attempt.
     private val directory = File(context.noBackupFilesDir, "import-batches")

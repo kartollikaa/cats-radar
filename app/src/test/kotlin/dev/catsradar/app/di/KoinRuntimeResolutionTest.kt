@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.ImportBatches
@@ -43,7 +44,10 @@ import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.core.error.InstanceCreationException
 import org.koin.core.parameter.parametersOf
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 
@@ -89,6 +93,9 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ImportNotifier>())
         assertNotNull(koin.get<WalkingNotifier>())
         assertNotNull(koin.get<ActivityManager>())
+        // A JVM test has no FirebaseApp: the reporter's binding is proven by reaching Crashlytics, which then refuses.
+        val noFirebase = assertFailsWith<InstanceCreationException> { koin.get<NonFatalReporter>() }
+        assertIs<IllegalStateException>(generateSequence<Throwable>(noFirebase) { it.cause }.last())
         assertNotNull(koin.get<Analytics>())
         assertNotNull(koin.get<ReverseGeocoder>())
         assertNotNull(koin.get<DeviceIdProvider>())

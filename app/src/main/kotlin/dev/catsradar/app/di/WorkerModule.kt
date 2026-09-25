@@ -33,7 +33,7 @@ import org.koin.dsl.module
 
 val workerModule = module {
     single { NotificationManagerCompat.from(androidContext()) }
-    // Valid only once WorkManager.initialize() has run, which CatsRadarApplication does right after startKoin().
+    // getInstance() throws until WorkManager.initialize() has run: nothing may resolve a WorkManager user earlier.
     single { WorkManager.getInstance(androidContext()) }
     single { FirebaseCrashlytics.getInstance() }
     single<ActivityManager> { androidContext().getSystemService(ActivityManager::class.java) }
