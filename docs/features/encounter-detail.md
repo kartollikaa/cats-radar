@@ -101,7 +101,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   two (`BottomNavigationTest`, *pushing a key already on the stack leaves the stack unchanged*).
 - **The cat is deleted, or given a photo some other way, while an attempt is running** — the screen
   shows no message of its own, since it already shows what the cat became: the "removed" state,
-  *Missing*, or the other photo (see [photos.md](./photos.md) for the attempt's files).
+  *Missing*, or the photo it was given first, with this one kept after it (see [photos.md](./photos.md)
+  for the attempt's files).
 - **Setting the coat while a photo is being attached** keeps both (see
   [coat.md](./coat.md#at-the-edges)).
 - **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown

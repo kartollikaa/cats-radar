@@ -3,7 +3,9 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterPhoto
+import dev.catsradar.domain.model.GalleryLink
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.galleryLink
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
@@ -73,7 +75,7 @@ class AttachPhotoTest {
             tally.copy(
                 photos = listOf(
                     EncounterPhoto(
-                        id = ID,
+                        id = "id-1",
                         encounterId = ID,
                         photoPath = FakeImageResizer.PHOTO_PATH,
                         thumbPath = FakeImageResizer.THUMB_PATH,
@@ -97,6 +99,7 @@ class AttachPhotoTest {
         attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
 
         assertEquals(listOf("id-1"), resizer.baseNames)
+        assertEquals("id-1", storedPhoto().id)
     }
 
     @Test
@@ -141,14 +144,36 @@ class AttachPhotoTest {
     }
 
     @Test
-    fun `a cat that already has a photo keeps it and nothing is copied`() = runTest {
-        val photo = tally.withPhoto(photoPath = "own.jpg", thumbPath = "own_thumb.jpg")
-        encounters.insert(photo)
+    fun `a cat that has a photo gets another after it and keeps the first`() = runTest {
+        val photographed = tally.withPhoto(photoPath = "own.jpg", thumbPath = "own_thumb.jpg", sourceDigest = "own")
+        encounters.insert(photographed)
 
-        assertEquals(AttachResult.NotAttachable, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+        assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
 
-        assertEquals(photo, stored())
+        val added = EncounterPhoto(
+            id = "id-1",
+            encounterId = ID,
+            photoPath = FakeImageResizer.PHOTO_PATH,
+            thumbPath = FakeImageResizer.THUMB_PATH,
+            galleryUri = null,
+            sourceMediaUri = PHONE_ITEM,
+            sourceDigest = FakeDigest.SHA,
+            deviceId = THIS_INSTALL,
+            addedAt = NOW,
+        )
+        assertEquals(photographed.copy(photos = photographed.photos + added, updatedAt = NOW), stored())
+    }
+
+    @Test
+    fun `a photo this cat already has is not added again and costs no disk`() = runTest {
+        val photographed = tally.withPhoto(sourceDigest = FakeDigest.SHA)
+        encounters.insert(photographed)
+
+        assertEquals(AttachResult.AlreadyThere, attachPhoto(ID, SOURCE, PhotoSource.CAMERA))
+
+        assertEquals(photographed, stored())
         assertEquals(0, resizer.calls)
+        assertEquals(0, gallery.calls)
     }
 
     @Test
@@ -265,23 +290,23 @@ class AttachPhotoTest {
     }
 
     @Test
-    fun `a cat another install logged keeps no link to a gallery item on this phone`() = runTest {
+    fun `a photo given to a cat another install logged keeps its picked item and names this install`() = runTest {
         encounters.insert(tally.copy(deviceId = "another-install"))
 
         attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
 
-        assertEquals(null, storedPhoto().sourceMediaUri)
-        assertEquals(FakeImageResizer.PHOTO_PATH, storedPhoto().photoPath)
+        assertEquals(PHONE_ITEM to THIS_INSTALL, storedPhoto().sourceMediaUri to storedPhoto().deviceId)
     }
 
     @Test
-    fun `a cat another install logged keeps no link to the original, which still goes to the gallery`() = runTest {
+    fun `a photo given to a cat another install logged opens its original here and not on that install`() = runTest {
         encounters.insert(tally.copy(deviceId = "another-install"))
 
         attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
 
-        assertEquals(1, gallery.calls)
-        assertEquals(null, storedPhoto().galleryUri)
+        assertEquals(FakeGallerySaver.URI, storedPhoto().galleryUri)
+        assertEquals(GalleryLink(FakeGallerySaver.URI, ownedByApp = true), storedPhoto().galleryLink(THIS_INSTALL))
+        assertEquals(null, storedPhoto().galleryLink("another-install"))
     }
 
     private companion object {

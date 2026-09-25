@@ -54,14 +54,17 @@ class EncounterDaoAttachPhotoTest {
     }
 
     @Test
-    fun attachPhotoNeverReplacesAPhotoTheRowAlreadyHas() = runTest {
+    fun attachPhotoAddsAnotherPhotoBesideTheOneTheRowHas() = runTest {
         val cat = tally("photo")
         val own = photoEntity("photo")
         dao.insertWithPhotos(cat, listOf(own))
+        val another = photoEntity("photo", id = "another")
 
-        assertFalse(dao.addPhoto(photoEntity("photo", id = "another"), UPDATED))
+        assertTrue(dao.addPhoto(another, UPDATED))
 
-        assertEquals(EncounterWithPhotos(cat, listOf(own)), dao.observeById("photo").first())
+        val stored = dao.observeById("photo").first()
+        assertEquals(cat.copy(updatedAt = UPDATED), stored?.encounter)
+        assertEquals(setOf(own, another), stored?.photos?.toSet())
     }
 
     @Test
