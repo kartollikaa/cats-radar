@@ -153,6 +153,11 @@ the way down from its full height closes it rather than stopping half open*). Ma
 sheets — `ModalBottomSheet`, `BottomSheetScaffold` and their states — stop a tall sheet halfway by
 default, so no other file uses them (`BottomSheetUsageTest`).
 
+**How a sheet looks.** A sheet opens on its header (`SheetHeader`). The header has a title in the
+large title style, which is a heading. When the title alone does not say what the sheet does, a
+line under it says so. The sheet's actions end it, at the end edge (`SheetActions`). The spot list,
+the coat question after a photo and the map's coat filter all follow it.
+
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
 wants springy motion gives its own animation a spring spec.
