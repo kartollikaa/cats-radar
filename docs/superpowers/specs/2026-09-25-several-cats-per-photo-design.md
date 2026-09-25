@@ -58,11 +58,17 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
 
 ## Backup
 
-Format **5** writes `shotId` on each photo record. A format 4 or older archive has none, so each of
-its photos is the first row of its own shot. Photos still merge by their own `id`, and `shotId`
-travels with its row. A shot whose first row is not in the archive still groups by that id, and joins
-the first row once a later import brings it. An app before format 5 refuses a new archive as too new,
-as it does for every format bump.
+Format **5** writes `shotId` on each photo record. A photo that starts its shot writes none, so its
+record reads exactly as format 4 wrote it. A format 4 or older archive has no `shotId` anywhere, so
+each of its photos is the first row of its own shot. Photos still merge by their own `id`, and
+`shotId` travels with its row. A shot whose first row is not in the archive still groups by that id,
+and joins the first row once a later import brings it. The archive carries every cat's own copy of
+the files, as it carries every file a photo row points at today.
+
+**The format number is what protects an older app.** The reader ignores keys it does not know. An app
+before this one, handed an archive that still said format 4, would read it, drop every `shotId`, and
+write the shots out as separate cats on its next export. Saying 5 makes that app refuse the archive as
+too new instead, the way it refuses any newer format.
 
 ## Adding cats to a photo
 
@@ -152,6 +158,63 @@ where a shot's cats are separate dots at one point, as any two cats logged in on
 
 Marking where each cat is on the photo; counting cats on the photo automatically; a shot badge on the
 map or in the Places area list; moving a cat from one shot to another; changing a shot's first cat.
+
+## Keeping export, import and the migration whole
+
+Merging needs no new rule. `BackupMerge` carries photos as whole rows keyed by their own id, the
+files already go one row at a time, and a gallery import already skips a photo by its digest, which
+every cat of a shot carries. What can break is a **silent loss of `shotId`**: at a mapping that
+forgets the field, at a format number that does not move, or in the migration. The shots would then
+come back as separate cats, and every test that looks only at cats would stay green. So:
+
+- **`EncounterPhoto.shotId` has no default value.** Each place that builds a photo has to state it,
+  so a new construction site cannot forget it. The archive's record and the Room entity need a
+  default of null to read older rows, and that is where a mapping can still drop the field without a
+  compile error. The round trips below cover exactly those mappings.
+- **Every round trip carries a non-null `shotId`.** Each of these tests uses a shot of three cats, one
+  with no coat:
+  - the entity mapper, both directions;
+  - the archive records, both directions;
+  - `ZipBackupArchiveTest.everyFieldOfEveryRowSurvivesTheRoundTrip`, written and read back as a
+    zip;
+  - `BackupRestoreTest` on a real database: export, wipe, import. It brings back the shot as one
+    group with every cat's coat and its own files. Imported again, it changes nothing.
+- **Older archives.** A format 4 archive, and a format 3 one through `carriedPhoto`, read with every
+  photo starting its own shot and every other field unchanged (`ZipBackupReaderOlderFormatTest`). The
+  archive says format 5, so a format 4 reader refuses it (mirroring
+  *anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt*).
+- **Merging across phones.** Each of these is a `BackupMerge` test:
+  - a phone holding the first two cats of a shot imports an archive with the third, and the third
+    joins the shot;
+  - a cat added on another phone with **+** joins the shot here;
+  - a first cat deleted here after the export stays deleted, and its shot's other cats stay grouped;
+  - an archive holding only a later cat of a shot restores it grouped by the missing first row's id.
+- **Files.**
+  - Purging one cat of a shot leaves every other cat's copy on disk (`PurgeDeletedTest`).
+  - An undone gallery import soft-deletes the imported cat only. A cat added to that photo with **+**
+    stays, with its own files (`UndoImportTest`).
+  - Importing the shot's photo from the gallery again is skipped while any of its cats is live.
+- **The migration v4 → v5**, in `CatsDatabaseMigrationTest` with the bundled driver:
+  - a v4 database holding the kinds of photo the v3 → v4 tests use (a camera photo with a gallery
+    original, a picked item, no thumbnail, a soft-deleted cat, another install's cat, a tally) reaches
+    v5 with the same number of cats and photos, every value unchanged, and a null `shotId` on every
+    photo;
+  - the same with foreign keys on, since a table rebuild with them on is what could take rows away;
+  - the app's own builder opening a v1, a v2 and a v3 file reaches v5. The existing purge test, which
+    removes a cat's photo rows with it, now runs at v5;
+  - `5.json` exported, with its test-asset copy kept identical by `SchemaAssetSyncTest`.
+- **Each of these tests is seen failing once, on purpose**, before it is trusted. The breaks: a
+  mapping that drops `shotId`, the format number left at 4, and a migration that loses a row. A
+  deliberately broken build must turn each test red.
+- **On a device**, at the end of slice 1:
+  - a build of `main` with real data (a camera photo, a gallery photo, a deleted cat, a walk) is
+    upgraded in place to the slice's build. Everything reads back, an export from each build imports
+    into the other, and the old one refuses the new archive as too new;
+  - the same export and import on the **release** APK, since R8 can strip what serialization needs
+    while every JVM test stays green.
+
+  At the end of slice 4, the same on a real shot of several cats: export, clear the app's data,
+  import, and the shot comes back as one tile with its badge.
 
 ## Slices
 
