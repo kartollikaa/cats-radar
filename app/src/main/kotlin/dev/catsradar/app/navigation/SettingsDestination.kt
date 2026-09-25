@@ -59,6 +59,7 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
         onBackupOutcomeDismiss = { store.dispatch(SettingsIntent.Backup.OutcomeDismissed) },
+        onCheckForUpdatesClick = { store.dispatch(SettingsIntent.UpdateCheckClicked) },
         onCopyBuildInfoClick = { store.dispatch(SettingsIntent.BuildInfoCopyClicked) },
     )
 }

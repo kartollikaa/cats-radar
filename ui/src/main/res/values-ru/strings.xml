@@ -219,6 +219,14 @@
     </plurals>
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
+    <string name="settings_updates">Обновления</string>
+    <string name="settings_updates_explained">Проверяет, нет ли новой версии в релизах приложения на GitHub</string>
+    <string name="settings_updates_check">Проверить обновления</string>
+    <string name="settings_updates_up_to_date">У вас последняя версия</string>
+    <string name="settings_updates_available">Доступна версия %1$s</string>
+    <string name="settings_updates_offline">Не удалось связаться с GitHub. Проверьте подключение и попробуйте ещё раз</string>
+    <string name="settings_updates_source_unavailable">GitHub не отдал список версий. Попробуйте позже</string>
+    <string name="settings_updates_unreadable">Не удалось разобрать ответ GitHub. Попробуйте позже</string>
     <string name="settings_about">О приложении</string>
     <string name="settings_about_version">Версия</string>
     <string name="settings_about_build">Сборка</string>

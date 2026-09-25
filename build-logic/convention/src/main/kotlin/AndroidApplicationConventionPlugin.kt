@@ -53,8 +53,13 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             // A sideloaded APK's download size outweighs unpacking its native libraries at install.
             onVariants(selector().withBuildType("release")) { it.packaging.jniLibs.useLegacyPackaging.set(true) }
             val commit = gitCommit()
+            val updateRepository = providers.gradleProperty("catsradar.updateRepository")
             onVariants { variant ->
                 variant.buildConfigFields?.put("GIT_COMMIT", commit.map { BuildConfigField("String", "\"$it\"", null) })
+                variant.buildConfigFields?.put(
+                    "UPDATE_REPOSITORY",
+                    updateRepository.map { BuildConfigField("String", "\"$it\"", null) },
+                )
             }
         }
     }
