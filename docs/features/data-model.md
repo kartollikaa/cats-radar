@@ -45,9 +45,9 @@ the purge. `softDelete` itself is guarded the same way in reverse — its `UPDAT
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
 *reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `addPhoto` is guarded both ways
-at once: it adds the photo row and stamps only `updatedAt`, and only on a live cat that has no photo,
-checked in the same transaction, so giving a cat a photo can neither bring back a deleted one nor
-replace a photo it has (`EncounterDaoAttachPhotoTest`). A backup's photos are added only where their id
+at once: it adds the photo row and stamps only `updatedAt`, and only on a live cat, checked in the same
+transaction, so giving a cat a photo can neither bring back a deleted one nor touch the photos it has
+(`EncounterDaoAttachPhotoTest`). A backup's photos are added only where their id
 is not here yet, leaving every cat's `updatedAt` alone (`EncounterDaoRestorePhotoTest`). `setCoat`
 writes only the `coat` column and `updatedAt`,
 `WHERE deletedAt IS NULL`, so changing a cat's coat can neither resurrect a deleted row nor undo a

@@ -71,6 +71,20 @@ class PhotoViewerStateMapperTest {
     }
 
     @Test
+    fun `a photo given here to a cat another install logged is offered here and not on that install`() {
+        val foreign = photographedCat(galleryUri = SAVED, deviceId = "another-install")
+        val attachedHere = foreign.copy(photos = foreign.photos.map { it.copy(deviceId = INSTALL) })
+        val onThatInstall = PhotoViewerStateMapper(
+            FakeDateTimeFormatter(),
+            FakePhotoStorage(root = "/data/photos"),
+            FakeDeviceIdProvider("another-install"),
+        )
+
+        assertEquals(true, mapper.map(attachedHere, TODAY)?.opensInGallery)
+        assertEquals(false, onThatInstall.map(attachedHere, TODAY)?.opensInGallery)
+    }
+
+    @Test
     fun `a photo with no original in the gallery offers nothing there`() {
         assertEquals(false, mapper.map(photographedCat(), TODAY)?.opensInGallery)
     }
