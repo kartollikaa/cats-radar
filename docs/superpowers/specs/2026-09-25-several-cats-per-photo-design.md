@@ -1,7 +1,7 @@
 # Several cats on one photo — design
 
 - **Date:** 2026-09-25
-- **Status:** design approved by the owner in chat, 2026-09-25; written spec awaiting review
+- **Status:** approved by the owner in chat, 2026-09-26
 - **Builds on:** [2026-09-21-cats-radar-design.md](./2026-09-21-cats-radar-design.md) §1 (counting),
   [2026-09-25-many-photos-per-cat-design.md](./2026-09-25-many-photos-per-cat-design.md)
 
@@ -168,9 +168,10 @@ forgets the field, at a format number that does not move, or in the migration. T
 come back as separate cats, and every test that looks only at cats would stay green. So:
 
 - **`EncounterPhoto.shotId` has no default value.** Each place that builds a photo has to state it,
-  so a new construction site cannot forget it. The archive's record and the Room entity need a
-  default of null to read older rows, and that is where a mapping can still drop the field without a
-  compile error. The round trips below cover exactly those mappings.
+  so a new construction site cannot forget it. The Room entity has no default either: Room fills a
+  missing column with null by itself. Only the archive's record needs a default of null, to read
+  older records, so its mapping is the one place that can still drop the field without a compile
+  error. The round trips below cover it and every other mapping.
 - **Every round trip carries a non-null `shotId`.** Each of these tests uses a shot of three cats, one
   with no coat:
   - the entity mapper, both directions;
@@ -206,31 +207,32 @@ come back as separate cats, and every test that looks only at cats would stay gr
 - **Each of these tests is seen failing once, on purpose**, before it is trusted. The breaks: a
   mapping that drops `shotId`, the format number left at 4, and a migration that loses a row. A
   deliberately broken build must turn each test red.
-- **On a device**, at the end of slice 1:
-  - a build of `main` with real data (a camera photo, a gallery photo, a deleted cat, a walk) is
-    upgraded in place to the slice's build. Everything reads back, an export from each build imports
-    into the other, and the old one refuses the new archive as too new;
-  - the same export and import on the **release** APK, since R8 can strip what serialization needs
-    while every JVM test stays green.
-
-  At the end of slice 4, the same on a real shot of several cats: export, clear the app's data,
-  import, and the shot comes back as one tile with its badge.
+- **On a device.** After the storage slice (S1), a build of `main` with real data (a camera photo, a
+  gallery photo, a deleted cat, a walk) is upgraded in place, and everything reads back. After the
+  format slice (S2), an export from each build imports into the other, and the old one refuses the
+  new archive as too new. The same export and import run on the **release** APK, since R8 can strip
+  what serialization needs while every JVM test stays green. After the coat sheet (S5), the same
+  runs on a real shot of several cats: export, clear the app's data, import, and the shot comes back
+  as one tile with its badge.
 
 ## Slices
 
-Each slice ships safely on its own. Nothing creates a shot of several cats until slice 4, and by then
-storage, backup and Encounters all handle one.
+Six slices, each safe to ship on its own; the map is
+[docs/tbd/decompositions/2026-09-25-several-cats-per-photo.md](../../tbd/decompositions/2026-09-25-several-cats-per-photo.md).
+Nothing creates a shot of several cats until S5, and by then storage, backup, the use case and
+Encounters all handle one.
 
-1. **Photos know their shot.** `shotId` on `EncounterPhoto`, database v5 and its migration test,
-   backup format 5 and the older-format reading.
-2. **Adding cats to a photo.** `AddCatsToPhoto`, the repository's all-or-nothing insert, the location
-   rules, and analytics.
-3. **Encounters shows one entry per shot.** Packing, the badge, opening the first cat, and selecting
-   by shot, in both layouts.
-4. **Counting cats in the coat sheet.** **Several**, the tray, the paw, **Save N cats**, strings in EN
-   and RU.
-5. **On this photo on the detail screen.** The row, switching between cats, and **+**.
+1. **S1 Photos know their shot.** `shotId` on `EncounterPhoto`, database v5 and its migration tests.
+2. **S2 Backup format 5 carries shots.** The record field, the format number, older formats, and the
+   round trips.
+3. **S3 Adding cats to a photo.** `AddCatsToPhoto`, the repository's all-or-nothing insert, the
+   location rules, and analytics.
+4. **S4 Encounters shows one entry per shot.** Packing, the badge, opening the first cat, and
+   selecting by shot, in both layouts.
+5. **S5 Counting cats in the coat sheet.** **Several**, the tray, the paw, **Save N cats**, strings in
+   EN and RU.
+6. **S6 On this photo on the detail screen.** The row, switching between cats, and **+**.
 
-Each slice updates its feature documents in the same PR: `data-model.md` and `backup.md` (1);
-`photos.md`, `location.md` and `analytics.md` (2); `browsing-cats.md` (3); `coat.md` (4);
-`encounter-detail.md` (5).
+Each slice updates its feature documents in the same PR: `data-model.md` (S1); `backup.md` (S2);
+`photos.md`, `location.md` and `analytics.md` (S3); `browsing-cats.md` (S4); `coat.md` (S5);
+`encounter-detail.md` (S6).
