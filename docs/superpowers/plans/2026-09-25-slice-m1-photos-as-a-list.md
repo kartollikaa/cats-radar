@@ -26,7 +26,7 @@ As V1–V3 (`docs/superpowers/plans/archive/`), plus:
 `data/…/repository/CarriedPhoto.kt` (`carriedPhoto(...)`, null when `photoPath` is null); `EncounterMapper` both ways through it; `EncounterRepositoryImpl.addPhoto` onto the existing guarded `attachPhoto` query, `updatedAt` = `addedAt`; `BackupRecords` through it. Tests: `EncounterMapperTest` (a row with a photo reads as one photo with the cat's id, install and creation time; a row with a thumbnail but no copy reads as none; a cat with a cover writes its columns; round trip), `EncounterRepositoryImplTest`, backup round trip; fixtures and `FakeEncounterDao`.
 
 ### Task 4: Presentation and app
-`EncountersStateMapper`, `CounterStateMapper`, `EncounterDetailStateMapper`, `PhotoViewerStateMapper` and `PhotoViewerStore` read the cover; presentation and app fixtures. State classes unchanged. Tests: the existing mapper and store tests, unchanged in what they assert.
+`EncountersStateMapper`, `CounterStateMapper`, `EncounterDetailStateMapper`, `PhotoViewerStateMapper` and `PhotoViewerStore` read the cover; presentation and app fixtures. State classes unchanged. Tests: the existing mapper and store tests, unchanged in what they assert, except the pair of a row with a thumbnail and no copy: such a row now reads as a cat without a photo (spec § The migration).
 
 ### Task 5: Docs, check, review
 `data-model.md` (photo fields as a list), `photos.md` (where the code lives); `./gradlew check`; `/code-review`; acceptance gate.

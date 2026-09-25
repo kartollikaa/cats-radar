@@ -130,4 +130,11 @@ class EncounterDaoTest {
         dao.softDelete(live.id, Instant.parse("2026-09-21T00:00:00Z"))
         assertNull(dao.findBySourceDigest("shared-digest"))
     }
+
+    @Test
+    fun sourceDigestLookupSkipsARowWhoseDigestHasNoCopy() = runTest {
+        dao.insert(fullEncounterEntity(id = "no-copy", sourceDigest = "orphan-digest").copy(photoPath = null))
+
+        assertNull(dao.findBySourceDigest("orphan-digest"))
+    }
 }
