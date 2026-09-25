@@ -19,7 +19,7 @@ class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
             else -> {
                 val total = view.children.sumOf { it.count }
                 RegionsState.Places(
-                    header = header(parent, view.self, total),
+                    header = header(parent, view, total),
                     section = parent.section(),
                     rows = view.children.map { it.toRow(total) }.toPersistentList(),
                 )
@@ -28,17 +28,27 @@ class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
         is RegionView.Cats -> when {
             view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE)
             else -> RegionsState.Cats(
-                header = header(parent, view.self, view.encounters.size),
+                header = header(parent, view, view.encounters.size),
                 rows = encountersMapper.map(view.encounters, today, grid = false).rows,
             )
         }
     }
 
-    private fun header(parent: RegionKey?, self: RegionNode?, total: Int): RegionsHeader? = when {
-        parent == null -> RegionsHeader(RegionsTitle.AllPlaces, total)
-        self != null -> RegionsHeader(RegionsTitle.Of(self.label.toRowLabel()), self.count)
-        else -> null
+    private fun header(parent: RegionKey?, view: RegionView, total: Int): RegionsHeader? {
+        val self = view.self
+        return when {
+            parent == null -> RegionsHeader(RegionsTitle.AllPlaces, total)
+            self != null -> RegionsHeader(
+                title = RegionsTitle.Of(self.label.toRowLabel()),
+                count = self.count,
+                flag = self.key.flag(),
+                trail = view.trail.map { RegionsCrumb(it.label.toRowLabel(), it.key.flag()) }.toPersistentList(),
+            )
+            else -> null
+        }
     }
+
+    private fun RegionKey.flag(): String? = (this as? RegionKey.Country)?.let { countryFlag(it.countryCode) }
 
     // An area and No location list cats, never places, so their answer is never shown.
     private fun RegionKey?.section(): RegionsSection = when (this) {
@@ -53,6 +63,7 @@ class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
         countLabel = count.toString(),
         share = if (total > 0) count.toFloat() / total else 0f,
         pseudo = key == RegionKey.Unresolved || key is RegionKey.NoCity || key == RegionKey.NoLocation,
+        flag = key.flag(),
     )
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {

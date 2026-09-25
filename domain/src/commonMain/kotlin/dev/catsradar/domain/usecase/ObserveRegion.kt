@@ -18,8 +18,20 @@ sealed interface RegionView {
     /** This level's node as the level above lists it; null at the top. */
     val self: RegionNode?
 
-    data class Places(val children: List<RegionNode>, override val self: RegionNode? = null) : RegionView
-    data class Cats(val encounters: List<Encounter>, override val self: RegionNode? = null) : RegionView
+    /** The nodes of the levels above this one, the outermost first; the top level is never among them. */
+    val trail: List<RegionNode>
+
+    data class Places(
+        val children: List<RegionNode>,
+        override val self: RegionNode? = null,
+        override val trail: List<RegionNode> = emptyList(),
+    ) : RegionView
+
+    data class Cats(
+        val encounters: List<Encounter>,
+        override val self: RegionNode? = null,
+        override val trail: List<RegionNode> = emptyList(),
+    ) : RegionView
 }
 
 class ObserveRegion(
@@ -31,15 +43,26 @@ class ObserveRegion(
     operator fun invoke(parent: RegionKey?): Flow<RegionView> =
         combine(encounterRepository.observeAll(), placeCellRepository.observeAll()) { encounters, cells ->
             val self = parent?.let { levelNode(it, encounters, cells) }
+            val trail = parent?.let { trail(it, encounters, cells) }.orEmpty()
             when (parent) {
                 null -> RegionView.Places(RegionTree.countries(encounters, cells))
                 is RegionKey.Country ->
-                    RegionView.Places(RegionTree.cities(parent.countryCode, encounters, cells), self)
-                is RegionKey.AreaParent -> RegionView.Places(RegionTree.areas(parent, encounters, cells), self)
+                    RegionView.Places(RegionTree.cities(parent.countryCode, encounters, cells), self, trail)
+                is RegionKey.AreaParent -> RegionView.Places(RegionTree.areas(parent, encounters, cells), self, trail)
                 is RegionKey.Area, RegionKey.NoLocation ->
-                    RegionView.Cats(RegionTree.encountersIn(parent, encounters, cells), self)
+                    RegionView.Cats(RegionTree.encountersIn(parent, encounters, cells), self, trail)
             }
         }.flowOn(computeDispatcher)
+
+    private fun trail(key: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): List<RegionNode> {
+        val above = when (key) {
+            is RegionKey.Country, RegionKey.Unresolved, RegionKey.NoLocation -> null
+            is RegionKey.City -> RegionKey.Country(key.countryCode)
+            is RegionKey.NoCity -> RegionKey.Country(key.countryCode)
+            is RegionKey.Area -> key.parent
+        } ?: return emptyList()
+        return trail(above, encounters, cells) + listOfNotNull(levelNode(above, encounters, cells))
+    }
 
     private fun levelNode(key: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): RegionNode? {
         val siblings = when (key) {
