@@ -2,7 +2,6 @@ package dev.catsradar.app.di
 
 import android.content.Context
 import dev.catsradar.domain.region.RegionKey
-import kotlinx.coroutines.CoroutineDispatcher
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.module
@@ -17,8 +16,8 @@ class KoinModulesTest {
     @Test
     fun `domain, data, presentation and worker modules resolve together`() {
         module { includes(domainModule, dataModule, presentationModule, workerModule) }
-            // verify() checks constructor types against bindings, so it is told about what arrives otherwise:
-            // parametersOf (Context, RegionKey, a spot's Sets) and the dispatcher ObserveWalkStats is built with.
-            .verify(extraTypes = listOf(Context::class, RegionKey::class, Set::class, CoroutineDispatcher::class))
+            // RegionKey and a spot's Sets are handed in with parametersOf when the screen opens, exactly
+            // like Context; verify() cannot see call-time parameters, so it has to be told.
+            .verify(extraTypes = listOf(Context::class, RegionKey::class, Set::class))
     }
 }
