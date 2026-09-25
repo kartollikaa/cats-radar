@@ -253,6 +253,9 @@ internal class FakePlaceCellRepository : PlaceCellRepository {
 
     override fun observeAll(): Flow<List<PlaceCell>> = cells
 
+    override fun observeById(cellId: String): Flow<PlaceCell?> =
+        cells.map { list -> list.firstOrNull { it.cellId == cellId } }
+
     override suspend fun upsert(cell: PlaceCell) {
         cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }
     }

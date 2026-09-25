@@ -140,6 +140,16 @@ class EncounterDetailStateMapperTest {
     }
 
     @Test
+    fun `a city named like its country shows the name once`() {
+        val place = EncounterPlace(countryCode = "SG", country = "Singapore", city = "Singapore")
+
+        assertEquals(
+            DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
     fun `a cat with no named place shows none`() {
         assertEquals(null, mapper.map(encounterFixture("e1", OCCURRED), today).place)
     }

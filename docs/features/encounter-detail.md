@@ -38,7 +38,8 @@ The **Where** section opens with the place the cat was found in, named the way P
 before both. The city is the cat's cell's locality, or its admin area when it has none, and a
 country with no name of its own shows its two-letter code (`ObserveEncounterPlaceTest`). A cell that
 names a country but no city — the cats Places lists under No city — shows the country alone, in the
-city's place (`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named
+city's place, and so does a city named like its country, such as Singapore, which would otherwise
+show the one name twice (`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named
 yet, has no place line; the section starts with where its coordinates came from. The line appears
 while the screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place
 reaches the screen once its cell is named*). TalkBack reads the city and the country with the rest of

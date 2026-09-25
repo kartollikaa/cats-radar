@@ -569,7 +569,7 @@ class EncounterDetailStoreTest {
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
-        observeEncounterPlace = ObserveEncounterPlace(repository, cells),
+        observeEncounterPlace = ObserveEncounterPlace(cells),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),

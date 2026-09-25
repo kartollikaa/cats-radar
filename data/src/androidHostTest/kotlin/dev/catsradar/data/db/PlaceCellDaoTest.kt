@@ -49,6 +49,17 @@ class PlaceCellDaoTest {
     }
 
     @Test
+    fun observeByIdEmitsOnlyItsOwnRowOnceItExists() = runTest {
+        dao.upsert(pendingPlaceCellEntity("other"))
+
+        assertEquals(null, dao.observeById("ucfv0h").first())
+
+        dao.upsert(pendingPlaceCellEntity("ucfv0h"))
+
+        assertEquals(pendingPlaceCellEntity("ucfv0h"), dao.observeById("ucfv0h").first())
+    }
+
+    @Test
     fun upsertPreservesLastAttemptAtAndResolvedAtThroughTheDatabase() = runTest {
         val cellId = "resolved-with-timestamps"
         val resolved = pendingPlaceCellEntity(cellId).copy(

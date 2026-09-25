@@ -18,8 +18,9 @@ import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -48,9 +49,8 @@ class EncounterDetailStore(
     private var leaving = false
 
     init {
-        combine(observeEncounter(encounterId), observeEncounterPlace(encounterId)) { encounter, place ->
-            encounter to place
-        }
+        observeEncounter(encounterId)
+            .flatMapLatest { encounter -> observeEncounterPlace(encounter).map { place -> encounter to place } }
             .onEach { (encounter, place) ->
                 lastSeen = encounter
                 lastPlace = place

@@ -47,11 +47,13 @@ class EncounterDetailStateMapper(
                 else -> AddPhoto.READY
             },
             onTheMap = encounter.isOnTheMap(),
-            place = place?.let {
+            place = place?.let { found ->
+                // A city-state's locality repeats its country's name.
+                val city = found.city?.takeIf { it != found.country }
                 DetailPlace(
-                    title = it.city ?: it.country,
-                    country = it.country.takeIf { _ -> it.city != null },
-                    flag = countryFlag(it.countryCode),
+                    title = city ?: found.country,
+                    country = if (city != null) found.country else null,
+                    flag = countryFlag(found.countryCode),
                 )
             },
         )

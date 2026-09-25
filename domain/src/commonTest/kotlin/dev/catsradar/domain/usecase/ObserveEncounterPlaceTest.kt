@@ -5,7 +5,6 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.region.EncounterPlace
-import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.encounterFixture
 import dev.catsradar.domain.testing.locatedFixture
@@ -21,10 +20,8 @@ class ObserveEncounterPlaceTest {
 
     private val cat = locatedFixture("cat", BASE, 41.390, 2.170)
 
-    private suspend fun placeOf(encounter: Encounter, vararg cells: PlaceCell): EncounterPlace? {
-        val encounters = FakeEncounterRepository().apply { insert(encounter) }
-        return ObserveEncounterPlace(encounters, FakePlaceCellRepository(cells.toList()))(encounter.id).first()
-    }
+    private suspend fun placeOf(encounter: Encounter?, vararg cells: PlaceCell): EncounterPlace? =
+        ObserveEncounterPlace(FakePlaceCellRepository(cells.toList()))(encounter).first()
 
     @Test
     fun `a located cat in a named cell is in that cell's city and country`() = runTest {
@@ -58,12 +55,19 @@ class ObserveEncounterPlaceTest {
     }
 
     @Test
+    fun `no cat, or a cat whose coordinates were cleared, is in no place even with its cell named`() = runTest {
+        val cleared = cat.copy(lat = null, lon = null)
+
+        assertNull(placeOf(null, placeCellFixture(cat)))
+        assertNull(placeOf(cleared, placeCellFixture(cat)))
+    }
+
+    @Test
     fun `the place appears once the cat's cell is named`() = runTest {
         val unnamed = placeCellFixture(cat, null, null, null, status = PlaceStatus.PENDING)
         val cells = FakePlaceCellRepository(listOf(unnamed))
-        val encounters = FakeEncounterRepository().apply { insert(cat) }
 
-        ObserveEncounterPlace(encounters, cells)(cat.id).test {
+        ObserveEncounterPlace(cells)(cat).test {
             assertNull(awaitItem())
 
             cells.upsert(placeCellFixture(cat))
