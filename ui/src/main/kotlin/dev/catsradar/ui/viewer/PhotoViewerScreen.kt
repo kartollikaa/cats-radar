@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -34,6 +38,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowProvider
@@ -41,11 +47,13 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import dev.catsradar.presentation.viewer.PhotoViewerState
+import dev.catsradar.presentation.viewer.ViewerPhoto
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.CenterAppBar
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import dev.catsradar.ui.theme.ViewerColors
+import kotlinx.collections.immutable.persistentListOf
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 
 @Composable
@@ -53,18 +61,31 @@ fun PhotoViewerScreen(
     state: PhotoViewerState,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onOpenInGalleryClick: () -> Unit = {},
+    onOpenInGalleryClick: (photoId: String) -> Unit = {},
 ) {
     var chromeVisible by rememberSaveable { mutableStateOf(true) }
     SystemBarsVisibility(visible = chromeVisible)
     Box(modifier = modifier.fillMaxSize().background(ViewerColors.Stage)) {
-        if (state is PhotoViewerState.Showing) {
-            ZoomableAsyncImage(
-                model = state.photoPath,
-                contentDescription = stringResource(R.string.detail_photo_description),
+        val showing = state as? PhotoViewerState.Showing
+        val pagerState = showing?.let { rememberPagerState(initialPage = it.firstPage) { it.photos.size } }
+        val onScreen = if (showing != null && pagerState != null) {
+            showing.photos.getOrNull(pagerState.currentPage)
+        } else {
+            null
+        }
+        if (showing != null && pagerState != null) {
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                onClick = { chromeVisible = !chromeVisible },
-            )
+                key = { showing.photos[it].id },
+            ) { page ->
+                ZoomableAsyncImage(
+                    model = showing.photos[page].path,
+                    contentDescription = stringResource(R.string.detail_photo_description),
+                    modifier = Modifier.fillMaxSize(),
+                    onClick = { chromeVisible = !chromeVisible },
+                )
+            }
         }
         AnimatedVisibility(
             visible = chromeVisible,
@@ -73,18 +94,46 @@ fun PhotoViewerScreen(
             exit = fadeOut(),
         ) {
             ViewerTopBar(
-                showing = state as? PhotoViewerState.Showing,
+                showing = showing,
+                opensInGallery = onScreen?.opensInGallery == true,
                 onBackClick = onBackClick,
-                onOpenInGalleryClick = onOpenInGalleryClick,
+                onOpenInGalleryClick = { onScreen?.let { onOpenInGalleryClick(it.id) } },
             )
         }
+        if (showing != null && pagerState != null && showing.photos.size > 1) {
+            AnimatedVisibility(
+                visible = chromeVisible,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                PagePosition(page = pagerState.currentPage, count = showing.photos.size)
+            }
+        }
     }
+}
+
+@Composable
+private fun PagePosition(page: Int, count: Int, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.viewer_position_description, page + 1, count)
+    Text(
+        text = stringResource(R.string.viewer_position, page + 1, count),
+        modifier = modifier
+            .navigationBarsPadding()
+            .padding(bottom = 24.dp)
+            .background(ViewerColors.ChromeScrim, CircleShape)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .semantics { contentDescription = description },
+        color = ViewerColors.OnStage,
+        style = MaterialTheme.typography.labelLarge,
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ViewerTopBar(
     showing: PhotoViewerState.Showing?,
+    opensInGallery: Boolean,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onOpenInGalleryClick: () -> Unit = {},
@@ -112,7 +161,7 @@ private fun ViewerTopBar(
                 }
             },
             endContent = {
-                if (showing?.opensInGallery == true) {
+                if (opensInGallery) {
                     IconButton(onClick = onOpenInGalleryClick) {
                         Icon(
                             painter = painterResource(R.drawable.ic_photo_library),
@@ -170,8 +219,11 @@ private fun PhotoViewerScreenLoadingPreview() {
 }
 
 private val sampleShowing = PhotoViewerState.Showing(
-    photoPath = "photos/5f1c2d9e-4b7a.jpg",
+    photos = persistentListOf(
+        ViewerPhoto(id = "5f1c2d9e", path = "photos/5f1c2d9e-4b7a.jpg", opensInGallery = true),
+        ViewerPhoto(id = "8a03b6c1", path = "photos/8a03b6c1-77d2.jpg"),
+    ),
+    firstPage = 0,
     timeLabel = "14:32",
     dayLabel = "Yesterday",
-    opensInGallery = true,
 )
