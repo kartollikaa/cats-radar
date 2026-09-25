@@ -2,7 +2,8 @@
 
 - **Date:** 2026-09-25
 - **Status:** decided autonomously on the owner's instruction ("continue in autonomous mode"), 2026-09-25;
-  the one owner call (*The update source*) was settled the same day: the repository is public
+  the owner keeps the source repository private and will choose where builds are published later, so the
+  Updates section is behind a runtime toggle until then (see *The update source*)
 - **Decomposition:** [docs/tbd/decompositions/2026-09-25-app-updates.md](../../tbd/decompositions/2026-09-25-app-updates.md)
 - **Builds on:** [docs/reference/releasing.md](../../reference/releasing.md) (how a release is published)
 
@@ -17,11 +18,12 @@
 
 ## The update source
 
-The releases are read anonymously from `kartollikaa/cats-radar`, which the owner made public on
-2026-09-25 so that they can be. The source is a build setting (`catsradar.updateRepository` in
-`gradle.properties`, `owner/name`); a private repository answers an anonymous request with `404`,
-which the check reports as the source being unavailable. **A token is never built into the APK**:
-anyone holding the file could read it out.
+Not chosen yet. The owner keeps the source repository private, and a private repository answers an
+anonymous request with `404`. The candidates are a public repository that carries only the releases
+(no code change: `catsradar.updateRepository` in `gradle.properties`) and a manifest file on Google
+Drive (a second `UpdateSource`). Until one is chosen, the Updates section is hidden behind the
+`in_app_updates` Remote Config flag, which is off unless set in the Firebase console. **A token is never
+built into the APK**: anyone holding the file could read it out.
 
 ## Settings, top to bottom
 

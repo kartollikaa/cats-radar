@@ -16,6 +16,8 @@
 | U2 | Check for updates | A Settings button reads the configured GitHub release list and says whether a newer version exists. | safe | ~650 | U1 | in-review |
 | U3 | Download and install an update | A newer version found by the check downloads in a worker, is verified, and installs through `PackageInstaller`. | safe | ~900 | U2 | in-review |
 | U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | in-review |
+| U5 | Updates behind a runtime toggle | The Updates section shows only while the `in_app_updates` Remote Config flag is on; off by default. | toggle:in_app_updates | ~350 | U4 | in-progress |
+| U6 | Remove the in_app_updates flag | Once a source is chosen and the section should always show, the flag and its port go. | safe | ~100 | U5 + a chosen source | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -63,11 +65,21 @@ bottom-up, each retargeted to `main` after the one below merges.
   that would otherwise hit the system's refusal dialog.
 - **Cleanup owed:** none.
 
+### Slice U5 — Updates behind a runtime toggle
+- **In scope:** the `FeatureToggles` port and `Feature` enum in `:domain`; `RemoteConfigFeatureToggles` in
+  `:data/androidMain` (Firebase Remote Config, real-time updates); `SettingsState.updatesShown`, the Store
+  following the flag; the section hidden while off; Koin; `updates.md`, `analytics.md` (what Remote Config sends).
+- **Out of scope:** choosing the update source.
+- **Ships safely because:** off by default — without a console parameter nothing about updates is shown.
+- **Cleanup owed:** U6 removes the flag once a source is chosen and the section should always show.
+
 ## Decision log
 
-- 2026-09-25: the owner made `kartollikaa/cats-radar` public, so the committed update source now answers.
-  Reading the live list showed v1.4.0-beta carrying a `-debug.apk` before its release APK; the feed now
-  skips debug builds (U2).
+- 2026-09-26: the owner keeps the source repository private and will choose where builds live later (a
+  public releases-only repository, or Google Drive). A slice U5 hides the Updates section behind a Firebase
+  Remote Config flag, off by default, so the chain can merge now. While the repository was briefly public,
+  its live list showed v1.4.0-beta carrying a `-debug.apk` before its release APK; the feed now skips debug
+  builds (U2).
 - 2026-09-25: map created. U3 is the largest slice because download without install would leave a
   user-visible dead end ("downloaded", nothing to do); splitting it by layer instead would ship dormant code
   reviewed without its caller.
