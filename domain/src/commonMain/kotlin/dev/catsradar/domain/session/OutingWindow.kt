@@ -17,8 +17,7 @@ data class OutingWindow(
 
 /** Null when no cat in [shown] is live. */
 fun outingWindow(encounters: List<Encounter>, shown: Set<String>): OutingWindow? {
-    // groupByOuting's sort is stable, so sorting by id first breaks a same-instant tie by id.
-    val outings = SessionSplitter.groupByOuting(encounters.sortedBy { it.id })
+    val outings = SessionSplitter.groupByOuting(encounters)
     val holdsShown: (List<Encounter>) -> Boolean = { outing -> outing.any { it.id in shown } }
     val oldest = outings.indexOfFirst(holdsShown)
     if (oldest == -1) return null
