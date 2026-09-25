@@ -10,6 +10,9 @@ import dev.catsradar.domain.model.locatedPoint
 /** One row of a region list: a real place, or one of the pseudo-nodes. */
 data class RegionNode(val key: RegionKey, val label: RegionLabel, val count: Int)
 
+/** [city] is null for a cell that names its country but no locality or admin area. */
+data class EncounterPlace(val countryCode: String, val country: String, val city: String?)
+
 sealed interface RegionKey {
     sealed interface AreaParent : RegionKey
 
@@ -102,6 +105,13 @@ object RegionTree {
                 )
             }
             .sortedByDescending { it.count }
+    }
+
+    /** The named place Places files [encounter] under; null while it sits in Not named yet or No location. */
+    fun placeOf(encounter: Encounter, cells: List<PlaceCell>): EncounterPlace? {
+        val cell = encounter.resolvedCell(cells.associateBy { it.cellId }) ?: return null
+        val countryCode = cell.countryCode ?: return null
+        return EncounterPlace(countryCode, country = cell.countryName ?: countryCode, city = cell.cityName())
     }
 
     fun encountersIn(parent: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): List<Encounter> {
