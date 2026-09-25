@@ -23,13 +23,14 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
 /**
- * A top bar whose title stays centred on the screen however wide [startContent] and [endContent]
- * are. It draws no background and applies no insets: both belong to [modifier].
+ * A top bar whose title is centred on the bar rather than between [startContent] and [endContent];
+ * [titlePadding] is what keeps the two clear of it. It draws no background and applies no insets:
+ * both belong to [modifier]. Without a [title] the bar offers no heading.
  */
 @Composable
 fun CenterAppBar(
     modifier: Modifier = Modifier,
-    title: @Composable () -> Unit = {},
+    title: (@Composable () -> Unit)? = null,
     startContent: @Composable () -> Unit = {},
     endContent: @Composable () -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(horizontal = 4.dp),
@@ -44,13 +45,15 @@ fun CenterAppBar(
         Box(modifier = Modifier.align(Alignment.CenterStart), contentAlignment = Alignment.Center) {
             startContent()
         }
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(titlePadding)
-                .semantics(mergeDescendants = true) { heading() },
-        ) {
-            ProvideTextStyle(MaterialTheme.typography.titleMedium) { title() }
+        if (title != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(titlePadding)
+                    .semantics(mergeDescendants = true) { heading() },
+            ) {
+                ProvideTextStyle(MaterialTheme.typography.titleMedium) { title() }
+            }
         }
         Box(modifier = Modifier.align(Alignment.CenterEnd), contentAlignment = Alignment.Center) {
             endContent()

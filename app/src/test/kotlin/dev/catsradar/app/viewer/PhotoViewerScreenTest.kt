@@ -9,6 +9,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -98,6 +99,14 @@ class PhotoViewerScreenTest {
 
         back().assertIsDisplayed()
         openInGallery().assertDoesNotExist()
+    }
+
+    @Test
+    fun `before the photo loads the bar offers back and names nothing`() {
+        compose.setContent { CatsRadarTheme { PhotoViewerScreen(state = PhotoViewerState.Loading) } }
+
+        back().assertIsDisplayed()
+        assertTrue(compose.onAllNodes(isHeading(), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
     }
 
     private fun show(

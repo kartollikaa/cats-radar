@@ -98,7 +98,11 @@ private fun ViewerTopBar(
                 .background(scrim)
                 .windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
                 .padding(bottom = 16.dp),
-            title = { if (showing != null) TakenAt(showing) },
+            title = if (showing != null) {
+                { TakenAt(showing) }
+            } else {
+                null
+            },
             startContent = {
                 IconButton(onClick = onBackClick) {
                     Icon(
