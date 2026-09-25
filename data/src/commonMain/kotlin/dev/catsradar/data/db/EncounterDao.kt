@@ -86,23 +86,16 @@ interface EncounterDao {
         updatedAt: Instant,
     )
 
-    @Query(
-        """
-        SELECT COUNT(*) FROM encounters
-        WHERE id = :id AND deletedAt IS NULL
-            AND NOT EXISTS (SELECT 1 FROM encounter_photos WHERE encounterId = :id)
-        """
-    )
-    suspend fun countLiveWithoutPhotos(id: String): Int
+    @Query("SELECT COUNT(*) FROM encounters WHERE id = :id AND deletedAt IS NULL")
+    suspend fun countLive(id: String): Int
 
     @Query("UPDATE encounters SET updatedAt = :updatedAt WHERE id = :id")
     suspend fun stampUpdatedAt(id: String, updatedAt: Instant)
 
-    // Checked and written in one transaction: a cat deleted, or given a photo, while its photo was being
-    // copied must get none.
+    // Checked and written in one transaction: a cat deleted while its photo was being copied must get none.
     @Transaction
     suspend fun addPhoto(photo: EncounterPhotoEntity, updatedAt: Instant): Boolean {
-        if (countLiveWithoutPhotos(photo.encounterId) == 0) return false
+        if (countLive(photo.encounterId) == 0) return false
         insertPhotos(listOf(photo))
         stampUpdatedAt(photo.encounterId, updatedAt)
         return true
