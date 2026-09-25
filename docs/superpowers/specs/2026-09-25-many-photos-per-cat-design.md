@@ -128,15 +128,16 @@ after a cat's first.
 
 ## The detail screen
 
-- The photos are a horizontal pager of the app's copies, with the position ("2 / 5") over the photo
-  when there is more than one. A tap opens the viewer on that photo.
+- The cat's cover, with a count badge when it has more than one photo; a tap opens the viewer on the
+  cover, and the viewer pages through the rest. A photo pager here would share its swipe with the pager
+  across the outing's cats (see [2026-09-25-outing-pager-design.md](./2026-09-25-outing-pager-design.md)).
 - **Add photo** — *Take a photo* and *Choose from gallery* — is always offered on a live cat, under
   its photos, or in place of them on a cat with none.
 - *Choose from gallery* opens the system picker for several images, up to `Tuning.ATTACH_BATCH_MAX`; a
   picker that ignores the limit is cut to it, as an import is.
 - The picked photos are attached one after another. While they are, both buttons are disabled and a
   progress bar shows how many are done; it stays until the observed cat carries every photo attached,
-  so the section never flickers back early. The pager then shows the newest.
+  so the section never flickers back early. The badge then counts them.
 - Messages after a batch: any photo that could not be attached → "Photo not attached", or "N photos
   not attached" for several; every picked photo already on the cat → "Already on this cat". A
   duplicate among photos that were added is skipped silently.

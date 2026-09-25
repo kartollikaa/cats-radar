@@ -18,7 +18,7 @@
 | M4 | Backup format 4 carries every photo | `encounter_photos.json` in the archive; older formats read by the migration's rule. | safe | ~450 | M3 | planned |
 | M5 | Attaching a photo to a cat that has one | `AttachPhoto` adds to any live cat, skips a photo already on it, keeps links on every cat. | safe | ~350 | M3 | planned |
 | M6 | The viewer pages through a cat's photos | `PhotoViewer(encounterId, photoId)` with a pager and a per-photo gallery link. | safe | ~550 | M3 | planned |
-| M7 | Adding photos from the detail screen | A pager of the cat's photos and an always-on *Add photo* with a multi-select gallery pick. | safe | ~650 | M4, M5, M6 | planned |
+| M7 | Adding photos from the detail screen | The cover with a count badge and an always-on *Add photo* with a multi-select gallery pick. | safe | ~650 | M4, M5, M6 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -83,8 +83,8 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice M7 — Adding photos from the detail screen
-- **In scope:** detail state with the photo list and the add section on every live cat; the pager and its
-  position; `PhotoClicked(photoId)`; the multi-select picker capped by `Tuning.ATTACH_BATCH_MAX`; the
+- **In scope:** detail state with the photo count and the add section on every live cat; the cover's count
+  badge; the multi-select picker capped by `Tuning.ATTACH_BATCH_MAX`; the
   sequential batch with progress, the wait for every attached photo, and the messages; EN/RU strings;
   `encounter-detail.md`, `photos.md`.
 - **Out of scope:** removing or reordering photos; a count on Encounters tiles.
@@ -92,6 +92,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-25: owner chose a **cover with a count badge** over a photo pager on the detail screen, which now
+  pages through the outing's cats ([2026-09-25-outing-pager.md](./2026-09-25-outing-pager.md)); paging photos
+  is the viewer's (M6). If P3 of that map lands first, M7 builds on its `CatPage`.
 
 - 2026-09-25: **M2 merged** as #153. Until the table exists, `update` kept a row's photo columns and a
   restore filled them only where empty; M3 replaces both.
