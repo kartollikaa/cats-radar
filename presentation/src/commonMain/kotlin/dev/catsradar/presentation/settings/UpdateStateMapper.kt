@@ -17,8 +17,10 @@ class UpdateStateMapper {
 
     // Rounded down, so a download never reads 100 % before it has ended.
     fun downloading(version: String, fraction: Float?): UpdateState = UpdateState(
-        UpdateStatus.Downloading(version, fraction?.let { (it * PERCENT).toInt().coerceIn(0, PERCENT) }),
-        UpdateAction.Busy,
+        status = fraction
+            ?.let { UpdateStatus.Downloading(version, (it * PERCENT).toInt().coerceIn(0, PERCENT)) }
+            ?: UpdateStatus.DownloadStarting(version),
+        action = UpdateAction.Busy,
     )
 
     fun ready(version: String): UpdateState =

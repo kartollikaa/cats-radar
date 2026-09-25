@@ -10,8 +10,9 @@ sealed interface UpdateStatus {
     data object Checking : UpdateStatus
     data object UpToDate : UpdateStatus
 
-    /** [percent] is null until the first bytes arrive. */
-    data class Downloading(val version: String, val percent: Int?) : UpdateStatus
+    /** Waiting for a network, or for the first bytes that tell the size. */
+    data class DownloadStarting(val version: String) : UpdateStatus
+    data class Downloading(val version: String, val percent: Int) : UpdateStatus
     data class ReadyToInstall(val version: String) : UpdateStatus
     data class Installing(val version: String) : UpdateStatus
     data class InstallFailed(val version: String) : UpdateStatus

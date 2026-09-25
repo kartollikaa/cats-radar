@@ -49,7 +49,7 @@ class UpdatesSectionTest {
         val words = mapOf(
             UpdateStatus.Idle to text(R.string.settings_updates_explained),
             UpdateStatus.UpToDate to text(R.string.settings_updates_up_to_date),
-            UpdateStatus.Downloading(v, percent = null) to text(R.string.settings_updates_downloading, v),
+            UpdateStatus.DownloadStarting(v) to text(R.string.settings_updates_downloading, v),
             UpdateStatus.Downloading(v, percent = 45) to text(R.string.settings_updates_downloading_percent, v, 45),
             UpdateStatus.ReadyToInstall(v) to text(R.string.settings_updates_ready, v),
             UpdateStatus.Installing(v) to text(R.string.settings_updates_installing, v),

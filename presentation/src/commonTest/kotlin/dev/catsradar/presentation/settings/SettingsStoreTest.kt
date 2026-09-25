@@ -374,7 +374,7 @@ class SettingsStoreTest {
 
             assertEquals(SettingsEffect.StartUpdateDownload("1.5.0-beta", newerApk), awaitItem())
             assertEquals(
-                UpdateState(UpdateStatus.Downloading("1.5.0-beta", percent = null), UpdateAction.Busy),
+                UpdateState(UpdateStatus.DownloadStarting("1.5.0-beta"), UpdateAction.Busy),
                 store.state.value.update,
             )
             cancelAndIgnoreRemainingEvents()

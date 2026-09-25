@@ -53,8 +53,9 @@ installs.
 - **Into the app's cache**, `cacheDir/updates/<version>.apk`. The folder is cleared before every
   download, so there is only ever one package, and a half-written `.part` never survives a failure.
   No storage permission is involved. Android may clear the cache; that costs a download, nothing more.
-- **Verified as it arrives** (`DownloadUpdate`): the file's SHA-256 is computed while it streams and must
-  equal the `sha256:` digest GitHub reports for the asset, and its size the asset's size. A mismatch
+- **Verified before it is kept**: `HttpPackageDownloader` computes the file's SHA-256 while it streams, and
+  `DownloadUpdate` requires it to equal the `sha256:` digest GitHub reports for the asset, and the size the
+  asset's size. A mismatch
   deletes the file and reports the download as failed; a truncated or swapped file never reaches the
   installer. An asset GitHub published without a digest is checked on its size alone.
 - GitHub's download link redirects to where the file lives; the download follows it.

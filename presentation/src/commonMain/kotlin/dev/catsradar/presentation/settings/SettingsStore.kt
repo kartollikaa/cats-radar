@@ -101,7 +101,8 @@ class SettingsStore(
     private fun downloadFailed(runId: String) {
         if (runId == handledDownloadRun) return
         handledDownloadRun = runId
-        if (state.value.update.status !is UpdateStatus.Downloading) return
+        val status = state.value.update.status
+        if (status !is UpdateStatus.Downloading && status !is UpdateStatus.DownloadStarting) return
         installWhenDownloaded = false
         setState { copy(update = updateStateMapper.downloadFailed()) }
     }

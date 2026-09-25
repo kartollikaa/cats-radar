@@ -144,7 +144,7 @@ not a release list.
 | Ready | "1.5.0-beta is ready to install" | Install 1.5.0-beta |
 | Needs permission | "Allow Cats Radar to install apps" | Open settings |
 | Installing | indeterminate progress while the system asks | disabled |
-| Failed | the reason | Check for updates, or Install for an install failure |
+| Failed | the reason | Check for updates (a failed install downloads the package afresh) |
 
 ### Where it lives
 

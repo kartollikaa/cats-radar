@@ -116,16 +116,10 @@ private fun UpdatesSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         when (val status = update.status) {
-            UpdateStatus.Checking, is UpdateStatus.Installing ->
+            UpdateStatus.Checking, is UpdateStatus.DownloadStarting, is UpdateStatus.Installing ->
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            is UpdateStatus.Downloading -> {
-                val percent = status.percent
-                if (percent == null) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                } else {
-                    LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
-                }
-            }
+            is UpdateStatus.Downloading ->
+                LinearProgressIndicator(progress = { status.percent / 100f }, modifier = Modifier.fillMaxWidth())
             else -> Unit
         }
         when (val action = update.action) {
@@ -146,10 +140,8 @@ private fun UpdatesSection(
 private fun UpdateStatus.message(): String = when (this) {
     UpdateStatus.Idle, UpdateStatus.Checking -> stringResource(R.string.settings_updates_explained)
     UpdateStatus.UpToDate -> stringResource(R.string.settings_updates_up_to_date)
-    is UpdateStatus.Downloading ->
-        percent
-            ?.let { stringResource(R.string.settings_updates_downloading_percent, version, it) }
-            ?: stringResource(R.string.settings_updates_downloading, version)
+    is UpdateStatus.DownloadStarting -> stringResource(R.string.settings_updates_downloading, version)
+    is UpdateStatus.Downloading -> stringResource(R.string.settings_updates_downloading_percent, version, percent)
     is UpdateStatus.ReadyToInstall -> stringResource(R.string.settings_updates_ready, version)
     is UpdateStatus.Installing -> stringResource(R.string.settings_updates_installing, version)
     is UpdateStatus.InstallFailed -> stringResource(R.string.settings_updates_install_failed, version)

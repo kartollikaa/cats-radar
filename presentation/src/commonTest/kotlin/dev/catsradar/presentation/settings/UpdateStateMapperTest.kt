@@ -26,7 +26,7 @@ class UpdateStateMapperTest {
         val check = UpdateCheck.Available(AppVersion.parse("v1.5.0-beta")!!, ReleasePackage("https://x/a.apk", 1, null))
 
         assertEquals(
-            UpdateState(UpdateStatus.Downloading("1.5.0-beta", percent = null), UpdateAction.Busy),
+            UpdateState(UpdateStatus.DownloadStarting("1.5.0-beta"), UpdateAction.Busy),
             mapper.map(check)
         )
     }
@@ -42,6 +42,14 @@ class UpdateStateMapperTest {
             ).map { (mapper.downloading("1.5.0-beta", it).status as UpdateStatus.Downloading).percent },
         )
         assertEquals(UpdateAction.Busy, mapper.downloading("1.5.0-beta", 0.5f).action)
+    }
+
+    @Test
+    fun `a download whose size is not known yet is starting`() {
+        assertEquals(
+            UpdateState(UpdateStatus.DownloadStarting("1.5.0-beta"), UpdateAction.Busy),
+            mapper.downloading("1.5.0-beta", fraction = null),
+        )
     }
 
     @Test
