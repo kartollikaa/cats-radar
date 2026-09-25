@@ -4,7 +4,7 @@ import com.lemonappdev.konsist.api.Konsist
 import org.junit.Test
 import kotlin.test.assertEquals
 
-/** Material's own sheet stops half open, which no sheet in the app may do. */
+/** Material's sheet stops a tall sheet half open by default, which no sheet in the app may do. */
 class BottomSheetUsageTest {
 
     @Test

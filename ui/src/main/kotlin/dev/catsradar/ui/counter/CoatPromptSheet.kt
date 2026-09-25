@@ -20,8 +20,8 @@ import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CoatPromptState
 import dev.catsradar.ui.R
-import dev.catsradar.ui.components.CatsRadarBottomSheet
 import dev.catsradar.ui.coat.CoatGrid
+import dev.catsradar.ui.components.CatsRadarBottomSheet
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 

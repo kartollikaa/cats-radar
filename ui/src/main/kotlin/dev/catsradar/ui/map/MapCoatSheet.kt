@@ -16,8 +16,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
-import dev.catsradar.ui.components.CatsRadarBottomSheet
 import dev.catsradar.ui.coat.CoatGrid
+import dev.catsradar.ui.components.CatsRadarBottomSheet
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableSet
