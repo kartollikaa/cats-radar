@@ -37,9 +37,70 @@ class EncounterRepositoryImplTest {
 
     @Test
     fun updateMapsDomainToEntity() = runTest {
+        dao.loadByIdResult = distinctEncounter().toEntity()
+
         repository.update(distinctEncounter())
 
         assertEquals(listOf(distinctEncounter().toEntity()), dao.updated)
+    }
+
+    @Test
+    fun updateKeepsThePhotoTheRowHasWhateverTheCatCarries() = runTest {
+        val here = distinctEncounter().toEntity()
+        dao.loadByIdResult = here
+        val offered = distinctEncounter().copy(photos = emptyList(), updatedAt = Instant.parse("2026-03-01T00:00:00Z"))
+
+        repository.update(offered)
+
+        assertEquals(
+            listOf(
+                offered.toEntity().copy(
+                    photoPath = here.photoPath,
+                    thumbPath = here.thumbPath,
+                    galleryUri = here.galleryUri,
+                    sourceMediaUri = here.sourceMediaUri,
+                    sourceDigest = here.sourceDigest,
+                )
+            ),
+            dao.updated,
+        )
+    }
+
+    @Test
+    fun updateOfARowThatIsGoneWritesNothing() = runTest {
+        repository.update(distinctEncounter())
+
+        assertEquals(emptyList(), dao.updated)
+    }
+
+    @Test
+    fun addPhotosRestoresEachPhotoOntoItsCatWithoutTouchingUpdatedAt() = runTest {
+        val first = distinctEncounter().cover!!
+        val second = first.copy(id = "encounter-id-2", encounterId = "encounter-id-2", photoPath = "photos/b.jpg")
+
+        repository.addPhotos(listOf(first, second))
+
+        assertEquals(
+            listOf(
+                RestorePhotoCall(
+                    "encounter-id-1",
+                    first.photoPath,
+                    first.thumbPath,
+                    first.galleryUri,
+                    first.sourceMediaUri,
+                    first.sourceDigest,
+                ),
+                RestorePhotoCall(
+                    "encounter-id-2",
+                    "photos/b.jpg",
+                    first.thumbPath,
+                    first.galleryUri,
+                    first.sourceMediaUri,
+                    first.sourceDigest,
+                ),
+            ),
+            dao.restorePhotoCalls,
+        )
     }
 
     @Test

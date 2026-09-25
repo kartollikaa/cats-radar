@@ -155,6 +155,9 @@ internal class InMemoryEncounters : EncounterRepository {
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =
         throw NotImplementedError("unused by these tests")
 
+    override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit =
+        throw NotImplementedError("unused by these tests")
+
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
         throw NotImplementedError("unused by these tests")
 

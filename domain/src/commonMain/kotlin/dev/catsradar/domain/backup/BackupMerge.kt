@@ -1,6 +1,7 @@
 package dev.catsradar.domain.backup
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 
@@ -13,22 +14,24 @@ object BackupMerge {
 
     fun merge(local: BackupContents, imported: BackupContents): MergeResult {
         val localById = local.encounters.associateBy { it.id }
+        val photosHere = local.encounters.flatMapTo(mutableSetOf()) { cat -> cat.photos.map { it.id } }
         var added = 0
         var updated = 0
         var unchanged = 0
         val encounters = mutableListOf<Encounter>()
+        val photos = mutableListOf<EncounterPhoto>()
 
         imported.encounters.oneRowPer(Encounter::id, ::isLaterEdit).forEach { candidate ->
             val existing = localById[candidate.id]
+            val writesRow = existing == null || replaces(offered = candidate, kept = existing)
+            val liveAfter = if (writesRow) candidate.deletedAt == null else existing?.deletedAt == null
+            // Photos merge by id, apart from the row: one here is never replaced, and only a live cat gains any.
+            val gained = if (liveAfter) candidate.photos.filter { photosHere.add(it.id) } else emptyList()
+            if (writesRow) encounters += candidate.copy(photos = emptyList())
+            photos += gained
             when {
-                existing == null -> {
-                    encounters += candidate
-                    added++
-                }
-                replaces(offered = candidate, kept = existing) -> {
-                    encounters += candidate
-                    updated++
-                }
+                existing == null -> added++
+                writesRow || gained.isNotEmpty() -> updated++
                 else -> unchanged++
             }
         }
@@ -43,6 +46,7 @@ object BackupMerge {
 
         return MergeResult(
             encounters = encounters,
+            photos = photos,
             placeCells = placeCells,
             walks = walks,
             trackPoints = trackPoints,
