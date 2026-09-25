@@ -23,7 +23,8 @@ User-Agent: CatsRadar/<versionName>
   checking needs a public repository, or a public one the releases are also published to.
 - **The list, not `/releases/latest`.** GitHub's "latest" skips pre-releases, and every Cats Radar release
   so far is one ([releasing.md](../reference/releasing.md)). Drafts are never listed. A release counts only
-  when it has an `.apk` asset; the `-mapping.zip` beside it is ignored.
+  when it has an `.apk` asset; the `-mapping.zip` beside it is ignored, and so is a `-debug.apk`, which
+  older releases attached and which is signed with another key than the release build.
 
 ## Which version is newer
 
