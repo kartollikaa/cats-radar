@@ -117,7 +117,7 @@ class CoatSheetsTest {
     }
 
     @Test
-    fun `the coat prompt leads with the photo when it has one`() {
+    fun `the coat prompt shows the photo when it has one`() {
         compose.setContent {
             CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(thumbPath = "/photos/just-taken_thumb.jpg")) }
         }

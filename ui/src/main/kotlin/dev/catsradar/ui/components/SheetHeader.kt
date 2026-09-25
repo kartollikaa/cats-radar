@@ -47,7 +47,6 @@ internal fun SheetHeader(
     }
 }
 
-/** A sheet's actions, at its end edge. */
 @Composable
 internal fun SheetActions(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, content = content)
