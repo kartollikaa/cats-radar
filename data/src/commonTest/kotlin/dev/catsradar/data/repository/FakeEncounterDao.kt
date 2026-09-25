@@ -71,7 +71,7 @@ internal class FakeEncounterDao : EncounterDao {
         insertedPhotos += photos
     }
 
-    override suspend fun countLiveWithoutPhotos(id: String): Int = error("addPhoto is recorded whole")
+    override suspend fun countLive(id: String): Int = error("addPhoto is recorded whole")
 
     override suspend fun stampUpdatedAt(id: String, updatedAt: Instant) = error("addPhoto is recorded whole")
 
