@@ -25,6 +25,7 @@ import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
 import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.ObserveWalkStats
 import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.domain.usecase.PruneInstalledUpdates
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
@@ -104,4 +105,5 @@ val domainModule = module {
     factoryOf(::ImportBackup)
     factoryOf(::CheckForUpdate)
     factoryOf(::DownloadUpdate)
+    factoryOf(::PruneInstalledUpdates)
 }

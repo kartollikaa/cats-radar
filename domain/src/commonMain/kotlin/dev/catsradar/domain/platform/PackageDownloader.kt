@@ -9,5 +9,8 @@ interface PackageDownloader {
      */
     suspend fun download(url: String, fileName: String, onProgress: suspend (Long) -> Unit): DownloadedPackage?
 
+    /** Paths of the packages kept from earlier downloads. */
+    suspend fun kept(): List<String>
+
     suspend fun discard(path: String)
 }

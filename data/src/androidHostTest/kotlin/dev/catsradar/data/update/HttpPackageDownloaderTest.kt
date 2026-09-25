@@ -98,6 +98,14 @@ class HttpPackageDownloaderTest {
     }
 
     @Test
+    fun theKeptPackagesAreListed() = runTest {
+        val before = downloader.kept()
+        val written = assertNotNull(downloader.download("$base/objects/cats-radar.apk", "1.5.0-beta.apk") {})
+
+        assertEquals(listOf(emptyList(), listOf(written.path)), listOf(before, downloader.kept()))
+    }
+
+    @Test
     fun aDiscardedPackageIsGone() = runTest {
         val written = assertNotNull(downloader.download("$base/objects/cats-radar.apk", "1.5.0-beta.apk") {})
 
