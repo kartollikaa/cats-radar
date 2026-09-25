@@ -17,6 +17,7 @@
 | U3 | Download and install an update | A newer version found by the check downloads in a worker, is verified, and installs through `PackageInstaller`. | safe | ~900 | U2 | planned |
 | U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | planned |
 | U5 | Updates behind a runtime toggle | The Updates section shows only while the `in_app_updates` Remote Config flag is on; off by default. | toggle:in_app_updates | ~350 | U4 | in-progress |
+| U6 | Remove the in_app_updates flag | Once a source is chosen and the section should always show, the flag and its port go. | safe | ~100 | U5 + a chosen source | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -70,8 +71,7 @@ bottom-up, each retargeted to `main` after the one below merges.
   following the flag; the section hidden while off; Koin; `updates.md`, `analytics.md` (what Remote Config sends).
 - **Out of scope:** choosing the update source.
 - **Ships safely because:** off by default — without a console parameter nothing about updates is shown.
-- **Cleanup owed:** once a source is chosen and the owner wants the section always on, remove the flag
-  (a later slice).
+- **Cleanup owed:** U6 removes the flag once a source is chosen and the section should always show.
 
 ## Decision log
 
