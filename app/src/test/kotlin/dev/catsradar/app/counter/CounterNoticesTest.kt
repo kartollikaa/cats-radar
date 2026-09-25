@@ -2,7 +2,11 @@ package dev.catsradar.app.counter
 
 import android.content.Context
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -14,6 +18,7 @@ import dev.catsradar.presentation.counter.ImportProgressState
 import dev.catsradar.presentation.counter.ImportSummaryState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
+import dev.catsradar.ui.counter.LocationHintAction
 import dev.catsradar.ui.theme.CatsRadarTheme
 import org.junit.Rule
 import org.junit.Test
@@ -22,7 +27,7 @@ import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
-class CounterImportStatusTest {
+class CounterNoticesTest {
 
     private val compose = createComposeRule()
 
@@ -32,29 +37,31 @@ class CounterImportStatusTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private var undos = 0
     private var dismissals = 0
+    private var tallyUndos = 0
+    private val hintActions = mutableListOf<LocationHintAction>()
 
     @Test
-    fun `a running import names itself and how far it got`() {
+    fun `a running import names itself and how far it got, read as one notice`() {
         show(counter.copy(importProgress = ImportProgressState(done = 7, total = 23)))
 
-        compose.onNodeWithText(context.getString(R.string.counter_import_running)).assertExists()
-        compose.onNodeWithText(context.getString(R.string.counter_import_progress, 7, 23)).assertExists()
+        compose.onNodeWithText(context.getString(R.string.counter_import_running))
+            .assertTextContains(context.getString(R.string.counter_import_progress, 7, 23))
         compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(7f / 23, 0f..1f))).assertExists()
     }
 
     @Test
-    fun `a finished import says what it added and offers Undo`() {
+    fun `a finished import says what it added, read as one notice, and offers its own Undo`() {
         val mixed = ImportSummaryState(added = 9, skipped = 3, failed = 1, undoable = true)
-        show(counter.copy(importSummary = mixed))
+        show(counter.copy(undoVisible = true, importSummary = mixed))
+        val added = plural(R.plurals.counter_import_added, 9)
 
-        listOf(
-            plural(R.plurals.counter_import_added, 9),
-            plural(R.plurals.counter_import_skipped, 3),
-            plural(R.plurals.counter_import_failed, 1),
-        ).forEach { compose.onNodeWithText(it).assertExists() }
-        compose.onNodeWithText(context.getString(R.string.counter_undo)).performClick()
+        compose.onNodeWithText(added)
+            .assertTextContains(plural(R.plurals.counter_import_skipped, 3))
+            .assertTextContains(plural(R.plurals.counter_import_failed, 1))
+        val importUndo = hasText(context.getString(R.string.counter_undo)) and hasAnySibling(hasText(added))
+        compose.onNode(importUndo).performClick()
 
-        assertEquals(1 to 0, undos to dismissals)
+        assertEquals(Triple(1, 0, 0), Triple(undos, dismissals, tallyUndos))
     }
 
     @Test
@@ -67,6 +74,17 @@ class CounterImportStatusTest {
         assertEquals(0 to 1, undos to dismissals)
     }
 
+    @Test
+    fun `the location hint offers Grant and Dismiss`() {
+        show(counter.copy(locationPermissionHintVisible = true))
+
+        compose.onNodeWithText(context.getString(R.string.counter_location_hint)).assertHasNoClickAction()
+        compose.onNodeWithText(context.getString(R.string.counter_location_grant)).performClick()
+        compose.onNodeWithText(context.getString(R.string.counter_location_dismiss)).performClick()
+
+        assertEquals(listOf(LocationHintAction.GRANT, LocationHintAction.DISMISS), hintActions)
+    }
+
     private fun plural(id: Int, count: Int) = context.resources.getQuantityString(id, count, count)
 
     private fun show(state: CounterState) {
@@ -74,6 +92,8 @@ class CounterImportStatusTest {
             CatsRadarTheme {
                 CounterScreen(
                     state = state,
+                    onUndoClick = { tallyUndos++ },
+                    onLocationHintAction = { hintActions += it },
                     onUndoImportClick = { undos++ },
                     onImportSummaryDismiss = { dismissals++ },
                 )
