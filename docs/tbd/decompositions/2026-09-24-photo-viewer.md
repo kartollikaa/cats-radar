@@ -54,7 +54,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - 2026-09-25: **V3 in review.** The picked item is read off the URI, never queried: the app holds no
   permission to read the gallery. A picked link is opened without an existence check and without a grant;
   a deleted one is the gallery's own "not found". The field raised the backup format, so an app before it
-  refuses a new archive rather than dropping the links.
+  refuses a new archive rather than dropping the links. Review found that `AttachPhoto` recorded a link on a
+  cat another install logged, which would open a different picture once the row went home; such a cat now
+  keeps no link of either kind. It also found the backup reader's cut-off guard keyed on the current format
+  only, which the bump would have lifted from format-2 archives; it now covers every format since walks.
 - 2026-09-25: **V2 merged** as #131. The read grant moved to the shell after review: it always asks for it
   and sends the view again without it when Android refuses, which is also how V3's picked links open. The
   picker URIs V3 parses were captured on an API 37 AVD before any code: `picker_get_content/…/media/<id>`
