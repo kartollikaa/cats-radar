@@ -18,11 +18,10 @@ class ImportPhotosWorker(
     context: Context,
     params: WorkerParameters,
     private val importPhotos: PhotoImport,
+    private val batches: ImportBatches,
     private val notifier: ImportNotifier,
     private val reporter: NonFatalReporter,
 ) : CoroutineWorker(context, params) {
-
-    private val batches = ImportBatches(context)
 
     override suspend fun doWork(): Result {
         val uris = batches.read(id)

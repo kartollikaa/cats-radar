@@ -37,12 +37,11 @@ private const val NOTIFICATION_ID = 2
  */
 class WalkingNotifier(
     private val context: Context,
+    private val manager: NotificationManagerCompat,
+    private val recording: WalkRecordingControl,
     private val clock: Clock,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : WalkingNotifications {
-
-    private val manager = NotificationManagerCompat.from(context)
-    private val recording = WalkRecordingControl(context)
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.CINNAMON_BUN)
     private val hasMetricStyle = sdkInt >= Build.VERSION_CODES.CINNAMON_BUN

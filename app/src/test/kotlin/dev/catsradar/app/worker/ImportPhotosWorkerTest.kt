@@ -2,6 +2,7 @@ package dev.catsradar.app.worker
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker
@@ -53,7 +54,8 @@ class ImportPhotosWorkerTest {
                             appContext,
                             workerParameters,
                             importPhotos,
-                            ImportNotifier(appContext),
+                            batches,
+                            ImportNotifier(appContext, NotificationManagerCompat.from(appContext)),
                             RecordingNonFatalReporter(),
                         )
                 },

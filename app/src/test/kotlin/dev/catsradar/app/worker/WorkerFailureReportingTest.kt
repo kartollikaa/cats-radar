@@ -1,11 +1,13 @@
 package dev.catsradar.app.worker
 
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ListenableWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
@@ -63,6 +65,7 @@ class WorkerFailureReportingTest {
         }
         single { ResolvePendingPlaces(failing(error), failing(error), Clock.System) }
         single { PurgeDeleted(failing(error), failing(error), Clock.System) }
+        single { GeocodeWorkScheduler(lazy { WorkManager.getInstance(context) }) }
         single<NonFatalReporter> { reporter }
     }
 
@@ -78,7 +81,8 @@ class WorkerFailureReportingTest {
 
     private fun importWorker(error: Throwable): CoroutineWorker {
         val runId = UUID.randomUUID()
-        ImportBatches(context).replaceWith(runId, listOf("content://media/1"))
+        val batches = ImportBatches(context)
+        batches.replaceWith(runId, listOf("content://media/1"))
         return TestListenableWorkerBuilder<ImportPhotosWorker>(context)
             .setId(runId)
             .setWorkerFactory(
@@ -91,7 +95,8 @@ class WorkerFailureReportingTest {
                         appContext,
                         workerParameters,
                         { _, _ -> throw error },
-                        ImportNotifier(appContext),
+                        batches,
+                        ImportNotifier(appContext, NotificationManagerCompat.from(appContext)),
                         reporter,
                     )
                 },

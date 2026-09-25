@@ -10,19 +10,19 @@ import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class SharedPreferencesLocationPermissionRequestStateTest {
+    private val prefs = ApplicationProvider.getApplicationContext<Context>()
+        .getSharedPreferences("location_permission", Context.MODE_PRIVATE)
+
     @Test
     fun startsUnrequestedForAFreshInstall() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-
-        assertFalse(SharedPreferencesLocationPermissionRequestState(context).alreadyRequested)
+        assertFalse(SharedPreferencesLocationPermissionRequestState(prefs).alreadyRequested)
     }
 
     @Test
     fun markingRequestedPersistsAcrossANewInstance() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        SharedPreferencesLocationPermissionRequestState(context).markRequested()
+        SharedPreferencesLocationPermissionRequestState(prefs).markRequested()
 
         // A fresh instance, as process death would produce, must still see the persisted flag.
-        assertTrue(SharedPreferencesLocationPermissionRequestState(context).alreadyRequested)
+        assertTrue(SharedPreferencesLocationPermissionRequestState(prefs).alreadyRequested)
     }
 }

@@ -79,7 +79,7 @@ class WalkRecordingService : Service(), KoinComponent {
 }
 
 /** Starts and stops [WalkRecordingService] on the walking notification's behalf. */
-internal class WalkRecordingControl(private val context: Context) {
+class WalkRecordingControl(private val context: Context) {
     @Volatile
     private var started = false
 

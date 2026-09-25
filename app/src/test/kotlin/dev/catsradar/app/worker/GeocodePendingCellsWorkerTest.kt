@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Data
 import androidx.work.ListenableWorker
+import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
@@ -39,6 +40,7 @@ class GeocodePendingCellsWorkerTest {
             modules(
                 module {
                     single { resolve }
+                    single { GeocodeWorkScheduler(lazy { WorkManager.getInstance(context) }) }
                     single<NonFatalReporter> { RecordingNonFatalReporter() }
                 },
             )

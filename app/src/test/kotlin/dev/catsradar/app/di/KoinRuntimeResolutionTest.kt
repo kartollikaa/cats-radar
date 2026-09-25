@@ -1,12 +1,23 @@
 package dev.catsradar.app.di
 
+import android.app.ActivityManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.app.worker.BackupScheduler
+import dev.catsradar.app.worker.GeocodeWorkScheduler
+import dev.catsradar.app.worker.ImportBatches
+import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.PlaceNamingTrigger
+import dev.catsradar.app.worker.PurgeWorkScheduler
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
 import dev.catsradar.domain.platform.GallerySaver
@@ -14,6 +25,7 @@ import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.ReverseGeocoder
 import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
@@ -59,8 +71,21 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<EncounterDao>())
         assertNotNull(koin.get<Haptics>())
         assertNotNull(koin.get<LocationProvider>())
+        // WorkManager is never initialized here, so a scheduler that reached for it while being built fails.
         assertNotNull(koin.get<LocationAttachScheduler>())
+        assertNotNull(koin.get<ImportScheduler>())
+        assertNotNull(koin.get<BackupScheduler>())
         assertNotNull(koin.get<PlaceNamingTrigger>())
+        assertNotNull(koin.get<GeocodeWorkScheduler>())
+        assertNotNull(koin.get<PurgeWorkScheduler>())
+        assertNotNull(koin.get<ImportBatches>())
+        assertNotNull(koin.get<ImportNotifier>())
+        assertNotNull(koin.get<WalkingNotifier>())
+        assertNotNull(koin.get<ActivityManager>())
+        assertNotNull(koin.get<Analytics>())
+        assertNotNull(koin.get<NonFatalReporter>())
+        assertNotNull(koin.get<ReverseGeocoder>())
+        assertNotNull(koin.get<DeviceIdProvider>())
         assertNotNull(koin.get<ExifReader>())
         assertNotNull(koin.get<ImportPhotos>())
         assertNotNull(koin.get<ExportBackup>())

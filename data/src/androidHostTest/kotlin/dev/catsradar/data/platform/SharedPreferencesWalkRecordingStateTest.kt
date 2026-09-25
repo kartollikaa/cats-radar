@@ -11,25 +11,26 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 class SharedPreferencesWalkRecordingStateTest {
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val prefs = ApplicationProvider.getApplicationContext<Context>()
+        .getSharedPreferences("walk_recording", Context.MODE_PRIVATE)
 
     @Test
     fun aFreshInstallIsNotRecording() {
-        assertFalse(SharedPreferencesWalkRecordingState(context).recording)
+        assertFalse(SharedPreferencesWalkRecordingState(prefs).recording)
     }
 
     @Test
     fun aRecordingMarkOutlivesTheInstanceThatSetIt() {
-        SharedPreferencesWalkRecordingState(context).markRecording()
+        SharedPreferencesWalkRecordingState(prefs).markRecording()
 
-        assertTrue(SharedPreferencesWalkRecordingState(context).recording)
+        assertTrue(SharedPreferencesWalkRecordingState(prefs).recording)
     }
 
     @Test
     fun stoppingClearsTheMarkForTheNextInstance() {
-        SharedPreferencesWalkRecordingState(context).markRecording()
-        SharedPreferencesWalkRecordingState(context).markStopped()
+        SharedPreferencesWalkRecordingState(prefs).markRecording()
+        SharedPreferencesWalkRecordingState(prefs).markStopped()
 
-        assertFalse(SharedPreferencesWalkRecordingState(context).recording)
+        assertFalse(SharedPreferencesWalkRecordingState(prefs).recording)
     }
 }

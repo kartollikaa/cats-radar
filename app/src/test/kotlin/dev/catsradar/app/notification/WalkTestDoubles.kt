@@ -1,5 +1,8 @@
 package dev.catsradar.app.notification
 
+import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
@@ -32,6 +35,14 @@ internal val WalkStart = Instant.parse("2026-09-23T09:00:00Z")
 internal object WalkClock : Clock {
     override fun now(): Instant = WalkStart + 20.minutes
 }
+
+internal fun walkingNotifier(context: Context, sdkInt: Int = Build.VERSION.SDK_INT) = WalkingNotifier(
+    context = context,
+    manager = NotificationManagerCompat.from(context),
+    recording = WalkRecordingControl(context),
+    clock = WalkClock,
+    sdkInt = sdkInt,
+)
 
 internal class TrackingOnlyLocationProvider(private val fixes: Flow<LocationFix>) : LocationProvider {
     override suspend fun getCurrentFix(timeout: Duration): LocationFix? = null

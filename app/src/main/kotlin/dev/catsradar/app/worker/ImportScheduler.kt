@@ -1,6 +1,5 @@
 package dev.catsradar.app.worker
 
-import android.content.Context
 import android.os.Build
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -18,15 +17,11 @@ interface ImportScheduler {
 }
 
 class WorkManagerImportScheduler(
-    context: Context,
+    workManager: Lazy<WorkManager>,
+    private val batches: ImportBatches,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : ImportScheduler {
-    private val appContext = context.applicationContext
-
-    // Lazy for the same reason as the location scheduler: WorkManager.initialize() runs after Koin.
-    private val workManager by lazy { WorkManager.getInstance(appContext) }
-
-    private val batches = ImportBatches(appContext)
+    private val workManager by workManager
 
     override fun start(uris: List<String>) {
         val requestBuilder = OneTimeWorkRequestBuilder<ImportPhotosWorker>()

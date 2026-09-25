@@ -10,6 +10,7 @@ Personal cat-encounter counter. Android-first Kotlin Multiplatform; design spec 
 - Rules (all binding):
   - @docs/rules/module-structure.md
   - @docs/rules/mvi-architecture.md
+  - @docs/rules/dependency-injection.md
   - @docs/rules/compose-patterns.md
   - @docs/rules/compose-preview-patterns.md
   - @docs/rules/date-time.md

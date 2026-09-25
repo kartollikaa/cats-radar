@@ -1,6 +1,5 @@
 package dev.catsradar.app.worker
 
-import android.content.Context
 import android.os.Build
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
@@ -9,14 +8,10 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 
 class WorkManagerLocationAttachScheduler(
-    context: Context,
+    workManager: Lazy<WorkManager>,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : LocationAttachScheduler {
-    private val appContext = context.applicationContext
-
-    // Lazy: WorkManager.initialize() runs in CatsRadarApplication.onCreate(), after Koin starts;
-    // resolving this eagerly for DI-graph checks must not require WorkManager already running.
-    private val workManager by lazy { WorkManager.getInstance(appContext) }
+    private val workManager by workManager
 
     // Named by encounter id so undo can cancel it by that same name. Cancellation is best-effort
     // (the worker may already be mid-flight); EncounterDao.attachLocation's own deletedAt guard
