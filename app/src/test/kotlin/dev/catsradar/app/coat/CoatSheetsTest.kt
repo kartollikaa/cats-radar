@@ -1,6 +1,9 @@
 package dev.catsradar.app.coat
 
 import android.content.Context
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
@@ -13,12 +16,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CoatPromptState
+import dev.catsradar.presentation.map.MapSpotState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
 import dev.catsradar.ui.counter.CoatPrompt
 import dev.catsradar.ui.map.MapCoatFilter
+import dev.catsradar.ui.map.MapSpotScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import org.junit.Rule
 import org.junit.Test
@@ -117,6 +123,16 @@ class CoatSheetsTest {
         }
 
         compose.onNodeWithContentDescription(context.getString(R.string.counter_coat_prompt_photo)).assertExists()
+    }
+
+    @Test
+    fun `a spot's list opens on the same sheet heading`() {
+        compose.setContent {
+            CatsRadarTheme { MapSpotScreen(state = MapSpotState.Listed(catCount = 3, rows = persistentListOf())) }
+        }
+
+        val title = context.resources.getQuantityString(R.plurals.map_spot_title, 3, 3)
+        compose.onNodeWithText(title).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
     }
 
     private fun showFilter(shown: ImmutableSet<CoatOption?>) {
