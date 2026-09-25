@@ -8,19 +8,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
@@ -33,12 +27,14 @@ import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsEmptyHint
 import dev.catsradar.presentation.regions.RegionsEmptyLabel
 import dev.catsradar.presentation.regions.RegionsHeader
 import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.encounters.EncounterRows
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -56,7 +52,7 @@ fun RegionsScreen(
 ) {
     when (state) {
         RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
-        is RegionsState.Empty -> EmptyRegions(state.label, modifier = modifier.fillMaxSize().padding(contentPadding))
+        is RegionsState.Empty -> EmptyRegions(state, modifier = modifier.fillMaxSize().padding(contentPadding))
         is RegionsState.Places -> Column(
             modifier = modifier
                 .fillMaxSize()
@@ -70,50 +66,48 @@ fun RegionsScreen(
                 state.rows.forEach { row -> RegionRow(row, onClick = { onRegionClick(row.key) }) }
             }
         }
-        is RegionsState.Cats -> EncounterRows(
-            rows = state.rows,
-            layout = EncountersLayout.LIST,
-            modifier = modifier.fillMaxSize(),
-            contentPadding = contentPadding,
-            onEncounterClick = onEncounterClick,
-            onOutingMapClick = onOutingMapClick,
-            leadingItem = state.header?.let { header ->
-                {
-                    RegionsHeadline(header, modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp))
+        is RegionsState.Cats -> {
+            val header = state.header
+            val headline: (@Composable () -> Unit)? = remember(header) {
+                header?.let { shown ->
+                    @Composable {
+                        RegionsHeadline(shown, modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp))
+                    }
                 }
-            },
-        )
+            }
+            EncounterRows(
+                rows = state.rows,
+                layout = EncountersLayout.LIST,
+                modifier = modifier.fillMaxSize(),
+                contentPadding = contentPadding,
+                onEncounterClick = onEncounterClick,
+                onOutingMapClick = onOutingMapClick,
+                leadingItem = headline,
+            )
+        }
     }
 }
 
 @Composable
-private fun EmptyRegions(label: RegionsEmptyLabel, modifier: Modifier = Modifier) {
-    val (title, hint) = when (label) {
-        RegionsEmptyLabel.NO_PLACES_YET -> R.string.regions_no_places_yet to R.string.regions_no_places_yet_hint
-        RegionsEmptyLabel.NO_PLACES_HERE -> R.string.regions_no_places_here to null
-        RegionsEmptyLabel.NO_CATS_HERE -> R.string.regions_no_cats_here to null
-    }
-    Column(
-        modifier = modifier.padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_location_on),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(56.dp),
-        )
-        Text(text = stringResource(title), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-        hint?.let {
-            Text(
-                text = stringResource(it),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
+private fun EmptyRegions(empty: RegionsState.Empty, modifier: Modifier = Modifier) {
+    EmptyState(
+        iconRes = R.drawable.ic_location_on,
+        title = stringResource(empty.label.titleRes()),
+        modifier = modifier,
+        hint = empty.hint?.let { stringResource(it.textRes()) },
+    )
+}
+
+@StringRes
+private fun RegionsEmptyLabel.titleRes(): Int = when (this) {
+    RegionsEmptyLabel.NO_PLACES_YET -> R.string.regions_no_places_yet
+    RegionsEmptyLabel.NO_PLACES_HERE -> R.string.regions_no_places_here
+    RegionsEmptyLabel.NO_CATS_HERE -> R.string.regions_no_cats_here
+}
+
+@StringRes
+private fun RegionsEmptyHint.textRes(): Int = when (this) {
+    RegionsEmptyHint.HOW_PLACES_APPEAR -> R.string.regions_no_places_yet_hint
 }
 
 @StringRes

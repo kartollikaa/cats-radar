@@ -122,7 +122,10 @@ its count, and that it opens.
 them out: one card per cat with its coat face or photo, in a run of cards under each outing header.
 This is never the Encounters grid, whatever the Settings switch says. The headline is the list's
 first item and scrolls away with it. An outing header whose cats include a located one offers
-**On the map**, which opens the Map tab on that outing, as it does from Encounters.
+**On the map**, which opens the Map tab on that outing, as it does from Encounters. The headers group
+only the place's own cats, so an outing that also went elsewhere starts here at its first cat in
+this place, while the map shows the whole outing and names it by its real start. A cat here has no
+long press: there is nothing to select.
 
 A level draws nothing until its cats have been read, so one sliding in never flashes as empty
 first. A level that holds nothing says what it would have listed, under a location pin. The

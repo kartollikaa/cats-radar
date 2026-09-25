@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,17 +31,15 @@ import dev.catsradar.presentation.regions.RegionRowState
 import dev.catsradar.presentation.regions.RegionsHeader
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.HeadlineCard
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
+private val ShareBarHeight = 4.dp
+
 @Composable
 internal fun RegionsHeadline(header: RegionsHeader, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    ) {
+    HeadlineCard(modifier = modifier) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -95,12 +93,14 @@ private fun ShareBar(share: Float, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(4.dp)
+            .height(ShareBarHeight)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
     ) {
+        // At least a round dot, so a row holding one cat among hundreds never reads as holding none.
         Box(
             modifier = Modifier
+                .widthIn(min = ShareBarHeight)
                 .fillMaxWidth(share)
                 .fillMaxHeight()
                 .clip(CircleShape)

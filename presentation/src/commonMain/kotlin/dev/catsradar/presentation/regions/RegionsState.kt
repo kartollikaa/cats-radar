@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.ImmutableList
 sealed interface RegionsState {
     data object Loading : RegionsState
 
-    data class Empty(val label: RegionsEmptyLabel) : RegionsState
+    data class Empty(val label: RegionsEmptyLabel, val hint: RegionsEmptyHint? = null) : RegionsState
 
     /** [header] is null only when the level above no longer lists this level. */
     data class Places(
@@ -19,6 +19,8 @@ sealed interface RegionsState {
 }
 
 enum class RegionsEmptyLabel { NO_PLACES_YET, NO_PLACES_HERE, NO_CATS_HERE }
+
+enum class RegionsEmptyHint { HOW_PLACES_APPEAR }
 
 data class RegionsHeader(val title: RegionsTitle, val count: Int)
 

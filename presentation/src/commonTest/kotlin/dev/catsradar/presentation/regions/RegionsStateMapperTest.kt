@@ -131,6 +131,13 @@ class RegionsStateMapperTest {
     }
 
     @Test
+    fun `a level whose rows count no cat gets empty shares, never a division by zero`() {
+        val view = RegionView.Places(listOf(RegionNode(barcelona, RegionLabel.Named("Barcelona"), count = 0)))
+
+        assertEquals(listOf(0f), assertIs<RegionsState.Places>(mapper.map(view, spain, TODAY)).rows.map { it.share })
+    }
+
+    @Test
     fun `only the rows standing for no place are pseudo`() {
         val pseudo = assertIs<RegionsState.Places>(mapper.map(oneRowPerKey, spain, TODAY)).rows
             .filter { it.pseudo }
@@ -216,9 +223,9 @@ class RegionsStateMapperTest {
 
         assertEquals(
             listOf(
-                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET),
-                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE),
-                RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE),
+                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR),
+                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE, hint = null),
+                RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE, hint = null),
             ),
             listOf(
                 mapper.map(noPlaces, parent = null, TODAY),

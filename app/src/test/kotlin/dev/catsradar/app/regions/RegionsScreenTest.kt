@@ -23,6 +23,7 @@ import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsEmptyHint
 import dev.catsradar.presentation.regions.RegionsEmptyLabel
 import dev.catsradar.presentation.regions.RegionsHeader
 import dev.catsradar.presentation.regions.RegionsSection
@@ -123,9 +124,9 @@ class RegionsScreenTest {
     }
 
     @Test
-    fun `the first empty level says how places appear, and no other empty level does`() {
+    fun `an empty level shows its hint when it has one, and none otherwise`() {
         val hint = context.getString(R.string.regions_no_places_yet_hint)
-        show(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET))
+        show(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR))
         compose.onNodeWithText(context.getString(R.string.regions_no_places_yet)).assertExists()
         compose.onNodeWithText(hint).assertExists()
 

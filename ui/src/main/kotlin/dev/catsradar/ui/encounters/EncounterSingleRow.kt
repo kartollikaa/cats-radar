@@ -29,7 +29,7 @@ internal fun SingleRow(
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
-    onEncounterLongClick: (String) -> Unit = {},
+    onEncounterLongClick: ((String) -> Unit)? = null,
 ) {
     EncounterCard(
         cell = row.cell,
@@ -37,7 +37,7 @@ internal fun SingleRow(
         shape = row.position.shape(),
         selecting = selecting,
         onClick = { onEncounterClick(row.cell.id) },
-        onLongClick = { onEncounterLongClick(row.cell.id) },
+        onLongClick = onEncounterLongClick?.let { longClick -> { longClick(row.cell.id) } },
     )
 }
 

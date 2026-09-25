@@ -13,7 +13,8 @@ class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
 
     fun map(view: RegionView, parent: RegionKey?, today: LocalDate): RegionsState = when (view) {
         is RegionView.Places -> when {
-            view.children.isEmpty() && parent == null -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
+            view.children.isEmpty() && parent == null ->
+                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR)
             view.children.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE)
             else -> {
                 val total = view.children.sumOf { it.count }
@@ -39,17 +40,18 @@ class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
         else -> null
     }
 
+    // An area and No location list cats, never places, so their answer is never shown.
     private fun RegionKey?.section(): RegionsSection = when (this) {
         null -> RegionsSection.COUNTRIES
         is RegionKey.Country -> RegionsSection.CITIES
-        else -> RegionsSection.AREAS
+        is RegionKey.AreaParent, is RegionKey.Area, RegionKey.NoLocation -> RegionsSection.AREAS
     }
 
     private fun RegionNode.toRow(total: Int) = RegionRowState(
         key = key.toRowKey(),
         label = label.toRowLabel(),
         countLabel = count.toString(),
-        share = count.toFloat() / total,
+        share = if (total > 0) count.toFloat() / total else 0f,
         pseudo = key == RegionKey.Unresolved || key is RegionKey.NoCity || key == RegionKey.NoLocation,
     )
 

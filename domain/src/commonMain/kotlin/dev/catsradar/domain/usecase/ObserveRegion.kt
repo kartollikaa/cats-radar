@@ -7,8 +7,11 @@ import dev.catsradar.domain.region.RegionNode
 import dev.catsradar.domain.region.RegionTree
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 
 /** One level of the region drill-down: its child regions, or at the bottom of the tree its cats. */
 sealed interface RegionView {
@@ -22,7 +25,9 @@ sealed interface RegionView {
 class ObserveRegion(
     private val encounterRepository: EncounterRepository,
     private val placeCellRepository: PlaceCellRepository,
+    private val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
+    /** The level under [parent], again whenever a cat or a place changes, worked out on [computeDispatcher]. */
     operator fun invoke(parent: RegionKey?): Flow<RegionView> =
         combine(encounterRepository.observeAll(), placeCellRepository.observeAll()) { encounters, cells ->
             val self = parent?.let { levelNode(it, encounters, cells) }
@@ -34,7 +39,7 @@ class ObserveRegion(
                 is RegionKey.Area, RegionKey.NoLocation ->
                     RegionView.Cats(RegionTree.encountersIn(parent, encounters, cells), self)
             }
-        }
+        }.flowOn(computeDispatcher)
 
     private fun levelNode(key: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): RegionNode? {
         val siblings = when (key) {

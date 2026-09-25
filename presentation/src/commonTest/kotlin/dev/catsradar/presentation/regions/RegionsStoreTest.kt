@@ -53,7 +53,7 @@ class RegionsStoreTest {
 
     private fun newStore(parent: RegionKey?) = RegionsStore(
         parent = parent,
-        observeRegion = ObserveRegion(encounters, cells),
+        observeRegion = ObserveRegion(encounters, cells, computeDispatcher = mainDispatcher),
         stateMapper = RegionsStateMapper(EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())),
         clock = FakeClock(NOW),
         timeZone = TimeZone.UTC,
@@ -138,7 +138,10 @@ class RegionsStoreTest {
 
         runCurrent()
 
-        assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET), store.state.value)
+        assertEquals(
+            RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR),
+            store.state.value,
+        )
     }
 
     @Test
