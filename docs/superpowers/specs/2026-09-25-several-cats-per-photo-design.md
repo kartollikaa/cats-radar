@@ -48,8 +48,11 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
 
 ## Storage
 
-- Database **v5** adds the nullable column `encounter_photos.shotId` and an index on it, by an
-  automatic migration. Every photo already stored reads as the first row of its own shot.
+- Database **v5** adds the nullable column `encounter_photos.shotId` and an index on it, by a
+  hand-written migration that runs only those two statements. Every photo already stored reads as
+  the first row of its own shot. Room's own auto-migration is not used: for this table it generates
+  a rebuild (copy into a new table, drop, rename) followed by a foreign key check, which throws on
+  a photo row whose cat is gone and would stop the app at start-up.
   `CatsDatabaseMigrationTest` opens a v4 database with photos and checks that each one comes through
   with a null `shotId` and every other value unchanged.
 - **Adding cats to a shot** is one repository call that inserts every new cat with its photo row in
@@ -200,9 +203,10 @@ come back as separate cats, and every test that looks only at cats would stay gr
     original, a picked item, no thumbnail, a soft-deleted cat, another install's cat, a tally) reaches
     v5 with the same number of cats and photos, every value unchanged, and a null `shotId` on every
     photo;
-  - the migration's own SQL, read from what Room generates, only adds the column and its index: it
-    rebuilds no table. Foreign keys cannot take rows away here, since nothing references
-    `encounter_photos` and `encounters` is not touched, so v4 → v5 needs no foreign-keys-on test;
+  - a photo row whose cat is gone does not stop the migration, and comes through with a null
+    `shotId`. Room's auto-migration fails this test, which is why the migration is hand-written. It
+    rebuilds no table, so foreign keys cannot take rows away, and v4 → v5 needs no foreign-keys-on
+    test;
   - the app's own builder opening a v1, a v2 and a v3 file reaches v5. The existing purge test, which
     removes a cat's photo rows with it, now runs at v5;
   - `5.json` exported, with its test-asset copy kept identical by `SchemaAssetSyncTest`.

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `EncounterPhoto` carries `shotId`, stored in database v5 by an automatic migration proven on every kind of photo; nothing sets it to anything but null yet.
+**Goal:** `EncounterPhoto` carries `shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it to anything but null yet.
 
-**Architecture:** `EncounterPhoto.shotId: String?` has no default, so every construction site states it; `shot` is `shotId ?: id`. `EncounterPhotoEntity` gains a nullable, indexed `shotId` column mapped both ways. `CatsDatabase` goes to version 5 with `AutoMigration(from = 4, to = 5)`, which Room generates as an `ALTER TABLE … ADD COLUMN` plus a `CREATE INDEX` — no rebuild. The archive format stays 4: its records do not carry the field until S2.
+**Architecture:** `EncounterPhoto.shotId: String?` has no default, so every construction site states it; `shot` is `shotId ?: id`. `EncounterPhotoEntity` gains a nullable, indexed `shotId` column mapped both ways. `CatsDatabase` goes to version 5 by `MigrationFrom4To5`: an `ALTER TABLE … ADD COLUMN` plus a `CREATE INDEX`, no rebuild. (Executed first with `AutoMigration(4, 5)`; Step 6 found Room generating a table rebuild with a foreign key check that throws on a photo whose cat is gone, so the migration became hand-written — see the map's decision log.) The archive format stays 4: its records do not carry the field until S2.
 
 **Tech Stack:** Kotlin Multiplatform, Room 3 (`androidx.room3`) with the bundled SQLite driver, `MigrationTestHelper`, Robolectric host tests.
 

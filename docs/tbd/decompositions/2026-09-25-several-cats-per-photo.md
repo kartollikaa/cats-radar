@@ -12,7 +12,7 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by an automatic migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | planned |
+| S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | planned |
 | S2 | Backup format 5 carries shots | Photo records carry `shotId`, the archive says format 5, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | planned |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | planned |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
@@ -27,7 +27,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **In scope:** `EncounterPhoto.shotId: String?` with no default value, and `shot` (`shotId ?: id`); every
   construction site stating it (`LogPhoto`, `AttachPhoto`, `ImportPhotos`, `carriedPhoto`, the backup
   record mapping, test doubles and fixtures); `EncounterPhotoEntity.shotId` with an index; the entity
-  mapper both ways; database v5 by `AutoMigration(4, 5)`; exported schema 5 and its asset copy; the
+  mapper both ways; database v5 by `MigrationFrom4To5`; exported schema 5 and its asset copy; the
   migration tests of the spec (v4 → v5 on every kind of photo, with foreign keys on, v1/v2/v3 → v5 through
   the app's builder, the purge cascade at v5), each seen failing once; `data-model.md`.
 - **Out of scope:** the archive format (S2); anything that writes a non-null `shotId`.
@@ -88,6 +88,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-26: **S1's migration is hand-written.** The plan's `AutoMigration(4, 5)` made Room generate a rebuild of
+  `encounter_photos` ending in a foreign key check, which throws on a photo row whose cat is gone and would stop
+  the app at start-up (`aPhotoWhoseCatIsGoneDoesNotStopTheMigrationToFive` red against it). `MigrationFrom4To5`
+  runs only `ADD COLUMN` and `CREATE INDEX`.
 
 - 2026-09-26: owner approved the design and asked that export, import and the migration be proven not to
   break. The spec's five slices became six: storage (S1) and the archive format (S2) are separate, as in the

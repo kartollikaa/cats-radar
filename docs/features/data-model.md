@@ -25,6 +25,12 @@ the gallery (`galleryUri`), the gallery item a picked photo came from (`sourceMe
 the bytes the source handed over (`sourceDigest`), the install that recorded those two links
 (`deviceId`), and when it joined the cat (`addedAt`).
 
+A photo also names its **shot**, so the cats of one photo can be found together: `shotId` is the id of
+the shot's first photo row, and null on that first row itself, so `shot` (`shotId ?: id`) is the same on
+every row of one shot and on no other. A row joining a shot points at the first one and never edits it.
+Every photo taken, attached, imported or read from an archive starts a shot of its own; nothing writes a
+shot of several cats yet (`EncounterPhotoShotTest`; *eachWayAPhotoIsWrittenKeepsItsShot*).
+
 Each photo is a row of `encounter_photos`, keyed by its own `id`, with a foreign key to its cat that
 deletes the photo rows with the cat. Every read returns a cat with its photos (`EncounterWithPhotos`),
 ordered as above whatever order they were written in (`EncounterDaoPhotosTest`). Inserting a cat writes
@@ -127,6 +133,15 @@ copied. Room runs migrations before it turns foreign keys on, so that never fire
 holding every kind of photo a cat could have — a camera original, a picked item, no thumbnail, a deleted
 cat, another install's cat — and opens the result with the app's own builder, and brings a photographed
 cat from versions 1 and 2 through every migration in between.
+
+Version 5 adds `shotId` and its index to `encounter_photos`, by a hand-written migration
+(`MigrationFrom4To5`) that runs only those two statements, so every photo already stored starts a shot of
+its own. Room's own auto-migration would rebuild the table and then check its foreign keys, which throws on
+a photo row whose cat is gone and would stop the app at start-up
+(`CatsDatabaseMigrationTest.aPhotoWhoseCatIsGoneDoesNotStopTheMigrationToFive`).
+`CatsDatabaseMigrationTest.versionFourBecomesFiveKeepingEveryCatAndPhotoWithNoShot` migrates every kind of
+photo a cat can have and finds each cat and photo unchanged, with no shot; the app's own builder brings a
+photographed cat from versions 1, 2 and 3 to 5 (`PhotosMigrationTest`).
 
 ## Where the code lives
 
