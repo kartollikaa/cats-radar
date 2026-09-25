@@ -14,7 +14,7 @@ Both show as a card above the count, on the same low surface as the Statistics a
 with a round icon at its start. While the run goes, the card shows the gallery icon, **Importing
 photos**, "7 of 23" and a progress bar. When it has finished, the card shows a check, the number
 added and, only when there were any, the skipped and failed lines, with **Undo** at its end, or
-**OK** once the run has been undone.
+**OK** when there is nothing to undo: the run added no cat, or has been undone.
 
 ## What an imported photo becomes
 

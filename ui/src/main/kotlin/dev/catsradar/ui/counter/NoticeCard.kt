@@ -25,7 +25,6 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/** A notice above the count: a round icon, what it says (read as one item), and [trailing] actions. */
 @Composable
 internal fun NoticeCard(
     @DrawableRes iconRes: Int,
@@ -66,7 +65,6 @@ internal fun NoticeCard(
     }
 }
 
-/** A secondary line of a notice. */
 @Composable
 internal fun NoticeDetail(text: String, modifier: Modifier = Modifier) {
     Text(
