@@ -55,10 +55,13 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
 
-    override suspend fun attachLocation(id: String, stamp: LocationStamp) {
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean {
+        var written = false
         encounters.update { list ->
+            written = false
             list.map { encounter ->
                 if (encounter.id == id) {
+                    written = true
                     encounter.copy(
                         lat = stamp.lat,
                         lon = stamp.lon,
@@ -74,6 +77,7 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
                 }
             }
         }
+        return written
     }
 
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =

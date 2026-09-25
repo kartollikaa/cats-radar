@@ -90,6 +90,7 @@
     <string name="location_current">Текущее место</string>
     <string name="location_last_known">Последнее известное место</string>
     <string name="location_from_outing">Из этой вылазки</string>
+    <string name="location_by_hand">Указано вручную</string>
     <string name="location_none">Места пока нет</string>
 
     <string name="detail_photo_description">Фото этого котика</string>

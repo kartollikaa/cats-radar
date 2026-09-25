@@ -107,10 +107,11 @@ internal class FakeEncounterDao : EncounterDao {
         geohash: String,
         placeCellId: String,
         updatedAt: Instant,
-    ) {
+    ): Int {
         attachLocationCall = AttachLocationCall(
             id, lat, lon, accuracyMeters, locationSource, locationFixedAt, geohash, placeCellId, updatedAt,
         )
+        return 1
     }
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int {

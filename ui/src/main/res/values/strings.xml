@@ -76,6 +76,7 @@
     <string name="location_current">Current location</string>
     <string name="location_last_known">Last known location</string>
     <string name="location_from_outing">From this outing</string>
+    <string name="location_by_hand">Set by hand</string>
     <string name="location_none">No location yet</string>
 
     <string name="detail_photo_description">Photo of this cat</string>

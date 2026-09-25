@@ -61,9 +61,8 @@ interface EncounterDao {
         ids.forEach { clearDeletedAtIfDeletedAt(it, deletedAt) }
     }
 
-    // The deletedAt IS NULL guard stops a fix that resolves after the row was undone (an
-    // up-to-8-second wait) from writing deletedAt back to NULL and resurrecting it: this touches
-    // only the location columns, never the row's other state.
+    // Only a live row still without a location: a fix landing after an undo must not resurrect the row, nor one
+    // landing after the cat got its location another way replace that location.
     @Suppress("LongParameterList") // Room binds one :placeholder per parameter; no POJO destructuring in a raw @Query
     @Query(
         """
@@ -71,7 +70,7 @@ interface EncounterDao {
             lat = :lat, lon = :lon, accuracyMeters = :accuracyMeters,
             locationSource = :locationSource, locationFixedAt = :locationFixedAt,
             geohash = :geohash, placeCellId = :placeCellId, updatedAt = :updatedAt
-        WHERE id = :id AND deletedAt IS NULL
+        WHERE id = :id AND deletedAt IS NULL AND locationSource = 'NONE'
         """
     )
     suspend fun attachLocation(
@@ -84,7 +83,7 @@ interface EncounterDao {
         geohash: String,
         placeCellId: String,
         updatedAt: Instant,
-    )
+    ): Int
 
     @Query("SELECT COUNT(*) FROM encounters WHERE id = :id AND deletedAt IS NULL")
     suspend fun countLive(id: String): Int
