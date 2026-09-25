@@ -23,18 +23,19 @@ first — so an outing a delete split in two stays whole for as long as a cat of
 while `groupByOuting()` itself keeps splitting it. A cat logged into one of those outings, or one that
 merges the next outing into them, is in the window too. `newer` and `older` are the outings just outside
 it, oldest first, or null at either end of history; `newerLanding` and `olderLanding` are the cats of
-each nearest to the window. No live cat in `shown` means no window (`OutingWindowTest`).
+each nearest to the window. Cats logged at the same instant keep one order — by id — whatever
+order the input list gives them. No live cat in `shown` means no window (`OutingWindowTest`).
 
 ## At the edges
 
-Both functions only ever exclude soft-deleted encounters — deleted rows count neither toward an
-outing's size nor its span (*a soft-deleted encounter is excluded from count and duration*;
-*groupByOuting excludes a soft-deleted encounter from its outing*). A gap of exactly `SESSION_GAP`
-stays inside the same outing; one millisecond more starts a new one — the boundary is `>`, not `>=`
-(*a gap exactly equal to SESSION_GAP stays one session*; *a gap one millisecond over SESSION_GAP
-starts a new session*). Both sort their own input, so callers don't need to pre-sort, and doing so
-doesn't change the result (*unsorted input yields the same sessions as sorted input*). Empty input
-produces an empty list, not a single empty session.
+`split()` and `groupByOuting()` only ever exclude soft-deleted encounters — deleted rows count
+neither toward an outing's size nor its span (*a soft-deleted encounter is excluded from count and
+duration*; *groupByOuting excludes a soft-deleted encounter from its outing*). A gap of exactly
+`SESSION_GAP` stays inside the same outing; one millisecond more starts a new one — the boundary is
+`>`, not `>=` (*a gap exactly equal to SESSION_GAP stays one session*; *a gap one millisecond over
+SESSION_GAP starts a new session*). `split()` and `groupByOuting()` sort their own input, so
+callers don't need to pre-sort, and doing so doesn't change the result (*unsorted input yields the
+same sessions as sorted input*). Empty input produces an empty list, not a single empty session.
 
 Because outings are derived and not stored, anything built on outings — the outings themselves, or
 which one a cat is in — has to run the splitter over the live encounter list itself rather than

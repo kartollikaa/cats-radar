@@ -111,12 +111,13 @@ class OutingWindowTest {
     @Test
     fun `a deleted cat is never on the window or beside it`() {
         val window = outingWindow(
-            listOf(e1, e2.deleted(), m1, m2.deleted(), m3, l1, l2),
+            listOf(e1, e2.deleted(), m1, m2.deleted(), m3, l1.deleted(), l2),
             setOf("m1", "m2", "m3"),
         )
 
         assertEquals(listOf(m3, m1), window?.cats)
         assertEquals(listOf(e1), window?.older)
+        assertEquals(listOf(l2), window?.newer)
     }
 
     @Test
@@ -131,6 +132,21 @@ class OutingWindowTest {
     fun `input order does not change the window`() {
         assertEquals(listOf(m3, m2, m1), outingWindow(all.reversed(), setOf("m2"))?.cats)
         assertEquals(outingWindow(all, setOf("m2")), outingWindow(all.reversed(), setOf("m2")))
+    }
+
+    @Test
+    fun `cats logged at the same instant keep one order whatever the input order`() {
+        val j = cat("j", 0.minutes)
+        val k = cat("k", 0.minutes)
+        val x = cat("x", 50.minutes)
+        val y = cat("y", 50.minutes)
+        val forward = listOf(j, k, x, y)
+        val expected = OutingWindow(cats = listOf(k, j), newer = listOf(x, y), older = null)
+
+        assertEquals(expected, outingWindow(forward, setOf("j")))
+        assertEquals(expected, outingWindow(forward.reversed(), setOf("j")))
+        assertEquals(x, outingWindow(forward, setOf("j"))?.newerLanding)
+        assertEquals(x, outingWindow(forward.reversed(), setOf("j"))?.newerLanding)
     }
 
     private fun cat(id: String, after: Duration): Encounter = encounterFixture(id, BASE + after)
