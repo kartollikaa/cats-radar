@@ -264,6 +264,36 @@ class MapStoreTest {
         }
 
     @Test
+    fun `switching focus while its tracks are still pending does not let a stale pairing clear the new one`() =
+        runTest(mainDispatcher) {
+            val x1 = located("x1", minute = 0)
+            val x2 = located("x2", minute = 5).copy(lat = 41.40)
+            val y1 = located("y1", minute = 180).copy(lat = 41.45)
+            repository.insert(x1)
+            repository.insert(x2)
+            repository.insert(y1)
+            val store = newStore(DelayedWalkRepository())
+            runCurrent()
+
+            store.dispatch(MapIntent.OutingFocused("x1"))
+            advanceTimeBy(2.seconds)
+            runCurrent()
+            assertEquals("x1", assertIs<MapState.Located>(store.state.value).focus?.outingId)
+
+            store.dispatch(MapIntent.OutingFocused("y1"))
+            runCurrent() // y1's own tracks have not answered yet; the cached pairing still names x1.
+
+            repository.update(x1.copy(deletedAt = BASE + 1.hours))
+            repository.update(x2.copy(deletedAt = BASE + 1.hours))
+            runCurrent() // x1 no longer matches while the stale pairing is live: must not clear y1.
+
+            advanceTimeBy(2.seconds)
+            runCurrent()
+
+            assertEquals("y1", assertIs<MapState.Located>(store.state.value).focus?.outingId)
+        }
+
+    @Test
     fun `an unfocused store never collects walk tracks, and focusing an outing starts collecting them`() =
         runTest(mainDispatcher) {
             val walk = Walk(

@@ -49,9 +49,8 @@ class MapStore(
     private val choices = MutableStateFlow(MapChoices())
 
     init {
-        // A route is only ever drawn for a focused outing, so nothing subscribes to walk tracks until one is chosen.
-        // Re-creating the combine per focus id (not reusing a running one) means a new focus can never pair with
-        // the previous focus's tracks: the pair only starts flowing once walks answers for this focus.
+        // A fresh combine per focus id: a pairing can only carry that focus's own walks answer, never the
+        // unfocused branch's empty list or one still pending from a focus switch in flight.
         val chosenWithWalks = choices.distinctUntilChangedBy { it.focus }.flatMapLatest { chosen ->
             val walks = if (chosen.focus == null) flowOf(emptyList()) else observeWalkTracks()
             combine(walks, choices) { tracks, latest -> latest to tracks }
@@ -59,8 +58,11 @@ class MapStore(
         combine(observeEncounters(), chosenWithWalks) { encounters, (chosen, tracks) ->
             val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen, tracks)
             val shown = mapped as? MapState.Located
-            // A focus the cats no longer match is let go, so it cannot reopen by itself later.
-            if (chosen.focus != null && shown?.focus == null) choices.update { it.copy(focus = null) }
+            // A focus the cats no longer match is let go, so it cannot reopen by itself later. Only if it is
+            // still the live choice: a pairing still catching up to an already-newer focus must not clear it.
+            if (chosen.focus != null && shown?.focus == null) {
+                choices.update { if (it.focus == chosen.focus) it.copy(focus = null) else it }
+            }
             setState { mapped }
         }.launchIn(viewModelScope)
     }
