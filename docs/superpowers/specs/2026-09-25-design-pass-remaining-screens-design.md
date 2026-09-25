@@ -94,18 +94,24 @@ location pin, Material Symbols Rounded (Apache 2.0) like the bottom bar's.
 - **`:domain`.** `RegionView.Places` and `RegionView.Cats` gain `self: RegionNode?`: the level's
   own node, meaning its label and count. It is null at the top. `ObserveRegion` finds it by
   listing the level above and picking the node with this key, so the headline count is exactly the
-  count its row showed one level up.
+  count its row showed one level up. That doubles the tree work per change, so `ObserveRegion` does
+  it on an injected compute dispatcher, as `ObserveWalkStats` does.
 - **`:presentation`.**
   - `RegionsState.Loaded` gains a `header` (a title token and a count) and a `section` token
     (countries, cities or areas).
   - `RegionRowState` gains `share: Float`.
   - The cats become `ImmutableList<EncountersRow>`, from `EncountersStateMapper.map(…, grid =
-    false)`, the call the spot sheet makes. `EncounterListItem` and `mapList`, which only Places
-    used, go away.
+    false)`, the call the spot sheet makes. `EncounterListItem` and `mapList` go away. The map's
+    focus chip, their only other user, reads the outing's label through `outingLabel`.
+  - The empty state's hint is a State token, so the mapper decides which empty level gets one.
   - The mapper takes the level's parent key instead of a `topLevel` flag, so it can name the
     section.
-- **`:ui`.** `EncounterRows` takes an optional leading item, which is how the headline scrolls
-  with the cats.
+- **`:ui`.**
+  - `EncounterRows` takes an optional leading item, which is how the headline scrolls with the cats.
+  - Its long press is optional. The cats of a place, like those of a map spot, have nothing to
+    select, so they offer no long press.
+  - The empty state and the headline card become shared components (`EmptyState`, `HeadlineCard`),
+    which Statistics, Encounters and the Map use as well.
 - **`:app`.** The entry wires **On the map** the way the Encounters entry does.
 
 ## 2. The Counter's import status
