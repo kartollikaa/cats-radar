@@ -111,7 +111,17 @@
     <string name="statistics_rate_per_km">%1$s / km</string>
     <string name="statistics_places">Places</string>
 
+    <string name="regions_title">Places</string>
+    <string name="regions_back">Back</string>
+    <string name="regions_section_countries">Countries</string>
+    <string name="regions_section_cities">Cities</string>
+    <string name="regions_section_areas">Areas</string>
+    <plurals name="regions_cat_count">
+        <item quantity="one">%d cat</item>
+        <item quantity="other">%d cats</item>
+    </plurals>
     <string name="regions_no_places_yet">No places yet</string>
+    <string name="regions_no_places_yet_hint">Cats logged with a location are grouped here by country and city</string>
     <string name="regions_no_places_here">No places here</string>
     <string name="regions_no_cats_here">No cats here</string>
     <string name="regions_unresolved">Not named yet</string>

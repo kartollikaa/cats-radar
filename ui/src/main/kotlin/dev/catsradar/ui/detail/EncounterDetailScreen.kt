@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -27,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -41,9 +37,9 @@ import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatPicker
-import dev.catsradar.ui.components.CenterAppBar
-import dev.catsradar.ui.components.CenterAppBarDefaults
+import dev.catsradar.ui.components.BackBar
 import dev.catsradar.ui.components.SectionCard
+import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.encounters.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -63,16 +59,7 @@ fun EncounterDetailScreen(
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
 ) {
-    val layoutDirection = LocalLayoutDirection.current
-    val start = contentPadding.calculateStartPadding(layoutDirection)
-    val end = contentPadding.calculateEndPadding(layoutDirection)
-    val top = contentPadding.calculateTopPadding()
-    val belowBar = PaddingValues(
-        start = start,
-        top = top + CenterAppBarDefaults.Height,
-        end = end,
-        bottom = contentPadding.calculateBottomPadding(),
-    )
+    val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             EncounterDetailState.Loading -> Unit
@@ -90,16 +77,10 @@ fun EncounterDetailScreen(
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing, Modifier.padding(belowBar))
         }
-        CenterAppBar(
-            modifier = Modifier.padding(start = start, top = top, end = end),
-            startContent = {
-                FilledTonalIconButton(onClick = onBackClick) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.detail_back),
-                    )
-                }
-            },
+        BackBar(
+            contentDescription = stringResource(R.string.detail_back),
+            contentPadding = contentPadding,
+            onBackClick = onBackClick,
         )
     }
 }

@@ -72,7 +72,9 @@ val domainModule = module {
     }
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounters)
-    factoryOf(::ObserveRegion)
+    factory {
+        ObserveRegion(encounterRepository = get(), placeCellRepository = get(), computeDispatcher = Dispatchers.Default)
+    }
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
