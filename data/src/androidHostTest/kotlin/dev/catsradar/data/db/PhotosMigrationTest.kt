@@ -196,6 +196,7 @@ class PhotosMigrationTest {
             sourceDigest = "d-camera",
             deviceId = "this-install",
             addedAt = Instant.fromEpochMilliseconds(1001),
+            shotId = null,
         )
 
         const val PHOTOGRAPHED_BEFORE_VERSION_THREE = "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, " +

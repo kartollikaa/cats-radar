@@ -18,7 +18,12 @@ data class EncounterPhoto(
     /** The install that recorded [galleryUri] and [sourceMediaUri]. */
     val deviceId: String,
     val addedAt: Instant,
-)
+    /** The first photo of the shot this one repeats when one photo shows several cats; null on that first photo. */
+    val shotId: String?,
+) {
+    /** Equal on every photo of one shot, and on no other photo. */
+    val shot: String get() = shotId ?: id
+}
 
 /** The order [Encounter.photos] keeps: by [EncounterPhoto.addedAt], then [EncounterPhoto.id]. */
 fun Iterable<EncounterPhoto>.oldestFirst(): List<EncounterPhoto> =

@@ -30,6 +30,7 @@ internal fun distinctEncounter(): Encounter = Encounter(
             sourceDigest = "digest-1",
             deviceId = "device-1",
             addedAt = Instant.parse("2026-01-01T03:00:00Z"),
+            shotId = null,
         ),
     ),
     lat = 10.111,
@@ -77,6 +78,7 @@ internal fun Encounter.withPhoto(
             sourceDigest = sourceDigest,
             deviceId = deviceId,
             addedAt = createdAt,
+            shotId = null,
         ),
     ),
 )

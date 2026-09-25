@@ -67,6 +67,7 @@ internal fun EncounterPhotoEntity.toDomain(): EncounterPhoto = EncounterPhoto(
     sourceDigest = sourceDigest,
     deviceId = deviceId,
     addedAt = addedAt,
+    shotId = null,
 )
 
 internal fun EncounterPhoto.toEntity(): EncounterPhotoEntity = EncounterPhotoEntity(

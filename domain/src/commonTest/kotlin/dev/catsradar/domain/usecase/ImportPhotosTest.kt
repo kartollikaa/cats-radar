@@ -68,6 +68,13 @@ class ImportPhotosTest {
     }
 
     @Test
+    fun `an imported photo starts a shot of its own`() = runTest {
+        importPhotos()(listOf("content://picked/1"))
+
+        assertNull(repository.inserted.single().photos.single().shotId)
+    }
+
+    @Test
     fun `EXIF coordinates become the encounter's location, geohashed and stamped at capture time`() = runTest {
         exifReader.data = ExifData(lat = 55.75, lon = 37.62, takenAt = LAST_MONTH)
 
