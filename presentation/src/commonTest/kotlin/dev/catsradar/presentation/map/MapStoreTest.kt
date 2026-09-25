@@ -17,10 +17,15 @@ import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -32,8 +37,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -216,6 +224,46 @@ class MapStoreTest {
         }
 
     @Test
+    fun `a focus never reaches state paired with the cat line once its walk's track arrives`() =
+        runTest(mainDispatcher) {
+            val first = located("first", minute = 0)
+            val second = located("second", minute = 5).copy(lat = 41.40)
+            repository.insert(first)
+            repository.insert(second)
+            val walk = Walk(
+                id = "walk-1",
+                startedAt = BASE,
+                endedAt = BASE + 10.minutes,
+                deviceId = "device",
+                createdAt = BASE,
+                updatedAt = BASE,
+            )
+            val points = listOf(
+                TrackPoint(walkId = "walk-1", at = BASE, lat = 41.388, lon = 2.168, accuracyMeters = 5f),
+                TrackPoint(walkId = "walk-1", at = BASE + 1.minutes, lat = 41.395, lon = 2.175, accuracyMeters = 5f),
+            )
+            val store = newStore(DelayedWalkRepository(walks = listOf(walk), points = points))
+            runCurrent()
+
+            val seen = mutableListOf<MapState>()
+            val collecting = launch { store.state.toList(seen) }
+            store.dispatch(MapIntent.OutingFocused("second"))
+            advanceTimeBy(2.seconds)
+            runCurrent()
+            collecting.cancel()
+
+            val focusedLines = seen.filterIsInstance<MapState.Located>().mapNotNull { it.focus?.lines }
+            val catLine = persistentListOf(
+                MapLine(persistentListOf(MapPosition(41.39, 2.17), MapPosition(41.40, 2.17))),
+            )
+            val trackLine = persistentListOf(
+                MapLine(persistentListOf(MapPosition(41.388, 2.168), MapPosition(41.395, 2.175))),
+            )
+            assertTrue(catLine !in focusedLines, "a focused state carried the cat line while the walk had a track")
+            assertTrue(trackLine in focusedLines, "the walk's track never reached a focused state")
+        }
+
+    @Test
     fun `an unfocused store never collects walk tracks, and focusing an outing starts collecting them`() =
         runTest(mainDispatcher) {
             val walk = Walk(
@@ -281,6 +329,39 @@ class MapStoreTest {
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
     }
+}
+
+/** A read-only stand-in whose [observeEveryPoint] answers only after [answerAfter] of virtual time, like Room. */
+private class DelayedWalkRepository(
+    private val walks: List<Walk> = emptyList(),
+    private val points: List<TrackPoint> = emptyList(),
+    private val answerAfter: Duration = 1.seconds,
+) : WalkRepository {
+
+    override fun observeAll(): Flow<List<Walk>> = flowOf(walks.sortedByDescending { it.startedAt })
+
+    override suspend fun openWalk(): Walk? = error("not needed by this test")
+
+    override suspend fun startIfNoneOpen(walk: Walk): Walk = error("read-only")
+
+    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean = error("read-only")
+
+    override suspend fun appendPoint(point: TrackPoint): Unit = error("read-only")
+
+    override suspend fun lastPoint(walkId: String): TrackPoint? = error("not needed by this test")
+
+    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = error("not needed by this test")
+
+    override suspend fun loadEveryPoint(): List<TrackPoint> = error("not needed by this test")
+
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> = flow {
+        delay(answerAfter)
+        emit(points.sortedWith(compareBy({ it.walkId }, { it.at })))
+    }
+
+    override suspend fun upsert(walk: Walk): Unit = error("read-only")
+
+    override suspend fun appendPoints(points: List<TrackPoint>): Unit = error("read-only")
 }
 
 /** A read-only stand-in that counts how many times [observeEveryPoint] is collected. */

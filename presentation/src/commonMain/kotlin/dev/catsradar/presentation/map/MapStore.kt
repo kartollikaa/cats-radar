@@ -8,11 +8,10 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
@@ -51,9 +50,13 @@ class MapStore(
 
     init {
         // A route is only ever drawn for a focused outing, so nothing subscribes to walk tracks until one is chosen.
-        val walks = choices.map { it.focus != null }.distinctUntilChanged()
-            .flatMapLatest { focused -> if (focused) observeWalkTracks() else flowOf(emptyList()) }
-        combine(observeEncounters(), walks, choices) { encounters, tracks, chosen ->
+        // Re-creating the combine per focus id (not reusing a running one) means a new focus can never pair with
+        // the previous focus's tracks: the pair only starts flowing once walks answers for this focus.
+        val chosenWithWalks = choices.distinctUntilChangedBy { it.focus }.flatMapLatest { chosen ->
+            val walks = if (chosen.focus == null) flowOf(emptyList()) else observeWalkTracks()
+            combine(walks, choices) { tracks, latest -> latest to tracks }
+        }
+        combine(observeEncounters(), chosenWithWalks) { encounters, (chosen, tracks) ->
             val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen, tracks)
             val shown = mapped as? MapState.Located
             // A focus the cats no longer match is let go, so it cannot reopen by itself later.

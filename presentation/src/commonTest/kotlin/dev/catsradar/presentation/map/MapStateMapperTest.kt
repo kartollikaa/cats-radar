@@ -279,11 +279,21 @@ class MapStateMapperTest {
     fun `a focused outing's view takes in its track as well as its cats`() {
         val first = located("first", 41.39, 2.17).copy(occurredAt = BASE)
         val second = located("second", 41.40, 2.18).copy(occurredAt = BASE + 10.minutes)
-        val walk = walkTrack("w", start = BASE - 5.minutes, end = BASE + 20.minutes, 41.60 to 2.17, 41.61 to 2.18)
+        // North-west of both cats, then south-east of both: the area must widen on every side to hold them.
+        val walk = walkTrack("w", start = BASE - 5.minutes, end = BASE + 20.minutes, 41.50 to 2.05, 41.30 to 2.30)
 
         val state = assertIs<MapState.Located>(map(listOf(first, second), focus = "first", walks = listOf(walk)))
 
-        assertTrue(state.area.north >= 41.61)
+        val area = state.area
+        val track = checkNotNull(state.focus).lines.single().positions
+        track.forEach { position ->
+            assertTrue(position.latitude in area.south..area.north, "latitude ${position.latitude} outside $area")
+            assertTrue(position.longitude in area.west..area.east, "longitude ${position.longitude} outside $area")
+        }
+        assertTrue(area.north > 41.40, "north not widened past the cats' box")
+        assertTrue(area.west < 2.17, "west not widened past the cats' box")
+        assertTrue(area.south < 41.39, "south not widened past the cats' box")
+        assertTrue(area.east > 2.18, "east not widened past the cats' box")
     }
 
     private companion object {
