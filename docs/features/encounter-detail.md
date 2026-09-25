@@ -54,8 +54,9 @@ corner of the photo on screen (`DetailPhotoPagerTest`, *a cat with several photo
 is*; *a cat with one photo shows no position*). A tap on a photo opens the viewer on that photo (see
 [photo-viewer.md](./photo-viewer.md); `EncounterDetailStoreTest`, *a tap on a cat's second photo opens
 the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
-opens that cat's viewer above it*). A photo that arrives brings the pager to it, whoever added it
-(*a photo that arrives brings the pager to it*).
+opens that cat's viewer above it*). When the cat gains a photo, whoever added it, the pager moves to
+the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
+pager to it*).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
 *Choose from gallery* — the system camera, or the system picker for a single image — on every live cat,
