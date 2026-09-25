@@ -84,14 +84,39 @@ class ObserveRegionTest {
     fun `an area opens its cats and no more rows`() = runTest {
         val view = view(areaOf(barcelona, RegionKey.City("ES", "Barcelona")))
 
-        assertEquals(RegionView.Cats(listOf(barcelona)), view)
+        assertEquals(listOf(barcelona), assertIs<RegionView.Cats>(view).encounters)
     }
 
     @Test
     fun `No location opens its cats and no more rows`() = runTest {
         val view = view(RegionKey.NoLocation)
 
-        assertEquals(RegionView.Cats(listOf(nowhere)), view)
+        assertEquals(listOf(nowhere), assertIs<RegionView.Cats>(view).encounters)
+    }
+
+    @Test
+    fun `the top level has no node of its own`() = runTest {
+        assertEquals(null, view(parent = null).self)
+    }
+
+    @Test
+    fun `every level below the top carries its node exactly as the level above lists it`() = runTest {
+        val spain = RegionKey.Country("ES")
+        val barcelonaCity = RegionKey.City("ES", "Barcelona")
+        val levels = listOf(
+            null to spain,
+            null to RegionKey.Unresolved,
+            null to RegionKey.NoLocation,
+            spain to barcelonaCity,
+            spain to RegionKey.NoCity("ES"),
+            barcelonaCity to areaOf(barcelona, barcelonaCity),
+            RegionKey.Unresolved to areaOf(pending, RegionKey.Unresolved),
+        )
+
+        levels.forEach { (above, level) ->
+            val listed = assertIs<RegionView.Places>(view(above)).children.single { it.key == level }
+            assertEquals(listed, view(level).self, "$level")
+        }
     }
 
     private fun RegionView.placeKeys() = assertIs<RegionView.Places>(this).children.map { it.key }
