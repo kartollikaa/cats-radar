@@ -3,6 +3,7 @@ package dev.catsradar.ui.map
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.map.MapLine
 import dev.catsradar.presentation.map.MapPoint
 import dev.catsradar.ui.coat.CoatLook
 import dev.catsradar.ui.coat.look
@@ -63,11 +64,16 @@ internal fun catFeatures(points: ImmutableList<MapPoint>): FeatureCollection<Poi
 internal fun tappedCatIds(features: List<Feature<*, JsonObject?>>): List<String> =
     features.mapNotNull { it.properties?.get(CAT_ID)?.jsonPrimitive?.contentOrNull }
 
-/** A line through [points] in their order, or null when there are too few to draw one. */
-internal fun routeLine(points: ImmutableList<MapPoint>): FeatureCollection<LineString, JsonObject>? {
-    if (points.size < 2) return null
-    val line = LineString(points.map { Position(it.longitude, it.latitude) })
-    return FeatureCollection(listOf(Feature(line, buildJsonObject {})))
+/** One line per entry of [lines] with at least two positions, or null when none has. */
+internal fun routeLines(lines: ImmutableList<MapLine>): FeatureCollection<LineString, JsonObject>? {
+    val drawable = lines.filter { it.positions.size >= 2 }
+    if (drawable.isEmpty()) return null
+    return FeatureCollection(
+        drawable.map { line ->
+            val coordinates = line.positions.map { Position(it.longitude, it.latitude) }
+            Feature(LineString(coordinates), buildJsonObject {})
+        },
+    )
 }
 
 private fun Color.toHex(): String = "#%06X".format(toArgb() and 0xFFFFFF)

@@ -19,3 +19,6 @@ data class TrackPoint(
     val lon: Double,
     val accuracyMeters: Float,
 )
+
+/** A walk with its route, [points] in the order they were recorded. */
+data class WalkTrack(val walk: Walk, val points: List<TrackPoint>)
