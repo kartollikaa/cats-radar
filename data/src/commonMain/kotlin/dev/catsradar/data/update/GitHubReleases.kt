@@ -31,7 +31,9 @@ private data class GitHubAsset(
     // GitHub reports it as "<algorithm>:<hex>", and only for assets uploaded since it began computing them.
     val digest: String? = null,
 ) {
-    val isApk: Boolean get() = name.endsWith(".apk", ignoreCase = true)
+    // A debug build attached beside the release one is signed with another key: it can never update a release install.
+    val isApk: Boolean
+        get() = name.endsWith(".apk", ignoreCase = true) && !name.endsWith("-debug.apk", ignoreCase = true)
 
     fun toPackage() = ReleasePackage(
         url = downloadUrl,
