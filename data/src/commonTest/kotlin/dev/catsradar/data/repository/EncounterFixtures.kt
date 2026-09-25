@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import kotlin.time.Instant
@@ -17,11 +18,19 @@ internal fun distinctEncounter(): Encounter = Encounter(
     kind = EncounterKind.PHOTO,
     origin = EncounterOrigin.GALLERY,
     coat = CatCoat.GINGER_WHITE,
-    photoPath = "photos/a.jpg",
-    thumbPath = "thumbs/a.jpg",
-    galleryUri = "content://gallery/1",
-    sourceMediaUri = "content://media/external/images/media/1",
-    sourceDigest = "digest-1",
+    photos = listOf(
+        EncounterPhoto(
+            id = "encounter-id-1",
+            encounterId = "encounter-id-1",
+            photoPath = "photos/a.jpg",
+            thumbPath = "thumbs/a.jpg",
+            galleryUri = "content://gallery/1",
+            sourceMediaUri = "content://media/external/images/media/1",
+            sourceDigest = "digest-1",
+            deviceId = "device-1",
+            addedAt = Instant.parse("2026-01-01T03:00:00Z"),
+        ),
+    ),
     lat = 10.111,
     lon = 20.222,
     accuracyMeters = 3.5f,
@@ -46,4 +55,27 @@ internal fun distinctLocationStamp(): LocationStamp = LocationStamp(
     geohash = "geohash-2",
     placeCellId = "place-2",
     updatedAt = Instant.parse("2026-02-01T07:00:00Z"),
+)
+
+/** The cat with one photo, the one its row's columns would read back as. */
+internal fun Encounter.withPhoto(
+    photoPath: String,
+    thumbPath: String? = null,
+    galleryUri: String? = null,
+    sourceMediaUri: String? = null,
+    sourceDigest: String? = null,
+): Encounter = copy(
+    photos = listOf(
+        EncounterPhoto(
+            id = id,
+            encounterId = id,
+            photoPath = photoPath,
+            thumbPath = thumbPath,
+            galleryUri = galleryUri,
+            sourceMediaUri = sourceMediaUri,
+            sourceDigest = sourceDigest,
+            deviceId = deviceId,
+            addedAt = createdAt,
+        ),
+    ),
 )

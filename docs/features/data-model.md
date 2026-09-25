@@ -8,15 +8,28 @@ layer leaking into the other.
 
 `Encounter`'s fields fall into a few groups: identity (`id`, `deviceId`); when and how it happened
 (`occurredAt`, `tzOffsetMinutes`, `kind`, `origin`); the cat (`coat`, which the user can change
-after creation, see `coat.md`); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
-`sourceMediaUri`, `sourceDigest`, covered in `photos.md` and `import.md`; set once — at creation, or
-later on a cat that had none);
+after creation, see `coat.md`); its photos (`photos`, covered in `photos.md` and `import.md`);
 location (`lat`, `lon`, `accuracyMeters`, `locationSource`, `locationFixedAt`, `geohash`,
 `placeCellId`, covered in `location.md`); and row lifecycle (`createdAt`, `updatedAt`, `deletedAt`).
 `tzOffsetMinutes` is the UTC offset at the moment the encounter happened, not the device's offset
 now — it is what lets "today" and streak calculations stay correct for an encounter logged while
 travelling (see `docs/rules/date-time.md`). `id` must be unique across devices, not just on this
 one: a backup import reconciles rows by it (see `backup.md`).
+
+## Photos
+
+`photos` is a list of `EncounterPhoto`, oldest first; the first is the cat's **cover**, what a tile, a
+pair row and the coat prompt show, and a cat has a photo exactly when the list is not empty. Each photo
+carries the app's copy and thumbnail (`photoPath`, `thumbPath`), the camera original the app saved to
+the gallery (`galleryUri`), the gallery item a picked photo came from (`sourceMediaUri`), the digest of
+the bytes the source handed over (`sourceDigest`), the install that recorded those two links
+(`deviceId`), and when it joined the cat (`addedAt`).
+
+The database still holds a cat's one photo in five columns of its own row, `photoPath` to
+`sourceDigest`. A row with a copy reads back as one photo that takes the cat's id, install and creation
+time — the columns name nothing else — and a row without a copy reads back as no photo, whatever the
+other four columns hold (`EncounterMapperTest`). An archive's encounter record carries its photo the
+same way and is read by the same rule (`carriedPhoto`).
 
 ## At the edges
 
@@ -29,7 +42,9 @@ an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
 *reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `attachPhoto` is guarded both ways
 at once: it writes only the photo columns and `updatedAt`, and only `WHERE deletedAt IS NULL AND
 photoPath IS NULL`, so giving a cat a photo can neither bring back a deleted one nor replace a photo
-it has (`EncounterDaoAttachPhotoTest`). `setCoat` writes only the `coat` column and `updatedAt`,
+it has (`EncounterDaoAttachPhotoTest`). `update`, which a backup's later edit uses, rewrites a row
+but keeps the photo columns it has, and a backup's photos are restored only onto a row without one,
+leaving its `updatedAt` alone (`EncounterDaoRestorePhotoTest`). `setCoat` writes only the `coat` column and `updatedAt`,
 `WHERE deletedAt IS NULL`, so changing a cat's coat can neither resurrect a deleted row nor undo a
 photo or a location attached a moment earlier (`EncounterDaoSetCoatTest`). Two writes clear
 `deletedAt` on purpose, unguarded:
@@ -97,11 +112,11 @@ migration: a nullable column, so every cat already stored has none
 
 ## Where the code lives
 
-- `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Encounter.kt`, `PlaceCell.kt`,
-  `LocationStamp.kt`, `PhotoStamp.kt`, `CatCoat.kt`
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Encounter.kt`, `EncounterPhoto.kt`,
+  `PlaceCell.kt`, `LocationStamp.kt`, `CatCoat.kt`
 - `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterEntity.kt`, `PlaceCellEntity.kt`,
   `EnumConverters.kt`, `InstantConverters.kt`, `CatsDatabase.kt`
-- `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`,
+- `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`, `CarriedPhoto.kt`,
   `PlaceCellMapper.kt`, `EncounterRepositoryImpl.kt`, `PlaceCellRepositoryImpl.kt`
 - Walks: `domain/.../model/Walk.kt`, `domain/.../geo/Distance.kt`, the use cases `StartWalk.kt`,
   `EndWalk.kt`, `RecordTrackPoint.kt`; `data/.../db/WalkEntity.kt`, `WalkDao.kt`, `TrackPointDao.kt`, and

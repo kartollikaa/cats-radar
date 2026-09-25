@@ -35,7 +35,7 @@ object StatsCalculator {
             today = days.count { it == today },
             lastSevenDays = days.countWithin(today, WEEK_DAYS),
             lastThirtyDays = days.countWithin(today, MONTH_DAYS),
-            withPhoto = live.count { it.photoPath != null },
+            withPhoto = live.count { it.photos.isNotEmpty() },
             byCoat = byCoat(live),
             currentStreak = Streaks.current(days.toSet(), today),
             longestStreak = Streaks.longest(days.toSet()),

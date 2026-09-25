@@ -11,6 +11,7 @@ import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
+import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.CatCoat
@@ -133,10 +134,6 @@ class BackupRoundTripTest {
             kind = if (photo == null) EncounterKind.TALLY else EncounterKind.PHOTO,
             origin = EncounterOrigin.APP,
             coat = coat,
-            photoPath = photo,
-            thumbPath = null,
-            galleryUri = null,
-            sourceDigest = null,
             lat = place?.lat,
             lon = place?.lon,
             accuracyMeters = place?.let { 8f },
@@ -148,7 +145,7 @@ class BackupRoundTripTest {
             createdAt = occurredAt,
             updatedAt = occurredAt,
             deletedAt = null,
-        )
+        ).let { if (photo == null) it else it.withPhoto(photo) }
     }
 
     private data class Place(

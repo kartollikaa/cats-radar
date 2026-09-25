@@ -47,10 +47,7 @@ class LogTallyTest {
         assertNull(encounter.locationFixedAt)
         assertNull(encounter.geohash)
         assertNull(encounter.placeCellId)
-        assertNull(encounter.photoPath)
-        assertNull(encounter.thumbPath)
-        assertNull(encounter.galleryUri)
-        assertNull(encounter.sourceDigest)
+        assertEquals(emptyList(), encounter.photos)
     }
 
     @Test

@@ -8,6 +8,7 @@ import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.photo.ImportLocation
 import dev.catsradar.domain.photo.ImportRules
@@ -122,12 +123,20 @@ class ImportPhotos(
                 kind = EncounterKind.PHOTO,
                 origin = EncounterOrigin.GALLERY,
                 coat = null,
-                photoPath = stored.photoPath,
-                thumbPath = stored.thumbPath,
-                // The original is already in the gallery; copying it back would duplicate it.
-                galleryUri = null,
-                sourceMediaUri = galleryItemLocator.locate(uri),
-                sourceDigest = sourceDigest,
+                photos = listOf(
+                    EncounterPhoto(
+                        id = id,
+                        encounterId = id,
+                        photoPath = stored.photoPath,
+                        thumbPath = stored.thumbPath,
+                        // The original is already in the gallery; copying it back would duplicate it.
+                        galleryUri = null,
+                        sourceMediaUri = galleryItemLocator.locate(uri),
+                        sourceDigest = sourceDigest,
+                        deviceId = deviceIdProvider.deviceId,
+                        addedAt = now,
+                    ),
+                ),
                 lat = exifPoint?.lat,
                 lon = exifPoint?.lon,
                 accuracyMeters = null,
