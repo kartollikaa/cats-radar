@@ -23,8 +23,9 @@ later has its home on the detail screen.
 
 A photo cannot carry its coat the way a tap on the grid does: the Photo button only opens the
 camera, and nothing in that press says what the cat looked like. So once the photo is saved, the
-Counter asks in a bottom sheet — the photo's thumbnail, the eleven faces, and **Not now**. The
-moment after the shutter is when the coat is known best, with the cat still in front of the lens.
+Counter asks in a bottom sheet: the photo's thumbnail beside **What coat was it?** and a line
+saying that a tap notes the coat, then the eleven faces, and **Not now** at the end. The moment
+after the shutter is when the coat is known best, with the cat still in front of the lens.
 
 That is not the old strip coming back: a photo has no tap that chose its coat, and the sheet is the
 only place the Counter asks about it.

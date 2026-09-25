@@ -118,8 +118,10 @@ Two chips sit at the map's top edge.
 - **The heat follows the zoom.** Each cat's heat shrinks and fades as the map zooms out, so a whole
   city shows its neighbourhoods as separate spots rather than one glow over all of it, and grows back
   as the map closes in on a street.
-- **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
-  shows the cats with none noted. The choice applies to the dots, the clusters, the heat, a
+- **Coats** opens the coat grid in a sheet, under a line saying that only cats of the marked coats
+  stay on the map: choosing coats shows only cats of those coats, and "Not specified" shows the cats
+  with none noted. "Not specified" is the grid's twelfth cell, a paw marked like any coat. That
+  cell is the filter's alone; the Counter's grid and the detail's picker have none. The choice applies to the dots, the clusters, the heat, a
   focused outing and a spot's list alike; a focused outing's route is never thinned by it, whichever
   kind of line it draws. The view stays where it is when the choice changes, and "Every coat" clears
   it. A choice that matches no cat says so, rather than showing a map with nothing on it.

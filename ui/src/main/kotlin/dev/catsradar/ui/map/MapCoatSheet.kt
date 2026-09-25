@@ -3,22 +3,21 @@ package dev.catsradar.ui.map
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
+import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableSet
@@ -34,29 +33,28 @@ internal fun MapCoatSheet(
     onDismiss: () -> Unit = {},
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
-        MapCoatContent(shown = shown, onCoatToggle = onCoatToggle, onClear = onClear)
+        MapCoatFilter(shown = shown, onCoatToggle = onCoatToggle, onClear = onClear)
     }
 }
 
+/** [shown] may hold null, which stands for the cats with no coat noted. */
 @Composable
-private fun MapCoatContent(
+fun MapCoatFilter(
     shown: ImmutableSet<CoatOption?>,
     modifier: Modifier = Modifier,
     onCoatToggle: (CoatOption?) -> Unit = {},
     onClear: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = stringResource(R.string.map_coats_title), style = MaterialTheme.typography.titleMedium)
-        CoatGrid(selected = shown, onCoatClick = onCoatToggle)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            FilterChip(
-                selected = null in shown,
-                onClick = { onCoatToggle(null) },
-                label = { Text(stringResource(R.string.coat_not_specified)) },
-            )
+        SheetHeader(
+            title = stringResource(R.string.map_coats_title),
+            supporting = stringResource(R.string.map_coats_hint),
+        )
+        CoatGrid(selected = shown, onCoatClick = onCoatToggle, onUnspecifiedClick = { onCoatToggle(null) })
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onClear, enabled = shown.isNotEmpty()) {
                 Text(stringResource(R.string.map_coats_all))
             }
@@ -66,6 +64,6 @@ private fun MapCoatContent(
 
 @ThemePreviews
 @Composable
-private fun MapCoatContentPreview() {
-    CatsRadarTheme { MapCoatContent(shown = persistentSetOf(CoatOption.GINGER, CoatOption.BLACK, null)) }
+private fun MapCoatFilterPreview() {
+    CatsRadarTheme { MapCoatFilter(shown = persistentSetOf(CoatOption.GINGER, CoatOption.BLACK, null)) }
 }
