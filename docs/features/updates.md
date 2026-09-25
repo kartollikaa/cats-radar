@@ -53,7 +53,8 @@ installs.
 - **Into the app's cache**, `cacheDir/updates/<version>.apk`. The folder is cleared before every
   download, so there is only ever one package, and a half-written `.part` never survives a failure.
   At start-up `PruneInstalledUpdates` deletes a kept package that is no longer an update — the one just
-  installed, an older one, or any file that is not a `<version>.apk`.
+  installed or an older one. A file that is not a `<version>.apk` yet is a download in progress, which
+  may be what started the process; the download clears it itself.
   No storage permission is involved. Android may clear the cache; that costs a download, nothing more.
 - **Verified before it is kept**: `HttpPackageDownloader` computes the file's SHA-256 while it streams, and
   `DownloadUpdate` requires it to equal the `sha256:` digest GitHub reports for the asset, and the size the
@@ -123,7 +124,7 @@ installed) is ignored.
 | download starting (waiting for a network or the first bytes) | "Downloading 1.5.0-beta", a moving bar | unavailable |
 | downloading | "Downloading 1.5.0-beta · 45 %", a progress bar | unavailable |
 | downloaded, not installed | "1.5.0-beta is downloaded and ready to install" | Install 1.5.0-beta |
-| waiting for the permission | "Allow Cats Radar to install apps to install 1.5.0-beta" | Open settings |
+| waiting for the permission | "To install 1.5.0-beta, allow Cats Radar to install apps" | Open settings |
 | installing | "Installing 1.5.0-beta. Confirm it in the window Android shows" | unavailable |
 | install failed | the reason, from the table above | Check for updates |
 | download failed or damaged | the download didn't finish or arrived damaged | Check for updates |

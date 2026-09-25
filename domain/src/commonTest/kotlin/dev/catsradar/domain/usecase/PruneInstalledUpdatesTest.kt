@@ -50,11 +50,11 @@ class PruneInstalledUpdatesTest {
     }
 
     @Test
-    fun `a file that names no version, such as a half-written one, is deleted`() = runTest {
+    fun `a half-written file is left to the download writing it`() = runTest {
         val kept = Kept(listOf("/cache/updates/1.5.0-beta.apk.part"))
 
         PruneInstalledUpdates(kept, installed)()
 
-        assertEquals(listOf("/cache/updates/1.5.0-beta.apk.part"), kept.discarded)
+        assertEquals(emptyList(), kept.discarded)
     }
 }

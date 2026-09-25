@@ -213,7 +213,7 @@
     <string name="settings_updates_install_not_this_app">The downloaded file isn\'t Cats Radar</string>
     <string name="settings_updates_install_not_newer">The downloaded %1$s isn\'t newer than this version</string>
     <string name="settings_updates_install">Install %1$s</string>
-    <string name="settings_updates_needs_permission">Allow Cats Radar to install apps to install %1$s</string>
+    <string name="settings_updates_needs_permission">To install %1$s, allow Cats Radar to install apps</string>
     <string name="settings_updates_allow_installs">Open settings</string>
     <string name="settings_updates_offline">Couldn\'t reach GitHub. Check the connection and try again</string>
     <string name="settings_updates_source_unavailable">GitHub didn\'t share the releases. Try again later</string>

@@ -21,7 +21,7 @@ interface UpdateInstaller {
     suspend fun install(path: String): InstallStart
 }
 
-/** What a package file says it is; null when Android cannot read it as a package. */
+/** What a package file says it is. */
 data class PackageArchive(val packageName: String, val versionCode: Long)
 
 class PackageInstallerUpdater(
