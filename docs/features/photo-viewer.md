@@ -17,11 +17,29 @@ pixels rather than the screen, since past those the copy has no more detail to s
 are Telephoto's `ZoomableAsyncImage` over the app's Coil; it
 carries no native code, so the 16 KB page-size check has nothing new to look at.
 
+## Several photos
+
+The viewer holds every photo of the cat, oldest first, side by side: a swipe sideways moves to the
+next or the previous one (`PhotoViewerScreenTest`, *a swipe moves to the next photo, and the gallery
+button follows the photo on screen*), and pinch, double-tap and pan act on the photo on screen —
+Telephoto hands a sideways drag to the pager once a zoomed photo cannot pan further that way. It opens on the photo it was
+opened for, and on the cat's cover when it was opened for none or for one the cat no longer has
+(`PhotoViewerStateMapperTest`, *the viewer opens on the photo it was opened for*; *opened for no photo,
+or for one the cat does not have, the viewer opens on the cover*). While the cat has more than one, a
+position — "2 / 3" — sits at the bottom and hides with the rest of the chrome; a cat with one shows none
+(*a cat with one photo shows no position*). Which photo is on screen is the pager's own state, kept
+when the screen is recreated (`PhotoViewerScreenTest`, *the photo on screen survives the screen being
+recreated*). The time and day in the bar are the cat's, the same on every page.
+
 ## Chrome
 
 A bar sits at the top over a dark scrim: the back arrow at the start, the gallery button at the end
 when there is one (see *Open in gallery* below), and centred on the screen between them when the cat
-was logged — the time, with the day under it. Both are the detail screen's own labels: the time where
+was logged — the time, with the day under it. The buttons stand as far from the screen's edges as the
+other screens' content does (`PhotoViewerScreenTest`, *the bar's buttons keep the screens' content
+inset from the edges*), and a day too long for the bar is cut short well before it reaches them (*a
+day too long for the bar is given no more room than keeps it clear of the buttons*). The time and the
+day are the detail screen's own labels: the time where
 the cat was logged, and the day it was there, "Today" and "Yesterday" included
 (`PhotoViewerStateMapperTest`, *the day comes from the cat's own offset, not the phone's*;
 `PhotoViewerScreenTest`, *the bar names when the photo was taken, the time over the day, centred on
@@ -35,7 +53,7 @@ the Store knows nothing of it.
 
 ## Where it sits
 
-`PhotoViewer(encounterId)` is a Navigation 3 key drawn by Navigation 3's `DialogSceneStrategy` in a
+`PhotoViewer(encounterId, photoId)` is a Navigation 3 key drawn by Navigation 3's `DialogSceneStrategy` in a
 dialog window of its own, edge to edge, so it covers the bottom bar without the shell learning which
 screens hide it (`PhotoViewerNavigationTest`, *the viewer opens in a window of its own over the
 cat*). The detail screen stays drawn underneath.
@@ -55,12 +73,17 @@ cat*). The detail screen stays drawn underneath.
   `PhotoViewerEntryTest`, *the nav host's own viewer entry closes by itself for a cat with no
   photo*).
 
-The key holds only the cat's id, so after the process is killed the restored viewer loads the cat
-again and shows the same photo.
+The key holds only the cat's id and the photo it was opened for, so after the process is killed the
+restored viewer loads the cat again. A key saved before cats had several photos carries no photo and
+opens on the cover (`PhotoViewerSavedStateTest`, *a viewer key saved before
+photo ids comes back opening on the cover*).
 
 ## Open in gallery
 
-**When it is offered.** A cat whose camera original the app saved to `Pictures/Cats Radar` (see
+**When it is offered.** The button belongs to the photo on screen and changes as the user swipes: it
+shows for a photo that has a link here and opens that photo's item, never the cover's
+(`PhotoViewerStoreTest`, *the gallery opens the original of the photo on screen, not the cover's*). A
+photo whose camera original the app saved to `Pictures/Cats Radar` (see
 [photos.md](./photos.md#the-gallery-setting)) shows a gallery button at the other end of the top bar.
 So does a cat whose photo was imported, or chosen from the gallery for it, when the pick named an item
 in this phone's gallery (see [import.md](./import.md#the-gallery-item-it-came-from)) — the item the
@@ -78,11 +101,11 @@ imported before the app kept the picked item offer nothing: the app has no link 
 (`PhotoViewerStateMapperTest`, *a photo with no original in the gallery offers nothing there*).
 
 **The install rule.** The button appears only on the installation that saved the original or made
-the pick (`GalleryLinkTest`, *an original recorded by another install is never a link here*; *a photo
-another install picked is never a link here*). A photo given on this phone to a cat another install
-logged — one a backup brought here — keeps no link at all, since back on that phone the row would pass
-the rule and open a different picture (`AttachPhotoTest`, *a cat another install logged keeps no link to
-a gallery item on this phone*). A gallery item
+the pick: each photo names the install that recorded its links (`GalleryLinkTest`, *an original recorded
+by another install is never a link here*; *a photo another install picked is never a link here*). A photo
+given on this phone to a cat another install logged — one a backup brought here — names this phone, so
+it opens here and not back on the phone that logged the cat (`AttachPhotoTest`, *a photo given to a cat
+another install logged opens its original here and not on that install*). A gallery item
 is known by an id that is only meaningful on the phone that made it, so on another phone — after a
 backup was restored there — the same id may be a different picture, possibly another cat the app saved
 there. A reinstall is another installation too, and Android takes away an uninstalled app's hold on

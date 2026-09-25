@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -33,6 +31,7 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.map.MapArea
 import dev.catsradar.presentation.map.MapState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.coroutines.CancellationException
@@ -45,7 +44,7 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.compose.map.MapState as MaplibreMapState
 
-// Vector tiles of OpenStreetMap data, free and keyless; the attribution the overlay draws is required.
+// Vector tiles of OpenStreetMap data, free and keyless.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
 private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
@@ -129,7 +128,12 @@ private fun CatsMap(
     val styleFailed = mapState.style.loadState is StyleLoadState.Failed
     val summary = pluralStringResource(R.plurals.map_summary, state.points.size, state.points.size)
     Box(modifier = modifier.semantics { contentDescription = summary }) {
-        MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
+        MaplibreMap(
+            modifier = Modifier.fillMaxSize(),
+            state = mapState,
+            cameraPadding = contentPadding,
+            overlay = { MapAttribution(contentPadding) },
+        )
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
         MapOverlay(
             state = state,
@@ -221,29 +225,12 @@ private fun MapArea.toBoundingBox() = BoundingBox(west, south, east, north)
 
 @Composable
 private fun EmptyMap(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_nav_map),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(56.dp),
-        )
-        Text(
-            text = stringResource(R.string.map_empty),
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = stringResource(R.string.map_empty_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
+    EmptyState(
+        iconRes = R.drawable.ic_nav_map,
+        title = stringResource(R.string.map_empty),
+        modifier = modifier,
+        hint = stringResource(R.string.map_empty_hint),
+    )
 }
 
 @ThemePreviews

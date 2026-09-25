@@ -103,18 +103,51 @@ geohash and needs no network — keeps working. Only country and city names are 
 ## Browsing them
 
 **Statistics → Places** opens the drill-down: countries, then cities, then areas, then the cats
-themselves — a plain list of one row per cat under its outing header, not the Encounters grid.
-Every level is sorted busiest first, and every place row opens the level below it: tapping an area
-lists its cats. Tapping a cat opens that cat, the same screen as from Encounters (see
+themselves. Every level is sorted busiest first, and every place row opens the level below it:
+tapping an area lists its cats. Tapping a cat opens that cat, the same screen as from Encounters (see
 [encounter-detail.md](./encounter-detail.md)), pushed above the list it was tapped in: the bottom bar
 still shows Stats, and back returns to that list, not to the top of the drill-down. The Stats tab,
-like from any level of the drill-down, goes back to Stats itself. Outing headers are labels, not
-buttons.
+like from any level of the drill-down, goes back to Stats itself.
+
+**The back arrow.** A back arrow sits at the top of every level, pinned while the level scrolls
+under it, whether the level is still loading, empty, a list of places or its cats. It works like
+the one on a cat's detail, and lines up with the cards under it the same way. The arrow takes back only the level it sits on: a second tap arriving
+after that level has gone does nothing, so a quick double tap never skips a level.
+
+**What a level looks like.** Each level opens on a headline card naming it and counting its cats:
+**Places** and every cat at the top, then the country, city or area tapped, with the count its row
+showed one level up. The level's own node comes from the level above, so the two can never
+disagree. A level the level above no longer lists opens without a headline instead of a wrong one.
+Below the headline, the level's rows sit in one card titled **Countries**, **Cities** or **Areas**.
+Each row shows its name, its count and a chevron, with a thin bar under the name that shows its
+share of the level. The three rows that stand for no place (Not named yet, No city, No
+location) have their names in the muted text colour. TalkBack reads a row as one item: its name,
+its count, and that it opens.
+
+**Flags and where a place is.** A country shows its flag before its name wherever the name appears:
+in the list of countries, in its own headline, and above the title of every level inside it. The
+flag is the platform's emoji for the country's two-letter code, so no flag is drawn for a code that
+is not two letters. Below the top, the headline names the places a level sits in above its title,
+the outermost first: a city's headline and No city's show the country, and an area's shows the
+country and then its city (or No city). Not named yet stands in for the country above its areas.
+TalkBack reads that line as one item, "Part of Spain, Barcelona", and skips the flags, which would
+only repeat the name beside them. A cat's detail names its city and country the same way (see
+[encounter-detail.md](./encounter-detail.md#where-it-was-found)).
+
+**The cats** at the bottom are laid out the way the map's spot sheet and the Encounters list lay
+them out: one card per cat with its coat face or photo, in a run of cards under each outing header.
+This is never the Encounters grid, whatever the Settings switch says. The headline is the list's
+first item and scrolls away with it. An outing header whose cats include a located one offers
+**On the map**, which opens the Map tab on that outing, as it does from Encounters. The headers
+group only the place's own cats, so an outing that also went elsewhere starts here at its first cat in
+this place, while the map shows the whole outing and names it by its real start. A cat here has no
+long press: there is nothing to select.
 
 A level draws nothing until its cats have been read, so one sliding in never flashes as empty
-first. A level that holds nothing says what it would have listed. The countries read **No places
-yet**: no cat has been logged at all. Any other level of places — a country's cities, the areas of
-a city, of No city or of Not named yet — reads **No places here**. An area or No location, whose
+first. A level that holds nothing says what it would have listed, under a location pin. The
+countries read **No places yet**: no cat has been logged at all. That first-run case also says that
+cats with a location are grouped here by country and city. Any other level of places — a country's
+cities, the areas of a city, of No city or of Not named yet — reads **No places here**. An area or No location, whose
 children are cats, reads **No cats here**. Below the countries, a level is empty only when its last
 cat went away while it was open — deleted from its own detail, or undone from the walking
 notification — or when it is rebuilt after its cats were deleted.

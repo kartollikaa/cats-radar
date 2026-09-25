@@ -23,12 +23,15 @@ import kotlin.time.Clock
 enum class PhotoSource { CAMERA, GALLERY }
 
 sealed interface AttachResult {
-    data object Attached : AttachResult
+    data class Attached(val photoId: String) : AttachResult
 
     /** The image could not be decoded; the cat is unchanged. */
     data object Unreadable : AttachResult
 
-    /** The cat is gone or already has a photo; it is unchanged and the attempt's own copies are removed. */
+    /** One of this cat's photos is already this one; nothing was copied and the cat is unchanged. */
+    data object AlreadyThere : AttachResult
+
+    /** The cat is gone; the attempt's own copies are removed. */
     data object NotAttachable : AttachResult
 }
 
@@ -47,45 +50,45 @@ class AttachPhoto(
     private val analytics: Analytics,
 ) {
     suspend operator fun invoke(encounterId: String, sourceUri: String, source: PhotoSource): AttachResult {
-        val target = encounterRepository.observeById(encounterId).first()
-        return if (target == null || target.photos.isNotEmpty()) {
-            AttachResult.NotAttachable
+        val target = encounterRepository.observeById(encounterId).first() ?: return AttachResult.NotAttachable
+        // Ahead of the copy: a photo this cat already has should cost no disk at all.
+        val sourceDigest = digest.sha256(sourceUri)
+        return if (sourceDigest != null && target.photos.any { it.sourceDigest == sourceDigest }) {
+            AttachResult.AlreadyThere
         } else {
-            storeAndAttach(target, sourceUri, source)
+            storeAndAttach(target, sourceUri, source, sourceDigest)
         }
     }
 
-    private suspend fun storeAndAttach(target: Encounter, sourceUri: String, source: PhotoSource): AttachResult {
-        // Gallery ids are per phone and this photo names its cat's install, so a link is kept only on this
-        // install's cats: recorded on another's, it would open a different photo back there.
-        val keepsLinks = target.deviceId == deviceIdProvider.deviceId
-        // Not the cat's id: an attempt that loses the row to another must remove only its own files.
-        val baseName = idGenerator.newId()
-        val stored = imageResizer.store(sourceUri, baseName) ?: return AttachResult.Unreadable
+    private suspend fun storeAndAttach(
+        target: Encounter,
+        sourceUri: String,
+        source: PhotoSource,
+        sourceDigest: String?,
+    ): AttachResult {
+        // Not the cat's id: the photo is one of several, and an attempt that fails removes only its own files.
+        val photoId = idGenerator.newId()
+        val stored = imageResizer.store(sourceUri, photoId) ?: return AttachResult.Unreadable
 
         var attached = false
         try {
             val galleryUri = if (
                 source == PhotoSource.CAMERA && settingsRepository.saveOriginalsToGallery().first()
             ) {
-                gallerySaver.save(sourceUri, "$baseName.jpg")
-            } else {
-                null
-            }
-            val pickedItem = if (keepsLinks && source == PhotoSource.GALLERY) {
-                galleryItemLocator.locate(sourceUri)
+                gallerySaver.save(sourceUri, "$photoId.jpg")
             } else {
                 null
             }
             val photo = EncounterPhoto(
-                id = target.id,
+                id = photoId,
                 encounterId = target.id,
                 photoPath = stored.photoPath,
                 thumbPath = stored.thumbPath,
-                galleryUri = galleryUri?.takeIf { keepsLinks },
-                sourceMediaUri = pickedItem,
-                sourceDigest = digest.sha256(sourceUri),
-                deviceId = target.deviceId,
+                galleryUri = galleryUri,
+                sourceMediaUri = if (source == PhotoSource.GALLERY) galleryItemLocator.locate(sourceUri) else null,
+                sourceDigest = sourceDigest,
+                // Gallery ids mean something only here, so the photo names this install whoever logged its cat.
+                deviceId = deviceIdProvider.deviceId,
                 addedAt = clock.now(),
             )
             // Once the write lands, these files are the cat's, so the write must not be cancelled.
@@ -94,7 +97,7 @@ class AttachPhoto(
             if (!attached) withContext(NonCancellable) { discard(stored) }
         }
         if (attached) analytics.log(AnalyticsEvent.PhotoAttached(source))
-        return if (attached) AttachResult.Attached else AttachResult.NotAttachable
+        return if (attached) AttachResult.Attached(photoId) else AttachResult.NotAttachable
     }
 
     private suspend fun discard(stored: StoredPhoto) {

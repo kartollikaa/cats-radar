@@ -109,10 +109,7 @@ internal fun catsRadarEntries(
         EncountersDestination(
             contentPadding = contentPadding,
             onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
-            onOutingMapClick = { id ->
-                mapFocus.postOuting(id)
-                backStack.selectTab(BottomNavTab.MAP)
-            },
+            onOutingMapClick = { id -> backStack.showOutingOnMap(id, mapFocus) },
         )
     }
     entry<CatsMap>(metadata = tabRootMetadata()) {
@@ -145,11 +142,18 @@ internal fun catsRadarEntries(
         RegionsDestination(
             key = key,
             contentPadding = contentPadding,
+            onBackClick = { backStack.popIfOnTop(key) },
             onRegionClick = { row -> backStack.push(row.toNavKey()) },
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
+            onOutingMapClick = { id -> backStack.showOutingOnMap(id, mapFocus) },
         )
     }
     catEntries(backStack, contentPadding, mapFocus)
+}
+
+private fun BottomNavBackStack.showOutingOnMap(outingId: String, mapFocus: MapFocusRequest) {
+    mapFocus.postOuting(outingId)
+    selectTab(BottomNavTab.MAP)
 }
 
 private fun EntryProviderScope<NavKey>.catEntries(
@@ -162,7 +166,7 @@ private fun EntryProviderScope<NavKey>.catEntries(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popIfOnTop(key) },
-            onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
+            onOpenPhoto = { photoId -> backStack.push(PhotoViewer(key.id, photoId)) },
             onOpenMap = {
                 mapFocus.postCat(key.id)
                 backStack.selectTab(BottomNavTab.MAP)
@@ -222,8 +226,10 @@ private fun defaultBackupName(): String =
 private fun RegionsDestination(
     key: Regions,
     contentPadding: PaddingValues,
+    onBackClick: () -> Unit,
     onRegionClick: (RegionRowKey) -> Unit,
     onEncounterClick: (String) -> Unit,
+    onOutingMapClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val store = koinViewModel<RegionsStore> { parametersOf(key.toRegionKey()) }
@@ -232,7 +238,9 @@ private fun RegionsDestination(
         state = state,
         modifier = modifier,
         contentPadding = contentPadding,
+        onBackClick = onBackClick,
         onRegionClick = onRegionClick,
         onEncounterClick = onEncounterClick,
+        onOutingMapClick = onOutingMapClick,
     )
 }
