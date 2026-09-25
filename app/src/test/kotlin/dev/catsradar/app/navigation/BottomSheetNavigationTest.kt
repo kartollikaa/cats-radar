@@ -97,7 +97,8 @@ class BottomSheetNavigationTest {
         settle { backStack.push(SPOT) }
 
         val sheetTop = sheetTop()
-        assertTrue(sheetTop < screenHeight() / 2, "the sheet's content starts at $sheetTop on a ${screenHeight()} screen")
+        val screenHeight = screenHeight()
+        assertTrue(sheetTop < screenHeight / 2, "the sheet's content starts at $sheetTop on a $screenHeight screen")
     }
 
     @Test
@@ -105,7 +106,8 @@ class BottomSheetNavigationTest {
         settle { backStack.push(SPOT) }
 
         val sheetTop = sheetTop()
-        assertTrue(sheetTop > screenHeight() / 2, "the sheet's content starts at $sheetTop on a ${screenHeight()} screen")
+        val screenHeight = screenHeight()
+        assertTrue(sheetTop > screenHeight / 2, "the sheet's content starts at $sheetTop on a $screenHeight screen")
     }
 
     @Test
