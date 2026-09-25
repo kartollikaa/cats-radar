@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
+@Suppress("LongParameterList") // one parameter per collaborator, plus the key's two ids
 class PhotoViewerStore(
     encounterId: String,
+    openedOn: String?,
     observeEncounter: ObserveEncounter,
     private val resolveGalleryLink: ResolveGalleryLink,
     private val stateMapper: PhotoViewerStateMapper,
@@ -21,15 +23,15 @@ class PhotoViewerStore(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<PhotoViewerState, PhotoViewerIntent, PhotoViewerEffect>(PhotoViewerState.Loading) {
 
-    private var shown: EncounterPhoto? = null
+    private var shown: List<EncounterPhoto> = emptyList()
     private var closing = false
     private var resolvingGallery = false
 
     init {
         observeEncounter(encounterId)
             .onEach { encounter ->
-                val showing = encounter?.let { stateMapper.map(it, clock.today(timeZone)) }
-                shown = encounter?.cover.takeIf { showing != null }
+                val showing = encounter?.let { stateMapper.map(it, clock.today(timeZone), openedOn) }
+                shown = encounter?.photos.orEmpty()
                 if (showing != null) setState { showing } else close()
             }
             .launchIn(viewModelScope)
@@ -38,12 +40,12 @@ class PhotoViewerStore(
     override suspend fun handle(intent: PhotoViewerIntent) {
         when (intent) {
             PhotoViewerIntent.BackClicked -> close()
-            PhotoViewerIntent.OpenInGalleryClicked -> openInGallery()
+            is PhotoViewerIntent.OpenInGalleryClicked -> openInGallery(intent.photoId)
         }
     }
 
-    private suspend fun openInGallery() {
-        val photo = shown
+    private suspend fun openInGallery(photoId: String) {
+        val photo = shown.firstOrNull { it.id == photoId }
         if (resolvingGallery || photo == null) return
         resolvingGallery = true
         try {

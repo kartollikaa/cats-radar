@@ -11,6 +11,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.withPhoto
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +25,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,7 +51,8 @@ class PhotoViewerStoreTest {
             runCurrent()
             assertEquals(
                 PhotoViewerState.Showing(
-                    photoPath = "/data/photos/cat-1.jpg",
+                    photos = persistentListOf(ViewerPhoto(id = ID, path = "/data/photos/cat-1.jpg")),
+                    firstPage = 0,
                     timeLabel = "2026-09-22T10:00:00Z",
                     dayLabel = "2026-09-22",
                 ),
@@ -121,7 +125,7 @@ class PhotoViewerStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = ID))
             runCurrent()
             assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED), awaitItem())
         }
@@ -134,7 +138,7 @@ class PhotoViewerStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = ID))
             runCurrent()
             assertEquals(PhotoViewerEffect.GalleryItemGone, awaitItem())
             expectNoEvents()
@@ -150,8 +154,8 @@ class PhotoViewerStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
-            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = ID))
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = ID))
             runCurrent()
             galleryItems.gate?.complete(Unit)
             runCurrent()
@@ -161,13 +165,45 @@ class PhotoViewerStoreTest {
     }
 
     @Test
+    fun `the gallery opens the original of the photo on screen, not the cover's`() = runTest(mainDispatcher) {
+        val cat = photographedCat(galleryUri = SAVED)
+        val second = cat.photos.single().copy(id = "second", galleryUri = SECOND_SAVED, addedAt = OCCURRED + 1.minutes)
+        repository.insert(cat.copy(photos = cat.photos + second))
+        galleryItems.present += listOf(SAVED, SECOND_SAVED)
+        val store = newStore(openedOn = "second")
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = "second"))
+            runCurrent()
+            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SECOND_SAVED), awaitItem())
+        }
+        assertEquals(1, assertIs<PhotoViewerState.Showing>(store.state.value).firstPage)
+    }
+
+    @Test
+    fun `a tap for a photo the cat no longer has opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(galleryUri = SAVED))
+        galleryItems.present += SAVED
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = "gone"))
+            runCurrent()
+            expectNoEvents()
+        }
+        assertEquals(emptyList(), galleryItems.asked)
+    }
+
+    @Test
     fun `a tap with nothing offered opens nothing and never asks the gallery`() = runTest(mainDispatcher) {
         repository.insert(photographedCat())
         val store = newStore()
         runCurrent()
 
         store.effects.test {
-            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = ID))
             runCurrent()
             expectNoEvents()
         }
@@ -178,8 +214,9 @@ class PhotoViewerStoreTest {
         .copy(kind = EncounterKind.PHOTO)
         .withPhoto(photoPath = "cat-1.jpg", galleryUri = galleryUri)
 
-    private fun newStore() = PhotoViewerStore(
+    private fun newStore(openedOn: String? = null) = PhotoViewerStore(
         encounterId = ID,
+        openedOn = openedOn,
         observeEncounter = ObserveEncounter(repository),
         resolveGalleryLink = ResolveGalleryLink(galleryItems, FakeDeviceIdProvider(INSTALL)),
         stateMapper = PhotoViewerStateMapper(
@@ -195,6 +232,7 @@ class PhotoViewerStoreTest {
         const val ID = "cat-1"
         const val INSTALL = "device-1"
         const val SAVED = "content://media/external/images/media/42"
+        const val SECOND_SAVED = "content://media/external/images/media/43"
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
 }
