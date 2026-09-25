@@ -112,6 +112,7 @@
     <string name="statistics_places">Places</string>
 
     <string name="regions_title">Places</string>
+    <string name="regions_back">Back</string>
     <string name="regions_section_countries">Countries</string>
     <string name="regions_section_cities">Cities</string>
     <string name="regions_section_areas">Areas</string>

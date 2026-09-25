@@ -4,8 +4,10 @@ import android.content.Context
 import android.os.Looper
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -63,9 +65,13 @@ class RegionsEntryTest {
         val backStack = BottomNavBackStack(NavBackStack(*levels.toTypedArray()))
         val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), MapFocusRequest())
         compose.setContent { CatsRadarTheme { entries(levels.last()).Content() } }
-        compose.waitUntil { compose.onAllNodes(hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+        val cat = hasClickAction() and !hasContentDescription(context.getString(R.string.regions_back))
+        compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) {
+            shadowOf(Looper.getMainLooper()).idle()
+            compose.onAllNodes(cat).fetchSemanticsNodes().isNotEmpty()
+        }
 
-        compose.onNode(hasClickAction()).performClick()
+        compose.onNode(cat).performClick()
 
         assertEquals(levels + EncounterDetail("cat-1"), backStack.toList())
     }
@@ -96,6 +102,25 @@ class RegionsEntryTest {
 
         assertEquals(listOf(Counter, CatsMap), backStack.toList())
         assertEquals(MapIntent.OutingFocused("cat-1"), mapFocus.consume())
+    }
+
+    @Test
+    fun `the back arrow pops only its own level, however fast it is tapped`() {
+        startKoin {
+            androidContext(context)
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }
+        val levels = listOf<NavKey>(Counter, Statistics, Regions(), Regions(RegionKind.NO_LOCATION))
+        val backStack = BottomNavBackStack(NavBackStack(*levels.toTypedArray()))
+        val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), MapFocusRequest())
+        compose.setContent { CatsRadarTheme { entries(levels.last()).Content() } }
+        val back = compose.onNodeWithContentDescription(context.getString(R.string.regions_back))
+
+        back.performClick()
+        back.performClick()
+        compose.waitForIdle()
+
+        assertEquals(levels.dropLast(1), backStack.toList())
     }
 
     private companion object {

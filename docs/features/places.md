@@ -109,6 +109,11 @@ tapping an area lists its cats. Tapping a cat opens that cat, the same screen as
 still shows Stats, and back returns to that list, not to the top of the drill-down. The Stats tab,
 like from any level of the drill-down, goes back to Stats itself.
 
+**The back arrow.** A back arrow sits at the top of every level, pinned while the level scrolls
+under it, whether the level is still loading, empty, a list of places or its cats. It works like
+the one on a cat's detail. The arrow takes back only the level it sits on: a second tap arriving
+after that level has gone does nothing, so a quick double tap never skips a level.
+
 **What a level looks like.** Each level opens on a headline card naming it and counting its cats:
 **Places** and every cat at the top, then the country, city or area tapped, with the count its row
 showed one level up. The level's own node comes from the level above, so the two can never
