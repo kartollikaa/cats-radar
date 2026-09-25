@@ -140,7 +140,8 @@ not a release list.
 | Idle | what the button does (the version is in About) | Check for updates |
 | Checking | indeterminate progress | disabled |
 | Up to date | "You have the latest version" | Check for updates |
-| Downloading | "Downloading 1.5.0-beta", progress with percent | disabled |
+| Download starting | "Downloading 1.5.0-beta", indeterminate progress (no network yet, or no size) | disabled |
+| Downloading | "Downloading 1.5.0-beta · 45 %", progress with percent | disabled |
 | Ready | "1.5.0-beta is ready to install" | Install 1.5.0-beta |
 | Needs permission | "Allow Cats Radar to install apps" | Open settings |
 | Installing | indeterminate progress while the system asks | disabled |

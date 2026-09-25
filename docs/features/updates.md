@@ -99,6 +99,7 @@ installed) is ignored.
 | nothing yet | what the button does | Check for updates |
 | checking | a progress bar | unavailable |
 | nothing newer | "You have the latest version" | Check for updates |
+| download starting (waiting for a network or the first bytes) | "Downloading 1.5.0-beta", a moving bar | unavailable |
 | downloading | "Downloading 1.5.0-beta · 45 %", a progress bar | unavailable |
 | downloaded, not installed | "1.5.0-beta is downloaded and ready to install" | Install 1.5.0-beta |
 | installing | "Installing 1.5.0-beta. Confirm it in the window Android shows" | unavailable |
