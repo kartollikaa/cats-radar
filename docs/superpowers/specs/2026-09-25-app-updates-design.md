@@ -137,7 +137,7 @@ not a release list.
 
 | State | Shows | Button |
 |---|---|---|
-| Idle | installed version | Check for updates |
+| Idle | what the button does (the version is in About) | Check for updates |
 | Checking | indeterminate progress | disabled |
 | Up to date | "You have the latest version" | Check for updates |
 | Downloading | "Downloading 1.5.0-beta", progress with percent | disabled |

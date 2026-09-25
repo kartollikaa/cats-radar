@@ -76,6 +76,16 @@ class CheckForUpdateTest {
     }
 
     @Test
+    fun `an installed version that is not a version is offered the newest release`() = runTest {
+        val local = CheckForUpdate(
+            UpdateSource { ReleaseFeed.Listed(listOf(release("v1.4.1-beta"))) },
+            installed.copy(versionName = "local"),
+        )
+
+        assertEquals(UpdateCheck.Available(AppVersion.parse("1.4.1-beta")!!, apk("v1.4.1-beta")), local())
+    }
+
+    @Test
     fun `a feed that fails says why`() = runTest {
         val result = CheckForUpdate(UpdateSource { ReleaseFeed.Failed(FeedFailure.UNAVAILABLE) }, installed)()
 
