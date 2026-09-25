@@ -14,13 +14,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/**
- * The routes of the walks that overlap the outing holding cat `encounterId` among `encounters`, again
- * whenever the walks overlapping it change or one of their routes does.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ObserveOutingTracks(private val walkRepository: WalkRepository) {
 
+    /**
+     * The routes of the walks that overlap the outing holding cat [encounterId] among [encounters], again
+     * whenever the walks overlapping it change or one of their routes does.
+     */
     operator fun invoke(encounters: Flow<List<Encounter>>, encounterId: String): Flow<List<WalkTrack>> {
         val outing = encounters.map { SessionSplitter.outingOf(it, encounterId) }
         return combine(outing, walkRepository.observeAll()) { cats, walks -> walks.overlapping(cats) }

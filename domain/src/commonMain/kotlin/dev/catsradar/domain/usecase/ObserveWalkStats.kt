@@ -14,14 +14,14 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 
-/**
- * Walk stats over every walk's route and the cats in [invoke]'s encounters, again whenever either changes,
- * worked out on [computeDispatcher]; a collector that falls behind receives only the latest.
- */
 class ObserveWalkStats(
     private val observeWalkTracks: ObserveWalkTracks,
     private val computeDispatcher: CoroutineDispatcher,
 ) {
+    /**
+     * Walk stats of every walk's route and the cats among [encounters], again whenever either changes,
+     * worked out on [computeDispatcher]; a collector that falls behind receives only the latest.
+     */
     operator fun invoke(encounters: Flow<List<Encounter>>): Flow<WalkStats> =
         combine(encounters.map(CatTimes::of), observeWalkTracks()) { cats, tracks -> cats to tracks }
             .scan(WalkMeasures.NONE) { measures, (cats, tracks) -> measures.next(cats, tracks) }
