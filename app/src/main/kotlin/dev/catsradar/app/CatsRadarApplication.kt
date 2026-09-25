@@ -6,6 +6,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dev.catsradar.app.di.dataModule
 import dev.catsradar.app.di.domainModule
 import dev.catsradar.app.di.presentationModule
@@ -37,7 +39,7 @@ import org.koin.core.context.startKoin
 class CatsRadarApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        tagReports(this, BuildConfig.BUILD_TYPE)
+        tagReports(FirebaseCrashlytics.getInstance(), FirebaseAnalytics.getInstance(this), BuildConfig.BUILD_TYPE)
         val koin = startKoin {
             androidLogger()
             androidContext(this@CatsRadarApplication)
@@ -80,7 +82,7 @@ class CatsRadarApplication : Application() {
             repairs = listOf({ koin.get<RepairPlaceCells>()() }, { koin.get<RegeneratePhotoCopies>()() }),
             reporter = koin.get<NonFatalReporter>(),
         ).launchIn(appScope)
-        GeocodeWorkScheduler.schedule(this)
-        PurgeWorkScheduler.schedule(this)
+        koin.get<GeocodeWorkScheduler>().schedule()
+        koin.get<PurgeWorkScheduler>().schedule()
     }
 }

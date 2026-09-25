@@ -32,13 +32,15 @@ private const val CONCURRENT_CONSTRUCTIONS = 8
 
 @RunWith(AndroidJUnit4::class)
 class SharedPreferencesDeviceIdProviderTest {
+    private val prefs = ApplicationProvider.getApplicationContext<Context>()
+        .getSharedPreferences("device", Context.MODE_PRIVATE)
+
     @Test
     fun deviceIdIsGeneratedOnceAndPersistsAcrossInstances() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val idGenerator = SequentialIdGenerator()
 
-        val first = SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId
-        val second = SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId
+        val first = SharedPreferencesDeviceIdProvider(prefs, idGenerator).deviceId
+        val second = SharedPreferencesDeviceIdProvider(prefs, idGenerator).deviceId
 
         assertEquals("generated-1", first)
         assertEquals(first, second)
@@ -46,11 +48,10 @@ class SharedPreferencesDeviceIdProviderTest {
 
     @Test
     fun concurrentConstructionAllConvergesOnTheSameGeneratedId() = runTest {
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val idGenerator = SlowSequentialIdGenerator()
 
         val ids = List(CONCURRENT_CONSTRUCTIONS) {
-            async(Dispatchers.IO) { SharedPreferencesDeviceIdProvider(context, idGenerator).deviceId }
+            async(Dispatchers.IO) { SharedPreferencesDeviceIdProvider(prefs, idGenerator).deviceId }
         }.awaitAll()
 
         assertEquals(1, ids.toSet().size)

@@ -1,13 +1,13 @@
 package dev.catsradar.data.platform
 
-import android.content.Context
+import android.content.SharedPreferences
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 
-private const val PREFS_NAME = "location_permission"
 private const val KEY_REQUESTED = "requested"
 
-class SharedPreferencesLocationPermissionRequestState(context: Context) : LocationPermissionRequestState {
-    private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+class SharedPreferencesLocationPermissionRequestState(
+    private val prefs: SharedPreferences,
+) : LocationPermissionRequestState {
 
     override val alreadyRequested: Boolean
         get() = prefs.getBoolean(KEY_REQUESTED, false)

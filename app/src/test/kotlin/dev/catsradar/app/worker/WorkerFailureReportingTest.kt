@@ -6,10 +6,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ListenableWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
-import dev.catsradar.app.notification.ImportNotifier
+import androidx.work.testing.WorkManagerTestInitHelper
+import dev.catsradar.app.notification.importNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.usecase.AttachLocation
@@ -19,6 +21,8 @@ import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.koinApplication
@@ -39,6 +43,16 @@ class WorkerFailureReportingTest {
     private val broken = IllegalStateException("database is gone")
     private val withUri = Data.Builder().putString(BackupWork.KEY_URI, "content://backups/cats.zip").build()
     private val withEncounter = Data.Builder().putString(AttachLocationWorker.KEY_ENCOUNTER_ID, "cat-1").build()
+
+    @Before
+    fun startWorkManager() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+    }
+
+    @After
+    fun closeWorkManager() {
+        WorkManagerTestInitHelper.closeWorkDatabase()
+    }
 
     private fun useCasesFailingWith(error: Throwable) = module {
         single { AttachLocation(failing(error), failing(error), failing(error), Clock.System) }
@@ -63,6 +77,7 @@ class WorkerFailureReportingTest {
         }
         single { ResolvePendingPlaces(failing(error), failing(error), Clock.System) }
         single { PurgeDeleted(failing(error), failing(error), Clock.System) }
+        single { GeocodeWorkScheduler(WorkManager.getInstance(context)) }
         single<NonFatalReporter> { reporter }
     }
 
@@ -78,7 +93,8 @@ class WorkerFailureReportingTest {
 
     private fun importWorker(error: Throwable): CoroutineWorker {
         val runId = UUID.randomUUID()
-        ImportBatches(context).replaceWith(runId, listOf("content://media/1"))
+        val batches = ImportBatches(context)
+        batches.replaceWith(runId, listOf("content://media/1"))
         return TestListenableWorkerBuilder<ImportPhotosWorker>(context)
             .setId(runId)
             .setWorkerFactory(
@@ -91,7 +107,8 @@ class WorkerFailureReportingTest {
                         appContext,
                         workerParameters,
                         { _, _ -> throw error },
-                        ImportNotifier(appContext),
+                        batches,
+                        importNotifier(appContext),
                         reporter,
                     )
                 },

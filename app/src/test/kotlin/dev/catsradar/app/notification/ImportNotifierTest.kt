@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 class ImportNotifierTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val notifier = ImportNotifier(context)
+    private val notifier = importNotifier(context)
 
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val shadowManager = shadowOf(manager)

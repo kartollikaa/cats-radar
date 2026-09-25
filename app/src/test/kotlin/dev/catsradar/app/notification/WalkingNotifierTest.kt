@@ -32,7 +32,7 @@ import kotlin.time.Instant
 class WalkingNotifierTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val notifier = WalkingNotifier(context, WalkClock)
+    private val notifier = walkingNotifier(context)
 
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val shadowManager = shadowOf(manager)
@@ -97,7 +97,7 @@ class WalkingNotifierTest {
     @Test
     fun fromApi37TheTimeIsAMetricAndTheHeaderShowsNoClock() {
         grantNotifications()
-        val notifier = WalkingNotifier(context, WalkClock, sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+        val notifier = walkingNotifier(context, sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
         notifier.ensureChannel()
 
         notifier.show(count = 3, startedAt = WalkStart, appOnScreen = false)

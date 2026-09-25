@@ -50,13 +50,19 @@ has no rule for it); every public `@Composable` with a `Modifier` parameter decl
 implementation is `@Serializable` (needed for Navigation 3's saved-state restoration, and for
 polymorphic key serialization once a non-JVM target exists); and `CatsRadarNavHost` takes its
 back stack from `rememberBottomNavBackStack()`, with no other `:app` source building or
-remembering a raw `NavBackStack` (`NavBackStackUsageTest`, see `app-shell.md`). `*Intent`, `*Effect`, and
-`*StateMapper` naming has no Konsist test at all.
+remembering a raw `NavBackStack` (`NavBackStackUsageTest`, see `app-shell.md`). And outside the
+composition root (`:app`'s `di` package and `CatsRadarApplication`) no production file looks up a
+platform service or SDK singleton — `getSystemService` (either form), `getSharedPreferences`,
+`Geocoder(...)`, `LocationServices`, `WorkManager`/`NotificationManagerCompat`/Firebase
+`getInstance`/`from`, `Firebase.analytics`/`crashlytics` — or constructs a `*StateMapper` or
+`*Store`, by call or by constructor reference (`DependencyLookupTest`, see
+`docs/rules/dependency-injection.md`). `*Intent`, `*Effect`, and `*StateMapper` naming has no Konsist
+test at all.
 
 The DI graph gets its own two-layer check outside the three formal tools: `KoinModulesTest`
 statically verifies every constructor-injected binding resolves, and `KoinRuntimeResolutionTest`
-actually starts Koin and resolves the handful of types obtained by hand that the static check
-can't see — see `app-shell.md`.
+actually starts Koin, with WorkManager running as in the app, and resolves the types obtained by
+hand that the static check can't see — see `app-shell.md`.
 
 ## Where the code lives
 

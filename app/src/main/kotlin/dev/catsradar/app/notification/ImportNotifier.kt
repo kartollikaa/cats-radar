@@ -21,9 +21,10 @@ private const val NOTIFICATION_ID = 1
  * Posting is best-effort: a user who has not granted notifications still gets the import, just not
  * the running commentary.
  */
-class ImportNotifier(private val context: Context) {
-
-    private val manager = NotificationManagerCompat.from(context)
+class ImportNotifier(
+    private val context: Context,
+    private val manager: NotificationManagerCompat,
+) {
 
     fun ensureChannel() {
         manager.createNotificationChannel(

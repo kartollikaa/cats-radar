@@ -11,7 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.WorkManagerTestInitHelper
-import dev.catsradar.app.notification.ImportNotifier
+import dev.catsradar.app.notification.importNotifier
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.ImportSummary
@@ -37,6 +37,7 @@ import kotlin.time.Duration.Companion.seconds
 class WorkManagerImportSchedulerTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val batches = ImportBatches(context)
 
     private val imported = CopyOnWriteArrayList<List<String>>()
 
@@ -57,7 +58,8 @@ class WorkManagerImportSchedulerTest {
                     appContext,
                     workerParameters,
                     importPhotos,
-                    ImportNotifier(appContext),
+                    batches,
+                    importNotifier(appContext),
                     RecordingNonFatalReporter(),
                 )
         }
@@ -79,7 +81,7 @@ class WorkManagerImportSchedulerTest {
             "content://media/picker_get_content/0/com.android.providers.media.photopicker/media/${TEN_DIGIT_ID + index}"
         }
 
-        WorkManagerImportScheduler(context).startAndAwaitTheRun(uris)
+        newScheduler().startAndAwaitTheRun(uris)
 
         assertEquals(listOf(uris), imported)
     }
@@ -89,7 +91,7 @@ class WorkManagerImportSchedulerTest {
         val uris = List(Tuning.IMPORT_BATCH_MAX) { index -> longProviderUri(index) }
         assertTrue(uris.sumOf { it.length } > Data.MAX_DATA_BYTES)
 
-        WorkManagerImportScheduler(context).startAndAwaitTheRun(uris)
+        newScheduler().startAndAwaitTheRun(uris)
 
         assertEquals(listOf(uris), imported)
     }
@@ -107,7 +109,7 @@ class WorkManagerImportSchedulerTest {
             }
             ImportSummary()
         }
-        val scheduler = WorkManagerImportScheduler(context)
+        val scheduler = newScheduler()
         scheduler.start(first)
         runBlocking { withTimeout(RUN_TIMEOUT) { firstRunImporting.await() } }
 
@@ -123,7 +125,7 @@ class WorkManagerImportSchedulerTest {
         importPhotos = { _, _ -> ImportSummary(added = addedIds.map { ImportedPhoto(it, needsLocation = false) }) }
         val uris = List(Tuning.IMPORT_BATCH_MAX, ::longProviderUri)
 
-        val run = WorkManagerImportScheduler(context).startAndAwaitTheRun(uris)
+        val run = newScheduler().startAndAwaitTheRun(uris)
 
         assertEquals(WorkInfo.State.SUCCEEDED, run.state)
         assertEquals(addedIds, run.outputData.getStringArray(ImportPhotosWorker.KEY_ADDED_IDS)?.toList())
@@ -134,7 +136,7 @@ class WorkManagerImportSchedulerTest {
         val storage = context.noBackupFilesDir
         storage.setWritable(false)
         try {
-            val run = WorkManagerImportScheduler(context).startAndAwaitTheRun(List(2, ::longProviderUri))
+            val run = newScheduler().startAndAwaitTheRun(List(2, ::longProviderUri))
 
             assertEquals(WorkInfo.State.SUCCEEDED, run.state)
             assertEquals(emptyList(), imported)
@@ -142,6 +144,8 @@ class WorkManagerImportSchedulerTest {
             storage.setWritable(true)
         }
     }
+
+    private fun newScheduler() = WorkManagerImportScheduler(WorkManager.getInstance(context), batches)
 
     private fun WorkManagerImportScheduler.startAndAwaitTheRun(uris: List<String>): WorkInfo = runBlocking {
         start(uris)

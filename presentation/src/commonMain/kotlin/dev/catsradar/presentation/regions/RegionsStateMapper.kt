@@ -1,21 +1,15 @@
 package dev.catsradar.presentation.regions
 
-import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.region.RegionLabel
 import dev.catsradar.domain.region.RegionNode
 import dev.catsradar.domain.usecase.RegionView
-import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.detail.formatCoordinate
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
 
-class RegionsStateMapper(
-    dateTimeFormatter: DateTimeFormatter,
-    photoStorage: PhotoStorage,
-) {
-    private val encountersMapper = EncountersStateMapper(dateTimeFormatter, photoStorage)
+class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
 
     fun map(view: RegionView, today: LocalDate, topLevel: Boolean): RegionsState = when (view) {
         is RegionView.Places -> when {
