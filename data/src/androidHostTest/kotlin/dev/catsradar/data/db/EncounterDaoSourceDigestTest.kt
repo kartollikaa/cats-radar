@@ -29,19 +29,25 @@ class EncounterDaoSourceDigestTest {
     }
 
     @Test
-    fun sourceDigestLookupFindsALiveRowAndNotASoftDeletedOne() = runTest {
-        val live = fullEncounterEntity(id = "live", sourceDigest = "shared-digest")
-        dao.insert(live)
-        assertEquals(live, dao.findBySourceDigest("shared-digest"))
+    fun sourceDigestLookupFindsALiveCatByAnyOfItsPhotosAndNotASoftDeletedOne() = runTest {
+        val cat = fullEncounterEntity(id = "cat")
+        val photos = listOf(
+            photoEntity("cat", sourceDigest = "first"),
+            photoEntity("cat", id = "b", sourceDigest = "second")
+        )
+        dao.insertWithPhotos(cat, photos)
 
-        dao.softDelete(live.id, Instant.parse("2026-09-21T00:00:00Z"))
-        assertNull(dao.findBySourceDigest("shared-digest"))
+        assertEquals(cat, dao.findBySourceDigest("second")?.encounter)
+        assertEquals(photos.toSet(), dao.findBySourceDigest("first")?.photos?.toSet())
+
+        dao.softDelete(cat.id, Instant.parse("2026-09-21T00:00:00Z"))
+        assertNull(dao.findBySourceDigest("second"))
     }
 
     @Test
-    fun sourceDigestLookupSkipsARowWhoseDigestHasNoCopy() = runTest {
-        dao.insert(fullEncounterEntity(id = "no-copy", sourceDigest = "orphan-digest").copy(photoPath = null))
+    fun sourceDigestLookupFindsNothingWhenNoPhotoCarriesTheDigest() = runTest {
+        dao.insertWithPhotos(fullEncounterEntity(id = "cat"), listOf(photoEntity("cat", sourceDigest = "other")))
 
-        assertNull(dao.findBySourceDigest("orphan-digest"))
+        assertNull(dao.findBySourceDigest("absent"))
     }
 }

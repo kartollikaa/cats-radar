@@ -12,6 +12,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
@@ -31,68 +33,49 @@ class EncounterDaoAttachPhotoTest {
     }
 
     @Test
-    fun attachPhotoWritesOnlyThePhotoColumnsOfALiveRowWithoutOne() = runTest {
-        val entity = tally("live")
-        dao.insert(entity)
+    fun attachPhotoGivesALiveCatWithoutOneThePhotoAndStampsOnlyItsUpdatedAt() = runTest {
+        val cat = tally("live")
+        dao.insert(cat)
+        val photo = photoEntity("live")
 
-        val written = attach("live")
+        assertTrue(dao.addPhoto(photo, UPDATED))
 
-        assertEquals(1, written)
-        assertEquals(
-            entity.copy(
-                photoPath = "p.jpg",
-                thumbPath = "p_thumb.jpg",
-                galleryUri = "content://gallery/7",
-                sourceMediaUri = "content://media/external/images/media/7",
-                sourceDigest = "sha",
-                updatedAt = UPDATED,
-            ),
-            dao.observeById("live").first(),
-        )
+        assertEquals(EncounterWithPhotos(cat.copy(updatedAt = UPDATED), listOf(photo)), dao.observeById("live").first())
     }
 
     @Test
     fun attachPhotoOnASoftDeletedRowNeitherResurrectsItNorGivesItAPhoto() = runTest {
-        val entity = tally("deleted", deletedAt = Instant.parse("2026-09-21T08:00:00Z"))
-        dao.insert(entity)
+        val cat = tally("deleted", deletedAt = Instant.parse("2026-09-21T08:00:00Z"))
+        dao.insert(cat)
 
-        assertEquals(0, attach("deleted"))
-        assertEquals(listOf(entity), dao.loadEvery())
+        assertFalse(dao.addPhoto(photoEntity("deleted"), UPDATED))
+
+        assertEquals(listOf(EncounterWithPhotos(cat, emptyList())), dao.loadEvery())
     }
 
     @Test
     fun attachPhotoNeverReplacesAPhotoTheRowAlreadyHas() = runTest {
-        val entity = fullEncounterEntity(id = "photo")
-        dao.insert(entity)
+        val cat = tally("photo")
+        val own = photoEntity("photo")
+        dao.insertWithPhotos(cat, listOf(own))
 
-        assertEquals(0, attach("photo"))
-        assertEquals(entity, dao.observeById("photo").first())
+        assertFalse(dao.addPhoto(photoEntity("photo", id = "another"), UPDATED))
+
+        assertEquals(EncounterWithPhotos(cat, listOf(own)), dao.observeById("photo").first())
     }
 
     @Test
     fun attachPhotoOnAnUnknownIdWritesNothing() = runTest {
-        assertEquals(0, attach("nobody"))
+        assertFalse(dao.addPhoto(photoEntity("nobody"), UPDATED))
+
+        assertEquals(emptyList(), dao.loadEvery())
     }
 
-    private suspend fun attach(id: String): Int = dao.attachPhoto(
-        id = id,
-        photoPath = "p.jpg",
-        thumbPath = "p_thumb.jpg",
-        galleryUri = "content://gallery/7",
-        sourceMediaUri = "content://media/external/images/media/7",
-        sourceDigest = "sha",
-        updatedAt = UPDATED,
-    )
-
     private fun tally(id: String, deletedAt: Instant? = null) =
-        fullEncounterEntity(id = id, sourceDigest = null, deletedAt = deletedAt).copy(
-            kind = EncounterKind.TALLY,
-            origin = EncounterOrigin.APP,
-            photoPath = null,
-            thumbPath = null,
-            galleryUri = null,
-            sourceMediaUri = null,
-        )
+        fullEncounterEntity(
+            id = id,
+            deletedAt = deletedAt
+        ).copy(kind = EncounterKind.TALLY, origin = EncounterOrigin.APP)
 
     private companion object {
         val UPDATED = Instant.parse("2026-09-21T09:05:00Z")

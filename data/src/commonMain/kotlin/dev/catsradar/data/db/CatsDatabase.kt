@@ -8,10 +8,16 @@ import androidx.room3.RoomDatabase
 import androidx.room3.RoomDatabaseConstructor
 
 internal const val DATABASE_FILE_NAME = "cats_radar.db"
-const val CATS_DATABASE_VERSION = 3
+const val CATS_DATABASE_VERSION = 4
 
 @Database(
-    entities = [EncounterEntity::class, PlaceCellEntity::class, WalkEntity::class, TrackPointEntity::class],
+    entities = [
+        EncounterEntity::class,
+        EncounterPhotoEntity::class,
+        PlaceCellEntity::class,
+        WalkEntity::class,
+        TrackPointEntity::class,
+    ],
     version = CATS_DATABASE_VERSION,
     autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )

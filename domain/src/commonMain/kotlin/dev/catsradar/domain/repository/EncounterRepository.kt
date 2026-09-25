@@ -16,6 +16,7 @@ interface EncounterRepository {
 
     suspend fun insert(encounter: Encounter)
 
+    /** Rewrites the cat's own fields; its photos are never touched. */
     suspend fun update(encounter: Encounter)
 
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
@@ -26,6 +27,9 @@ interface EncounterRepository {
      * cat was live and had no photo; otherwise writes nothing.
      */
     suspend fun addPhoto(photo: EncounterPhoto): Boolean
+
+    /** Gives each of [photos] to its cat unless it is already here; the cats' `updatedAt` stays as it was. */
+    suspend fun addPhotos(photos: List<EncounterPhoto>)
 
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant)

@@ -9,7 +9,17 @@ return to the list, never to the Counter root. The same screen opens from a dot 
 above the screen it was tapped in. A cat that is on the map has its coordinates drawn in the theme's
 primary colour with a map mark beside them, and a tap anywhere in its **Where** section switches to the
 Map tab with the view on that cat (see [map.md](./map.md#a-cats-coordinates)). The screen scrolls: a photo and the coat picker
-together are taller than most phones, and Delete must never end up below the bottom edge. The coat
+together are taller than most phones, and Delete must never end up below the bottom edge.
+
+A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
+"removed" state or *Missing* (`EncounterDetailScreenTest`). It leaves the same way system back does,
+once however often it is tapped, and only if the screen is still on top (`EncounterDetailStoreTest`,
+*back navigates back once, however often it is tapped*; `EncounterDetailEntryTest`). The bar has no
+fill of its own: the list runs edge to edge, under the status bar and under the arrow, which sits in
+a tonal circle so it stays readable over whatever passes beneath it. Only the list's content is
+inset, so at rest the first line starts below the bar and, scrolled to the end, Delete ends above the
+bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar while its first line
+starts below the bar*; *scrolled to the end, delete clears the bottom bar*). The coat
 picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
 [coat.md](./coat.md#changing-it-later).
 
@@ -82,8 +92,10 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - **The write fails** — the screen goes back to showing the cat rather than a deletion that did not
   happen, and no back-navigation fires (*a failed delete restores the loaded state*). A failed undo
   reopens the window instead of stranding the user on a closed one.
-- **Leaving during the window** — system back or a tab tap during the undo window closes the screen
-  and takes the undo with it; the deletion stands. That is the defined behaviour, not an accident:
+- **Leaving during the window** — system back, the back arrow or a tab tap during the undo window
+  closes the screen and takes the undo with it; the deletion stands, and the window closing later
+  navigates nowhere (*back during the undo window navigates back once, and the window closing adds
+  nothing*). That is the defined behaviour, not an accident:
   the window is bound to the screen, and the Counter offers the same trade.
 - **Pushing the same detail twice** — a double-tap on a row — puts one entry on the back stack, not
   two (`BottomNavigationTest`, *pushing a key already on the stack leaves the stack unchanged*).
@@ -101,7 +113,7 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 - `domain/…/usecase/ObserveEncounter.kt`, `DeleteEncounter.kt`, `UndoDelete.kt`
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`
+- `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`; `ui/…/components/CenterAppBar.kt` — the bar
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to

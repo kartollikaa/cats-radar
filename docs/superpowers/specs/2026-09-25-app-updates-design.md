@@ -61,7 +61,7 @@ Android: 16 (API 36)
 ABIs: arm64-v8a
 Locale: ru-RU
 Time zone: Europe/Moscow
-Database: 3
+Database: 4
 ```
 
 - The **commit** is read by the build (`git rev-parse --short=12 HEAD`) into `BuildConfig`; a build with no
