@@ -237,10 +237,11 @@ nothing, which keeps a fixture that large small in the repository.
 
 ## Seeing one
 
-A photo encounter shows its thumbnail in an Encounters tile or card, the app's full copy when it
-shares a pair row with the photo next to it (see `browsing-cats.md`), and the full copy on the detail
-screen, all loaded from app-private storage with Coil; a tap on the detail screen's photo opens the
-same copy fullscreen (see [photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
+A photographed cat shows its cover's thumbnail in an Encounters tile or card, the cover's full copy
+when it shares a pair row with the photo next to it (see `browsing-cats.md`), and every photo's full
+copy in a pager on the detail screen, all loaded from app-private storage with Coil; a tap on one on
+the detail screen opens it fullscreen (see [encounter-detail.md](./encounter-detail.md#its-photos) and
+[photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens
 to hold. A pair tile with no full copy falls back to its thumbnail.
 
@@ -250,6 +251,7 @@ the copy succeeded. Such a photo never joins a pair: the grid packs it like any 
 
 ## Not built yet
 
-A cat's photo cannot be replaced or removed — there is no control for either.
+A cat's photos cannot be removed or reordered, and its cover is always the oldest — there is no control
+for any of it.
 `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.

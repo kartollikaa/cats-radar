@@ -19,20 +19,22 @@ import org.koin.core.parameter.parametersOf
 internal fun handleEncounterDetailEffect(
     effect: EncounterDetailEffect,
     onNavigateBack: () -> Unit,
-    onOpenPhoto: () -> Unit,
+    onOpenPhoto: (photoId: String) -> Unit,
     onOpenMap: () -> Unit,
     cameraLauncher: CameraLauncher,
     photoPickerLauncher: PhotoPickerLauncher,
     photoFailureReporter: PhotoFailureReporter,
+    alreadyThereReporter: PhotoFailureReporter,
     captureDiscarder: CaptureDiscarder,
 ) {
     when (effect) {
         EncounterDetailEffect.NavigateBack -> onNavigateBack()
         EncounterDetailEffect.OpenCamera -> cameraLauncher.launch()
         EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch()
-        EncounterDetailEffect.OpenPhoto -> onOpenPhoto()
+        is EncounterDetailEffect.OpenPhoto -> onOpenPhoto(effect.photoId)
         EncounterDetailEffect.OpenMap -> onOpenMap()
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
+        EncounterDetailEffect.PhotoAlreadyThere -> alreadyThereReporter.report()
         is EncounterDetailEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
     }
 }
@@ -41,7 +43,7 @@ internal fun handleEncounterDetailEffect(
 internal fun EncounterDetailDestination(
     key: EncounterDetail,
     contentPadding: PaddingValues,
-    onOpenPhoto: () -> Unit,
+    onOpenPhoto: (photoId: String) -> Unit,
     onOpenMap: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
@@ -54,17 +56,19 @@ internal fun EncounterDetailDestination(
     val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(EncounterDetailIntent.PhotoTaken(uri)) }
     val photoPicker = rememberSinglePhotoPicker { uri -> store.dispatch(EncounterDetailIntent.PhotoPicked(uri)) }
     val photoFailureReporter = rememberPhotoFailureReporter(R.string.detail_photo_not_attached)
+    val alreadyThereReporter = rememberPhotoFailureReporter(R.string.detail_photo_already_there)
     val captureDiscarder = rememberCaptureDiscarder()
-    LaunchedEffect(store, cameraLauncher, photoPicker, photoFailureReporter, captureDiscarder) {
+    LaunchedEffect(store, cameraLauncher, photoPicker, photoFailureReporter, alreadyThereReporter, captureDiscarder) {
         store.effects.collect { effect ->
             handleEncounterDetailEffect(
                 effect,
                 onNavigateBack = { currentOnNavigateBack() },
-                onOpenPhoto = { currentOnOpenPhoto() },
+                onOpenPhoto = { photoId -> currentOnOpenPhoto(photoId) },
                 onOpenMap = { currentOnOpenMap() },
                 cameraLauncher = cameraLauncher,
                 photoPickerLauncher = photoPicker,
                 photoFailureReporter = photoFailureReporter,
+                alreadyThereReporter = alreadyThereReporter,
                 captureDiscarder = captureDiscarder,
             )
         }
@@ -79,7 +83,7 @@ internal fun EncounterDetailDestination(
         onCoatClick = { coat -> store.dispatch(EncounterDetailIntent.CoatPicked(coat)) },
         onTakePhotoClick = { store.dispatch(EncounterDetailIntent.TakePhotoClicked) },
         onPickPhotoClick = { store.dispatch(EncounterDetailIntent.PickPhotoClicked) },
-        onPhotoClick = { store.dispatch(EncounterDetailIntent.PhotoClicked) },
+        onPhotoClick = { photoId -> store.dispatch(EncounterDetailIntent.PhotoClicked(photoId)) },
         onCoordinatesClick = { store.dispatch(EncounterDetailIntent.CoordinatesClicked) },
     )
 }

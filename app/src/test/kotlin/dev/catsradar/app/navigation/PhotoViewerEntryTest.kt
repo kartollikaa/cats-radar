@@ -75,7 +75,7 @@ class PhotoViewerEntryTest {
         compose.onNode(photoMatcher() and hasClickAction()).performClick()
         compose.waitForIdle()
 
-        assertEquals(levels + PhotoViewer(ID), backStack.toList())
+        assertEquals(levels + PhotoViewer(ID, photoId = ID), backStack.toList())
     }
 
     @Test
