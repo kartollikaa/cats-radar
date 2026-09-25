@@ -45,7 +45,7 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.compose.map.MapState as MaplibreMapState
 
-// Vector tiles of OpenStreetMap data, free and keyless; the attribution the overlay draws is required.
+// Vector tiles of OpenStreetMap data, free and keyless.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
 private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
@@ -129,7 +129,12 @@ private fun CatsMap(
     val styleFailed = mapState.style.loadState is StyleLoadState.Failed
     val summary = pluralStringResource(R.plurals.map_summary, state.points.size, state.points.size)
     Box(modifier = modifier.semantics { contentDescription = summary }) {
-        MaplibreMap(modifier = Modifier.fillMaxSize(), state = mapState, cameraPadding = contentPadding)
+        MaplibreMap(
+            modifier = Modifier.fillMaxSize(),
+            state = mapState,
+            cameraPadding = contentPadding,
+            overlay = { MapAttribution(contentPadding) },
+        )
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
         MapOverlay(
             state = state,
