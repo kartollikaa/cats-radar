@@ -10,9 +10,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
@@ -27,6 +30,7 @@ import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsCrumb
 import dev.catsradar.presentation.regions.RegionsEmptyHint
 import dev.catsradar.presentation.regions.RegionsEmptyLabel
 import dev.catsradar.presentation.regions.RegionsHeader
@@ -36,6 +40,7 @@ import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.CenterAppBarDefaults
 import dev.catsradar.ui.regions.RegionsScreen
+import dev.catsradar.ui.regions.RegionsTestTags
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
@@ -192,7 +197,66 @@ class RegionsScreenTest {
         assertTrue(headlineTop >= statusBar + CenterAppBarDefaults.Height, "headline at $headlineTop")
     }
 
+    @Test
+    fun `a country row shows its flag before its name, and TalkBack reads the row without it`() {
+        val spain = RegionRowState(
+            RegionRowKey.Country("ES"),
+            RegionRowLabel.Named("Spain"),
+            countLabel = "3",
+            share = 1f,
+            pseudo = false,
+            flag = FLAG,
+        )
+        val header = RegionsHeader(RegionsTitle.AllPlaces, 3)
+        show(RegionsState.Places(header, RegionsSection.COUNTRIES, persistentListOf(spain)))
+
+        val flagLeft = compose.onNodeWithTag(RegionsTestTags.FLAG, useUnmergedTree = true)
+            .getUnclippedBoundsInRoot().left
+        val nameLeft = compose.onNodeWithText("Spain", useUnmergedTree = true).getUnclippedBoundsInRoot().left
+
+        assertTrue(flagLeft < nameLeft, "flag at $flagLeft, name at $nameLeft")
+        compose.onNodeWithText("Spain").assertTextContains("3").assert(!hasText(FLAG, substring = true))
+    }
+
+    @Test
+    fun `a country's headline shows its flag, and a city's names its country above the title`() {
+        show(
+            RegionsState.Places(
+                RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 3, flag = FLAG),
+                RegionsSection.CITIES,
+                oneCountry,
+            ),
+        )
+        compose.onNodeWithTag(RegionsTestTags.FLAG, useUnmergedTree = true).assertExists()
+
+        state = RegionsState.Places(
+            RegionsHeader(
+                RegionsTitle.Of(RegionRowLabel.Named("Barcelona")),
+                count = 2,
+                trail = persistentListOf(RegionsCrumb(RegionRowLabel.Named("Spain"), FLAG)),
+            ),
+            RegionsSection.AREAS,
+            persistentListOf(
+                RegionRowState(
+                    RegionRowKey.Area("sp3e9", RegionRowKey.City("ES", "Barcelona")),
+                    RegionRowLabel.Named("Gràcia"),
+                    countLabel = "2",
+                    share = 1f,
+                    pseudo = false,
+                ),
+            ),
+        )
+        val countryTop = compose.onNodeWithText("Spain", useUnmergedTree = true).getUnclippedBoundsInRoot().top
+        val titleTop = compose.onNodeWithText("Barcelona").getUnclippedBoundsInRoot().top
+
+        assertTrue(countryTop < titleTop, "country at $countryTop, title at $titleTop")
+    }
+
     private val isHeading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
+
+    private companion object {
+        const val FLAG = "🇪🇸"
+    }
 
     private val oneCountry = persistentListOf(
         RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "3", 1f, pseudo = false),

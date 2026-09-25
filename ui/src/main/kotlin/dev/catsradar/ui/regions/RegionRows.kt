@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -22,20 +23,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsCrumb
 import dev.catsradar.presentation.regions.RegionsHeader
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.HeadlineCard
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 private val ShareBarHeight = 4.dp
+
+/** What tests find the parts of Places by. */
+object RegionsTestTags {
+    const val FLAG = "regions-flag"
+}
 
 @Composable
 internal fun RegionsHeadline(header: RegionsHeader, modifier: Modifier = Modifier) {
@@ -44,11 +56,15 @@ internal fun RegionsHeadline(header: RegionsHeader, modifier: Modifier = Modifie
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                text = header.title.text(),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.semantics { heading() },
-            )
+            if (header.trail.isNotEmpty()) RegionsTrail(header.trail)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                header.flag?.let { Flag(it, MaterialTheme.typography.headlineSmall) }
+                Text(
+                    text = header.title.text(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.semantics { heading() },
+                )
+            }
             Text(
                 text = pluralStringResource(R.plurals.regions_cat_count, header.count, header.count),
                 style = MaterialTheme.typography.titleMedium,
@@ -70,6 +86,7 @@ internal fun RegionRow(row: RegionRowState, modifier: Modifier = Modifier, onCli
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                row.flag?.let { Flag(it, MaterialTheme.typography.bodyLarge) }
                 Text(
                     text = row.label.text(),
                     style = MaterialTheme.typography.bodyLarge,
@@ -86,6 +103,34 @@ internal fun RegionRow(row: RegionRowState, modifier: Modifier = Modifier, onCli
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/** Where the level sits: the places above it, the outermost first. */
+@Composable
+private fun RegionsTrail(trail: ImmutableList<RegionsCrumb>, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.semantics(mergeDescendants = true) {},
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        trail.forEachIndexed { index, crumb ->
+            if (index > 0) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            crumb.flag?.let { Flag(it, MaterialTheme.typography.titleSmall) }
+            Text(text = crumb.label.text(), style = MaterialTheme.typography.titleSmall)
+        }
+    }
+}
+
+// TalkBack would read the emoji as "flag: Spain" right before the name that already says Spain.
+@Composable
+private fun Flag(flag: String, style: TextStyle, modifier: Modifier = Modifier) {
+    Text(text = flag, style = style, modifier = modifier.clearAndSetSemantics { testTag = RegionsTestTags.FLAG })
 }
 
 @Composable
@@ -128,10 +173,19 @@ private fun RegionRowLabel.text(): String = when (this) {
 @Composable
 private fun RegionsHeadlinePreview() {
     CatsRadarTheme {
-        RegionsHeadline(
-            header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Barcelona")), count = 97),
-            modifier = Modifier.padding(16.dp),
-        )
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            RegionsHeadline(sampleCountryHeader)
+            RegionsHeadline(
+                RegionsHeader(
+                    RegionsTitle.Of(RegionRowLabel.Named("Gràcia")),
+                    count = 54,
+                    trail = persistentListOf(
+                        RegionsCrumb(RegionRowLabel.Named("Spain"), flag = "🇪🇸"),
+                        RegionsCrumb(RegionRowLabel.Named("Barcelona"), flag = null),
+                    ),
+                ),
+            )
+        }
     }
 }
 
@@ -140,8 +194,20 @@ private fun RegionsHeadlinePreview() {
 private fun RegionRowPreview() {
     CatsRadarTheme {
         Column(modifier = Modifier.padding(16.dp)) {
-            RegionRow(RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "128", 0.85f, false))
+            RegionRow(sampleCountryRow)
             RegionRow(RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "6", 0.04f, pseudo = true))
         }
     }
 }
+
+private val sampleCountryHeader =
+    RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 128, flag = "🇪🇸")
+
+private val sampleCountryRow = RegionRowState(
+    RegionRowKey.Country("ES"),
+    RegionRowLabel.Named("Spain"),
+    countLabel = "128",
+    share = 0.85f,
+    pseudo = false,
+    flag = "🇪🇸",
+)

@@ -124,6 +124,13 @@ share of the level. The three rows that stand for no place (Not named yet, No ci
 location) have their names in the muted text colour. TalkBack reads a row as one item: its name,
 its count, and that it opens.
 
+**Flags and where a place is.** A country shows its flag before its name, both in the list of
+countries and in its own headline. The flag is the platform's emoji for the country's two-letter
+code, so no flag is drawn for a code that is not two letters. Below the top, the headline names the
+places a level sits in above its title, the outermost first: a city's headline shows its country, and
+an area's shows its country and then its city. Not named yet stands in for the country above its
+areas. TalkBack skips the flags, which would only repeat the name beside them.
+
 **The cats** at the bottom are laid out the way the map's spot sheet and the Encounters list lay
 them out: one card per cat with its coat face or photo, in a run of cards under each outing header.
 This is never the Encounters grid, whatever the Settings switch says. The headline is the list's
