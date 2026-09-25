@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.BuildConfigField
 import dev.catsradar.buildlogic.configureAndroid
 import dev.catsradar.buildlogic.configureLintSeverity
 import dev.catsradar.buildlogic.libs
@@ -8,6 +9,7 @@ import dev.catsradar.buildlogic.pluginId
 import dev.catsradar.buildlogic.version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.configure
 import java.io.StringReader
 import java.util.Properties
@@ -50,9 +52,20 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         extensions.configure<ApplicationAndroidComponentsExtension> {
             // A sideloaded APK's download size outweighs unpacking its native libraries at install.
             onVariants(selector().withBuildType("release")) { it.packaging.jniLibs.useLegacyPackaging.set(true) }
+            val commit = gitCommit()
+            onVariants { variant ->
+                variant.buildConfigFields?.put("GIT_COMMIT", commit.map { BuildConfigField("String", "\"$it\"", null) })
+            }
         }
     }
 }
+
+// A tree with no git history (a source archive) has no commit to name.
+private fun Project.gitCommit(): Provider<String> =
+    providers.exec {
+        commandLine("git", "rev-parse", "--short=12", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.map { it.trim().ifEmpty { "unknown" } }
 
 // The key never enters the repo: without a signing file a release build is left unsigned.
 private fun ApplicationExtension.signReleaseWithLocalKey(project: Project) {

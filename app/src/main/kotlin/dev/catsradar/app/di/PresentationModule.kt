@@ -15,6 +15,7 @@ import dev.catsradar.presentation.map.MapStateMapper
 import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.regions.RegionsStateMapper
 import dev.catsradar.presentation.regions.RegionsStore
+import dev.catsradar.presentation.settings.AboutStateMapper
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.statistics.StatisticsStateMapper
 import dev.catsradar.presentation.statistics.StatisticsStore
@@ -49,6 +50,7 @@ val presentationModule = module {
     factoryOf(::StatisticsStateMapper)
     viewModelOf(::StatisticsStore)
     factoryOf(::RegionsStateMapper)
+    factoryOf(::AboutStateMapper)
     viewModelOf(::SettingsStore)
     viewModel { (parent: dev.catsradar.domain.region.RegionKey?) ->
         RegionsStore(parent = parent, observeRegion = get(), stateMapper = get(), clock = get(), timeZone = get())
