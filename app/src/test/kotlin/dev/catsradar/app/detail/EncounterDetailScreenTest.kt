@@ -20,11 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -126,7 +128,7 @@ class EncounterDetailScreenTest {
             location = LocationLabel.NONE,
             coordinatesLabel = null,
             accuracyMeters = null,
-            photoPath = "/data/photos/cat-1.jpg",
+            photos = persistentListOf(DetailPhoto(id = "cat-1", path = "/data/photos/cat-1.jpg")),
         )
     }
 }

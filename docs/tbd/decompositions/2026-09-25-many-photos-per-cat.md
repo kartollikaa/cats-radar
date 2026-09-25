@@ -17,8 +17,9 @@
 | M3 | Photos move to their own table | Database v4: `encounter_photos`, a hand-written migration moving every photo, and the repository reading and writing the table. | safe | ~650 | M2 | merged |
 | M4 | Backup format 4 carries every photo | `encounter_photos.json` in the archive; older formats read by the migration's rule. | safe | ~450 | M3 | merged |
 | M5 | Attaching a photo to a cat that has one | `AttachPhoto` adds to any live cat, skips a photo already on it, keeps links on every cat. | safe | ~350 | M3 | merged |
-| M6 | The viewer pages through a cat's photos | `PhotoViewer(encounterId, photoId)` with a pager and a per-photo gallery link. | safe | ~550 | M3 | in-review |
-| M7 | Adding photos from the detail screen | The cover with a count badge and an always-on *Add photo* with a multi-select gallery pick. | safe | ~650 | M4, M5, M6 | planned |
+| M6 | The viewer pages through a cat's photos | `PhotoViewer(encounterId, photoId)` with a pager and a per-photo gallery link. | safe | ~550 | M3 | merged |
+| M7 | A cat's photos on its detail screen | A pager of the cat's photos opening the viewer on the tapped one, and *Add photo* on every live cat, one photo at a time. | safe | ~550 | M4, M5, M6 | in-review |
+| M8 | Several photos from the gallery at once | *Choose from gallery* picks several images and attaches them one after another, with progress and one message for the lot. | safe | ~450 | M7 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -82,20 +83,29 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** every cat has at most one photo, so the pager is a single page.
 - **Cleanup owed:** none.
 
-### Slice M7 — Adding photos from the detail screen
-- **In scope:** detail state with the photo count and the add section on every live cat; the cover's count
-  badge; the multi-select picker capped by `Tuning.ATTACH_BATCH_MAX`; the
-  sequential batch with progress, the wait for every attached photo, and the messages; EN/RU strings;
-  `encounter-detail.md`, `photos.md`.
-- **Out of scope:** removing or reordering photos; a count on Encounters tiles.
-- **Ships safely because:** it is the feature; everything under it is in place.
+### Slice M7 — A cat's photos on its detail screen
+- **In scope:** detail state with the photo list and the add section on every live cat; the pager, its
+  position and scrolling to a photo that arrives; `PhotoClicked(photoId)` → `PhotoViewer(id, photoId)`;
+  `AttachResult.Attached(photoId)` so the attempt waits for exactly that photo; the already-there message;
+  EN/RU strings; `encounter-detail.md`, `photos.md`.
+- **Out of scope:** several photos at once (M8); removing or reordering photos; a count on Encounters tiles.
+- **Ships safely because:** it is the feature, one photo at a time; storage, backup and viewer already hold many.
+- **Cleanup owed:** none.
+
+### Slice M8 — Several photos from the gallery at once
+- **In scope:** the multi-select picker capped by `Tuning.ATTACH_BATCH_MAX` (cut to it when a picker ignores
+  the limit); the Store attaching the picked photos one after another with progress; one message for the
+  photos that could not be attached, one for a pick that was all already there; leaving mid-batch; EN/RU
+  strings; `encounter-detail.md`, `photos.md`.
+- **Out of scope:** the camera taking several shots in one go.
+- **Ships safely because:** it widens a pick that already works for one photo.
 - **Cleanup owed:** none.
 
 ## Decision log
 
-- 2026-09-25: owner chose a **cover with a count badge** over a photo pager on the detail screen, which now
-  pages through the outing's cats ([2026-09-25-outing-pager.md](./2026-09-25-outing-pager.md)); paging photos
-  is the viewer's (M6). If P3 of that map lands first, M7 builds on its `CatPage`.
+- 2026-09-25: **M6 merged** as #165. **M7 split in two**: the pager and adding one photo at a time (M7), then
+  several photos from the gallery at once (M8). Each is a complete behaviour, and the batch — sequential
+  attaching, progress, a message for the lot — is its own review.
 
 - 2026-09-25: **M5 merged** as #161. A cat given a photo some other way while an attempt runs now keeps both;
   the detail screen shows only the cover until M7.
