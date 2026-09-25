@@ -26,8 +26,8 @@ class UpdateStateMapper {
 
     fun installing(version: String): UpdateState = UpdateState(UpdateStatus.Installing(version), UpdateAction.Busy)
 
-    fun installFailed(version: String): UpdateState =
-        UpdateState(UpdateStatus.InstallFailed(version), UpdateAction.Install(version))
+    // A new check downloads the package again: offering the same one could fail the same way forever.
+    fun installFailed(version: String): UpdateState = UpdateState(UpdateStatus.InstallFailed(version))
 
     fun downloadFailed(): UpdateState = UpdateState(UpdateStatus.Failed(UpdateFailure.DOWNLOAD_FAILED))
 

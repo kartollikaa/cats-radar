@@ -61,9 +61,9 @@ class UpdateStateMapperTest {
     }
 
     @Test
-    fun `a failed install offers to try the same package again`() {
+    fun `a failed install offers a new check, which downloads the package afresh`() {
         assertEquals(
-            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Install("1.5.0-beta")),
+            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Check),
             mapper.installFailed("1.5.0-beta"),
         )
     }

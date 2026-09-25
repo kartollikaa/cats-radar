@@ -72,7 +72,8 @@ installs.
   launch is the new version. Everything the app keeps stays — the application id and the signing key are
   the same, so the database, the photos and the settings are the old ones.
 - **A cancelled confirmation** (`STATUS_FAILURE_ABORTED`) goes back to offering *Install*; any other
-  failure says the version was not installed and offers to try again.
+  failure says the version was not installed and offers *Check for updates*, which downloads the package
+  afresh — the same file could fail the same way forever (the cache cleared under it, a key that differs).
 - `REQUEST_INSTALL_PACKAGES` is declared; without it Android refuses the session outright.
 - A debug build is signed with another key than a release, so it cannot update to one: Android refuses
   the session.
@@ -82,7 +83,9 @@ installs.
 
 ## Whether to install at once
 
-A download this screen started installs as soon as it finishes. A download found finished by a Settings
+A download this screen started installs as soon as it finishes — while the screen is started: its
+download is read only then, because Android does not show the install confirmation to an app in the
+background. A download that ends while the app is away installs when the user comes back to Settings. A download found finished by a Settings
 opened later — after leaving the screen, or after Android ended the process — waits for *Install
 <version>*. A finished download is reported by WorkManager again every time it is read; the run's id
 keeps it from installing twice, and a package that is not newer than the installed version (the one just
@@ -98,7 +101,7 @@ installed) is ignored.
 | downloading | "Downloading 1.5.0-beta · 45 %", a progress bar | unavailable |
 | downloaded, not installed | "1.5.0-beta is downloaded and ready to install" | Install 1.5.0-beta |
 | installing | "Installing 1.5.0-beta. Confirm it in the window Android shows" | unavailable |
-| install failed | "1.5.0-beta wasn't installed" | Install 1.5.0-beta |
+| install failed | "1.5.0-beta wasn't installed" | Check for updates |
 | download failed or damaged | the download didn't finish or arrived damaged | Check for updates |
 | no connection | couldn't reach GitHub, check the connection | Check for updates |
 | `404`, `403`, `429` or any other refusal | GitHub didn't share the releases, try later | Check for updates |

@@ -10,7 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import dev.catsradar.app.update.InstallResults
 import dev.catsradar.app.update.UpdateInstaller
 import dev.catsradar.app.worker.BackupScheduler
@@ -89,8 +92,12 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
 // The download worker and the install session both outlive this screen, so both are read back.
 @Composable
 private fun FollowUpdate(store: SettingsStore, scheduler: UpdateDownloadScheduler, installResults: InstallResults) {
-    LaunchedEffect(store, scheduler) {
-        scheduler.observe().collect { info -> info?.toUpdateIntent()?.let(store::dispatch) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // Read only while the screen is started: Android refuses to show the install confirmation from the background.
+    LaunchedEffect(store, scheduler, lifecycle) {
+        scheduler.observe()
+            .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+            .collect { info -> info?.toUpdateIntent()?.let(store::dispatch) }
     }
     LaunchedEffect(store, installResults) {
         installResults.observe().collect { store.dispatch(SettingsIntent.Update.InstallFinished(it)) }

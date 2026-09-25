@@ -536,7 +536,7 @@ class SettingsStoreTest {
     }
 
     @Test
-    fun `a failed install says so and offers to try again`() = runTest(mainDispatcher) {
+    fun `a failed install says so and offers a new check`() = runTest(mainDispatcher) {
         val store = newStore()
         store.dispatch(downloaded)
         store.dispatch(SettingsIntent.Update.InstallClicked)
@@ -546,7 +546,7 @@ class SettingsStoreTest {
         runCurrent()
 
         assertEquals(
-            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Install("1.5.0-beta")),
+            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Check),
             store.state.value.update,
         )
     }
