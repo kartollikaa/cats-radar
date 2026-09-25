@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,7 +14,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -37,9 +34,10 @@ import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
-import dev.catsradar.ui.components.CenterAppBarDefaults
+import dev.catsradar.ui.components.BackBar
 import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.components.SectionCard
+import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.encounters.EncounterRows
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -55,16 +53,7 @@ fun RegionsScreen(
     onEncounterClick: (String) -> Unit = {},
     onOutingMapClick: (String) -> Unit = {},
 ) {
-    val layoutDirection = LocalLayoutDirection.current
-    val start = contentPadding.calculateStartPadding(layoutDirection)
-    val end = contentPadding.calculateEndPadding(layoutDirection)
-    val top = contentPadding.calculateTopPadding()
-    val belowBar = PaddingValues(
-        start = start,
-        top = top + CenterAppBarDefaults.Height,
-        end = end,
-        bottom = contentPadding.calculateBottomPadding(),
-    )
+    val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             RegionsState.Loading -> Unit
@@ -105,8 +94,9 @@ fun RegionsScreen(
                 )
             }
         }
-        RegionsBackBar(
-            modifier = Modifier.padding(start = start, top = top, end = end),
+        BackBar(
+            contentDescription = stringResource(R.string.regions_back),
+            contentPadding = contentPadding,
             onBackClick = onBackClick,
         )
     }
