@@ -27,6 +27,29 @@ class GitHubReleasesTest {
     }
 
     @Test
+    fun `a release that also carries a debug build offers its release build`() {
+        val releases = parseGitHubReleases(
+            """[{"tag_name": "v1.4.0-beta", "draft": false, "assets": [
+                {"name": "cats-radar-1.4.0-beta-debug.apk", "size": 104833459, "browser_download_url": "https://x/debug.apk"},
+                {"name": "cats-radar-1.4.0-beta.apk", "size": 13685692, "browser_download_url": "https://x/release.apk"}
+            ]}]""",
+        )
+
+        assertEquals("https://x/release.apk", releases.single().apk?.url)
+    }
+
+    @Test
+    fun `a release whose only package is a debug build offers none`() {
+        val releases = parseGitHubReleases(
+            """[{"tag_name": "v1.3.0-beta", "draft": false, "assets": [
+                {"name": "cats-radar-1.3.0-beta-debug.apk", "size": 99304041, "browser_download_url": "https://x/debug.apk"}
+            ]}]""",
+        )
+
+        assertEquals(listOf(PublishedRelease("v1.3.0-beta", apk = null)), releases)
+    }
+
+    @Test
     fun `a draft is never listed`() {
         assertEquals(emptyList(), parseGitHubReleases("""[{"tag_name": "v9.0.0", "draft": true, "assets": []}]"""))
     }
