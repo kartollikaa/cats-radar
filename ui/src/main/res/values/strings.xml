@@ -128,9 +128,9 @@
         <item quantity="one">%1$d cat in %2$s</item>
         <item quantity="other">%1$d cats in %2$s</item>
     </plurals>
-    <plurals name="counter_outing_now">
-        <item quantity="one">%1$d cat · %2$s</item>
-        <item quantity="other">%1$d cats · %2$s</item>
+    <plurals name="counter_outing_cats">
+        <item quantity="one">%1$d cat</item>
+        <item quantity="other">%1$d cats</item>
     </plurals>
     <plurals name="counter_milestone">
         <item quantity="one">%1$d cat!</item>
