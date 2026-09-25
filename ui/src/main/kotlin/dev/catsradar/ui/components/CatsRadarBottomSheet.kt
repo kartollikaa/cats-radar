@@ -22,11 +22,11 @@ fun CatsRadarBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        sheetState = rememberBottomSheetState(
-            initialValue = SheetValue.Hidden,
-            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
-        ),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = fullyOpenOrHidden),
         contentWindowInsets = contentWindowInsets,
         content = content,
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+private val fullyOpenOrHidden = setOf(SheetValue.Hidden, SheetValue.Expanded)

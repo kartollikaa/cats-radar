@@ -51,8 +51,8 @@ implementation is `@Serializable` (needed for Navigation 3's saved-state restora
 polymorphic key serialization once a non-JVM target exists); and `CatsRadarNavHost` takes its
 back stack from `rememberBottomNavBackStack()`, with no other `:app` source building or
 remembering a raw `NavBackStack` (`NavBackStackUsageTest`, see `app-shell.md`); and no file but
-`CatsRadarBottomSheet.kt` imports Material's `ModalBottomSheet`, so no sheet can stop half open
-(`BottomSheetUsageTest`, see `app-shell.md`). And outside the
+`CatsRadarBottomSheet.kt` uses Material's own sheets, by import or by a fully qualified call, so no
+sheet can stop half open (`BottomSheetUsageTest`, see `app-shell.md`). And outside the
 composition root (`:app`'s `di` package and `CatsRadarApplication`) no production file looks up a
 platform service or SDK singleton — `getSystemService` (either form), `getSharedPreferences`,
 `Geocoder(...)`, `LocationServices`, `WorkManager`/`NotificationManagerCompat`/Firebase

@@ -12,12 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.navigation3.runtime.NavBackStack
@@ -56,6 +63,7 @@ class BottomSheetNavigationTest {
 
     private val backStack = BottomNavBackStack(NavBackStack<NavKey>(Counter))
     private lateinit var backDispatcher: OnBackPressedDispatcher
+    private var sheetHeight by mutableStateOf(SHORT_SHEET)
 
     @Before
     fun showTheMap() {
@@ -66,7 +74,7 @@ class BottomSheetNavigationTest {
                 entryProvider = entryProvider {
                     entry<Counter>(metadata = tabRootMetadata()) { Screen(COUNTER) }
                     entry<CatsMap>(metadata = tabRootMetadata()) { Screen(MAP) }
-                    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { TallSheet(SHEET) }
+                    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { Sheet(SHEET, sheetHeight) }
                     entry<EncounterDetail> { Screen(CAT) }
                 },
             )
@@ -84,11 +92,35 @@ class BottomSheetNavigationTest {
 
     @Test
     fun `a sheet taller than half the screen opens at its full height`() {
+        sheetHeight = TALL_SHEET
+
         settle { backStack.push(SPOT) }
 
-        val sheetTop = compose.onNodeWithTag(SHEET).getUnclippedBoundsInRoot().top
-        val screenHeight = compose.onNodeWithTag(MAP).getUnclippedBoundsInRoot().height
-        assertTrue(sheetTop < screenHeight / 2, "the sheet's content starts at $sheetTop on a $screenHeight screen")
+        val sheetTop = sheetTop()
+        assertTrue(sheetTop < screenHeight() / 2, "the sheet's content starts at $sheetTop on a ${screenHeight()} screen")
+    }
+
+    @Test
+    fun `a sheet shorter than half the screen opens at its own height`() {
+        settle { backStack.push(SPOT) }
+
+        val sheetTop = sheetTop()
+        assertTrue(sheetTop > screenHeight() / 2, "the sheet's content starts at $sheetTop on a ${screenHeight()} screen")
+    }
+
+    @Test
+    fun `dragging a tall sheet part of the way down closes it rather than stopping half open`() {
+        sheetHeight = TALL_SHEET
+        settle { backStack.push(SPOT) }
+
+        compose.onNodeWithTag(SHEET).performTouchInput {
+            val start = Offset(centerX, 20.dp.toPx())
+            swipe(start = start, end = start + Offset(0f, PART_OF_THE_WAY.toPx()), durationMillis = 1_000)
+        }
+        compose.waitForIdle()
+
+        assertEquals(listOf(Counter, CatsMap), backStack.toList())
+        assertFalse(isShown(SHEET), "the sheet is still open")
     }
 
     @Test
@@ -145,6 +177,10 @@ class BottomSheetNavigationTest {
         compose.waitForIdle()
     }
 
+    private fun sheetTop() = compose.onNodeWithTag(SHEET).getUnclippedBoundsInRoot().top
+
+    private fun screenHeight() = compose.onNodeWithTag(MAP).getUnclippedBoundsInRoot().height
+
     private fun isShown(text: String) = compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
 
     private companion object {
@@ -152,6 +188,11 @@ class BottomSheetNavigationTest {
         const val MAP = "map screen"
         const val SHEET = "spot sheet"
         const val CAT = "cat screen"
+        val SHORT_SHEET = 120.dp
+        val TALL_SHEET = 2000.dp
+
+        // Past the drag that settles a sheet at its next stop, and short of the half-open one.
+        val PART_OF_THE_WAY = 160.dp
         val SPOT = MapSpot(catIds = setOf("a", "b"), coats = emptySet())
         val CAT_KEY = EncounterDetail("a")
     }
@@ -163,6 +204,6 @@ private fun Screen(label: String) {
 }
 
 @Composable
-private fun TallSheet(label: String) {
-    Box(Modifier.fillMaxWidth().height(2000.dp).testTag(label)) { Text(label) }
+private fun Sheet(label: String, height: Dp) {
+    Box(Modifier.fillMaxWidth().height(height).testTag(label)) { Text(label) }
 }
