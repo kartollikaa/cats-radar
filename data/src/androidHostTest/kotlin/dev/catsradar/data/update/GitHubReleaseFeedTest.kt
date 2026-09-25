@@ -24,7 +24,9 @@ class GitHubReleaseFeedTest {
             requests += Request(
                 method = exchange.requestMethod,
                 pathAndQuery = exchange.requestURI.toString(),
-                headers = exchange.requestHeaders.keys.associate { it.lowercase() to exchange.requestHeaders.getFirst(it) },
+                headers = exchange.requestHeaders.keys.associate { name ->
+                    name.lowercase() to exchange.requestHeaders.getFirst(name)
+                },
             )
             val bytes = body.encodeToByteArray()
             exchange.sendResponseHeaders(status, bytes.size.toLong())
@@ -95,7 +97,11 @@ class GitHubReleaseFeedTest {
         val closedPort = server.address.port
         server.stop(0)
 
-        val offline = GitHubReleaseFeed("kartollikaa/cats-radar", "CatsRadar/1", apiBase = "http://127.0.0.1:$closedPort")
+        val offline = GitHubReleaseFeed(
+            repository = "kartollikaa/cats-radar",
+            userAgent = "CatsRadar/1",
+            apiBase = "http://127.0.0.1:$closedPort",
+        )
 
         assertEquals(ReleaseFeed.Failed(FeedFailure.OFFLINE), offline.releases())
     }

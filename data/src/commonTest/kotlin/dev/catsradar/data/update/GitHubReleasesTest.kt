@@ -16,7 +16,7 @@ class GitHubReleasesTest {
                 PublishedRelease(
                     tag = "v1.4.1-beta",
                     apk = ReleasePackage(
-                        url = "https://github.com/kartollikaa/cats-radar/releases/download/v1.4.1-beta/cats-radar-1.4.1-beta.apk",
+                        url = "$DOWNLOADS/v1.4.1-beta/cats-radar-1.4.1-beta.apk",
                         sizeBytes = 13_682_980,
                         sha256 = "e4eebd3ae6e095ecc92df3f4859b03edf14bc799dd6e4cb4f61c629882cbbdf1",
                     ),
@@ -89,4 +89,8 @@ class GitHubReleasesTest {
           }
         ]
     """.trimIndent()
+
+    private companion object {
+        const val DOWNLOADS = "https://github.com/kartollikaa/cats-radar/releases/download"
+    }
 }

@@ -23,6 +23,7 @@ class GitHubReleaseFeed(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : UpdateSource {
 
+    @Suppress("SwallowedException") // each failure becomes the reason the check reports; the cause helps no one
     override suspend fun releases(): ReleaseFeed = withContext(ioDispatcher) {
         val connection = URL("$apiBase/repos/$repository/releases?per_page=20").openConnection() as HttpURLConnection
         try {

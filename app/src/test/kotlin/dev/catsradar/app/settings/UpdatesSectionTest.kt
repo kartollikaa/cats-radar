@@ -43,11 +43,13 @@ class UpdatesSectionTest {
         show()
         val words = mapOf(
             UpdateStatus.UpToDate to context.getString(R.string.settings_updates_up_to_date),
-            UpdateStatus.Available("1.5.0-beta") to context.getString(R.string.settings_updates_available, "1.5.0-beta"),
+            UpdateStatus.Available("1.5.0-beta") to
+                context.getString(R.string.settings_updates_available, "1.5.0-beta"),
             UpdateStatus.Failed(UpdateFailure.OFFLINE) to context.getString(R.string.settings_updates_offline),
             UpdateStatus.Failed(UpdateFailure.SOURCE_UNAVAILABLE) to
                 context.getString(R.string.settings_updates_source_unavailable),
-            UpdateStatus.Failed(UpdateFailure.UNREADABLE_ANSWER) to context.getString(R.string.settings_updates_unreadable),
+            UpdateStatus.Failed(UpdateFailure.UNREADABLE_ANSWER) to
+                context.getString(R.string.settings_updates_unreadable),
         )
 
         words.forEach { (status, text) ->

@@ -393,7 +393,11 @@ class SettingsStoreTest {
     fun `a second tap while a check runs asks the source nothing more`() = runTest(mainDispatcher) {
         val answer = CompletableDeferred<ReleaseFeed>()
         var asked = 0
-        val store = settingsStore(updateSource = UpdateSource { asked++; answer.await() })
+        val counting = UpdateSource {
+            asked++
+            answer.await()
+        }
+        val store = settingsStore(updateSource = counting)
 
         store.dispatch(SettingsIntent.UpdateCheckClicked)
         store.dispatch(SettingsIntent.UpdateCheckClicked)

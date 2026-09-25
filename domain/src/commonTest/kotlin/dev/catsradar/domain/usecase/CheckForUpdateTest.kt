@@ -23,7 +23,8 @@ class CheckForUpdateTest {
         databaseVersion = 3,
     )
 
-    private fun apk(tag: String) = ReleasePackage("https://example.test/$tag.apk", sizeBytes = 13_682_980, sha256 = null)
+    private fun apk(tag: String) =
+        ReleasePackage("https://example.test/$tag.apk", sizeBytes = 13_682_980, sha256 = null)
 
     private fun release(tag: String) = PublishedRelease(tag, apk(tag))
 

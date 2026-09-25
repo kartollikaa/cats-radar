@@ -133,7 +133,10 @@ val dataModule = module {
     }
     single<BuildInfoReader> { AndroidBuildInfoReader(androidContext(), get()) }
     single<UpdateSource> {
-        GitHubReleaseFeed(repository = BuildConfig.UPDATE_REPOSITORY, userAgent = "CatsRadar/${BuildConfig.VERSION_NAME}")
+        GitHubReleaseFeed(
+            repository = BuildConfig.UPDATE_REPOSITORY,
+            userAgent = "CatsRadar/${BuildConfig.VERSION_NAME}",
+        )
     }
 }
 
