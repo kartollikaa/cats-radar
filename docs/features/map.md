@@ -138,10 +138,10 @@ opening the map (above).
 - **No connection:** the dots sit on the map's style, so without the style there is nothing to draw
   them on. An area already seen loads from the cache; a first look with no connection says the map
   could not load, rather than showing an empty canvas.
-- **No compass and no scale:** only the MapLibre logo and the attribution sit over the map. Two
-  fingers still turn and tilt it as on any map, and no control sets it straight; the view comes back
-  north-up and flat whenever it is fitted again, as when an outing is focused or let go, a cat's
-  coordinates open it, or the tab is left and reopened.
+- **No compass, scale or logo:** only the attribution sits over the map. Two fingers still turn and
+  tilt it as on any map, and no control sets it straight; the view comes back north-up and flat
+  whenever it is fitted again, as when an outing is focused or let go, a cat's coordinates open it,
+  or the tab is left and reopened.
 - **TalkBack** hears how many cats the map shows; the dots themselves are not reachable yet, and a
   spot's list is read like the Encounters tab.
 - **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
@@ -164,8 +164,8 @@ opening the map (above).
   `MapFeatures.kt` — cats as map features, and each coat's colour shares; its `routeLines` — a
   focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's layers, their order and
   which need a rim; `MapSpotScreen.kt` — a spot's list, drawn by the Encounters tab's own
-  `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` —
-  the coat choice
+  `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map; `MapAttribution.kt` —
+  the attribution, the one library control kept on it; `MapCoatSheet.kt` — the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
   back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing,
   or the single cat, another tab or a spot's list asked the map to show

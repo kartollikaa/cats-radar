@@ -41,13 +41,11 @@ import kotlinx.coroutines.isActive
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
-import org.maplibre.compose.overlay.include
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.compose.map.MapState as MaplibreMapState
-import org.maplibre.compose.overlay.MapOverlay as MaplibreMapOverlay
 
-// Vector tiles of OpenStreetMap data, free and keyless; their licence requires the library's attribution overlay.
+// Vector tiles of OpenStreetMap data, free and keyless.
 private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
 private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
 
@@ -135,7 +133,7 @@ private fun CatsMap(
             modifier = Modifier.fillMaxSize(),
             state = mapState,
             cameraPadding = contentPadding,
-            overlay = { include(MaplibreMapOverlay.AttributionOnly) },
+            overlay = { MapAttribution(contentPadding) },
         )
         if (styleFailed) MapUnavailable(modifier = Modifier.fillMaxSize().padding(contentPadding))
         MapOverlay(
