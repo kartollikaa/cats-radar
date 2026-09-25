@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.repository.EncounterRepositoryImpl
+import dev.catsradar.data.repository.toDomain
+import dev.catsradar.domain.model.EncounterPhoto
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -106,26 +108,33 @@ class EncounterDaoPhotosTest {
     }
 
     @Test
-    fun eachWayAPhotoRowIsWrittenKeepsItsShot() = runTest {
-        dao.insertWithPhotos(fullEncounterEntity(id = "ginger"), listOf(photoEntity("ginger", id = "p1")))
-        dao.insertWithPhotos(
-            fullEncounterEntity(id = "ginger-too"),
-            listOf(photoEntity("ginger-too", id = "p2", shotId = "p1")),
-        )
-        dao.insertWithPhotos(
-            fullEncounterEntity(id = "unseen"),
-            listOf(photoEntity("unseen", id = "p3", shotId = "p1")),
-        )
-        dao.insert(fullEncounterEntity(id = "added-later"))
-        dao.addPhoto(
-            photoEntity("added-later", id = "p4", shotId = "p1"),
-            updatedAt = Instant.parse("2026-09-21T00:00:00Z"),
-        )
-        dao.insert(fullEncounterEntity(id = "restored"))
-        dao.addPhotos(listOf(photoEntity("restored", id = "p5", shotId = "p1")))
+    fun eachWayAPhotoIsWrittenKeepsItsShot() = runTest {
+        val repository = EncounterRepositoryImpl(dao)
+        repository.insert(cat("ginger").copy(photos = listOf(photo("ginger", id = "p1", shotId = null))))
+        repository.insert(cat("ginger-too").copy(photos = listOf(photo("ginger-too", id = "p2", shotId = "p1"))))
+        repository.insert(cat("unseen").copy(photos = listOf(photo("unseen", id = "p3", shotId = "p1"))))
+        repository.insert(cat("added-later"))
+        repository.addPhoto(photo("added-later", id = "p4", shotId = "p1"))
+        repository.insert(cat("restored"))
+        repository.addPhotos(listOf(photo("restored", id = "p5", shotId = "p1")))
 
-        val shots = dao.loadEvery().flatMap { it.photos }.associate { it.id to it.shotId }
+        val shots = repository.loadEvery().flatMap { it.photos }.associate { it.id to it.shotId }
 
         assertEquals(mapOf("p1" to null, "p2" to "p1", "p3" to "p1", "p4" to "p1", "p5" to "p1"), shots)
     }
+
+    private fun cat(id: String) = fullEncounterEntity(id = id).toDomain()
+
+    private fun photo(encounterId: String, id: String, shotId: String?) = EncounterPhoto(
+        id = id,
+        encounterId = encounterId,
+        photoPath = "photos/$id.jpg",
+        thumbPath = null,
+        galleryUri = null,
+        sourceMediaUri = null,
+        sourceDigest = "digest-$id",
+        deviceId = "device-1",
+        addedAt = Instant.parse("2026-09-21T00:00:00Z"),
+        shotId = shotId,
+    )
 }
