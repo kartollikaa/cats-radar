@@ -63,7 +63,7 @@ fun CenterAppBar(
 object CenterAppBarDefaults {
     val Height = 56.dp
 
-    // Leaves an icon button's visible edge, 4dp inside its touch target, on the screens' 16dp content inset.
+    // An icon button's visible edge sits inside its touch target; this puts that edge on the screens' content inset.
     val ContentPadding = PaddingValues(horizontal = 12.dp)
 }
 

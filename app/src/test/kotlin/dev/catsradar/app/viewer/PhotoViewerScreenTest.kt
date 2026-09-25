@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.view.ViewConfiguration
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -111,6 +113,21 @@ class PhotoViewerScreenTest {
     }
 
     @Test
+    fun `a day too long for the bar is given no more room than keeps it clear of the buttons`() {
+        show(photos = listOf(Photo("cover", opensInGallery = true)), day = LONG_DAY)
+        val clearance = with(compose.density) { 12.dp.toPx() }
+        val between = openInGallery().fetchSemanticsNode().boundsInRoot.left -
+            back().fetchSemanticsNode().boundsInRoot.right
+
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText(LONG_DAY, useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        val room = layouts.single().layoutInput.constraints.maxWidth
+
+        assertTrue(room <= between - 2 * clearance, "the day may take ${room}px of the ${between}px left to it")
+    }
+
+    @Test
     fun `a photo with no original in the gallery offers nothing there`() {
         show(photos = listOf(Photo("cover", opensInGallery = false)))
 
@@ -175,13 +192,14 @@ class PhotoViewerScreenTest {
     private fun show(
         photos: List<Photo> = listOf(Photo("cover")),
         firstPage: Int = 0,
+        day: String = DAY,
         onBackClick: () -> Unit = {},
         onOpenInGalleryClick: (String) -> Unit = {},
     ) {
         compose.setContent {
             CatsRadarTheme {
                 PhotoViewerScreen(
-                    state = showingOf(photos, firstPage),
+                    state = showingOf(photos, firstPage, day),
                     onBackClick = onBackClick,
                     onOpenInGalleryClick = onOpenInGalleryClick,
                 )
@@ -190,7 +208,7 @@ class PhotoViewerScreenTest {
         awaitThePhoto()
     }
 
-    private fun showingOf(photos: List<Photo>, firstPage: Int = 0): PhotoViewerState.Showing {
+    private fun showingOf(photos: List<Photo>, firstPage: Int = 0, day: String = DAY): PhotoViewerState.Showing {
         val viewerPhotos = photos.map { photo ->
             val file = File(context.cacheDir, "${photo.id}.png")
             file.outputStream().use { out ->
@@ -202,7 +220,7 @@ class PhotoViewerScreenTest {
             photos = viewerPhotos.toImmutableList(),
             firstPage = firstPage,
             timeLabel = TIME,
-            dayLabel = DAY,
+            dayLabel = day,
         )
     }
 
@@ -243,5 +261,6 @@ class PhotoViewerScreenTest {
     private companion object {
         const val TIME = "14:32"
         const val DAY = "Yesterday"
+        const val LONG_DAY = "Wednesday, 23 September 2026, late in the evening"
     }
 }
