@@ -1,5 +1,6 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.stats.Stats
 import dev.catsradar.domain.stats.StatsCalculator
@@ -17,8 +18,11 @@ class ObserveStats(
     // ticking is what makes its elapsed time and rate move while nothing is being logged.
     private val ticks: Flow<Unit> = ticker(TickPeriod),
 ) {
-    operator fun invoke(): Flow<Stats> =
-        combine(encounterRepository.observeAll(), ticks) { encounters, _ ->
-            StatsCalculator.calculate(encounters, today = clock.today(timeZone), now = clock.now())
+    operator fun invoke(): Flow<Stats> = invoke(encounterRepository.observeAll())
+
+    /** Stats of [encounters], in place of a read of its own. */
+    operator fun invoke(encounters: Flow<List<Encounter>>): Flow<Stats> =
+        combine(encounters, ticks) { list, _ ->
+            StatsCalculator.calculate(list, today = clock.today(timeZone), now = clock.now())
         }
 }

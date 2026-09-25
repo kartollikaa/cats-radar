@@ -2,10 +2,13 @@ package dev.catsradar.presentation.statistics
 
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.WalkRepository
+import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveWalkStats
 import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.presentation.CountingEncounterRepository
 import dev.catsradar.presentation.DelayedWalkRepository
 import dev.catsradar.presentation.StoredWalkRepository
 import dev.catsradar.presentation.counter.FakeClock
@@ -49,9 +52,13 @@ class StatisticsStoreTest {
         Dispatchers.resetMain()
     }
 
-    private fun newStore(walkRepository: WalkRepository) = StatisticsStore(
-        observeStats = ObserveStats(encounterRepository, FakeClock(BASE + 2.hours), TimeZone.UTC, ticks = flowOf(Unit)),
-        observeWalkStats = ObserveWalkStats(encounterRepository, ObserveWalkTracks(walkRepository)),
+    private fun newStore(
+        walkRepository: WalkRepository,
+        encounters: EncounterRepository = encounterRepository,
+    ) = StatisticsStore(
+        observeEncounters = ObserveEncounters(encounters),
+        observeStats = ObserveStats(encounters, FakeClock(BASE + 2.hours), TimeZone.UTC, ticks = flowOf(Unit)),
+        observeWalkStats = ObserveWalkStats(ObserveWalkTracks(walkRepository), mainDispatcher),
         stateMapper = StatisticsStateMapper(FakeDateTimeFormatter()),
     )
 
@@ -111,6 +118,18 @@ class StatisticsStoreTest {
         runCurrent()
 
         assertNull(store.state.value.walked)
+    }
+
+    @Test
+    fun `the screen reads the cats once for both the stats and the walk rows`() = runTest(mainDispatcher) {
+        val encounters = CountingEncounterRepository(encounterRepository)
+        encounters.insert(encounterFixture("cat-1", BASE + 10.minutes))
+
+        val store = newStore(StoredWalkRepository(), encounters)
+        runCurrent()
+
+        assertTrue(store.state.value.hasAnyCats)
+        assertEquals(1, encounters.everyCollection)
     }
 
     private companion object {

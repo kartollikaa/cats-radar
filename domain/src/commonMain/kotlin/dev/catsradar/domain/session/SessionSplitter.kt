@@ -39,4 +39,8 @@ object SessionSplitter {
         outings += current
         return outings
     }
+
+    /** The outing, oldest first, that holds live encounter [encounterId]; null when there is none. */
+    fun outingOf(encounters: List<Encounter>, encounterId: String): List<Encounter>? =
+        groupByOuting(encounters).firstOrNull { outing -> outing.any { it.id == encounterId } }
 }
