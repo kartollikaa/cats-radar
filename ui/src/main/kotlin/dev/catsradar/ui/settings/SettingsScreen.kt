@@ -221,7 +221,9 @@ private fun BackupOutcome.messageRes(): Int = when (this) {
 private fun SettingsScreenPreview() {
     CatsRadarTheme {
         Surface {
-            SettingsScreen(state = SettingsState(saveOriginalsToGallery = true, updatesShown = true, about = sampleAbout))
+            SettingsScreen(
+                state = SettingsState(saveOriginalsToGallery = true, updatesShown = true, about = sampleAbout),
+            )
         }
     }
 }
