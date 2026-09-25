@@ -15,7 +15,7 @@
 | D1 | Places on the card rhythm (#149) | Every level of the drill-down gets a headline with its name and count, its rows in a titled card with share bars and chevrons, and its cats in the Encounters list layout. | safe | ~600 | — | in-review |
 | D2 | Notices on the Counter as cards (#155) | The Counter's import progress and summary, and the location hint beside them, become one low-surface notice card with a leading icon. | safe | ~250 | — | in-review |
 | D3 | One layout for the sheets (#157) | The coat question after a photo, the map's coat filter and the spot list share a header and an action row; Not specified becomes a cell of the filter's grid. | safe | ~350 | — | in-review |
-| D4 | A back arrow on Places | Each level of the drill-down gets the pinned back arrow the cat's detail has, now that `CenterAppBar` is on `main`. | safe | ~250 | D1, #146 | planned |
+| D4 | A back arrow on Places (#162) | Each level of the drill-down gets the pinned back arrow the cat's detail has, now that `CenterAppBar` is on `main`. | safe | ~250 | D1, #146 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -56,6 +56,8 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **In scope:** a `CenterAppBar` with the pinned back arrow over each level, the way #146 gave it to the
   cat's detail, with a back that pops only its own level; `places.md`.
 - **Out of scope:** a title in the bar; the headline already names the level.
+- **Also landed (review):** `BackBar` and `belowBackBar` in `ui/components`, used by the cat's detail too;
+  a *Pushed screens* paragraph in `app-shell.md`.
 - **Ships safely because:** additive; system back keeps working.
 - **Cleanup owed:** none.
 
