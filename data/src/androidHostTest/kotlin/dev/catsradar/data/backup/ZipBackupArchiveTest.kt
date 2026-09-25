@@ -107,7 +107,7 @@ class ZipBackupArchiveTest {
     @Test
     fun everyFieldOfEveryRowSurvivesTheRoundTrip() = runTest {
         val contents = BackupContents(
-            encounters = listOf(encounter("a"), encounter("b")),
+            encounters = listOf(encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg"), encounter("b")),
             placeCells = listOf(placeCell()),
         )
         val path = target()

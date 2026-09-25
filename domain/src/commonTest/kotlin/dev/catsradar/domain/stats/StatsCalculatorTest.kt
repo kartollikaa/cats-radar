@@ -93,6 +93,19 @@ class StatsCalculatorTest {
     }
 
     @Test
+    fun `a cat with several photos counts once, and a deleted cat with one not at all`() {
+        val twice = at(NOON).withPhoto(photoPath = "first.jpg")
+        val stats = stats(
+            listOf(
+                twice.copy(photos = twice.photos + twice.photos.single().copy(id = "second", photoPath = "second.jpg")),
+                at(NOON - 1.hours).copy(deletedAt = NOON).withPhoto(photoPath = "gone.jpg"),
+            ),
+        )
+
+        assertEquals(1, stats.withPhoto)
+    }
+
+    @Test
     fun `coats are listed busiest first, and the unnoted ones last however many there are`() {
         val encounters = listOf(
             coated("g", CatCoat.GINGER),

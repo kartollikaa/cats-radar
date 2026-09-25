@@ -241,6 +241,20 @@ class ImportPhotosTest {
         }
 
     @Test
+    fun `an imported cat has one photo with the copy, thumbnail, picked item and digest, and no gallery original`() =
+        runTest {
+            exifReader.data = ExifData(takenAt = LAST_MONTH)
+
+            importPhotos()(listOf(PICKED_FROM_PHONE))
+
+            val photo = repository.inserted.single().photos.single()
+            assertEquals(
+                listOf(FakeImageResizer.PHOTO_PATH, FakeImageResizer.THUMB_PATH, PHONE_ITEM, FakeDigest.SHA, null),
+                listOf(photo.photoPath, photo.thumbPath, photo.sourceMediaUri, photo.sourceDigest, photo.galleryUri),
+            )
+        }
+
+    @Test
     fun `a pick that names no item on the phone is imported with no link to one`() = runTest {
         exifReader.data = ExifData(takenAt = LAST_MONTH)
 

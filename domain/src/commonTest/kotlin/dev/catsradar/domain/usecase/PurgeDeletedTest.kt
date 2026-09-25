@@ -47,6 +47,17 @@ class PurgeDeletedTest {
     }
 
     @Test
+    fun `every purged cat loses its photos' files`() = runTest {
+        val longAgo = NOW - Tuning.PURGE_AFTER - 1.days
+        repository.insert(encounterFixture("one", OCCURRED).copy(deletedAt = longAgo).withPhoto("one.jpg", null))
+        repository.insert(encounterFixture("two", OCCURRED).copy(deletedAt = longAgo).withPhoto("two.jpg", null))
+
+        purge()()
+
+        assertEquals(setOf("one.jpg", "two.jpg"), photos.deleted.toSet())
+    }
+
+    @Test
     fun `the files go while the row still points at them`() = runTest {
         val rowsAtEachDelete = mutableListOf<Int>()
         val storage = object : PhotoStorage {

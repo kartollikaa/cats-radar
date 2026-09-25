@@ -61,7 +61,7 @@ class LogPhotoTest {
         assertEquals(EncounterOrigin.CAMERA, logged.encounter.origin)
         val photo = logged.encounter.photos.single()
         assertEquals(FakeImageResizer.PHOTO_PATH, photo.photoPath)
-        assertNotNull(photo.thumbPath)
+        assertEquals(FakeImageResizer.THUMB_PATH, photo.thumbPath)
         assertEquals(1, resizer.calls)
     }
 
