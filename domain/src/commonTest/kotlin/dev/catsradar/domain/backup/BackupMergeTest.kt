@@ -3,6 +3,7 @@ package dev.catsradar.domain.backup
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.withPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -17,12 +18,9 @@ private fun encounter(
     updatedAt: Instant,
     deletedAt: Instant? = null,
     coatless: Boolean = true,
-) = encounterAt(EARLY).copy(
-    id = id,
-    updatedAt = updatedAt,
-    deletedAt = deletedAt,
-    photoPath = if (coatless) null else "$id.jpg",
-)
+) = encounterAt(EARLY).copy(id = id, updatedAt = updatedAt, deletedAt = deletedAt).let {
+    if (coatless) it else it.withPhoto()
+}
 
 private fun cell(
     id: String = "ucfv0h",

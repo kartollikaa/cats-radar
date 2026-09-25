@@ -8,6 +8,7 @@ import dev.catsradar.domain.geo.pointOnGlobe
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
@@ -72,10 +73,19 @@ class LogPhoto(
             kind = EncounterKind.PHOTO,
             origin = EncounterOrigin.CAMERA,
             coat = null,
-            photoPath = stored.photoPath,
-            thumbPath = stored.thumbPath,
-            galleryUri = galleryUri,
-            sourceDigest = digest.sha256(sourceUri),
+            photos = listOf(
+                EncounterPhoto(
+                    id = id,
+                    encounterId = id,
+                    photoPath = stored.photoPath,
+                    thumbPath = stored.thumbPath,
+                    galleryUri = galleryUri,
+                    sourceMediaUri = null,
+                    sourceDigest = digest.sha256(sourceUri),
+                    deviceId = deviceIdProvider.deviceId,
+                    addedAt = now,
+                ),
+            ),
             lat = exifPoint?.lat,
             lon = exifPoint?.lon,
             accuracyMeters = null,

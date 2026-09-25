@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
@@ -16,6 +17,7 @@ import dev.catsradar.domain.testing.FakeSettingsRepository
 import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -59,6 +61,8 @@ class AttachPhotoTest {
 
     private suspend fun stored(id: String = ID): Encounter = encounters.loadEvery().first { it.id == id }
 
+    private suspend fun storedPhoto(id: String = ID): EncounterPhoto = stored(id).photos.single()
+
     @Test
     fun `a cat without a photo gets the copy, thumbnail and digest, and keeps everything else`() = runTest {
         encounters.insert(tally)
@@ -67,10 +71,19 @@ class AttachPhotoTest {
 
         assertEquals(
             tally.copy(
-                photoPath = FakeImageResizer.PHOTO_PATH,
-                thumbPath = FakeImageResizer.THUMB_PATH,
-                sourceMediaUri = PHONE_ITEM,
-                sourceDigest = FakeDigest.SHA,
+                photos = listOf(
+                    EncounterPhoto(
+                        id = ID,
+                        encounterId = ID,
+                        photoPath = FakeImageResizer.PHOTO_PATH,
+                        thumbPath = FakeImageResizer.THUMB_PATH,
+                        galleryUri = null,
+                        sourceMediaUri = PHONE_ITEM,
+                        sourceDigest = FakeDigest.SHA,
+                        deviceId = THIS_INSTALL,
+                        addedAt = NOW,
+                    ),
+                ),
                 updatedAt = NOW,
             ),
             stored(),
@@ -93,7 +106,7 @@ class AttachPhotoTest {
         attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
 
         assertEquals(1, gallery.calls)
-        assertEquals(FakeGallerySaver.URI, stored().galleryUri)
+        assertEquals(FakeGallerySaver.URI, storedPhoto().galleryUri)
     }
 
     @Test
@@ -104,7 +117,7 @@ class AttachPhotoTest {
         attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
 
         assertEquals(0, gallery.calls)
-        assertEquals(null, stored().galleryUri)
+        assertEquals(null, storedPhoto().galleryUri)
     }
 
     @Test
@@ -129,7 +142,7 @@ class AttachPhotoTest {
 
     @Test
     fun `a cat that already has a photo keeps it and nothing is copied`() = runTest {
-        val photo = tally.copy(photoPath = "own.jpg", thumbPath = "own_thumb.jpg")
+        val photo = tally.withPhoto(photoPath = "own.jpg", thumbPath = "own_thumb.jpg")
         encounters.insert(photo)
 
         assertEquals(AttachResult.NotAttachable, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
@@ -180,7 +193,7 @@ class AttachPhotoTest {
     @Test
     fun `a write that fails removes the files it had written`() = runTest {
         encounters.insert(tally)
-        encounters.attachPhotoShouldThrow = IllegalStateException("disk full")
+        encounters.addPhotoShouldThrow = IllegalStateException("disk full")
 
         assertFailsWith<IllegalStateException> { attachPhoto(ID, SOURCE, PhotoSource.GALLERY) }
 
@@ -196,15 +209,15 @@ class AttachPhotoTest {
         assertEquals(AttachResult.Attached, attachPhoto("cat-2", SOURCE, PhotoSource.GALLERY))
         assertTrue(storage.deleted.isEmpty())
         assertEquals(listOf("id-1", "id-2"), resizer.baseNames)
-        assertEquals(FakeDigest.SHA, stored().sourceDigest)
-        assertEquals(FakeDigest.SHA, stored("cat-2").sourceDigest)
+        assertEquals(FakeDigest.SHA, storedPhoto().sourceDigest)
+        assertEquals(FakeDigest.SHA, storedPhoto("cat-2").sourceDigest)
     }
 
     @Test
     fun `a cancellation after the write has landed keeps the files the cat now points at`() = runTest {
         encounters.insert(tally)
         lateinit var job: Job
-        encounters.afterAttachPhoto = {
+        encounters.afterAddPhoto = {
             job.cancel()
             yield()
         }
@@ -213,7 +226,7 @@ class AttachPhotoTest {
         job.join()
 
         assertTrue(storage.deleted.isEmpty())
-        assertEquals(FakeImageResizer.PHOTO_PATH, stored().photoPath)
+        assertEquals(FakeImageResizer.PHOTO_PATH, storedPhoto().photoPath)
     }
 
     @Test
@@ -238,7 +251,7 @@ class AttachPhotoTest {
 
         attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
 
-        assertEquals(PHONE_ITEM, stored().sourceMediaUri)
+        assertEquals(PHONE_ITEM, storedPhoto().sourceMediaUri)
     }
 
     @Test
@@ -247,7 +260,7 @@ class AttachPhotoTest {
 
         attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
 
-        assertEquals(null, stored().sourceMediaUri)
+        assertEquals(null, storedPhoto().sourceMediaUri)
         assertEquals(emptyList(), locator.asked)
     }
 
@@ -257,8 +270,8 @@ class AttachPhotoTest {
 
         attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
 
-        assertEquals(null, stored().sourceMediaUri)
-        assertEquals(FakeImageResizer.PHOTO_PATH, stored().photoPath)
+        assertEquals(null, storedPhoto().sourceMediaUri)
+        assertEquals(FakeImageResizer.PHOTO_PATH, storedPhoto().photoPath)
     }
 
     @Test
@@ -268,7 +281,7 @@ class AttachPhotoTest {
         attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
 
         assertEquals(1, gallery.calls)
-        assertEquals(null, stored().galleryUri)
+        assertEquals(null, storedPhoto().galleryUri)
     }
 
     private companion object {
