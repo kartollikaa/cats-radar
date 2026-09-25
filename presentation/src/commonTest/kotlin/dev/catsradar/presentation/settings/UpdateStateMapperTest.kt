@@ -13,19 +13,20 @@ class UpdateStateMapperTest {
 
     @Test
     fun `a check in progress takes the button away`() {
-        assertEquals(UpdateState(UpdateStatus.Checking, checkEnabled = false), mapper.checking())
+        assertEquals(UpdateState(UpdateStatus.Checking), mapper.checking())
+        assertEquals(false, mapper.checking().checkEnabled)
     }
 
     @Test
     fun `an available release names its version`() {
         val check = UpdateCheck.Available(AppVersion.parse("v1.5.0-beta")!!, ReleasePackage("https://x/a.apk", 1, null))
 
-        assertEquals(UpdateState(UpdateStatus.Available("1.5.0-beta"), checkEnabled = true), mapper.map(check))
+        assertEquals(UpdateState(UpdateStatus.Available("1.5.0-beta")), mapper.map(check))
     }
 
     @Test
     fun `an up-to-date app says so`() {
-        assertEquals(UpdateState(UpdateStatus.UpToDate, checkEnabled = true), mapper.map(UpdateCheck.UpToDate))
+        assertEquals(UpdateState(UpdateStatus.UpToDate), mapper.map(UpdateCheck.UpToDate))
     }
 
     @Test

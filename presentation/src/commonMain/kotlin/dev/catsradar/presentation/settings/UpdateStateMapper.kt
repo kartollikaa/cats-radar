@@ -5,7 +5,7 @@ import dev.catsradar.domain.update.UpdateCheck
 
 class UpdateStateMapper {
 
-    fun checking(): UpdateState = UpdateState(UpdateStatus.Checking, checkEnabled = false)
+    fun checking(): UpdateState = UpdateState(UpdateStatus.Checking)
 
     fun map(check: UpdateCheck): UpdateState = UpdateState(
         status = when (check) {

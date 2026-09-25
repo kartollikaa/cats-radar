@@ -58,6 +58,11 @@ class GitHubReleaseFeedTest {
     }
 
     @Test
+    fun withoutAnOverrideItAsksGitHubsApiOverHttps() {
+        assertEquals("https://api.github.com", GitHubReleaseFeed.GITHUB_API)
+    }
+
+    @Test
     fun aListIsReadIntoReleases() = runTest {
         assertEquals(ReleaseFeed.Listed(listOf(PublishedRelease("v1.5.0-beta", apk = null))), feed.releases())
     }

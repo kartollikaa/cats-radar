@@ -18,7 +18,7 @@ sealed interface ReleaseFeed {
 enum class FeedFailure {
     OFFLINE,
 
-    /** The source answered and refused: not found, not allowed, or rate-limited. */
+    /** The source answered without the list: not found, not allowed, rate-limited, or failing itself. */
     UNAVAILABLE,
 
     /** The source answered with something that is not a release list. */

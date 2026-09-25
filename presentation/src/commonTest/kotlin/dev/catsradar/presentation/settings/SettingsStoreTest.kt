@@ -340,7 +340,7 @@ class SettingsStoreTest {
         val store = newStore()
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.Idle, checkEnabled = true), store.state.value.update)
+        assertEquals(UpdateState(UpdateStatus.Idle), store.state.value.update)
     }
 
     @Test
@@ -351,7 +351,8 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.UpdateCheckClicked)
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.Checking, checkEnabled = false), store.state.value.update)
+        assertEquals(UpdateState(UpdateStatus.Checking), store.state.value.update)
+        assertEquals(false, store.state.value.update.checkEnabled)
     }
 
     @Test
@@ -362,7 +363,7 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.UpdateCheckClicked)
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.Available("1.5.0-beta"), checkEnabled = true), store.state.value.update)
+        assertEquals(UpdateState(UpdateStatus.Available("1.5.0-beta")), store.state.value.update)
     }
 
     @Test
@@ -373,7 +374,7 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.UpdateCheckClicked)
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.UpToDate, checkEnabled = true), store.state.value.update)
+        assertEquals(UpdateState(UpdateStatus.UpToDate), store.state.value.update)
     }
 
     @Test
@@ -383,10 +384,8 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.UpdateCheckClicked)
         runCurrent()
 
-        assertEquals(
-            UpdateState(UpdateStatus.Failed(UpdateFailure.OFFLINE), checkEnabled = true),
-            store.state.value.update,
-        )
+        assertEquals(UpdateState(UpdateStatus.Failed(UpdateFailure.OFFLINE)), store.state.value.update)
+        assertEquals(true, store.state.value.update.checkEnabled)
     }
 
     @Test

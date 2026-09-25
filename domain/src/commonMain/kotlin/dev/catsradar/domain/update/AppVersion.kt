@@ -45,13 +45,14 @@ data class AppVersion(
             else -> a.zip(b).map { (x, y) -> compareField(x, y) }.firstOrNull { it != 0 } ?: a.size.compareTo(b.size)
         }
 
+        // The grammar gives numeric fields no leading zeros, so a longer one is always the larger.
         private fun compareField(a: String, b: String): Int {
-            val x = a.toLongOrNull()
-            val y = b.toLongOrNull()
+            val aNumeric = a.all(Char::isDigit)
+            val bNumeric = b.all(Char::isDigit)
             return when {
-                x != null && y != null -> x.compareTo(y)
-                x != null -> -1
-                y != null -> 1
+                aNumeric && bNumeric -> compareValuesBy(a, b, String::length, { it })
+                aNumeric -> -1
+                bNumeric -> 1
                 else -> a.compareTo(b)
             }
         }

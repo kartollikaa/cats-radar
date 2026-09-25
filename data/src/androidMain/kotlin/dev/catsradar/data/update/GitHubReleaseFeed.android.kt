@@ -19,7 +19,7 @@ private val ReadTimeout = 30.seconds
 class GitHubReleaseFeed(
     private val repository: String,
     private val userAgent: String,
-    private val apiBase: String = "https://api.github.com",
+    private val apiBase: String = GITHUB_API,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : UpdateSource {
 
@@ -47,5 +47,9 @@ class GitHubReleaseFeed(
         } finally {
             connection.disconnect()
         }
+    }
+
+    companion object {
+        const val GITHUB_API = "https://api.github.com"
     }
 }

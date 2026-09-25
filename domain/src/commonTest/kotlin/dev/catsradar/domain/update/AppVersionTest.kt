@@ -35,6 +35,12 @@ class AppVersionTest {
     }
 
     @Test
+    fun `a numeric pre-release field too long for a Long still compares as a number`() {
+        assertTrue(v("1.5.0-99999999999999999999") < v("1.5.0-100000000000000000000"))
+        assertTrue(v("1.5.0-99999999999999999999") < v("1.5.0-alpha"))
+    }
+
+    @Test
     fun `a longer pre-release ranks above its own prefix`() {
         assertTrue(v("1.5.0-beta") < v("1.5.0-beta.1"))
     }

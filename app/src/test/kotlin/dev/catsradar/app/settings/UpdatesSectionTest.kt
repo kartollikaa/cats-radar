@@ -53,7 +53,7 @@ class UpdatesSectionTest {
         )
 
         words.forEach { (status, text) ->
-            update = UpdateState(status, checkEnabled = true)
+            update = UpdateState(status)
             compose.onNodeWithText(text).performScrollTo()
         }
         assertEquals(words.size, words.values.toSet().size)
@@ -65,7 +65,7 @@ class UpdatesSectionTest {
         val button = compose.onNodeWithText(context.getString(R.string.settings_updates_check))
 
         button.performScrollTo().assertIsEnabled().performClick()
-        update = UpdateState(UpdateStatus.Checking, checkEnabled = false)
+        update = UpdateState(UpdateStatus.Checking)
 
         button.assertIsNotEnabled()
         assertEquals(1, checks)

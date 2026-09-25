@@ -1,9 +1,8 @@
 package dev.catsradar.presentation.settings
 
-data class UpdateState(
-    val status: UpdateStatus = UpdateStatus.Idle,
-    val checkEnabled: Boolean = true,
-)
+data class UpdateState(val status: UpdateStatus = UpdateStatus.Idle) {
+    val checkEnabled: Boolean get() = status != UpdateStatus.Checking
+}
 
 sealed interface UpdateStatus {
     data object Idle : UpdateStatus
