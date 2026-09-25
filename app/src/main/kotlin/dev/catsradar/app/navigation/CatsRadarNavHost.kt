@@ -111,7 +111,7 @@ internal fun catsRadarEntries(
             contentPadding = contentPadding,
             onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
             onOutingMapClick = { id ->
-                mapFocus.post(id)
+                mapFocus.postOuting(id)
                 backStack.selectTab(BottomNavTab.MAP)
             },
         )
@@ -129,7 +129,7 @@ internal fun catsRadarEntries(
             key = key,
             onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
             onFocusOuting = { id ->
-                mapFocus.post(id)
+                mapFocus.postOuting(id)
                 backStack.popIfOnTop(key)
             },
             onClose = { backStack.popIfOnTop(key) },
@@ -150,16 +150,24 @@ internal fun catsRadarEntries(
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
-    catEntries(backStack, contentPadding)
+    catEntries(backStack, contentPadding, mapFocus)
 }
 
-private fun EntryProviderScope<NavKey>.catEntries(backStack: BottomNavBackStack, contentPadding: PaddingValues) {
+private fun EntryProviderScope<NavKey>.catEntries(
+    backStack: BottomNavBackStack,
+    contentPadding: PaddingValues,
+    mapFocus: MapFocusRequest,
+) {
     entry<EncounterDetail> { key ->
         EncounterDetailDestination(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popOrNull() },
             onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
+            onOpenMap = {
+                mapFocus.postCat(key.id)
+                backStack.selectTab(BottomNavTab.MAP)
+            },
         )
     }
     entry<PhotoViewer>(metadata = photoViewerMetadata()) { key ->

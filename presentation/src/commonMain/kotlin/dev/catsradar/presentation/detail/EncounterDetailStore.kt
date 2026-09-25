@@ -69,6 +69,10 @@ class EncounterDetailStore(
                 if ((state.value as? EncounterDetailState.Loaded)?.photoPath != null) {
                     emit(EncounterDetailEffect.OpenPhoto)
                 }
+            EncounterDetailIntent.CoordinatesClicked ->
+                if ((state.value as? EncounterDetailState.Loaded)?.onTheMap == true) {
+                    emit(EncounterDetailEffect.OpenMap)
+                }
             is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.uri, PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.uri, PhotoSource.GALLERY)
         }

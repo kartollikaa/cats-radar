@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.map
 
 import app.cash.turbine.test
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.repository.WalkRepository
@@ -34,6 +35,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
@@ -345,11 +347,110 @@ class MapStoreTest {
             assertEquals(false, shown().heat)
         }
 
+    @Test
+    fun `asking for a cat shows every cat with the view on it, letting go of the outing, the coats and the heat`() =
+        runTest(mainDispatcher) {
+            repository.insert(located("first", minute = 0))
+            repository.insert(located("second", minute = 5))
+            repository.insert(located("other outing", minute = 180).copy(lat = 41.45, coat = CatCoat.GINGER))
+            val store = newStore()
+            runCurrent()
+            store.dispatch(MapIntent.OutingFocused("first"))
+            store.dispatch(MapIntent.CoatToggled(CoatOption.BLACK))
+            store.dispatch(MapIntent.HeatToggled)
+            runCurrent()
+
+            store.dispatch(MapIntent.CatRequested("other outing"))
+            runCurrent()
+
+            val shown = assertIs<MapState.Located>(store.state.value)
+            assertNull(shown.focus)
+            assertEquals(emptySet(), shown.shownCoats)
+            assertEquals(false, shown.heat)
+            assertEquals(listOf("first", "second", "other outing"), shown.points.map { it.id })
+            assertEquals(MapArea(south = 41.445, west = 2.165, north = 41.455, east = 2.175), shown.catArea?.rounded())
+        }
+
+    @Test
+    fun `the view is sent to a requested cat once, and asking again sends it there again`() =
+        runTest(mainDispatcher) {
+            val later = encounterFixture("later", BASE + 10.minutes)
+            repository.insert(located("a", minute = 0))
+            repository.insert(later)
+            val store = newStore()
+            runCurrent()
+            fun catArea() = assertIs<MapState.Located>(store.state.value).catArea
+
+            store.dispatch(MapIntent.CatRequested("a"))
+            runCurrent()
+            assertNotNull(catArea())
+
+            store.dispatch(MapIntent.CatReached)
+            runCurrent()
+            assertNull(catArea())
+            repository.update(later.copy(lat = 41.40, lon = 2.18))
+            runCurrent()
+            assertNull(catArea())
+            store.dispatch(MapIntent.OutingFocused("a"))
+            runCurrent()
+            assertEquals("a", assertIs<MapState.Located>(store.state.value).focus?.outingId)
+            assertNull(catArea())
+            store.dispatch(MapIntent.FocusCleared)
+            runCurrent()
+            assertNull(catArea())
+
+            store.dispatch(MapIntent.CatRequested("a"))
+            runCurrent()
+            assertNotNull(catArea())
+        }
+
+    @Test
+    fun `a requested cat that is not on the map is let go, and does not come back on its own`() =
+        runTest(mainDispatcher) {
+            val tally = encounterFixture("tally", BASE + 10.minutes)
+            repository.insert(located("a", minute = 0))
+            repository.insert(tally)
+            val store = newStore()
+            runCurrent()
+
+            store.dispatch(MapIntent.CatRequested("tally"))
+            runCurrent()
+            assertNull(assertIs<MapState.Located>(store.state.value).catArea)
+
+            repository.update(tally.copy(lat = 41.40, lon = 2.18))
+            runCurrent()
+
+            assertNull(assertIs<MapState.Located>(store.state.value).catArea)
+        }
+
+    @Test
+    fun `a requested cat deleted meanwhile is let go, and its restore does not bring it back`() =
+        runTest(mainDispatcher) {
+            val deleted = located("deleted", minute = 10).copy(deletedAt = BASE + 1.hours)
+            repository.insert(located("a", minute = 0))
+            repository.insert(deleted)
+            val store = newStore()
+            runCurrent()
+
+            store.dispatch(MapIntent.CatRequested("deleted"))
+            runCurrent()
+            assertNull(assertIs<MapState.Located>(store.state.value).catArea)
+
+            repository.update(deleted.copy(deletedAt = null))
+            runCurrent()
+
+            val shown = assertIs<MapState.Located>(store.state.value)
+            assertEquals(listOf("a", "deleted"), shown.points.map { it.id })
+            assertNull(shown.catArea)
+        }
+
     // Floating-point padding: compare the area to a millionth of a degree.
     private fun MapState.roundedArea(): MapState = when (this) {
-        is MapState.Located -> copy(area = area.run { MapArea(south.r(), west.r(), north.r(), east.r()) })
+        is MapState.Located -> copy(area = area.rounded())
         else -> this
     }
+
+    private fun MapArea.rounded() = MapArea(south.r(), west.r(), north.r(), east.r())
 
     private fun Double.r() = kotlin.math.round(this * 1e6) / 1e6
 

@@ -70,8 +70,8 @@ internal fun MapDestination(
     val state by store.state.collectAsStateWithLifecycle()
     val openCat by rememberUpdatedState(onOpenCat)
     val openSpot by rememberUpdatedState(onOpenSpot)
-    LaunchedEffect(store, focusRequest.outing) {
-        focusRequest.consume()?.let { store.dispatch(MapIntent.OutingFocused(it)) }
+    LaunchedEffect(store, focusRequest.pending) {
+        focusRequest.consume()?.let(store::dispatch)
     }
     BackHandler(enabled = (state as? MapState.Located)?.focus != null) { store.dispatch(MapIntent.FocusCleared) }
     LaunchedEffect(store) {
@@ -91,6 +91,7 @@ internal fun MapDestination(
         onHeatToggle = { store.dispatch(MapIntent.HeatToggled) },
         onCoatToggle = { coat -> store.dispatch(MapIntent.CoatToggled(coat)) },
         onCoatFilterClear = { store.dispatch(MapIntent.CoatFilterCleared) },
+        onCatReach = { store.dispatch(MapIntent.CatReached) },
     )
 }
 

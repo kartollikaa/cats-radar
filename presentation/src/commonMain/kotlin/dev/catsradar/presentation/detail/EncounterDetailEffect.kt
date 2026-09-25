@@ -5,6 +5,7 @@ sealed interface EncounterDetailEffect {
     data object OpenCamera : EncounterDetailEffect
     data object OpenPhotoPicker : EncounterDetailEffect
     data object OpenPhoto : EncounterDetailEffect
+    data object OpenMap : EncounterDetailEffect
     data object PhotoNotAttached : EncounterDetailEffect
 
     /** The camera's original at [uri] is no longer needed. */
