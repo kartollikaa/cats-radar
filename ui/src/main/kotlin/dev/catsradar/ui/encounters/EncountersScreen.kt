@@ -84,7 +84,7 @@ fun EncountersScreen(
     val listState = rememberLazyListState()
     // A keyed list keeps its first visible row in place when rows land above it, so an undone
     // outing would come back out of sight; a list resting at the top moves up to show them.
-    SideEffect { listState.run { if (!canScrollBackward && !isScrollInProgress) requestScrollToItem(0) } }
+    SideEffect { if (listState.isRestingAtTop()) listState.requestScrollToItem(0) }
     Column(modifier = modifier.fillMaxSize()) {
         if (state.isSelecting) {
             SelectionBar(
@@ -123,6 +123,10 @@ fun EncountersScreen(
         }
     }
 }
+
+// Not canScrollBackward: it reads false until the first layout, so a list restored mid-way would look at the top.
+private fun LazyListState.isRestingAtTop(): Boolean =
+    firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0 && !isScrollInProgress
 
 /** Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any. */
 @Composable

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,17 +24,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.AddPhoto
+import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
@@ -46,6 +43,7 @@ import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.encounters.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun EncounterDetailScreen(
@@ -58,7 +56,7 @@ fun EncounterDetailScreen(
     onCoatClick: (CoatOption?) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
-    onPhotoClick: () -> Unit = {},
+    onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
@@ -96,7 +94,7 @@ private fun LoadedDetail(
     onCoatClick: (CoatOption?) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
-    onPhotoClick: () -> Unit = {},
+    onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
 ) {
     Column(
@@ -107,26 +105,8 @@ private fun LoadedDetail(
             .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        val photoPath = state.photoPath
-        val addPhoto = state.addPhoto
-        if (photoPath != null) {
-            AsyncImage(
-                model = photoPath,
-                contentDescription = stringResource(R.string.detail_photo_description),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(MaterialTheme.shapes.extraLarge)
-                    .clickable(
-                        onClickLabel = stringResource(R.string.detail_open_photo),
-                        role = Role.Image,
-                        onClick = onPhotoClick,
-                    ),
-                contentScale = ContentScale.Crop,
-            )
-        } else if (addPhoto != null) {
-            AddPhotoCard(addPhoto, onTakePhotoClick = onTakePhotoClick, onPickPhotoClick = onPickPhotoClick)
-        }
+        if (state.photos.isNotEmpty()) DetailPhotoPager(state.photos, onPhotoClick = onPhotoClick)
+        AddPhotoCard(state.addPhoto, onTakePhotoClick = onTakePhotoClick, onPickPhotoClick = onPickPhotoClick)
         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
             Text(
                 text = state.dayLabel,
@@ -281,6 +261,10 @@ private val sampleLoaded = EncounterDetailState.Loaded(
     location = LocationLabel.CURRENT,
     coordinatesLabel = "41.39864, 2.17842",
     accuracyMeters = 12,
+    photos = persistentListOf(
+        DetailPhoto(id = "5f1c2d9e", path = "photos/5f1c2d9e-4b7a.jpg"),
+        DetailPhoto(id = "8a03b6c1", path = "photos/8a03b6c1-77d2.jpg"),
+    ),
     onTheMap = true,
 )
 

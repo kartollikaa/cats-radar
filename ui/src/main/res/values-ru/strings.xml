@@ -187,10 +187,11 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
-    <string name="detail_photo">Фото</string>
+    <string name="detail_photo">Добавить фото</string>
     <string name="detail_take_photo">Сфотографировать</string>
     <string name="detail_pick_photo">Выбрать из галереи</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
+    <string name="detail_photo_already_there">Это фото уже есть у котика</string>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
     <string name="detail_back">Назад</string>
@@ -199,6 +200,8 @@
     <string name="viewer_open_in_gallery">Открыть в галерее</string>
     <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
     <string name="viewer_no_gallery_app">Нет приложения, которое покажет это фото</string>
+    <string name="viewer_position">%1$d / %2$d</string>
+    <string name="viewer_position_description">Фото %1$d из %2$d</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>
