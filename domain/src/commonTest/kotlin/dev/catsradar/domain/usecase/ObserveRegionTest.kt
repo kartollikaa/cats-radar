@@ -3,6 +3,7 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.region.RegionKey
+import dev.catsradar.domain.region.RegionNode
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
@@ -125,6 +126,40 @@ class ObserveRegionTest {
             val listed = assertIs<RegionView.Places>(view(above)).children.single { it.key == level }
             assertEquals(listed, view(level).self, "$level")
         }
+    }
+
+    @Test
+    fun `each level carries the levels above it, top-down, the top level not among them`() = runTest {
+        val spain = RegionKey.Country("ES")
+        val barcelonaCity = RegionKey.City("ES", "Barcelona")
+        val countries = assertIs<RegionView.Places>(view(null)).children
+        val cities = assertIs<RegionView.Places>(view(spain)).children
+        fun node(key: RegionKey, level: List<RegionNode>) = level.single { it.key == key }
+
+        val trails = listOf(
+            null,
+            spain,
+            RegionKey.Unresolved,
+            RegionKey.NoLocation,
+            barcelonaCity,
+            RegionKey.NoCity("ES"),
+            areaOf(barcelona, barcelonaCity),
+            areaOf(pending, RegionKey.Unresolved),
+        ).map { view(it).trail }
+
+        assertEquals(
+            listOf(
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                listOf(node(spain, countries)),
+                listOf(node(spain, countries)),
+                listOf(node(spain, countries), node(barcelonaCity, cities)),
+                listOf(node(RegionKey.Unresolved, countries)),
+            ),
+            trails,
+        )
     }
 
     @Test
