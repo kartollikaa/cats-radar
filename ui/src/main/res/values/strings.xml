@@ -12,6 +12,7 @@
     <string name="map_heat">Heatmap</string>
     <string name="map_coats">Coats</string>
     <string name="map_coats_title">Show cats by coat</string>
+    <string name="map_coats_hint">Only cats of the marked coats stay on the map</string>
     <string name="map_coats_all">Every coat</string>
     <string name="map_filter_none">No cat of these coats on the map</string>
     <plurals name="map_summary">
@@ -49,6 +50,7 @@
     <string name="counter_location_grant">Grant</string>
     <string name="counter_location_dismiss">Dismiss</string>
     <string name="counter_coat_prompt_title">What coat was it?</string>
+    <string name="counter_coat_prompt_hint">Tap a coat to note it</string>
     <string name="counter_coat_prompt_skip">Not now</string>
     <string name="counter_coat_prompt_photo">The photo you just took</string>
 

@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -23,6 +21,7 @@ import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.map.MapSpotState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.encounters.EncounterListTextInset
 import dev.catsradar.ui.encounters.EncounterRows
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -56,9 +55,8 @@ private fun MapSpotLoaded(
     onOutingMapClick: (String) -> Unit = {},
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = pluralStringResource(R.plurals.map_spot_title, spot.catCount, spot.catCount),
-            style = MaterialTheme.typography.titleMedium,
+        SheetHeader(
+            title = pluralStringResource(R.plurals.map_spot_title, spot.catCount, spot.catCount),
             modifier = Modifier.padding(horizontal = EncounterListTextInset).padding(bottom = 8.dp),
         )
         EncounterRows(

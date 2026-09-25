@@ -12,6 +12,7 @@
     <string name="map_heat">Тепловая карта</string>
     <string name="map_coats">Окрасы</string>
     <string name="map_coats_title">Показать котиков по окрасу</string>
+    <string name="map_coats_hint">На карте останутся только котики отмеченных окрасов</string>
     <string name="map_coats_all">Все окрасы</string>
     <string name="map_filter_none">На карте нет котиков этих окрасов</string>
     <plurals name="map_summary">
@@ -59,6 +60,7 @@
     <string name="counter_location_grant">Разрешить</string>
     <string name="counter_location_dismiss">Не надо</string>
     <string name="counter_coat_prompt_title">Какого окраса котик?</string>
+    <string name="counter_coat_prompt_hint">Нажмите на окрас, чтобы отметить его</string>
     <string name="counter_coat_prompt_skip">Не сейчас</string>
     <string name="counter_coat_prompt_photo">Только что снятое фото</string>
 
