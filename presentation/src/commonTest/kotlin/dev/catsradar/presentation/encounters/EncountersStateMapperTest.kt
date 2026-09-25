@@ -171,7 +171,8 @@ class EncountersStateMapperTest {
                 "e1" to LocationLabel.CURRENT,
                 "e2" to LocationLabel.LAST_KNOWN,
                 "e3" to LocationLabel.FROM_OUTING,
-                "e4" to LocationLabel.NONE,
+                "e4" to LocationLabel.BY_HAND,
+                "e5" to LocationLabel.NONE,
             ),
             labels,
         )
