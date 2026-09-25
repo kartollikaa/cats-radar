@@ -34,7 +34,10 @@ class PhotoViewerStateMapperTest {
 
     @Test
     fun `the day comes from the cat's own offset, not the phone's`() {
-        val loggedAhead = photographedCat().copy(occurredAt = Instant.parse("2026-09-22T22:30:00Z"), tzOffsetMinutes = 180)
+        val loggedAhead = photographedCat().copy(
+            occurredAt = Instant.parse("2026-09-22T22:30:00Z"),
+            tzOffsetMinutes = 180,
+        )
 
         assertEquals("2026-09-23", mapper.map(loggedAhead, TODAY)?.dayLabel)
     }
