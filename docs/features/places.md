@@ -112,7 +112,7 @@ like from any level of the drill-down, goes back to Stats itself.
 **What a level looks like.** Each level opens on a headline card naming it and counting its cats:
 **Places** and every cat at the top, then the country, city or area tapped, with the count its row
 showed one level up. The level's own node comes from the level above, so the two can never
-disagree. Below the headline, the level's rows sit in one card titled **Countries**, **Cities** or
+disagree. A level the level above no longer lists opens without a headline instead of a wrong one. Below the headline, the level's rows sit in one card titled **Countries**, **Cities** or
 **Areas**. Each row shows its name, its count and a chevron, with a thin bar under the name that
 shows its share of the level. The three rows that stand for no place (Not named yet, No city, No
 location) have their names in the muted text colour. TalkBack reads a row as one item: its name,

@@ -74,6 +74,7 @@ class RegionsStateMapperTest {
         )
     }
 
+    // The own row's count differs from the children's sum, so the test tells which one the header took.
     @Test
     fun `a level below the top is named and counted by its own row`() {
         val view = RegionView.Places(
@@ -81,20 +82,22 @@ class RegionsStateMapperTest {
                 RegionNode(barcelona, RegionLabel.Named("Barcelona"), 2),
                 RegionNode(RegionKey.NoCity("ES"), RegionLabel.NoCity, 1),
             ),
-            self = RegionNode(spain, RegionLabel.Named("Spain"), 3),
+            self = RegionNode(spain, RegionLabel.Named("Spain"), 4),
         )
 
         val state = assertIs<RegionsState.Places>(mapper.map(view, parent = spain, TODAY))
 
-        assertEquals(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 3), state.header)
+        assertEquals(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 4), state.header)
         assertEquals(RegionsSection.CITIES, state.section)
     }
 
     @Test
     fun `a level whose own row has gone has no header`() {
-        val view = RegionView.Places(listOf(RegionNode(barcelona, RegionLabel.Named("Barcelona"), 2)), self = null)
+        val places = RegionView.Places(listOf(RegionNode(barcelona, RegionLabel.Named("Barcelona"), 2)), self = null)
+        val cats = RegionView.Cats(listOf(photoFixture("lone", Instant.parse("2026-09-22T10:00:00Z"))), self = null)
 
-        assertNull(assertIs<RegionsState.Places>(mapper.map(view, parent = spain, TODAY)).header)
+        assertNull(assertIs<RegionsState.Places>(mapper.map(places, parent = spain, TODAY)).header)
+        assertNull(assertIs<RegionsState.Cats>(mapper.map(cats, parent = RegionKey.NoLocation, TODAY)).header)
     }
 
     @Test
@@ -151,11 +154,11 @@ class RegionsStateMapperTest {
         val base = Instant.parse("2026-09-22T10:00:00Z")
         val cats = listOf(photoFixture("older", base), photoFixture("newer", base + 5.minutes))
         val area = RegionKey.Area("sp3e3", barcelona)
-        val view = RegionView.Cats(cats, self = RegionNode(area, RegionLabel.Named("Gràcia"), 2))
+        val view = RegionView.Cats(cats, self = RegionNode(area, RegionLabel.Named("Gràcia"), 3))
 
         val state = assertIs<RegionsState.Cats>(mapper.map(view, parent = area, TODAY))
 
-        assertEquals(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Gràcia")), count = 2), state.header)
+        assertEquals(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Gràcia")), count = 3), state.header)
         assertEquals(encountersMapper.map(cats, TODAY, grid = false).rows, state.rows)
         assertEquals(
             listOf("newer", "older"),
