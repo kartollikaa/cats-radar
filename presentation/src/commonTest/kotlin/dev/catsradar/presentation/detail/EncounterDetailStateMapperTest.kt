@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -9,6 +10,7 @@ import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 class EncounterDetailStateMapperTest {
@@ -72,14 +74,27 @@ class EncounterDetailStateMapperTest {
         val state = mapper.map(encounter, today)
 
         // The full copy, not the thumbnail: the detail screen has the room for it.
-        assertEquals("/data/photos/e1.jpg", state.photoPath)
+        assertEquals(listOf(DetailPhoto(id = "e1", path = "/data/photos/e1.jpg")), state.photos)
+    }
+
+    @Test
+    fun `every photo of the cat is listed, oldest first`() {
+        val cat = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
+        val second = cat.photos.single().copy(id = "second", photoPath = "second.jpg", addedAt = OCCURRED + 1.minutes)
+
+        val state = mapper.map(cat.copy(photos = cat.photos + second), today)
+
+        assertEquals(
+            listOf(DetailPhoto("e1", "/data/photos/e1.jpg"), DetailPhoto("second", "/data/photos/second.jpg")),
+            state.photos,
+        )
     }
 
     @Test
     fun `a tally carries no photo at all`() {
         val state = mapper.map(encounterFixture("e1", OCCURRED), today)
 
-        assertEquals(null, state.photoPath)
+        assertEquals(emptyList(), state.photos)
     }
 
     @Test
@@ -102,11 +117,11 @@ class EncounterDetailStateMapperTest {
     }
 
     @Test
-    fun `a cat with a photo is never offered another, even while one is being attached`() {
+    fun `a cat with a photo is offered another, and shows one being attached`() {
         val photo = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
 
-        assertEquals(null, mapper.map(photo, today).addPhoto)
-        assertEquals(null, mapper.map(photo, today, attachingPhoto = true).addPhoto)
+        assertEquals(AddPhoto.READY, mapper.map(photo, today).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.map(photo, today, attachingPhoto = true).addPhoto)
     }
 
     @Test
@@ -116,6 +131,41 @@ class EncounterDetailStateMapperTest {
         assertEquals("-73.98571", formatCoordinate(-73.985708))
         assertEquals("0.00000", formatCoordinate(0.0))
         assertEquals("180.00000", formatCoordinate(180.0))
+    }
+
+    @Test
+    fun `a cat found in a city shows the city over its country, with the country's flag`() {
+        val place = EncounterPlace(countryCode = "ES", country = "Spain", city = "Barcelona")
+
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a cat found in a country with no city shows the country alone`() {
+        val place = EncounterPlace(countryCode = "ES", country = "Spain", city = null)
+
+        assertEquals(
+            DetailPlace(title = "Spain", country = null, flag = "🇪🇸"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a city named like its country shows the name once`() {
+        val place = EncounterPlace(countryCode = "SG", country = "Singapore", city = "SINGAPORE")
+
+        assertEquals(
+            DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a cat with no named place shows none`() {
+        assertEquals(null, mapper.map(encounterFixture("e1", OCCURRED), today).place)
     }
 
     private companion object {

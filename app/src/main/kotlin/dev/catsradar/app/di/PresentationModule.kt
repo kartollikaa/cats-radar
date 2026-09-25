@@ -54,9 +54,10 @@ val presentationModule = module {
         RegionsStore(parent = parent, observeRegion = get(), stateMapper = get(), clock = get(), timeZone = get())
     }
     factoryOf(::PhotoViewerStateMapper)
-    viewModel { (encounterId: String) ->
+    viewModel { (encounterId: String, openedOn: String?) ->
         PhotoViewerStore(
             encounterId = encounterId,
+            openedOn = openedOn,
             observeEncounter = get(),
             resolveGalleryLink = get(),
             stateMapper = get(),
@@ -68,6 +69,7 @@ val presentationModule = module {
         EncounterDetailStore(
             encounterId = encounterId,
             observeEncounter = get(),
+            observeEncounterPlace = get(),
             deleteEncounter = get(),
             undoDelete = get(),
             setCoat = get(),

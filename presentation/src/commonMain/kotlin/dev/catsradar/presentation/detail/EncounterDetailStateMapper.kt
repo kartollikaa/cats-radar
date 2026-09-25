@@ -2,12 +2,15 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.encounters.toLocationLabel
 import dev.catsradar.presentation.map.isOnTheMap
+import dev.catsradar.presentation.regions.countryFlag
 import dev.catsradar.presentation.time
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 import kotlin.math.pow
@@ -19,7 +22,12 @@ class EncounterDetailStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounter: Encounter, today: LocalDate, attachingPhoto: Boolean = false): EncounterDetailState.Loaded {
+    fun map(
+        encounter: Encounter,
+        today: LocalDate,
+        attachingPhoto: Boolean = false,
+        place: EncounterPlace? = null,
+    ): EncounterDetailState.Loaded {
         val lat = encounter.lat
         val lon = encounter.lon
         return EncounterDetailState.Loaded(
@@ -32,14 +40,19 @@ class EncounterDetailStateMapper(
                 null
             },
             accuracyMeters = encounter.accuracyMeters?.takeIf { lat != null && lon != null }?.roundToInt(),
-            photoPath = encounter.cover?.photoPath?.let(photoStorage::resolve),
+            photos = encounter.photos.map { DetailPhoto(it.id, photoStorage.resolve(it.photoPath)) }.toImmutableList(),
             coat = encounter.coat?.toOption(),
-            addPhoto = when {
-                encounter.photos.isNotEmpty() -> null
-                attachingPhoto -> AddPhoto.ATTACHING
-                else -> AddPhoto.READY
-            },
+            addPhoto = if (attachingPhoto) AddPhoto.ATTACHING else AddPhoto.READY,
             onTheMap = encounter.isOnTheMap(),
+            place = place?.let { found ->
+                // A city-state's locality repeats its country's name.
+                val city = found.city?.takeIf { !it.equals(found.country, ignoreCase = true) }
+                DetailPlace(
+                    title = city ?: found.country,
+                    country = if (city != null) found.country else null,
+                    flag = countryFlag(found.countryCode),
+                )
+            },
         )
     }
 }

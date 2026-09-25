@@ -12,6 +12,7 @@ import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.model.oldestFirst
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifData
@@ -104,16 +105,16 @@ internal class FakeEncounterRepository : EncounterRepository {
         }
     }
 
-    // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
+    // Mirrors the DAO's live-cat guard, checked at write time.
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean {
         addPhotoShouldThrow?.let { throw it }
         var added = false
         encounters.update { list ->
             added = false
             list.map { encounter ->
-                if (encounter.id == photo.encounterId && encounter.deletedAt == null && encounter.photos.isEmpty()) {
+                if (encounter.id == photo.encounterId && encounter.deletedAt == null) {
                     added = true
-                    encounter.copy(photos = listOf(photo), updatedAt = photo.addedAt)
+                    encounter.copy(photos = (encounter.photos + photo).oldestFirst(), updatedAt = photo.addedAt)
                 } else {
                     encounter
                 }
@@ -251,6 +252,9 @@ internal class FakePlaceCellRepository : PlaceCellRepository {
     private val cells = MutableStateFlow<List<PlaceCell>>(emptyList())
 
     override fun observeAll(): Flow<List<PlaceCell>> = cells
+
+    override fun observeById(cellId: String): Flow<PlaceCell?> =
+        cells.map { list -> list.firstOrNull { it.cellId == cellId } }
 
     override suspend fun upsert(cell: PlaceCell) {
         cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }

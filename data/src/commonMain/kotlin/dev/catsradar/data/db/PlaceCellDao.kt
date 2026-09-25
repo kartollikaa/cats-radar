@@ -15,6 +15,9 @@ interface PlaceCellDao {
     fun observeAll(): Flow<List<PlaceCellEntity>>
 
     @Query("SELECT * FROM place_cells WHERE cellId = :cellId")
+    fun observeById(cellId: String): Flow<PlaceCellEntity?>
+
+    @Query("SELECT * FROM place_cells WHERE cellId = :cellId")
     suspend fun loadById(cellId: String): PlaceCellEntity?
 
     // Keyed on cellId, not OFFSET: callers change the status of rows between pages, so an offset would
