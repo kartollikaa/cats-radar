@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -52,6 +56,7 @@ fun EncounterDetailScreen(
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: () -> Unit = {},
+    onCoordinatesClick: () -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
         when (state) {
@@ -63,6 +68,7 @@ fun EncounterDetailScreen(
                 onTakePhotoClick = onTakePhotoClick,
                 onPickPhotoClick = onPickPhotoClick,
                 onPhotoClick = onPhotoClick,
+                onCoordinatesClick = onCoordinatesClick,
             )
             is EncounterDetailState.Deleted -> DeletedDetail(state, onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing)
@@ -79,6 +85,7 @@ private fun LoadedDetail(
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: () -> Unit = {},
+    onCoordinatesClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -112,7 +119,7 @@ private fun LoadedDetail(
             )
             Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        WhereCard(state)
+        WhereCard(state, onCoordinatesClick = onCoordinatesClick)
         SectionCard(R.string.detail_coat) {
             CoatPicker(
                 selected = state.coat,
@@ -133,22 +140,52 @@ private fun LoadedDetail(
 }
 
 @Composable
-private fun WhereCard(state: EncounterDetailState.Loaded, modifier: Modifier = Modifier) {
+private fun WhereCard(
+    state: EncounterDetailState.Loaded,
+    modifier: Modifier = Modifier,
+    onCoordinatesClick: () -> Unit = {},
+) {
+    val opensMap = if (state.onTheMap) {
+        Modifier.clickable(
+            onClickLabel = stringResource(R.string.detail_show_on_map),
+            role = Role.Button,
+            onClick = onCoordinatesClick,
+        )
+    } else {
+        Modifier.semantics(mergeDescendants = true) {}
+    }
     SectionCard(R.string.detail_where, modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics(mergeDescendants = true) {}
+                .then(opensMap)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
             state.coordinatesLabel?.let { coordinates ->
-                Text(
-                    text = coordinates,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = coordinates,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (state.onTheMap) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    if (state.onTheMap) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_nav_map),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
             }
             state.accuracyMeters?.let { accuracy ->
                 Text(
@@ -228,6 +265,7 @@ private val sampleLoaded = EncounterDetailState.Loaded(
     location = LocationLabel.CURRENT,
     coordinatesLabel = "41.39864, 2.17842",
     accuracyMeters = 12,
+    onTheMap = true,
 )
 
 private val sampleNoLocation = EncounterDetailState.Loaded(

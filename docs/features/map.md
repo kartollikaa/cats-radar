@@ -72,6 +72,24 @@ the walk tracks' job.
   another of its cats gets a location later.
 - **Cats sharing one fix** give the line no length there; their cluster still opens as a spot's list.
 
+## A cat's coordinates
+
+A tap on the coordinates in a cat's detail ([encounter-detail.md](./encounter-detail.md)) switches to
+the Map tab with the view on that cat: a street-sized area centred on its dot, the size a lone cat
+opens on. Every other cat stays on the map around it.
+
+- **From the Map tab itself**, when a dot or a spot's list opened the cat, the map comes back showing
+  every cat: a focused outing, a coat choice and the heat are all let go, since each of them could
+  hide the dot the tap asked for. The same map every other tab gets.
+- **The view moves there once.** Afterwards a cat getting its location, or an outing focused and
+  closed again, leaves the view where it is; tapping the coordinates again brings it back to the cat.
+  A pan during the move stops it where it is, and that ends the request too.
+- **A cat inside a cluster** stays inside it: the view centres on the cluster, and nothing marks which
+  of its dots was asked for.
+- **A cat no longer on the map** by the time the map opens, deleted in between, does not move the
+  view: the map still comes back showing every cat, and its view stays where it was, or fits around
+  every cat on a first look.
+
 ## Heat and coats
 
 Two chips sit at the map's top edge.
@@ -96,7 +114,8 @@ Two chips sit at the map's top edge.
   cats, since it is the order they were seen in. The view stays where it is when the choice changes, and "Every coat" clears
   it. A choice that matches no cat says so, rather than showing a map with nothing on it.
 
-Both last as long as the tab does; leaving the tab clears them.
+Both last as long as the tab does; leaving the tab clears them, and so does a cat's coordinates
+opening the map (above).
 
 ## At the edges
 
@@ -129,8 +148,8 @@ Both last as long as the tab does; leaving the tab clears them.
   spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
   `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` — the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
-  back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing
-  another tab, or a spot's list, asked the map to show
+  back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing,
+  or the single cat, another tab or a spot's list asked the map to show
 
 ## Not built yet
 

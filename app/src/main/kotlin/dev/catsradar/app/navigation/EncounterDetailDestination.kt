@@ -20,6 +20,7 @@ internal fun handleEncounterDetailEffect(
     effect: EncounterDetailEffect,
     onNavigateBack: () -> Unit,
     onOpenPhoto: () -> Unit,
+    onOpenMap: () -> Unit,
     cameraLauncher: CameraLauncher,
     photoPickerLauncher: PhotoPickerLauncher,
     photoFailureReporter: PhotoFailureReporter,
@@ -30,6 +31,7 @@ internal fun handleEncounterDetailEffect(
         EncounterDetailEffect.OpenCamera -> cameraLauncher.launch()
         EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch()
         EncounterDetailEffect.OpenPhoto -> onOpenPhoto()
+        EncounterDetailEffect.OpenMap -> onOpenMap()
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
         is EncounterDetailEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
     }
@@ -40,6 +42,7 @@ internal fun EncounterDetailDestination(
     key: EncounterDetail,
     contentPadding: PaddingValues,
     onOpenPhoto: () -> Unit,
+    onOpenMap: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
 ) {
@@ -47,6 +50,7 @@ internal fun EncounterDetailDestination(
     val state by store.state.collectAsStateWithLifecycle()
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
+    val currentOnOpenMap by rememberUpdatedState(onOpenMap)
     val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(EncounterDetailIntent.PhotoTaken(uri)) }
     val photoPicker = rememberSinglePhotoPicker { uri -> store.dispatch(EncounterDetailIntent.PhotoPicked(uri)) }
     val photoFailureReporter = rememberPhotoFailureReporter(R.string.detail_photo_not_attached)
@@ -57,6 +61,7 @@ internal fun EncounterDetailDestination(
                 effect,
                 onNavigateBack = { currentOnNavigateBack() },
                 onOpenPhoto = { currentOnOpenPhoto() },
+                onOpenMap = { currentOnOpenMap() },
                 cameraLauncher = cameraLauncher,
                 photoPickerLauncher = photoPicker,
                 photoFailureReporter = photoFailureReporter,
@@ -74,5 +79,6 @@ internal fun EncounterDetailDestination(
         onTakePhotoClick = { store.dispatch(EncounterDetailIntent.TakePhotoClicked) },
         onPickPhotoClick = { store.dispatch(EncounterDetailIntent.PickPhotoClicked) },
         onPhotoClick = { store.dispatch(EncounterDetailIntent.PhotoClicked) },
+        onCoordinatesClick = { store.dispatch(EncounterDetailIntent.CoordinatesClicked) },
     )
 }

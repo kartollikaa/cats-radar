@@ -19,6 +19,12 @@ sealed interface MapIntent {
 
     data object FocusCleared : MapIntent
 
+    /** Shows every cat, with the view on this one. */
+    data class CatRequested(val encounterId: String) : MapIntent
+
+    /** The view is done moving onto the requested cat. */
+    data object CatReached : MapIntent
+
     /** Shows cats of [coat], or stops showing them; null stands for a cat with no coat noted. */
     data class CoatToggled(val coat: CoatOption?) : MapIntent
 
@@ -47,8 +53,9 @@ class MapStore(
         combine(observeEncounters(), choices) { encounters, chosen ->
             val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen)
             val shown = mapped as? MapState.Located
-            // A focus the cats no longer match is let go, so it cannot reopen by itself later.
+            // A focus or a cat the cats no longer match is let go, so it cannot come back by itself later.
             if (chosen.focus != null && shown?.focus == null) choices.update { it.copy(focus = null) }
+            if (chosen.cat != null && shown?.catArea == null) choices.update { it.copy(cat = null) }
             setState { mapped }
         }.launchIn(viewModelScope)
     }
@@ -71,6 +78,8 @@ class MapStore(
             }
             MapIntent.CoatFilterCleared -> choices.update { it.copy(coats = emptySet()) }
             MapIntent.HeatToggled -> choices.update { it.copy(heat = !it.heat) }
+            is MapIntent.CatRequested -> choices.value = MapChoices(cat = intent.encounterId)
+            MapIntent.CatReached -> choices.update { it.copy(cat = null) }
         }
     }
 }

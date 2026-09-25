@@ -18,6 +18,7 @@ sealed interface EncounterDetailState {
         val coat: CoatOption? = null,
         /** Null when the cat has a photo of its own, which is never replaced. */
         val addPhoto: AddPhoto? = null,
+        val onTheMap: Boolean = false,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */

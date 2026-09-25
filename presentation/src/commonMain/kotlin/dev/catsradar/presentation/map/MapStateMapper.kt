@@ -24,6 +24,7 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
         if (located.isEmpty()) return MapState.Empty
         val filtering = choices.coats.isNotEmpty()
         val points = located.filter { choices.coats.shows(it.coat) }
+        val requested = choices.cat?.let { id -> points.firstOrNull { it.id == id } }
         return MapState.Located(
             points = points.toImmutableList(),
             // Around every located cat, not only the shown ones: a coat filter does not change where the map opens.
@@ -39,6 +40,7 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
             shownCoats = choices.coats.toImmutableSet(),
             coatFilterActive = filtering,
             filterMatchesNone = points.isEmpty(),
+            catArea = requested?.let { areaAround(listOf(it)) },
         )
     }
 
