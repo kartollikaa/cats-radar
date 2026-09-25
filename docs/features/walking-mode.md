@@ -47,9 +47,12 @@ On the Counter a tap starts a walk but never stops one. A stop ends the walk and
 and the button sits just under the count, where a thumb tallying cats can slip onto it, and so can
 a phone going back into a pocket. So while a walk is on the button has to be held until a fill has
 crossed it (`HoldToStop` in `WalkButton.kt`); the walk stops the moment it has, with a haptic, before
-the finger lifts. Let go earlier, or drift off the button, and the fill drains back and nothing changes. The
-button's second line says *press and hold* meanwhile, after the walk's time: a gesture nothing hints at
-is one nobody finds.
+the finger lifts. On the way the fill is cut into `TicksPerHold` even steps, and the phone ticks softly
+as each one fills, so the hold can be felt working without looking at it; the last step gives the
+stop's haptic instead of a tick. A press that picks the fill up mid-drain ticks on from where it is
+rather than from the start. Let go earlier, or drift off the button, and the ticks stop, the fill
+drains back and nothing changes. The button's second line says *press and hold* meanwhile, after the
+walk's time: a gesture nothing hints at is one nobody finds.
 
 Starting stays one tap, because a walk started by mistake loses nothing.
 

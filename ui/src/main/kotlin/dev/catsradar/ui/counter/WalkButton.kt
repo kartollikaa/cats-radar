@@ -49,6 +49,7 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
 private val HoldToStop = 1.seconds
+private const val TicksPerHold = 20
 
 /**
  * Starts a walk on a tap, and stops one only when held until the fill crosses it: a stop ends the walk
@@ -76,7 +77,15 @@ internal fun WalkButton(
                         // Still full: the last stop has not landed, and this press must earn its own.
                         if (fill.value == 1f) fill.snapTo(0f)
                         val remaining = (HoldToStop.inWholeMilliseconds * (1f - fill.value)).roundToInt()
-                        fill.animateTo(1f, tween(durationMillis = remaining, easing = LinearEasing))
+                        var ticked = ticksCrossed(fill.value)
+                        fill.animateTo(1f, tween(durationMillis = remaining, easing = LinearEasing)) {
+                            val crossed = ticksCrossed(value)
+                            // The last boundary is the stop itself, which gets Confirm instead of a tick.
+                            if (crossed > ticked && crossed < TicksPerHold) {
+                                ticked = crossed
+                                haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                            }
+                        }
                         haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                         currentOnWalkingChange(false)
                     }
@@ -150,6 +159,8 @@ private fun WalkButtonSurface(
         }
     }
 }
+
+private fun ticksCrossed(filled: Float): Int = (filled * TicksPerHold).toInt()
 
 private fun DrawScope.drawFill(filled: Float, color: Color) {
     val width = size.width * filled
