@@ -70,13 +70,22 @@ class EncounterRepositoryImplTest {
             photoPath = "p.jpg",
             thumbPath = "p_thumb.jpg",
             galleryUri = "content://gallery/7",
+            sourceMediaUri = "content://media/external/images/media/7",
             sourceDigest = "sha",
             updatedAt = Instant.parse("2026-02-01T00:00:00Z"),
         )
 
         assertEquals(true, repository.attachPhoto("id-1", stamp))
         assertEquals(
-            AttachPhotoCall("id-1", "p.jpg", "p_thumb.jpg", "content://gallery/7", "sha", stamp.updatedAt),
+            AttachPhotoCall(
+                "id-1",
+                "p.jpg",
+                "p_thumb.jpg",
+                "content://gallery/7",
+                "content://media/external/images/media/7",
+                "sha",
+                stamp.updatedAt,
+            ),
             dao.attachPhotoCall,
         )
 

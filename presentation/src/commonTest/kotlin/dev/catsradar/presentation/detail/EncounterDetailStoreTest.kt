@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
@@ -11,6 +12,7 @@ import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
+import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeGallerySaver
@@ -500,8 +502,10 @@ class EncounterDetailStoreTest {
             imageResizer = resizer,
             digest = FakeDigest(),
             gallerySaver = FakeGallerySaver(),
+            galleryItemLocator = LocatesNoGalleryItem,
             photoStorage = FakePhotoStorage(),
             idGenerator = FakeIdGenerator(),
+            deviceIdProvider = FakeDeviceIdProvider(),
             clock = clock,
             analytics = NoAnalytics,
         ),
@@ -519,4 +523,8 @@ class EncounterDetailStoreTest {
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
+}
+
+private object LocatesNoGalleryItem : GalleryItemLocator {
+    override suspend fun locate(pickedUri: String): String? = null
 }

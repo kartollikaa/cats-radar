@@ -153,8 +153,8 @@ class ZipBackupReader(
             // the rest of its manifest, may not be what this one expects at all.
             manifest.formatVersion > BACKUP_FORMAT_VERSION -> BackupReadResult.Rejected(BackupRejection.TOO_NEW)
             encounters == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
-            // This version writes every list, so an archive of its own format that lacks one was cut off.
-            manifest.formatVersion == BACKUP_FORMAT_VERSION && !unpacked.texts.keys.containsAll(archiveTextEntries) ->
+            // Every format since walks writes all five lists, so an archive of one that lacks a list was cut off.
+            manifest.formatVersion >= FIRST_FORMAT_WITH_WALKS && !unpacked.texts.keys.containsAll(archiveTextEntries) ->
                 BackupReadResult.Rejected(BackupRejection.UNREADABLE)
             else -> {
                 val contents = BackupContents(

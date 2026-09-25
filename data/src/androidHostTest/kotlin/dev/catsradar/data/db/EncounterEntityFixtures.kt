@@ -21,6 +21,7 @@ fun fullEncounterEntity(
     photoPath = "photos/$id.jpg",
     thumbPath = "thumbs/$id.jpg",
     galleryUri = "content://media/external/images/media/42",
+    sourceMediaUri = "content://media/external/images/media/43",
     sourceDigest = sourceDigest,
     lat = 55.751244,
     lon = 37.618423,

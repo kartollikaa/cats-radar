@@ -10,6 +10,7 @@ import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeDigest
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeExifReader
+import dev.catsradar.domain.testing.FakeGalleryItemLocator
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
 import dev.catsradar.domain.testing.FakePlaceCellRepository
@@ -33,6 +34,7 @@ class ImportPhotosTest {
     private val imageResizer = FakeImageResizer()
     private val digest = FakeDigest()
     private val sourceFileTime = FakeSourceFileTime()
+    private val locator = FakeGalleryItemLocator(mapOf(PICKED_FROM_PHONE to PHONE_ITEM))
 
     private fun importPhotos(timeZone: TimeZone = TimeZone.UTC) = ImportPhotos(
         encounterRepository = repository,
@@ -41,6 +43,7 @@ class ImportPhotosTest {
         imageResizer = imageResizer,
         digest = digest,
         sourceFileTime = sourceFileTime,
+        galleryItemLocator = locator,
         idGenerator = FakeIdGenerator(),
         deviceIdProvider = FakeDeviceIdProvider(),
         clock = FakeClock(NOW),
@@ -223,7 +226,31 @@ class ImportPhotosTest {
         assertEquals(emptyList(), repository.inserted)
     }
 
+    @Test
+    fun `an import from the phone's gallery remembers the item it came from, and is still not copied back`() =
+        runTest {
+            exifReader.data = ExifData(takenAt = LAST_MONTH)
+
+            importPhotos()(listOf(PICKED_FROM_PHONE))
+
+            val inserted = repository.inserted.single()
+            assertEquals(PHONE_ITEM, inserted.sourceMediaUri)
+            assertEquals(null, inserted.galleryUri)
+        }
+
+    @Test
+    fun `a pick that names no item on the phone is imported with no link to one`() = runTest {
+        exifReader.data = ExifData(takenAt = LAST_MONTH)
+
+        importPhotos()(listOf("content://com.google.android.apps.photos.contentprovider/-1/1/abc"))
+
+        assertEquals(null, repository.inserted.single().sourceMediaUri)
+    }
+
     private companion object {
+        const val PICKED_FROM_PHONE =
+            "content://media/picker_get_content/0/com.android.providers.media.photopicker/media/17"
+        const val PHONE_ITEM = "content://media/external/images/media/17"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val LAST_MONTH = Instant.parse("2026-08-22T09:00:00Z")
     }

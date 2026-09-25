@@ -3,7 +3,9 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.model.PhotoStamp
+import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
@@ -36,8 +38,10 @@ class AttachPhoto(
     private val imageResizer: ImageResizer,
     private val digest: Digest,
     private val gallerySaver: GallerySaver,
+    private val galleryItemLocator: GalleryItemLocator,
     private val photoStorage: PhotoStorage,
     private val idGenerator: IdGenerator,
+    private val deviceIdProvider: DeviceIdProvider,
     private val clock: Clock,
     private val analytics: Analytics,
 ) {
@@ -46,11 +50,18 @@ class AttachPhoto(
         return if (target == null || target.photoPath != null) {
             AttachResult.NotAttachable
         } else {
-            storeAndAttach(encounterId, sourceUri, source)
+            // Gallery ids are per phone and a row names only the install that created it, so a link is kept
+            // only on this install's cats: recorded on another's, it would open a different photo back there.
+            storeAndAttach(encounterId, sourceUri, source, keepsLinks = target.deviceId == deviceIdProvider.deviceId)
         }
     }
 
-    private suspend fun storeAndAttach(encounterId: String, sourceUri: String, source: PhotoSource): AttachResult {
+    private suspend fun storeAndAttach(
+        encounterId: String,
+        sourceUri: String,
+        source: PhotoSource,
+        keepsLinks: Boolean,
+    ): AttachResult {
         // Not the cat's id: an attempt that loses the row to another must remove only its own files.
         val baseName = idGenerator.newId()
         val stored = imageResizer.store(sourceUri, baseName) ?: return AttachResult.Unreadable
@@ -64,10 +75,16 @@ class AttachPhoto(
             } else {
                 null
             }
+            val pickedItem = if (keepsLinks && source == PhotoSource.GALLERY) {
+                galleryItemLocator.locate(sourceUri)
+            } else {
+                null
+            }
             val stamp = PhotoStamp(
                 photoPath = stored.photoPath,
                 thumbPath = stored.thumbPath,
-                galleryUri = galleryUri,
+                galleryUri = galleryUri?.takeIf { keepsLinks },
+                sourceMediaUri = pickedItem,
                 sourceDigest = digest.sha256(sourceUri),
                 updatedAt = clock.now(),
             )

@@ -15,6 +15,7 @@ import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.SourceFileTime
@@ -53,6 +54,7 @@ class ImportPhotos(
     private val imageResizer: ImageResizer,
     private val digest: Digest,
     private val sourceFileTime: SourceFileTime,
+    private val galleryItemLocator: GalleryItemLocator,
     private val idGenerator: IdGenerator,
     private val deviceIdProvider: DeviceIdProvider,
     private val clock: Clock,
@@ -124,6 +126,7 @@ class ImportPhotos(
                 thumbPath = stored.thumbPath,
                 // The original is already in the gallery; copying it back would duplicate it.
                 galleryUri = null,
+                sourceMediaUri = galleryItemLocator.locate(uri),
                 sourceDigest = sourceDigest,
                 lat = exifPoint?.lat,
                 lon = exifPoint?.lon,

@@ -117,6 +117,7 @@ internal class FakeEncounterRepository : EncounterRepository {
                         photoPath = stamp.photoPath,
                         thumbPath = stamp.thumbPath,
                         galleryUri = stamp.galleryUri,
+                        sourceMediaUri = stamp.sourceMediaUri,
                         sourceDigest = stamp.sourceDigest,
                         updatedAt = stamp.updatedAt,
                     )

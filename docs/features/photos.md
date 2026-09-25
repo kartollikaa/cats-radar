@@ -58,9 +58,17 @@ photographed removes only its own files, never the ones the cat now points at (`
 
 From the camera the original goes to the gallery under the same setting as a photo taken from the
 counter (see *The gallery setting* below); from the gallery it is never copied back in
-(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*).
+(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*). A photo chosen from the
+gallery keeps the item it was picked as instead, by the same rule as an import (see
+[import.md](./import.md#the-gallery-item-it-came-from); `AttachPhotoTest`, *a photo chosen from the
+gallery remembers the item it came from*); a camera photo never does (*a photo from the camera is never
+linked to a picked item*). A cat another install logged keeps neither link — its camera original still
+goes to the gallery, the cat just does not point at it — because gallery ids are only this phone's (see
+[photo-viewer.md](./photo-viewer.md#open-in-gallery); `AttachPhotoTest`, *a cat another install logged
+keeps no link to the original, which still goes to the gallery*).
 
-The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`. The cat
+The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceMediaUri`, `sourceDigest` and
+`updatedAt`. The cat
 keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
 photo this way is still a tally (`AttachPhotoTest`, *a cat without a photo gets the copy, thumbnail
 and digest, and keeps everything else*), and it now counts as "With photo" in Statistics like any
@@ -98,8 +106,8 @@ The switch renders what is *stored*, not what was last tapped: it follows the se
 than keeping its own optimistic state, so a failed write cannot leave the two disagreeing.
 
 The `galleryUri` a saved original leaves on its cat is also what the photo viewer's *Open in gallery*
-opens, on the installation that saved it and while the gallery still holds the item (see
-[photo-viewer.md](./photo-viewer.md#open-in-gallery)).
+opens, on the installation that saved it and while the gallery still holds the item, ahead of any
+picked item the cat also keeps (see [photo-viewer.md](./photo-viewer.md#open-in-gallery)).
 
 ## Reading a photo's metadata
 

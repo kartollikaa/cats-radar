@@ -84,7 +84,9 @@ On one device a link can never open a different picture: the `files` table's `_i
 `INTEGER PRIMARY KEY AUTOINCREMENT`, which SQLite never reuses.
 
 Accepted false negative: a tally restored from another install's backup and given a photo on this
-one keeps the other install's `deviceId`, so its new photo offers no link.
+one keeps the other install's `deviceId`, so its new photo offers no link. `AttachPhoto` therefore records
+no link at all on such a cat: back on the install that logged it, the row would pass the rule and name a
+different picture. A camera original still goes to the gallery; the cat just does not point at it.
 
 ### Opening
 
@@ -116,7 +118,8 @@ From the URI the picker or `GET_CONTENT` handed over, at import or attach time, 
   `LocalUriMatcher`.
 - `content://com.android.providers.media.documents/document/image:<id>` —
   `MediaStore.getMediaUri(context, uri)`, the documented conversion.
-- `content://media/external…/images/media/<id>` — already a MediaStore item; kept as it is.
+- `content://media/<volume>/images/media/<id>` — already a MediaStore item; kept as that item, without
+  any query it came with.
 - Anything else — a cloud-only item (its authority is the cloud provider's), another app's
   provider, a file — no link.
 

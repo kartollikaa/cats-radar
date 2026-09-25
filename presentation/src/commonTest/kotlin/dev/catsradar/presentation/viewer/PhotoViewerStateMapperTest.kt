@@ -35,6 +35,13 @@ class PhotoViewerStateMapperTest {
     }
 
     @Test
+    fun `a photo this install picked from the gallery is offered there`() {
+        val cat = photographedCat().copy(sourceMediaUri = "content://media/external/images/media/17")
+
+        assertEquals(true, mapper.map(cat)?.opensInGallery)
+    }
+
+    @Test
     fun `an original recorded by another install is not offered here`() {
         val cat = photographedCat().copy(galleryUri = SAVED, deviceId = "another-install")
 

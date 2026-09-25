@@ -63,6 +63,7 @@ val domainModule = module {
             imageResizer = get(),
             digest = get(),
             sourceFileTime = get(),
+            galleryItemLocator = get(),
             idGenerator = get(),
             deviceIdProvider = get(),
             clock = get(),
