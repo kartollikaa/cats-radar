@@ -84,9 +84,10 @@ MediaStore shows an app only the items it owns, and hides one moved to the trash
 no longer returns is gone. Then nothing opens and a message says the photo is no longer in the gallery
 (`ResolveGalleryLinkTest`, *an original deleted from the gallery is gone*; `MediaStoreGalleryItemsTest`
 — a refused query or an unparseable URI reads as gone, never as a crash). A picked item is not the
-app's to see, so it is never checked: the gallery opens and gives its own "not found" if the user has
-deleted it since (`ResolveGalleryLinkTest`, *a picked item opens without asking the gallery, which the
-app cannot read*).
+app's to see, so it is never checked: the gallery is opened all the same, and what it shows for an item
+the user has deleted since — its library, or a message of its own — is its behaviour, not the app's
+(`ResolveGalleryLinkTest`, *a picked item opens without asking the gallery, which the app cannot
+read*).
 
 **No gallery app.** A phone with nothing that shows images gets a message that no app can show the
 photo (`GalleryOpenerTest`, *with no app to show an image it reports so instead of crashing*).
