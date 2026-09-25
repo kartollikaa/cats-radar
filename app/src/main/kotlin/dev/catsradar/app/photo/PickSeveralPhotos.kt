@@ -14,7 +14,7 @@ internal class PickSeveralPhotos(private val maxItems: Int) : ActivityResultCont
     override fun createIntent(context: Context, input: Unit): Intent =
         media.createIntent(context, PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
 
-    // Where the system photo picker is missing, the fallback GET_CONTENT picker has no item limit.
+    // Where no photo picker is available, the OPEN_DOCUMENT picker it falls back to has no item limit.
     override fun parseResult(resultCode: Int, intent: Intent?): List<Uri> =
         media.parseResult(resultCode, intent).take(maxItems)
 }

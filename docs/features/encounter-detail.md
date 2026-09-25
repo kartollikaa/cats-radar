@@ -75,7 +75,7 @@ have the photo yet, and offer the buttons back for a moment before the photo app
 (*a successful attach stays in progress until the photo arrives, never offering again*).
 
 **Several from the gallery.** The picker lets the user choose up to `Tuning.ATTACH_BATCH_MAX` images; a
-picker that ignores the limit — the fallback where the system photo picker is missing — is cut to the
+picker that ignores the limit — the document picker used where no photo picker is available — is cut to the
 first ones chosen (`PickSeveralPhotosTest`). The photos are attached one after another, in the order
 picked, after the cat's own (`EncounterDetailPickSeveralTest`, *every picked photo lands after the
 cat's own, in the order picked*). While they are, the progress bar counts them — "Attached 2 of 5
