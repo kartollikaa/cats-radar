@@ -23,7 +23,7 @@ not copied back*).
 The imported cat also keeps the gallery item the photo was picked as, in `sourceMediaUri`, so the
 photo viewer can open the original where the user keeps it (see
 [photo-viewer.md](./photo-viewer.md#open-in-gallery)). Which item that is comes from the URI the
-gallery handed over, not from reading the gallery, which the app has no permission to do:
+gallery handed over, not from reading the gallery, which the app may have no permission to do:
 
 - **The system photo picker** names the item as `content://media/picker…/<user>/<provider>/media/<id>`.
   When the provider is the phone's own, `<id>` is the item's MediaStore id, so the cat keeps
@@ -33,12 +33,13 @@ gallery handed over, not from reading the gallery, which the app has no permissi
 - **A photo only in the cloud** comes from the cloud provider, whose `<id>` is its own, and **a photo
   from another profile** (a work profile) names another user — neither has an item here, so the cat
   keeps none (*aCloudOnlyPhotoHasNoItemOnThisDevice*, *aPhotoFromAnotherProfileHasNoItemForThisOne*).
-- **The Files app** hands over a documents URI, which Android's own `MediaStore.getMediaUri`
-  converts; when it cannot, no item (*aFilesAppImageIsTheItemAndroidsOwnConversionNames*,
-  *aFilesAppImageAndroidCannotConvertHasNoItem*).
-- **A gallery app that answers with the MediaStore item itself** is kept as it is; any other app's
-  provider, or a file, has no item (*aMediaStoreItemHandedOverAsItselfIsKept*,
-  *anotherAppsProviderHasNoItem*).
+- **The Files app's image views** hand over a media documents URI, which Android's own
+  `MediaStore.getMediaUri` converts; when it cannot, no item (*aFilesAppImageIsTheItemAndroidsOwnConversionNames*,
+  *aFilesAppImageAndroidCannotConvertHasNoItem*). A file picked by browsing a storage folder comes from
+  another provider and has none (*aFilesAppImageFromAStorageFolderHasNoItem*).
+- **A gallery app that answers with the MediaStore item itself** keeps that item, without any query
+  it came with (*aMediaStoreItemHandedOverAsItselfIsKeptWithoutItsQuery*); any other app's provider,
+  or a file, has no item (*anotherAppsProviderHasNoItem*).
 
 A pick with no item is imported all the same, just without the link (`ImportPhotosTest`, *a pick that
 names no item on the phone is imported with no link to one*). Cats imported before the app kept the

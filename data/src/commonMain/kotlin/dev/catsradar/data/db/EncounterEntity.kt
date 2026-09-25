@@ -23,7 +23,7 @@ data class EncounterEntity(
     val photoPath: String?,
     val thumbPath: String?,
     val galleryUri: String?,
-    val sourceMediaUri: String? = null,
+    val sourceMediaUri: String?,
     val sourceDigest: String?,
     val lat: Double?,
     val lon: Double?,

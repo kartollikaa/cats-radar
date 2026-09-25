@@ -62,7 +62,10 @@ counter (see *The gallery setting* below); from the gallery it is never copied b
 gallery keeps the item it was picked as instead, by the same rule as an import (see
 [import.md](./import.md#the-gallery-item-it-came-from); `AttachPhotoTest`, *a photo chosen from the
 gallery remembers the item it came from*); a camera photo never does (*a photo from the camera is never
-linked to a picked item*).
+linked to a picked item*). A cat another install logged keeps neither link — its camera original still
+goes to the gallery, the cat just does not point at it — because gallery ids are only this phone's (see
+[photo-viewer.md](./photo-viewer.md#open-in-gallery); `AttachPhotoTest`, *a cat another install logged
+keeps no link to the original, which still goes to the gallery*).
 
 The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceMediaUri`, `sourceDigest` and
 `updatedAt`. The cat

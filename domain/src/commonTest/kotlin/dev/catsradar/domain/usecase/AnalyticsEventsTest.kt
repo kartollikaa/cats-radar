@@ -158,6 +158,7 @@ class AnalyticsEventsTest {
         galleryItemLocator = FakeGalleryItemLocator(),
         photoStorage = RecordingPhotoStorage(),
         idGenerator = FakeIdGenerator(),
+        deviceIdProvider = FakeDeviceIdProvider(),
         clock = clock,
         analytics = analytics,
     )

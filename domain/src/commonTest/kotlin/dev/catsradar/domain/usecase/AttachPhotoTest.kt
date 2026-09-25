@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
+import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeDigest
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeGalleryItemLocator
@@ -43,6 +44,7 @@ class AttachPhotoTest {
         galleryItemLocator = locator,
         photoStorage = storage,
         idGenerator = FakeIdGenerator(),
+        deviceIdProvider = FakeDeviceIdProvider(THIS_INSTALL),
         clock = FakeClock(NOW),
         analytics = RecordingAnalytics(),
     )
@@ -53,7 +55,7 @@ class AttachPhotoTest {
         locationSource = LocationSource.CURRENT_FIX,
         lat = 41.39864,
         lon = 2.17842,
-    ).copy(coat = CatCoat.GINGER)
+    ).copy(coat = CatCoat.GINGER, deviceId = THIS_INSTALL)
 
     private suspend fun stored(id: String = ID): Encounter = encounters.loadEvery().first { it.id == id }
 
@@ -249,8 +251,29 @@ class AttachPhotoTest {
         assertEquals(emptyList(), locator.asked)
     }
 
+    @Test
+    fun `a cat another install logged keeps no link to a gallery item on this phone`() = runTest {
+        encounters.insert(tally.copy(deviceId = "another-install"))
+
+        attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
+
+        assertEquals(null, stored().sourceMediaUri)
+        assertEquals(FakeImageResizer.PHOTO_PATH, stored().photoPath)
+    }
+
+    @Test
+    fun `a cat another install logged keeps no link to the original, which still goes to the gallery`() = runTest {
+        encounters.insert(tally.copy(deviceId = "another-install"))
+
+        attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
+
+        assertEquals(1, gallery.calls)
+        assertEquals(null, stored().galleryUri)
+    }
+
     private companion object {
         const val ID = "cat-1"
+        const val THIS_INSTALL = "install-1"
         const val PHONE_ITEM = "content://media/external/images/media/18"
         const val SOURCE = "content://picker/1"
         val OCCURRED = Instant.parse("2026-09-21T10:00:00Z")

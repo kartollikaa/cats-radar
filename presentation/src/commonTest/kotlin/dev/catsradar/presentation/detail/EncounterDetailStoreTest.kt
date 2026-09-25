@@ -12,6 +12,7 @@ import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
+import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeGallerySaver
@@ -501,9 +502,10 @@ class EncounterDetailStoreTest {
             imageResizer = resizer,
             digest = FakeDigest(),
             gallerySaver = FakeGallerySaver(),
-            galleryItemLocator = NoGalleryItems,
+            galleryItemLocator = LocatesNoGalleryItem,
             photoStorage = FakePhotoStorage(),
             idGenerator = FakeIdGenerator(),
+            deviceIdProvider = FakeDeviceIdProvider(),
             clock = clock,
             analytics = NoAnalytics,
         ),
@@ -523,6 +525,6 @@ class EncounterDetailStoreTest {
     }
 }
 
-private object NoGalleryItems : GalleryItemLocator {
+private object LocatesNoGalleryItem : GalleryItemLocator {
     override suspend fun locate(pickedUri: String): String? = null
 }

@@ -16,6 +16,8 @@ import kotlin.time.Instant
  */
 internal const val BACKUP_FORMAT_VERSION = 3
 
+internal const val FIRST_FORMAT_WITH_WALKS = 2
+
 internal const val MANIFEST_ENTRY = "manifest.json"
 internal const val ENCOUNTERS_ENTRY = "encounters.json"
 internal const val PLACE_CELLS_ENTRY = "placecells.json"

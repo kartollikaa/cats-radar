@@ -124,8 +124,10 @@ written only where no file was here, so importing the same archive again finds t
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.
 - **A file cut off between two entries** looks, to a ZIP read entry by entry, like its end. An
-  archive of this version's format always carries all five lists, so one that lacks any of them was
-  cut off and is refused as unreadable. The lists come before the photos, so a clean cut after them
+  archive of any format since walks always carries all five lists, so one that lacks any of them was
+  cut off and is refused as unreadable, an archive from before picked gallery items included
+  (`ZipBackupReaderOlderFormatTest`, *aFormatTwoArchiveCutOffBetweenItsListsIsRefusedRatherThanReadWithoutItsWalks*).
+  The lists come before the photos, so a clean cut after them
   can only lose photos: the cats arrive, and those whose photos were past the cut show the
   placeholder until an archive that has them is imported.
 - **A failure on this device's side fails the import instead of refusing the archive**: a file it

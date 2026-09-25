@@ -33,7 +33,7 @@ class ResolveGalleryLinkTest {
     }
 
     @Test
-    fun `a picked item opens without asking the gallery, which the app cannot read`() = runTest {
+    fun `a picked item opens unchecked, since without photo access the app cannot see it`() = runTest {
         val picked = savedCat().copy(galleryUri = null, sourceMediaUri = PICKED)
 
         assertEquals(GalleryTarget.Open(uri = PICKED), resolve(picked))

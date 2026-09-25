@@ -38,8 +38,9 @@ class MediaStoreItemLocatorTest {
     }
 
     @Test
-    fun aMediaStoreItemHandedOverAsItselfIsKept() = runTest {
+    fun aMediaStoreItemHandedOverAsItselfIsKeptWithoutItsQuery() = runTest {
         assertEquals(MEDIA_ITEM, locator.locate(MEDIA_ITEM))
+        assertEquals(MEDIA_ITEM, locator.locate("$MEDIA_ITEM?requireOriginal=1"))
         assertEquals(
             "content://media/external_primary/images/media/42",
             locator.locate("content://media/external_primary/images/media/42"),
@@ -50,14 +51,23 @@ class MediaStoreItemLocatorTest {
     fun aFilesAppImageIsTheItemAndroidsOwnConversionNames() = runTest {
         ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, Converting(answer = Uri.parse(MEDIA_ITEM)))
 
-        assertEquals(MEDIA_ITEM, locator.locate("content://$MEDIA_DOCUMENTS/document/image%3A42"))
+        assertEquals(MEDIA_ITEM, locator.locate(FILES_APP_IMAGE))
     }
 
     @Test
     fun aFilesAppImageAndroidCannotConvertHasNoItem() = runTest {
         ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, Converting(answer = null))
 
-        assertNull(locator.locate("content://$MEDIA_DOCUMENTS/document/image%3A42"))
+        assertNull(locator.locate(FILES_APP_IMAGE))
+    }
+
+    @Test
+    fun aFilesAppImageFromAStorageFolderHasNoItem() = runTest {
+        val inAFolder = "content://com.android.externalstorage.documents/document/primary%3APictures%2Fcat.jpg"
+        val converting = Converting(answer = Uri.parse(MEDIA_ITEM), document = inAFolder)
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, converting)
+
+        assertNull(locator.locate(inAFolder))
     }
 
     @Test
@@ -82,12 +92,18 @@ class MediaStoreItemLocatorTest {
         assertNull(locator.locate("content://media/picker/0/$ON_DEVICE_PICKER/media/not-a-number"))
     }
 
-    /** MediaStore answering the document-to-item conversion `MediaStore.getMediaUri` asks it for with [answer]. */
-    private class Converting(private val answer: Uri?) : ContentProvider() {
+    /** MediaStore converting [document], and nothing else, to [answer] when `MediaStore.getMediaUri` asks. */
+    private class Converting(
+        private val answer: Uri?,
+        private val document: String = FILES_APP_IMAGE,
+    ) : ContentProvider() {
         override fun onCreate(): Boolean = true
 
-        override fun call(method: String, arg: String?, extras: Bundle?): Bundle? =
-            answer?.let { Bundle().apply { putParcelable("uri", it) } }
+        override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
+            val asked = extras?.getParcelable("uri", Uri::class.java)
+            val converts = method == "get_media_uri" && asked == Uri.parse(document)
+            return answer?.takeIf { converts }?.let { Bundle().apply { putParcelable("uri", it) } }
+        }
 
         override fun query(
             uri: Uri,
@@ -107,5 +123,6 @@ class MediaStoreItemLocatorTest {
         const val MEDIA_DOCUMENTS = "com.android.providers.media.documents"
         const val ON_DEVICE_PICKER = "com.android.providers.media.photopicker"
         const val MEDIA_ITEM = "content://media/external/images/media/42"
+        const val FILES_APP_IMAGE = "content://$MEDIA_DOCUMENTS/document/image%3A42"
     }
 }

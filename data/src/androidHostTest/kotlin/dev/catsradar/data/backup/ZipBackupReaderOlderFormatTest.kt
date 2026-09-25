@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.domain.platform.BackupReadResult
+import dev.catsradar.domain.platform.BackupRejection
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -27,7 +28,7 @@ class ZipBackupReaderOlderFormatTest {
     fun aFormatTwoArchiveReadsItsCatsWithNoPickedGalleryItem() = runTest {
         val path = File(temporaryFolder.root, "backup.zip")
         path.writeArchive(
-            MANIFEST_ENTRY to """{"formatVersion":2,"exportedAt":0,"deviceId":"d","appVersion":"1.3.0"}""",
+            MANIFEST_ENTRY to FORMAT_TWO_MANIFEST,
             ENCOUNTERS_ENTRY to """[{"id":"a","occurredAt":0,"tzOffsetMinutes":0,"kind":"PHOTO","origin":"GALLERY",""" +
                 """"locationSource":"NONE","deviceId":"d","createdAt":0,"updatedAt":0}]""",
             PLACE_CELLS_ENTRY to "[]",
@@ -41,5 +42,21 @@ class ZipBackupReaderOlderFormatTest {
         val cat = read.contents.encounters.single()
         assertEquals("a", cat.id)
         assertEquals(null, cat.sourceMediaUri)
+    }
+
+    @Test
+    fun aFormatTwoArchiveCutOffBetweenItsListsIsRefusedRatherThanReadWithoutItsWalks() = runTest {
+        val path = File(temporaryFolder.root, "backup.zip")
+        path.writeArchive(
+            MANIFEST_ENTRY to FORMAT_TWO_MANIFEST,
+            ENCOUNTERS_ENTRY to "[]",
+            PLACE_CELLS_ENTRY to "[]",
+        )
+
+        assertEquals(BackupReadResult.Rejected(BackupRejection.UNREADABLE), reader.read(path.path))
+    }
+
+    private companion object {
+        const val FORMAT_TWO_MANIFEST = """{"formatVersion":2,"exportedAt":0,"deviceId":"d","appVersion":"1.3.0"}"""
     }
 }

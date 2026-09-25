@@ -249,7 +249,7 @@ class ImportPhotosTest {
 
     private companion object {
         const val PICKED_FROM_PHONE =
-            "content://media/picker_get_content/0/" + "com.android.providers.media.photopicker/media/17"
+            "content://media/picker_get_content/0/com.android.providers.media.photopicker/media/17"
         const val PHONE_ITEM = "content://media/external/images/media/17"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val LAST_MONTH = Instant.parse("2026-08-22T09:00:00Z")

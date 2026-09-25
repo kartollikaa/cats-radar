@@ -62,8 +62,8 @@ user picked, not a copy (`GalleryLinkTest`, *a photo this install picked from th
 the item, one the app does not own*). A cat with both opens the original the app saved (*the original
 the app saved wins over a picked item on the same cat*). A tap hands that item to whatever app the
 phone opens images with — the user's default gallery, or the system's choice — with the app's own read
-access passed on. If Android refuses to pass it on — always for a picked item, which the app cannot
-read, and for a saved one deleted in the moment between the check and the tap reaching the gallery —
+access passed on. If Android refuses to pass it on — for a picked item the user gave the app no access
+to, and for a saved one deleted in the moment between the check and the tap reaching the gallery —
 the view goes again without it rather than crashing, and the gallery opens the item with its own access
 or says it cannot find it (`GalleryOpenerTest`, *a grant the app can no longer give is dropped and the
 item still opens*). Whether that gallery lets the user swipe on to the photos around it is its own
@@ -73,7 +73,10 @@ imported before the app kept the picked item offer nothing: the app has no link 
 
 **The install rule.** The button appears only on the installation that saved the original or made
 the pick (`GalleryLinkTest`, *an original recorded by another install is never a link here*; *a photo
-another install picked is never a link here*). A gallery item
+another install picked is never a link here*). A photo given on this phone to a cat another install
+logged — one a backup brought here — keeps no link at all, since back on that phone the row would pass
+the rule and open a different picture (`AttachPhotoTest`, *a cat another install logged keeps no link to
+a gallery item on this phone*). A gallery item
 is known by an id that is only meaningful on the phone that made it, so on another phone — after a
 backup was restored there — the same id may be a different picture, possibly another cat the app saved
 there. A reinstall is another installation too, and Android takes away an uninstalled app's hold on
@@ -83,11 +86,11 @@ the items it saved, so there is nothing the app could check either.
 MediaStore shows an app only the items it owns, and hides one moved to the trash, so an item the query
 no longer returns is gone. Then nothing opens and a message says the photo is no longer in the gallery
 (`ResolveGalleryLinkTest`, *an original deleted from the gallery is gone*; `MediaStoreGalleryItemsTest`
-— a refused query or an unparseable URI reads as gone, never as a crash). A picked item is not the
-app's to see, so it is never checked: the gallery is opened all the same, and what it shows for an item
-the user has deleted since — its library, or a message of its own — is its behaviour, not the app's
-(`ResolveGalleryLinkTest`, *a picked item opens without asking the gallery, which the app cannot
-read*).
+— a refused query or an unparseable URI reads as gone, never as a crash). A picked item is never
+checked: without access to the user's photos the app cannot see it, so a check would call a present
+item gone. The gallery is opened all the same, and what it shows for an item the user has deleted since
+— its library, or a message of its own — is its behaviour, not the app's (`ResolveGalleryLinkTest`, *a
+picked item opens unchecked, since without photo access the app cannot see it*).
 
 **No gallery app.** A phone with nothing that shows images gets a message that no app can show the
 photo (`GalleryOpenerTest`, *with no app to show an image it reports so instead of crashing*).
