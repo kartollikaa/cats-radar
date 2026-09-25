@@ -10,8 +10,7 @@ import dev.catsradar.domain.model.LocationStamp
 import kotlin.time.Instant
 
 // Every field is distinct and non-null where the type allows it: no two same-typed fields
-// (lat/lon, the four Instants) share a value, so a transposition between them cannot hide. Its photo is
-// the one its row's columns read back as.
+// (lat/lon, the four Instants) share a value, so a transposition between them cannot hide.
 internal fun distinctEncounter(): Encounter = Encounter(
     id = "encounter-id-1",
     occurredAt = Instant.parse("2026-01-01T01:00:00Z"),
