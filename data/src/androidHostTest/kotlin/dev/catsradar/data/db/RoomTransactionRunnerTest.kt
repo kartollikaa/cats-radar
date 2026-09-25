@@ -46,18 +46,18 @@ class RoomTransactionRunnerTest {
     @Test
     fun aBlockThatThrowsAfterWritingLeavesNoneOfItsWritesBehind() = runTest {
         encounterDao.insert(fullEncounterEntity(id = "here"))
-        val before = encounterDao.loadEvery()
+        val before = encounterDao.loadEvery().map { it.encounter }
 
         assertFailsWith<IllegalStateException> {
             runner.inTransaction {
                 encounterDao.update(fullEncounterEntity(id = "here").copy(coat = null))
-                encounterDao.insert(fullEncounterEntity(id = "imported", sourceDigest = "digest-2"))
+                encounterDao.insert(fullEncounterEntity(id = "imported"))
                 placeCellDao.upsert(pendingPlaceCellEntity("ucfv0h"))
                 error("database or disk is full")
             }
         }
 
-        assertEquals(before, encounterDao.loadEvery())
+        assertEquals(before, encounterDao.loadEvery().map { it.encounter })
         assertEquals(emptyList(), placeCellDao.observeAll().first())
     }
 
@@ -70,7 +70,7 @@ class RoomTransactionRunnerTest {
         }
 
         assertEquals(1, result)
-        assertEquals(listOf("imported"), encounterDao.loadEvery().map { it.id })
+        assertEquals(listOf("imported"), encounterDao.loadEvery().map { it.encounter }.map { it.id })
         assertEquals(listOf("ucfv0h"), placeCellDao.observeAll().first().map { it.cellId })
     }
 
@@ -88,7 +88,7 @@ class RoomTransactionRunnerTest {
         written.await()
         run.cancelAndJoin()
 
-        assertEquals(emptyList(), encounterDao.loadEvery())
+        assertEquals(emptyList(), encounterDao.loadEvery().map { it.encounter })
     }
 
     @Test
@@ -107,7 +107,7 @@ class RoomTransactionRunnerTest {
         val outsideStarted = CompletableDeferred<Unit>()
         val outside = launch {
             outsideStarted.complete(Unit)
-            encounterDao.insert(fullEncounterEntity(id = "tapped", sourceDigest = null))
+            encounterDao.insert(fullEncounterEntity(id = "tapped"))
         }
         outsideStarted.await()
         withContext(Dispatchers.Default) { delay(OUTSIDE_WRITE_GRACE_MS) }
@@ -115,14 +115,23 @@ class RoomTransactionRunnerTest {
 
         release.complete(Unit)
         joinAll(run, outside)
-        assertEquals(setOf("imported", "tapped"), encounterDao.loadEvery().mapTo(mutableSetOf()) { it.id })
+        assertEquals(
+            setOf("imported", "tapped"),
+            encounterDao.loadEvery().map { it.encounter }.mapTo(mutableSetOf()) { it.id }
+        )
     }
 
     @Test
     fun anObserverOutsideSeesTheRowsOnceTheTransactionCommits() = runTest {
         withContext(Dispatchers.Default) {
             val seen = Channel<List<String>>(Channel.UNLIMITED)
-            val observer = launch { encounterDao.observeAll().collect { rows -> seen.send(rows.map { it.id }) } }
+            val observer = launch {
+                encounterDao.observeAll().collect { rows ->
+                    seen.send(
+                        rows.map { it.encounter.id }
+                    )
+                }
+            }
             withTimeout(EMISSION_TIMEOUT_MS) { assertEquals(emptyList(), seen.receive()) }
 
             runner.inTransaction { encounterDao.insert(fullEncounterEntity(id = "imported")) }

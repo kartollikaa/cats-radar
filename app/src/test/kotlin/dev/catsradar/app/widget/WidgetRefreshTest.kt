@@ -106,6 +106,9 @@ private class FakeTodayRepository : EncounterRepository {
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =
         throw NotImplementedError("unused by this test")
 
+    override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
         throw NotImplementedError("unused by this test")
 

@@ -1,78 +1,42 @@
 package dev.catsradar.data.repository
 
-import dev.catsradar.domain.model.EncounterPhoto
+import dev.catsradar.data.db.EncounterWithPhotos
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.minutes
 
 class EncounterMapperTest {
     @Test
-    fun toEntityThenToDomainRoundTripsExactly() {
+    fun aCatAndItsPhotosRoundTripExactly() {
         val original = distinctEncounter()
 
-        assertEquals(original, original.toEntity().toDomain())
+        assertEquals(original, original.toRelation().toDomain())
     }
 
     @Test
-    fun toDomainThenToEntityRoundTripsExactly() {
-        val original = distinctEncounter().toEntity()
-
-        assertEquals(original, original.toDomain().toEntity())
-    }
-
-    @Test
-    fun aRowWithAPhotoReadsAsOnePhotoWithTheCatsIdInstallAndCreationTime() {
+    fun aRowAndItsPhotoRowsRoundTripExactly() {
         val row = distinctEncounter().toEntity()
+        val photoRows = distinctEncounter().photos.map { it.toEntity() }
 
-        assertEquals(
-            listOf(
-                EncounterPhoto(
-                    id = row.id,
-                    encounterId = row.id,
-                    photoPath = row.photoPath!!,
-                    thumbPath = row.thumbPath,
-                    galleryUri = row.galleryUri,
-                    sourceMediaUri = row.sourceMediaUri,
-                    sourceDigest = row.sourceDigest,
-                    deviceId = row.deviceId,
-                    addedAt = row.createdAt,
-                ),
-            ),
-            row.toDomain().photos,
-        )
+        val read = EncounterWithPhotos(row, photoRows).toDomain()
+
+        assertEquals(row, read.toEntity())
+        assertEquals(photoRows, read.photos.map { it.toEntity() })
     }
 
     @Test
-    fun aRowWithoutACopyHasNoPhotoWhateverItsOtherPhotoColumnsHold() {
-        val row = distinctEncounter().toEntity().copy(photoPath = null)
-
-        assertEquals(emptyList(), row.toDomain().photos)
-    }
-
-    @Test
-    fun aCatsCoverIsWrittenToItsRowsPhotoColumns() {
+    fun aCatsPhotosReadOldestFirstAndTiesByTheirId() {
         val cover = distinctEncounter().cover!!
-        val cat = distinctEncounter().copy(
-            photos = listOf(
-                cover.copy(photoPath = "photos/b.jpg", thumbPath = null, galleryUri = null, sourceDigest = "digest-2"),
-            ),
-        )
+        val later = cover.copy(id = "b-later", addedAt = cover.addedAt + 1.minutes)
+        val sameTimeB = cover.copy(id = "b-tie")
+        val sameTimeA = cover.copy(id = "a-tie")
 
-        val row = cat.toEntity()
+        val read = EncounterWithPhotos(
+            distinctEncounter().toEntity(),
+            listOf(later, sameTimeB, cover, sameTimeA).map { it.toEntity() },
+        ).toDomain()
 
-        assertEquals(
-            listOf("photos/b.jpg", null, null, cover.sourceMediaUri, "digest-2"),
-            listOf(row.photoPath, row.thumbPath, row.galleryUri, row.sourceMediaUri, row.sourceDigest),
-        )
-    }
-
-    @Test
-    fun aCatWithoutPhotosWritesNoPhotoColumns() {
-        val row = distinctEncounter().copy(photos = emptyList()).toEntity()
-
-        assertEquals(
-            listOf(null, null, null, null, null),
-            listOf(row.photoPath, row.thumbPath, row.galleryUri, row.sourceMediaUri, row.sourceDigest),
-        )
+        assertEquals(listOf("a-tie", "b-tie", cover.id, "b-later"), read.photos.map { it.id })
     }
 
     @Test

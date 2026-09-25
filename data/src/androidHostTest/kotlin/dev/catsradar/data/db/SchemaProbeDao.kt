@@ -7,6 +7,7 @@ import androidx.room3.RoomRawQuery
 
 /** Raw schema introspection and row-corruption injection for tests; not part of the app's data access. */
 @Dao
+@Suppress("TooManyFunctions") // one probe per raw read a test needs
 internal interface SchemaProbeDao {
     @Query(
         "SELECT name FROM sqlite_master " +
@@ -29,6 +30,9 @@ internal interface SchemaProbeDao {
 
     @Query("SELECT COUNT(*) FROM encounters WHERE id = :id")
     suspend fun encounterRowCount(id: String): Int
+
+    @Query("SELECT COUNT(*) FROM encounter_photos")
+    suspend fun photoRowCount(): Int
 
     // Bypasses EncounterDao's own "deletedAt IS NULL" read filters, to inspect a soft-deleted row.
     @Query("SELECT lat FROM encounters WHERE id = :id")
