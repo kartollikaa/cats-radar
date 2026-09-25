@@ -2,9 +2,13 @@ package dev.catsradar.app.counter
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -47,6 +51,7 @@ class CounterControlsTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val requested = mutableListOf<Boolean>()
+    private val haptics = mutableListOf<HapticFeedbackType>()
     private var undoVisible by mutableStateOf(false)
 
     @Test
@@ -144,6 +149,39 @@ class CounterControlsTest {
     }
 
     @Test
+    fun `a held press ticks softly all the way through the hold, then confirms the stop once`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
+
+        walkButton(walking = true).performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(HOLD_MS / 2)
+        val halfway = haptics.toList()
+        compose.mainClock.advanceTimeBy(HOLD_MS / 2 + 100)
+        val ticks = haptics.dropLast(1)
+
+        assertTrue(halfway.isNotEmpty(), "no haptic halfway through the hold")
+        assertTrue(halfway.all { it == HapticFeedbackType.SegmentFrequentTick }, "halfway: $halfway")
+        assertTrue(ticks.all { it == HapticFeedbackType.SegmentFrequentTick }, "before the stop: $ticks")
+        assertTrue(ticks.size > halfway.size, "${ticks.size} ticks by the stop, $halfway halfway")
+        assertEquals(HapticFeedbackType.Confirm, haptics.last())
+    }
+
+    @Test
+    fun `a press let go early stops ticking and never confirms`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
+
+        walkButton(walking = true).performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(HOLD_MS / 2)
+        walkButton(walking = true).performTouchInput { up() }
+        val atRelease = haptics.toList()
+        compose.mainClock.advanceTimeBy(HOLD_MS * 2)
+
+        assertTrue(atRelease.isNotEmpty(), "no haptic before the release")
+        assertEquals(atRelease, haptics)
+    }
+
+    @Test
     fun `during a walk the button says it has to be held`() {
         show(walking = true)
 
@@ -190,18 +228,25 @@ class CounterControlsTest {
     }
 
     private fun show(walking: Boolean, elapsedLabel: String? = null) {
+        val recorder = object : HapticFeedback {
+            override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
+                haptics += hapticFeedbackType
+            }
+        }
         compose.setContent {
-            CatsRadarTheme {
-                CounterScreen(
-                    state = CounterState(
-                        totalLabel = "3",
-                        count = 3,
-                        undoVisible = false,
-                        walkingMode = walking,
-                        walkElapsedLabel = elapsedLabel,
-                    ),
-                    onWalkingModeChange = { requested += it },
-                )
+            CompositionLocalProvider(LocalHapticFeedback provides recorder) {
+                CatsRadarTheme {
+                    CounterScreen(
+                        state = CounterState(
+                            totalLabel = "3",
+                            count = 3,
+                            undoVisible = false,
+                            walkingMode = walking,
+                            walkElapsedLabel = elapsedLabel,
+                        ),
+                        onWalkingModeChange = { requested += it },
+                    )
+                }
             }
         }
     }
