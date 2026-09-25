@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
@@ -106,12 +109,16 @@ internal fun RegionRow(row: RegionRowState, modifier: Modifier = Modifier, onCli
 }
 
 /** Where the level sits: the places above it, the outermost first. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RegionsTrail(trail: ImmutableList<RegionsCrumb>, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.semantics(mergeDescendants = true) {},
+    val names = trail.map { it.label.text() }
+    val description = stringResource(R.string.regions_trail_description, names.joinToString())
+    FlowRow(
+        modifier = modifier.clearAndSetSemantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         trail.forEachIndexed { index, crumb ->
             if (index > 0) {
@@ -121,8 +128,10 @@ private fun RegionsTrail(trail: ImmutableList<RegionsCrumb>, modifier: Modifier 
                     modifier = Modifier.size(16.dp),
                 )
             }
-            crumb.flag?.let { Flag(it, MaterialTheme.typography.titleSmall) }
-            Text(text = crumb.label.text(), style = MaterialTheme.typography.titleSmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                crumb.flag?.let { Flag(it, MaterialTheme.typography.titleSmall) }
+                Text(text = names[index], style = MaterialTheme.typography.titleSmall)
+            }
         }
     }
 }

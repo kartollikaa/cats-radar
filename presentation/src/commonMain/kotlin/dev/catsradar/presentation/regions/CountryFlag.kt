@@ -9,8 +9,8 @@ private const val LOW_SURROGATE_MASK = 0x3FF
 
 /** The emoji flag of an ISO 3166 alpha-2 [countryCode]; null for anything but two letters. */
 internal fun countryFlag(countryCode: String): String? {
+    if (countryCode.length != 2 || countryCode.any { it !in 'A'..'Z' && it !in 'a'..'z' }) return null
     val code = countryCode.uppercase()
-    if (code.length != 2 || code.any { it !in 'A'..'Z' }) return null
     return buildString {
         code.forEach { letter ->
             val codePoint = REGIONAL_INDICATOR_A + (letter - 'A') - SUPPLEMENTARY_START

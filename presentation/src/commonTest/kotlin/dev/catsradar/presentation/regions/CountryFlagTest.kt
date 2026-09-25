@@ -12,7 +12,7 @@ class CountryFlagTest {
 
     @Test
     fun `anything but two letters gives no flag`() {
-        val notCodes = listOf("", "E", "ESP", "E1", "É S")
+        val notCodes = listOf("", "E", "ESP", "E1", "É S", "ß")
 
         assertEquals(notCodes.map { null }, notCodes.map { countryFlag(it) })
     }

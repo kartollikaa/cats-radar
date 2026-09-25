@@ -246,10 +246,11 @@ class RegionsScreenTest {
                 ),
             ),
         )
-        val countryTop = compose.onNodeWithText("Spain", useUnmergedTree = true).getUnclippedBoundsInRoot().top
+        val trail = context.getString(R.string.regions_trail_description, "Spain")
+        val trailTop = compose.onNodeWithContentDescription(trail).getUnclippedBoundsInRoot().top
         val titleTop = compose.onNodeWithText("Barcelona").getUnclippedBoundsInRoot().top
 
-        assertTrue(countryTop < titleTop, "country at $countryTop, title at $titleTop")
+        assertTrue(trailTop < titleTop, "country at $trailTop, title at $titleTop")
     }
 
     private val isHeading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)

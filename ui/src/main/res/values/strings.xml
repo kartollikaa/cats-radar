@@ -113,6 +113,7 @@
 
     <string name="regions_title">Places</string>
     <string name="regions_back">Back</string>
+    <string name="regions_trail_description">Part of %1$s</string>
     <string name="regions_section_countries">Countries</string>
     <string name="regions_section_cities">Cities</string>
     <string name="regions_section_areas">Areas</string>

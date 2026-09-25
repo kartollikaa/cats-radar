@@ -127,6 +127,7 @@
 
     <string name="regions_title">Места</string>
     <string name="regions_back">Назад</string>
+    <string name="regions_trail_description">Входит в: %1$s</string>
     <string name="regions_section_countries">Страны</string>
     <string name="regions_section_cities">Города</string>
     <string name="regions_section_areas">Районы</string>
