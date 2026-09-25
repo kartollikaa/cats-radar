@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +24,7 @@ import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.R
+import dev.catsradar.ui.statistics.label
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -43,39 +43,50 @@ internal fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = 
 
 @Composable
 private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifier) {
-    val detail = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(OutingGap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = pluralStringResource(R.plurals.counter_outing_cats, state.count, state.count),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        // Short of room the rate stays whole: the count gives way first, then the time.
+        Row(
             modifier = Modifier.weight(1f, fill = false),
-        )
-        OutingSeparator()
-        Text(text = state.elapsedLabel, style = MaterialTheme.typography.bodyMedium, color = detail, maxLines = 1)
-        state.rate?.let {
-            val rateRes = if (it.unit == RateUnit.PER_MINUTE) {
-                R.string.statistics_rate_per_minute
-            } else {
-                R.string.statistics_rate_per_hour
-            }
+            horizontalArrangement = Arrangement.spacedBy(OutingGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = pluralStringResource(R.plurals.counter_outing_cats, state.count, state.count),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
             OutingSeparator()
             Text(
-                text = stringResource(rateRes, it.value),
+                text = state.elapsedLabel,
                 style = MaterialTheme.typography.bodyMedium,
-                color = detail,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        state.rate?.let {
+            OutingSeparator()
+            Text(
+                text = it.label(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                softWrap = false,
             )
         }
     }
 }
+
+// The inner and the outer row must part their items alike, or the dots stop being evenly spaced.
+private val OutingGap = 8.dp
 
 @Composable
 private fun OutingSeparator(modifier: Modifier = Modifier) {
