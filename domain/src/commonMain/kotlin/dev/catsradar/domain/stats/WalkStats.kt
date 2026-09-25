@@ -1,10 +1,8 @@
 package dev.catsradar.domain.stats
 
 import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.geo.trackLengthMeters
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.WalkTrack
-import dev.catsradar.domain.walk.covers
 
 data class WalkStats(
     /** The length of every walk's recorded route, in metres. */
@@ -19,26 +17,20 @@ object WalkStatsCalculator {
         encounters: List<Encounter>,
         walks: List<WalkTrack>,
         minRateDistanceMeters: Double = Tuning.MIN_RATE_DISTANCE_METERS,
-    ): WalkStats {
-        val live = encounters.filter { it.deletedAt == null }
-        val lengths = walks.map { it to trackLengthMeters(it.points) }
-        return WalkStats(
-            walkedMeters = lengths.sumOf { (_, meters) -> meters },
-            catsPerKm = catsPerKm(live, lengths, minRateDistanceMeters),
-        )
-    }
+    ): WalkStats = calculate(WalkMeasures.NONE.next(CatTimes.of(encounters), walks).walks, minRateDistanceMeters)
 
     // Pooled like the overall rate: one short lucky walk must not outweigh a long ordinary one.
-    private fun catsPerKm(
-        live: List<Encounter>,
-        lengths: List<Pair<WalkTrack, Double>>,
-        minDistanceMeters: Double,
-    ): Double? {
-        val measured = lengths.filter { (_, meters) -> meters >= minDistanceMeters }
-        if (measured.isEmpty()) return null
-        val cats = measured.sumOf { (track, _) -> live.count { track.walk.covers(it.occurredAt) } }
-        val kilometres = measured.sumOf { (_, meters) -> meters } / METERS_PER_KM
-        return cats / kilometres
+    fun calculate(
+        walks: List<MeasuredWalk>,
+        minRateDistanceMeters: Double = Tuning.MIN_RATE_DISTANCE_METERS,
+    ): WalkStats {
+        val measured = walks.filter { it.meters >= minRateDistanceMeters }
+        val catsPerKm = if (measured.isEmpty()) {
+            null
+        } else {
+            measured.sumOf { it.cats } / (measured.sumOf { it.meters } / METERS_PER_KM)
+        }
+        return WalkStats(walkedMeters = walks.sumOf { it.meters }, catsPerKm = catsPerKm)
     }
 
     private const val METERS_PER_KM = 1000.0

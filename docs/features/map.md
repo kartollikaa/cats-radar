@@ -69,10 +69,14 @@ oldest first — the way to the first cat is part of the walk, not only the stre
 line joining the located cats in the order they were seen stands in when no such walk has a track of
 two points or more. The coat filter never thins either kind of line.
 
+The map reads walks only while an outing is focused, and then only the tracks of the walks that
+overlap it — never every point of every walk. With no outing focused it reads no walk at all.
+
 - **No located cat in an outing:** its header offers no map.
 - **The outing changes while it is shown:** a cat added to it or deleted from it moves the line with
-  it. If its last located cat is deleted, the map returns to every cat, and stays there even when
-  another of its cats gets a location later.
+  it, and a cat that stretches it into another walk's time brings that walk's track in. If its last
+  located cat is deleted, the map returns to every cat, and stays there even when another of its cats
+  gets a location later.
 - **Cats sharing one fix** give the cat-to-cat line no length there; their cluster still opens as a
   spot's list.
 - **A walk still recording** grows on the map as its points arrive; the view does not refit to it — it
@@ -147,6 +151,9 @@ opening the map (above).
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
   on), `MapFocus` (an outing's `MapLine`s, each a list of `MapPosition`), `MapStateMapper`,
   `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a spot's list
+- `domain/…/usecase/ObserveOutingTracks.kt` — the tracks of the walks overlapping a focused outing;
+  `domain/…/session/SessionSplitter.kt`'s `outingOf` — the outing that holds a cat, for the mapper and
+  the tracks alike
 - `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
   their taps; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
   `MapFeatures.kt` — cats as map features, and each coat's colour shares; its `routeLines` — a

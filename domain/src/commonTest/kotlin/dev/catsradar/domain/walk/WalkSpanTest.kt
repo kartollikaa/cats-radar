@@ -7,31 +7,11 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 class WalkSpanTest {
 
     private fun walk(endedAt: Instant? = END) = Walk("w", START, endedAt, "device", START, endedAt ?: START)
-
-    @Test
-    fun `a walk covers its start, its end and every moment between`() {
-        assertTrue(walk().covers(START))
-        assertTrue(walk().covers(START + 30.minutes))
-        assertTrue(walk().covers(END))
-    }
-
-    @Test
-    fun `a walk covers nothing before its start or after its end`() {
-        assertFalse(walk().covers(START - 1.milliseconds))
-        assertFalse(walk().covers(END + 1.milliseconds))
-    }
-
-    @Test
-    fun `a walk still on covers every moment from its start`() {
-        assertTrue(walk(endedAt = null).covers(START + 30.days))
-        assertFalse(walk(endedAt = null).covers(START - 1.milliseconds))
-    }
 
     @Test
     fun `a span touching either end of a walk overlaps it`() {

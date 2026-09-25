@@ -47,6 +47,7 @@ import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
+import dev.catsradar.domain.usecase.ObserveWalkStats
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
@@ -131,6 +132,7 @@ class KoinRuntimeResolutionTest {
         // verify() treats a constructor parameter with a default as satisfied, but factoryOf's
         // reflection still tries to inject it; only actually building the object catches that.
         assertNotNull(koin.get<ObserveStats>())
+        assertNotNull(koin.get<ObserveWalkStats>())
         assertNotNull(koin.get<LogPhoto>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
         assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id") })

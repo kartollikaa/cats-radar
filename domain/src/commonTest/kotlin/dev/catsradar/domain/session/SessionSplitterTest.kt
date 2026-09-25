@@ -3,6 +3,7 @@ package dev.catsradar.domain.session
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Session
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.encounterFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration
@@ -89,6 +90,24 @@ class SessionSplitterTest {
         val outings = SessionSplitter.groupByOuting(listOf(kept, deleted))
 
         assertEquals(listOf(listOf(kept)), outings)
+    }
+
+    @Test
+    fun `outingOf gives the whole outing holding a cat, oldest first`() {
+        val first = encounterFixture("first", BASE)
+        val held = encounterFixture("held", BASE + 5.minutes)
+        val later = encounterFixture("later", BASE + 3.hours)
+
+        assertEquals(listOf(first, held), SessionSplitter.outingOf(listOf(later, held, first), "held"))
+    }
+
+    @Test
+    fun `outingOf finds no outing for a cat that is not there or is deleted`() {
+        val deleted = encounterFixture("deleted", BASE).copy(deletedAt = BASE + 1.hours)
+        val live = encounterFixture("live", BASE + 1.minutes)
+
+        assertEquals(null, SessionSplitter.outingOf(listOf(deleted, live), "deleted"))
+        assertEquals(null, SessionSplitter.outingOf(listOf(deleted, live), "missing"))
     }
 
     private companion object {
