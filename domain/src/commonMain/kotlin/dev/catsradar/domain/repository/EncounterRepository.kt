@@ -2,8 +2,8 @@ package dev.catsradar.domain.repository
 
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
@@ -21,8 +21,11 @@ interface EncounterRepository {
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun attachLocation(id: String, stamp: LocationStamp)
 
-    /** True only when a live row without a photo was written; otherwise writes nothing. */
-    suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean
+    /**
+     * Gives [photo] to its cat and stamps the cat's `updatedAt` with [EncounterPhoto.addedAt]. True only when the
+     * cat was live and had no photo; otherwise writes nothing.
+     */
+    suspend fun addPhoto(photo: EncounterPhoto): Boolean
 
     /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
     suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant)
@@ -43,6 +46,7 @@ interface EncounterRepository {
     /** Restores those of [ids] deleted at exactly [deletedAt]; a row deleted at another time stays deleted. */
     suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant)
 
+    /** A live cat with a photo whose digest is [sourceDigest]. */
     suspend fun findBySourceDigest(sourceDigest: String): Encounter?
 
     /** Every row, soft-deleted ones included — what a backup merge has to reconcile against. */

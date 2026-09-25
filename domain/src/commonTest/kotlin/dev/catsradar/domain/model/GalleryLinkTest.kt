@@ -1,6 +1,5 @@
 package dev.catsradar.domain.model
 
-import dev.catsradar.domain.testing.encounterAt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -9,45 +8,57 @@ class GalleryLinkTest {
 
     @Test
     fun `an original this install saved to the gallery is a link`() {
-        val cat = encounterAt(OCCURRED).copy(galleryUri = SAVED, deviceId = THIS_INSTALL)
+        val photo = photo(galleryUri = SAVED, deviceId = THIS_INSTALL)
 
-        assertEquals(GalleryLink(uri = SAVED, ownedByApp = true), cat.galleryLink(THIS_INSTALL))
+        assertEquals(GalleryLink(uri = SAVED, ownedByApp = true), photo.galleryLink(THIS_INSTALL))
     }
 
     @Test
-    fun `a cat with no original in the gallery has no link`() {
-        val cat = encounterAt(OCCURRED).copy(galleryUri = null, deviceId = THIS_INSTALL)
+    fun `a photo with no original in the gallery has no link`() {
+        val photo = photo(galleryUri = null, deviceId = THIS_INSTALL)
 
-        assertEquals(null, cat.galleryLink(THIS_INSTALL))
+        assertEquals(null, photo.galleryLink(THIS_INSTALL))
     }
 
     @Test
     fun `an original recorded by another install is never a link here`() {
-        val cat = encounterAt(OCCURRED).copy(galleryUri = SAVED, deviceId = "another-install")
+        val photo = photo(galleryUri = SAVED, deviceId = "another-install")
 
-        assertEquals(null, cat.galleryLink(THIS_INSTALL))
+        assertEquals(null, photo.galleryLink(THIS_INSTALL))
     }
 
     @Test
     fun `a photo this install picked from the gallery is a link to the item, one the app does not own`() {
-        val cat = encounterAt(OCCURRED).copy(sourceMediaUri = PICKED, deviceId = THIS_INSTALL)
+        val photo = photo(sourceMediaUri = PICKED, deviceId = THIS_INSTALL)
 
-        assertEquals(GalleryLink(uri = PICKED, ownedByApp = false), cat.galleryLink(THIS_INSTALL))
+        assertEquals(GalleryLink(uri = PICKED, ownedByApp = false), photo.galleryLink(THIS_INSTALL))
     }
 
     @Test
     fun `a photo another install picked is never a link here`() {
-        val cat = encounterAt(OCCURRED).copy(sourceMediaUri = PICKED, deviceId = "another-install")
+        val photo = photo(sourceMediaUri = PICKED, deviceId = "another-install")
 
-        assertEquals(null, cat.galleryLink(THIS_INSTALL))
+        assertEquals(null, photo.galleryLink(THIS_INSTALL))
     }
 
     @Test
-    fun `the original the app saved wins over a picked item on the same cat`() {
-        val cat = encounterAt(OCCURRED).copy(galleryUri = SAVED, sourceMediaUri = PICKED, deviceId = THIS_INSTALL)
+    fun `the original the app saved wins over a picked item on the same photo`() {
+        val photo = photo(galleryUri = SAVED, sourceMediaUri = PICKED, deviceId = THIS_INSTALL)
 
-        assertEquals(GalleryLink(uri = SAVED, ownedByApp = true), cat.galleryLink(THIS_INSTALL))
+        assertEquals(GalleryLink(uri = SAVED, ownedByApp = true), photo.galleryLink(THIS_INSTALL))
     }
+
+    private fun photo(deviceId: String, galleryUri: String? = null, sourceMediaUri: String? = null) = EncounterPhoto(
+        id = "cat-1",
+        encounterId = "cat-1",
+        photoPath = "cat-1.jpg",
+        thumbPath = "cat-1_thumb.jpg",
+        galleryUri = galleryUri,
+        sourceMediaUri = sourceMediaUri,
+        sourceDigest = null,
+        deviceId = deviceId,
+        addedAt = OCCURRED,
+    )
 
     private companion object {
         const val THIS_INSTALL = "install-1"

@@ -2,8 +2,8 @@ package dev.catsradar.domain.testing
 
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,10 +23,10 @@ class FakeEncounterRepository :
     val attachLocationCalls = mutableListOf<String>()
     val setPlaceCellsCalls = mutableListOf<List<PlaceCellAssignment>>()
     val purgeCalls = mutableListOf<Instant>()
-    var attachPhotoShouldThrow: Throwable? = null
+    var addPhotoShouldThrow: Throwable? = null
 
     /** Runs after a successful write, before the result returns. */
-    var afterAttachPhoto: suspend () -> Unit = {}
+    var afterAddPhoto: suspend () -> Unit = {}
 
     /** Runs before setCoat writes, for what else happens to the cat in the meantime. */
     var beforeSetCoat: suspend () -> Unit = {}
@@ -79,29 +79,22 @@ class FakeEncounterRepository :
     }
 
     // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
-    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
-        attachPhotoShouldThrow?.let { throw it }
-        var attached = false
+    override suspend fun addPhoto(photo: EncounterPhoto): Boolean {
+        addPhotoShouldThrow?.let { throw it }
+        var added = false
         encounters.update { list ->
-            attached = false
+            added = false
             list.map { encounter ->
-                if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
-                    attached = true
-                    encounter.copy(
-                        photoPath = stamp.photoPath,
-                        thumbPath = stamp.thumbPath,
-                        galleryUri = stamp.galleryUri,
-                        sourceMediaUri = stamp.sourceMediaUri,
-                        sourceDigest = stamp.sourceDigest,
-                        updatedAt = stamp.updatedAt,
-                    )
+                if (encounter.id == photo.encounterId && encounter.deletedAt == null && encounter.photos.isEmpty()) {
+                    added = true
+                    encounter.copy(photos = listOf(photo), updatedAt = photo.addedAt)
                 } else {
                     encounter
                 }
             }
         }
-        if (attached) afterAttachPhoto()
-        return attached
+        if (added) afterAddPhoto()
+        return added
     }
 
     // Mirrors the DAO's WHERE deletedAt IS NULL guard, checked at write time.
@@ -156,7 +149,9 @@ class FakeEncounterRepository :
 
     // Mirrors the DAO: a soft-deleted row does not block a re-import of the same bytes.
     override suspend fun findBySourceDigest(sourceDigest: String): Encounter? =
-        encounters.value.firstOrNull { it.sourceDigest == sourceDigest && it.deletedAt == null }
+        encounters.value.firstOrNull { cat ->
+            cat.deletedAt == null && cat.photos.any { it.sourceDigest == sourceDigest }
+        }
 
     override suspend fun loadEvery(): List<Encounter> = encounters.value
 

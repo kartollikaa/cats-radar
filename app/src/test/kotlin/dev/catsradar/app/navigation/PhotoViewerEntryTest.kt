@@ -30,6 +30,7 @@ import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.ui.R
@@ -142,7 +143,7 @@ class PhotoViewerEntryTest {
     private fun tapOpenInGallery(galleryHolds: String) {
         ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, GalleryHolding(galleryHolds))
         val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
-        show(keys, cat = { install -> photographed().copy(galleryUri = SAVED, deviceId = install) })
+        show(keys, cat = { install -> photographed(install, galleryUri = SAVED) })
         val openInGallery = hasContentDescription(context.getString(R.string.viewer_open_in_gallery))
         awaitTheDatabase { compose.onAllNodes(openInGallery).fetchSemanticsNodes().isNotEmpty() }
         compose.onNode(openInGallery).performClick()
@@ -177,8 +178,21 @@ class PhotoViewerEntryTest {
         return backStack
     }
 
-    private fun photographed() =
-        tally(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "photos/$ID.jpg", thumbPath = "thumbs/$ID.jpg")
+    private fun photographed(install: String = "device-1", galleryUri: String? = null): Encounter {
+        val cat = tally(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, deviceId = install)
+        val photo = EncounterPhoto(
+            id = ID,
+            encounterId = ID,
+            photoPath = "photos/$ID.jpg",
+            thumbPath = "thumbs/$ID.jpg",
+            galleryUri = galleryUri,
+            sourceMediaUri = null,
+            sourceDigest = null,
+            deviceId = install,
+            addedAt = cat.createdAt,
+        )
+        return cat.copy(photos = listOf(photo))
+    }
 
     private fun photoMatcher() = hasContentDescription(context.getString(R.string.detail_photo_description))
 

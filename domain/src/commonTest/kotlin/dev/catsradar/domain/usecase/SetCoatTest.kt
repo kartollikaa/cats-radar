@@ -2,11 +2,11 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -54,28 +54,12 @@ class SetCoatTest {
     @Test
     fun `a photo attached between the read and the write survives the coat`() = runTest {
         encounters.insert(tally)
-        val stamp = PhotoStamp(
-            photoPath = "p.jpg",
-            thumbPath = "p_thumb.jpg",
-            galleryUri = null,
-            sourceMediaUri = null,
-            sourceDigest = "sha",
-            updatedAt = NOW - 1.minutes,
-        )
-        encounters.beforeSetCoat = { encounters.attachPhoto(ID, stamp) }
+        val photo = tally.withPhoto(sourceDigest = "sha").photos.single().copy(addedAt = NOW - 1.minutes)
+        encounters.beforeSetCoat = { encounters.addPhoto(photo) }
 
         setCoat(ID, CatCoat.GINGER)
 
-        assertEquals(
-            tally.copy(
-                coat = CatCoat.GINGER,
-                photoPath = stamp.photoPath,
-                thumbPath = stamp.thumbPath,
-                sourceDigest = stamp.sourceDigest,
-                updatedAt = NOW,
-            ),
-            stored(),
-        )
+        assertEquals(tally.copy(coat = CatCoat.GINGER, photos = listOf(photo), updatedAt = NOW), stored())
     }
 
     private companion object {

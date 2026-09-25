@@ -113,7 +113,13 @@ interface EncounterDao {
         assignments.forEach { setPlaceCell(it.encounterId, it.lat, it.lon, it.geohash, it.placeCellId) }
     }
 
-    @Query("SELECT * FROM encounters WHERE sourceDigest = :sourceDigest AND deletedAt IS NULL LIMIT 1")
+    // A digest on a row without a copy names no photo: the row reads back as a cat without one.
+    @Query(
+        """
+        SELECT * FROM encounters
+        WHERE sourceDigest = :sourceDigest AND photoPath IS NOT NULL AND deletedAt IS NULL LIMIT 1
+        """
+    )
     suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?
 
     // Deleted rows included: a merge has to know that a row it is being offered was deleted here,
