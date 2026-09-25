@@ -27,6 +27,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import dev.catsradar.app.R as AppR
 
 @RunWith(AndroidJUnit4::class)
 class WalkingNotifierTest {
@@ -70,10 +71,10 @@ class WalkingNotifierTest {
     }
 
     @Test
-    fun theStatusBarIconIsTheWalkingCat() {
+    fun theStatusBarIconIsTheCatFace() {
         val posted = showAndRead(count = 3)
 
-        assertEquals(R.drawable.ic_cat_walking, posted.smallIcon.resId)
+        assertEquals(AppR.drawable.ic_notification_cat, posted.smallIcon.resId)
     }
 
     @Test

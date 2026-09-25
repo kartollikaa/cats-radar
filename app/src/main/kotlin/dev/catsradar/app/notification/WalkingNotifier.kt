@@ -23,6 +23,7 @@ import dev.catsradar.ui.R
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
+import dev.catsradar.app.R as AppR
 
 // Android lets an app lower a channel's importance but never raise it; a raised one needs a new id.
 private const val CHANNEL_ID = "walking_lock_screen"
@@ -81,7 +82,7 @@ class WalkingNotifier internal constructor(
 
     private fun build(count: Int, startedAt: Instant?): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_cat_walking)
+            .setSmallIcon(AppR.drawable.ic_notification_cat)
             .setContentTitle(context.getString(R.string.notification_walking_title))
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
             // A start ahead of the clock would count up from below zero.
