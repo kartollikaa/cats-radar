@@ -190,7 +190,7 @@
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>
     <string name="settings_save_originals_explained">Своя копия всегда остаётся в приложении</string>
-    <string name="settings_section_logging">Фото и прогулки</string>
+    <string name="settings_section_logging">Фото</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_backup_explained">Один файл со всеми котиками, фото и местами</string>
     <string name="settings_export">Сохранить</string>
@@ -217,8 +217,6 @@
         <item quantity="many">%1$d котиков за прогулку</item>
         <item quantity="other">%1$d котика за прогулку</item>
     </plurals>
-    <string name="settings_walking">Режим прогулки</string>
-    <string name="settings_walking_explained">Уведомление, из которого котик отмечается без разблокировки</string>
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
     <string name="counter_walk_start">Начать прогулку</string>

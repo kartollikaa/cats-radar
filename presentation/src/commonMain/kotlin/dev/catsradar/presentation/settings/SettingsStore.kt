@@ -18,9 +18,6 @@ class SettingsStore(
         settingsRepository.saveOriginalsToGallery()
             .onEach { enabled -> setState { copy(saveOriginalsToGallery = enabled) } }
             .launchIn(viewModelScope)
-        settingsRepository.walkingMode()
-            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
-            .launchIn(viewModelScope)
         settingsRepository.encountersGrid()
             .onEach { enabled -> setState { copy(encountersGrid = enabled) } }
             .launchIn(viewModelScope)
@@ -32,7 +29,6 @@ class SettingsStore(
             // than its own optimistic state, so a failed write cannot leave them disagreeing.
             is SettingsIntent.SaveOriginalsToggled ->
                 settingsRepository.setSaveOriginalsToGallery(intent.enabled)
-            is SettingsIntent.WalkingModeToggled -> settingsRepository.setWalkingMode(intent.enabled)
             is SettingsIntent.EncountersGridToggled -> settingsRepository.setEncountersGrid(intent.enabled)
             is SettingsIntent.Backup -> handleBackup(intent)
         }
