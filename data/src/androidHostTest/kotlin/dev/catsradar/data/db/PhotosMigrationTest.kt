@@ -43,6 +43,21 @@ class PhotosMigrationTest {
         }
     }
 
+    // Room turns foreign keys on only after migrating, so only a connection that has them on shows the cascade.
+    @Test
+    fun theMigrationKeepsEveryPhotoOnAConnectionWithForeignKeysOn() = runTest {
+        helper.createDatabase(3).use { v3 -> versionThreeCats.forEach { v3.execSQL(it) } }
+
+        BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+            connection.execSQL("PRAGMA foreign_keys = ON")
+            connection.execSQL("BEGIN")
+            MigrationFrom3To4.migrate(connection)
+            connection.execSQL("COMMIT")
+
+            assertEquals(expectedPhotoRows, connection.rows("SELECT $PHOTO_COLUMNS FROM encounter_photos ORDER BY id"))
+        }
+    }
+
     @Test
     fun versionFourHasNoPhotoColumnOnItsCatsAndNoDigestIndexThere() = runTest {
         helper.createDatabase(3).close()
