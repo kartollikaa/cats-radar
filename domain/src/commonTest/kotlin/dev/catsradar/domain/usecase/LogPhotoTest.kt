@@ -59,8 +59,9 @@ class LogPhotoTest {
         assertEquals(1, encounters.inserted.size)
         assertEquals(EncounterKind.PHOTO, logged.encounter.kind)
         assertEquals(EncounterOrigin.CAMERA, logged.encounter.origin)
-        assertEquals(FakeImageResizer.PHOTO_PATH, logged.encounter.photoPath)
-        assertNotNull(logged.encounter.thumbPath)
+        val photo = logged.encounter.photos.single()
+        assertEquals(FakeImageResizer.PHOTO_PATH, photo.photoPath)
+        assertNotNull(photo.thumbPath)
         assertEquals(1, resizer.calls)
     }
 
@@ -193,7 +194,7 @@ class LogPhotoTest {
         val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
 
         assertEquals(1, gallery.calls)
-        assertEquals(FakeGallerySaver.URI, logged.encounter.galleryUri)
+        assertEquals(FakeGallerySaver.URI, logged.encounter.cover?.galleryUri)
     }
 
     @Test
@@ -203,7 +204,7 @@ class LogPhotoTest {
         val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
 
         assertEquals(0, gallery.calls)
-        assertNull(logged.encounter.galleryUri)
+        assertNull(logged.encounter.cover?.galleryUri)
     }
 
     @Test
@@ -214,14 +215,14 @@ class LogPhotoTest {
         val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
 
         assertEquals(1, encounters.inserted.size)
-        assertNull(logged.encounter.galleryUri)
+        assertNull(logged.encounter.cover?.galleryUri)
     }
 
     @Test
     fun `the original's digest is stored so a later import can recognise it`() = runTest {
         val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
 
-        assertEquals(FakeDigest.SHA, logged.encounter.sourceDigest)
+        assertEquals(FakeDigest.SHA, logged.encounter.cover?.sourceDigest)
     }
 
     private companion object {

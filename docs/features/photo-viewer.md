@@ -105,7 +105,7 @@ second tap while the first is being checked opens the gallery once*).
   app's theme
 - `app/…/navigation/PhotoViewer.kt` (the key and its dialog metadata), `PhotoViewerDestination.kt`,
   wired into `CatsRadarNavHost.kt` next to `EncounterDetail`; `GalleryOpener.kt` — `ACTION_VIEW`
-- `domain/…/model/GalleryLink.kt` — whether a cat has a link here; `domain/…/usecase/ResolveGalleryLink.kt`;
+- `domain/…/model/GalleryLink.kt` — whether a photo has a link here; `domain/…/usecase/ResolveGalleryLink.kt`;
   `domain/…/platform/GalleryItems.kt`, answered by `data/…/androidMain/platform/MediaStoreGalleryItems.android.kt`
 - `data/…/androidMain/platform/MediaStoreItemLocator.android.kt` — which gallery item a picked photo is
   (see [import.md](./import.md#the-gallery-item-it-came-from))

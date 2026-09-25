@@ -157,22 +157,6 @@ class EncountersStateMapperTest {
     }
 
     @Test
-    fun `a pair cat without a full-size copy shows its thumbnail`() {
-        val thumbOnly = photoFixture("thumbOnly", BASE).copy(photoPath = null)
-        val full = photoFixture("full", BASE + 1.minutes)
-
-        val rows = mapper.map(listOf(thumbOnly, full), today, grid = true).rows
-
-        assertEquals(
-            EncountersRow.PhotoPair(
-                first = photoCell("full", BASE + 1.minutes, "/data/photos/full.jpg"),
-                second = photoCell("thumbOnly", BASE, "/data/photos/thumbOnly_thumb.jpg"),
-            ),
-            rows.last(),
-        )
-    }
-
-    @Test
     fun `every location source maps to its own label, so none of them can collapse onto another`() {
         val sources = LocationSource.entries
         val encounters = sources.mapIndexed { index, source ->
@@ -196,7 +180,7 @@ class EncountersStateMapperTest {
 
     @Test
     fun `a photo leads over a coat, and a coat over nothing`() {
-        val both = encounterFixture("both", BASE).copy(thumbPath = "both_thumb.jpg", coat = CatCoat.GINGER)
+        val both = encounterFixture("both", BASE).copy(coat = CatCoat.GINGER).withPhoto("both.jpg", "both_thumb.jpg")
         val coatOnly = encounterFixture("coatOnly", BASE + 5.minutes).copy(coat = CatCoat.GINGER)
         val neither = encounterFixture("neither", BASE + 10.minutes)
 
@@ -218,8 +202,8 @@ class EncountersStateMapperTest {
 
     @Test
     fun `photos whose thumbnails failed to write lead with a coat or a paw, and never pair up`() {
-        val coated = encounterFixture("coated", BASE).copy(photoPath = "a.jpg", thumbPath = null, coat = CatCoat.GREY)
-        val bare = encounterFixture("bare", BASE + 5.minutes).copy(photoPath = "b.jpg", thumbPath = null)
+        val coated = encounterFixture("coated", BASE).copy(coat = CatCoat.GREY).withPhoto(photoPath = "a.jpg")
+        val bare = encounterFixture("bare", BASE + 5.minutes).withPhoto(photoPath = "b.jpg")
 
         val rows = mapper.map(listOf(coated, bare), today, grid = true).rows
 

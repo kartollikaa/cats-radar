@@ -223,7 +223,8 @@ nothing, which keeps a fixture that large small in the repository.
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
 - `domain/…/geo/Globe.kt` — `pointOnGlobe`, whether a pair of coordinates counts as a location
 - `domain/…/platform/ExifReader.kt`, `PhotoPlatform.kt` — the interfaces
-- `domain/…/usecase/AttachPhoto.kt`, `domain/…/model/PhotoStamp.kt` — giving a logged cat a photo
+- `domain/…/usecase/AttachPhoto.kt` — giving a logged cat a photo; `domain/…/model/EncounterPhoto.kt` — a cat's
+  photo (see [data-model.md](./data-model.md#photos))
 - `data/…/androidMain/platform/` — `AndroidExifReader`, `AndroidImageResizer`, `Sha256Digest`,
   `MediaStoreGallerySaver`, `AndroidPhotoStorage`
 - `tools/make-photo-fixtures.py`, `data/src/androidHostTest/resources/photos/`

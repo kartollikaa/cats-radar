@@ -17,6 +17,7 @@ import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.FakeSourceFileTime
 import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlin.test.Test
@@ -62,8 +63,8 @@ class ImportPhotosTest {
         assertEquals(EncounterOrigin.GALLERY, inserted.origin)
         assertEquals(EncounterKind.PHOTO, inserted.kind)
         assertEquals(LAST_MONTH, inserted.occurredAt)
-        assertEquals(FakeImageResizer.PHOTO_PATH, inserted.photoPath)
-        assertNull(inserted.galleryUri)
+        assertEquals(FakeImageResizer.PHOTO_PATH, inserted.cover?.photoPath)
+        assertNull(inserted.cover?.galleryUri)
     }
 
     @Test
@@ -149,7 +150,7 @@ class ImportPhotosTest {
 
     @Test
     fun `the same bytes already in the database are skipped without touching the disk`() = runTest {
-        repository.insert(encounterFixture("already-here", LAST_MONTH).copy(sourceDigest = FakeDigest.SHA))
+        repository.insert(encounterFixture("already-here", LAST_MONTH).withPhoto(sourceDigest = FakeDigest.SHA))
 
         val summary = importPhotos()(listOf("content://picked/1"))
 
@@ -162,7 +163,8 @@ class ImportPhotosTest {
     fun `a soft-deleted twin does not block re-importing the same photo`() = runTest {
         repository.insert(
             encounterFixture("removed", LAST_MONTH)
-                .copy(sourceDigest = FakeDigest.SHA, deletedAt = NOW - 1.days),
+                .copy(deletedAt = NOW - 1.days)
+                .withPhoto(sourceDigest = FakeDigest.SHA),
         )
 
         val summary = importPhotos()(listOf("content://picked/1"))
@@ -234,8 +236,8 @@ class ImportPhotosTest {
             importPhotos()(listOf(PICKED_FROM_PHONE))
 
             val inserted = repository.inserted.single()
-            assertEquals(PHONE_ITEM, inserted.sourceMediaUri)
-            assertEquals(null, inserted.galleryUri)
+            assertEquals(PHONE_ITEM, inserted.cover?.sourceMediaUri)
+            assertEquals(null, inserted.cover?.galleryUri)
         }
 
     @Test
@@ -244,7 +246,7 @@ class ImportPhotosTest {
 
         importPhotos()(listOf("content://com.google.android.apps.photos.contentprovider/-1/1/abc"))
 
-        assertEquals(null, repository.inserted.single().sourceMediaUri)
+        assertEquals(null, repository.inserted.single().cover?.sourceMediaUri)
     }
 
     private companion object {

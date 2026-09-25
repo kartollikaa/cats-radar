@@ -3,6 +3,7 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeGalleryItems
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,30 +18,31 @@ class ResolveGalleryLinkTest {
     fun `an original the gallery still holds opens`() = runTest {
         galleryItems.present += SAVED
 
-        assertEquals(GalleryTarget.Open(uri = SAVED), resolve(savedCat()))
+        assertEquals(GalleryTarget.Open(uri = SAVED), resolve(savedPhoto()))
     }
 
     @Test
     fun `an original deleted from the gallery is gone`() = runTest {
-        assertEquals(GalleryTarget.Gone, resolve(savedCat()))
+        assertEquals(GalleryTarget.Gone, resolve(savedPhoto()))
         assertEquals(listOf(SAVED), galleryItems.asked)
     }
 
     @Test
-    fun `a cat with no link has nothing to open, and the gallery is never asked`() = runTest {
-        assertEquals(GalleryTarget.Unavailable, resolve(savedCat().copy(galleryUri = null)))
+    fun `a photo with no link has nothing to open, and the gallery is never asked`() = runTest {
+        assertEquals(GalleryTarget.Unavailable, resolve(savedPhoto().copy(galleryUri = null)))
         assertEquals(emptyList(), galleryItems.asked)
     }
 
     @Test
     fun `a picked item opens unchecked, since without photo access the app cannot see it`() = runTest {
-        val picked = savedCat().copy(galleryUri = null, sourceMediaUri = PICKED)
+        val picked = savedPhoto().copy(galleryUri = null, sourceMediaUri = PICKED)
 
         assertEquals(GalleryTarget.Open(uri = PICKED), resolve(picked))
         assertEquals(emptyList(), galleryItems.asked)
     }
 
-    private fun savedCat() = encounterAt(OCCURRED).copy(id = "cat-1", galleryUri = SAVED, deviceId = THIS_INSTALL)
+    private fun savedPhoto() =
+        encounterAt(OCCURRED).copy(id = "cat-1", deviceId = THIS_INSTALL).withPhoto(galleryUri = SAVED).photos.single()
 
     private companion object {
         const val THIS_INSTALL = "install-1"

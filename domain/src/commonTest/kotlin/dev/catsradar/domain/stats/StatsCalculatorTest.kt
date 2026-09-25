@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.UtcOffset
@@ -81,8 +82,8 @@ class StatsCalculatorTest {
         val stats = stats(
             listOf(
                 at(NOON),
-                at(NOON - 1.hours, kind = EncounterKind.PHOTO).copy(photoPath = "taken.jpg"),
-                at(NOON - 2.hours).copy(photoPath = "attached.jpg"),
+                at(NOON - 1.hours, kind = EncounterKind.PHOTO).withPhoto(photoPath = "taken.jpg"),
+                at(NOON - 2.hours).withPhoto(photoPath = "attached.jpg"),
                 at(NOON - 3.hours, kind = EncounterKind.PHOTO),
             ),
         )

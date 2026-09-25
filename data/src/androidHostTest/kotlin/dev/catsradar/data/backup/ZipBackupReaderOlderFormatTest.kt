@@ -41,7 +41,7 @@ class ZipBackupReaderOlderFormatTest {
         assertIs<BackupReadResult.Readable>(read)
         val cat = read.contents.encounters.single()
         assertEquals("a", cat.id)
-        assertEquals(null, cat.sourceMediaUri)
+        assertEquals(null, cat.cover?.sourceMediaUri)
     }
 
     @Test
