@@ -90,7 +90,8 @@ class PackageInstallerUpdaterTest {
         backgroundScope.launch { results.observe().collect { received += it } }
         val receiver = assertNotNull(statusReceiverOf(packageInstaller.mySessions.single().sessionId))
 
-        receiver.send(context, 0, Intent().putExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE_ABORTED))
+        val status = Intent().putExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE_ABORTED)
+        receiver.send(context, 0, status)
         ShadowLooper.idleMainLooper()
 
         assertEquals(listOf(InstallOutcome.CANCELLED), received)
