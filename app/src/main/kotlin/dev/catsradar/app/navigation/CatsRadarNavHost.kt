@@ -23,7 +23,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
-import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.toSettingsIntent
@@ -180,9 +179,6 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
     val store = koinViewModel<SettingsStore>()
     val state by store.state.collectAsStateWithLifecycle()
     val backupScheduler = koinInject<BackupScheduler>()
-    val onWalkingModeChange = rememberWalkingModeRequest { enabled ->
-        store.dispatch(SettingsIntent.WalkingModeToggled(enabled))
-    }
     val exportLauncher = rememberLauncherForActivityResult(CreateDocument(BACKUP_MIME_TYPE)) { uri ->
         store.dispatch(SettingsIntent.Backup.ExportTargetChosen(uri?.toString()))
     }
@@ -208,7 +204,6 @@ private fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifie
         modifier = modifier,
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
-        onWalkingModeChange = onWalkingModeChange,
         onEncountersGridChange = { store.dispatch(SettingsIntent.EncountersGridToggled(it)) },
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
