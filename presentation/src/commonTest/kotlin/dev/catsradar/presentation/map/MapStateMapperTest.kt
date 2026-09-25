@@ -2,6 +2,9 @@ package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.TrackPoint
+import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.model.WalkTrack
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
@@ -30,11 +33,25 @@ class MapStateMapperTest {
         encounters: List<Encounter>,
         focus: String? = null,
         coats: Set<CoatOption?> = emptySet(),
+        walks: List<WalkTrack> = emptyList(),
         cat: String? = null,
-    ) = mapper.map(encounters, TODAY, MapChoices(focus = focus, coats = coats, cat = cat))
+    ) = mapper.map(encounters, TODAY, MapChoices(focus = focus, coats = coats, cat = cat), walks)
 
     private fun located(id: String, lat: Double, lon: Double, coat: CatCoat? = null) =
         encounterFixture(id, BASE).copy(lat = lat, lon = lon, coat = coat)
+
+    private fun walkTrack(
+        id: String,
+        start: Instant,
+        end: Instant?,
+        vararg positions: Pair<Double, Double>,
+    ): WalkTrack {
+        val walk = Walk(id, startedAt = start, endedAt = end, deviceId = "device", createdAt = start, updatedAt = start)
+        val points = positions.mapIndexed { index, (lat, lon) ->
+            TrackPoint(walkId = id, at = start + index.minutes, lat = lat, lon = lon, accuracyMeters = 5f)
+        }
+        return WalkTrack(walk, points)
+    }
 
     @Test
     fun `with no cat located, the map is empty`() {
@@ -112,12 +129,13 @@ class MapStateMapperTest {
         val header = encountersMapper.map(cats, TODAY, grid = true).rows
             .filterIsInstance<OutingHeader>()
             .single { it.mapOutingId == "first" }
-        val route = persistentListOf(MapPoint("first", 41.37, 2.15, null), MapPoint("second", 41.39, 2.17, null))
+        val points = persistentListOf(MapPoint("first", 41.37, 2.15, null), MapPoint("second", 41.39, 2.17, null))
+        val lines = persistentListOf(MapLine(persistentListOf(MapPosition(41.37, 2.15), MapPosition(41.39, 2.17))))
         assertEquals(
             MapState.Located(
-                points = route,
+                points = points,
                 area = MapArea(south = 41.37, west = 2.15, north = 41.39, east = 2.17),
-                focus = MapFocus(outingId = "first", label = header.label, route = route),
+                focus = MapFocus(outingId = "first", label = header.label, lines = lines),
             ),
             state,
         )
@@ -171,7 +189,10 @@ class MapStateMapperTest {
         )
 
         assertEquals(listOf("ginger"), state.points.map { it.id })
-        assertEquals(listOf("ginger", "black"), state.focus?.route?.map { it.id })
+        assertEquals(
+            persistentListOf(MapPosition(41.37, 2.15), MapPosition(41.39, 2.17)),
+            checkNotNull(state.focus).lines.single().positions,
+        )
         assertEquals(true, state.coatFilterActive)
     }
 
@@ -210,6 +231,102 @@ class MapStateMapperTest {
         val state = assertIs<MapState.Located>(map(listOf(located("polar", 89.999, 10.0))))
 
         assertEquals(90.0, state.area.north)
+    }
+
+    @Test
+    fun `a focused outing on a recorded walk draws the walk's track instead of joining its cats`() {
+        val first = located("first", 41.39, 2.17).copy(occurredAt = BASE)
+        val second = located("second", 41.40, 2.18).copy(occurredAt = BASE + 10.minutes)
+        val walk = walkTrack(
+            "w",
+            start = BASE - 5.minutes,
+            end = BASE + 20.minutes,
+            41.388 to 2.168,
+            41.395 to 2.175,
+            41.401 to 2.181,
+        )
+
+        val state = assertIs<MapState.Located>(
+            mapper.map(listOf(first, second), TODAY, MapChoices(focus = "first"), listOf(walk)),
+        )
+
+        val expectedPositions =
+            persistentListOf(MapPosition(41.388, 2.168), MapPosition(41.395, 2.175), MapPosition(41.401, 2.181))
+        assertEquals(persistentListOf(MapLine(expectedPositions)), state.focus?.lines)
+    }
+
+    @Test
+    fun `every walk the outing overlaps is drawn, oldest first, and one outside it is not`() {
+        val first = located("first", 41.39, 2.17).copy(occurredAt = BASE)
+        val second = located("second", 41.40, 2.18).copy(occurredAt = BASE + 10.minutes)
+        val before =
+            walkTrack("before", start = BASE - 30.minutes, end = BASE - 20.minutes, 41.30 to 2.10, 41.31 to 2.11)
+        val acrossStart =
+            walkTrack("across-start", start = BASE - 5.minutes, end = BASE + 2.minutes, 41.32 to 2.12, 41.33 to 2.13)
+        val acrossEnd =
+            walkTrack("across-end", start = BASE + 8.minutes, end = BASE + 20.minutes, 41.34 to 2.14, 41.35 to 2.15)
+        val after =
+            walkTrack("after", start = BASE + 15.minutes, end = BASE + 25.minutes, 41.36 to 2.16, 41.37 to 2.17)
+
+        val state = assertIs<MapState.Located>(
+            // Given newest-first, so a passing test proves the mapper's own sort rather than the input order.
+            map(listOf(first, second), focus = "first", walks = listOf(after, acrossEnd, acrossStart, before)),
+        )
+
+        assertEquals(
+            persistentListOf(
+                MapLine(persistentListOf(MapPosition(41.32, 2.12), MapPosition(41.33, 2.13))),
+                MapLine(persistentListOf(MapPosition(41.34, 2.14), MapPosition(41.35, 2.15))),
+            ),
+            state.focus?.lines,
+        )
+    }
+
+    @Test
+    fun `a walk whose track has fewer than two points leaves the line joining the cats`() {
+        val first = located("first", 41.39, 2.17).copy(occurredAt = BASE)
+        val second = located("second", 41.40, 2.18).copy(occurredAt = BASE + 10.minutes)
+        val walk = walkTrack("w", start = BASE - 5.minutes, end = BASE + 20.minutes, 41.388 to 2.168)
+
+        val state = assertIs<MapState.Located>(map(listOf(first, second), focus = "first", walks = listOf(walk)))
+
+        assertEquals(
+            persistentListOf(MapLine(persistentListOf(MapPosition(41.39, 2.17), MapPosition(41.40, 2.18)))),
+            state.focus?.lines,
+        )
+    }
+
+    @Test
+    fun `with no focus, walks draw nothing`() {
+        val cats = listOf(located("a", 41.30, 2.10), located("b", 41.45, 2.25))
+        val walk = walkTrack("w", start = BASE - 5.minutes, end = BASE + 20.minutes, 41.50 to 2.30, 41.55 to 2.35)
+
+        val withoutWalks = assertIs<MapState.Located>(map(cats))
+        val withWalks = assertIs<MapState.Located>(map(cats, walks = listOf(walk)))
+
+        assertEquals(null, withWalks.focus)
+        assertEquals(withoutWalks.area, withWalks.area)
+    }
+
+    @Test
+    fun `a focused outing's view takes in its track as well as its cats`() {
+        val first = located("first", 41.39, 2.17).copy(occurredAt = BASE)
+        val second = located("second", 41.40, 2.18).copy(occurredAt = BASE + 10.minutes)
+        // North-west of both cats, then south-east of both: the area must widen on every side to hold them.
+        val walk = walkTrack("w", start = BASE - 5.minutes, end = BASE + 20.minutes, 41.50 to 2.05, 41.30 to 2.30)
+
+        val state = assertIs<MapState.Located>(map(listOf(first, second), focus = "first", walks = listOf(walk)))
+
+        val area = state.area
+        val track = checkNotNull(state.focus).lines.single().positions
+        track.forEach { position ->
+            assertTrue(position.latitude in area.south..area.north, "latitude ${position.latitude} outside $area")
+            assertTrue(position.longitude in area.west..area.east, "longitude ${position.longitude} outside $area")
+        }
+        assertTrue(area.north > 41.40, "north not widened past the cats' box")
+        assertTrue(area.west < 2.17, "west not widened past the cats' box")
+        assertTrue(area.south < 41.39, "south not widened past the cats' box")
+        assertTrue(area.east > 2.18, "east not widened past the cats' box")
     }
 
     private companion object {

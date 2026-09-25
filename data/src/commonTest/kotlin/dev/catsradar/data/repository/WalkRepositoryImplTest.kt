@@ -73,6 +73,13 @@ class WalkRepositoryImplTest {
         assertEquals(listOf(distinctPoint), repository.loadEveryPoint())
     }
 
+    @Test
+    fun observeEveryPointMapsEveryField() = runTest {
+        points.everyResult = listOf(distinctPointEntity.copy(rowId = 7))
+
+        assertEquals(listOf(distinctPoint), repository.observeEveryPoint().first())
+    }
+
     private companion object {
         fun at(second: Long) = Instant.fromEpochSeconds(1_790_000_000 + second)
 

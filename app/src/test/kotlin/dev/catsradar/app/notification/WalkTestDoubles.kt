@@ -100,6 +100,7 @@ internal class OneWalkRepository : WalkRepository {
     override suspend fun lastPoint(walkId: String): TrackPoint? = points.value.lastOrNull()
     override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = points
     override suspend fun loadEveryPoint(): List<TrackPoint> = points.value
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> = points
 
     override suspend fun upsert(walk: Walk): Unit = throw NotImplementedError("unused by these tests")
 
