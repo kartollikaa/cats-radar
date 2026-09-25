@@ -1,13 +1,20 @@
 package dev.catsradar.data.repository
 
 import dev.catsradar.data.db.EncounterEntity
+import dev.catsradar.data.db.EncounterPhotoEntity
+import dev.catsradar.data.db.EncounterWithPhotos
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
+import dev.catsradar.domain.model.oldestFirst
 
 // Must match Encounter's private bound (UtcOffset tops out at +-18:00). A row outside it is
 // clamped, not thrown: Encounter's init would otherwise reject every row read after this one too.
 private const val MAX_TZ_OFFSET_MINUTES = 18 * 60
 
-internal fun EncounterEntity.toDomain(): Encounter =
+internal fun EncounterWithPhotos.toDomain(): Encounter =
+    encounter.toDomain(photos = photos.map { it.toDomain() }.oldestFirst())
+
+internal fun EncounterEntity.toDomain(photos: List<EncounterPhoto> = emptyList()): Encounter =
     Encounter(
         id = id,
         occurredAt = occurredAt,
@@ -15,11 +22,7 @@ internal fun EncounterEntity.toDomain(): Encounter =
         kind = kind,
         origin = origin,
         coat = coat,
-        photoPath = photoPath,
-        thumbPath = thumbPath,
-        galleryUri = galleryUri,
-        sourceMediaUri = sourceMediaUri,
-        sourceDigest = sourceDigest,
+        photos = photos,
         lat = lat,
         lon = lon,
         accuracyMeters = accuracyMeters,
@@ -41,11 +44,6 @@ internal fun Encounter.toEntity(): EncounterEntity =
         kind = kind,
         origin = origin,
         coat = coat,
-        photoPath = photoPath,
-        thumbPath = thumbPath,
-        galleryUri = galleryUri,
-        sourceMediaUri = sourceMediaUri,
-        sourceDigest = sourceDigest,
         lat = lat,
         lon = lon,
         accuracyMeters = accuracyMeters,
@@ -58,3 +56,27 @@ internal fun Encounter.toEntity(): EncounterEntity =
         updatedAt = updatedAt,
         deletedAt = deletedAt,
     )
+
+internal fun EncounterPhotoEntity.toDomain(): EncounterPhoto = EncounterPhoto(
+    id = id,
+    encounterId = encounterId,
+    photoPath = photoPath,
+    thumbPath = thumbPath,
+    galleryUri = galleryUri,
+    sourceMediaUri = sourceMediaUri,
+    sourceDigest = sourceDigest,
+    deviceId = deviceId,
+    addedAt = addedAt,
+)
+
+internal fun EncounterPhoto.toEntity(): EncounterPhotoEntity = EncounterPhotoEntity(
+    id = id,
+    encounterId = encounterId,
+    photoPath = photoPath,
+    thumbPath = thumbPath,
+    galleryUri = galleryUri,
+    sourceMediaUri = sourceMediaUri,
+    sourceDigest = sourceDigest,
+    deviceId = deviceId,
+    addedAt = addedAt,
+)

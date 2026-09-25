@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
+import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
@@ -38,11 +39,6 @@ private fun encounter(id: String, photoPath: String? = null, thumbPath: String? 
     kind = if (photoPath == null) EncounterKind.TALLY else EncounterKind.PHOTO,
     origin = EncounterOrigin.APP,
     coat = CatCoat.GINGER_WHITE,
-    photoPath = photoPath,
-    thumbPath = thumbPath,
-    galleryUri = "content://media/1",
-    sourceMediaUri = "content://media/external/images/media/17",
-    sourceDigest = "abc",
     lat = 41.39864,
     lon = 2.17842,
     accuracyMeters = 7.5f,
@@ -54,7 +50,19 @@ private fun encounter(id: String, photoPath: String? = null, thumbPath: String? 
     createdAt = Instant.parse("2026-09-20T08:31:00Z"),
     updatedAt = Instant.parse("2026-09-21T09:00:00Z"),
     deletedAt = null,
-)
+).let {
+    if (photoPath == null) {
+        it
+    } else {
+        it.withPhoto(
+            photoPath = photoPath,
+            thumbPath = thumbPath,
+            galleryUri = "content://media/1",
+            sourceMediaUri = "content://media/external/images/media/17",
+            sourceDigest = "abc",
+        )
+    }
+}
 
 private fun placeCell(id: String = "sp3e3q") = PlaceCell(
     cellId = id,
@@ -99,7 +107,7 @@ class ZipBackupArchiveTest {
     @Test
     fun everyFieldOfEveryRowSurvivesTheRoundTrip() = runTest {
         val contents = BackupContents(
-            encounters = listOf(encounter("a"), encounter("b")),
+            encounters = listOf(encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg"), encounter("b")),
             placeCells = listOf(placeCell()),
         )
         val path = target()
@@ -136,7 +144,7 @@ class ZipBackupArchiveTest {
     }
 
     @Test
-    fun anArchiveSaysItIsFormatThreeSoAnAppBeforePickedGalleryItemsRefusesIt() = runTest {
+    fun anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt() = runTest {
         val path = target()
 
         assertTrue(writer().write(path, BackupContents()))
@@ -144,7 +152,7 @@ class ZipBackupArchiveTest {
         val manifest = ZipFile(path).use { zip ->
             zip.getInputStream(zip.getEntry(MANIFEST_ENTRY)).readBytes().decodeToString()
         }
-        assertTrue("\"formatVersion\":3" in manifest, manifest)
+        assertTrue("\"formatVersion\":4" in manifest, manifest)
     }
 
     @Test

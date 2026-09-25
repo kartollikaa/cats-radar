@@ -22,6 +22,7 @@ import dev.catsradar.presentation.counter.FakeSettingsRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -170,6 +171,56 @@ class EncounterDetailStoreTest {
         }
 
     @Test
+    fun `back navigates back once, however often it is tapped`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.BackClicked)
+            store.dispatch(EncounterDetailIntent.BackClicked)
+            runCurrent()
+
+            assertEquals(EncounterDetailEffect.NavigateBack, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `back during the undo window navigates back once, and the window closing adds nothing`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.DeleteClicked)
+                runCurrent()
+                store.dispatch(EncounterDetailIntent.BackClicked)
+                runCurrent()
+                assertEquals(EncounterDetailEffect.NavigateBack, awaitItem())
+
+                advanceTimeBy(Tuning.UNDO_VISIBLE * 2)
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `back from a cat nobody has seen still navigates back`() = runTest(mainDispatcher) {
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.BackClicked)
+            runCurrent()
+
+            assertEquals(EncounterDetailState.Missing, store.state.value)
+            assertEquals(EncounterDetailEffect.NavigateBack, awaitItem())
+        }
+    }
+
+    @Test
     fun `undo after the window closed is a no-op and the deletion stands`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         val store = newStore()
@@ -236,7 +287,7 @@ class EncounterDetailStoreTest {
 
     @Test
     fun `a cat that already has a photo opens neither`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(photoPath = "own.jpg"))
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
         val store = newStore()
         runCurrent()
 
@@ -411,7 +462,7 @@ class EncounterDetailStoreTest {
     @Test
     fun `a failed write says the photo was not attached`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
-        repository.attachPhotoShouldThrow = IllegalStateException("disk full")
+        repository.addPhotoShouldThrow = IllegalStateException("disk full")
         val store = newStore()
         runCurrent()
 
@@ -425,7 +476,9 @@ class EncounterDetailStoreTest {
 
     @Test
     fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg"))
+        repository.insert(
+            encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO).withPhoto(photoPath = "cat-1.jpg")
+        )
         val store = newStore()
         runCurrent()
 

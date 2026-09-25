@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.withPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -18,10 +19,6 @@ private val locatedPhoto = encounterAt(OCCURRED, tzOffsetMinutes = 180).copy(
     kind = EncounterKind.PHOTO,
     origin = EncounterOrigin.CAMERA,
     coat = CatCoat.GINGER,
-    photoPath = "2026/09/cat.jpg",
-    thumbPath = "2026/09/cat_thumb.jpg",
-    galleryUri = "content://media/external/images/media/4211",
-    sourceDigest = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     lat = 55.7558,
     lon = 37.6173,
     accuracyMeters = 12f,
@@ -30,6 +27,11 @@ private val locatedPhoto = encounterAt(OCCURRED, tzOffsetMinutes = 180).copy(
     geohash = "ucfv0n01",
     placeCellId = "ucfv0n",
     updatedAt = EDITED,
+).withPhoto(
+    photoPath = "2026/09/cat.jpg",
+    thumbPath = "2026/09/cat_thumb.jpg",
+    galleryUri = "content://media/external/images/media/4211",
+    sourceDigest = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 )
 
 private val unlocatedPhoto = locatedPhoto.copy(

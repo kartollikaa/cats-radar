@@ -1,5 +1,6 @@
 package dev.catsradar.data.backup
 
+import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -21,7 +22,9 @@ internal fun catWithPhotos(photoPath: String?, thumbPath: String? = null): Strin
         """"locationSource":"NONE","deviceId":"d","createdAt":0,"updatedAt":0,${paths.joinToString(",")}}]"""
 }
 
-internal fun File.writeArchive(vararg entries: Pair<String, String>) {
+internal fun File.writeArchive(vararg entries: Pair<String, String>) = writeArchive(entries.asList())
+
+internal fun File.writeArchive(entries: List<Pair<String, String>>) {
     ZipOutputStream(outputStream()).use { zip ->
         entries.forEach { (name, body) ->
             zip.putNextEntry(ZipEntry(name))
@@ -38,10 +41,6 @@ internal fun photoCat(photoPath: String) = Encounter(
     kind = EncounterKind.PHOTO,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = photoPath,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,
@@ -53,4 +52,4 @@ internal fun photoCat(photoPath: String) = Encounter(
     createdAt = Epoch,
     updatedAt = Epoch,
     deletedAt = null,
-)
+).withPhoto(photoPath)

@@ -12,11 +12,8 @@ data class Encounter(
     val kind: EncounterKind,
     val origin: EncounterOrigin,
     val coat: CatCoat?,
-    val photoPath: String?,
-    val thumbPath: String?,
-    val galleryUri: String?,
-    val sourceMediaUri: String? = null,
-    val sourceDigest: String?,
+    /** Oldest first; the first is the cat's [cover]. */
+    val photos: List<EncounterPhoto> = emptyList(),
     val lat: Double?,
     val lon: Double?,
     val accuracyMeters: Float?,
@@ -34,6 +31,8 @@ data class Encounter(
             "tzOffsetMinutes must be in [-$MAX_TZ_OFFSET_MINUTES, $MAX_TZ_OFFSET_MINUTES], was $tzOffsetMinutes"
         }
     }
+
+    val cover: EncounterPhoto? get() = photos.firstOrNull()
 }
 
 enum class EncounterKind { TALLY, PHOTO }

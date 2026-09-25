@@ -11,6 +11,7 @@ import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
+import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.CatCoat
@@ -110,20 +111,34 @@ class BackupRestoreTest {
     }
 
     private suspend fun fillHere(): Map<String, ByteArray> {
-        val photos = mapOf("photo.jpg" to Random(1).nextBytes(4096), "photo_thumb.jpg" to Random(2).nextBytes(512))
+        val photos = mapOf(
+            "photo.jpg" to Random(1).nextBytes(4096),
+            "photo_thumb.jpg" to Random(2).nextBytes(512),
+            "second.jpg" to Random(3).nextBytes(4096),
+            "second_thumb.jpg" to Random(4).nextBytes(512),
+        )
         photos.forEach { (path, bytes) -> photoStorage.prepare(path).writeBytes(bytes) }
         here.encounters.insert(tally("tally", Morning))
-        here.encounters.insert(
-            tally("photo", Morning + 5.minutes).copy(
-                kind = EncounterKind.PHOTO,
-                origin = EncounterOrigin.GALLERY,
-                coat = CatCoat.GINGER_WHITE,
-                photoPath = "photo.jpg",
-                thumbPath = "photo_thumb.jpg",
-                galleryUri = "content://media/external/images/media/42",
-                sourceDigest = "9f86d081884c7d65",
-            ),
+        val photographed = tally("photo", Morning + 5.minutes).copy(
+            kind = EncounterKind.PHOTO,
+            origin = EncounterOrigin.GALLERY,
+            coat = CatCoat.GINGER_WHITE,
+        ).withPhoto(
+            photoPath = "photo.jpg",
+            thumbPath = "photo_thumb.jpg",
+            galleryUri = "content://media/external/images/media/42",
+            sourceDigest = "9f86d081884c7d65",
         )
+        val second = photographed.photos.single().copy(
+            id = "second",
+            photoPath = "second.jpg",
+            thumbPath = "second_thumb.jpg",
+            galleryUri = null,
+            sourceMediaUri = "content://media/external/images/media/43",
+            sourceDigest = "c3ab8ff13720e8ad",
+            addedAt = Morning + 1.hours,
+        )
+        here.encounters.insert(photographed.copy(photos = photographed.photos + second))
         here.encounters.insert(located("located", Morning + 12.minutes, lat = 41.39864, lon = 2.17842))
         here.encounters.insert(tally("deleted", Morning + 20.minutes))
         here.encounters.softDelete("deleted", Morning + 30.minutes)
@@ -210,10 +225,6 @@ private fun tally(id: String, at: Instant) = Encounter(
     kind = EncounterKind.TALLY,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = null,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,

@@ -178,6 +178,9 @@ Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
   transient expansion) — never for anything the Store should know.
 - **`modifier: Modifier = Modifier` is the first optional parameter.**
 - **`contentDescription`** on every meaningful image and icon; `null` on purely decorative ones.
+- **A sheet is a `CatsRadarBottomSheet`**, never one of Material's own (`ModalBottomSheet`,
+  `BottomSheetScaffold`), which stop a tall sheet half open: the app's sheets open all the way
+  (`BottomSheetUsageTest`).
 - **Consistent naming.** `Screen` suffix for entry points; `Loaded`, `Loading`, `Empty` for
   state-specific content.
 

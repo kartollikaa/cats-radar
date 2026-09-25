@@ -5,6 +5,7 @@ import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
@@ -18,10 +19,6 @@ fun encounterAt(occurredAt: Instant, tzOffsetMinutes: Int = 0, deletedAt: Instan
     kind = EncounterKind.TALLY,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = null,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,
@@ -48,6 +45,29 @@ fun locatedFixture(id: String, occurredAt: Instant, lat: Double, lon: Double): E
     return encounterFixture(id, occurredAt, LocationSource.CURRENT_FIX, lat, lon)
         .copy(geohash = geohash, placeCellId = Geohash.prefix(geohash, Tuning.PLACE_CELL_PRECISION))
 }
+
+/** The cat with one photo, which takes the cat's id, install and creation time. */
+fun Encounter.withPhoto(
+    photoPath: String = "$id.jpg",
+    thumbPath: String? = "${id}_thumb.jpg",
+    galleryUri: String? = null,
+    sourceMediaUri: String? = null,
+    sourceDigest: String? = null,
+): Encounter = copy(
+    photos = listOf(
+        EncounterPhoto(
+            id = id,
+            encounterId = id,
+            photoPath = photoPath,
+            thumbPath = thumbPath,
+            galleryUri = galleryUri,
+            sourceMediaUri = sourceMediaUri,
+            sourceDigest = sourceDigest,
+            deviceId = deviceId,
+            addedAt = createdAt,
+        ),
+    ),
+)
 
 fun areaOf(encounter: Encounter, parent: RegionKey.AreaParent): RegionKey.Area =
     RegionKey.Area(Geohash.prefix(encounter.geohash!!, Tuning.AREA_PRECISION), parent)

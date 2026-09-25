@@ -3,8 +3,8 @@ package dev.catsradar.data.repository
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +18,8 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override fun observeById(id: String): Flow<Encounter?> = dao.observeById(id).map { it?.toDomain() }
 
-    override suspend fun insert(encounter: Encounter) = dao.insert(encounter.toEntity())
+    override suspend fun insert(encounter: Encounter) =
+        dao.insertWithPhotos(encounter.toEntity(), encounter.photos.map { it.toEntity() })
 
     override suspend fun update(encounter: Encounter) = dao.update(encounter.toEntity())
 
@@ -34,15 +35,9 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         updatedAt = stamp.updatedAt,
     )
 
-    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean = dao.attachPhoto(
-        id = id,
-        photoPath = stamp.photoPath,
-        thumbPath = stamp.thumbPath,
-        galleryUri = stamp.galleryUri,
-        sourceMediaUri = stamp.sourceMediaUri,
-        sourceDigest = stamp.sourceDigest,
-        updatedAt = stamp.updatedAt,
-    ) > 0
+    override suspend fun addPhoto(photo: EncounterPhoto): Boolean = dao.addPhoto(photo.toEntity(), photo.addedAt)
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>) = dao.addPhotos(photos.map { it.toEntity() })
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         dao.setCoat(id, coat, updatedAt)
