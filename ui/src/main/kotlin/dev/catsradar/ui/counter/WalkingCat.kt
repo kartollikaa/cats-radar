@@ -20,7 +20,7 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
 
-// Must play as ic_cat_walking does in the status bar: the same frames, in order, at the same pace.
+// Must list every frame tools/make-walking-cat.py generates, in order.
 internal val WalkFrames = persistentListOf(
     R.drawable.cat_walk_0,
     R.drawable.cat_walk_1,
