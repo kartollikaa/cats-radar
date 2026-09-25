@@ -16,7 +16,8 @@ A back arrow sits at the top, pinned while the rest scrolls, whether the screen 
 once however often it is tapped, and only if the screen is still on top (`EncounterDetailStoreTest`,
 *back navigates back once, however often it is tapped*; `EncounterDetailEntryTest`). The bar has no
 fill of its own: the list runs edge to edge, under the status bar and under the arrow, which sits in
-a tonal circle so it stays readable over whatever passes beneath it. Only the list's content is
+a tonal circle so it stays readable over whatever passes beneath it, its edge in line with the
+content's (*the back button lines up with the content under it*). Only the list's content is
 inset, so at rest the first line starts below the bar and, scrolled to the end, Delete ends above the
 bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar while its first line
 starts below the bar*; *scrolled to the end, delete clears the bottom bar*). The coat

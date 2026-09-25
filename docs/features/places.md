@@ -111,7 +111,7 @@ like from any level of the drill-down, goes back to Stats itself.
 
 **The back arrow.** A back arrow sits at the top of every level, pinned while the level scrolls
 under it, whether the level is still loading, empty, a list of places or its cats. It works like
-the one on a cat's detail. The arrow takes back only the level it sits on: a second tap arriving
+the one on a cat's detail, and lines up with the cards under it the same way. The arrow takes back only the level it sits on: a second tap arriving
 after that level has gone does nothing, so a quick double tap never skips a level.
 
 **What a level looks like.** Each level opens on a headline card naming it and counting its cats:

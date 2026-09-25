@@ -92,6 +92,17 @@ class EncounterDetailScreenTest {
     }
 
     @Test
+    fun `the back button lines up with the content under it`() {
+        show(loaded)
+
+        val photo = compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
+            .fetchSemanticsNode().boundsInRoot
+        val button = back().fetchSemanticsNode().boundsInRoot
+
+        assertEquals(photo.left, button.left, 1f)
+    }
+
+    @Test
     fun `scrolled to the end, delete clears the bottom bar`() {
         show(loaded)
         val screenBottom = compose.onRoot().fetchSemanticsNode().boundsInRoot.bottom
