@@ -52,6 +52,8 @@ installs.
   Settings or the app does not stop it, and a second tap while it runs starts nothing.
 - **Into the app's cache**, `cacheDir/updates/<version>.apk`. The folder is cleared before every
   download, so there is only ever one package, and a half-written `.part` never survives a failure.
+  At start-up `PruneInstalledUpdates` deletes a kept package that is no longer an update — the one just
+  installed, an older one, or any file that is not a `<version>.apk`.
   No storage permission is involved. Android may clear the cache; that costs a download, nothing more.
 - **Verified before it is kept**: `HttpPackageDownloader` computes the file's SHA-256 while it streams, and
   `DownloadUpdate` requires it to equal the `sha256:` digest GitHub reports for the asset, and the size the
@@ -63,6 +65,15 @@ installs.
 
 ## The install
 
+- **The permission first.** Android lets an app install packages only once the user has allowed it on the
+  system page *Install unknown apps*. Before every install Settings asks `canRequestPackageInstalls()`;
+  when the answer is no it opens that page for Cats Radar alone
+  (`Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES`, `package:<id>`) and says *Allow Cats Radar to install
+  apps*. Coming back with the permission installs without another tap; coming back without it keeps the
+  line and an *Open settings* button. Granting the permission does not end the app's process.
+- **The package is checked before Android is asked** (`getPackageArchiveInfo`): it must be this
+  application id with a higher `versionCode` than the installed one, and readable as a package at all.
+  Anything else is refused with its own message and never reaches a session.
 - **A `PackageInstaller` session** (`MODE_FULL_INSTALL`, limited to this app's own package name) streams
   the file in and is committed with an explicit, mutable `PendingIntent` to `UpdateInstallReceiver`, which
   is not exported. The file never leaves the app through a content URI.
@@ -72,9 +83,19 @@ installs.
 - **On success** Android replaces the app and ends its process, so nothing reports success; the next
   launch is the new version. Everything the app keeps stays — the application id and the signing key are
   the same, so the database, the photos and the settings are the old ones.
-- **A cancelled confirmation** (`STATUS_FAILURE_ABORTED`) goes back to offering *Install*; any other
-  failure says the version was not installed and offers *Check for updates*, which downloads the package
-  afresh — the same file could fail the same way forever (the cache cleared under it, a key that differs).
+- **A cancelled confirmation** (`STATUS_FAILURE_ABORTED`) goes back to offering *Install*. Every other
+  ending says why and offers *Check for updates*, which downloads the package afresh — the same file
+  could fail the same way forever:
+
+  | Android's status or the app's own check | Says |
+  |---|---|
+  | `STATUS_FAILURE_CONFLICT` | signed with another key; a debug build can't update to a release one |
+  | `STATUS_FAILURE_INCOMPATIBLE` | not built for this phone's processor |
+  | `STATUS_FAILURE_STORAGE` | not enough free space |
+  | the file is gone (the cache was cleared) | check again to download it |
+  | another application id | the downloaded file isn't Cats Radar |
+  | a `versionCode` not above the installed one | the downloaded version isn't newer |
+  | anything else (`BLOCKED`, `INVALID`, a refused session) | the version wasn't installed |
 - `REQUEST_INSTALL_PACKAGES` is declared; without it Android refuses the session outright.
 - A debug build is signed with another key than a release, so it cannot update to one: Android refuses
   the session.
@@ -102,8 +123,9 @@ installed) is ignored.
 | download starting (waiting for a network or the first bytes) | "Downloading 1.5.0-beta", a moving bar | unavailable |
 | downloading | "Downloading 1.5.0-beta · 45 %", a progress bar | unavailable |
 | downloaded, not installed | "1.5.0-beta is downloaded and ready to install" | Install 1.5.0-beta |
+| waiting for the permission | "Allow Cats Radar to install apps to install 1.5.0-beta" | Open settings |
 | installing | "Installing 1.5.0-beta. Confirm it in the window Android shows" | unavailable |
-| install failed | "1.5.0-beta wasn't installed" | Check for updates |
+| install failed | the reason, from the table above | Check for updates |
 | download failed or damaged | the download didn't finish or arrived damaged | Check for updates |
 | no connection | couldn't reach GitHub, check the connection | Check for updates |
 | `404`, `403`, `429` or any other refusal | GitHub didn't share the releases, try later | Check for updates |
@@ -118,9 +140,12 @@ The check runs only on the tap: nothing checks in the background and nothing not
   `CheckForUpdate` and `DownloadUpdate`.
 - `:data` — `parseGitHubReleases` (`commonMain`, kotlinx-serialization); `GitHubReleaseFeed` and
   `HttpPackageDownloader` (`androidMain`, `HttpURLConnection`). Their tests run against a local HTTP server.
-- `:presentation` — `UpdateStateMapper` builds the status and the button; `SettingsStore` runs the check,
-  follows the download and decides whether to install at once.
+- `:presentation` — `UpdateStateMapper` builds the status and the button; `SettingsUpdates`, one per
+  Settings screen, runs the check, follows the download, asks for the permission and decides whether to
+  install at once; `SettingsStore` hands it the update intents.
 - `:ui` — the Updates section in `SettingsScreen`, which resolves the tokens to words.
 - `:app` — `DownloadUpdateWorker`, `WorkManagerUpdateDownloadScheduler` and `toUpdateIntent`;
-  `PackageInstallerUpdater`, `UpdateInstallReceiver` and `InstallResults`, which carries the session's
-  ending from the receiver to the screen.
+  `PackageInstallerUpdater` (with `readPackageArchive`), `UpdateInstallReceiver` and `InstallResults`,
+  which carries the session's ending from the receiver to the screen; `installPermissionPage`.
+- `:domain`/`:data` also hold the `InstallPermission` port and `AndroidInstallPermission`, and
+  `PruneInstalledUpdates`, run among the start-up repairs.
