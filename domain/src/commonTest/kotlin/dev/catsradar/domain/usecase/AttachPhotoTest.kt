@@ -70,7 +70,7 @@ class AttachPhotoTest {
     fun `a cat without a photo gets the copy, thumbnail and digest, and keeps everything else`() = runTest {
         encounters.insert(tally)
 
-        assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+        assertEquals(AttachResult.Attached("id-1"), attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
 
         assertEquals(
             tally.copy(
@@ -149,7 +149,7 @@ class AttachPhotoTest {
         val photographed = tally.withPhoto(photoPath = "own.jpg", thumbPath = "own_thumb.jpg", sourceDigest = "own")
         encounters.insert(photographed)
 
-        assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+        assertEquals(AttachResult.Attached("id-1"), attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
 
         val added = EncounterPhoto(
             id = "id-1",
@@ -182,7 +182,7 @@ class AttachPhotoTest {
         digest.result = null
         encounters.insert(tally.withPhoto(photoPath = "own.jpg", sourceDigest = null))
 
-        assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+        assertEquals(AttachResult.Attached("id-1"), attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
 
         assertEquals(2, stored().photos.size)
     }
@@ -241,8 +241,8 @@ class AttachPhotoTest {
         encounters.insert(tally)
         encounters.insert(tally.copy(id = "cat-2"))
 
-        assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
-        assertEquals(AttachResult.Attached, attachPhoto("cat-2", SOURCE, PhotoSource.GALLERY))
+        assertEquals(AttachResult.Attached("id-1"), attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+        assertEquals(AttachResult.Attached("id-2"), attachPhoto("cat-2", SOURCE, PhotoSource.GALLERY))
         assertTrue(storage.deleted.isEmpty())
         assertEquals(listOf("id-1", "id-2"), resizer.baseNames)
         assertEquals(FakeDigest.SHA, storedPhoto().sourceDigest)

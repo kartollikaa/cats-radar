@@ -17,6 +17,20 @@ pixels rather than the screen, since past those the copy has no more detail to s
 are Telephoto's `ZoomableAsyncImage` over the app's Coil; it
 carries no native code, so the 16 KB page-size check has nothing new to look at.
 
+## Several photos
+
+The viewer holds every photo of the cat, oldest first, side by side: a swipe sideways moves to the
+next or the previous one (`PhotoViewerScreenTest`, *a swipe moves to the next photo, and the gallery
+button follows the photo on screen*), and pinch, double-tap and pan act on the photo on screen —
+Telephoto hands a sideways drag to the pager once a zoomed photo cannot pan further that way. It opens on the photo it was
+opened for, and on the cat's cover when it was opened for none or for one the cat no longer has
+(`PhotoViewerStateMapperTest`, *the viewer opens on the photo it was opened for*; *opened for no photo,
+or for one the cat does not have, the viewer opens on the cover*). While the cat has more than one, a
+position — "2 / 3" — sits at the bottom and hides with the rest of the chrome; a cat with one shows none
+(*a cat with one photo shows no position*). Which photo is on screen is the pager's own state, kept
+when the screen is recreated (`PhotoViewerScreenTest`, *the photo on screen survives the screen being
+recreated*). The time and day in the bar are the cat's, the same on every page.
+
 ## Chrome
 
 A bar sits at the top over a dark scrim: the back arrow at the start, the gallery button at the end
@@ -35,7 +49,7 @@ the Store knows nothing of it.
 
 ## Where it sits
 
-`PhotoViewer(encounterId)` is a Navigation 3 key drawn by Navigation 3's `DialogSceneStrategy` in a
+`PhotoViewer(encounterId, photoId)` is a Navigation 3 key drawn by Navigation 3's `DialogSceneStrategy` in a
 dialog window of its own, edge to edge, so it covers the bottom bar without the shell learning which
 screens hide it (`PhotoViewerNavigationTest`, *the viewer opens in a window of its own over the
 cat*). The detail screen stays drawn underneath.
@@ -55,12 +69,17 @@ cat*). The detail screen stays drawn underneath.
   `PhotoViewerEntryTest`, *the nav host's own viewer entry closes by itself for a cat with no
   photo*).
 
-The key holds only the cat's id, so after the process is killed the restored viewer loads the cat
-again and shows the same photo.
+The key holds only the cat's id and the photo it was opened for, so after the process is killed the
+restored viewer loads the cat again. A key saved before cats had several photos carries no photo and
+opens on the cover (`PhotoViewerSavedStateTest`, *a viewer key saved before
+photo ids comes back opening on the cover*).
 
 ## Open in gallery
 
-**When it is offered.** A cat whose camera original the app saved to `Pictures/Cats Radar` (see
+**When it is offered.** The button belongs to the photo on screen and changes as the user swipes: it
+shows for a photo that has a link here and opens that photo's item, never the cover's
+(`PhotoViewerStoreTest`, *the gallery opens the original of the photo on screen, not the cover's*). A
+photo whose camera original the app saved to `Pictures/Cats Radar` (see
 [photos.md](./photos.md#the-gallery-setting)) shows a gallery button at the other end of the top bar.
 So does a cat whose photo was imported, or chosen from the gallery for it, when the pick named an item
 in this phone's gallery (see [import.md](./import.md#the-gallery-item-it-came-from)) — the item the

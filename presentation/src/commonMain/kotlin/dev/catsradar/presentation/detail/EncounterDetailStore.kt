@@ -39,6 +39,9 @@ class EncounterDetailStore(
     private var deletedHere = false
     private var undoTimeoutJob: Job? = null
     private var attachingPhoto = false
+
+    // Attached but not emitted yet: until it arrives the section keeps showing the attempt, not a bare offer.
+    private var arrivingPhotoId: String? = null
     private var awaitingPhoto = false
     private var leaving = false
 
@@ -46,6 +49,8 @@ class EncounterDetailStore(
         observeEncounter(encounterId)
             .onEach { encounter ->
                 lastSeen = encounter
+                val arriving = arrivingPhotoId
+                if (encounter == null || encounter.photos.any { it.id == arriving }) arrivingPhotoId = null
                 setState { reduce(encounter) }
             }
             .launchIn(viewModelScope)
@@ -53,7 +58,11 @@ class EncounterDetailStore(
 
     // A null emission after our own delete is the delete taking effect, not the encounter vanishing.
     private fun EncounterDetailState.reduce(encounter: Encounter?): EncounterDetailState = when {
-        encounter != null -> stateMapper.map(encounter, clock.today(timeZone), attachingPhoto)
+        encounter != null -> stateMapper.map(
+            encounter,
+            clock.today(timeZone),
+            attachingPhoto || arrivingPhotoId != null
+        )
         deletedHere -> this
         else -> EncounterDetailState.Missing
     }
@@ -67,9 +76,9 @@ class EncounterDetailStore(
             is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(encounterId, intent.coat?.toCatCoat()) }
             EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
             EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
-            EncounterDetailIntent.PhotoClicked ->
-                if ((state.value as? EncounterDetailState.Loaded)?.photoPath != null) {
-                    emit(EncounterDetailEffect.OpenPhoto)
+            is EncounterDetailIntent.PhotoClicked ->
+                if ((state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId }) {
+                    emit(EncounterDetailEffect.OpenPhoto(intent.photoId))
                 }
             EncounterDetailIntent.CoordinatesClicked ->
                 if ((state.value as? EncounterDetailState.Loaded)?.onTheMap == true) {
@@ -95,10 +104,17 @@ class EncounterDetailStore(
         var result: AttachResult? = null
         runStorageWrite { result = attachPhoto(encounterId, uri, source) }
         attachingPhoto = false
-        when (result) {
-            // Rendering from lastSeen here would offer a photo again until the flow delivers this one.
-            AttachResult.Attached -> Unit
-            AttachResult.AlreadyThere, AttachResult.NotAttachable -> refresh()
+        when (val outcome = result) {
+            is AttachResult.Attached -> {
+                val arrived = lastSeen?.photos.orEmpty().any { it.id == outcome.photoId }
+                if (!arrived) arrivingPhotoId = outcome.photoId
+                refresh()
+            }
+            AttachResult.AlreadyThere -> {
+                refresh()
+                emit(EncounterDetailEffect.PhotoAlreadyThere)
+            }
+            AttachResult.NotAttachable -> refresh()
             AttachResult.Unreadable, null -> {
                 refresh()
                 emit(EncounterDetailEffect.PhotoNotAttached)
