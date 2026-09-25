@@ -65,6 +65,9 @@ bottom-up, each retargeted to `main` after the one below merges.
 
 ## Decision log
 
+- 2026-09-25: the owner made `kartollikaa/cats-radar` public, so the committed update source now answers.
+  Reading the live list showed v1.4.0-beta carrying a `-debug.apk` before its release APK; the feed now
+  skips debug builds (U2).
 - 2026-09-25: map created. U3 is the largest slice because download without install would leave a
   user-visible dead end ("downloaded", nothing to do); splitting it by layer instead would ship dormant code
   reviewed without its caller.

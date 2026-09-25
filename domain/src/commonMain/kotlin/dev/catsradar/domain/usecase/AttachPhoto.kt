@@ -23,7 +23,7 @@ import kotlin.time.Clock
 enum class PhotoSource { CAMERA, GALLERY }
 
 sealed interface AttachResult {
-    data object Attached : AttachResult
+    data class Attached(val photoId: String) : AttachResult
 
     /** The image could not be decoded; the cat is unchanged. */
     data object Unreadable : AttachResult
@@ -97,7 +97,7 @@ class AttachPhoto(
             if (!attached) withContext(NonCancellable) { discard(stored) }
         }
         if (attached) analytics.log(AnalyticsEvent.PhotoAttached(source))
-        return if (attached) AttachResult.Attached else AttachResult.NotAttachable
+        return if (attached) AttachResult.Attached(photoId) else AttachResult.NotAttachable
     }
 
     private suspend fun discard(stored: StoredPhoto) {
