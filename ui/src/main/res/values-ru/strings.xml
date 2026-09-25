@@ -125,7 +125,19 @@
     <string name="statistics_rate_per_km">%1$s / км</string>
     <string name="statistics_places">Места</string>
 
+    <string name="regions_title">Места</string>
+    <string name="regions_back">Назад</string>
+    <string name="regions_section_countries">Страны</string>
+    <string name="regions_section_cities">Города</string>
+    <string name="regions_section_areas">Районы</string>
+    <plurals name="regions_cat_count">
+        <item quantity="one">%d котик</item>
+        <item quantity="few">%d котика</item>
+        <item quantity="many">%d котиков</item>
+        <item quantity="other">%d котика</item>
+    </plurals>
     <string name="regions_no_places_yet">Мест пока нет</string>
+    <string name="regions_no_places_yet_hint">Котики с местом соберутся здесь по странам и городам</string>
     <string name="regions_no_places_here">Здесь нет мест</string>
     <string name="regions_no_cats_here">Здесь нет котиков</string>
     <string name="regions_unresolved">Пока без названия</string>

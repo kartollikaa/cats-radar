@@ -1,21 +1,35 @@
 package dev.catsradar.presentation.regions
 
-import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncountersRow
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 
 sealed interface RegionsState {
     data object Loading : RegionsState
 
-    data class Empty(val label: RegionsEmptyLabel) : RegionsState
+    data class Empty(val label: RegionsEmptyLabel, val hint: RegionsEmptyHint? = null) : RegionsState
 
-    data class Loaded(
-        val rows: ImmutableList<RegionRowState> = persistentListOf(),
-        val encounters: ImmutableList<EncounterListItem> = persistentListOf(),
+    /** [header] is null only when the level above no longer lists this level. */
+    data class Places(
+        val header: RegionsHeader?,
+        val section: RegionsSection,
+        val rows: ImmutableList<RegionRowState>,
     ) : RegionsState
+
+    data class Cats(val header: RegionsHeader?, val rows: ImmutableList<EncountersRow>) : RegionsState
 }
 
 enum class RegionsEmptyLabel { NO_PLACES_YET, NO_PLACES_HERE, NO_CATS_HERE }
+
+enum class RegionsEmptyHint { HOW_PLACES_APPEAR }
+
+data class RegionsHeader(val title: RegionsTitle, val count: Int)
+
+sealed interface RegionsTitle {
+    data object AllPlaces : RegionsTitle
+    data class Of(val label: RegionRowLabel) : RegionsTitle
+}
+
+enum class RegionsSection { COUNTRIES, CITIES, AREAS }
 
 /**
  * [key] is the identity the screen hands back when the row is tapped; the callback stays a
@@ -25,6 +39,10 @@ data class RegionRowState(
     val key: RegionRowKey,
     val label: RegionRowLabel,
     val countLabel: String,
+    /** This row's part of the level's cats, from 0 to 1. */
+    val share: Float,
+    /** Not named yet, No city and No location: rows that stand for the lack of a place. */
+    val pseudo: Boolean,
 )
 
 /** A row's name, or the pieces the platform needs to build one. */

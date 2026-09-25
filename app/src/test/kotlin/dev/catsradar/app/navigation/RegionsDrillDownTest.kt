@@ -1,20 +1,27 @@
 package dev.catsradar.app.navigation
 
 import android.content.Context
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
-import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncounterCell
+import dev.catsradar.presentation.encounters.EncountersRow
+import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
 import dev.catsradar.presentation.regions.RegionRowState
+import dev.catsradar.presentation.regions.RegionsHeader
+import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
+import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -24,9 +31,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
+// A phone-sized screen, so every row below the back arrow's bar is on it and takes a tap.
 @RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "w411dp-h891dp")
 class RegionsDrillDownTest {
 
     private val compose = createComposeRule()
@@ -38,45 +48,43 @@ class RegionsDrillDownTest {
     fun `every row kind hands back its own key when tapped, an area's too`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val rowsWithShownText = listOf(
-            RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "12") to "Spain",
-            RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "9") to "Barcelona",
-            RegionRowState(
-                RegionRowKey.Area("sp3e3", RegionRowKey.City("ES", "Barcelona")),
-                RegionRowLabel.Named("Gràcia"),
-                "5",
-            ) to "Gràcia",
-            RegionRowState(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "3") to
+            row(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "12") to "Spain",
+            row(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "9") to "Barcelona",
+            row(RegionRowKey.Area("sp3e3", barcelona), RegionRowLabel.Named("Gràcia"), "5") to "Gràcia",
+            row(RegionRowKey.Unresolved, RegionRowLabel.Unresolved, "3") to
                 context.getString(R.string.regions_unresolved),
-            RegionRowState(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2") to
+            row(RegionRowKey.NoCity("ES"), RegionRowLabel.NoCity, "2") to
                 context.getString(R.string.regions_no_city),
-            RegionRowState(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1") to
+            row(RegionRowKey.NoLocation, RegionRowLabel.NoLocation, "1") to
                 context.getString(R.string.regions_no_location),
         )
         val rows = rowsWithShownText.map { (row, _) -> row }.toPersistentList()
         val tapped = mutableListOf<RegionRowKey>()
+        val level = RegionsState.Places(header = null, section = RegionsSection.AREAS, rows = rows)
         compose.setContent {
-            CatsRadarTheme { RegionsScreen(state = RegionsState.Loaded(rows = rows), onRegionClick = { tapped += it }) }
+            CatsRadarTheme { RegionsScreen(state = level, onRegionClick = { tapped += it }) }
         }
 
-        rowsWithShownText.forEach { (_, text) -> compose.onNodeWithText(text).performClick() }
+        rowsWithShownText.forEach { (row, text) ->
+            compose.onNodeWithText(text).assertHasClickAction().assertTextContains(row.countLabel).performClick()
+        }
 
         assertEquals(rows.map { it.key }, tapped)
     }
 
     @Test
     fun `every cat hands back its own id when tapped, and an outing header hands back nothing`() {
-        val encounters = persistentListOf(
+        val cats = persistentListOf(
             OutingHeader(key = "header-evening", label = "Today, 18:40"),
-            EncounterListItem.Row(id = "c3", timeLabel = "19:18", location = LocationLabel.FROM_PHOTO),
-            EncounterListItem.Row(id = "c2", timeLabel = "18:57", location = LocationLabel.CURRENT),
+            EncountersRow.Single(EncounterCell("c3", "19:18", LocationLabel.FROM_PHOTO), GroupPosition.FIRST),
+            EncountersRow.Single(EncounterCell("c2", "18:57", LocationLabel.CURRENT), GroupPosition.LAST),
             OutingHeader(key = "header-morning", label = "Yesterday, 08:15"),
-            EncounterListItem.Row(id = "c1", timeLabel = "08:22", location = LocationLabel.FROM_OUTING),
+            EncountersRow.Single(EncounterCell("c1", "08:22", LocationLabel.FROM_OUTING), GroupPosition.ONLY),
         )
         val tapped = mutableListOf<String>()
+        val area = RegionsState.Cats(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Gràcia")), 3), cats)
         compose.setContent {
-            CatsRadarTheme {
-                RegionsScreen(state = RegionsState.Loaded(encounters = encounters), onEncounterClick = { tapped += it })
-            }
+            CatsRadarTheme { RegionsScreen(state = area, onEncounterClick = { tapped += it }) }
         }
 
         listOf("08:22", "Today, 18:40", "19:18", "Yesterday, 08:15", "18:57").forEach { text ->
@@ -88,4 +96,9 @@ class RegionsDrillDownTest {
             compose.onNodeWithText(header).assertHasNoClickAction()
         }
     }
+
+    private val barcelona = RegionRowKey.City("ES", "Barcelona")
+
+    private fun row(key: RegionRowKey, label: RegionRowLabel, count: String) =
+        RegionRowState(key, label, countLabel = count, share = 0.5f, pseudo = false)
 }

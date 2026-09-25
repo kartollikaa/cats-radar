@@ -1,18 +1,26 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.region.RegionKey
+import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
 import dev.catsradar.domain.testing.areaOf
 import dev.catsradar.domain.testing.encounterFixture
 import dev.catsradar.domain.testing.locatedFixture
 import dev.catsradar.domain.testing.placeCellFixture
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 import kotlin.time.Instant
 
 class ObserveRegionTest {
@@ -84,14 +92,49 @@ class ObserveRegionTest {
     fun `an area opens its cats and no more rows`() = runTest {
         val view = view(areaOf(barcelona, RegionKey.City("ES", "Barcelona")))
 
-        assertEquals(RegionView.Cats(listOf(barcelona)), view)
+        assertEquals(listOf(barcelona), assertIs<RegionView.Cats>(view).encounters)
     }
 
     @Test
     fun `No location opens its cats and no more rows`() = runTest {
         val view = view(RegionKey.NoLocation)
 
-        assertEquals(RegionView.Cats(listOf(nowhere)), view)
+        assertEquals(listOf(nowhere), assertIs<RegionView.Cats>(view).encounters)
+    }
+
+    @Test
+    fun `the top level has no node of its own`() = runTest {
+        assertEquals(null, view(parent = null).self)
+    }
+
+    @Test
+    fun `every level below the top carries its node exactly as the level above lists it`() = runTest {
+        val spain = RegionKey.Country("ES")
+        val barcelonaCity = RegionKey.City("ES", "Barcelona")
+        val levels = listOf(
+            null to spain,
+            null to RegionKey.Unresolved,
+            null to RegionKey.NoLocation,
+            spain to barcelonaCity,
+            spain to RegionKey.NoCity("ES"),
+            barcelonaCity to areaOf(barcelona, barcelonaCity),
+            RegionKey.Unresolved to areaOf(pending, RegionKey.Unresolved),
+        )
+
+        levels.forEach { (above, level) ->
+            val listed = assertIs<RegionView.Places>(view(above)).children.single { it.key == level }
+            assertEquals(listed, view(level).self, "$level")
+        }
+    }
+
+    @Test
+    fun `the tree is worked out on the injected dispatcher, not the collector's`() = runTest {
+        val compute = StandardTestDispatcher(testScheduler, name = "compute")
+        val witness = WitnessEncounterRepository(FakeEncounterRepository().apply { insert(barcelona) })
+
+        ObserveRegion(witness, FakePlaceCellRepository(listOf(placeCellFixture(barcelona))), compute)(null).first()
+
+        assertSame(compute, witness.collectedOn)
     }
 
     private fun RegionView.placeKeys() = assertIs<RegionView.Places>(this).children.map { it.key }
@@ -99,4 +142,14 @@ class ObserveRegionTest {
     private companion object {
         val BASE = Instant.parse("2026-09-22T08:00:00Z")
     }
+}
+
+/** Delegates to [delegate], noting the dispatcher its encounters were collected on. */
+private class WitnessEncounterRepository(private val delegate: EncounterRepository) : EncounterRepository by delegate {
+
+    var collectedOn: ContinuationInterceptor? = null
+        private set
+
+    override fun observeAll(): Flow<List<Encounter>> =
+        delegate.observeAll().onStart { collectedOn = currentCoroutineContext()[ContinuationInterceptor] }
 }
