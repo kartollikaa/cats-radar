@@ -15,7 +15,6 @@ sealed interface RegionsState {
         val rows: ImmutableList<RegionRowState>,
     ) : RegionsState
 
-    /** The bottom of the tree: the level's cats, laid out as the Encounters list. */
     data class Cats(val header: RegionsHeader?, val rows: ImmutableList<EncountersRow>) : RegionsState
 }
 

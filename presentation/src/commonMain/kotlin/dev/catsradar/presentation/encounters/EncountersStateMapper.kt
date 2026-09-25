@@ -39,7 +39,7 @@ class EncountersStateMapper(
         layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
     ).withSelection(selectedIds)
 
-    /** The label the list heads [outing]'s run of cards with. */
+    /** The header label the list gives [outing]. */
     fun outingLabel(outing: List<Encounter>, today: LocalDate): String =
         outingsNewestFirst(outing).first().header(today).label
 

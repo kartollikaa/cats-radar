@@ -6,17 +6,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.encounters.EncounterCell
+import dev.catsradar.presentation.encounters.EncountersRow
+import dev.catsradar.presentation.encounters.GroupPosition
+import dev.catsradar.presentation.encounters.LocationLabel
+import dev.catsradar.presentation.encounters.OutingHeader
+import dev.catsradar.presentation.regions.RegionRowKey
+import dev.catsradar.presentation.regions.RegionRowLabel
+import dev.catsradar.presentation.regions.RegionRowState
 import dev.catsradar.presentation.regions.RegionsEmptyLabel
+import dev.catsradar.presentation.regions.RegionsHeader
+import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
+import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -40,7 +55,7 @@ class RegionsScreenTest {
         val words = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
         words.assertCountEquals(0)
 
-        state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
+        state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE)
 
         words.assertCountEquals(1)
     }
@@ -60,6 +75,77 @@ class RegionsScreenTest {
             compose.onNodeWithText(context.getString(text)).assertExists()
         }
     }
+
+    @Test
+    fun `a level of places names itself, counts its cats and titles its rows`() {
+        show(
+            RegionsState.Places(
+                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 128),
+                section = RegionsSection.CITIES,
+                rows = persistentListOf(
+                    RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "128", 1f, false),
+                ),
+            ),
+        )
+
+        compose.onNodeWithText("Spain").assert(isHeading)
+        val count = context.resources.getQuantityString(R.plurals.regions_cat_count, 128, 128)
+        compose.onNodeWithText(count).assertExists()
+        compose.onNodeWithText(context.getString(R.string.regions_section_cities)).assert(isHeading)
+    }
+
+    @Test
+    fun `the top level is called Places`() {
+        show(RegionsState.Places(RegionsHeader(RegionsTitle.AllPlaces, 3), RegionsSection.COUNTRIES, oneCountry))
+
+        compose.onNodeWithText(context.getString(R.string.regions_title)).assert(isHeading)
+    }
+
+    @Test
+    fun `an area's cats are drawn with their times under the area's headline`() {
+        show(RegionsState.Cats(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Gràcia")), 2), twoCats))
+
+        compose.onNodeWithText("Gràcia").assert(isHeading)
+        listOf("19:18", "18:57").forEach { compose.onNodeWithText(it).assertHasClickAction() }
+    }
+
+    @Test
+    fun `an outing header's On the map hands back the outing`() {
+        val asked = mutableListOf<String>()
+        state = RegionsState.Cats(header = null, rows = twoCats)
+        compose.setContent {
+            CatsRadarTheme { RegionsScreen(state = state, onOutingMapClick = { asked += it }) }
+        }
+
+        compose.onNodeWithText(context.getString(R.string.encounters_outing_on_map)).performClick()
+
+        assertEquals(listOf("c3"), asked)
+    }
+
+    @Test
+    fun `the first empty level says how places appear, and no other empty level does`() {
+        val hint = context.getString(R.string.regions_no_places_yet_hint)
+        show(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET))
+        compose.onNodeWithText(context.getString(R.string.regions_no_places_yet)).assertExists()
+        compose.onNodeWithText(hint).assertExists()
+
+        listOf(RegionsEmptyLabel.NO_PLACES_HERE, RegionsEmptyLabel.NO_CATS_HERE).forEach { label ->
+            state = RegionsState.Empty(label)
+            compose.onNodeWithText(hint).assertDoesNotExist()
+        }
+    }
+
+    private val isHeading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
+
+    private val oneCountry = persistentListOf(
+        RegionRowState(RegionRowKey.Country("ES"), RegionRowLabel.Named("Spain"), "3", 1f, pseudo = false),
+    )
+
+    private val twoCats = persistentListOf(
+        OutingHeader(key = "header-c2", label = "Today, 18:57", mapOutingId = "c3"),
+        EncountersRow.Single(EncounterCell("c3", "19:18", LocationLabel.FROM_PHOTO), GroupPosition.FIRST),
+        EncountersRow.Single(EncounterCell("c2", "18:57", LocationLabel.CURRENT), GroupPosition.LAST),
+    )
 
     private fun show(initial: RegionsState) {
         state = initial

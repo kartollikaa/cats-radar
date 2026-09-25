@@ -53,6 +53,8 @@ import kotlinx.collections.immutable.toPersistentList
 private val RowInset = 16.dp
 private val CardTextInset = 12.dp
 
+private const val LEADING_ITEM_KEY = "leading"
+
 /** Where a list row's text starts, for a heading above [EncounterRows] that lines up with it. */
 internal val EncounterListTextInset = RowInset + CardTextInset
 
@@ -122,7 +124,7 @@ fun EncountersScreen(
     }
 }
 
-/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout]. */
+/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any. */
 @Composable
 internal fun EncounterRows(
     rows: ImmutableList<EncountersRow>,
@@ -134,6 +136,7 @@ internal fun EncounterRows(
     onEncounterClick: (String) -> Unit = {},
     onEncounterLongClick: (String) -> Unit = {},
     onOutingMapClick: (String) -> Unit = {},
+    leadingItem: (@Composable () -> Unit)? = null,
 ) {
     val list = layout == EncountersLayout.LIST
     LazyColumn(
@@ -142,6 +145,7 @@ internal fun EncounterRows(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(if (list) ListRowGap else CellGap),
     ) {
+        leadingItem?.let { item(key = LEADING_ITEM_KEY, contentType = LEADING_ITEM_KEY) { it() } }
         items(items = rows, key = { it.key }, contentType = { it::class }) { row ->
             val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
             when (row) {
