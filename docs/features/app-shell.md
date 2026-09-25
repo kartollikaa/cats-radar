@@ -221,7 +221,6 @@ because building it reaches Play Services, which only a real location call shoul
 
 ## Not handled yet
 
-The theme is the foundation of a design pass that is not finished: coats are drawn as cat faces
-(`coat.md`) and the Counter's count springs and rolls (`counting-cats.md`), but the rhythm of the
-list, detail and statistics screens is still to come. Until then, those screens wear the new colours on
-their old layouts. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
+The two sheets a screen opens itself — the coat choice over the map and the coat question after a
+photo — are not back-stack destinations yet, so *Sheets are destinations* above does not hold for
+them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
