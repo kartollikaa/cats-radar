@@ -348,7 +348,7 @@ class SettingsStoreTest {
         val answer = CompletableDeferred<ReleaseFeed>()
         val store = settingsStore(updateSource = UpdateSource { answer.await() })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
         assertEquals(UpdateState(UpdateStatus.Checking), store.state.value.update)
@@ -360,7 +360,7 @@ class SettingsStoreTest {
         val newer = PublishedRelease("v1.5.0-beta", ReleasePackage("https://x/a.apk", 1, null))
         val store = settingsStore(updateSource = UpdateSource { ReleaseFeed.Listed(listOf(newer)) })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
         assertEquals(UpdateState(UpdateStatus.Available("1.5.0-beta")), store.state.value.update)
@@ -371,7 +371,7 @@ class SettingsStoreTest {
         val same = PublishedRelease("v1.4.1-beta", ReleasePackage("https://x/a.apk", 1, null))
         val store = settingsStore(updateSource = UpdateSource { ReleaseFeed.Listed(listOf(same)) })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
         assertEquals(UpdateState(UpdateStatus.UpToDate), store.state.value.update)
@@ -381,7 +381,7 @@ class SettingsStoreTest {
     fun `a failed check says why and offers another`() = runTest(mainDispatcher) {
         val store = settingsStore(updateSource = UpdateSource { ReleaseFeed.Failed(FeedFailure.OFFLINE) })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
         assertEquals(UpdateState(UpdateStatus.Failed(UpdateFailure.OFFLINE)), store.state.value.update)
@@ -398,8 +398,8 @@ class SettingsStoreTest {
         }
         val store = settingsStore(updateSource = counting)
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
         answer.complete(ReleaseFeed.Listed(emptyList()))
         runCurrent()

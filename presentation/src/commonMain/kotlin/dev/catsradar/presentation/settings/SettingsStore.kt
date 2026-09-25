@@ -45,7 +45,7 @@ class SettingsStore(
             // Read again rather than kept: the locale or the zone may have changed since the screen opened.
             SettingsIntent.BuildInfoCopyClicked ->
                 emit(SettingsEffect.CopyBuildInfo(aboutStateMapper.report(buildInfoReader.read())))
-            SettingsIntent.UpdateCheckClicked -> checkForUpdates()
+            SettingsIntent.Update.CheckClicked -> checkForUpdates()
         }
     }
 
