@@ -7,6 +7,7 @@ data class PhotoStamp(
     val photoPath: String,
     val thumbPath: String?,
     val galleryUri: String?,
+    val sourceMediaUri: String?,
     val sourceDigest: String?,
     val updatedAt: Instant,
 )

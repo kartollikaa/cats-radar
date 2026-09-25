@@ -58,6 +58,7 @@ class SetCoatTest {
             photoPath = "p.jpg",
             thumbPath = "p_thumb.jpg",
             galleryUri = null,
+            sourceMediaUri = null,
             sourceDigest = "sha",
             updatedAt = NOW - 1.minutes,
         )

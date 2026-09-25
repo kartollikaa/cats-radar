@@ -26,6 +26,7 @@ internal data class AttachPhotoCall(
     val photoPath: String,
     val thumbPath: String?,
     val galleryUri: String?,
+    val sourceMediaUri: String?,
     val sourceDigest: String?,
     val updatedAt: Instant,
 )
@@ -105,10 +106,11 @@ internal class FakeEncounterDao : EncounterDao {
         photoPath: String,
         thumbPath: String?,
         galleryUri: String?,
+        sourceMediaUri: String?,
         sourceDigest: String?,
         updatedAt: Instant,
     ): Int {
-        attachPhotoCall = AttachPhotoCall(id, photoPath, thumbPath, galleryUri, sourceDigest, updatedAt)
+        attachPhotoCall = AttachPhotoCall(id, photoPath, thumbPath, galleryUri, sourceMediaUri, sourceDigest, updatedAt)
         return attachPhotoResult
     }
 

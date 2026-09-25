@@ -20,6 +20,8 @@ class ResolveGalleryLink(
 ) {
     suspend operator fun invoke(encounter: Encounter): GalleryTarget {
         val link = encounter.galleryLink(deviceIdProvider.deviceId) ?: return GalleryTarget.Unavailable
-        return if (galleryItems.exists(link.uri)) GalleryTarget.Open(link.uri) else GalleryTarget.Gone
+        // The app cannot read an item it only picked, so it cannot tell whether that one is still there.
+        val openable = !link.ownedByApp || galleryItems.exists(link.uri)
+        return if (openable) GalleryTarget.Open(link.uri) else GalleryTarget.Gone
     }
 }

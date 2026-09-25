@@ -39,6 +39,7 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         photoPath = stamp.photoPath,
         thumbPath = stamp.thumbPath,
         galleryUri = stamp.galleryUri,
+        sourceMediaUri = stamp.sourceMediaUri,
         sourceDigest = stamp.sourceDigest,
         updatedAt = stamp.updatedAt,
     ) > 0

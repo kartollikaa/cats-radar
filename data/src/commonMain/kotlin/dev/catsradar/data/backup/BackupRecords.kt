@@ -14,7 +14,7 @@ import kotlin.time.Instant
  * An archive whose own version is ahead of this one is refused rather than half-read: its rows may
  * carry fields this build would silently drop on the next export.
  */
-internal const val BACKUP_FORMAT_VERSION = 2
+internal const val BACKUP_FORMAT_VERSION = 3
 
 internal const val MANIFEST_ENTRY = "manifest.json"
 internal const val ENCOUNTERS_ENTRY = "encounters.json"
@@ -46,6 +46,7 @@ internal data class EncounterRecord(
     val photoPath: String? = null,
     val thumbPath: String? = null,
     val galleryUri: String? = null,
+    val sourceMediaUri: String? = null,
     val sourceDigest: String? = null,
     val lat: Double? = null,
     val lon: Double? = null,
@@ -86,6 +87,7 @@ internal fun Encounter.toRecord(): EncounterRecord = EncounterRecord(
     photoPath = photoPath,
     thumbPath = thumbPath,
     galleryUri = galleryUri,
+    sourceMediaUri = sourceMediaUri,
     sourceDigest = sourceDigest,
     lat = lat,
     lon = lon,
@@ -106,6 +108,7 @@ internal fun EncounterRecord.toDomain(): Encounter = Encounter(
     photoPath = photoPath,
     thumbPath = thumbPath,
     galleryUri = galleryUri,
+    sourceMediaUri = sourceMediaUri,
     sourceDigest = sourceDigest,
     lat = lat,
     lon = lon,

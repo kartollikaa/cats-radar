@@ -7,6 +7,7 @@ import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeDigest
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.FakeGalleryItemLocator
 import dev.catsradar.domain.testing.FakeGallerySaver
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
@@ -30,6 +31,7 @@ class AttachPhotoTest {
     private val settings = FakeSettingsRepository()
     private val resizer = FakeImageResizer()
     private val gallery = FakeGallerySaver()
+    private val locator = FakeGalleryItemLocator(mapOf(SOURCE to PHONE_ITEM))
     private val storage = RecordingPhotoStorage()
 
     private val attachPhoto = AttachPhoto(
@@ -38,6 +40,7 @@ class AttachPhotoTest {
         imageResizer = resizer,
         digest = FakeDigest(),
         gallerySaver = gallery,
+        galleryItemLocator = locator,
         photoStorage = storage,
         idGenerator = FakeIdGenerator(),
         clock = FakeClock(NOW),
@@ -64,6 +67,7 @@ class AttachPhotoTest {
             tally.copy(
                 photoPath = FakeImageResizer.PHOTO_PATH,
                 thumbPath = FakeImageResizer.THUMB_PATH,
+                sourceMediaUri = PHONE_ITEM,
                 sourceDigest = FakeDigest.SHA,
                 updatedAt = NOW,
             ),
@@ -226,8 +230,28 @@ class AttachPhotoTest {
         assertEquals(tally, stored())
     }
 
+    @Test
+    fun `a photo chosen from the gallery remembers the item it came from`() = runTest {
+        encounters.insert(tally)
+
+        attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
+
+        assertEquals(PHONE_ITEM, stored().sourceMediaUri)
+    }
+
+    @Test
+    fun `a photo from the camera is never linked to a picked item`() = runTest {
+        encounters.insert(tally)
+
+        attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
+
+        assertEquals(null, stored().sourceMediaUri)
+        assertEquals(emptyList(), locator.asked)
+    }
+
     private companion object {
         const val ID = "cat-1"
+        const val PHONE_ITEM = "content://media/external/images/media/18"
         const val SOURCE = "content://picker/1"
         val OCCURRED = Instant.parse("2026-09-21T10:00:00Z")
         val NOW = Instant.parse("2026-09-23T12:00:00Z")

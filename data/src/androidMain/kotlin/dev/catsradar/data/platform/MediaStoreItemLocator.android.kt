@@ -12,8 +12,12 @@ import kotlinx.coroutines.withContext
 
 private const val MEDIA_DOCUMENTS_AUTHORITY = "com.android.providers.media.documents"
 private const val ON_DEVICE_PICKER_AUTHORITY = "com.android.providers.media.photopicker"
-private val PICKER_SEGMENTS = setOf("picker", "picker_get_content")
 private const val PER_USER_UID_RANGE = 100_000
+
+// Not public API (AOSP PickerUriResolver): <user>, <provider>, <id>, where <id> is the MediaStore _id
+// when <provider> is the on-device one, and a cloud provider's own id otherwise.
+private val PickerPath = Regex("""/picker(?:_get_content)?/(\d+)/([^/]+)/media/(\d+)""")
+private val ImagePath = Regex("""/[^/]+/images/media/\d+""")
 
 class MediaStoreItemLocator(
     private val context: Context,
@@ -30,24 +34,20 @@ class MediaStoreItemLocator(
     }
 
     private fun fromMediaStore(uri: Uri): String? {
-        val segments = uri.pathSegments
-        val isItem = segments.size == 4 && segments[1] == "images" && segments[2] == "media" &&
-            segments[3].toLongOrNull() != null
+        val path = uri.path.orEmpty()
+        val picked = PickerPath.matchEntire(path)?.destructured
         return when {
-            segments.firstOrNull() in PICKER_SEGMENTS -> fromPicker(segments)
-            isItem -> uri.toString()
+            picked != null -> fromPicker(picked)
+            ImagePath.matches(path) -> uri.toString()
             else -> null
         }
     }
 
-    // Not public API: picker/<user>/<provider>/media/<id>, whose <id> is the MediaStore _id when the
-    // provider is the on-device one (AOSP PickerUriResolver). A cloud provider's <id> is its own.
-    private fun fromPicker(segments: List<String>): String? {
-        val onThisProfile = segments.size == 5 && segments[1] == currentUser() && segments[3] == "media"
-        if (!onThisProfile || segments[2] != ON_DEVICE_PICKER_AUTHORITY) return null
-        val id = segments[4].toLongOrNull() ?: return null
-        return ContentUris.withAppendedId(MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL), id)
-            .toString()
+    private fun fromPicker(picked: MatchResult.Destructured): String? {
+        val (user, provider, id) = picked
+        val onThisPhone = user == currentUser() && provider == ON_DEVICE_PICKER_AUTHORITY
+        val images = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        return id.toLongOrNull()?.takeIf { onThisPhone }?.let { ContentUris.withAppendedId(images, it).toString() }
     }
 
     private fun currentUser(): String = (Process.myUid() / PER_USER_UID_RANGE).toString()

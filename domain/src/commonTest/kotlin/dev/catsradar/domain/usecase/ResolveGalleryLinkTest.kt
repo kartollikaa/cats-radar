@@ -32,11 +32,20 @@ class ResolveGalleryLinkTest {
         assertEquals(emptyList(), galleryItems.asked)
     }
 
+    @Test
+    fun `a picked item opens without asking the gallery, which the app cannot read`() = runTest {
+        val picked = savedCat().copy(galleryUri = null, sourceMediaUri = PICKED)
+
+        assertEquals(GalleryTarget.Open(uri = PICKED), resolve(picked))
+        assertEquals(emptyList(), galleryItems.asked)
+    }
+
     private fun savedCat() = encounterAt(OCCURRED).copy(id = "cat-1", galleryUri = SAVED, deviceId = THIS_INSTALL)
 
     private companion object {
         const val THIS_INSTALL = "install-1"
         const val SAVED = "content://media/external/images/media/42"
+        const val PICKED = "content://media/external/images/media/17"
         val OCCURRED = Instant.parse("2026-09-24T10:00:00Z")
     }
 }

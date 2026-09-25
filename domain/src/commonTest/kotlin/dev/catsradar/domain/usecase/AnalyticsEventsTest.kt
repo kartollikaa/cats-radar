@@ -29,6 +29,7 @@ import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeDigest
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakeExifReader
+import dev.catsradar.domain.testing.FakeGalleryItemLocator
 import dev.catsradar.domain.testing.FakeGallerySaver
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
@@ -154,6 +155,7 @@ class AnalyticsEventsTest {
         imageResizer = resizer,
         digest = digest,
         gallerySaver = FakeGallerySaver(),
+        galleryItemLocator = FakeGalleryItemLocator(),
         photoStorage = RecordingPhotoStorage(),
         idGenerator = FakeIdGenerator(),
         clock = clock,
@@ -204,6 +206,7 @@ class AnalyticsEventsTest {
             imageResizer = resizer,
             digest = digest,
             sourceFileTime = FakeSourceFileTime(),
+            galleryItemLocator = FakeGalleryItemLocator(),
             idGenerator = FakeIdGenerator(),
             deviceIdProvider = FakeDeviceIdProvider(),
             clock = clock,
@@ -225,6 +228,7 @@ class AnalyticsEventsTest {
             imageResizer = resizer,
             digest = digest,
             sourceFileTime = FakeSourceFileTime(),
+            galleryItemLocator = FakeGalleryItemLocator(),
             idGenerator = FakeIdGenerator(),
             deviceIdProvider = FakeDeviceIdProvider(),
             clock = clock,

@@ -43,6 +43,7 @@ class EncounterDaoAttachPhotoTest {
                 photoPath = "p.jpg",
                 thumbPath = "p_thumb.jpg",
                 galleryUri = "content://gallery/7",
+                sourceMediaUri = "content://media/external/images/media/7",
                 sourceDigest = "sha",
                 updatedAt = UPDATED,
             ),
@@ -78,6 +79,7 @@ class EncounterDaoAttachPhotoTest {
         photoPath = "p.jpg",
         thumbPath = "p_thumb.jpg",
         galleryUri = "content://gallery/7",
+        sourceMediaUri = "content://media/external/images/media/7",
         sourceDigest = "sha",
         updatedAt = UPDATED,
     )
@@ -89,6 +91,7 @@ class EncounterDaoAttachPhotoTest {
             photoPath = null,
             thumbPath = null,
             galleryUri = null,
+            sourceMediaUri = null,
         )
 
     private companion object {

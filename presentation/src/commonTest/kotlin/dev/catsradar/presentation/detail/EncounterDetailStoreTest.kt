@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
@@ -459,6 +460,7 @@ class EncounterDetailStoreTest {
             imageResizer = resizer,
             digest = FakeDigest(),
             gallerySaver = FakeGallerySaver(),
+            galleryItemLocator = NoGalleryItems,
             photoStorage = FakePhotoStorage(),
             idGenerator = FakeIdGenerator(),
             clock = clock,
@@ -478,4 +480,8 @@ class EncounterDetailStoreTest {
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
+}
+
+private object NoGalleryItems : GalleryItemLocator {
+    override suspend fun locate(pickedUri: String): String? = null
 }

@@ -80,7 +80,7 @@ interface EncounterDao {
         """
         UPDATE encounters SET
             photoPath = :photoPath, thumbPath = :thumbPath, galleryUri = :galleryUri,
-            sourceDigest = :sourceDigest, updatedAt = :updatedAt
+            sourceMediaUri = :sourceMediaUri, sourceDigest = :sourceDigest, updatedAt = :updatedAt
         WHERE id = :id AND deletedAt IS NULL AND photoPath IS NULL
         """
     )
@@ -89,6 +89,7 @@ interface EncounterDao {
         photoPath: String,
         thumbPath: String?,
         galleryUri: String?,
+        sourceMediaUri: String?,
         sourceDigest: String?,
         updatedAt: Instant,
     ): Int

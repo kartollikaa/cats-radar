@@ -3,6 +3,7 @@ package dev.catsradar.domain.testing
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.platform.GalleryItems
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.ImageResizer
@@ -83,6 +84,16 @@ class FakeGallerySaver(var result: String? = URI) : GallerySaver {
 
     companion object {
         const val URI = "content://media/external/images/media/42"
+    }
+}
+
+/** Knows the gallery items of [items], keyed by the picked URI that names each. */
+class FakeGalleryItemLocator(private val items: Map<String, String> = emptyMap()) : GalleryItemLocator {
+    val asked = mutableListOf<String>()
+
+    override suspend fun locate(pickedUri: String): String? {
+        asked += pickedUri
+        return items[pickedUri]
     }
 }
 

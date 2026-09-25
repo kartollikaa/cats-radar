@@ -43,6 +43,7 @@ class DatabaseSchemaTest {
             "photoPath" to false,
             "thumbPath" to false,
             "galleryUri" to false,
+            "sourceMediaUri" to false,
             "sourceDigest" to false,
             "lat" to false,
             "lon" to false,

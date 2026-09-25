@@ -79,7 +79,7 @@ class MediaStoreItemLocatorTest {
     fun aFilePathOrGarbageHasNoItem() = runTest {
         assertNull(locator.locate("file:///sdcard/Pictures/cat.jpg"))
         assertNull(locator.locate("not a uri"))
-        assertNull(locator.locate("content://media/picker/0/com.android.providers.media.photopicker/media/not-a-number"))
+        assertNull(locator.locate("content://media/picker/0/$ON_DEVICE_PICKER/media/not-a-number"))
     }
 
     /** MediaStore answering the document-to-item conversion `MediaStore.getMediaUri` asks it for with [answer]. */
@@ -105,6 +105,7 @@ class MediaStoreItemLocatorTest {
 
     private companion object {
         const val MEDIA_DOCUMENTS = "com.android.providers.media.documents"
+        const val ON_DEVICE_PICKER = "com.android.providers.media.photopicker"
         const val MEDIA_ITEM = "content://media/external/images/media/42"
     }
 }

@@ -4,6 +4,7 @@ import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.platform.Digest
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
@@ -36,6 +37,7 @@ class AttachPhoto(
     private val imageResizer: ImageResizer,
     private val digest: Digest,
     private val gallerySaver: GallerySaver,
+    private val galleryItemLocator: GalleryItemLocator,
     private val photoStorage: PhotoStorage,
     private val idGenerator: IdGenerator,
     private val clock: Clock,
@@ -68,6 +70,7 @@ class AttachPhoto(
                 photoPath = stored.photoPath,
                 thumbPath = stored.thumbPath,
                 galleryUri = galleryUri,
+                sourceMediaUri = if (source == PhotoSource.GALLERY) galleryItemLocator.locate(sourceUri) else null,
                 sourceDigest = digest.sha256(sourceUri),
                 updatedAt = clock.now(),
             )
