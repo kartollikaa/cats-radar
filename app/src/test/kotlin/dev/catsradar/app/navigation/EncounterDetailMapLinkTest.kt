@@ -3,6 +3,8 @@ package dev.catsradar.app.navigation
 import android.content.Context
 import android.os.Looper
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -117,7 +119,10 @@ class EncounterDetailMapLinkTest {
         val backStack = BottomNavBackStack(NavBackStack(*keys.toTypedArray()))
         val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), mapFocus)
         compose.setContent {
-            CatsRadarTheme { entries(keys.last()).Content() }
+            // A located cat's map needs MapLibre's native runtime, which the JVM cannot start.
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                CatsRadarTheme { entries(keys.last()).Content() }
+            }
         }
         return backStack
     }

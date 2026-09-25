@@ -20,7 +20,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -40,15 +39,8 @@ import kotlinx.coroutines.isActive
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.StyleLoadState
 import org.maplibre.compose.map.rememberMapState
-import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.BoundingBox
 import org.maplibre.compose.map.MapState as MaplibreMapState
-
-// Vector tiles of OpenStreetMap data, free and keyless.
-private const val LightStyle = "https://tiles.openfreemap.org/styles/liberty"
-private const val DarkStyle = "https://tiles.openfreemap.org/styles/dark"
-
-private const val HALF_LUMINANCE = 0.5f
 
 private val FitPadding = PaddingValues(48.dp)
 
@@ -105,9 +97,7 @@ private fun CatsMap(
     val colors = catLayerColors()
     val cats = remember(state.points) { catFeatures(state.points) }
     val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
-    // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
-    val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
-    val style = BaseStyle.Uri(if (dark) DarkStyle else LightStyle)
+    val style = themedMapStyle()
     val tapCats by rememberUpdatedState(onCatsTap)
     var clusterTap by remember { mutableStateOf<ClusterTap?>(null) }
     val mapState = rememberMapState(baseStyle = style) {

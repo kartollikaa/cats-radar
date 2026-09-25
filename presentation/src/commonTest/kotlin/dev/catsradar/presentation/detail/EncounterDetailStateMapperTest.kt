@@ -7,6 +7,7 @@ import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.withPhoto
+import dev.catsradar.presentation.map.MapPosition
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,7 +34,7 @@ class EncounterDetailStateMapperTest {
                 coordinatesLabel = "41.39864, 2.17842",
                 accuracyMeters = 12,
                 addPhoto = AddPhoto.READY,
-                onTheMap = true,
+                mapPosition = MapPosition(latitude = 41.398644444, longitude = 2.178419444),
             ),
             state,
         )
@@ -55,9 +56,9 @@ class EncounterDetailStateMapperTest {
         val unlocated = encounterFixture("e1", OCCURRED)
         val pastThePole = encounterFixture("e2", OCCURRED).copy(lat = 123.4, lon = 2.17)
 
-        assertEquals(false, mapper.map(unlocated, today).onTheMap)
+        assertEquals(null, mapper.map(unlocated, today).mapPosition)
         assertEquals("123.40000, 2.17000", mapper.map(pastThePole, today).coordinatesLabel)
-        assertEquals(false, mapper.map(pastThePole, today).onTheMap)
+        assertEquals(null, mapper.map(pastThePole, today).mapPosition)
     }
 
     @Test

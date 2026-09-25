@@ -7,6 +7,7 @@ import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.encounters.toLocationLabel
+import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.presentation.map.isOnTheMap
 import dev.catsradar.presentation.regions.countryFlag
 import dev.catsradar.presentation.time
@@ -43,7 +44,7 @@ class EncounterDetailStateMapper(
             photos = encounter.photos.map { DetailPhoto(it.id, photoStorage.resolve(it.photoPath)) }.toImmutableList(),
             coat = encounter.coat?.toOption(),
             addPhoto = if (attachingPhoto) AddPhoto.ATTACHING else AddPhoto.READY,
-            onTheMap = encounter.isOnTheMap(),
+            mapPosition = if (lat != null && lon != null && encounter.isOnTheMap()) MapPosition(lat, lon) else null,
             place = place?.let { found ->
                 // A city-state's locality repeats its country's name.
                 val city = found.city?.takeIf { !it.equals(found.country, ignoreCase = true) }
