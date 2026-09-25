@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-25
 - **Status:** decided autonomously on the owner's instruction ("continue in autonomous mode"), 2026-09-25;
-  one owner call is open (see *Open owner call*)
+  the one owner call (*The update source*) was settled the same day: the repository is public
 - **Decomposition:** [docs/tbd/decompositions/2026-09-25-app-updates.md](../../tbd/decompositions/2026-09-25-app-updates.md)
 - **Builds on:** [docs/reference/releasing.md](../../reference/releasing.md) (how a release is published)
 
@@ -15,18 +15,13 @@
 3. Settings shows the version, the build number and whatever else helps debugging, with an icon button
    next to it that copies the lot in a form a developer can paste.
 
-## Open owner call
+## The update source
 
-`kartollikaa/cats-radar` is a **private** repository. GitHub answers an anonymous request for its
-releases with `404`, so until one of these happens the check reports that the update source cannot be
-reached:
-
-- the repository becomes public, or
-- releases are also published to a public repository (a releases-only mirror), and the build points at it.
-
-The source is a build setting (`catsradar.updateRepository` in `gradle.properties`, `owner/name`), so
-either choice is a one-line change. **A token is never built into the APK**: anyone holding the file
-could read it out and, with it, the private repository.
+The releases are read anonymously from `kartollikaa/cats-radar`, which the owner made public on
+2026-09-25 so that they can be. The source is a build setting (`catsradar.updateRepository` in
+`gradle.properties`, `owner/name`); a private repository answers an anonymous request with `404`,
+which the check reports as the source being unavailable. **A token is never built into the APK**:
+anyone holding the file could read it out.
 
 ## Settings, top to bottom
 
