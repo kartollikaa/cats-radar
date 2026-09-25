@@ -102,8 +102,11 @@ alone: no other cat of its outing is backfilled from it.
 The detail screen of a cat with no location offers *Set on map* (see
 [encounter-detail.md](./encounter-detail.md)), which opens the location picker above it: the app's
 map, a pin fixed at its centre, *Where am I* and *Save*. The pin's tip is the point saved — the centre
-of the map's padded view when *Save* is tapped. Back leaves without writing anything
-(`LocationPickerStoreTest`, *back leaves once and writes nothing*).
+of the map's padded view when *Save* is tapped. Neither button does anything until the map has loaded
+its style and been placed: before that its centre is MapLibre's default at 0°, 0°, a point nobody
+looked at (`LocationPickerControlsTest`, *until the map is ready neither save nor where am I does
+anything*). Back leaves without writing anything (`LocationPickerStoreTest`, *back leaves once and
+writes nothing*). A save that lands is logged as `location_set_by_hand` (`analytics.md`).
 
 **Where it opens** is decided once, by `WhereToLook`: a street around the located cat logged closest in
 time to this one — for a tally without a fix usually a cat of the same walk, for an old photo one of

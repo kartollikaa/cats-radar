@@ -42,6 +42,7 @@ says which one it came from. There is no switch to turn it off.
   | `tally_undone` | — | the Undo chip removes a tally |
   | `coat_set` | `coat` (one of the eleven, or `none` when cleared) | a coat is written; setting the same coat again logs nothing |
   | `photo_attached` | `source` (`camera`, `gallery`) | a logged cat gets a photo |
+  | `location_set_by_hand` | — | a cat with no location gets the point under the picker's pin |
   | `photos_imported` | `added`, `duplicates`, `failed` | a gallery import finishes (one event per batch, not per photo; a batch stopped midway logs nothing) |
   | `import_undone` | `count` | an import is undone |
   | `cats_deleted` | `count` | one cat or a selection is deleted |

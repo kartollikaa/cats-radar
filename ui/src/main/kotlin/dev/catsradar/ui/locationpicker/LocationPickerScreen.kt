@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.locationpicker.LocationPickerState
@@ -53,7 +55,7 @@ import org.maplibre.compose.map.MapState as MaplibreMapState
 private val PinSize = 48.dp
 
 /** The point under the pin when Save was tapped. */
-data class PickedPoint(val latitude: Double, val longitude: Double)
+data class SaveLocationInteraction(val latitude: Double, val longitude: Double)
 
 @Composable
 fun LocationPickerScreen(
@@ -62,7 +64,7 @@ fun LocationPickerScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onBackClick: () -> Unit = {},
     onWhereAmIClick: () -> Unit = {},
-    onSaveClick: (PickedPoint) -> Unit = {},
+    onSaveClick: (SaveLocationInteraction) -> Unit = {},
     onMoveReach: () -> Unit = {},
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -101,11 +103,19 @@ private fun PickerMap(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onWhereAmIClick: () -> Unit = {},
-    onSaveClick: (PickedPoint) -> Unit = {},
+    onSaveClick: (SaveLocationInteraction) -> Unit = {},
     onMoveReach: () -> Unit = {},
 ) {
     val mapState = rememberMapState(baseStyle = mapStyle())
-    PickerCamera(mapState, start = state.start, moveTo = state.moveTo, onMoveReach = onMoveReach)
+    var placed by rememberSaveable { mutableStateOf(false) }
+    PickerCamera(
+        mapState,
+        start = state.start.takeUnless { placed },
+        moveTo = state.moveTo,
+        onPlace = { placed = true },
+        onMoveReach = onMoveReach,
+    )
+    val mapDescription = stringResource(R.string.picker_map_description)
     val layoutDirection = LocalLayoutDirection.current
     val belowBar = PaddingValues(
         start = contentPadding.calculateStartPadding(layoutDirection),
@@ -115,7 +125,7 @@ private fun PickerMap(
     )
     Box(modifier = modifier.fillMaxSize()) {
         MaplibreMap(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().semantics { contentDescription = mapDescription },
             state = mapState,
             cameraPadding = contentPadding,
             overlay = { MapAttribution(belowBar, alignment = Alignment.TopEnd) },
@@ -135,6 +145,8 @@ private fun PickerMap(
         LocationPickerControls(
             saving = state.saving,
             locating = state.locating,
+            // Until the camera is placed its target is MapLibre's default, not a point anyone looked at.
+            mapReady = placed && mapState.style.loadState == StyleLoadState.Ready,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(contentPadding)
@@ -142,27 +154,28 @@ private fun PickerMap(
             onWhereAmIClick = onWhereAmIClick,
             onSaveClick = {
                 val target = mapState.cameraPosition.target
-                onSaveClick(PickedPoint(latitude = target.latitude, longitude = target.longitude))
+                onSaveClick(SaveLocationInteraction(latitude = target.latitude, longitude = target.longitude))
             },
         )
     }
 }
 
-// Placed once and saved across recreation: after that the map keeps its own camera, and only a move the Store
-// asks for may take it anywhere.
+// Placed once: the map saves its own camera across recreation, and only a move the Store asks for may take it
+// anywhere after that.
 @Composable
 private fun PickerCamera(
     mapState: MaplibreMapState,
     start: MapArea?,
     moveTo: MapArea?,
+    onPlace: () -> Unit,
     onMoveReach: () -> Unit,
 ) {
-    var placed by rememberSaveable { mutableStateOf(false) }
+    val place by rememberUpdatedState(onPlace)
     val moveReach by rememberUpdatedState(onMoveReach)
     LaunchedEffect(mapState) {
-        if (placed) return@LaunchedEffect
         start?.let { mapState.fitCameraToBounds(it.toBoundingBox(), padding = FitPadding) }
-        placed = true
+        mapState.awaitViewport()
+        place()
     }
     LaunchedEffect(mapState, moveTo) {
         val area = moveTo ?: return@LaunchedEffect
@@ -177,6 +190,7 @@ fun LocationPickerControls(
     saving: Boolean,
     locating: Boolean,
     modifier: Modifier = Modifier,
+    mapReady: Boolean = true,
     onWhereAmIClick: () -> Unit = {},
     onSaveClick: () -> Unit = {},
 ) {
@@ -198,10 +212,10 @@ fun LocationPickerControls(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Button(onClick = onSaveClick, enabled = !saving, modifier = Modifier.weight(1f)) {
+            Button(onClick = onSaveClick, enabled = mapReady && !saving, modifier = Modifier.weight(1f)) {
                 Text(text = stringResource(R.string.picker_save))
             }
-            FilledTonalIconButton(onClick = onWhereAmIClick, enabled = !locating) {
+            FilledTonalIconButton(onClick = onWhereAmIClick, enabled = mapReady && !locating) {
                 Icon(
                     painter = painterResource(R.drawable.ic_my_location),
                     contentDescription = stringResource(R.string.picker_where_am_i),

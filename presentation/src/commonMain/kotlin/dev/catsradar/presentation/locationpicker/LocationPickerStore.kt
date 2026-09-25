@@ -12,7 +12,6 @@ import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-@Suppress("LongParameterList") // one parameter per collaborator; a holder type would exist only to lower the count
 class LocationPickerStore(
     private val encounterId: String,
     observeEncounter: ObserveEncounter,

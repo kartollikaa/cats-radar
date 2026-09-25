@@ -63,9 +63,21 @@ class LocationPickerControlsTest {
         save().assertIsEnabled()
     }
 
+    @Test
+    fun `until the map is ready neither save nor where am I does anything`() {
+        var taps = 0
+        show(saving = false, locating = false, mapReady = false, onSaveClick = { taps++ }, onWhereAmIClick = { taps++ })
+
+        save().assertIsNotEnabled().performClick()
+        whereAmI().assertIsNotEnabled().performClick()
+
+        assertEquals(0, taps)
+    }
+
     private fun show(
         saving: Boolean,
         locating: Boolean,
+        mapReady: Boolean = true,
         onSaveClick: () -> Unit = {},
         onWhereAmIClick: () -> Unit = {},
     ) {
@@ -74,6 +86,7 @@ class LocationPickerControlsTest {
                 LocationPickerControls(
                     saving = saving,
                     locating = locating,
+                    mapReady = mapReady,
                     onSaveClick = onSaveClick,
                     onWhereAmIClick = onWhereAmIClick,
                 )

@@ -25,6 +25,8 @@ sealed interface AnalyticsEvent {
 
     data class PhotoAttached(val source: PhotoSource) : AnalyticsEvent
 
+    data object LocationSetByHand : AnalyticsEvent
+
     data class PhotosImported(val added: Int, val duplicates: Int, val failed: Int) : AnalyticsEvent
 
     data class ImportUndone(val count: Int) : AnalyticsEvent

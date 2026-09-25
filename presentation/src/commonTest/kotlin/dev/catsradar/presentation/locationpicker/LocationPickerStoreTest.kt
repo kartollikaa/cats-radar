@@ -11,6 +11,7 @@ import dev.catsradar.domain.usecase.LocatePhone
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.SetLocationByHand
 import dev.catsradar.domain.usecase.WhereToLook
+import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakePlaceCellRepository
@@ -259,7 +260,7 @@ class LocationPickerStoreTest {
             observeEncounter = ObserveEncounter(repository),
             whereToLook = WhereToLook(repository, phone),
             locatePhone = LocatePhone(phone, clock),
-            setLocationByHand = SetLocationByHand(repository, FakePlaceCellRepository(), clock),
+            setLocationByHand = SetLocationByHand(repository, FakePlaceCellRepository(), clock, NoAnalytics),
             stateMapper = mapper,
         )
     }
