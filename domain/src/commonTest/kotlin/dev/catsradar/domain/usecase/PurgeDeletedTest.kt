@@ -1,10 +1,12 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,11 +24,8 @@ class PurgeDeletedTest {
     fun `an encounter deleted long enough ago goes, with its photo files`() = runTest {
         repository.insert(
             encounterFixture("old", OCCURRED)
-                .copy(
-                    deletedAt = NOW - Tuning.PURGE_AFTER - 1.days,
-                    photoPath = "old.jpg",
-                    thumbPath = "old_thumb.jpg"
-                ),
+                .copy(deletedAt = NOW - Tuning.PURGE_AFTER - 1.days)
+                .withPhoto(photoPath = "old.jpg", thumbPath = "old_thumb.jpg"),
         )
 
         purge()()
@@ -36,8 +35,51 @@ class PurgeDeletedTest {
     }
 
     @Test
+    fun `every photo of a purged cat loses its copy and its thumbnail`() = runTest {
+        val old = encounterFixture("old", OCCURRED).copy(deletedAt = NOW - Tuning.PURGE_AFTER - 1.days)
+        val first = old.withPhoto(photoPath = "first.jpg", thumbPath = "first_thumb.jpg").photos.single()
+        val second = first.copy(id = "second", photoPath = "second.jpg", thumbPath = null)
+        repository.insert(old.copy(photos = listOf(first, second)))
+
+        purge()()
+
+        assertEquals(listOf("first.jpg", "first_thumb.jpg", "second.jpg"), photos.deleted)
+    }
+
+    @Test
+    fun `every purged cat loses its photos' files`() = runTest {
+        val longAgo = NOW - Tuning.PURGE_AFTER - 1.days
+        repository.insert(encounterFixture("one", OCCURRED).copy(deletedAt = longAgo).withPhoto("one.jpg", null))
+        repository.insert(encounterFixture("two", OCCURRED).copy(deletedAt = longAgo).withPhoto("two.jpg", null))
+
+        purge()()
+
+        assertEquals(setOf("one.jpg", "two.jpg"), photos.deleted.toSet())
+    }
+
+    @Test
+    fun `the files go while the row still points at them`() = runTest {
+        val rowsAtEachDelete = mutableListOf<Int>()
+        val storage = object : PhotoStorage {
+            override fun resolve(relativePath: String) = relativePath
+
+            override suspend fun delete(relativePath: String) {
+                rowsAtEachDelete += repository.loadEvery().size
+            }
+        }
+        repository.insert(
+            encounterFixture("old", OCCURRED).copy(deletedAt = NOW - Tuning.PURGE_AFTER - 1.days).withPhoto(),
+        )
+
+        PurgeDeleted(repository, storage, FakeClock(NOW))()
+
+        assertEquals(listOf(1, 1), rowsAtEachDelete)
+        assertEquals(emptyList(), repository.loadEvery())
+    }
+
+    @Test
     fun `an encounter deleted recently is left alone, files and all`() = runTest {
-        repository.insert(encounterFixture("recent", OCCURRED).copy(deletedAt = NOW - 1.days, photoPath = "r.jpg"))
+        repository.insert(encounterFixture("recent", OCCURRED).copy(deletedAt = NOW - 1.days).withPhoto())
 
         purge()()
 
@@ -46,7 +88,7 @@ class PurgeDeletedTest {
 
     @Test
     fun `a live encounter is never touched`() = runTest {
-        repository.insert(encounterFixture("live", OCCURRED).copy(photoPath = "live.jpg"))
+        repository.insert(encounterFixture("live", OCCURRED).withPhoto())
 
         purge()()
 

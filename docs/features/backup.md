@@ -32,6 +32,25 @@ Importing never wipes what is here. Every cat is reconciled on its own, by `id`:
 
 There is no server to arbitrate, so each rule settles the conflict from the rows alone.
 
+## Photos
+
+A cat's photos are reconciled apart from its row, each by its own `id` (`BackupMergeTest`):
+
+- **A photo the archive has and this device does not** is added — to a new cat, to a cat whose row
+  the archive's copy replaces, and to a cat here whose own row is kept. A cat whose row is kept but
+  gains a photo counts as updated; importing the same archive again finds it and counts the cat as
+  unchanged (`ImportBackupTest`, *an archive's photo reaches a cat here that had none, and importing it
+  again writes nothing more*).
+- **A photo already here is never replaced**, not even by a later-edited copy of its cat. The local copy
+  is the one the app has been rendering; the later edit takes the row and leaves the photos (*a later
+  copy of a cat from the archive does not replace the photo here*).
+- **A cat that stays deleted here gains no photo.** One the archive brings back gains its photos with it.
+- **One photo listed on two of the archive's cats** arrives once, on the first.
+
+Rewriting a cat's row — what the later edit does — never touches its photos, and adding the archive's
+photos leaves the cat's `updatedAt` as it was, so neither write changes what the next import decides
+(`EncounterDaoRestorePhotoTest`).
+
 ## Place cells
 
 A cell is a patch of map with a name attached, expensive to obtain and worth carrying between

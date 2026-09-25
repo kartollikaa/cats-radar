@@ -74,7 +74,7 @@ class ZipBackupWriter(
         putJson(PLACE_CELLS_ENTRY, ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }))
         putJson(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
         putJson(TRACK_POINTS_ENTRY, ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }))
-        contents.encounters.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }.distinct().forEach { path ->
+        contents.photoFiles().distinct().forEach { path ->
             readPhoto(path)?.let { putEntry(PHOTOS_PREFIX + path, it) }
         }
     }
@@ -164,9 +164,7 @@ class ZipBackupReader(
                     trackPoints = unpacked.decoded<TrackPointRecord>(TRACK_POINTS_ENTRY).map { it.toDomain() },
                 )
                 // fileFor throws for a path outside the photo directory, so such a row is refused, not stored.
-                contents.encounters.forEach { cat ->
-                    listOfNotNull(cat.photoPath, cat.thumbPath).forEach(photoStorage::fileFor)
-                }
+                contents.photoFiles().forEach(photoStorage::fileFor)
                 unpacked.stagedPhotos.forEach { (relativePath, staged) -> moveIntoPlace(relativePath, staged) }
                 BackupReadResult.Readable(contents)
             }
@@ -221,6 +219,9 @@ class ZipBackupReader(
 
     private fun ZipInputStream.readText(): String = readBytes().decodeToString()
 }
+
+private fun BackupContents.photoFiles(): List<String> =
+    encounters.flatMap { it.photos }.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }
 
 @Serializable
 private data class ManifestVersion(val formatVersion: Int)

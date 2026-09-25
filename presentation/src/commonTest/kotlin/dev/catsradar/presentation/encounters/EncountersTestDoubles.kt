@@ -3,6 +3,7 @@ package dev.catsradar.presentation.encounters
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.presentation.DateTimeFormatter
@@ -24,10 +25,6 @@ internal fun encounterFixture(
     kind = EncounterKind.TALLY,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = null,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,
@@ -46,7 +43,29 @@ internal fun photoFixture(
     occurredAt: Instant,
     locationSource: LocationSource = LocationSource.NONE,
 ): Encounter = encounterFixture(id, occurredAt, locationSource = locationSource)
-    .copy(photoPath = "$id.jpg", thumbPath = "${id}_thumb.jpg")
+    .withPhoto(photoPath = "$id.jpg", thumbPath = "${id}_thumb.jpg")
+
+/** The cat with one photo, which takes the cat's id, install and creation time. */
+internal fun Encounter.withPhoto(
+    photoPath: String,
+    thumbPath: String? = null,
+    galleryUri: String? = null,
+    sourceMediaUri: String? = null,
+): Encounter = copy(
+    photos = listOf(
+        EncounterPhoto(
+            id = id,
+            encounterId = id,
+            photoPath = photoPath,
+            thumbPath = thumbPath,
+            galleryUri = galleryUri,
+            sourceMediaUri = sourceMediaUri,
+            sourceDigest = null,
+            deviceId = deviceId,
+            addedAt = createdAt,
+        ),
+    ),
+)
 
 // Returns the argument each call was given rather than a real translation, so a mapper test can
 // assert on the LocalDate/Instant it was asked to format without depending on any locale.

@@ -6,5 +6,6 @@ import androidx.compose.ui.graphics.Color
 internal object ViewerColors {
     val Stage = Color.Black
     val OnStage = Color.White
+    val OnStageVariant = Color.White.copy(alpha = 0.72f)
     val ChromeScrim = Color.Black.copy(alpha = 0.5f)
 }

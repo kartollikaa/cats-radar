@@ -73,6 +73,7 @@ internal fun EncounterDetailDestination(
         state = state,
         modifier = modifier,
         contentPadding = contentPadding,
+        onBackClick = { store.dispatch(EncounterDetailIntent.BackClicked) },
         onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
         onCoatClick = { coat -> store.dispatch(EncounterDetailIntent.CoatPicked(coat)) },

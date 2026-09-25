@@ -2,7 +2,9 @@ package dev.catsradar.presentation.counter
 
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
+import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.photoFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -66,8 +68,8 @@ class CounterStateMapperTest {
 
     @Test
     fun `the coat prompt has no picture when the thumbnail could not be made`() {
-        val photo = photoFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
-            .copy(thumbPath = null)
+        val photo = encounterFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
+            .withPhoto(photoPath = "cat-7.jpg", thumbPath = null)
 
         assertEquals(CoatPromptState(thumbPath = null), mapper.coatPrompt(photo))
     }

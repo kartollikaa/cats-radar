@@ -152,7 +152,7 @@ class CounterStorePhotoPromptTest {
 
         assertEquals(
             listOf("cat_thumb.jpg" to null, "second_thumb.jpg" to CatCoat.GINGER),
-            repository.encounters().map { it.thumbPath to it.coat },
+            repository.encounters().map { it.cover?.thumbPath to it.coat },
         )
     }
 
@@ -183,7 +183,7 @@ class CounterStorePhotoPromptTest {
 
         store.dispatch(CounterIntent.CoatPromptPicked(CoatOption.WHITE))
         runCurrent()
-        assertEquals(CatCoat.WHITE, repository.encounters().single { it.thumbPath != null }.coat)
+        assertEquals(CatCoat.WHITE, repository.encounters().single { it.photos.isNotEmpty() }.coat)
     }
 
     @Test

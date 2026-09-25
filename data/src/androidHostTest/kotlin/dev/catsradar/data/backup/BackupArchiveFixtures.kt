@@ -1,5 +1,6 @@
 package dev.catsradar.data.backup
 
+import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -38,10 +39,6 @@ internal fun photoCat(photoPath: String) = Encounter(
     kind = EncounterKind.PHOTO,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = photoPath,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,
@@ -53,4 +50,4 @@ internal fun photoCat(photoPath: String) = Encounter(
     createdAt = Epoch,
     updatedAt = Epoch,
     deletedAt = null,
-)
+).withPhoto(photoPath)

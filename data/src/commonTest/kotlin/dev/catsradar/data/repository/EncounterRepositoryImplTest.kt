@@ -1,7 +1,6 @@
 package dev.catsradar.data.repository
 
 import dev.catsradar.domain.model.CatCoat
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -15,31 +14,47 @@ class EncounterRepositoryImplTest {
 
     @Test
     fun observeAllMapsEntitiesToDomain() = runTest {
-        dao.observeAllResult = listOf(distinctEncounter().toEntity())
+        dao.observeAllResult = listOf(distinctEncounter().toRelation())
 
         assertEquals(listOf(distinctEncounter()), repository.observeAll().first())
     }
 
     @Test
     fun observeByIdDelegatesAndMaps() = runTest {
-        dao.observeByIdResult = distinctEncounter().toEntity()
+        dao.observeByIdResult = distinctEncounter().toRelation()
 
         assertEquals(distinctEncounter(), repository.observeById("encounter-id-1").first())
         assertEquals("encounter-id-1", dao.observeByIdCall)
     }
 
     @Test
-    fun insertMapsDomainToEntity() = runTest {
-        repository.insert(distinctEncounter())
+    fun insertWritesTheCatAndEveryPhotoOfIt() = runTest {
+        val cover = distinctEncounter().cover!!
+        val second = cover.copy(id = "photo-2", photoPath = "photos/b.jpg")
+        val cat = distinctEncounter().copy(photos = listOf(cover, second))
 
-        assertEquals(listOf(distinctEncounter().toEntity()), dao.inserted)
+        repository.insert(cat)
+
+        assertEquals(listOf(cat.toEntity()), dao.inserted)
+        assertEquals(listOf(cover.toEntity(), second.toEntity()), dao.insertedPhotos)
     }
 
     @Test
-    fun updateMapsDomainToEntity() = runTest {
+    fun updateWritesOnlyTheCatsOwnRow() = runTest {
         repository.update(distinctEncounter())
 
         assertEquals(listOf(distinctEncounter().toEntity()), dao.updated)
+        assertEquals(emptyList(), dao.insertedPhotos + dao.addedPhotos)
+    }
+
+    @Test
+    fun addPhotosHandsEveryPhotoToTheDao() = runTest {
+        val first = distinctEncounter().cover!!
+        val second = first.copy(id = "photo-2", encounterId = "encounter-id-2", photoPath = "photos/b.jpg")
+
+        repository.addPhotos(listOf(first, second))
+
+        assertEquals(listOf(first.toEntity(), second.toEntity()), dao.addedPhotos)
     }
 
     @Test
@@ -65,32 +80,14 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
-    fun attachPhotoForwardsEveryStampFieldAndReportsWhetherARowWasWritten() = runTest {
-        val stamp = PhotoStamp(
-            photoPath = "p.jpg",
-            thumbPath = "p_thumb.jpg",
-            galleryUri = "content://gallery/7",
-            sourceMediaUri = "content://media/external/images/media/7",
-            sourceDigest = "sha",
-            updatedAt = Instant.parse("2026-02-01T00:00:00Z"),
-        )
+    fun addPhotoHandsThePhotoOverStampedWithItsOwnTimeAndReportsWhetherItWasWritten() = runTest {
+        val photo = distinctEncounter().cover!!
 
-        assertEquals(true, repository.attachPhoto("id-1", stamp))
-        assertEquals(
-            AttachPhotoCall(
-                "id-1",
-                "p.jpg",
-                "p_thumb.jpg",
-                "content://gallery/7",
-                "content://media/external/images/media/7",
-                "sha",
-                stamp.updatedAt,
-            ),
-            dao.attachPhotoCall,
-        )
+        assertEquals(true, repository.addPhoto(photo))
+        assertEquals(AddPhotoCall(photo.toEntity(), photo.addedAt), dao.addPhotoCall)
 
-        dao.attachPhotoResult = 0
-        assertEquals(false, repository.attachPhoto("id-1", stamp))
+        dao.addPhotoResult = false
+        assertEquals(false, repository.addPhoto(photo))
     }
 
     @Test
@@ -142,7 +139,7 @@ class EncounterRepositoryImplTest {
 
     @Test
     fun findBySourceDigestDelegatesAndMaps() = runTest {
-        dao.findBySourceDigestResult = distinctEncounter().toEntity()
+        dao.findBySourceDigestResult = distinctEncounter().toRelation()
 
         assertEquals(distinctEncounter(), repository.findBySourceDigest("digest-1"))
         assertEquals("digest-1", dao.findBySourceDigestCall)
