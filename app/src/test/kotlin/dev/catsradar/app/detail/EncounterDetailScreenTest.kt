@@ -2,6 +2,9 @@ package dev.catsradar.app.detail
 
 import android.content.Context
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -51,8 +54,12 @@ class EncounterDetailScreenTest {
     }
 
     @Test
-    fun `a removed cat still offers back`() {
-        show(EncounterDetailState.Deleted(undoVisible = true))
+    fun `a removed cat still offers back, before and after the undo window closes`() {
+        var removed by mutableStateOf(EncounterDetailState.Deleted(undoVisible = true))
+        show { removed }
+        back().assertIsDisplayed()
+
+        removed = EncounterDetailState.Deleted(undoVisible = false)
 
         back().assertIsDisplayed()
     }
@@ -69,10 +76,11 @@ class EncounterDetailScreenTest {
         show(loaded)
 
         val list = compose.onNode(scrollsVertically).fetchSemanticsNode().boundsInRoot
-        val day = compose.onNodeWithText(DAY).fetchSemanticsNode().boundsInRoot
+        val photo = compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
+            .fetchSemanticsNode().boundsInRoot
 
         assertEquals(0f, list.top)
-        assertTrue(day.top >= (STATUS_BAR + 56.dp).px(), "the day starts at ${day.top}px, under the bar")
+        assertTrue(photo.top >= (STATUS_BAR + 56.dp).px(), "the photo starts at ${photo.top}px, under the bar")
     }
 
     @Test
@@ -86,11 +94,13 @@ class EncounterDetailScreenTest {
         assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), delete.boundsInRoot.bottom, 1f)
     }
 
-    private fun show(state: EncounterDetailState, onBackClick: () -> Unit = {}) {
+    private fun show(state: EncounterDetailState, onBackClick: () -> Unit = {}) = show(onBackClick) { state }
+
+    private fun show(onBackClick: () -> Unit = {}, state: () -> EncounterDetailState) {
         compose.setContent {
             CatsRadarTheme {
                 EncounterDetailScreen(
-                    state = state,
+                    state = state(),
                     contentPadding = PaddingValues(top = STATUS_BAR, bottom = BOTTOM_BAR),
                     onBackClick = onBackClick,
                 )

@@ -23,9 +23,8 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
 /**
- * A top bar whose title is centred on the bar rather than between [startContent] and [endContent];
- * [titlePadding] is what keeps the two clear of it. It draws no background and applies no insets:
- * both belong to [modifier]. Without a [title] the bar offers no heading.
+ * Title centred on the bar, not between [startContent] and [endContent]; [titlePadding] keeps them clear of it.
+ * No background and no insets — both belong to [modifier]. Without a [title] the bar offers no heading.
  */
 @Composable
 fun CenterAppBar(

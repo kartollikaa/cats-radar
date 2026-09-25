@@ -48,15 +48,18 @@ class PhotoViewerScreenTest {
     fun `a tap on the photo hides the top bar and a second tap brings it back`() {
         show()
         back().assertIsDisplayed()
-        takenAt().assertIsDisplayed()
+        time().assertIsDisplayed()
+        day().assertIsDisplayed()
 
         tapThePhoto()
         back().assertDoesNotExist()
-        takenAt().assertDoesNotExist()
+        time().assertDoesNotExist()
+        day().assertDoesNotExist()
 
         tapThePhoto()
         back().assertIsDisplayed()
-        takenAt().assertIsDisplayed()
+        time().assertIsDisplayed()
+        day().assertIsDisplayed()
     }
 
     @Test
@@ -146,7 +149,9 @@ class PhotoViewerScreenTest {
 
     private fun back() = compose.onNodeWithContentDescription(context.getString(R.string.viewer_back))
 
-    private fun takenAt() = compose.onNodeWithText(TIME)
+    private fun time() = compose.onNodeWithText(TIME, useUnmergedTree = true)
+
+    private fun day() = compose.onNodeWithText(DAY, useUnmergedTree = true)
 
     private fun openInGallery() =
         compose.onNodeWithContentDescription(context.getString(R.string.viewer_open_in_gallery))
