@@ -2,7 +2,8 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.analytics.AnalyticsEvent
-import dev.catsradar.domain.model.PhotoStamp
+import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.GalleryItemLocator
@@ -47,21 +48,17 @@ class AttachPhoto(
 ) {
     suspend operator fun invoke(encounterId: String, sourceUri: String, source: PhotoSource): AttachResult {
         val target = encounterRepository.observeById(encounterId).first()
-        return if (target == null || target.photoPath != null) {
+        return if (target == null || target.photos.isNotEmpty()) {
             AttachResult.NotAttachable
         } else {
-            // Gallery ids are per phone and a row names only the install that created it, so a link is kept
-            // only on this install's cats: recorded on another's, it would open a different photo back there.
-            storeAndAttach(encounterId, sourceUri, source, keepsLinks = target.deviceId == deviceIdProvider.deviceId)
+            storeAndAttach(target, sourceUri, source)
         }
     }
 
-    private suspend fun storeAndAttach(
-        encounterId: String,
-        sourceUri: String,
-        source: PhotoSource,
-        keepsLinks: Boolean,
-    ): AttachResult {
+    private suspend fun storeAndAttach(target: Encounter, sourceUri: String, source: PhotoSource): AttachResult {
+        // Gallery ids are per phone and this photo names its cat's install, so a link is kept only on this
+        // install's cats: recorded on another's, it would open a different photo back there.
+        val keepsLinks = target.deviceId == deviceIdProvider.deviceId
         // Not the cat's id: an attempt that loses the row to another must remove only its own files.
         val baseName = idGenerator.newId()
         val stored = imageResizer.store(sourceUri, baseName) ?: return AttachResult.Unreadable
@@ -80,16 +77,19 @@ class AttachPhoto(
             } else {
                 null
             }
-            val stamp = PhotoStamp(
+            val photo = EncounterPhoto(
+                id = target.id,
+                encounterId = target.id,
                 photoPath = stored.photoPath,
                 thumbPath = stored.thumbPath,
                 galleryUri = galleryUri?.takeIf { keepsLinks },
                 sourceMediaUri = pickedItem,
                 sourceDigest = digest.sha256(sourceUri),
-                updatedAt = clock.now(),
+                deviceId = target.deviceId,
+                addedAt = clock.now(),
             )
             // Once the write lands, these files are the cat's, so the write must not be cancelled.
-            withContext(NonCancellable) { attached = encounterRepository.attachPhoto(encounterId, stamp) }
+            withContext(NonCancellable) { attached = encounterRepository.addPhoto(photo) }
         } finally {
             if (!attached) withContext(NonCancellable) { discard(stored) }
         }

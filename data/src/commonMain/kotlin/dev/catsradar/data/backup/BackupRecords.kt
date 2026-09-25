@@ -1,5 +1,6 @@
 package dev.catsradar.data.backup
 
+import dev.catsradar.data.repository.carriedPhoto
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
@@ -86,11 +87,11 @@ internal fun Encounter.toRecord(): EncounterRecord = EncounterRecord(
     createdAt = createdAt.toEpochMilliseconds(),
     updatedAt = updatedAt.toEpochMilliseconds(),
     coat = coat?.name,
-    photoPath = photoPath,
-    thumbPath = thumbPath,
-    galleryUri = galleryUri,
-    sourceMediaUri = sourceMediaUri,
-    sourceDigest = sourceDigest,
+    photoPath = cover?.photoPath,
+    thumbPath = cover?.thumbPath,
+    galleryUri = cover?.galleryUri,
+    sourceMediaUri = cover?.sourceMediaUri,
+    sourceDigest = cover?.sourceDigest,
     lat = lat,
     lon = lon,
     accuracyMeters = accuracyMeters,
@@ -107,11 +108,18 @@ internal fun EncounterRecord.toDomain(): Encounter = Encounter(
     kind = EncounterKind.valueOf(kind),
     origin = EncounterOrigin.valueOf(origin),
     coat = coat?.let(CatCoat::valueOf),
-    photoPath = photoPath,
-    thumbPath = thumbPath,
-    galleryUri = galleryUri,
-    sourceMediaUri = sourceMediaUri,
-    sourceDigest = sourceDigest,
+    photos = listOfNotNull(
+        carriedPhoto(
+            encounterId = id,
+            deviceId = deviceId,
+            createdAt = Instant.fromEpochMilliseconds(createdAt),
+            photoPath = photoPath,
+            thumbPath = thumbPath,
+            galleryUri = galleryUri,
+            sourceMediaUri = sourceMediaUri,
+            sourceDigest = sourceDigest,
+        ),
+    ),
     lat = lat,
     lon = lon,
     accuracyMeters = accuracyMeters,

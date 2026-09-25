@@ -39,7 +39,6 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onSaveOriginalsChange: (Boolean) -> Unit = {},
-    onWalkingModeChange: (Boolean) -> Unit = {},
     onEncountersGridChange: (Boolean) -> Unit = {},
     onExportClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
@@ -59,12 +58,6 @@ fun SettingsScreen(
                 explanation = R.string.settings_save_originals_explained,
                 checked = state.saveOriginalsToGallery,
                 onCheckedChange = onSaveOriginalsChange,
-            )
-            SettingRow(
-                title = R.string.settings_walking,
-                explanation = R.string.settings_walking_explained,
-                checked = state.walkingMode,
-                onCheckedChange = onWalkingModeChange,
             )
         }
         SectionCard(R.string.tab_encounters) {

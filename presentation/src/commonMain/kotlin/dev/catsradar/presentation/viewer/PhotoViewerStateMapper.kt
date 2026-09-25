@@ -16,12 +16,12 @@ class PhotoViewerStateMapper(
 ) {
 
     /** Null when the cat has no photo to show. */
-    fun map(encounter: Encounter, today: LocalDate): PhotoViewerState.Showing? = encounter.photoPath?.let {
+    fun map(encounter: Encounter, today: LocalDate): PhotoViewerState.Showing? = encounter.cover?.let { cover ->
         PhotoViewerState.Showing(
-            photoPath = photoStorage.resolve(it),
+            photoPath = photoStorage.resolve(cover.photoPath),
             timeLabel = dateTimeFormatter.time(encounter),
             dayLabel = dateTimeFormatter.dayHeader(encounter, today),
-            opensInGallery = encounter.galleryLink(deviceIdProvider.deviceId) != null,
+            opensInGallery = cover.galleryLink(deviceIdProvider.deviceId) != null,
         )
     }
 }

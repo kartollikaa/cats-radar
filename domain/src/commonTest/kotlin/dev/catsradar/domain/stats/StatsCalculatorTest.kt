@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.UtcOffset
@@ -81,14 +82,27 @@ class StatsCalculatorTest {
         val stats = stats(
             listOf(
                 at(NOON),
-                at(NOON - 1.hours, kind = EncounterKind.PHOTO).copy(photoPath = "taken.jpg"),
-                at(NOON - 2.hours).copy(photoPath = "attached.jpg"),
+                at(NOON - 1.hours, kind = EncounterKind.PHOTO).withPhoto(photoPath = "taken.jpg"),
+                at(NOON - 2.hours).withPhoto(photoPath = "attached.jpg"),
                 at(NOON - 3.hours, kind = EncounterKind.PHOTO),
             ),
         )
 
         assertEquals(4, stats.total)
         assertEquals(2, stats.withPhoto)
+    }
+
+    @Test
+    fun `a cat with several photos counts once, and a deleted cat with one not at all`() {
+        val twice = at(NOON).withPhoto(photoPath = "first.jpg")
+        val stats = stats(
+            listOf(
+                twice.copy(photos = twice.photos + twice.photos.single().copy(id = "second", photoPath = "second.jpg")),
+                at(NOON - 1.hours).copy(deletedAt = NOON).withPhoto(photoPath = "gone.jpg"),
+            ),
+        )
+
+        assertEquals(1, stats.withPhoto)
     }
 
     @Test

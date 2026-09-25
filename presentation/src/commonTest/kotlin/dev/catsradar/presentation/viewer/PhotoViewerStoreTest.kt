@@ -10,6 +10,7 @@ import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -174,7 +175,8 @@ class PhotoViewerStoreTest {
     }
 
     private fun photographedCat(galleryUri: String? = null) = encounterFixture(ID, OCCURRED)
-        .copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg", galleryUri = galleryUri)
+        .copy(kind = EncounterKind.PHOTO)
+        .withPhoto(photoPath = "cat-1.jpg", galleryUri = galleryUri)
 
     private fun newStore() = PhotoViewerStore(
         encounterId = ID,

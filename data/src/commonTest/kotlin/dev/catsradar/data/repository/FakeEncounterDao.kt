@@ -31,6 +31,15 @@ internal data class AttachPhotoCall(
     val updatedAt: Instant,
 )
 
+internal data class RestorePhotoCall(
+    val id: String,
+    val photoPath: String,
+    val thumbPath: String?,
+    val galleryUri: String?,
+    val sourceMediaUri: String?,
+    val sourceDigest: String?,
+)
+
 internal data class SetCoatCall(val id: String, val coat: CatCoat?, val updatedAt: Instant)
 
 internal class FakeEncounterDao : EncounterDao {
@@ -40,6 +49,8 @@ internal class FakeEncounterDao : EncounterDao {
     var purgeDeletedBeforeResult: Int = 0
     var loadDeletedBeforeResult: List<EncounterEntity> = emptyList()
     var loadEveryResult: List<EncounterEntity> = emptyList()
+    var loadByIdResult: EncounterEntity? = null
+    val restorePhotoCalls = mutableListOf<RestorePhotoCall>()
 
     val inserted = mutableListOf<EncounterEntity>()
     val updated = mutableListOf<EncounterEntity>()
@@ -69,6 +80,20 @@ internal class FakeEncounterDao : EncounterDao {
 
     override suspend fun update(encounter: EncounterEntity) {
         updated += encounter
+    }
+
+    override suspend fun loadById(id: String): EncounterEntity? = loadByIdResult?.takeIf { it.id == id }
+
+    @Suppress("LongParameterList") // mirrors EncounterDao.restorePhoto's own Room binding constraint
+    override suspend fun restorePhoto(
+        id: String,
+        photoPath: String,
+        thumbPath: String?,
+        galleryUri: String?,
+        sourceMediaUri: String?,
+        sourceDigest: String?,
+    ) {
+        restorePhotoCalls += RestorePhotoCall(id, photoPath, thumbPath, galleryUri, sourceMediaUri, sourceDigest)
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {

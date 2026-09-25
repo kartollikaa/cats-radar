@@ -6,7 +6,7 @@ goes back — no unlock, no app launch, no hunting for the right screen.
 
 Started from the **Counter** — a button with a small cat, centred under the count, that reads
 *Start a walk*, then *Stop the walk* — because that is the screen someone is on when they set out.
-The same switch is in **Settings → Walking mode** for finding it again later.
+It is the only control in the app that turns the mode on; Settings has no switch for it.
 
 ## How long the walk has lasted
 
@@ -59,12 +59,12 @@ Starting stays one tap, because a walk started by mistake loses nothing.
 TalkBack's double tap stops the walk at once: the hold guards against touches nobody meant, and a
 screen reader's double tap is always meant.
 
-Only the Counter's button asks for the hold. The Settings switch and the notification's **Done**
-still stop a walk in one action.
+Only the Counter's button asks for the hold; the notification's **Done** still stops a walk in one
+action.
 
 ## One flag, one owner
 
-Both controls do exactly one thing: write a stored flag. Neither posts the notification.
+The Counter's button does exactly one thing: write a stored flag. It never posts the notification.
 
 The notification is kept equal to that flag, and to the outing it is counting, by a single collector
 that runs for as long as the process does. Anything that changes either — a cat tallied in the app,
@@ -254,10 +254,10 @@ activity, so from a locked phone Android asks for the unlock first and the camer
   `ObserveWalkTracks.kt` — every walk with its route, read by the map and Statistics
 - `data/…/platform/SharedPreferencesWalkRecordingState.kt` — the mark a running recording leaves
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
-- `app/…/permission/NotificationPermission.kt` — the permission-gated switch both screens use
+- `app/…/permission/NotificationPermission.kt` — the permission-gated switch behind the button
 - `ui/…/counter/WalkButton.kt` — the Counter's button and its hold
 - `domain/…/usecase/ObserveWalkElapsed.kt` — how long the open walk has lasted, for the button
-- `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the switch survives a restart
+- `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the mode survives a restart
 
 ## Not built yet
 

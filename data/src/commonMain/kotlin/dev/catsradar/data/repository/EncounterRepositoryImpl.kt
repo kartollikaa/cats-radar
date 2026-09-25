@@ -3,8 +3,8 @@ package dev.catsradar.data.repository
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +20,7 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override suspend fun insert(encounter: Encounter) = dao.insert(encounter.toEntity())
 
-    override suspend fun update(encounter: Encounter) = dao.update(encounter.toEntity())
+    override suspend fun update(encounter: Encounter) = dao.updateKeepingPhoto(encounter.toEntity())
 
     override suspend fun attachLocation(id: String, stamp: LocationStamp) = dao.attachLocation(
         id = id,
@@ -34,15 +34,17 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         updatedAt = stamp.updatedAt,
     )
 
-    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean = dao.attachPhoto(
-        id = id,
-        photoPath = stamp.photoPath,
-        thumbPath = stamp.thumbPath,
-        galleryUri = stamp.galleryUri,
-        sourceMediaUri = stamp.sourceMediaUri,
-        sourceDigest = stamp.sourceDigest,
-        updatedAt = stamp.updatedAt,
+    override suspend fun addPhoto(photo: EncounterPhoto): Boolean = dao.attachPhoto(
+        id = photo.encounterId,
+        photoPath = photo.photoPath,
+        thumbPath = photo.thumbPath,
+        galleryUri = photo.galleryUri,
+        sourceMediaUri = photo.sourceMediaUri,
+        sourceDigest = photo.sourceDigest,
+        updatedAt = photo.addedAt,
     ) > 0
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>) = dao.restorePhotos(photos)
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         dao.setCoat(id, coat, updatedAt)

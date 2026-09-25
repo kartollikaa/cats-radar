@@ -22,9 +22,10 @@ class PurgeDeleted(
         // Files first: a row deleted before its files would leave orphans nothing points at, and
         // nothing would ever look for them again.
         encounterRepository.loadDeletedBefore(cutoff)
-            .forEach { encounter ->
-                encounter.photoPath?.let { photoStorage.delete(it) }
-                encounter.thumbPath?.let { photoStorage.delete(it) }
+            .flatMap { it.photos }
+            .forEach { photo ->
+                photoStorage.delete(photo.photoPath)
+                photo.thumbPath?.let { photoStorage.delete(it) }
             }
         return encounterRepository.purgeDeletedBefore(cutoff)
     }

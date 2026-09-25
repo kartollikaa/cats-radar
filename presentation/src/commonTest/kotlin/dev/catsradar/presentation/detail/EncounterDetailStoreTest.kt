@@ -22,6 +22,7 @@ import dev.catsradar.presentation.counter.FakeSettingsRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -286,7 +287,7 @@ class EncounterDetailStoreTest {
 
     @Test
     fun `a cat that already has a photo opens neither`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(photoPath = "own.jpg"))
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
         val store = newStore()
         runCurrent()
 
@@ -461,7 +462,7 @@ class EncounterDetailStoreTest {
     @Test
     fun `a failed write says the photo was not attached`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
-        repository.attachPhotoShouldThrow = IllegalStateException("disk full")
+        repository.addPhotoShouldThrow = IllegalStateException("disk full")
         val store = newStore()
         runCurrent()
 
@@ -475,7 +476,9 @@ class EncounterDetailStoreTest {
 
     @Test
     fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg"))
+        repository.insert(
+            encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO).withPhoto(photoPath = "cat-1.jpg")
+        )
         val store = newStore()
         runCurrent()
 

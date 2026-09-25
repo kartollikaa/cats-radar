@@ -5,6 +5,7 @@ import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,21 +51,21 @@ class PhotoViewerStateMapperTest {
 
     @Test
     fun `an original this install saved to the gallery is offered there`() {
-        val cat = photographedCat().copy(galleryUri = SAVED)
+        val cat = photographedCat(galleryUri = SAVED)
 
         assertEquals(true, mapper.map(cat, TODAY)?.opensInGallery)
     }
 
     @Test
     fun `a photo this install picked from the gallery is offered there`() {
-        val cat = photographedCat().copy(sourceMediaUri = "content://media/external/images/media/17")
+        val cat = photographedCat(sourceMediaUri = "content://media/external/images/media/17")
 
         assertEquals(true, mapper.map(cat, TODAY)?.opensInGallery)
     }
 
     @Test
     fun `an original recorded by another install is not offered here`() {
-        val cat = photographedCat().copy(galleryUri = SAVED, deviceId = "another-install")
+        val cat = photographedCat(galleryUri = SAVED, deviceId = "another-install")
 
         assertEquals(false, mapper.map(cat, TODAY)?.opensInGallery)
     }
@@ -74,8 +75,13 @@ class PhotoViewerStateMapperTest {
         assertEquals(false, mapper.map(photographedCat(), TODAY)?.opensInGallery)
     }
 
-    private fun photographedCat() =
-        encounterFixture("cat-1", OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg")
+    private fun photographedCat(
+        galleryUri: String? = null,
+        sourceMediaUri: String? = null,
+        deviceId: String = INSTALL,
+    ) = encounterFixture("cat-1", OCCURRED)
+        .copy(kind = EncounterKind.PHOTO, deviceId = deviceId)
+        .withPhoto(photoPath = "cat-1.jpg", galleryUri = galleryUri, sourceMediaUri = sourceMediaUri)
 
     private companion object {
         const val INSTALL = "device-1"

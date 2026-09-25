@@ -4,9 +4,9 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.usecase.ObserveTodayCount
@@ -103,7 +103,10 @@ private class FakeTodayRepository : EncounterRepository {
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
         throw NotImplementedError("unused by this test")
 
-    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
+    override suspend fun addPhoto(photo: EncounterPhoto): Boolean =
+        throw NotImplementedError("unused by this test")
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit =
         throw NotImplementedError("unused by this test")
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
@@ -129,10 +132,6 @@ private fun tally(id: String, at: Instant): Encounter = Encounter(
     kind = EncounterKind.TALLY,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = null,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,
