@@ -179,6 +179,19 @@ class RegionsScreenTest {
         assertTrue(headlineTop >= barBottom, "headline at $headlineTop, arrow ends at $barBottom")
     }
 
+    @Test
+    fun `an area's headline also starts below the back arrow's bar`() {
+        val statusBar = 24.dp
+        state = RegionsState.Cats(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Gràcia")), 2), twoCats)
+        compose.setContent {
+            CatsRadarTheme { RegionsScreen(state = state, contentPadding = PaddingValues(top = statusBar)) }
+        }
+
+        val headlineTop = compose.onNodeWithText("Gràcia").getUnclippedBoundsInRoot().top
+
+        assertTrue(headlineTop >= statusBar + CenterAppBarDefaults.Height, "headline at $headlineTop")
+    }
+
     private val isHeading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
 
     private val oneCountry = persistentListOf(
