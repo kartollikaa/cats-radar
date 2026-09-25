@@ -85,13 +85,15 @@ fun SettingsScreen(
                 onBackupOutcomeDismiss = onBackupOutcomeDismiss,
             )
         }
-        SectionCard(R.string.settings_updates) {
-            UpdatesSection(
-                update = state.update,
-                onCheckClick = onCheckForUpdatesClick,
-                onInstallClick = onInstallUpdateClick,
-                onAllowInstallsClick = onAllowInstallsClick,
-            )
+        if (state.updatesShown) {
+            SectionCard(R.string.settings_updates) {
+                UpdatesSection(
+                    update = state.update,
+                    onCheckClick = onCheckForUpdatesClick,
+                    onInstallClick = onInstallUpdateClick,
+                    onAllowInstallsClick = onAllowInstallsClick,
+                )
+            }
         }
         state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
     }
@@ -218,7 +220,9 @@ private fun BackupOutcome.messageRes(): Int = when (this) {
 @Composable
 private fun SettingsScreenPreview() {
     CatsRadarTheme {
-        Surface { SettingsScreen(state = SettingsState(saveOriginalsToGallery = true, about = sampleAbout)) }
+        Surface {
+            SettingsScreen(state = SettingsState(saveOriginalsToGallery = true, updatesShown = true, about = sampleAbout))
+        }
     }
 }
 

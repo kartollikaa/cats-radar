@@ -107,8 +107,10 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<UpdateDownloadScheduler>())
         assertNotNull(koin.get<UpdateInstaller>())
         assertNotNull(koin.get<InstallResults>())
-        assertNotNull(koin.get<SettingsStore>())
         assertNotNull(koin.get<PruneInstalledUpdates>())
+        // Settings follows a Remote Config switch, which a JVM test without FirebaseApp cannot create.
+        val noFirebase = assertFailsWith<InstanceCreationException> { koin.get<SettingsStore>() }
+        assertIs<IllegalStateException>(generateSequence<Throwable>(noFirebase) { it.cause }.last())
     }
 
     @Test
