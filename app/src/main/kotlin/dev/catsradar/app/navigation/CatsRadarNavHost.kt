@@ -164,7 +164,7 @@ private fun EntryProviderScope<NavKey>.catEntries(
         EncounterDetailDestination(
             key = key,
             contentPadding = contentPadding,
-            onNavigateBack = { backStack.popOrNull() },
+            onNavigateBack = { backStack.popIfOnTop(key) },
             onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
             onOpenMap = {
                 mapFocus.postCat(key.id)

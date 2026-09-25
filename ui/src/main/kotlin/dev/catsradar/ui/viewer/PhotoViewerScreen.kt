@@ -4,15 +4,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
@@ -20,7 +18,11 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
@@ -39,6 +42,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import dev.catsradar.presentation.viewer.PhotoViewerState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.CenterAppBar
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import dev.catsradar.ui.theme.ViewerColors
@@ -69,7 +73,7 @@ fun PhotoViewerScreen(
             exit = fadeOut(),
         ) {
             ViewerTopBar(
-                opensInGallery = (state as? PhotoViewerState.Showing)?.opensInGallery == true,
+                showing = state as? PhotoViewerState.Showing,
                 onBackClick = onBackClick,
                 onOpenInGalleryClick = onOpenInGalleryClick,
             )
@@ -80,7 +84,7 @@ fun PhotoViewerScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ViewerTopBar(
-    opensInGallery: Boolean,
+    showing: PhotoViewerState.Showing?,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onOpenInGalleryClick: () -> Unit = {},
@@ -88,30 +92,50 @@ private fun ViewerTopBar(
     // safeDrawing drops the status bar's height while it is hidden, so the arrow would slide as the bar returns.
     val insets = WindowInsets.statusBarsIgnoringVisibility.union(WindowInsets.displayCutout)
     val scrim = Brush.verticalGradient(listOf(ViewerColors.ChromeScrim, ViewerColors.ChromeScrim.copy(alpha = 0f)))
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(scrim)
-            .windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_back),
-                contentDescription = stringResource(R.string.viewer_back),
-                tint = ViewerColors.OnStage,
-            )
-        }
-        if (opensInGallery) {
-            IconButton(onClick = onOpenInGalleryClick) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_photo_library),
-                    contentDescription = stringResource(R.string.viewer_open_in_gallery),
-                    tint = ViewerColors.OnStage,
-                )
-            }
-        }
+    CompositionLocalProvider(LocalContentColor provides ViewerColors.OnStage) {
+        CenterAppBar(
+            modifier = modifier
+                .background(scrim)
+                .windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                .padding(bottom = 16.dp),
+            title = if (showing != null) {
+                { TakenAt(showing) }
+            } else {
+                null
+            },
+            startContent = {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.viewer_back),
+                    )
+                }
+            },
+            endContent = {
+                if (showing?.opensInGallery == true) {
+                    IconButton(onClick = onOpenInGalleryClick) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_photo_library),
+                            contentDescription = stringResource(R.string.viewer_open_in_gallery),
+                        )
+                    }
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun TakenAt(state: PhotoViewerState.Showing, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = state.timeLabel, maxLines = 1)
+        Text(
+            text = state.dayLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = ViewerColors.OnStageVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -145,4 +169,9 @@ private fun PhotoViewerScreenLoadingPreview() {
     CatsRadarTheme { PhotoViewerScreen(state = PhotoViewerState.Loading) }
 }
 
-private val sampleShowing = PhotoViewerState.Showing(photoPath = "photos/5f1c2d9e-4b7a.jpg", opensInGallery = true)
+private val sampleShowing = PhotoViewerState.Showing(
+    photoPath = "photos/5f1c2d9e-4b7a.jpg",
+    timeLabel = "14:32",
+    dayLabel = "Yesterday",
+    opensInGallery = true,
+)

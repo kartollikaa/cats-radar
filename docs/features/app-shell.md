@@ -130,13 +130,23 @@ defaults are a long cross-fade for every change and a back gesture that shrinks 
 fading it, leaving it fully opaque over the one coming in until it vanishes at the end.
 
 **Sheets are destinations.** A bottom sheet is an entry on the back stack whose metadata carries
-`BottomSheetSceneStrategy.bottomSheet()`; the strategy draws it in a Material `ModalBottomSheet` over
-the entries under it, and dismissing the sheet pops it. A screen opened from a sheet goes on top of
+`BottomSheetSceneStrategy.bottomSheet()`; the strategy draws it in a `CatsRadarBottomSheet` over the
+entries under it, and dismissing the sheet pops it. A screen opened from a sheet goes on top of
 it, and the sheet stays on the stack under that screen. Navigation 3 would take the sheet as the
 screen a back gesture returns to, and the sheet's window then opens over the screen being dragged
 away and takes the gesture from it, so no navigation happens. While a screen covers it, the
 strategy draws a sheet as the scene under it instead: the gesture uncovers that scene, and the sheet
 slides back up once the gesture lands (`BottomSheetNavigationTest`).
+
+**A sheet opens all the way.** Every sheet — these, and the two a screen opens itself, the coat
+choice over the map and the coat question after a photo — is a `CatsRadarBottomSheet`, which has no
+half-open stop (`BottomSheetNavigationTest`). A sheet taller than half the screen opens at its full
+height rather than halfway (*a sheet taller than half the screen opens at its full height*), a
+shorter one at its own height (*a sheet shorter than half the screen opens at its own height*), and a
+drag part of the way down closes it instead of parking it half open (*dragging a sheet part of
+the way down from its full height closes it rather than stopping half open*). Material's own
+sheets — `ModalBottomSheet`, `BottomSheetScaffold` and their states — stop a tall sheet halfway by
+default, so no other file uses them (`BottomSheetUsageTest`).
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
@@ -195,6 +205,7 @@ because building it reaches Play Services, which only a real location call shoul
   `PresentationModule.kt`, `WorkerModule.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/theme/CatsRadarTheme.kt`, `CatsRadarColors.kt`,
   `tools/make-palette.py`
+- `ui/src/main/kotlin/dev/catsradar/ui/components/CatsRadarBottomSheet.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/CatsRadarBottomBar.kt`,
   `ui/src/main/res/drawable/ic_nav_*.xml`
 

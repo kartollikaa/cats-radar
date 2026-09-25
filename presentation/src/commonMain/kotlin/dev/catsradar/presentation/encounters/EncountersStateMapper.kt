@@ -3,13 +3,13 @@ package dev.catsradar.presentation.encounters
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.session.SessionSplitter
-import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.map.isOnTheMap
+import dev.catsradar.presentation.time
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.UtcOffset
 
 class EncountersStateMapper(
     private val dateTimeFormatter: DateTimeFormatter,
@@ -52,7 +52,7 @@ class EncountersStateMapper(
         val earliest = last()
         return OutingHeader(
             key = "header-${earliest.id}",
-            label = "${dateTimeFormatter.dayHeader(earliest.localDate(), today)}, ${earliest.timeLabel()}",
+            label = "${dateTimeFormatter.dayHeader(earliest, today)}, ${earliest.timeLabel()}",
             mapOutingId = mapOutingId,
         )
     }
@@ -96,8 +96,7 @@ class EncountersStateMapper(
         }
     }
 
-    private fun Encounter.timeLabel(): String =
-        dateTimeFormatter.time(occurredAt, UtcOffset(minutes = tzOffsetMinutes))
+    private fun Encounter.timeLabel(): String = dateTimeFormatter.time(this)
 }
 
 private inline fun <T, R> List<T>.mapWithGroupPosition(transform: (T, GroupPosition) -> R): List<R> =
