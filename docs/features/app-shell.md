@@ -198,7 +198,8 @@ because building it reaches Play Services, which only a real location call shoul
 
 ## Not handled yet
 
-The theme is the foundation of a design pass that is not finished: coats are drawn as cat faces
-(`coat.md`) and the Counter's count springs and rolls (`counting-cats.md`), but the rhythm of the
-list, detail and statistics screens is still to come. Until then, those screens wear the new colours on
-their old layouts. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
+Three surfaces still wear the layouts they had before the look above was set: the Places
+drill-down, the Counter's import progress and summary, and the two coat sheets — the coat question
+after a photo and the map's coat filter. The
+[design pass on the remaining screens](../tbd/decompositions/2026-09-25-design-pass-remaining-screens.md)
+covers them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
