@@ -10,6 +10,12 @@ names it. The run happens in a worker, so it survives leaving the screen; the Co
 it has got, and at the end, briefly, what was added, skipped and failed, with one undo for the
 whole batch.
 
+Both show as a card above the count, on the same low surface as the Statistics and Settings rows,
+with a round icon at its start. While the run goes, the card shows the gallery icon, **Importing
+photos**, "7 of 23" and a progress bar. When it has finished, the card shows a check, the number
+added and, only when there were any, the skipped and failed lines, with **Undo** at its end, or
+**OK** once the run has been undone.
+
 ## What an imported photo becomes
 
 An encounter with `kind = PHOTO` and `origin = GALLERY`. The app writes its own compressed copy and

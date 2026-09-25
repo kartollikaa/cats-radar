@@ -1,17 +1,27 @@
 package dev.catsradar.ui.counter
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -23,17 +33,17 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 @Composable
 internal fun ImportProgress(state: ImportProgressState, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    ImportCard(iconRes = R.drawable.ic_photo_library, modifier = modifier) {
+        Text(text = stringResource(R.string.counter_import_running), style = MaterialTheme.typography.titleSmall)
         Text(
             text = stringResource(R.string.counter_import_progress, state.done, state.total),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         LinearProgressIndicator(
             progress = { if (state.total == 0) 0f else state.done.toFloat() / state.total },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            strokeCap = StrokeCap.Round,
         )
     }
 }
@@ -45,33 +55,72 @@ internal fun ImportSummary(
     onUndoClick: () -> Unit = {},
     onDismissClick: () -> Unit = {},
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    ImportCard(
+        iconRes = R.drawable.ic_check,
+        modifier = modifier,
+        trailing = {
+            if (state.undoable) {
+                TextButton(onClick = onUndoClick) { Text(text = stringResource(R.string.counter_undo)) }
+            } else {
+                TextButton(onClick = onDismissClick) { Text(text = stringResource(R.string.counter_import_ok)) }
+            }
+        },
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = pluralStringResource(R.plurals.counter_import_added, state.added, state.added),
-                style = MaterialTheme.typography.bodyMedium,
+        Text(
+            text = pluralStringResource(R.plurals.counter_import_added, state.added, state.added),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        state.skipped?.let { DetailLine(pluralStringResource(R.plurals.counter_import_skipped, it, it)) }
+        state.failed?.let { DetailLine(pluralStringResource(R.plurals.counter_import_failed, it, it)) }
+    }
+}
+
+@Composable
+private fun DetailLine(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ImportCard(
+    @DrawableRes iconRes: Int,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                content = content,
             )
-            state.skipped?.let {
-                Text(
-                    text = pluralStringResource(R.plurals.counter_import_skipped, it, it),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-            state.failed?.let {
-                Text(
-                    text = pluralStringResource(R.plurals.counter_import_failed, it, it),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-        }
-        if (state.undoable) {
-            AssistChip(onClick = onUndoClick, label = { Text(text = stringResource(R.string.counter_undo)) })
-        } else {
-            AssistChip(onClick = onDismissClick, label = { Text(text = stringResource(R.string.counter_import_ok)) })
+            trailing()
         }
     }
 }
