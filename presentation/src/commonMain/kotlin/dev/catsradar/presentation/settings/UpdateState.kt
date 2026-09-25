@@ -16,7 +16,7 @@ sealed interface UpdateStatus {
     data class ReadyToInstall(val version: String) : UpdateStatus
     data class NeedsInstallPermission(val version: String) : UpdateStatus
     data class Installing(val version: String) : UpdateStatus
-    data class InstallFailed(val version: String) : UpdateStatus
+    data class InstallFailed(val version: String, val reason: InstallFailure) : UpdateStatus
     data class Failed(val reason: UpdateFailure) : UpdateStatus
 }
 
@@ -38,4 +38,15 @@ enum class UpdateFailure {
     SOURCE_UNAVAILABLE,
     UNREADABLE_ANSWER,
     DOWNLOAD_FAILED,
+}
+
+/** Why an install did not happen. The words live in `:ui`. */
+enum class InstallFailure {
+    SIGNED_DIFFERENTLY,
+    INCOMPATIBLE,
+    NO_SPACE,
+    PACKAGE_GONE,
+    NOT_THIS_APP,
+    NOT_NEWER,
+    OTHER,
 }

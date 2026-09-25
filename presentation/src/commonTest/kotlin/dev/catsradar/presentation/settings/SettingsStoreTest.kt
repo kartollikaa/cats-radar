@@ -50,10 +50,12 @@ class SettingsStoreTest {
         settingsRepository = repository,
         buildInfoReader = buildInfoReader,
         aboutStateMapper = AboutStateMapper(),
-        checkForUpdate = CheckForUpdate(updateSource, pixelBuildInfo.app),
-        updateStateMapper = UpdateStateMapper(),
-        installed = pixelBuildInfo.app,
-        installPermission = installPermission,
+        updates = SettingsUpdates(
+            checkForUpdate = CheckForUpdate(updateSource, pixelBuildInfo.app),
+            installed = pixelBuildInfo.app,
+            installPermission = installPermission,
+            mapper = UpdateStateMapper(),
+        ),
     )
 
     @Test
@@ -545,11 +547,11 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.Update.InstallClicked)
         runCurrent()
 
-        store.dispatch(SettingsIntent.Update.InstallFinished(InstallOutcome.FAILED))
+        store.dispatch(SettingsIntent.Update.InstallFinished(InstallOutcome.CONFLICT))
         runCurrent()
 
         assertEquals(
-            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Check),
+            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta", InstallFailure.SIGNED_DIFFERENTLY)),
             store.state.value.update,
         )
     }
@@ -627,7 +629,10 @@ class SettingsStoreTest {
             runCurrent()
 
             assertEquals(SettingsEffect.InstallUpdate("/cache/updates/1.5.0-beta.apk"), awaitItem())
-            assertEquals(UpdateState(UpdateStatus.Installing("1.5.0-beta"), UpdateAction.Busy), store.state.value.update)
+            assertEquals(
+                UpdateState(UpdateStatus.Installing("1.5.0-beta"), UpdateAction.Busy),
+                store.state.value.update,
+            )
             cancelAndIgnoreRemainingEvents()
         }
     }

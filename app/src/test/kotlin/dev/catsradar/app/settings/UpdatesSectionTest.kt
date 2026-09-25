@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.settings.InstallFailure
 import dev.catsradar.presentation.settings.SettingsState
 import dev.catsradar.presentation.settings.UpdateAction
 import dev.catsradar.presentation.settings.UpdateFailure
@@ -55,7 +56,19 @@ class UpdatesSectionTest {
             UpdateStatus.ReadyToInstall(v) to text(R.string.settings_updates_ready, v),
             UpdateStatus.NeedsInstallPermission(v) to text(R.string.settings_updates_needs_permission, v),
             UpdateStatus.Installing(v) to text(R.string.settings_updates_installing, v),
-            UpdateStatus.InstallFailed(v) to text(R.string.settings_updates_install_failed, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.OTHER) to text(R.string.settings_updates_install_failed, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.SIGNED_DIFFERENTLY) to
+                text(R.string.settings_updates_install_conflict, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.INCOMPATIBLE) to
+                text(R.string.settings_updates_install_incompatible, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.NO_SPACE) to
+                text(R.string.settings_updates_install_storage, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.PACKAGE_GONE) to
+                text(R.string.settings_updates_install_package_gone, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.NOT_THIS_APP) to
+                text(R.string.settings_updates_install_not_this_app),
+            UpdateStatus.InstallFailed(v, InstallFailure.NOT_NEWER) to
+                text(R.string.settings_updates_install_not_newer, v),
             UpdateStatus.Failed(UpdateFailure.OFFLINE) to text(R.string.settings_updates_offline),
             UpdateStatus.Failed(UpdateFailure.SOURCE_UNAVAILABLE) to text(R.string.settings_updates_source_unavailable),
             UpdateStatus.Failed(UpdateFailure.UNREADABLE_ANSWER) to text(R.string.settings_updates_unreadable),

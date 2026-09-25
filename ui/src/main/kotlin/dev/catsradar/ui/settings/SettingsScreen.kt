@@ -32,10 +32,6 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.settings.AboutState
 import dev.catsradar.presentation.settings.BackupOutcome
 import dev.catsradar.presentation.settings.SettingsState
-import dev.catsradar.presentation.settings.UpdateAction
-import dev.catsradar.presentation.settings.UpdateFailure
-import dev.catsradar.presentation.settings.UpdateState
-import dev.catsradar.presentation.settings.UpdateStatus
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.components.ValueRow
@@ -99,67 +95,6 @@ fun SettingsScreen(
         }
         state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
     }
-}
-
-@Composable
-private fun UpdatesSection(
-    update: UpdateState,
-    modifier: Modifier = Modifier,
-    onCheckClick: () -> Unit = {},
-    onInstallClick: () -> Unit = {},
-    onAllowInstallsClick: () -> Unit = {},
-) {
-    Column(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = update.status.message(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        when (val status = update.status) {
-            UpdateStatus.Checking, is UpdateStatus.DownloadStarting, is UpdateStatus.Installing ->
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            is UpdateStatus.Downloading ->
-                LinearProgressIndicator(progress = { status.percent / 100f }, modifier = Modifier.fillMaxWidth())
-            else -> Unit
-        }
-        when (val action = update.action) {
-            UpdateAction.Check, UpdateAction.Busy -> Button(
-                onClick = onCheckClick,
-                enabled = action == UpdateAction.Check,
-            ) {
-                Text(text = stringResource(R.string.settings_updates_check))
-            }
-            is UpdateAction.Install -> Button(onClick = onInstallClick) {
-                Text(text = stringResource(R.string.settings_updates_install, action.version))
-            }
-            UpdateAction.AllowInstalls -> Button(onClick = onAllowInstallsClick) {
-                Text(text = stringResource(R.string.settings_updates_allow_installs))
-            }
-        }
-    }
-}
-
-@Composable
-private fun UpdateStatus.message(): String = when (this) {
-    UpdateStatus.Idle, UpdateStatus.Checking -> stringResource(R.string.settings_updates_explained)
-    UpdateStatus.UpToDate -> stringResource(R.string.settings_updates_up_to_date)
-    is UpdateStatus.DownloadStarting -> stringResource(R.string.settings_updates_downloading, version)
-    is UpdateStatus.Downloading -> stringResource(R.string.settings_updates_downloading_percent, version, percent)
-    is UpdateStatus.ReadyToInstall -> stringResource(R.string.settings_updates_ready, version)
-    is UpdateStatus.NeedsInstallPermission -> stringResource(R.string.settings_updates_needs_permission, version)
-    is UpdateStatus.Installing -> stringResource(R.string.settings_updates_installing, version)
-    is UpdateStatus.InstallFailed -> stringResource(R.string.settings_updates_install_failed, version)
-    is UpdateStatus.Failed -> stringResource(
-        when (reason) {
-            UpdateFailure.OFFLINE -> R.string.settings_updates_offline
-            UpdateFailure.SOURCE_UNAVAILABLE -> R.string.settings_updates_source_unavailable
-            UpdateFailure.UNREADABLE_ANSWER -> R.string.settings_updates_unreadable
-            UpdateFailure.DOWNLOAD_FAILED -> R.string.settings_updates_download_failed
-        },
-    )
 }
 
 @Composable

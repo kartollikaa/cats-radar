@@ -16,13 +16,13 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import dev.catsradar.app.update.InstallResults
+import dev.catsradar.app.update.InstallStart
 import dev.catsradar.app.update.UpdateInstaller
 import dev.catsradar.app.update.installPermissionPage
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.UpdateDownloadScheduler
 import dev.catsradar.app.worker.toSettingsIntent
 import dev.catsradar.app.worker.toUpdateIntent
-import dev.catsradar.presentation.settings.InstallOutcome
 import dev.catsradar.presentation.settings.SettingsEffect
 import dev.catsradar.presentation.settings.SettingsIntent
 import dev.catsradar.presentation.settings.SettingsStore
@@ -48,9 +48,7 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
     val importLauncher = rememberLauncherForActivityResult(OpenDocument()) { uri ->
         store.dispatch(SettingsIntent.Backup.ImportSourceChosen(uri?.toString()))
     }
-    val permissionLauncher = rememberLauncherForActivityResult(StartActivityForResult()) {
-        store.dispatch(SettingsIntent.Update.InstallPermissionReturned)
-    }
+    val permissionLauncher = rememberInstallPermissionLauncher(store)
     // The worker outlives this screen, so its state is read back rather than remembered.
     LaunchedEffect(store, backupScheduler) {
         backupScheduler.observe().collect { info -> info?.toSettingsIntent()?.let(store::dispatch) }
@@ -74,10 +72,9 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
                 is SettingsEffect.StartImport -> backupScheduler.import(effect.source)
                 is SettingsEffect.CopyBuildInfo -> copyBuildInfo(clipboard, context, effect.report)
                 is SettingsEffect.StartUpdateDownload -> updateScheduler.download(effect.version, effect.apk)
-                SettingsEffect.OpenInstallPermission -> permissionLauncher.launch(installPermissionPage(context.packageName))
-                is SettingsEffect.InstallUpdate -> if (!updateInstaller.install(effect.path)) {
-                    store.dispatch(SettingsIntent.Update.InstallFinished(InstallOutcome.FAILED))
-                }
+                SettingsEffect.OpenInstallPermission ->
+                    permissionLauncher.launch(installPermissionPage(context.packageName))
+                is SettingsEffect.InstallUpdate -> install(updateInstaller, effect.path, store)
             }
         }
     }
@@ -95,6 +92,17 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
         onAllowInstallsClick = { store.dispatch(SettingsIntent.Update.AllowInstallsClicked) },
         onCopyBuildInfoClick = { store.dispatch(SettingsIntent.BuildInfoCopyClicked) },
     )
+}
+
+@Composable
+private fun rememberInstallPermissionLauncher(store: SettingsStore) =
+    rememberLauncherForActivityResult(StartActivityForResult()) {
+        store.dispatch(SettingsIntent.Update.InstallPermissionReturned)
+    }
+
+private suspend fun install(installer: UpdateInstaller, path: String, store: SettingsStore) {
+    val refused = installer.install(path) as? InstallStart.Refused ?: return
+    store.dispatch(SettingsIntent.Update.InstallFinished(refused.outcome))
 }
 
 // The download worker and the install session both outlive this screen, so both are read back.
