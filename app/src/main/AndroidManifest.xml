@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+    <!-- An update installs itself through PackageInstaller; the user still allows it per app. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- The Analytics SDK merges these in to read an ad id and report ad attribution; the app uses neither. -->
     <uses-permission
         android:name="com.google.android.gms.permission.AD_ID"
@@ -70,6 +72,11 @@
             android:name=".notification.WalkRecordingService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <!-- Not exported: only the system, through this app's own PendingIntent, reports an install. -->
+        <receiver
+            android:name=".update.UpdateInstallReceiver"
+            android:exported="false" />
 
         <!-- Exported: the launcher hosts it, and AppWidgetManager is what sends UPDATE. -->
         <receiver

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.settings.AboutState
 import dev.catsradar.presentation.settings.BackupOutcome
 import dev.catsradar.presentation.settings.SettingsState
+import dev.catsradar.presentation.settings.UpdateAction
 import dev.catsradar.presentation.settings.UpdateFailure
 import dev.catsradar.presentation.settings.UpdateState
 import dev.catsradar.presentation.settings.UpdateStatus
@@ -52,6 +53,7 @@ fun SettingsScreen(
     onImportClick: () -> Unit = {},
     onBackupOutcomeDismiss: () -> Unit = {},
     onCheckForUpdatesClick: () -> Unit = {},
+    onInstallUpdateClick: () -> Unit = {},
     onCopyBuildInfoClick: () -> Unit = {},
 ) {
     Column(
@@ -87,42 +89,76 @@ fun SettingsScreen(
             )
         }
         SectionCard(R.string.settings_updates) {
-            UpdatesSection(update = state.update, onCheckClick = onCheckForUpdatesClick)
+            UpdatesSection(
+                update = state.update,
+                onCheckClick = onCheckForUpdatesClick,
+                onInstallClick = onInstallUpdateClick,
+            )
         }
         state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
     }
 }
 
 @Composable
-private fun UpdatesSection(update: UpdateState, modifier: Modifier = Modifier, onCheckClick: () -> Unit = {}) {
+private fun UpdatesSection(
+    update: UpdateState,
+    modifier: Modifier = Modifier,
+    onCheckClick: () -> Unit = {},
+    onInstallClick: () -> Unit = {},
+) {
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = update.status.message() ?: stringResource(R.string.settings_updates_explained),
+            text = update.status.message(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (update.status == UpdateStatus.Checking) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        when (val status = update.status) {
+            UpdateStatus.Checking, is UpdateStatus.Installing ->
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            is UpdateStatus.Downloading -> {
+                val percent = status.percent
+                if (percent == null) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else {
+                    LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
+                }
+            }
+            else -> Unit
         }
-        Button(onClick = onCheckClick, enabled = update.checkEnabled) {
-            Text(text = stringResource(R.string.settings_updates_check))
+        when (val action = update.action) {
+            UpdateAction.Check, UpdateAction.Busy -> Button(
+                onClick = onCheckClick,
+                enabled = action == UpdateAction.Check,
+            ) {
+                Text(text = stringResource(R.string.settings_updates_check))
+            }
+            is UpdateAction.Install -> Button(onClick = onInstallClick) {
+                Text(text = stringResource(R.string.settings_updates_install, action.version))
+            }
         }
     }
 }
 
 @Composable
-private fun UpdateStatus.message(): String? = when (this) {
-    UpdateStatus.Idle, UpdateStatus.Checking -> null
+private fun UpdateStatus.message(): String = when (this) {
+    UpdateStatus.Idle, UpdateStatus.Checking -> stringResource(R.string.settings_updates_explained)
     UpdateStatus.UpToDate -> stringResource(R.string.settings_updates_up_to_date)
-    is UpdateStatus.Available -> stringResource(R.string.settings_updates_available, version)
+    is UpdateStatus.Downloading ->
+        percent
+            ?.let { stringResource(R.string.settings_updates_downloading_percent, version, it) }
+            ?: stringResource(R.string.settings_updates_downloading, version)
+    is UpdateStatus.ReadyToInstall -> stringResource(R.string.settings_updates_ready, version)
+    is UpdateStatus.Installing -> stringResource(R.string.settings_updates_installing, version)
+    is UpdateStatus.InstallFailed -> stringResource(R.string.settings_updates_install_failed, version)
     is UpdateStatus.Failed -> stringResource(
         when (reason) {
             UpdateFailure.OFFLINE -> R.string.settings_updates_offline
             UpdateFailure.SOURCE_UNAVAILABLE -> R.string.settings_updates_source_unavailable
             UpdateFailure.UNREADABLE_ANSWER -> R.string.settings_updates_unreadable
+            UpdateFailure.DOWNLOAD_FAILED -> R.string.settings_updates_download_failed
         },
     )
 }

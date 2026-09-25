@@ -11,8 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.catsradar.app.update.InstallResults
+import dev.catsradar.app.update.UpdateInstaller
 import dev.catsradar.app.worker.BackupScheduler
+import dev.catsradar.app.worker.UpdateDownloadScheduler
 import dev.catsradar.app.worker.toSettingsIntent
+import dev.catsradar.app.worker.toUpdateIntent
+import dev.catsradar.presentation.settings.InstallOutcome
 import dev.catsradar.presentation.settings.SettingsEffect
 import dev.catsradar.presentation.settings.SettingsIntent
 import dev.catsradar.presentation.settings.SettingsStore
@@ -27,6 +32,9 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
     val store = koinViewModel<SettingsStore>()
     val state by store.state.collectAsStateWithLifecycle()
     val backupScheduler = koinInject<BackupScheduler>()
+    val updateScheduler = koinInject<UpdateDownloadScheduler>()
+    val updateInstaller = koinInject<UpdateInstaller>()
+    val installResults = koinInject<InstallResults>()
     val context = LocalContext.current
     val clipboard = LocalClipboard.current.nativeClipboard
     val exportLauncher = rememberLauncherForActivityResult(CreateDocument(BACKUP_MIME_TYPE)) { uri ->
@@ -39,7 +47,16 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
     LaunchedEffect(store, backupScheduler) {
         backupScheduler.observe().collect { info -> info?.toSettingsIntent()?.let(store::dispatch) }
     }
-    LaunchedEffect(store, backupScheduler, exportLauncher, importLauncher, clipboard) {
+    FollowUpdate(store, updateScheduler, installResults)
+    LaunchedEffect(
+        store,
+        backupScheduler,
+        exportLauncher,
+        importLauncher,
+        clipboard,
+        updateScheduler,
+        updateInstaller
+    ) {
         store.effects.collect { effect ->
             when (effect) {
                 SettingsEffect.PickExportTarget -> exportLauncher.launch(defaultBackupName())
@@ -47,6 +64,10 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
                 is SettingsEffect.StartExport -> backupScheduler.export(effect.target)
                 is SettingsEffect.StartImport -> backupScheduler.import(effect.source)
                 is SettingsEffect.CopyBuildInfo -> copyBuildInfo(clipboard, context, effect.report)
+                is SettingsEffect.StartUpdateDownload -> updateScheduler.download(effect.version, effect.apk)
+                is SettingsEffect.InstallUpdate -> if (!updateInstaller.install(effect.path)) {
+                    store.dispatch(SettingsIntent.Update.InstallFinished(InstallOutcome.FAILED))
+                }
             }
         }
     }
@@ -60,8 +81,20 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
         onBackupOutcomeDismiss = { store.dispatch(SettingsIntent.Backup.OutcomeDismissed) },
         onCheckForUpdatesClick = { store.dispatch(SettingsIntent.Update.CheckClicked) },
+        onInstallUpdateClick = { store.dispatch(SettingsIntent.Update.InstallClicked) },
         onCopyBuildInfoClick = { store.dispatch(SettingsIntent.BuildInfoCopyClicked) },
     )
+}
+
+// The download worker and the install session both outlive this screen, so both are read back.
+@Composable
+private fun FollowUpdate(store: SettingsStore, scheduler: UpdateDownloadScheduler, installResults: InstallResults) {
+    LaunchedEffect(store, scheduler) {
+        scheduler.observe().collect { info -> info?.toUpdateIntent()?.let(store::dispatch) }
+    }
+    LaunchedEffect(store, installResults) {
+        installResults.observe().collect { store.dispatch(SettingsIntent.Update.InstallFinished(it)) }
+    }
 }
 
 private const val BACKUP_MIME_TYPE = "application/zip"
