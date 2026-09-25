@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +63,7 @@ fun EncounterDetailScreen(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val start = contentPadding.calculateStartPadding(layoutDirection)
@@ -85,6 +87,7 @@ fun EncounterDetailScreen(
                 onPickPhotoClick = onPickPhotoClick,
                 onPhotoClick = onPhotoClick,
                 onCoordinatesClick = onCoordinatesClick,
+                onSetLocationClick = onSetLocationClick,
             )
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
@@ -115,6 +118,7 @@ private fun LoadedDetail(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -134,7 +138,7 @@ private fun LoadedDetail(
             )
             Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        WhereCard(state, onCoordinatesClick = onCoordinatesClick)
+        WhereCard(state, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             CoatPicker(
                 selected = state.coat,
@@ -159,6 +163,7 @@ private fun WhereCard(
     state: EncounterDetailState.Loaded,
     modifier: Modifier = Modifier,
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val opensMap = if (state.onTheMap) {
         Modifier.clickable(
@@ -209,7 +214,22 @@ private fun WhereCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            if (state.setsLocation) {
+                SetLocationButton(modifier = Modifier.padding(top = 8.dp), onClick = onSetLocationClick)
+            }
         }
+    }
+}
+
+@Composable
+private fun SetLocationButton(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+    FilledTonalButton(onClick = onClick, modifier = modifier) {
+        Icon(
+            painter = painterResource(R.drawable.ic_pin),
+            contentDescription = null,
+            modifier = Modifier.padding(end = 8.dp).size(ButtonDefaults.IconSize),
+        )
+        Text(text = stringResource(R.string.detail_set_location))
     }
 }
 

@@ -163,6 +163,13 @@
     <string name="detail_open_photo">Open full screen</string>
     <string name="detail_back">Back</string>
     <string name="detail_show_on_map">Show on the map</string>
+    <string name="detail_set_location">Set on map</string>
+
+    <string name="picker_back">Back</string>
+    <string name="picker_hint">Move the map to put the pin where the cat was</string>
+    <string name="picker_where_am_i">Where am I</string>
+    <string name="picker_save">Save</string>
+    <string name="picker_position_unknown">Couldn\'t tell where you are</string>
     <string name="viewer_back">Back</string>
     <string name="viewer_open_in_gallery">Open in gallery</string>
     <string name="viewer_gallery_gone">This photo is no longer in the gallery</string>

@@ -21,10 +21,11 @@ internal fun handleEncounterDetailEffect(
     onNavigateBack: () -> Unit,
     onOpenPhoto: (photoId: String) -> Unit,
     onOpenMap: () -> Unit,
+    onOpenLocationPicker: () -> Unit,
     cameraLauncher: CameraLauncher,
     photoPickerLauncher: PhotoPickerLauncher,
-    photoFailureReporter: PhotoFailureReporter,
-    alreadyThereReporter: PhotoFailureReporter,
+    photoFailureReporter: MessageReporter,
+    alreadyThereReporter: MessageReporter,
     captureDiscarder: CaptureDiscarder,
 ) {
     when (effect) {
@@ -33,6 +34,7 @@ internal fun handleEncounterDetailEffect(
         EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch()
         is EncounterDetailEffect.OpenPhoto -> onOpenPhoto(effect.photoId)
         EncounterDetailEffect.OpenMap -> onOpenMap()
+        EncounterDetailEffect.OpenLocationPicker -> onOpenLocationPicker()
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
         EncounterDetailEffect.PhotoAlreadyThere -> alreadyThereReporter.report()
         is EncounterDetailEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
@@ -45,6 +47,7 @@ internal fun EncounterDetailDestination(
     contentPadding: PaddingValues,
     onOpenPhoto: (photoId: String) -> Unit,
     onOpenMap: () -> Unit,
+    onOpenLocationPicker: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
 ) {
@@ -53,10 +56,11 @@ internal fun EncounterDetailDestination(
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
     val currentOnOpenMap by rememberUpdatedState(onOpenMap)
+    val currentOnOpenLocationPicker by rememberUpdatedState(onOpenLocationPicker)
     val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(EncounterDetailIntent.PhotoTaken(uri)) }
     val photoPicker = rememberSinglePhotoPicker { uri -> store.dispatch(EncounterDetailIntent.PhotoPicked(uri)) }
-    val photoFailureReporter = rememberPhotoFailureReporter(R.string.detail_photo_not_attached)
-    val alreadyThereReporter = rememberPhotoFailureReporter(R.string.detail_photo_already_there)
+    val photoFailureReporter = rememberMessageReporter(R.string.detail_photo_not_attached)
+    val alreadyThereReporter = rememberMessageReporter(R.string.detail_photo_already_there)
     val captureDiscarder = rememberCaptureDiscarder()
     LaunchedEffect(store, cameraLauncher, photoPicker, photoFailureReporter, alreadyThereReporter, captureDiscarder) {
         store.effects.collect { effect ->
@@ -65,6 +69,7 @@ internal fun EncounterDetailDestination(
                 onNavigateBack = { currentOnNavigateBack() },
                 onOpenPhoto = { photoId -> currentOnOpenPhoto(photoId) },
                 onOpenMap = { currentOnOpenMap() },
+                onOpenLocationPicker = { currentOnOpenLocationPicker() },
                 cameraLauncher = cameraLauncher,
                 photoPickerLauncher = photoPicker,
                 photoFailureReporter = photoFailureReporter,
@@ -85,5 +90,6 @@ internal fun EncounterDetailDestination(
         onPickPhotoClick = { store.dispatch(EncounterDetailIntent.PickPhotoClicked) },
         onPhotoClick = { photoId -> store.dispatch(EncounterDetailIntent.PhotoClicked(photoId)) },
         onCoordinatesClick = { store.dispatch(EncounterDetailIntent.CoordinatesClicked) },
+        onSetLocationClick = { store.dispatch(EncounterDetailIntent.SetLocationClicked) },
     )
 }

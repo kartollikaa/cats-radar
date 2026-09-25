@@ -49,6 +49,7 @@ enum class AnalyticsScreen {
     ENCOUNTERS,
     ENCOUNTER_DETAIL,
     PHOTO_VIEWER,
+    LOCATION_PICKER,
     STATISTICS,
     REGIONS,
     MAP,
