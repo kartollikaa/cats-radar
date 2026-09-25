@@ -142,9 +142,9 @@ half-open stop (`BottomSheetNavigationTest`). A sheet taller than half the scree
 height rather than halfway (*a sheet taller than half the screen opens at its full height*), a
 shorter one at its own height (*a sheet shorter than half the screen opens at its own height*), and a
 drag part of the way down closes it instead of parking it half open (*dragging a sheet part of
-the way down from its full height closes it rather than stopping half open*). Material's own sheets — `ModalBottomSheet`,
-`BottomSheetScaffold` and their states — stop a tall sheet halfway by default, so no other file uses
-them (`BottomSheetUsageTest`).
+the way down from its full height closes it rather than stopping half open*). Material's own
+sheets — `ModalBottomSheet`, `BottomSheetScaffold` and their states — stop a tall sheet halfway by
+default, so no other file uses them (`BottomSheetUsageTest`).
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
