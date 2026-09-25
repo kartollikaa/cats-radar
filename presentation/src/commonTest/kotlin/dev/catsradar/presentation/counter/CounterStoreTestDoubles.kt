@@ -55,6 +55,9 @@ internal class FakeEncounterRepository : EncounterRepository {
     var addPhotoShouldThrow: Throwable? = null
     var setCoatShouldThrow: Throwable? = null
     var setCoatGate: CompletableDeferred<Unit>? = null
+    val attachLocationCalls = mutableListOf<Pair<String, LocationStamp>>()
+    var attachLocationShouldThrow: Throwable? = null
+    var attachLocationGate: CompletableDeferred<Unit>? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -85,6 +88,9 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean {
+        attachLocationCalls += id to stamp
+        attachLocationGate?.await()
+        attachLocationShouldThrow?.let { throw it }
         var written = false
         encounters.update { list ->
             written = false

@@ -6,6 +6,7 @@ sealed interface EncounterDetailEffect {
     data object OpenPhotoPicker : EncounterDetailEffect
     data class OpenPhoto(val photoId: String) : EncounterDetailEffect
     data object OpenMap : EncounterDetailEffect
+    data object OpenLocationPicker : EncounterDetailEffect
     data object PhotoNotAttached : EncounterDetailEffect
     data object PhotoAlreadyThere : EncounterDetailEffect
 

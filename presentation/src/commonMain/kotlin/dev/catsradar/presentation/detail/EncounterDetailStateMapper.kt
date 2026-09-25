@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
@@ -37,6 +38,7 @@ class EncounterDetailStateMapper(
             coat = encounter.coat?.toOption(),
             addPhoto = if (attachingPhoto) AddPhoto.ATTACHING else AddPhoto.READY,
             onTheMap = encounter.isOnTheMap(),
+            setsLocation = encounter.locationSource == LocationSource.NONE,
         )
     }
 }

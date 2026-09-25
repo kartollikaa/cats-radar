@@ -60,6 +60,15 @@ class EncounterDetailStateMapperTest {
     }
 
     @Test
+    fun `only a cat with no location is offered one on a map`() {
+        val offered = LocationSource.entries.associateWith { source ->
+            mapper.map(encounterFixture("e1", OCCURRED, locationSource = source), today).setsLocation
+        }
+
+        assertEquals(LocationSource.entries.associateWith { it == LocationSource.NONE }, offered)
+    }
+
+    @Test
     fun `an accuracy with no coordinates to qualify is dropped`() {
         val encounter = encounterFixture("e1", OCCURRED).copy(lat = null, lon = null, accuracyMeters = 12f)
 
