@@ -106,6 +106,11 @@ other glyphs have no separate filled version. The label is always shown and name
 icons carry no content description of their own. Each label gets a fifth of the bar, which on a
 360dp-wide phone is narrower than «Статистика», so the Russian stats tab says «Итоги».
 
+**Pushed screens.** A screen pushed above a tab has a back arrow in a tonal circle, pinned at its
+top (`BackBar`). A cat's detail and every level of Places are such screens. The bar draws no
+background, so the screen scrolls under it, and the content starts below it (`belowBackBar`). The
+arrow takes back only its own screen, so a quick double tap never pops the one under it.
+
 **Motion.** Screens change the way Material's transition patterns describe, and every change is
 short: `NavTransitionTimingTest` drives the host's own `NavDisplay` on the test clock and fails if a
 tab switch, a step forward or a step back runs past the motion's duration and the frame that ends

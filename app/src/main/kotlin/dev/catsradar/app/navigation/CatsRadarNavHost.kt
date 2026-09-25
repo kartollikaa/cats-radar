@@ -142,6 +142,7 @@ internal fun catsRadarEntries(
         RegionsDestination(
             key = key,
             contentPadding = contentPadding,
+            onBackClick = { backStack.popIfOnTop(key) },
             onRegionClick = { row -> backStack.push(row.toNavKey()) },
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
             onOutingMapClick = { id -> backStack.showOutingOnMap(id, mapFocus) },
@@ -225,6 +226,7 @@ private fun defaultBackupName(): String =
 private fun RegionsDestination(
     key: Regions,
     contentPadding: PaddingValues,
+    onBackClick: () -> Unit,
     onRegionClick: (RegionRowKey) -> Unit,
     onEncounterClick: (String) -> Unit,
     onOutingMapClick: (String) -> Unit,
@@ -236,6 +238,7 @@ private fun RegionsDestination(
         state = state,
         modifier = modifier,
         contentPadding = contentPadding,
+        onBackClick = onBackClick,
         onRegionClick = onRegionClick,
         onEncounterClick = onEncounterClick,
         onOutingMapClick = onOutingMapClick,

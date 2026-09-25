@@ -34,8 +34,10 @@ import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.BackBar
 import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.components.SectionCard
+import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.encounters.EncounterRows
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -46,45 +48,57 @@ fun RegionsScreen(
     state: RegionsState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onBackClick: () -> Unit = {},
     onRegionClick: (RegionRowKey) -> Unit = {},
     onEncounterClick: (String) -> Unit = {},
     onOutingMapClick: (String) -> Unit = {},
 ) {
-    when (state) {
-        RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
-        is RegionsState.Empty -> EmptyRegions(state, modifier = modifier.fillMaxSize().padding(contentPadding))
-        is RegionsState.Places -> Column(
-            modifier = modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(contentPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            state.header?.let { RegionsHeadline(it) }
-            SectionCard(state.section.titleRes()) {
-                state.rows.forEach { row -> RegionRow(row, onClick = { onRegionClick(row.key) }) }
-            }
-        }
-        is RegionsState.Cats -> {
-            val header = state.header
-            val headline: (@Composable () -> Unit)? = remember(header) {
-                header?.let { shown ->
-                    @Composable {
-                        RegionsHeadline(shown, modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp))
-                    }
+    val belowBar = belowBackBar(contentPadding)
+    Box(modifier = modifier.fillMaxSize()) {
+        when (state) {
+            RegionsState.Loading -> Unit
+            is RegionsState.Empty -> EmptyRegions(state, modifier = Modifier.fillMaxSize().padding(belowBar))
+            is RegionsState.Places -> Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(belowBar)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                state.header?.let { RegionsHeadline(it) }
+                SectionCard(state.section.titleRes()) {
+                    state.rows.forEach { row -> RegionRow(row, onClick = { onRegionClick(row.key) }) }
                 }
             }
-            EncounterRows(
-                rows = state.rows,
-                layout = EncountersLayout.LIST,
-                modifier = modifier.fillMaxSize(),
-                contentPadding = contentPadding,
-                onEncounterClick = onEncounterClick,
-                onOutingMapClick = onOutingMapClick,
-                leadingItem = headline,
-            )
+            is RegionsState.Cats -> {
+                val header = state.header
+                val headline: (@Composable () -> Unit)? = remember(header) {
+                    header?.let { shown ->
+                        @Composable {
+                            RegionsHeadline(
+                                header = shown,
+                                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
+                            )
+                        }
+                    }
+                }
+                EncounterRows(
+                    rows = state.rows,
+                    layout = EncountersLayout.LIST,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = belowBar,
+                    onEncounterClick = onEncounterClick,
+                    onOutingMapClick = onOutingMapClick,
+                    leadingItem = headline,
+                )
+            }
         }
+        BackBar(
+            contentDescription = stringResource(R.string.regions_back),
+            contentPadding = contentPadding,
+            onBackClick = onBackClick,
+        )
     }
 }
 
