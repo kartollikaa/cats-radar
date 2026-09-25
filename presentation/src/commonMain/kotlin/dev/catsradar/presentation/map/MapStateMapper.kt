@@ -2,6 +2,7 @@ package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.WalkTrack
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.walk.overlaps
 import dev.catsradar.presentation.coat.toOption
@@ -17,7 +18,10 @@ private const val MIN_AREA_DEGREES = 0.01
 
 private const val MAX_LATITUDE = 90.0
 
-class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
+class MapStateMapper(
+    private val encountersMapper: EncountersStateMapper,
+    private val photoStorage: PhotoStorage,
+) {
 
     /** A focus in [choices] that matches nothing is ignored. */
     fun map(
@@ -31,7 +35,9 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
         val located = shown.mapNotNull { it.toPoint() }
         if (located.isEmpty()) return MapState.Empty
         val filtering = choices.coats.isNotEmpty()
-        val points = located.filter { choices.coats.shows(it.coat) }
+        val points = shown.sortedByDescending { it.occurredAt }
+            .mapNotNull { it.toPoint() }
+            .filter { choices.coats.shows(it.coat) }
         val locatedPositions = located.map { MapPosition(it.latitude, it.longitude) }
         val focus = outing?.let {
             MapFocus(outingId = it.first().id, label = headerLabel(it, today), lines = routeOf(it, located, walks))
@@ -76,7 +82,13 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
         val latitude = lat
         val longitude = lon
         if (!isOnTheMap() || latitude == null || longitude == null) return null
-        return MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
+        return MapPoint(
+            id = id,
+            latitude = latitude,
+            longitude = longitude,
+            coat = coat?.toOption(),
+            thumbnailPath = cover?.thumbPath?.let(photoStorage::resolve),
+        )
     }
 
     private fun areaAround(points: List<MapPosition>): MapArea {

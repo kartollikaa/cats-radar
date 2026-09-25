@@ -105,6 +105,7 @@ private fun CatsMap(
 ) {
     val colors = catLayerColors()
     val cats = remember(state.points) { catFeatures(state.points) }
+    val photos = remember(state.points) { photoImages(state.points) }
     val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
@@ -112,8 +113,17 @@ private fun CatsMap(
     val tapCats by rememberUpdatedState(onCatsTap)
     var clusterTap by remember { mutableStateOf<ClusterTap?>(null) }
     val mapState = rememberMapState(baseStyle = style) {
-        CatLayers(cats, route, state.heat, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
+        CatLayers(
+            cats,
+            photos,
+            route,
+            state.heat,
+            colors,
+            onClusterTap = { clusterTap = it },
+            onCatsTap = { tapCats(it) },
+        )
     }
+    PhotoTiles(mapState, rim = colors.tileRim)
     MapCamera(
         mapState,
         area = state.area,

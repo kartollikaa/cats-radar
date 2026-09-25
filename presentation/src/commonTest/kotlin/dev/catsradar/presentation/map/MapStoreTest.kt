@@ -68,7 +68,7 @@ class MapStoreTest {
     ) = MapStore(
         observeEncounters = ObserveEncounters(encounters),
         observeOutingTracks = ObserveOutingTracks(walks),
-        stateMapper = MapStateMapper(encountersMapper),
+        stateMapper = MapStateMapper(encountersMapper, FakePhotoStorage()),
         clock = FakeClock(BASE + 3.hours),
         timeZone = TimeZone.UTC,
     )
@@ -177,7 +177,7 @@ class MapStoreTest {
             runCurrent()
             val focused = assertIs<MapState.Located>(store.state.value)
             assertEquals("first", focused.focus?.outingId)
-            assertEquals(listOf("first", "second"), focused.points.map { it.id })
+            assertEquals(listOf("second", "first"), focused.points.map { it.id })
 
             store.dispatch(MapIntent.FocusCleared)
             runCurrent()
@@ -448,7 +448,7 @@ class MapStoreTest {
             assertNull(shown.focus)
             assertEquals(emptySet(), shown.shownCoats)
             assertEquals(false, shown.heat)
-            assertEquals(listOf("first", "second", "other outing"), shown.points.map { it.id })
+            assertEquals(listOf("other outing", "second", "first"), shown.points.map { it.id })
             assertEquals(MapArea(south = 41.445, west = 2.165, north = 41.455, east = 2.175), shown.catArea?.rounded())
         }
 
@@ -521,7 +521,7 @@ class MapStoreTest {
             runCurrent()
 
             val shown = assertIs<MapState.Located>(store.state.value)
-            assertEquals(listOf("a", "deleted"), shown.points.map { it.id })
+            assertEquals(listOf("deleted", "a"), shown.points.map { it.id })
             assertNull(shown.catArea)
         }
 

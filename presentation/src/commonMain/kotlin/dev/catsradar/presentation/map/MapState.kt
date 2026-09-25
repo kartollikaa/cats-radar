@@ -12,6 +12,7 @@ sealed interface MapState {
     data object Empty : MapState
 
     data class Located(
+        /** Newest first. */
         val points: ImmutableList<MapPoint>,
         val area: MapArea,
         val focus: MapFocus? = null,
@@ -25,7 +26,13 @@ sealed interface MapState {
     ) : MapState
 }
 
-data class MapPoint(val id: String, val latitude: Double, val longitude: Double, val coat: CoatOption?)
+data class MapPoint(
+    val id: String,
+    val latitude: Double,
+    val longitude: Double,
+    val coat: CoatOption?,
+    val thumbnailPath: String? = null,
+)
 
 /** The part of the world the map opens on, in degrees. */
 data class MapArea(val south: Double, val west: Double, val north: Double, val east: Double)
