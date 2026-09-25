@@ -95,14 +95,17 @@ class ObserveWalkStatsTest {
         storeKilometreWalk()
         val compute = StandardTestDispatcher(testScheduler, name = "compute")
         val witness = WitnessWalkRepository(walkRepository)
-        val stats = ObserveWalkStats(ObserveWalkTracks(witness), compute)(encounterRepository.observeAll())
+        var encountersCollectedOn: ContinuationInterceptor? = null
+        val encounters = encounterRepository.observeAll()
+            .onStart { encountersCollectedOn = currentCoroutineContext()[ContinuationInterceptor] }
 
-        stats.test {
+        ObserveWalkStats(ObserveWalkTracks(witness), compute)(encounters).test {
             awaitItem()
             cancelAndIgnoreRemainingEvents()
         }
 
         assertSame(compute, witness.pointsCollectedOn)
+        assertSame(compute, encountersCollectedOn)
     }
 
     @Test

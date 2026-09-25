@@ -289,7 +289,8 @@ class MapStoreTest {
             repository.insert(x1)
             repository.insert(x2)
             repository.insert(y1)
-            val store = newStore(DelayedWalkRepository())
+            val afternoon = walk("afternoon", fromMinute = 170, toMinute = 200)
+            val store = newStore(DelayedWalkRepository(walks = listOf(afternoon), points = route(afternoon, NEAR, FAR)))
             runCurrent()
 
             store.dispatch(MapIntent.OutingFocused("x1"))
@@ -308,6 +309,7 @@ class MapStoreTest {
             runCurrent()
 
             assertEquals("y1", assertIs<MapState.Located>(store.state.value).focus?.outingId)
+            assertEquals(listOf(listOf(NEAR, FAR)), focusedLines(store))
         }
 
     @Test

@@ -124,11 +124,27 @@ class StatisticsStoreTest {
     fun `the screen reads the cats once for both the stats and the walk rows`() = runTest(mainDispatcher) {
         val encounters = CountingEncounterRepository(encounterRepository)
         encounters.insert(encounterFixture("cat-1", BASE + 10.minutes))
+        val walk = Walk(
+            id = "walk-1",
+            startedAt = BASE,
+            endedAt = BASE + 1.hours,
+            deviceId = "device-1",
+            createdAt = BASE,
+            updatedAt = BASE + 1.hours,
+        )
+        val points = listOf(
+            TrackPoint(walkId = "walk-1", at = BASE, lat = 41.390, lon = 2.170, accuracyMeters = 5f),
+            TrackPoint(walkId = "walk-1", at = BASE + 30.minutes, lat = 41.408, lon = 2.170, accuracyMeters = 5f),
+        )
 
-        val store = newStore(StoredWalkRepository(), encounters)
+        val store = newStore(StoredWalkRepository(walks = listOf(walk), points = points), encounters)
         runCurrent()
 
         assertTrue(store.state.value.hasAnyCats)
+        assertEquals(
+            WalkedState(DistanceState("2.0", DistanceUnit.KILOMETERS), catsPerKm = "0.5"),
+            store.state.value.walked,
+        )
         assertEquals(1, encounters.everyCollection)
     }
 

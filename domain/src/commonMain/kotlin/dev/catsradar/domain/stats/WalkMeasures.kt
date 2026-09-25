@@ -4,7 +4,7 @@ import dev.catsradar.domain.geo.trackLengthMeters
 import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.model.WalkTrack
 
-/** A walk's route length in metres, taken over [pointCount] recorded points, and how many cats it covers. */
+/** A walk's route length in metres, taken over [pointCount] recorded points, and the cats logged during it. */
 data class MeasuredWalk(val walk: Walk, val pointCount: Int, val meters: Double, val cats: Int)
 
 /** Every walk measured among [cats]. */
