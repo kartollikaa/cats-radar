@@ -38,12 +38,13 @@ class AttachPhotoTest {
     private val gallery = FakeGallerySaver()
     private val locator = FakeGalleryItemLocator(mapOf(SOURCE to PHONE_ITEM))
     private val storage = RecordingPhotoStorage()
+    private val digest = FakeDigest()
 
     private val attachPhoto = AttachPhoto(
         encounterRepository = encounters,
         settingsRepository = settings,
         imageResizer = resizer,
-        digest = FakeDigest(),
+        digest = digest,
         gallerySaver = gallery,
         galleryItemLocator = locator,
         photoStorage = storage,
@@ -174,6 +175,16 @@ class AttachPhotoTest {
         assertEquals(photographed, stored())
         assertEquals(0, resizer.calls)
         assertEquals(0, gallery.calls)
+    }
+
+    @Test
+    fun `a photo whose digest cannot be read is never taken for one the cat already has`() = runTest {
+        digest.result = null
+        encounters.insert(tally.withPhoto(photoPath = "own.jpg", sourceDigest = null))
+
+        assertEquals(AttachResult.Attached, attachPhoto(ID, SOURCE, PhotoSource.GALLERY))
+
+        assertEquals(2, stored().photos.size)
     }
 
     @Test
