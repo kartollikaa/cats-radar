@@ -154,7 +154,7 @@ the window closed does not reopen it*).
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
   press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
   block's floor and the scroll past it), `WalkRow.kt` (the walk button and Undo's place beside it),
-  `UndoChip.kt`
+  `CurrentOutingLine.kt` (the outing in progress), `UndoChip.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`
 
