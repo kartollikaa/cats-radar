@@ -10,6 +10,8 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
@@ -71,6 +73,23 @@ class DetailPhotoPagerTest {
             .performClick()
 
         assertEquals(listOf("cover"), tapped)
+    }
+
+    @Test
+    fun `a tap on the photo swiped to reports that photo, not the cover`() {
+        val tapped = mutableListOf<String>()
+        show(catWith("cover", "second"), onPhotoClick = { tapped += it })
+        compose.onAllNodesWithContentDescription(context.getString(R.string.detail_photo_description))
+            .onFirst()
+            .performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        position(2, of = 2).assertIsDisplayed()
+
+        val photos = compose.onAllNodesWithContentDescription(context.getString(R.string.detail_photo_description))
+        val onScreen = photos.fetchSemanticsNodes().indexOfFirst { it.boundsInRoot.left >= 0f }
+        photos[onScreen].performClick()
+
+        assertEquals(listOf("second"), tapped)
     }
 
     private fun show(state: EncounterDetailState, onPhotoClick: (String) -> Unit = {}) {

@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.detail
 
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.EncounterKind
@@ -310,6 +311,36 @@ class EncounterDetailStoreTest {
         val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
         assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
         assertEquals(AddPhoto.READY, state.addPhoto)
+    }
+
+    @Test
+    fun `a photo picked for a cat that has one is added after it`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
+    }
+
+    @Test
+    fun `leaving mid-attempt leaves the cat as the attempt found it`() = runTest(mainDispatcher) {
+        val tally = encounterFixture(ID, OCCURRED)
+        repository.insert(tally)
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+
+        ViewModelStore().apply { put("detail", store) }.clear()
+        advanceTimeBy(2.seconds)
+        runCurrent()
+
+        assertEquals(listOf(tally), repository.encounters())
     }
 
     @Test

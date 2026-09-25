@@ -49,8 +49,9 @@ has both.
 
 ## Giving a cat a photo later
 
-A cat can be given a photo afterwards — a tally with none from its detail screen (see
-[encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the gallery.
+A cat can be given a photo afterwards from its detail screen, whether it has photos or not (see
+[encounter-detail.md](./encounter-detail.md#its-photos)): the camera, or a single image picked from the
+gallery.
 `AttachPhoto` adds a photo to any live cat, one that already has photos included: the new one goes after
 the others (`AttachPhotoTest`, *a cat that has a photo gets another after it and keeps the first*). It
 stores the app's copy and thumbnail the same way `LogPhoto` does, under the new photo's own id rather
@@ -59,8 +60,10 @@ attempt, never after the cat*).
 
 **The same photo twice on one cat is not added.** The photo's digest is taken before any copy is
 written; if one of this cat's photos already carries it, the attempt stops there, with no copy and
-nothing sent to the gallery (*a photo this cat already has is not added again and costs no disk*). A
-photo whose digest cannot be read is never taken for a duplicate.
+nothing sent to the gallery (*a photo this cat already has is not added again and costs no disk*), and
+the detail screen says the photo is already on this cat (`EncounterDetailStoreTest`, *a picked photo the
+cat already has is not added again, and the screen says so*). A photo whose digest cannot be read is
+never taken for a duplicate.
 
 From the camera the original goes to the gallery under the same setting as a photo taken from the
 counter (see *The gallery setting* below); from the gallery it is never copied back in
