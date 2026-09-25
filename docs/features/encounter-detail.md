@@ -78,9 +78,11 @@ have the photo yet, and offer the buttons back for a moment before the photo app
 picker that ignores the limit — the document picker used where no photo picker is available — is cut to the
 first ones chosen (`PickSeveralPhotosTest`). The photos are attached one after another, in the order
 picked, after the cat's own (`EncounterDetailPickSeveralTest`, *every picked photo lands after the
-cat's own, in the order picked*). While they are, the progress bar counts them — "Attached 2 of 5
-photos" — where a single photo shows it without a count (*a pick of several shows how many are through
-as it goes*; `EncounterDetailScreenTest`). The attempt ends only once the cat carries every photo the
+cat's own, in the order picked*). While they are, both buttons stay disabled and the progress bar fills
+as each one goes through, read out as "Attached 2 of 5 photos"; a single photo, picked or taken, shows the
+bar without a count as before (*a pick of several shows how many are through as it goes*; *a single
+picked photo or a camera photo shows the attempt without a count*; *a tap on either button mid-pick
+opens nothing*; `EncounterDetailScreenTest`). The attempt ends only once the cat carries every photo the
 pick attached (*the progress stays until the cat carries every photo the pick attached*). A pick ends in
 one message at most: one photo not attached says "Photo not attached", several say how many (*one photo
 of a pick not attached says so once, and the others land*; *several photos not attached say how many in

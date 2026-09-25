@@ -98,6 +98,44 @@ class EncounterDetailPickSeveralTest {
     }
 
     @Test
+    fun `a single picked photo or a camera photo shows the attempt without a count`() = runTest(mainDispatcher) {
+        repository.insert(catWithPhotosOf())
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST)))
+        runCurrent()
+        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
+        assertEquals(null, loaded(store).attachProgress)
+        advanceTimeBy(2.seconds)
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+        runCurrent()
+        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
+        assertEquals(null, loaded(store).attachProgress)
+    }
+
+    @Test
+    fun `a tap on either button mid-pick opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(catWithPhotosOf())
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+        advanceTimeBy(1.seconds)
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `the progress stays until the cat carries every photo the pick attached`() = runTest(mainDispatcher) {
         repository.insert(catWithPhotosOf())
         resizer.storeDelay = 1.seconds
@@ -270,6 +308,7 @@ class EncounterDetailPickSeveralTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val CAPTURE = "content://captures/1"
         const val FIRST = "content://picker/1"
         const val SECOND = "content://picker/2"
         const val THIRD = "content://picker/3"

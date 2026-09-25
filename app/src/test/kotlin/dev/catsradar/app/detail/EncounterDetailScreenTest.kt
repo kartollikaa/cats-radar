@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -105,6 +106,8 @@ class EncounterDetailScreenTest {
         val bar = compose.onNodeWithContentDescription("Attached 2 of 5 photos")
         bar.assertExists()
         assertEquals(0.4f, bar.fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current)
+        compose.onNodeWithText(context.getString(R.string.detail_take_photo)).assertIsNotEnabled()
+        compose.onNodeWithText(context.getString(R.string.detail_pick_photo)).assertIsNotEnabled()
     }
 
     @Test
