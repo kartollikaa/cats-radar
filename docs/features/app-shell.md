@@ -175,9 +175,11 @@ graph is *declarable*, but that check is blind to anything resolved by hand insi
 binding or a composable (`androidContext()`, `koinInject<Haptics>()`) — nothing reflects a
 constructor for those. `KoinRuntimeResolutionTest` closes that gap by actually starting Koin and
 resolving exactly those hand-resolved types, so a deleted binding fails a JVM test instead of
-surfacing on the user's first tap. It starts WorkManager first, because the app does: every
-scheduler takes the `WorkManager` instance, which exists from `WorkManager.initialize()` on, right
-after `startKoin()`. Only the Play Services client reaches `FusedLocationProvider` as `Lazy<T>`,
+surfacing on the user's first tap. It has WorkManager running before it resolves anything, as the
+app does: every scheduler takes the `WorkManager` instance, which exists from
+`WorkManager.initialize()` on, right after `startKoin()`. It also reads the three preference files
+back through the real bindings, so renaming one — which would lose what installed versions stored
+there — fails a test. Only the Play Services client reaches `FusedLocationProvider` as `Lazy<T>`,
 because building it reaches Play Services, which only a real location call should do.
 
 ## Where the code lives

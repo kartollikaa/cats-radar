@@ -66,7 +66,7 @@ another service object is the case above.
   `Lazy` is not a way around start-up order. `WorkManager` and the Firebase instances exist before
   anything resolves their users — `CatsRadarApplication` initializes WorkManager right after
   `startKoin()`, and Firebase starts before `Application.onCreate()` — so they are injected as
-  instances, and a test that builds the graph starts them in the same order.
+  instances, and a test that builds the graph has WorkManager running before it resolves anything.
 - **A supplier `() -> T`** — when every use needs a fresh instance: a `Geocoder` keeps the locale it
   was built with, so `AndroidReverseGeocoder` builds one per lookup.
 
@@ -76,7 +76,8 @@ when it reaches its user through `inject()` or `by inject()` (the Play Services 
 `ActivityManager`), or when its user is bound by class so that `verify()` can check it
 (`FirebaseCrashlytics`).
 A `SharedPreferences` file is opened in the binding; its name is where its data lives, so it never
-changes.
+changes — `KoinRuntimeResolutionTest` reads back through the real bindings what installed versions
+wrote.
 
 ## Classes Android builds
 
