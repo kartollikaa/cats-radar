@@ -11,22 +11,46 @@ import kotlinx.datetime.LocalDate
 
 class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
 
-    fun map(view: RegionView, today: LocalDate, topLevel: Boolean): RegionsState = when (view) {
+    fun map(view: RegionView, parent: RegionKey?, today: LocalDate): RegionsState = when (view) {
         is RegionView.Places -> when {
-            view.children.isEmpty() && topLevel -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
+            view.children.isEmpty() && parent == null -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
             view.children.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE)
-            else -> RegionsState.Loaded(rows = view.children.map { it.toRow() }.toPersistentList())
+            else -> {
+                val total = view.children.sumOf { it.count }
+                RegionsState.Places(
+                    header = header(parent, view.self, total),
+                    section = parent.section(),
+                    rows = view.children.map { it.toRow(total) }.toPersistentList(),
+                )
+            }
         }
         is RegionView.Cats -> when {
             view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE)
-            else -> RegionsState.Loaded(encounters = encountersMapper.mapList(view.encounters, today))
+            else -> RegionsState.Cats(
+                header = header(parent, view.self, view.encounters.size),
+                rows = encountersMapper.map(view.encounters, today, grid = false).rows,
+            )
         }
     }
 
-    private fun RegionNode.toRow() = RegionRowState(
+    private fun header(parent: RegionKey?, self: RegionNode?, total: Int): RegionsHeader? = when {
+        parent == null -> RegionsHeader(RegionsTitle.AllPlaces, total)
+        self != null -> RegionsHeader(RegionsTitle.Of(self.label.toRowLabel()), self.count)
+        else -> null
+    }
+
+    private fun RegionKey?.section(): RegionsSection = when (this) {
+        null -> RegionsSection.COUNTRIES
+        is RegionKey.Country -> RegionsSection.CITIES
+        else -> RegionsSection.AREAS
+    }
+
+    private fun RegionNode.toRow(total: Int) = RegionRowState(
         key = key.toRowKey(),
         label = label.toRowLabel(),
         countLabel = count.toString(),
+        share = count.toFloat() / total,
+        pseudo = key == RegionKey.Unresolved || key is RegionKey.NoCity || key == RegionKey.NoLocation,
     )
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {
