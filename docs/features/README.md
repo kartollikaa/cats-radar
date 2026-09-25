@@ -42,8 +42,8 @@ a document nobody updates is worse than none.
   an outing.
 - `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
   things that redraw it.
-- `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the
-  one screen that fetches from the network.
+- `map.md` — the Map tab: which cats are on it, where the tiles come from, and why its tiles, and
+  those of the small map in a cat's detail, are the only screen content fetched from the network.
 - `analytics.md` — crash reports to Crashlytics, screen views and product events to Analytics: the
   event catalogue, what never leaves the phone, no advertising, the failures the app recovers from that are still reported, and why every
   build reports.

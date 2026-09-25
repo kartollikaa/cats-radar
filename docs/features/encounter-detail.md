@@ -6,9 +6,10 @@ coordinates themselves when there are any, with the fix's accuracy under them. T
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
 return to the list, never to the Counter root. The same screen opens from a dot on the Map
 ([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
-above the screen it was tapped in. A cat that is on the map has its coordinates drawn in the theme's
-primary colour with a map mark beside them, and a tap anywhere in its **Where** section switches to the
-Map tab with the view on that cat (see [map.md](./map.md#a-cats-coordinates)). The screen scrolls: a photo and the coat picker
+above the screen it was tapped in. A cat that is on the map has a small map of its spot at the top of
+its **Where** section (see [Its map](#its-map)) and its coordinates drawn in the theme's primary colour
+with a map mark beside them, and a tap anywhere in that section switches to the Map tab with the view
+on that cat (see [map.md](./map.md#a-cats-coordinates)). The screen scrolls: a photo and the coat picker
 together are taller than most phones, and Delete must never end up below the bottom edge.
 
 A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
@@ -34,9 +35,10 @@ offset, not the device's, so a cat logged abroad stays on the day it was logged
 
 ## Where it was found
 
-The **Where** section opens with the place the cat was found in, named the way Places files it (see
-[places.md](./places.md#browsing-them)): the city, the country under it, and the country's flag
-before both, unless the country's code is not two letters, as in Places. The city is the cat's
+Under its map, when it has one (see [Its map](#its-map)), the **Where** section names the place the
+cat was found in, the way Places files it (see [places.md](./places.md#browsing-them)): the city, the
+country under it, and the country's flag before both, unless the country's code is not two letters,
+as in Places. The city is the cat's
 cell's locality, or its admin area when it has none, and a country with no name of its own shows its
 two-letter code (`ObserveEncounterPlaceTest`). A cell that names a country but no city — the cats
 Places lists under No city — shows the country alone, in the city's place, and so does a city named
@@ -50,6 +52,29 @@ section and skips the flag, which would only repeat the country (`EncounterDetai
 The names are the cat's own cell's. Places names a country after the first of its cats whose cell
 has a name for it, so the two differ only when cells of one country were named differently — in
 another language, say.
+
+## Its map
+
+A cat the map draws, one whose coordinates lie on the globe, opens its **Where** section with a map of
+the few streets around it, centred on the cat, with a pin whose point is the cat's spot
+(`EncounterDetailScreenTest`, *a cat on the map shows a map with the pin's point at its centre*). It is
+drawn in the Map tab's light or dark style, whichever the theme is, and carries the tiles' attribution
+in its corner, open at first, until its ⓘ folds it away. A cat with no coordinates, or with coordinates
+off the globe, shows no map (*a cat not on the map shows no map*).
+
+The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
+screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a
+tap anywhere else in the section does (*a tap on the map opens the map*). Should the cat's coordinates
+change while the screen is open, the map moves to the new spot.
+
+Its tiles come over the network, like the Map tab's (see [map.md](./map.md#where-the-map-comes-from)):
+an area seen before loads from the cache, and a first look with no connection says the map could not
+load, with no pin on an empty area.
+
+MapLibre's runtime is native, so neither a Compose preview nor a JVM test can start it. Under
+`LocalInspectionMode` the map is a plain block with the pin at its centre, and the screen tests switch
+that mode on to reach it. So the tests prove the pin's place and that the section's taps and drags
+reach it; that the real map lets them through is checked on a device.
 
 ## Delete and undo
 
@@ -136,8 +161,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - **Setting the coat while a photo is being attached** keeps both (see
   [coat.md](./coat.md#at-the-edges)).
 - **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown
-  as numbers, but the map does not draw that cat, so its **Where** section opens nothing
-  (`EncounterDetailStoreTest`, *a cat that is not on the map opens no map*). A cat with no
+  as numbers, but the map does not draw that cat, so its **Where** section shows no map and opens
+  nothing (`EncounterDetailStoreTest`, *a cat that is not on the map opens no map*). A cat with no
   coordinates has nothing to open either.
 
 ## Where the code lives
@@ -146,7 +171,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/detail/EncounterDetailScreen.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`;
-  `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips
+  `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/PinnedMap.kt` —
+  the **Where** section's map and its pin
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
@@ -155,6 +181,5 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-The coordinates are shown as numbers, and the map is a tap away rather than drawn on this screen. A
-cat's photos cannot be removed or reordered, nor several chosen from the gallery at once (see
+A cat's photos cannot be removed or reordered, nor several chosen from the gallery at once (see
 `photos.md`).
