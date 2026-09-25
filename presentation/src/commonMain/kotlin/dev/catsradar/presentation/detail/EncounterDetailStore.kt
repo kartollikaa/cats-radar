@@ -98,7 +98,7 @@ class EncounterDetailStore(
         when (result) {
             // Rendering from lastSeen here would offer a photo again until the flow delivers this one.
             AttachResult.Attached -> Unit
-            AttachResult.NotAttachable -> refresh()
+            AttachResult.AlreadyThere, AttachResult.NotAttachable -> refresh()
             AttachResult.Unreadable, null -> {
                 refresh()
                 emit(EncounterDetailEffect.PhotoNotAttached)

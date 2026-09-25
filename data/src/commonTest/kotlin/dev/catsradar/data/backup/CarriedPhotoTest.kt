@@ -1,4 +1,4 @@
-package dev.catsradar.data.repository
+package dev.catsradar.data.backup
 
 import dev.catsradar.domain.model.EncounterPhoto
 import kotlin.test.Test
