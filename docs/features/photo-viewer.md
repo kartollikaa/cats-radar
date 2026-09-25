@@ -20,15 +20,16 @@ carries no native code, so the 16 KB page-size check has nothing new to look at.
 ## Several photos
 
 The viewer holds every photo of the cat, oldest first, side by side: a swipe sideways moves to the
-next or the previous one, and pinch, double-tap and pan act on the photo on screen, which passes a
-sideways drag on to the pager once it cannot pan further (`PhotoViewerScreenTest`, *a swipe moves to
-the next photo, and the gallery button follows the photo on screen*). It opens on the photo it was
+next or the previous one (`PhotoViewerScreenTest`, *a swipe moves to the next photo, and the gallery
+button follows the photo on screen*), and pinch, double-tap and pan act on the photo on screen —
+Telephoto hands a sideways drag to the pager once a zoomed photo cannot pan further that way. It opens on the photo it was
 opened for, and on the cat's cover when it was opened for none or for one the cat no longer has
 (`PhotoViewerStateMapperTest`, *the viewer opens on the photo it was opened for*; *opened for no photo,
 or for one the cat does not have, the viewer opens on the cover*). While the cat has more than one, a
 position — "2 / 3" — sits at the bottom and hides with the rest of the chrome; a cat with one shows none
-(*a cat with one photo shows no position*). Which photo is on screen is the pager's own state, kept
-across a rotation; the time and day in the bar are the cat's, the same on every page.
+(*a cat with one photo shows no position*). Which photo is on screen is the pager's own state: a
+rotation keeps it, and a viewer brought back after the process was killed opens on the photo it was
+opened for. The time and day in the bar are the cat's, the same on every page.
 
 ## Chrome
 
@@ -70,7 +71,8 @@ cat*). The detail screen stays drawn underneath.
 
 The key holds only the cat's id and the photo it was opened for, so after the process is killed the
 restored viewer loads the cat again and opens on that photo. A key saved before cats had several
-photos carries no photo and opens on the cover (`PhotoViewerStateMapperTest`, *opened for no photo…*).
+photos carries no photo and opens on the cover (`PhotoViewerSavedStateTest`, *a viewer key saved before
+photo ids comes back opening on the cover*).
 
 ## Open in gallery
 

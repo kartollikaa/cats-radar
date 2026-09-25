@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -125,6 +126,19 @@ class PhotoViewerScreenTest {
     }
 
     @Test
+    fun `the photo on screen survives the screen being recreated`() {
+        val restoration = StateRestorationTester(compose)
+        val state = showingOf(listOf(Photo("cover"), Photo("second")))
+        restoration.setContent { CatsRadarTheme { PhotoViewerScreen(state = state) } }
+        awaitThePhoto()
+        swipeToTheNextPhoto()
+
+        restoration.emulateSavedInstanceStateRestore()
+
+        position(2, of = 2).assertIsDisplayed()
+    }
+
+    @Test
     fun `opened on a photo the viewer starts there`() {
         show(photos = listOf(Photo("cover"), Photo("second"), Photo("third")), firstPage = 2)
 
@@ -154,6 +168,19 @@ class PhotoViewerScreenTest {
         onBackClick: () -> Unit = {},
         onOpenInGalleryClick: (String) -> Unit = {},
     ) {
+        compose.setContent {
+            CatsRadarTheme {
+                PhotoViewerScreen(
+                    state = showingOf(photos, firstPage),
+                    onBackClick = onBackClick,
+                    onOpenInGalleryClick = onOpenInGalleryClick,
+                )
+            }
+        }
+        awaitThePhoto()
+    }
+
+    private fun showingOf(photos: List<Photo>, firstPage: Int = 0): PhotoViewerState.Showing {
         val viewerPhotos = photos.map { photo ->
             val file = File(context.cacheDir, "${photo.id}.png")
             file.outputStream().use { out ->
@@ -161,20 +188,15 @@ class PhotoViewerScreenTest {
             }
             ViewerPhoto(id = photo.id, path = file.absolutePath, opensInGallery = photo.opensInGallery)
         }
-        compose.setContent {
-            CatsRadarTheme {
-                PhotoViewerScreen(
-                    state = PhotoViewerState.Showing(
-                        photos = viewerPhotos.toImmutableList(),
-                        firstPage = firstPage,
-                        timeLabel = TIME,
-                        dayLabel = DAY,
-                    ),
-                    onBackClick = onBackClick,
-                    onOpenInGalleryClick = onOpenInGalleryClick,
-                )
-            }
-        }
+        return PhotoViewerState.Showing(
+            photos = viewerPhotos.toImmutableList(),
+            firstPage = firstPage,
+            timeLabel = TIME,
+            dayLabel = DAY,
+        )
+    }
+
+    private fun awaitThePhoto() {
         compose.waitUntil(timeoutMillis = 5_000) {
             compose.onAllNodes(photoOnScreen, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
