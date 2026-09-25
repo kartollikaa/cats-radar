@@ -107,7 +107,11 @@ class ZipBackupArchiveTest {
     @Test
     fun everyFieldOfEveryRowSurvivesTheRoundTrip() = runTest {
         val contents = BackupContents(
-            encounters = listOf(encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg"), encounter("b")),
+            encounters = listOf(
+                encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg"),
+                encounter("b"),
+                encounter("by-hand").copy(locationSource = LocationSource.MANUAL, accuracyMeters = null),
+            ),
             placeCells = listOf(placeCell()),
         )
         val path = target()
@@ -141,18 +145,6 @@ class ZipBackupArchiveTest {
         assertIs<BackupReadResult.Readable>(read)
         assertEquals(contents.walks, read.contents.walks)
         assertEquals(contents.trackPoints, read.contents.trackPoints)
-    }
-
-    @Test
-    fun aCatLocatedByHandSurvivesTheRoundTrip() = runTest {
-        val byHand = encounter("m").copy(locationSource = LocationSource.MANUAL, accuracyMeters = null)
-        val path = target()
-
-        assertTrue(writer().write(path, BackupContents(encounters = listOf(byHand))))
-        val read = reader().read(path)
-
-        assertIs<BackupReadResult.Readable>(read)
-        assertEquals(listOf(byHand), read.contents.encounters)
     }
 
     @Test

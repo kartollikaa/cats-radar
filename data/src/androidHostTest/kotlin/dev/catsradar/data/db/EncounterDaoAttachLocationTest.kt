@@ -88,7 +88,8 @@ class EncounterDaoAttachLocationTest {
 
     @Test
     fun attachLocationLeavesACatThatAlreadyHasALocationAsItWas() = runTest {
-        val entity = fullEncounterEntity(id = "located").copy(locationSource = LocationSource.EXIF, accuracyMeters = null)
+        val entity = fullEncounterEntity(id = "located")
+            .copy(locationSource = LocationSource.EXIF, accuracyMeters = null)
         dao.insert(entity)
 
         val changed = dao.attachLocation(

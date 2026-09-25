@@ -18,10 +18,7 @@ class SetLocationByHand(
 ) {
     /** True when the cat now has this point; false when it is gone, already located, or the point is off the globe. */
     suspend operator fun invoke(encounterId: String, lat: Double, lon: Double): Boolean {
-        if (!isOnGlobe(lat, lon)) return false
-        encounterRepository.observeById(encounterId).first()
-            ?.takeIf { it.deletedAt == null && it.locationSource == LocationSource.NONE }
-            ?: return false
+        if (!isOnGlobe(lat, lon) || !isUnlocated(encounterId)) return false
 
         val geohash = Geohash.encode(lat, lon, Tuning.GEOHASH_PRECISION)
         val now = clock.now()
@@ -37,4 +34,8 @@ class SetLocationByHand(
         )
         return encounterRepository.attachLocation(encounterId, stamp)
     }
+
+    private suspend fun isUnlocated(encounterId: String): Boolean =
+        encounterRepository.observeById(encounterId).first()
+            ?.let { it.deletedAt == null && it.locationSource == LocationSource.NONE } == true
 }

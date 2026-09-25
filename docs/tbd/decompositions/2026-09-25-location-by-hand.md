@@ -23,7 +23,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **In scope:** `LocationSource.MANUAL` and its label token and EN/RU words; `EncounterDao.attachLocation`
   written only to a `NONE` row and reporting whether it did, through `EncounterRepository`;
   `AttachLocation` backfilling only after its own write landed; `SetLocationByHand`; the closest-in-time
-  located cat as a `:domain` function; backup format 5; `location.md`, `backup.md`, `data-model.md`.
+  located cat as a `:domain` function; backup format 5; `location.md`, `backup.md`, the base spec's §3.1.
 - **Out of scope:** any screen.
 - **Ships safely because:** nothing produces `MANUAL` yet, and the only writers of a location already
   wrote only `NONE` cats — the guard moves that rule from a read before the write into the write.
