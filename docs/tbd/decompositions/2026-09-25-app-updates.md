@@ -15,7 +15,7 @@
 | U1 | Build info in Settings | Settings shows the version, build and device, and copies a developer report to the clipboard. | safe | ~450 | — | in-review |
 | U2 | Check for updates | A Settings button reads the configured GitHub release list and says whether a newer version exists. | safe | ~650 | U1 | in-review |
 | U3 | Download and install an update | A newer version found by the check downloads in a worker, is verified, and installs through `PackageInstaller`. | safe | ~900 | U2 | in-review |
-| U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | planned |
+| U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
