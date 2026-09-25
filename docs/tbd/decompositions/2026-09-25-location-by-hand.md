@@ -12,7 +12,7 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| L1 | A location set by hand | `MANUAL` source, `SetLocationByHand`, the `NONE` guard on every location write, backup format 5. | safe | ~400 | — | in-progress |
+| L1 | A location set by hand | `MANUAL` source, `SetLocationByHand`, the `NONE` guard on every location write, backup format 5. | safe | ~400 | — | in-review |
 | L2 | Set a cat's location on a map | The picker screen with *Where am I*, opened from the detail of a cat with no location. | safe | ~700 | L1 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`

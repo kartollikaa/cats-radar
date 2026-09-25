@@ -45,7 +45,6 @@ class AttachLocation(
             updatedAt = clock.now(),
         )
 
-        // The wait above can outlast the target's undo or its location set another way; then this writes nothing.
         val attached = encounterRepository.attachLocation(encounterId, stamp)
 
         if (attached && result.source == LocationSource.CURRENT_FIX) {

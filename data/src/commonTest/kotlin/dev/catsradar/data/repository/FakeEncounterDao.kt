@@ -44,6 +44,7 @@ internal class FakeEncounterDao : EncounterDao {
     var clearDeletedAtCall: String? = null
     val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
+    var attachLocationRows = 1
     var addPhotoResult: Boolean = true
     var addPhotoCall: AddPhotoCall? = null
     var setCoatCall: SetCoatCall? = null
@@ -111,7 +112,7 @@ internal class FakeEncounterDao : EncounterDao {
         attachLocationCall = AttachLocationCall(
             id, lat, lon, accuracyMeters, locationSource, locationFixedAt, geohash, placeCellId, updatedAt,
         )
-        return 1
+        return attachLocationRows
     }
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int {
