@@ -9,7 +9,6 @@ import kotlin.time.Instant
 fun fullEncounterEntity(
     id: String = "encounter-1",
     occurredAt: Instant = Instant.parse("2026-09-20T10:15:00Z"),
-    sourceDigest: String? = "digest-1",
     deletedAt: Instant? = null,
 ): EncounterEntity = EncounterEntity(
     id = id,
@@ -18,11 +17,6 @@ fun fullEncounterEntity(
     kind = EncounterKind.PHOTO,
     origin = EncounterOrigin.GALLERY,
     coat = CatCoat.GINGER_WHITE,
-    photoPath = "photos/$id.jpg",
-    thumbPath = "thumbs/$id.jpg",
-    galleryUri = "content://media/external/images/media/42",
-    sourceMediaUri = "content://media/external/images/media/43",
-    sourceDigest = sourceDigest,
     lat = 55.751244,
     lon = 37.618423,
     accuracyMeters = 12.5f,
@@ -34,4 +28,21 @@ fun fullEncounterEntity(
     createdAt = Instant.parse("2026-09-20T12:45:00Z"),
     updatedAt = Instant.parse("2026-09-20T14:00:00Z"),
     deletedAt = deletedAt,
+)
+
+fun photoEntity(
+    encounterId: String,
+    id: String = encounterId,
+    sourceDigest: String? = "digest-1",
+    addedAt: Instant = Instant.parse("2026-09-20T12:45:00Z"),
+): EncounterPhotoEntity = EncounterPhotoEntity(
+    id = id,
+    encounterId = encounterId,
+    photoPath = "photos/$id.jpg",
+    thumbPath = "thumbs/$id.jpg",
+    galleryUri = "content://media/external/images/media/42",
+    sourceMediaUri = "content://media/external/images/media/43",
+    sourceDigest = sourceDigest,
+    deviceId = "device-1",
+    addedAt = addedAt,
 )

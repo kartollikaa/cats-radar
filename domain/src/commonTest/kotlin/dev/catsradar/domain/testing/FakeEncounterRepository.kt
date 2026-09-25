@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
+import dev.catsradar.domain.model.oldestFirst
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -182,5 +183,3 @@ class FakeEncounterRepository :
         return doomed.size
     }
 }
-
-private fun List<EncounterPhoto>.oldestFirst() = sortedWith(compareBy<EncounterPhoto>({ it.addedAt }, { it.id }))

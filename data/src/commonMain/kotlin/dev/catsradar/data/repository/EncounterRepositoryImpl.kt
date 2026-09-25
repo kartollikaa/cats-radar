@@ -18,9 +18,10 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override fun observeById(id: String): Flow<Encounter?> = dao.observeById(id).map { it?.toDomain() }
 
-    override suspend fun insert(encounter: Encounter) = dao.insert(encounter.toEntity())
+    override suspend fun insert(encounter: Encounter) =
+        dao.insertWithPhotos(encounter.toEntity(), encounter.photos.map { it.toEntity() })
 
-    override suspend fun update(encounter: Encounter) = dao.updateKeepingPhoto(encounter.toEntity())
+    override suspend fun update(encounter: Encounter) = dao.update(encounter.toEntity())
 
     override suspend fun attachLocation(id: String, stamp: LocationStamp) = dao.attachLocation(
         id = id,
@@ -34,17 +35,9 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         updatedAt = stamp.updatedAt,
     )
 
-    override suspend fun addPhoto(photo: EncounterPhoto): Boolean = dao.attachPhoto(
-        id = photo.encounterId,
-        photoPath = photo.photoPath,
-        thumbPath = photo.thumbPath,
-        galleryUri = photo.galleryUri,
-        sourceMediaUri = photo.sourceMediaUri,
-        sourceDigest = photo.sourceDigest,
-        updatedAt = photo.addedAt,
-    ) > 0
+    override suspend fun addPhoto(photo: EncounterPhoto): Boolean = dao.addPhoto(photo.toEntity(), photo.addedAt)
 
-    override suspend fun addPhotos(photos: List<EncounterPhoto>) = dao.restorePhotos(photos)
+    override suspend fun addPhotos(photos: List<EncounterPhoto>) = dao.addPhotos(photos.map { it.toEntity() })
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         dao.setCoat(id, coat, updatedAt)

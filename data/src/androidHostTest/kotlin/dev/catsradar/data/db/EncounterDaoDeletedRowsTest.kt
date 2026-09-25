@@ -54,7 +54,7 @@ class EncounterDaoDeletedRowsTest {
 
         // A backup merge has to know the deleted row exists and when it went, or an older archive
         // would reinsert it as a brand-new cat.
-        assertEquals(listOf("deleted", "live"), dao.loadEvery().map { it.id }.sorted())
+        assertEquals(listOf("deleted", "live"), dao.loadEvery().map { it.encounter }.map { it.id }.sorted())
         assertEquals(1, dao.observeAll().first().size)
     }
 }

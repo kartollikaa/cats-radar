@@ -28,7 +28,7 @@ class DatabaseSchemaTest {
     @Test
     fun databaseOpensWithEveryTable() = runTest {
         val tables = database.schemaProbeDao().tableNames().toSet()
-        assertEquals(setOf("encounters", "place_cells", "walks", "track_points"), tables)
+        assertEquals(setOf("encounters", "encounter_photos", "place_cells", "walks", "track_points"), tables)
     }
 
     @Test
@@ -40,11 +40,6 @@ class DatabaseSchemaTest {
             "kind" to true,
             "origin" to true,
             "coat" to false,
-            "photoPath" to false,
-            "thumbPath" to false,
-            "galleryUri" to false,
-            "sourceMediaUri" to false,
-            "sourceDigest" to false,
             "lat" to false,
             "lon" to false,
             "accuracyMeters" to false,
@@ -63,5 +58,24 @@ class DatabaseSchemaTest {
 
         assertEquals(expectedNotNull.keys, actualNotNull.keys)
         assertEquals(expectedNotNull, actualNotNull)
+    }
+
+    @Test
+    fun encounterPhotosTableHasEveryColumnWithExpectedNullability() = runTest {
+        val expectedNotNull = mapOf(
+            "id" to true,
+            "encounterId" to true,
+            "photoPath" to true,
+            "thumbPath" to false,
+            "galleryUri" to false,
+            "sourceMediaUri" to false,
+            "sourceDigest" to false,
+            "deviceId" to true,
+            "addedAt" to true,
+        )
+
+        val columns = database.schemaProbeDao().tableInfo(RoomRawQuery("PRAGMA table_info(`encounter_photos`)"))
+
+        assertEquals(expectedNotNull, columns.associate { it.name to (it.notnull != 0) })
     }
 }
