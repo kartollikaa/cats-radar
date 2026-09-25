@@ -187,6 +187,8 @@
     <string name="viewer_open_in_gallery">Открыть в галерее</string>
     <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
     <string name="viewer_no_gallery_app">Нет приложения, которое покажет это фото</string>
+    <string name="viewer_position">%1$d / %2$d</string>
+    <string name="viewer_position_description">Фото %1$d из %2$d</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>

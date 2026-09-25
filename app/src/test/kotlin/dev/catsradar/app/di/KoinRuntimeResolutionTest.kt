@@ -134,7 +134,8 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ObserveWalkStats>())
         assertNotNull(koin.get<LogPhoto>())
         assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id") })
-        assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id") })
+        assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
         // Both the root (null parent) and a drilled-in level, because they take different paths.
         assertNotNull(koin.get<RegionsStore> { parametersOf(null) })
         assertNotNull(koin.get<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
