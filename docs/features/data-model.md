@@ -28,8 +28,9 @@ the bytes the source handed over (`sourceDigest`), the install that recorded tho
 A photo also names its **shot**, so the cats of one photo can be found together: `shotId` is the id of
 the shot's first photo row, and null on that first row itself, so `shot` (`shotId ?: id`) is the same on
 every row of one shot and on no other. A row joining a shot points at the first one and never edits it.
-Every photo taken, attached, imported or read from an archive starts a shot of its own; nothing writes a
-shot of several cats yet (`EncounterPhotoShotTest`; *eachWayAPhotoIsWrittenKeepsItsShot*).
+Every photo taken, attached or imported starts a shot of its own, and one read from a backup keeps the
+shot it was written with (see `backup.md`); nothing writes a shot of several cats yet
+(`EncounterPhotoShotTest`; *eachWayAPhotoIsWrittenKeepsItsShot*).
 
 Each photo is a row of `encounter_photos`, keyed by its own `id`, with a foreign key to its cat that
 deletes the photo rows with the cat. Every read returns a cat with its photos (`EncounterWithPhotos`),

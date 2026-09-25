@@ -46,6 +46,13 @@ A cat's photos are reconciled apart from its row, each by its own `id` (`BackupM
   copy of a cat from the archive does not replace the photo here*).
 - **A cat that stays deleted here gains no photo.** One the archive brings back gains its photos with it.
 - **One photo listed on two of the archive's cats** arrives once, on the first.
+- **A photo's shot travels with it** — the cats of one photo share it (see `data-model.md`). A cat of a
+  shot that arrives from another phone joins the cats of that shot here; the shot's first cat, deleted
+  here after the export, stays deleted while the others keep their shot; and a cat whose shot's first row
+  the archive does not carry still names it (*a cat of a shot that is not here yet joins its shot*; *a
+  first cat deleted here after the export stays deleted and the others keep their shot*; *a later cat
+  whose shot's first row is not in the archive keeps its shot*). Each cat of a shot has its own copy of
+  the photo, so each restores its own files.
 
 Rewriting a cat's row — what the later edit does — never touches its photos, and adding the archive's
 photos leaves the cat's `updatedAt` as it was, so neither write changes what the next import decides
@@ -97,10 +104,16 @@ nothing.
 **Every photo is its own record** in `encounter_photos.json`, naming its cat, with every field it has
 here; a cat's record carries no photo (`ZipBackupPhotoListTest`, *everyPhotoOfEveryCatIsListedWithEveryFieldAndNoneRidesOnItsCat*).
 A cat with several photos comes back with all of them (*aCatWithTwoPhotosSurvivesTheRoundTripWithBoth*).
+A photo's record carries its shot (`shotId`); the first photo of a shot writes none, so its record reads
+exactly as format 4 wrote it (*aPhotoThatStartsItsShotWritesNoShotKeyAndTheOthersNameTheFirst*). A shot
+of several cats comes back as one, each cat with its coat and its own files
+(*aShotOfThreeCatsSurvivesTheRoundTripAsOneShot*; `BackupRestoreTest`,
+*aShotOfThreeCatsComesBackAsOneShotWithEveryCoatAndItsOwnFiles*).
 A photo whose cat the archive does not carry is left out and the rest imports: nothing could show it.
 
 The manifest records `formatVersion` — 2 since walks joined the archive, 3 since cats carry the gallery
-item a picked photo came from, 4 since photos travel in their own list — when it was exported, which
+item a picked photo came from, 4 since photos travel in their own list, 5 since a photo carries its
+shot — when it was exported, which
 device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
@@ -139,9 +152,11 @@ written only where no file was here, so importing the same archive again finds t
   fields this version would silently drop. Nothing is written. It is judged by its manifest before
   any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
   still say "newer version", not "not a backup". That is why the walks raised the version, the
-  picked gallery items raised it again, and the photo list again: an app from before them refuses an
-  archive rather than losing its walks, its links, or every photo after a cat's first
-  (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt*).
+  picked gallery items raised it again, the photo list again, and the shots again: an app from before
+  them refuses an archive rather than losing its walks, its links, every photo after a cat's first, or
+  which cats share a photo. The reader ignores keys it does not know, so without the new number an
+  older app would read a shot's cats as separate photos and write them out that way on its next export
+  (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatFiveSoAnAppBeforeShotsRefusesIt*).
 - **An archive from before walks** still imports, with no walks in it.
 - **An archive from before picked gallery items** still imports, its cats keeping none
   (`ZipBackupReaderOlderFormatTest`). A picked item restored on another phone is kept but offers no
@@ -151,6 +166,9 @@ written only where no file was here, so importing the same archive again finds t
   with a copy gets that photo, named after the cat and dated at its creation — the rule the database
   migration moves such a photo by — and a cat without a copy gets none, whatever else its record holds
   (`ZipBackupReaderOlderFormatTest`, *aFormatThreeArchiveGivesEachCatWithACopyThePhotoItsRecordCarries*).
+- **An archive from before shots** reads every photo as the first of a shot of its own, with every
+  other field as its record has it (`ZipBackupReaderOlderFormatTest`,
+  *aFormatFourArchiveReadsEveryPhotoAsStartingItsOwnShot*).
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.
