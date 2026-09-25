@@ -49,7 +49,7 @@ class EncounterDetailStateMapper(
             onTheMap = encounter.isOnTheMap(),
             place = place?.let { found ->
                 // A city-state's locality repeats its country's name.
-                val city = found.city?.takeIf { it != found.country }
+                val city = found.city?.takeIf { !it.equals(found.country, ignoreCase = true) }
                 DetailPlace(
                     title = city ?: found.country,
                     country = if (city != null) found.country else null,

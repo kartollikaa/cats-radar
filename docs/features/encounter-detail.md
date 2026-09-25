@@ -35,15 +35,16 @@ offset, not the device's, so a cat logged abroad stays on the day it was logged
 
 The **Where** section opens with the place the cat was found in, named the way Places files it (see
 [places.md](./places.md#browsing-them)): the city, the country under it, and the country's flag
-before both. The city is the cat's cell's locality, or its admin area when it has none, and a
-country with no name of its own shows its two-letter code (`ObserveEncounterPlaceTest`). A cell that
-names a country but no city — the cats Places lists under No city — shows the country alone, in the
-city's place, and so does a city named like its country, such as Singapore, which would otherwise
-show the one name twice (`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named
-yet, has no place line; the section starts with where its coordinates came from. The line appears
-while the screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place
-reaches the screen once its cell is named*). TalkBack reads the city and the country with the rest of
-the section and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
+before both, unless the country's code is not two letters, as in Places. The city is the cat's
+cell's locality, or its admin area when it has none, and a country with no name of its own shows its
+two-letter code (`ObserveEncounterPlaceTest`). A cell that names a country but no city — the cats
+Places lists under No city — shows the country alone, in the city's place, and so does a city named
+like its country, such as Singapore, which would otherwise show the one name twice
+(`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named yet, has no
+place line; the section starts with where its coordinates came from. The line appears while the
+screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place reaches the
+screen once its cell is named*). TalkBack reads the city and the country with the rest of the
+section and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
 
 The names are the cat's own cell's. Places names a country after the first of its cats whose cell
 has a name for it, so the two differ only when cells of one country were named differently — in
@@ -143,4 +144,5 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-The coordinates are shown as numbers, and the map is a tap away rather than drawn on this screen. A photo already on a cat cannot be replaced or removed from this screen (see `photos.md`).
+The coordinates are shown as numbers, and the map is a tap away rather than drawn on this screen. A
+photo already on a cat cannot be replaced or removed from this screen (see `photos.md`).

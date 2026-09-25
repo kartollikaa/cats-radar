@@ -141,7 +141,7 @@ class EncounterDetailStateMapperTest {
 
     @Test
     fun `a city named like its country shows the name once`() {
-        val place = EncounterPlace(countryCode = "SG", country = "Singapore", city = "Singapore")
+        val place = EncounterPlace(countryCode = "SG", country = "Singapore", city = "SINGAPORE")
 
         assertEquals(
             DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
