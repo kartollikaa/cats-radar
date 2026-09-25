@@ -28,7 +28,9 @@ and outings within the list, both come back newest first.
 
 **Back from a cat returns to the same place in the list.** The list's scroll position is saved with
 the Encounters entry while a cat's screen covers it, and it comes back when that screen closes
-(`EncountersListPositionTest`, *back from a cat returns to the list scrolled where it was*). The pull
+(`EncountersListPositionTest`, *back from a cat returns to the list scrolled where it was*); a
+rotation restores it the same way. The position is kept by row index, not by row, so a cat logged
+from the walking notification meanwhile shifts the view by the rows it adds above. The pull
 to the top described under *Rows coming back above the screen* checks that restored position, not
 whether the list can scroll back: a returning list is not laid out yet and reports it cannot, so it
 would look like it was resting at the top and jump there.
