@@ -31,9 +31,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
+// A phone-sized screen, so every row below the back arrow's bar is on it and takes a tap.
 @RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "w411dp-h891dp")
 class RegionsDrillDownTest {
 
     private val compose = createComposeRule()

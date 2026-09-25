@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -34,6 +37,7 @@ import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.CenterAppBarDefaults
 import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.encounters.EncounterRows
@@ -46,45 +50,65 @@ fun RegionsScreen(
     state: RegionsState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onBackClick: () -> Unit = {},
     onRegionClick: (RegionRowKey) -> Unit = {},
     onEncounterClick: (String) -> Unit = {},
     onOutingMapClick: (String) -> Unit = {},
 ) {
-    when (state) {
-        RegionsState.Loading -> Box(modifier = modifier.fillMaxSize())
-        is RegionsState.Empty -> EmptyRegions(state, modifier = modifier.fillMaxSize().padding(contentPadding))
-        is RegionsState.Places -> Column(
-            modifier = modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(contentPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            state.header?.let { RegionsHeadline(it) }
-            SectionCard(state.section.titleRes()) {
-                state.rows.forEach { row -> RegionRow(row, onClick = { onRegionClick(row.key) }) }
-            }
-        }
-        is RegionsState.Cats -> {
-            val header = state.header
-            val headline: (@Composable () -> Unit)? = remember(header) {
-                header?.let { shown ->
-                    @Composable {
-                        RegionsHeadline(shown, modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp))
-                    }
+    val layoutDirection = LocalLayoutDirection.current
+    val start = contentPadding.calculateStartPadding(layoutDirection)
+    val end = contentPadding.calculateEndPadding(layoutDirection)
+    val top = contentPadding.calculateTopPadding()
+    val belowBar = PaddingValues(
+        start = start,
+        top = top + CenterAppBarDefaults.Height,
+        end = end,
+        bottom = contentPadding.calculateBottomPadding(),
+    )
+    Box(modifier = modifier.fillMaxSize()) {
+        when (state) {
+            RegionsState.Loading -> Unit
+            is RegionsState.Empty -> EmptyRegions(state, modifier = Modifier.fillMaxSize().padding(belowBar))
+            is RegionsState.Places -> Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(belowBar)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                state.header?.let { RegionsHeadline(it) }
+                SectionCard(state.section.titleRes()) {
+                    state.rows.forEach { row -> RegionRow(row, onClick = { onRegionClick(row.key) }) }
                 }
             }
-            EncounterRows(
-                rows = state.rows,
-                layout = EncountersLayout.LIST,
-                modifier = modifier.fillMaxSize(),
-                contentPadding = contentPadding,
-                onEncounterClick = onEncounterClick,
-                onOutingMapClick = onOutingMapClick,
-                leadingItem = headline,
-            )
+            is RegionsState.Cats -> {
+                val header = state.header
+                val headline: (@Composable () -> Unit)? = remember(header) {
+                    header?.let { shown ->
+                        @Composable {
+                            RegionsHeadline(
+                                header = shown,
+                                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
+                            )
+                        }
+                    }
+                }
+                EncounterRows(
+                    rows = state.rows,
+                    layout = EncountersLayout.LIST,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = belowBar,
+                    onEncounterClick = onEncounterClick,
+                    onOutingMapClick = onOutingMapClick,
+                    leadingItem = headline,
+                )
+            }
         }
+        RegionsBackBar(
+            modifier = Modifier.padding(start = start, top = top, end = end),
+            onBackClick = onBackClick,
+        )
     }
 }
 

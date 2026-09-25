@@ -1,6 +1,7 @@
 package dev.catsradar.app.regions
 
 import android.content.Context
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,9 +10,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
@@ -30,6 +34,7 @@ import dev.catsradar.presentation.regions.RegionsSection
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.CenterAppBarDefaults
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -38,6 +43,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class RegionsScreenTest {
@@ -134,6 +140,43 @@ class RegionsScreenTest {
             state = RegionsState.Empty(label)
             compose.onNodeWithText(hint).assertDoesNotExist()
         }
+    }
+
+    @Test
+    fun `every kind of level offers the back arrow, and a tap on it reports once`() {
+        var backs = 0
+        state = RegionsState.Loading
+        compose.setContent { CatsRadarTheme { RegionsScreen(state = state, onBackClick = { backs++ }) } }
+        val levels = listOf(
+            RegionsState.Loading,
+            RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE),
+            RegionsState.Places(RegionsHeader(RegionsTitle.AllPlaces, 3), RegionsSection.COUNTRIES, oneCountry),
+            RegionsState.Cats(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Gràcia")), 2), twoCats),
+        )
+
+        levels.forEach { level ->
+            state = level
+            compose.onNodeWithContentDescription(context.getString(R.string.regions_back)).performClick()
+        }
+
+        assertEquals(levels.size, backs)
+    }
+
+    @Test
+    fun `a level's headline starts below the status bar and the back arrow's bar`() {
+        val statusBar = 24.dp
+        state = RegionsState.Places(RegionsHeader(RegionsTitle.AllPlaces, 3), RegionsSection.COUNTRIES, oneCountry)
+        compose.setContent {
+            CatsRadarTheme { RegionsScreen(state = state, contentPadding = PaddingValues(top = statusBar)) }
+        }
+
+        val headlineTop = compose.onNodeWithText(context.getString(R.string.regions_title))
+            .getUnclippedBoundsInRoot().top
+        val barBottom = compose.onNodeWithContentDescription(context.getString(R.string.regions_back))
+            .getUnclippedBoundsInRoot().bottom
+
+        assertTrue(headlineTop >= statusBar + CenterAppBarDefaults.Height, "headline at $headlineTop")
+        assertTrue(headlineTop >= barBottom, "headline at $headlineTop, arrow ends at $barBottom")
     }
 
     private val isHeading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
