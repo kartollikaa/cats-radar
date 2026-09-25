@@ -78,7 +78,8 @@ row counts stop being trivial to read and group on every emission.
 
 An outing's header ends in "On the map" when at least one of its cats has a location. The mapper
 decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
-that outing alone (`map.md`).
+that outing alone (`map.md`). The map's spot sheet and the cats of a place (`places.md`) use the same
+rows and offer the same action.
 
 ## What the grid shows
 

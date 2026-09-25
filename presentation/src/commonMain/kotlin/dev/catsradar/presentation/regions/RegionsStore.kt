@@ -20,7 +20,7 @@ class RegionsStore(
 
     init {
         observeRegion(parent)
-            .onEach { view -> setState { stateMapper.map(view, clock.today(timeZone), topLevel = parent == null) } }
+            .onEach { view -> setState { stateMapper.map(view, parent, clock.today(timeZone)) } }
             .launchIn(viewModelScope)
     }
 
