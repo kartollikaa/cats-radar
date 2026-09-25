@@ -21,6 +21,8 @@ data class StatisticsState(
     /** Null when no outing was long enough or busy enough to measure. */
     val overallRate: RateState? = null,
     val bestOuting: BestOutingState? = null,
+    /** Null when nothing walked has any length. */
+    val walked: WalkedState? = null,
 )
 
 /** [coat] of null is the "not specified" row. */
@@ -35,3 +37,11 @@ enum class RateUnit { PER_HOUR, PER_MINUTE }
 
 /** [count] is the count itself, not a label: only the platform knows the plural form for it. */
 data class BestOutingState(val count: Int, val durationLabel: String, val rate: RateState)
+
+/** [catsPerKm] already carries one decimal; null when no walk was long enough to measure. */
+data class WalkedState(val distance: DistanceState, val catsPerKm: String?)
+
+/** [value] is the number alone; [unit] says which unit the screen labels it with. */
+data class DistanceState(val value: String, val unit: DistanceUnit)
+
+enum class DistanceUnit { METERS, KILOMETERS }

@@ -36,5 +36,8 @@ object Tuning {
     /** How often a walk that is recording asks for a fix. */
     val TRACK_FIX_INTERVAL: Duration = 5.seconds
 
+    /** A walk shorter than this is left out of cats per km, as an outing too short is left out of the rate. */
+    const val MIN_RATE_DISTANCE_METERS: Double = 500.0
+
     val MILESTONES: List<Int> = listOf(1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000)
 }

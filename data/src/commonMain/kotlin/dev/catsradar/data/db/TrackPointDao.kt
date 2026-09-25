@@ -16,6 +16,9 @@ interface TrackPointDao {
     @Query("SELECT * FROM track_points ORDER BY walkId, at, rowId")
     suspend fun loadEvery(): List<TrackPointEntity>
 
+    @Query("SELECT * FROM track_points ORDER BY walkId, at, rowId")
+    fun observeEvery(): Flow<List<TrackPointEntity>>
+
     @Query("SELECT * FROM track_points WHERE walkId = :walkId ORDER BY at DESC, rowId DESC LIMIT 1")
     suspend fun loadLast(walkId: String): TrackPointEntity?
 

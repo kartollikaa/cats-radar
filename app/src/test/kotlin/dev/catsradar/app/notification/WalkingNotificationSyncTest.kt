@@ -185,6 +185,7 @@ private class OpenWalkOnly : WalkRepository {
     override suspend fun lastPoint(walkId: String): TrackPoint? = throw NotImplementedError("unused by this test")
     override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = throw NotImplementedError("unused by this test")
     override suspend fun loadEveryPoint(): List<TrackPoint> = throw NotImplementedError("unused by this test")
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> = throw NotImplementedError("unused by this test")
     override suspend fun upsert(walk: Walk): Unit = throw NotImplementedError("unused by this test")
     override suspend fun appendPoints(points: List<TrackPoint>): Unit = throw NotImplementedError("unused by this test")
 }

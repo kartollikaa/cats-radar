@@ -2,9 +2,13 @@ package dev.catsradar.app.counter
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -47,6 +51,7 @@ class CounterControlsTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val requested = mutableListOf<Boolean>()
+    private val haptics = mutableListOf<HapticFeedbackType>()
     private var undoVisible by mutableStateOf(false)
 
     @Test
@@ -144,6 +149,44 @@ class CounterControlsTest {
     }
 
     @Test
+    fun `a held press ticks softly all the way through the hold, then confirms the stop once`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
+
+        walkButton(walking = true).performTouchInput { down(center) }
+        val perFrame = List(HOLD_FRAMES + 10) {
+            val before = haptics.size
+            compose.mainClock.advanceTimeByFrame()
+            haptics.drop(before)
+        }
+        val tickFrames = perFrame.indices.filter { HapticFeedbackType.SegmentFrequentTick in perFrame[it] }
+        val confirmFrames = perFrame.indices.filter { HapticFeedbackType.Confirm in perFrame[it] }
+
+        assertEquals(1, confirmFrames.size, "Confirm on frames $confirmFrames")
+        val confirmFrame = confirmFrames.single()
+        assertEquals(listOf(HapticFeedbackType.Confirm), perFrame[confirmFrame])
+        assertTrue(tickFrames.all { it < confirmFrame }, "ticks $tickFrames, Confirm $confirmFrame")
+        assertTrue(tickFrames.first() < HOLD_FRAMES / 5, "first tick on frame ${tickFrames.first()}")
+        assertTrue(tickFrames.last() > HOLD_FRAMES * 4 / 5, "last tick on frame ${tickFrames.last()}")
+        assertTrue(tickFrames.zipWithNext().all { (a, b) -> b - a > 1 }, "ticks on neighbouring frames: $tickFrames")
+    }
+
+    @Test
+    fun `a press let go early stops ticking and never confirms`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
+
+        walkButton(walking = true).performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(HOLD_MS / 2)
+        walkButton(walking = true).performTouchInput { up() }
+        val atRelease = haptics.toList()
+        compose.mainClock.advanceTimeBy(HOLD_MS * 2)
+
+        assertTrue(atRelease.isNotEmpty(), "no haptic before the release")
+        assertEquals(atRelease, haptics)
+    }
+
+    @Test
     fun `during a walk the button says it has to be held`() {
         show(walking = true)
 
@@ -190,18 +233,25 @@ class CounterControlsTest {
     }
 
     private fun show(walking: Boolean, elapsedLabel: String? = null) {
+        val recorder = object : HapticFeedback {
+            override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
+                haptics += hapticFeedbackType
+            }
+        }
         compose.setContent {
-            CatsRadarTheme {
-                CounterScreen(
-                    state = CounterState(
-                        totalLabel = "3",
-                        count = 3,
-                        undoVisible = false,
-                        walkingMode = walking,
-                        walkElapsedLabel = elapsedLabel,
-                    ),
-                    onWalkingModeChange = { requested += it },
-                )
+            CompositionLocalProvider(LocalHapticFeedback provides recorder) {
+                CatsRadarTheme {
+                    CounterScreen(
+                        state = CounterState(
+                            totalLabel = "3",
+                            count = 3,
+                            undoVisible = false,
+                            walkingMode = walking,
+                            walkElapsedLabel = elapsedLabel,
+                        ),
+                        onWalkingModeChange = { requested += it },
+                    )
+                }
             }
         }
     }
@@ -225,5 +275,6 @@ class CounterControlsTest {
 
     private companion object {
         const val HOLD_MS = 1_000L
+        const val HOLD_FRAMES = (HOLD_MS / 16).toInt()
     }
 }
