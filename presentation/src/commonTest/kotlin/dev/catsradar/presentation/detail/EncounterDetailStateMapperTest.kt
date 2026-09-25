@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -130,6 +131,41 @@ class EncounterDetailStateMapperTest {
         assertEquals("-73.98571", formatCoordinate(-73.985708))
         assertEquals("0.00000", formatCoordinate(0.0))
         assertEquals("180.00000", formatCoordinate(180.0))
+    }
+
+    @Test
+    fun `a cat found in a city shows the city over its country, with the country's flag`() {
+        val place = EncounterPlace(countryCode = "ES", country = "Spain", city = "Barcelona")
+
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a cat found in a country with no city shows the country alone`() {
+        val place = EncounterPlace(countryCode = "ES", country = "Spain", city = null)
+
+        assertEquals(
+            DetailPlace(title = "Spain", country = null, flag = "🇪🇸"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a city named like its country shows the name once`() {
+        val place = EncounterPlace(countryCode = "SG", country = "Singapore", city = "SINGAPORE")
+
+        assertEquals(
+            DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a cat with no named place shows none`() {
+        assertEquals(null, mapper.map(encounterFixture("e1", OCCURRED), today).place)
     }
 
     private companion object {

@@ -33,11 +33,13 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.AddPhoto
 import dev.catsradar.presentation.detail.DetailPhoto
+import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatPicker
 import dev.catsradar.ui.components.BackBar
+import dev.catsradar.ui.components.Flag
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.encounters.labelRes
@@ -158,6 +160,7 @@ private fun WhereCard(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            state.place?.let { PlaceLine(it, Modifier.padding(bottom = 4.dp)) }
             Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
             state.coordinatesLabel?.let { coordinates ->
                 Row(
@@ -187,6 +190,27 @@ private fun WhereCard(
                 Text(
                     text = stringResource(R.string.detail_accuracy, accuracy),
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaceLine(place: DetailPlace, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        place.flag?.let { Flag(it, MaterialTheme.typography.headlineSmall) }
+        Column {
+            Text(text = place.title, style = MaterialTheme.typography.titleMedium)
+            place.country?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -266,6 +290,7 @@ private val sampleLoaded = EncounterDetailState.Loaded(
         DetailPhoto(id = "8a03b6c1", path = "photos/8a03b6c1-77d2.jpg"),
     ),
     onTheMap = true,
+    place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
 )
 
 private val sampleNoLocation = EncounterDetailState.Loaded(

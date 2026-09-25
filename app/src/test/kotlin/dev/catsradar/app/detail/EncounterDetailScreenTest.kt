@@ -8,9 +8,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -21,9 +25,11 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.detail.DetailPhoto
+import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.FlagTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -107,6 +113,27 @@ class EncounterDetailScreenTest {
         assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), delete.boundsInRoot.bottom, 1f)
     }
 
+    @Test
+    fun `the where card names the cat's city and country after its flag, and TalkBack reads them without it`() {
+        show(loaded.copy(place = DetailPlace(title = "Barcelona", country = "Spain", flag = FLAG)))
+
+        val city = compose.onNodeWithText("Barcelona", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val flag = compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue(flag.right <= city.left, "the flag ends at ${flag.right}px, past the city at ${city.left}px")
+        compose.onNodeWithText("Barcelona")
+            .assertTextContains("Spain")
+            .assertTextContains(context.getString(R.string.location_none))
+            .assert(!hasText(FLAG, substring = true))
+    }
+
+    @Test
+    fun `a cat with no named place shows no place line`() {
+        show(loaded)
+
+        compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithText("Barcelona", useUnmergedTree = true).assertDoesNotExist()
+    }
+
     private fun show(state: EncounterDetailState, onBackClick: () -> Unit = {}) = show(onBackClick) { state }
 
     private fun show(onBackClick: () -> Unit = {}, state: () -> EncounterDetailState) {
@@ -129,6 +156,7 @@ class EncounterDetailScreenTest {
 
     private companion object {
         const val DAY = "Today"
+        const val FLAG = "🇪🇸"
         val STATUS_BAR = 24.dp
         val BOTTOM_BAR = 80.dp
 
