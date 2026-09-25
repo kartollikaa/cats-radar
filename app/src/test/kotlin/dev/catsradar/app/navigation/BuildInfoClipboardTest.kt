@@ -1,5 +1,6 @@
 package dev.catsradar.app.navigation
 
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
@@ -23,6 +24,7 @@ class BuildInfoClipboardTest {
         copyBuildInfo(clipboard, context, report, sdkInt = Build.VERSION_CODES.TIRAMISU)
 
         assertEquals(report, clipboard.primaryClip?.getItemAt(0)?.text?.toString())
+        assertEquals(true, clipboard.primaryClipDescription?.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN))
     }
 
     @Test

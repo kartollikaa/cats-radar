@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.settings
 
 import app.cash.turbine.test
+import dev.catsradar.domain.about.BuildInfo
 import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
@@ -282,17 +283,23 @@ class SettingsStoreTest {
     }
 
     @Test
-    fun `a copy reports the locale the phone has now, not the one it had when the screen opened`() =
+    fun `a copy reports the locale and zone the phone has at the tap, even while the screen's own read is pending`() =
         runTest(mainDispatcher) {
-            var current = pixelBuildInfo
-            val store = settingsStore(buildInfoReader = BuildInfoReader { current })
+            val firstRead = CompletableDeferred<BuildInfo>()
+            var reads = 0
+            val now = pixelBuildInfo.copy(
+                device = pixelBuildInfo.device.copy(localeTag = "en-GB", timeZoneId = "Europe/London"),
+            )
+            val store = settingsStore(
+                buildInfoReader = BuildInfoReader { if (reads++ == 0) firstRead.await() else now },
+            )
             runCurrent()
-            current = pixelBuildInfo.copy(device = pixelBuildInfo.device.copy(localeTag = "en-GB"))
             store.effects.test {
                 store.dispatch(SettingsIntent.BuildInfoCopyClicked)
                 runCurrent()
 
-                assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().report(current)), awaitItem())
+                assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().report(now)), awaitItem())
+                assertNull(store.state.value.about)
                 cancelAndIgnoreRemainingEvents()
             }
         }

@@ -35,13 +35,13 @@ class AndroidBuildInfoReader(
         ),
     )
 
-    private fun installer(): String? = runCatching {
+    private fun installer(): String? {
         val packageManager = context.packageManager
-        if (sdkInt >= Build.VERSION_CODES.R) {
+        return if (sdkInt >= Build.VERSION_CODES.R) {
             packageManager.getInstallSourceInfo(context.packageName).installingPackageName
         } else {
             @Suppress("DEPRECATION") // its replacement starts at Android 11
             packageManager.getInstallerPackageName(context.packageName)
         }
-    }.getOrNull()
+    }
 }

@@ -72,6 +72,8 @@ class AndroidBuildInfoReaderTest {
 
     @Test
     fun anInstallAndroidHasNoInstallerForReadsAsNone() = runTest {
+        shadowOf(context.packageManager).setInstallSourceInfo(context.packageName, null, null)
+
         assertNull(AndroidBuildInfoReader(context, app).read().device.installer)
     }
 
