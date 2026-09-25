@@ -4,8 +4,8 @@
 - **Status:** approved by the owner in chat, 2026-09-25
 - **Decomposition:** [docs/tbd/decompositions/2026-09-25-outing-pager.md](../../tbd/decompositions/2026-09-25-outing-pager.md)
 - **Builds on:** [2026-09-21-cats-radar-design.md](./2026-09-21-cats-radar-design.md) §3.5;
-  [2026-09-25-many-photos-per-cat-design.md](./2026-09-25-many-photos-per-cat-design.md) (its detail screen
-  section is amended here)
+  [2026-09-25-many-photos-per-cat-design.md](./2026-09-25-many-photos-per-cat-design.md) (its detail
+  screen's photo pager is nested in each cat page)
 
 ## What the owner asked for
 
@@ -28,8 +28,9 @@ Owner decisions, 2026-09-25:
   and location backfill stay right. Changing the rule globally was offered and rejected: the data cannot tell
   a genuine middle cat from a stray tap between two walks, a stray tap could then never be undone out of an
   outing, the purge would split it silently a month later, and a backup carries no deleted rows.
-- **Many photos per cat show as a cover with a count** on the detail screen; paging through them is the
-  viewer's job. A photo pager inside a cat page would put photos, cats and outings on one gesture axis.
+- **A cat's photos keep their own pager inside its page.** A cover with a count, leaving the paging to the
+  viewer, was chosen first; the photo pager shipped with many photos per cat before that amendment landed, and
+  the owner kept it (2026-09-26). The cats pager nests it (*The photo pager inside a page*, below).
 
 ## The outing window (`:domain`)
 
@@ -94,9 +95,9 @@ is extracted so both screens build the label with one function.
 ### Intents and effects name their cat
 
 Every per-cat intent and effect carries the cat's id: `CoatPicked(catId, coat)`, `TakePhotoClicked(catId)`,
-`PickPhotoClicked(catId)`, `PhotoTaken(catId, uri)`, `PhotoPicked(catId, uri)`, `PhotoClicked(catId)`,
-`CoordinatesClicked(catId)`; `OpenCamera(catId)`, `OpenPhotoPicker(catId)`, `OpenPhoto(catId)`,
-`OpenMap(catId)`. The nav host opens the viewer and the map on that id, never `key.id`.
+`PickPhotoClicked(catId)`, `PhotoTaken(catId, uri)`, `PhotoPicked(catId, uri)`, `PhotoClicked(catId, photoId)`,
+`CoordinatesClicked(catId)`; `OpenCamera(catId)`, `OpenPhotoPicker(catId)`, `OpenPhoto(catId, photoId)`,
+`OpenMap(catId)`. The nav host opens the viewer and the map on that cat, never on `key.id`.
 
 **A photo lands on the cat it was taken for.** The camera launcher's saved state holds each target with its
 cat's id, and the picker saves the id it was opened for, so a result delivered after the process died still
@@ -145,7 +146,7 @@ settled page only when that page's cat differs from it.
 
 A `NestedScrollConnection` on a wrapper around the pager, not an `OverscrollEffect`: the pager never calls
 its overscroll effect when it has one page, and a drag that starts inside a nested horizontal scroller — the
-coat row on every page — bypasses it.
+coat row and the photo pager on every page — bypasses it.
 
 - Horizontal scroll the pager leaves over from a user drag accumulates as a resisted pull; pre-scroll in the
   opposite direction takes the pull back first.
@@ -161,11 +162,18 @@ coat row on every page — bypasses it.
 - Directions follow the pager, so right-to-left layouts mirror them.
 - The pull distance and the haptic are gesture state; they never reach the Store.
 
-## Amending many photos per cat
+### The photo pager inside a page
 
-The detail screen shows a cat's cover, with a count badge when it has more than one photo; a tap opens the
-viewer on the cover, and the viewer pages through all of them. *Add photo* is offered on every live cat as
-before. The photo pager and its "2 / 5" leave the detail screen (M7); nothing else in that design changes.
+A cat with several photos shows them in their own horizontal pager at the top of its page, as many photos per
+cat built it. The two pagers share one axis:
+
+- A horizontal drag that starts on a photo moves the photos first. Past the cat's first or last photo, the rest
+  of the drag moves the cats pager, and past the first or last cat it feeds the pull, so a stretch to the next
+  outing can start on a photo.
+- A fling off the last photo does not carry its speed into the cats pager, which settles by position: a short
+  flick there can come back to the same cat. Accepted with the photo pager.
+- The photo's own position stays over the photo; the cat's "2 / 5" stays in the bar.
+- Each cat keeps its photo position while the user swipes to other cats and back.
 
 ## Not built
 
@@ -185,7 +193,8 @@ outing, pinch or long-press gestures on a page, a split gesture for outings.
   appearing after a tally; no jump when the oldest cat is deleted.
 - **Screen** (Robolectric Compose): an armed release jumps once; a short release and a cancelled gesture do
   not; no threshold at the ends of history; a one-cat outing still pulls and jumps; a pull that starts on the
-  coat row; one haptic per crossing; the position and its description; accessibility actions present only
-  where a neighbour is; the pager follows `currentId`.
+  coat row, and one that starts on a photo; a drag past a cat's last photo moving to the next cat; one haptic per
+  crossing; the position and its description; accessibility actions present only where a neighbour is; the
+  pager follows `currentId`.
 - **Entry** (`:app`): the viewer and the map open the cat on screen after a swipe; a restored entry reopens the
   cat that was on screen.

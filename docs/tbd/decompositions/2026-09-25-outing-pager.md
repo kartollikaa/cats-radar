@@ -32,7 +32,8 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ### Slice P2 — The detail screen's intents and effects name their cat
 - **In scope:** the cat id on `CoatPicked`, `TakePhotoClicked`, `PickPhotoClicked`, `PhotoTaken`, `PhotoPicked`,
-  `PhotoClicked`, `CoordinatesClicked` and on `OpenCamera`, `OpenPhotoPicker`, `OpenPhoto`, `OpenMap`;
+  `PhotoClicked` (beside its `photoId`), `CoordinatesClicked` and on `OpenCamera`, `OpenPhotoPicker`, `OpenPhoto`
+  (beside its `photoId`), `OpenMap`;
   `PendingCaptures` saving each target with its cat id, and restoring the old shape without inventing one; the
   picker saving the id it opened for; the nav host opening the viewer and the map by the effect's id;
   `encounter-detail.md`.
@@ -42,7 +43,8 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ### Slice P3 — The detail screen pages through its outing
 - **In scope:** the Store collecting `ObserveEncounters` through `outingWindow`, with the anchor and the shown
-  set, starting from `restoredId`, `openedId` or *Missing*; `CatPage`; `PageSettled`; per-cat attaching and one
+  set, starting from `restoredId`, `openedId` or *Missing*; `CatPage` with its photos, each page keeping its
+  photo pager; `PageSettled`; per-cat attaching and one
   screen-wide *waiting* flag; a cat deleted elsewhere leaving the pages; the pager keyed by id and following
   `currentId`; "2 / 5" and "Cat 2 of 5" in EN/RU; the destination saving the anchor; the Store and entry tests
   rewritten around ids; `encounter-detail.md`, `browsing-cats.md`, `map.md`, `places.md`, `photo-viewer.md`,
@@ -73,7 +75,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 ### Slice P5b — Stretching past the edge opens the next outing
 - **In scope:** the pull as a `NestedScrollConnection` around the pager with its overscroll off; the give, the
   label in the gap, the threshold haptic once per crossing, spring-back, a cancelled gesture never jumping, RTL;
-  the screen tests of the spec; `encounter-detail.md`.
+  a pull that starts on a photo; the screen tests of the spec; `encounter-detail.md`.
 - **Out of scope:** anything the Store does (P5a).
 - **Ships safely because:** it adds a gesture for an intent that already exists.
 - **Cleanup owed:** none.
@@ -84,7 +86,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   neighbouring outing. Reviews before planning moved the stretch off `OverscrollEffect` (never called for one
   page, bypassed by the coat row), put the window in `:domain`, and found that camera and picker results carry
   no cat, which P2 fixes before any second cat is on screen. Owner chose **no split on delete in the pager
-  only**, and a **cover with a count** for many photos on the detail screen (M7 in
-  [2026-09-25-many-photos-per-cat.md](./2026-09-25-many-photos-per-cat.md)).
-- Ordering against many photos per cat: P2 and M6 both change `OpenPhoto`; whichever lands second adds its id
-  to the other's. M7 builds on P3's `CatPage` if P3 lands first.
+  only**.
+- 2026-09-26: many photos per cat shipped its detail-screen photo pager (M7, #169) before this map's
+  amendment (a cover with a count) could land, and the owner **kept the photo pager**. The amendment left
+  #166; each cat page nests the photo pager, and a drag past a cat's last photo moves on to the next cat.
+  P2 adds the cat's id beside M7's `photoId`. M8 (several photos at once) and P2 both change what the
+  picker hands back; whichever lands second carries the other's change.

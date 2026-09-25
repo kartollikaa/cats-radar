@@ -357,7 +357,7 @@ If the push stalls or fails with an HTTP/2 framing error, retry with
 
 Open the PR as a draft with `gh pr create --draft --base main --head tech/outing-window --title "The outing window in the domain"`.
 Body: what P1 adds (the function, what it keeps whole, nothing calls it yet), that it carries the outing
-pager's design and PR map, the amendment to many photos per cat (cover with a count), and the test and
+pager's design and PR map, and the test and
 mutation evidence. End the body with the session's PR attribution line. Update the map's P1 status to
 `in-review` in the same branch and push.
 
