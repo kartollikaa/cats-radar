@@ -4,8 +4,10 @@ import app.cash.turbine.test
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ResolveGalleryLink
+import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeEncounterRepository
+import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
 import kotlinx.coroutines.CompletableDeferred
@@ -16,6 +18,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.TimeZone
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -42,7 +45,14 @@ class PhotoViewerStoreTest {
 
         store.effects.test {
             runCurrent()
-            assertEquals(PhotoViewerState.Showing(photoPath = "/data/photos/cat-1.jpg"), store.state.value)
+            assertEquals(
+                PhotoViewerState.Showing(
+                    photoPath = "/data/photos/cat-1.jpg",
+                    timeLabel = "2026-09-22T10:00:00Z",
+                    dayLabel = "2026-09-22",
+                ),
+                store.state.value,
+            )
             expectNoEvents()
         }
     }
@@ -170,7 +180,13 @@ class PhotoViewerStoreTest {
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
         resolveGalleryLink = ResolveGalleryLink(galleryItems, FakeDeviceIdProvider(INSTALL)),
-        stateMapper = PhotoViewerStateMapper(FakePhotoStorage(root = "/data/photos"), FakeDeviceIdProvider(INSTALL)),
+        stateMapper = PhotoViewerStateMapper(
+            FakeDateTimeFormatter(),
+            FakePhotoStorage(root = "/data/photos"),
+            FakeDeviceIdProvider(INSTALL),
+        ),
+        clock = FakeClock(OCCURRED),
+        timeZone = TimeZone.UTC,
     )
 
     private companion object {

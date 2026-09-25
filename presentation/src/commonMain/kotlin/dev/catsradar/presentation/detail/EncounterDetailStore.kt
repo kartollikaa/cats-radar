@@ -41,6 +41,7 @@ class EncounterDetailStore(
     private var undoTimeoutJob: Job? = null
     private var attachingPhoto = false
     private var awaitingPhoto = false
+    private var leaving = false
 
     init {
         observeEncounter(encounterId)
@@ -60,6 +61,7 @@ class EncounterDetailStore(
 
     override suspend fun handle(intent: EncounterDetailIntent) {
         when (intent) {
+            EncounterDetailIntent.BackClicked -> navigateBack()
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
             is EncounterDetailIntent.CoatPicked -> onCoatPicked(intent.coat)
@@ -123,8 +125,14 @@ class EncounterDetailStore(
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
             setState { EncounterDetailState.Deleted(undoVisible = false) }
-            emit(EncounterDetailEffect.NavigateBack)
+            navigateBack()
         }
+    }
+
+    private suspend fun navigateBack() {
+        if (leaving) return
+        leaving = true
+        emit(EncounterDetailEffect.NavigateBack)
     }
 
     private suspend fun onUndoClicked() {

@@ -170,6 +170,56 @@ class EncounterDetailStoreTest {
         }
 
     @Test
+    fun `back navigates back once, however often it is tapped`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.BackClicked)
+            store.dispatch(EncounterDetailIntent.BackClicked)
+            runCurrent()
+
+            assertEquals(EncounterDetailEffect.NavigateBack, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `back during the undo window navigates back once, and the window closing adds nothing`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.DeleteClicked)
+                runCurrent()
+                store.dispatch(EncounterDetailIntent.BackClicked)
+                runCurrent()
+                assertEquals(EncounterDetailEffect.NavigateBack, awaitItem())
+
+                advanceTimeBy(Tuning.UNDO_VISIBLE * 2)
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `back from a cat nobody has seen still navigates back`() = runTest(mainDispatcher) {
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.BackClicked)
+            runCurrent()
+
+            assertEquals(EncounterDetailState.Missing, store.state.value)
+            assertEquals(EncounterDetailEffect.NavigateBack, awaitItem())
+        }
+    }
+
+    @Test
     fun `undo after the window closed is a no-op and the deletion stands`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         val store = newStore()
