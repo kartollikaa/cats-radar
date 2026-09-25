@@ -73,19 +73,20 @@ class EncounterDetailStore(
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
             // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
-            is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(encounterId, intent.coat?.toCatCoat()) }
-            EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
-            EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
+            is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(intent.catId, intent.coat?.toCatCoat()) }
+            is EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera(intent.catId))
+            is EncounterDetailIntent.PickPhotoClicked ->
+                requestPhoto(EncounterDetailEffect.OpenPhotoPicker(intent.catId))
             is EncounterDetailIntent.PhotoClicked ->
                 if ((state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId }) {
-                    emit(EncounterDetailEffect.OpenPhoto(intent.photoId))
+                    emit(EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId))
                 }
-            EncounterDetailIntent.CoordinatesClicked ->
+            is EncounterDetailIntent.CoordinatesClicked ->
                 if ((state.value as? EncounterDetailState.Loaded)?.onTheMap == true) {
-                    emit(EncounterDetailEffect.OpenMap)
+                    emit(EncounterDetailEffect.OpenMap(intent.catId))
                 }
-            is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.uri, PhotoSource.CAMERA)
-            is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.uri, PhotoSource.GALLERY)
+            is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.catId, intent.uri, PhotoSource.CAMERA)
+            is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.catId, intent.uri, PhotoSource.GALLERY)
         }
     }
 
@@ -96,13 +97,13 @@ class EncounterDetailStore(
         emit(opener)
     }
 
-    private suspend fun onPhotoChosen(uri: String?, source: PhotoSource) {
+    private suspend fun onPhotoChosen(catId: String, uri: String?, source: PhotoSource) {
         awaitingPhoto = false
         if (uri == null) return
         attachingPhoto = true
         refresh()
         var result: AttachResult? = null
-        runStorageWrite { result = attachPhoto(encounterId, uri, source) }
+        runStorageWrite { result = attachPhoto(catId, uri, source) }
         attachingPhoto = false
         when (val outcome = result) {
             is AttachResult.Attached -> {

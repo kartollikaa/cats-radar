@@ -12,6 +12,8 @@ import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
+import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
@@ -276,13 +278,13 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
-            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhotoPicker, awaitItem())
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker(ID), awaitItem())
         }
     }
 
@@ -293,9 +295,9 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
         }
     }
 
@@ -305,7 +307,7 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+        store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
         runCurrent()
 
         val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
@@ -319,7 +321,7 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
         runCurrent()
 
         val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
@@ -333,7 +335,7 @@ class EncounterDetailStoreTest {
         resizer.storeDelay = 1.seconds
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
         runCurrent()
 
         ViewModelStore().apply { put("detail", store) }.clear()
@@ -348,14 +350,14 @@ class EncounterDetailStoreTest {
         repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
         runCurrent()
         val second = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.last().id
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked(second))
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, second))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto(second), awaitItem())
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, second), awaitItem())
         }
     }
 
@@ -366,17 +368,17 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
             expectNoEvents()
 
-            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
         }
     }
 
@@ -387,7 +389,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
             runCurrent()
             assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
         }
@@ -403,7 +405,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
             runCurrent()
             expectNoEvents()
         }
@@ -419,8 +421,8 @@ class EncounterDetailStoreTest {
         val before = store.state.value
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.PhotoPicked(null))
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(ID, null))
             runCurrent()
             expectNoEvents()
         }
@@ -434,7 +436,7 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
         runCurrent()
         assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
 
@@ -451,7 +453,7 @@ class EncounterDetailStoreTest {
             runCurrent()
             repository.observeDelay = 5.seconds
 
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
             runCurrent()
             assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
 
@@ -472,12 +474,12 @@ class EncounterDetailStoreTest {
         resizer.storeDelay = 1.seconds
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
             runCurrent()
             expectNoEvents()
         }
@@ -491,7 +493,7 @@ class EncounterDetailStoreTest {
             val store = newStore()
             runCurrent()
 
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
             runCurrent()
             store.dispatch(EncounterDetailIntent.DeleteClicked)
             runCurrent()
@@ -516,7 +518,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
             assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
@@ -534,7 +536,7 @@ class EncounterDetailStoreTest {
         val before = store.state.value
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoAlreadyThere, awaitItem())
         }
@@ -550,7 +552,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotoPicked(ID, PICKED))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
         }
@@ -566,9 +568,9 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto(ID), awaitItem())
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, ID), awaitItem())
         }
     }
 
@@ -579,7 +581,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked("anything"))
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, "anything"))
             runCurrent()
             expectNoEvents()
         }
@@ -592,9 +594,9 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenMap, awaitItem())
+            assertEquals(EncounterDetailEffect.OpenMap(ID), awaitItem())
         }
     }
 
@@ -605,7 +607,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
             runCurrent()
             expectNoEvents()
         }
@@ -620,9 +622,74 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
             runCurrent()
             expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `the camera and the picker open for the cat they were asked for`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, uri = null))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a photo lands on the cat its result names, not on the one the screen observes`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+        store.dispatch(EncounterDetailIntent.PhotoTaken(OTHER, CAPTURE))
+        runCurrent()
+
+        assertEquals(1, repository.observeById(OTHER).value()?.photos?.size)
+        assertEquals(0, repository.observeById(ID).value()?.photos?.size)
+    }
+
+    @Test
+    fun `a coat lands on the cat it was picked for`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
+        runCurrent()
+
+        assertEquals(CoatOption.GINGER, repository.observeById(OTHER).value()?.coat?.toOption())
+        assertEquals(null, repository.observeById(ID).value()?.coat)
+    }
+
+    @Test
+    fun `the viewer and the map open on the cat that was tapped`() = runTest(mainDispatcher) {
+        repository.insert(
+            encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
+        )
+        val store = newStore()
+        runCurrent()
+        val photoId = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.first().id
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, photoId))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, photoId), awaitItem())
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenMap(ID), awaitItem())
         }
     }
 
@@ -654,6 +721,7 @@ class EncounterDetailStoreTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val OTHER = "cat-2"
         const val CAPTURE = "content://captures/1"
         const val PICKED = "content://picker/1"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")

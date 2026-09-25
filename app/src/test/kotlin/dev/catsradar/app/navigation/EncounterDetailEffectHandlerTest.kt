@@ -10,8 +10,8 @@ class EncounterDetailEffectHandlerTest {
     private fun handle(effect: EncounterDetailEffect) = handleEncounterDetailEffect(
         effect,
         onNavigateBack = { calls += "back" },
-        onOpenPhoto = { photoId -> calls += "photo $photoId" },
-        onOpenMap = { calls += "map" },
+        onOpenPhoto = { viewer -> calls += "photo ${viewer.encounterId} ${viewer.photoId}" },
+        onOpenMap = { catId -> calls += "map $catId" },
         cameraLauncher = { calls += "camera" },
         photoPickerLauncher = { calls += "picker" },
         photoFailureReporter = { calls += "failure" },
@@ -22,24 +22,24 @@ class EncounterDetailEffectHandlerTest {
     @Test
     fun `each effect reaches exactly its own collaborator`() {
         handle(EncounterDetailEffect.NavigateBack)
-        handle(EncounterDetailEffect.OpenCamera)
-        handle(EncounterDetailEffect.OpenPhotoPicker)
-        handle(EncounterDetailEffect.OpenPhoto("second"))
+        handle(EncounterDetailEffect.OpenCamera("cat-1"))
+        handle(EncounterDetailEffect.OpenPhotoPicker("cat-1"))
+        handle(EncounterDetailEffect.OpenPhoto("cat-1", "second"))
         handle(EncounterDetailEffect.PhotoNotAttached)
         handle(EncounterDetailEffect.PhotoAlreadyThere)
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
-        handle(EncounterDetailEffect.OpenMap)
+        handle(EncounterDetailEffect.OpenMap("cat-1"))
 
         assertEquals(
             listOf(
                 "back",
                 "camera",
                 "picker",
-                "photo second",
+                "photo cat-1 second",
                 "failure",
                 "already there",
                 "discard content://captures/1",
-                "map",
+                "map cat-1",
             ),
             calls,
         )
