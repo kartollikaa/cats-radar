@@ -34,10 +34,12 @@ recreated*). The time and day in the bar are the cat's, the same on every page.
 ## Chrome
 
 A bar sits at the top over a dark scrim: the back arrow at the start, the gallery button at the end
-when there is one (see *Open in gallery* below), both kept the other screens' content inset from the
-edges (`PhotoViewerScreenTest`, *the bar's buttons keep the screens' content inset from the edges*),
-and centred on the screen between them when the cat
-was logged — the time, with the day under it. Both are the detail screen's own labels: the time where
+when there is one (see *Open in gallery* below), and centred on the screen between them when the cat
+was logged — the time, with the day under it. The buttons stand as far from the screen's edges as the
+other screens' content does (`PhotoViewerScreenTest`, *the bar's buttons keep the screens' content
+inset from the edges*), and a day too long for the bar is cut short well before it reaches them (*a
+day too long for the bar is given no more room than keeps it clear of the buttons*). The time and the
+day are the detail screen's own labels: the time where
 the cat was logged, and the day it was there, "Today" and "Yesterday" included
 (`PhotoViewerStateMapperTest`, *the day comes from the cat's own offset, not the phone's*;
 `PhotoViewerScreenTest`, *the bar names when the photo was taken, the time over the day, centred on
