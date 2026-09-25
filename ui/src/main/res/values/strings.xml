@@ -158,6 +158,15 @@
     <string name="detail_pick_photo">Choose from gallery</string>
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_already_there">This photo is already on this cat</string>
+    <string name="detail_photos_already_there">These photos are already on this cat</string>
+    <plurals name="detail_photos_attaching">
+        <item quantity="one">Attached %1$d of %2$d photo</item>
+        <item quantity="other">Attached %1$d of %2$d photos</item>
+    </plurals>
+    <plurals name="detail_photos_not_attached">
+        <item quantity="one">%d photo not attached</item>
+        <item quantity="other">%d photos not attached</item>
+    </plurals>
     <string name="detail_photo_attaching">Attaching the photo</string>
     <string name="detail_open_photo">Open full screen</string>
     <string name="detail_back">Back</string>

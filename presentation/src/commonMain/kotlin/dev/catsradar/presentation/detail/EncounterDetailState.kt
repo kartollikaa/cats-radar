@@ -19,6 +19,8 @@ sealed interface EncounterDetailState {
         val photos: ImmutableList<DetailPhoto> = persistentListOf(),
         val coat: CoatOption? = null,
         val addPhoto: AddPhoto = AddPhoto.READY,
+        /** Null unless several photos are being attached. */
+        val attachProgress: AttachProgress? = null,
         val onTheMap: Boolean = false,
     ) : EncounterDetailState
 
@@ -33,3 +35,8 @@ sealed interface EncounterDetailState {
 data class DetailPhoto(val id: String, val path: String)
 
 enum class AddPhoto { READY, ATTACHING }
+
+/** [done] of the [total] photos being attached are through, whether or not each one landed. */
+data class AttachProgress(val done: Int, val total: Int) {
+    val fraction: Float get() = done.toFloat() / total
+}

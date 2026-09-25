@@ -50,8 +50,8 @@ has both.
 ## Giving a cat a photo later
 
 A cat can be given a photo afterwards from its detail screen, whether it has photos or not (see
-[encounter-detail.md](./encounter-detail.md#its-photos)): the camera, or a single image picked from the
-gallery.
+[encounter-detail.md](./encounter-detail.md#its-photos)): the camera, or several images picked from the
+gallery at once, up to `Tuning.ATTACH_BATCH_MAX`, each attached in turn as below.
 `AttachPhoto` adds a photo to any live cat, one that already has photos included: the new one goes after
 the others (`AttachPhotoTest`, *a cat that has a photo gets another after it and keeps the first*). It
 stores the app's copy and thumbnail the same way `LogPhoto` does, under the new photo's own id rather
@@ -102,7 +102,12 @@ photo later is skipped while either cat is live (see `import.md`).
 - **Leaving mid-attempt** — once the attempt's copies are written, a cancellation before the write
   lands removes them. Once the write has landed, the files are the cat's and stay
   (`AttachPhotoTest`, *a cancellation while the original goes to the gallery removes the copies*;
-  *a cancellation after the write has landed keeps the files the cat now points at*).
+  *a cancellation after the write has landed keeps the files the cat now points at*). In a pick of
+  several, the photos already attached stay and the rest are never started
+  (`EncounterDetailPickSeveralTest`, *leaving mid-pick keeps the photos attached so far and attaches no
+  more*).
+- **Some photos of a pick fail** — the others still land, and the screen says how many did not
+  (*several photos not attached say how many in one message*).
 
 ## The gallery setting
 

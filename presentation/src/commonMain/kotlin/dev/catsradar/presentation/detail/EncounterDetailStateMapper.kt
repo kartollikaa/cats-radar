@@ -20,7 +20,7 @@ class EncounterDetailStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    fun map(encounter: Encounter, today: LocalDate, attachingPhoto: Boolean = false): EncounterDetailState.Loaded {
+    fun map(encounter: Encounter, today: LocalDate, attaching: AttachProgress? = null): EncounterDetailState.Loaded {
         val lat = encounter.lat
         val lon = encounter.lon
         return EncounterDetailState.Loaded(
@@ -35,7 +35,8 @@ class EncounterDetailStateMapper(
             accuracyMeters = encounter.accuracyMeters?.takeIf { lat != null && lon != null }?.roundToInt(),
             photos = encounter.photos.map { DetailPhoto(it.id, photoStorage.resolve(it.photoPath)) }.toImmutableList(),
             coat = encounter.coat?.toOption(),
-            addPhoto = if (attachingPhoto) AddPhoto.ATTACHING else AddPhoto.READY,
+            addPhoto = if (attaching != null) AddPhoto.ATTACHING else AddPhoto.READY,
+            attachProgress = attaching?.takeIf { it.total > 1 },
             onTheMap = encounter.isOnTheMap(),
         )
     }

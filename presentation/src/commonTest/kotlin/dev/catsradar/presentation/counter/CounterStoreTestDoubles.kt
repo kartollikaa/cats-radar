@@ -237,15 +237,16 @@ internal class FakeImageResizer(
     var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
 ) : ImageResizer {
     var storeDelay: Duration = Duration.ZERO
+    var unreadable: Set<String> = emptySet()
 
     override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
         delay(storeDelay)
-        return result
+        return result.takeUnless { sourceUri in unreadable }
     }
 }
 
-internal class FakeDigest : Digest {
-    override suspend fun sha256(uri: String): String? = "digest"
+internal class FakeDigest(private val digestOf: (uri: String) -> String? = { "digest" }) : Digest {
+    override suspend fun sha256(uri: String): String? = digestOf(uri)
 }
 
 internal class FakePlaceCellRepository : PlaceCellRepository {

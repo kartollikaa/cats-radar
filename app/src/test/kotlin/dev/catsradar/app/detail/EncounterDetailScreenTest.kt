@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.detail.AddPhoto
+import dev.catsradar.presentation.detail.AttachProgress
 import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -94,6 +96,22 @@ class EncounterDetailScreenTest {
         val delete = compose.onNodeWithText(context.getString(R.string.detail_delete)).fetchSemanticsNode()
 
         assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), delete.boundsInRoot.bottom, 1f)
+    }
+
+    @Test
+    fun `several photos being attached show how many are through out of how many`() {
+        show(loaded.copy(addPhoto = AddPhoto.ATTACHING, attachProgress = AttachProgress(done = 2, total = 5)))
+
+        val bar = compose.onNodeWithContentDescription("Attached 2 of 5 photos")
+        bar.assertExists()
+        assertEquals(0.4f, bar.fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current)
+    }
+
+    @Test
+    fun `a single photo being attached shows the bar without a count`() {
+        show(loaded.copy(addPhoto = AddPhoto.ATTACHING))
+
+        compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_attaching)).assertExists()
     }
 
     private fun show(state: EncounterDetailState, onBackClick: () -> Unit = {}) = show(onBackClick) { state }
