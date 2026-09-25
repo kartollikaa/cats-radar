@@ -90,10 +90,12 @@ only in the corners of squarer shapes.
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
 
-**Rhythm.** Screens that hold rows — Statistics, Settings, an encounter's detail — group them in
-titled cards (`SectionCard`) on the theme's low surface, with the title in the primary colour; a
-headline number sits in a primary-container card of its own. The Encounters list is the one place
-rows are cards individually, since each outing is one run of them. A value that does not fit beside
+**Rhythm.** Screens that hold rows — Statistics, Settings, an encounter's detail, each level of
+Places — group them in titled cards (`SectionCard`) on the theme's low surface, with the title in
+the primary colour; a headline number sits in a primary-container card of its own, and a Places
+level opens on one that names the place. Cat lists — the Encounters tab, the map's spot sheet, the
+cats at the bottom of Places — are the one place rows are cards individually, since each outing is
+one run of them. A value that does not fit beside
 its label moves under it, end-aligned, rather than squeezing the label; a card's title is a heading
 and each row reads as one item to TalkBack. A setting's whole row toggles it, not only its switch.
 
