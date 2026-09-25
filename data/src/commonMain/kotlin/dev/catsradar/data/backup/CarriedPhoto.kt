@@ -1,11 +1,11 @@
-package dev.catsradar.data.repository
+package dev.catsradar.data.backup
 
 import dev.catsradar.domain.model.EncounterPhoto
 import kotlin.time.Instant
 
 /**
- * The photo a cat's own record carries in its photo fields, or null when it has no copy. Those fields name
- * no photo of their own, so it takes the cat's id, install and creation time.
+ * The photo an archive before format 4 carries in a cat's own record, or null when it has no copy. Those fields
+ * name no photo of their own, so it takes the cat's id, install and creation time, as the v4 migration does.
  */
 @Suppress("LongParameterList") // one parameter per photo field the record carries
 internal fun carriedPhoto(

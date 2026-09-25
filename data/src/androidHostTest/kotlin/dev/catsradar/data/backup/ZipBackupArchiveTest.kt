@@ -144,7 +144,7 @@ class ZipBackupArchiveTest {
     }
 
     @Test
-    fun anArchiveSaysItIsFormatThreeSoAnAppBeforePickedGalleryItemsRefusesIt() = runTest {
+    fun anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt() = runTest {
         val path = target()
 
         assertTrue(writer().write(path, BackupContents()))
@@ -152,7 +152,7 @@ class ZipBackupArchiveTest {
         val manifest = ZipFile(path).use { zip ->
             zip.getInputStream(zip.getEntry(MANIFEST_ENTRY)).readBytes().decodeToString()
         }
-        assertTrue("\"formatVersion\":3" in manifest, manifest)
+        assertTrue("\"formatVersion\":4" in manifest, manifest)
     }
 
     @Test

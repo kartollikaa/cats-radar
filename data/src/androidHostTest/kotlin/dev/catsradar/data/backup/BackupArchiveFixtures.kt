@@ -22,7 +22,9 @@ internal fun catWithPhotos(photoPath: String?, thumbPath: String? = null): Strin
         """"locationSource":"NONE","deviceId":"d","createdAt":0,"updatedAt":0,${paths.joinToString(",")}}]"""
 }
 
-internal fun File.writeArchive(vararg entries: Pair<String, String>) {
+internal fun File.writeArchive(vararg entries: Pair<String, String>) = writeArchive(entries.asList())
+
+internal fun File.writeArchive(entries: List<Pair<String, String>>) {
     ZipOutputStream(outputStream()).use { zip ->
         entries.forEach { (name, body) ->
             zip.putNextEntry(ZipEntry(name))
