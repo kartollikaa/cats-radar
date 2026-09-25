@@ -30,7 +30,8 @@ class WalkMeasuresTest {
     private fun cats(vararg minutes: Int) =
         CatTimes.of(minutes.map { encounterFixture("cat-$it", START + it.minutes) })
 
-    private fun kept(walk: Walk, pointCount: Int) = MeasuredWalk(walk, pointCount, meters = KEPT_METERS, cats = KEPT_CATS)
+    private fun kept(walk: Walk, pointCount: Int) =
+        MeasuredWalk(walk, pointCount, meters = KEPT_METERS, cats = KEPT_CATS)
 
     @Test
     fun `a first measure gives every walk its route's length and the cats logged during it`() {
