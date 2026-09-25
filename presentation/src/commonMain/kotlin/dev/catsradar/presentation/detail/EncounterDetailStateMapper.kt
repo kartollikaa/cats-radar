@@ -10,6 +10,7 @@ import dev.catsradar.presentation.encounters.toLocationLabel
 import dev.catsradar.presentation.map.isOnTheMap
 import dev.catsradar.presentation.regions.countryFlag
 import dev.catsradar.presentation.time
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 import kotlin.math.pow
@@ -39,13 +40,9 @@ class EncounterDetailStateMapper(
                 null
             },
             accuracyMeters = encounter.accuracyMeters?.takeIf { lat != null && lon != null }?.roundToInt(),
-            photoPath = encounter.cover?.photoPath?.let(photoStorage::resolve),
+            photos = encounter.photos.map { DetailPhoto(it.id, photoStorage.resolve(it.photoPath)) }.toImmutableList(),
             coat = encounter.coat?.toOption(),
-            addPhoto = when {
-                encounter.photos.isNotEmpty() -> null
-                attachingPhoto -> AddPhoto.ATTACHING
-                else -> AddPhoto.READY
-            },
+            addPhoto = if (attachingPhoto) AddPhoto.ATTACHING else AddPhoto.READY,
             onTheMap = encounter.isOnTheMap(),
             place = place?.let { found ->
                 // A city-state's locality repeats its country's name.
