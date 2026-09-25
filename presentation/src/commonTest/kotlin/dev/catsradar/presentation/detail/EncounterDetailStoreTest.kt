@@ -44,6 +44,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -631,17 +633,18 @@ class EncounterDetailStoreTest {
     @Test
     fun `the camera and the picker open for the cat they were asked for`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
         val store = newStore()
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(OTHER))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
-            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, uri = null))
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
+            assertEquals(EncounterDetailEffect.OpenCamera(OTHER), awaitItem())
+            store.dispatch(EncounterDetailIntent.PhotoTaken(OTHER, uri = null))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(OTHER))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhotoPicker(ID), awaitItem())
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker(OTHER), awaitItem())
         }
     }
 
@@ -671,7 +674,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         assertEquals(CoatOption.GINGER, repository.observeById(OTHER).value()?.coat?.toOption())
-        assertEquals(null, repository.observeById(ID).value()?.coat)
+        assertNull(assertNotNull(repository.observeById(ID).value()).coat)
     }
 
     @Test
@@ -679,17 +682,18 @@ class EncounterDetailStoreTest {
         repository.insert(
             encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
         )
+        repository.insert(encounterFixture(OTHER, OCCURRED))
         val store = newStore()
         runCurrent()
         val photoId = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.first().id
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, photoId))
+            store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, photoId))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto(ID, photoId), awaitItem())
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
+            assertEquals(EncounterDetailEffect.OpenPhoto(OTHER, photoId), awaitItem())
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(OTHER))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenMap(ID), awaitItem())
+            assertEquals(EncounterDetailEffect.OpenMap(OTHER), awaitItem())
         }
     }
 
