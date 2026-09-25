@@ -16,14 +16,17 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.viewer.PhotoViewerState
+import dev.catsradar.presentation.viewer.ViewerPhoto
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.viewer.PhotoViewerScreen
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -87,21 +90,52 @@ class PhotoViewerScreenTest {
     }
 
     @Test
-    fun `a photo whose original is in the gallery offers it there, and the tap reports`() {
-        var opens = 0
-        show(opensInGallery = true, onOpenInGalleryClick = { opens++ })
+    fun `a photo whose original is in the gallery offers it there, and the tap reports which photo`() {
+        val opened = mutableListOf<String>()
+        show(photos = listOf(Photo("cover", opensInGallery = true)), onOpenInGalleryClick = { opened += it })
 
         openInGallery().assertIsDisplayed().performClick()
 
-        assertEquals(1, opens)
+        assertEquals(listOf("cover"), opened)
     }
 
     @Test
     fun `a photo with no original in the gallery offers nothing there`() {
-        show(opensInGallery = false)
+        show(photos = listOf(Photo("cover", opensInGallery = false)))
 
         back().assertIsDisplayed()
         openInGallery().assertDoesNotExist()
+    }
+
+    @Test
+    fun `a swipe moves to the next photo, and the gallery button follows the photo on screen`() {
+        val opened = mutableListOf<String>()
+        show(
+            photos = listOf(Photo("cover", opensInGallery = false), Photo("second", opensInGallery = true)),
+            onOpenInGalleryClick = { opened += it },
+        )
+        position(1, of = 2).assertIsDisplayed()
+        openInGallery().assertDoesNotExist()
+
+        swipeToTheNextPhoto()
+
+        position(2, of = 2).assertIsDisplayed()
+        openInGallery().assertIsDisplayed().performClick()
+        assertEquals(listOf("second"), opened)
+    }
+
+    @Test
+    fun `opened on a photo the viewer starts there`() {
+        show(photos = listOf(Photo("cover"), Photo("second"), Photo("third")), firstPage = 2)
+
+        position(3, of = 3).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a cat with one photo shows no position`() {
+        show(photos = listOf(Photo("cover")))
+
+        compose.onNodeWithText(context.getString(R.string.viewer_position, 1, 1)).assertDoesNotExist()
     }
 
     @Test
@@ -112,23 +146,29 @@ class PhotoViewerScreenTest {
         assertTrue(compose.onAllNodes(isHeading(), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
     }
 
+    private data class Photo(val id: String, val opensInGallery: Boolean = false)
+
     private fun show(
-        opensInGallery: Boolean = false,
+        photos: List<Photo> = listOf(Photo("cover")),
+        firstPage: Int = 0,
         onBackClick: () -> Unit = {},
-        onOpenInGalleryClick: () -> Unit = {},
+        onOpenInGalleryClick: (String) -> Unit = {},
     ) {
-        val photo = File(context.cacheDir, "cat.png")
-        photo.outputStream().use { out ->
-            Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, out)
+        val viewerPhotos = photos.map { photo ->
+            val file = File(context.cacheDir, "${photo.id}.png")
+            file.outputStream().use { out ->
+                Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            ViewerPhoto(id = photo.id, path = file.absolutePath, opensInGallery = photo.opensInGallery)
         }
         compose.setContent {
             CatsRadarTheme {
                 PhotoViewerScreen(
                     state = PhotoViewerState.Showing(
-                        photoPath = photo.absolutePath,
+                        photos = viewerPhotos.toImmutableList(),
+                        firstPage = firstPage,
                         timeLabel = TIME,
                         dayLabel = DAY,
-                        opensInGallery = opensInGallery,
                     ),
                     onBackClick = onBackClick,
                     onOpenInGalleryClick = onOpenInGalleryClick,
@@ -146,6 +186,14 @@ class PhotoViewerScreenTest {
         compose.mainClock.advanceTimeBy(ViewConfiguration.getDoubleTapTimeout() * 2L)
         compose.waitForIdle()
     }
+
+    private fun swipeToTheNextPhoto() {
+        compose.onRoot().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+    }
+
+    private fun position(page: Int, of: Int) =
+        compose.onNodeWithText(context.getString(R.string.viewer_position, page, of))
 
     private fun back() = compose.onNodeWithContentDescription(context.getString(R.string.viewer_back))
 
