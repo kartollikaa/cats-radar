@@ -175,11 +175,10 @@ graph is *declarable*, but that check is blind to anything resolved by hand insi
 binding or a composable (`androidContext()`, `koinInject<Haptics>()`) — nothing reflects a
 constructor for those. `KoinRuntimeResolutionTest` closes that gap by actually starting Koin and
 resolving exactly those hand-resolved types, so a deleted binding fails a JVM test instead of
-surfacing on the user's first tap. A few collaborators arrive as `Lazy<T>` rather than as the
-instance: `WorkManager` for every scheduler, the Play Services client for `FusedLocationProvider`,
-and `FirebaseCrashlytics` for the crash reporter. Building one of those classes therefore never
-touches `WorkManager` before `WorkManager.initialize()` has run, never opens Play Services, and never
-needs `FirebaseApp`; the runtime test builds them in exactly that state.
+surfacing on the user's first tap. It starts WorkManager first, because the app does: every
+scheduler takes the `WorkManager` instance, which exists from `WorkManager.initialize()` on, right
+after `startKoin()`. Only the Play Services client reaches `FusedLocationProvider` as `Lazy<T>`,
+because building it reaches Play Services, which only a real location call should do.
 
 ## Where the code lives
 

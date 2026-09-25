@@ -146,7 +146,7 @@ class WorkManagerImportSchedulerTest {
         }
     }
 
-    private fun newScheduler() = WorkManagerImportScheduler(lazy { WorkManager.getInstance(context) }, batches)
+    private fun newScheduler() = WorkManagerImportScheduler(WorkManager.getInstance(context), batches)
 
     private fun WorkManagerImportScheduler.startAndAwaitTheRun(uris: List<String>): WorkInfo = runBlocking {
         start(uris)

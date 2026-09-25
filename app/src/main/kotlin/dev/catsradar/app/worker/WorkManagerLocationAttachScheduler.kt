@@ -8,10 +8,9 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 
 class WorkManagerLocationAttachScheduler(
-    workManager: Lazy<WorkManager>,
+    private val workManager: WorkManager,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : LocationAttachScheduler {
-    private val workManager by workManager
 
     // Named by encounter id so undo can cancel it by that same name. Cancellation is best-effort
     // (the worker may already be mid-flight); EncounterDao.attachLocation's own deletedAt guard

@@ -4,9 +4,9 @@ import android.app.ActivityManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotifier
-import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.ImportBatches
@@ -37,6 +37,7 @@ import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.viewer.PhotoViewerStore
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
@@ -49,9 +50,16 @@ import kotlin.test.assertSame
 @RunWith(AndroidJUnit4::class)
 class KoinRuntimeResolutionTest {
 
+    // As in CatsRadarApplication, WorkManager is running before anything resolves a scheduler.
+    @Before
+    fun setUp() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(ApplicationProvider.getApplicationContext())
+    }
+
     @After
     fun tearDown() {
         stopKoin()
+        WorkManagerTestInitHelper.closeWorkDatabase()
     }
 
     // verify() (KoinModulesTest) proves the graph is *declarable* by walking constructor
@@ -71,7 +79,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<EncounterDao>())
         assertNotNull(koin.get<Haptics>())
         assertNotNull(koin.get<LocationProvider>())
-        // WorkManager is never initialized here, so a scheduler that reached for it while being built fails.
         assertNotNull(koin.get<LocationAttachScheduler>())
         assertNotNull(koin.get<ImportScheduler>())
         assertNotNull(koin.get<BackupScheduler>())
@@ -83,7 +90,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<WalkingNotifier>())
         assertNotNull(koin.get<ActivityManager>())
         assertNotNull(koin.get<Analytics>())
-        assertNotNull(koin.get<NonFatalReporter>())
         assertNotNull(koin.get<ReverseGeocoder>())
         assertNotNull(koin.get<DeviceIdProvider>())
         assertNotNull(koin.get<ExifReader>())

@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
@@ -21,6 +22,8 @@ import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.koinApplication
@@ -41,6 +44,16 @@ class WorkerFailureReportingTest {
     private val broken = IllegalStateException("database is gone")
     private val withUri = Data.Builder().putString(BackupWork.KEY_URI, "content://backups/cats.zip").build()
     private val withEncounter = Data.Builder().putString(AttachLocationWorker.KEY_ENCOUNTER_ID, "cat-1").build()
+
+    @Before
+    fun startWorkManager() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+    }
+
+    @After
+    fun closeWorkManager() {
+        WorkManagerTestInitHelper.closeWorkDatabase()
+    }
 
     private fun useCasesFailingWith(error: Throwable) = module {
         single { AttachLocation(failing(error), failing(error), failing(error), Clock.System) }
@@ -65,7 +78,7 @@ class WorkerFailureReportingTest {
         }
         single { ResolvePendingPlaces(failing(error), failing(error), Clock.System) }
         single { PurgeDeleted(failing(error), failing(error), Clock.System) }
-        single { GeocodeWorkScheduler(lazy { WorkManager.getInstance(context) }) }
+        single { GeocodeWorkScheduler(WorkManager.getInstance(context)) }
         single<NonFatalReporter> { reporter }
     }
 

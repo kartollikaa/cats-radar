@@ -60,8 +60,8 @@ test at all.
 
 The DI graph gets its own two-layer check outside the three formal tools: `KoinModulesTest`
 statically verifies every constructor-injected binding resolves, and `KoinRuntimeResolutionTest`
-actually starts Koin — with neither WorkManager nor Firebase initialized — and resolves the types
-obtained by hand that the static check can't see — see `app-shell.md`.
+actually starts Koin, with WorkManager running as in the app, and resolves the types obtained by
+hand that the static check can't see — see `app-shell.md`.
 
 ## Where the code lives
 

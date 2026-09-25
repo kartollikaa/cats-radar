@@ -17,11 +17,10 @@ interface ImportScheduler {
 }
 
 class WorkManagerImportScheduler(
-    workManager: Lazy<WorkManager>,
+    private val workManager: WorkManager,
     private val batches: ImportBatches,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : ImportScheduler {
-    private val workManager by workManager
 
     override fun start(uris: List<String>) {
         val requestBuilder = OneTimeWorkRequestBuilder<ImportPhotosWorker>()

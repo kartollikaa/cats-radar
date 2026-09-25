@@ -41,8 +41,7 @@ class WorkManagerLocationAttachSchedulerEnqueueTest {
         )
     }
 
-    private fun scheduler(sdkInt: Int) =
-        WorkManagerLocationAttachScheduler(lazyOf(WorkManager.getInstance(context)), sdkInt)
+    private fun scheduler(sdkInt: Int) = WorkManagerLocationAttachScheduler(WorkManager.getInstance(context), sdkInt)
 
     @After
     fun tearDown() {

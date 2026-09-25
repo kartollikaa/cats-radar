@@ -17,8 +17,7 @@ interface BackupScheduler {
     fun observe(): Flow<WorkInfo?>
 }
 
-class WorkManagerBackupScheduler(workManager: Lazy<WorkManager>) : BackupScheduler {
-    private val workManager by workManager
+class WorkManagerBackupScheduler(private val workManager: WorkManager) : BackupScheduler {
 
     override fun export(target: String) {
         start(OneTimeWorkRequestBuilder<ExportBackupWorker>().setInputData(uriData(target)).build())

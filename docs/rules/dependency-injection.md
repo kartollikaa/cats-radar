@@ -51,16 +51,20 @@ another service object is the case above.
 ## Shapes a dependency can take
 
 - **The instance** — the default.
-- **`Lazy<T>`** — when Koin can build the class before the dependency can exist. `WorkManager` is
-  initialized after Koin starts; building a Play Services client reaches Play Services;
-  `FirebaseCrashlytics` throws in a process where `FirebaseApp` never started. The binding passes
-  Koin's `inject()`, or `lazy { … }` for a one-off, and says in one line why. The class delegates a
-  property to it, so its call sites read as if it held the instance:
+- **`Lazy<T>`** — only when creating the instance is itself costly or has side effects, and the
+  class may be built long before it needs it: building the Play Services location client reaches
+  Play Services, which only a location call should do. The binding passes Koin's `inject()` and
+  says in one line why; the class delegates a property to it, so its call sites read as if it held
+  the instance:
   ```kotlin
-  class WorkManagerBackupScheduler(workManager: Lazy<WorkManager>) : BackupScheduler {
-      private val workManager by workManager
+  class FusedLocationProvider(context: Context, client: Lazy<FusedLocationProviderClient>, …) {
+      private val client by client
   }
   ```
+  `Lazy` is not a way around start-up order. `WorkManager` and the Firebase instances exist before
+  anything resolves their users — `CatsRadarApplication` initializes WorkManager right after
+  `startKoin()`, and Firebase starts before `Application.onCreate()` — so they are injected as
+  instances, and a test that builds the graph starts them in the same order.
 - **A supplier `() -> T`** — when every use needs a fresh instance: a `Geocoder` keeps the locale it
   was built with, so `AndroidReverseGeocoder` builds one per lookup.
 
@@ -85,9 +89,11 @@ worker takes constructor parameters like any other class.
 - `KoinModulesTest` (`verify()`) proves every constructor parameter has a binding. It reads the
   constructor of the class a definition names; a definition bound to an interface
   (`single<Haptics> { … }`) is not reflected.
-- `KoinRuntimeResolutionTest` starts the real modules, without `WorkManager.initialize()` and without
-  `FirebaseApp`, and resolves every type obtained by hand — so a binding that is missing, or a class
-  that reaches for a dependency too early, fails a JVM test.
+- `KoinRuntimeResolutionTest` starts the real modules, with WorkManager running as it is in the app,
+  and resolves every type obtained by hand, so a missing binding fails a JVM test. It runs without
+  `FirebaseApp`, where `FirebaseCrashlytics` cannot be created, so the class that takes it is bound
+  by its class (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`) and
+  `verify()` covers it instead.
 
 No test sees a hand-built instance of a plain class with its own binding (`ImportBatches(context)`
 inside a scheduler); review catches that one.
@@ -96,6 +102,6 @@ inside a scheduler); review catches that one.
 
 1. Add it to the class's primary constructor.
 2. Bind it in the module for its layer; a platform object is obtained there, never in the class.
-3. If Koin can build the class before the object exists, pass `Lazy<T>`.
+3. Pass `Lazy<T>` only for an instance that is costly to create and may never be needed.
 4. If the class is resolved by hand (`koin.get()`, `by inject()`, `koinInject()`, `inject()`), add it
    to `KoinRuntimeResolutionTest`.

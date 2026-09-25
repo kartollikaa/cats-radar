@@ -12,8 +12,7 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
 /** A new cell gets a one-time pass as soon as the phone is online; a failed one waits for the periodic retry. */
-class GeocodeWorkScheduler(workManager: Lazy<WorkManager>) : PlaceNamingScheduler {
-    private val workManager by workManager
+class GeocodeWorkScheduler(private val workManager: WorkManager) : PlaceNamingScheduler {
 
     fun schedule() {
         val request = PeriodicWorkRequestBuilder<GeocodePendingCellsWorker>(INTERVAL_HOURS, TimeUnit.HOURS)

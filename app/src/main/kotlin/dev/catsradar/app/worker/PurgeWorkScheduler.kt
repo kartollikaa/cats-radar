@@ -7,8 +7,7 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
 /** Housekeeping, so it waits for a moment the user is not using the phone. */
-class PurgeWorkScheduler(workManager: Lazy<WorkManager>) {
-    private val workManager by workManager
+class PurgeWorkScheduler(private val workManager: WorkManager) {
 
     fun schedule() {
         val request = PeriodicWorkRequestBuilder<PurgeDeletedWorker>(INTERVAL_DAYS, TimeUnit.DAYS)

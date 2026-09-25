@@ -31,7 +31,7 @@ class GeocodeWorkSchedulerTest {
             context,
             WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING,
         )
-        scheduler = GeocodeWorkScheduler(lazyOf(WorkManager.getInstance(context)))
+        scheduler = GeocodeWorkScheduler(WorkManager.getInstance(context))
     }
 
     @After

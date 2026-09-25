@@ -28,12 +28,14 @@ import dev.catsradar.app.worker.WorkManagerBackupScheduler
 import dev.catsradar.app.worker.WorkManagerImportScheduler
 import dev.catsradar.app.worker.WorkManagerLocationAttachScheduler
 import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val workerModule = module {
     single { NotificationManagerCompat.from(androidContext()) }
-    // Schedulers take this Lazy: Koin may build them before WorkManager.initialize() has run.
+    // Valid only once WorkManager.initialize() has run, which CatsRadarApplication does right after startKoin().
     single { WorkManager.getInstance(androidContext()) }
+    single { FirebaseCrashlytics.getInstance() }
     single<ActivityManager> { androidContext().getSystemService(ActivityManager::class.java) }
     single { ImportNotifier(androidContext(), get()) }
     single { WalkRecordingControl(androidContext()) }
@@ -42,15 +44,14 @@ val workerModule = module {
     single { WalkingNotificationSync(get(), get(), get(), get()) }
     single<WidgetRedraw> { WidgetRedraw { CatsRadarWidget().updateAll(androidContext()) } }
     single { WidgetRefresh(get(), get()) }
-    single { GeocodeWorkScheduler(inject()) }
+    single { GeocodeWorkScheduler(get()) }
     single<PlaceNamingScheduler> { get<GeocodeWorkScheduler>() }
     single { PlaceNamingTrigger(get(), get()) }
-    single { PurgeWorkScheduler(inject()) }
+    single { PurgeWorkScheduler(get()) }
     single { ImportBatches(androidContext()) }
-    single<LocationAttachScheduler> { WorkManagerLocationAttachScheduler(inject()) }
-    single<ImportScheduler> { WorkManagerImportScheduler(inject(), get()) }
-    single<BackupScheduler> { WorkManagerBackupScheduler(inject()) }
-    // Lazy: getInstance() throws in a process where FirebaseApp never started, a JVM test among them.
-    single<NonFatalReporter> { CrashlyticsNonFatalReporter(lazy { FirebaseCrashlytics.getInstance() }) }
+    single<LocationAttachScheduler> { WorkManagerLocationAttachScheduler(get()) }
+    single<ImportScheduler> { WorkManagerImportScheduler(get(), get()) }
+    single<BackupScheduler> { WorkManagerBackupScheduler(get()) }
+    single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class
     single { ScreenViewTracker(get()) }
 }
