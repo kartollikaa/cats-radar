@@ -91,6 +91,44 @@ class ZipBackupReaderOlderFormatTest {
     }
 
     @Test
+    fun aFormatFourArchiveReadsEveryPhotoAsStartingItsOwnShot() = runTest {
+        val path = File(temporaryFolder.root, "backup.zip")
+        path.writeArchive(
+            MANIFEST_ENTRY to FORMAT_FOUR_MANIFEST,
+            ENCOUNTERS_ENTRY to """[{"id":"a","occurredAt":0,"tzOffsetMinutes":0,"kind":"PHOTO","origin":"CAMERA",""" +
+                """"locationSource":"NONE","deviceId":"d","createdAt":0,"updatedAt":0}]""",
+            ENCOUNTER_PHOTOS_ENTRY to """[{"id":"p","encounterId":"a","photoPath":"p.jpg",""" +
+                """"deviceId":"photo-install",""" +
+                """"addedAt":7,"thumbPath":"p_thumb.jpg","galleryUri":"content://media/external/images/media/8",""" +
+                """"sourceDigest":"sha"}]""",
+            PLACE_CELLS_ENTRY to "[]",
+            WALKS_ENTRY to "[]",
+            TRACK_POINTS_ENTRY to "[]",
+        )
+
+        val read = reader.read(path.path)
+
+        assertIs<BackupReadResult.Readable>(read)
+        assertEquals(
+            listOf(
+                EncounterPhoto(
+                    id = "p",
+                    encounterId = "a",
+                    photoPath = "p.jpg",
+                    thumbPath = "p_thumb.jpg",
+                    galleryUri = "content://media/external/images/media/8",
+                    sourceMediaUri = null,
+                    sourceDigest = "sha",
+                    deviceId = "photo-install",
+                    addedAt = Instant.fromEpochMilliseconds(7),
+                    shotId = null,
+                ),
+            ),
+            read.contents.encounters.single().photos,
+        )
+    }
+
+    @Test
     fun aFormatTwoArchiveCutOffBetweenItsListsIsRefusedRatherThanReadWithoutItsWalks() = runTest {
         val path = File(temporaryFolder.root, "backup.zip")
         path.writeArchive(
@@ -105,5 +143,6 @@ class ZipBackupReaderOlderFormatTest {
     private companion object {
         const val FORMAT_TWO_MANIFEST = """{"formatVersion":2,"exportedAt":0,"deviceId":"d","appVersion":"1.3.0"}"""
         const val FORMAT_THREE_MANIFEST = """{"formatVersion":3,"exportedAt":0,"deviceId":"d","appVersion":"1.4.1"}"""
+        const val FORMAT_FOUR_MANIFEST = """{"formatVersion":4,"exportedAt":0,"deviceId":"d","appVersion":"1.4.1"}"""
     }
 }
