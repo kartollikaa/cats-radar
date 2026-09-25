@@ -590,6 +590,7 @@ class SettingsStoreTest {
             runCurrent()
 
             assertEquals(SettingsEffect.OpenInstallPermission, awaitItem())
+            expectNoEvents()
             assertEquals(
                 UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls),
                 store.state.value.update,
@@ -649,7 +650,10 @@ class SettingsStoreTest {
             store.dispatch(SettingsIntent.Update.InstallPermissionReturned)
             runCurrent()
             expectNoEvents()
-            assertEquals(UpdateAction.AllowInstalls, store.state.value.update.action)
+            assertEquals(
+                UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls),
+                store.state.value.update,
+            )
 
             store.dispatch(SettingsIntent.Update.AllowInstallsClicked)
             runCurrent()
