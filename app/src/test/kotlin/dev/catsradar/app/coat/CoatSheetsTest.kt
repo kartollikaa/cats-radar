@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -107,6 +108,15 @@ class CoatSheetsTest {
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_skip)).performClick()
 
         assertEquals(listOf<CoatOption?>(CoatOption.GINGER) to 1, coatsTapped to skips)
+    }
+
+    @Test
+    fun `the coat prompt leads with the photo when it has one`() {
+        compose.setContent {
+            CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(thumbPath = "/photos/just-taken_thumb.jpg")) }
+        }
+
+        compose.onNodeWithContentDescription(context.getString(R.string.counter_coat_prompt_photo)).assertExists()
     }
 
     private fun showFilter(shown: ImmutableSet<CoatOption?>) {

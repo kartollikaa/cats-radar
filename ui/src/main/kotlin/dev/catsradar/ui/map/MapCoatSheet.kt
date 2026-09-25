@@ -2,8 +2,6 @@ package dev.catsradar.ui.map
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
+import dev.catsradar.ui.components.SheetActions
 import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -54,7 +53,7 @@ fun MapCoatFilter(
             supporting = stringResource(R.string.map_coats_hint),
         )
         CoatGrid(selected = shown, onCoatClick = onCoatToggle, onUnspecifiedClick = { onCoatToggle(null) })
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        SheetActions {
             TextButton(onClick = onClear, enabled = shown.isNotEmpty()) {
                 Text(stringResource(R.string.map_coats_all))
             }

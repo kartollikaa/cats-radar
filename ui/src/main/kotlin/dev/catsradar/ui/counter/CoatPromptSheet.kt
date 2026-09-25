@@ -2,8 +2,6 @@ package dev.catsradar.ui.counter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,6 +21,7 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CoatPromptState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
+import dev.catsradar.ui.components.SheetActions
 import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -66,7 +65,7 @@ fun CoatPrompt(
             },
         )
         CoatGrid(onCoatClick = onCoatClick)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        SheetActions {
             TextButton(onClick = onSkipClick) { Text(stringResource(R.string.counter_coat_prompt_skip)) }
         }
     }

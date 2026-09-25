@@ -136,6 +136,11 @@ away and takes the gesture from it, so no navigation happens. While a screen cov
 strategy draws a sheet as the scene under it instead: the gesture uncovers that scene, and the sheet
 slides back up once the gesture lands (`BottomSheetNavigationTest`).
 
+**How a sheet looks.** A sheet opens on its header (`SheetHeader`). The header has a title in the
+large title style, which is a heading. When the title alone does not say what the sheet does, a
+line under it says so. The sheet's actions end it, at the end edge (`SheetActions`). The spot list,
+the coat question after a photo and the map's coat filter all follow it.
+
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
 wants springy motion gives its own animation a spring spec.

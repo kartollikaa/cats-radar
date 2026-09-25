@@ -3,6 +3,7 @@ package dev.catsradar.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -19,8 +20,8 @@ import dev.catsradar.ui.theme.ThemePreviews
 @Composable
 internal fun SheetHeader(
     title: String,
-    supporting: String,
     modifier: Modifier = Modifier,
+    supporting: String? = null,
     leading: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -35,13 +36,21 @@ internal fun SheetHeader(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                text = supporting,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            supporting?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
+}
+
+/** A sheet's actions, at its end edge. */
+@Composable
+internal fun SheetActions(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, content = content)
 }
 
 @ThemePreviews
