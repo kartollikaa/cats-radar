@@ -14,8 +14,6 @@ reads the switch when it opens and follows changes while it stays open (Remote C
 channel; without that channel a fetch brings the value within Remote Config's own cache interval).
 A download or an install already under way is not affected by the switch.
 
-The switch exists until a public place for the builds is chosen; removing it is its own slice.
-
 ## Where releases come from
 
 The GitHub REST API's release list of one repository, read anonymously:

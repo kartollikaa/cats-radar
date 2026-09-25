@@ -99,10 +99,11 @@ worker takes constructor parameters like any other class.
   while the graph is built, so `verify()` is the only check that `T` has a binding.
 - `KoinRuntimeResolutionTest` starts the real modules, with WorkManager running as it is in the app,
   and resolves every type obtained by hand, so a missing binding fails a JVM test. It runs without
-  `FirebaseApp`, where `FirebaseCrashlytics` cannot be created: `NonFatalReporter` is proven bound by
-  its resolution reaching Crashlytics and failing there, and its user is bound by class
-  (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`) so that `verify()`
-  checks the `FirebaseCrashlytics` binding.
+  `FirebaseApp`, where neither `FirebaseCrashlytics` nor `FirebaseRemoteConfig` can be created:
+  `NonFatalReporter` and `SettingsStore` are proven bound by their resolution reaching Firebase and
+  failing there, and the classes that take those instances are bound by class
+  (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`, likewise
+  `RemoteConfigFeatureToggles`) so that `verify()` checks the Firebase bindings.
 
 No test sees a hand-built instance of a plain class with its own binding (`ImportBatches(context)`
 inside a scheduler); review catches that one.

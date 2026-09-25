@@ -9,7 +9,6 @@ data class SettingsState(
     val backupOutcome: BackupOutcome? = null,
     /** Null until the build info has been read. */
     val about: AboutState? = null,
-    /** False while the in-app updates switch is off; the section is not shown at all then. */
     val updatesShown: Boolean = false,
     val update: UpdateState = UpdateState(),
 )

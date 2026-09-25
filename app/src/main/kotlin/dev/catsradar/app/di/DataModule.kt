@@ -31,6 +31,7 @@ import dev.catsradar.data.platform.MediaStoreGallerySaver
 import dev.catsradar.data.platform.MediaStoreItemLocator
 import dev.catsradar.data.platform.MediaStoreSourceFileTime
 import dev.catsradar.data.platform.RandomIdGenerator
+import dev.catsradar.data.platform.RemoteConfigFeatureToggles
 import dev.catsradar.data.platform.Sha256Digest
 import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
 import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestState
@@ -43,7 +44,6 @@ import dev.catsradar.data.settings.createSettingsRepository
 import dev.catsradar.data.update.AndroidInstallPermission
 import dev.catsradar.data.update.GitHubReleaseFeed
 import dev.catsradar.data.update.HttpPackageDownloader
-import dev.catsradar.data.update.RemoteConfigFeatureToggles
 import dev.catsradar.domain.about.InstalledApp
 import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.platform.BackupReader
