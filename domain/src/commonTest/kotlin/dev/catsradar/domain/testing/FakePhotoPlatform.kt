@@ -3,6 +3,7 @@ package dev.catsradar.domain.testing
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GalleryItems
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.PhotoStorage
@@ -82,6 +83,16 @@ class FakeGallerySaver(var result: String? = URI) : GallerySaver {
 
     companion object {
         const val URI = "content://media/external/images/media/42"
+    }
+}
+
+class FakeGalleryItems : GalleryItems {
+    val present = mutableSetOf<String>()
+    val asked = mutableListOf<String>()
+
+    override suspend fun exists(uri: String): Boolean {
+        asked += uri
+        return uri in present
     }
 }
 

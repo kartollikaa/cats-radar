@@ -3,9 +3,12 @@ package dev.catsradar.presentation.viewer
 import app.cash.turbine.test
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ResolveGalleryLink
+import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -24,6 +27,7 @@ class PhotoViewerStoreTest {
 
     private val mainDispatcher = StandardTestDispatcher()
     private val repository = FakeEncounterRepository()
+    private val galleryItems = FakeGalleryItems()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(mainDispatcher)
@@ -98,17 +102,81 @@ class PhotoViewerStoreTest {
         }
     }
 
-    private fun photographedCat() =
-        encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg")
+    @Test
+    fun `a cat whose original is still in the gallery opens it there`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(galleryUri = SAVED))
+        galleryItems.present += SAVED
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            runCurrent()
+            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED), awaitItem())
+        }
+    }
+
+    @Test
+    fun `an original deleted from the gallery says so and opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(galleryUri = SAVED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            runCurrent()
+            assertEquals(PhotoViewerEffect.GalleryItemGone, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a second tap while the first is being checked opens the gallery once`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(galleryUri = SAVED))
+        galleryItems.present += SAVED
+        galleryItems.gate = CompletableDeferred()
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            runCurrent()
+            galleryItems.gate?.complete(Unit)
+            runCurrent()
+            assertEquals(PhotoViewerEffect.OpenInGallery(uri = SAVED), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a tap with nothing offered opens nothing and never asks the gallery`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat())
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.OpenInGalleryClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+        assertEquals(emptyList(), galleryItems.asked)
+    }
+
+    private fun photographedCat(galleryUri: String? = null) = encounterFixture(ID, OCCURRED)
+        .copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg", galleryUri = galleryUri)
 
     private fun newStore() = PhotoViewerStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
-        stateMapper = PhotoViewerStateMapper(FakePhotoStorage(root = "/data/photos")),
+        resolveGalleryLink = ResolveGalleryLink(galleryItems, FakeDeviceIdProvider(INSTALL)),
+        stateMapper = PhotoViewerStateMapper(FakePhotoStorage(root = "/data/photos"), FakeDeviceIdProvider(INSTALL)),
     )
 
     private companion object {
         const val ID = "cat-1"
+        const val INSTALL = "device-1"
+        const val SAVED = "content://media/external/images/media/42"
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
 }

@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -47,6 +49,7 @@ fun PhotoViewerScreen(
     state: PhotoViewerState,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
+    onOpenInGalleryClick: () -> Unit = {},
 ) {
     var chromeVisible by rememberSaveable { mutableStateOf(true) }
     SystemBarsVisibility(visible = chromeVisible)
@@ -65,23 +68,33 @@ fun PhotoViewerScreen(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            ViewerTopBar(onBackClick = onBackClick)
+            ViewerTopBar(
+                opensInGallery = (state as? PhotoViewerState.Showing)?.opensInGallery == true,
+                onBackClick = onBackClick,
+                onOpenInGalleryClick = onOpenInGalleryClick,
+            )
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ViewerTopBar(modifier: Modifier = Modifier, onBackClick: () -> Unit = {}) {
+private fun ViewerTopBar(
+    opensInGallery: Boolean,
+    modifier: Modifier = Modifier,
+    onBackClick: () -> Unit = {},
+    onOpenInGalleryClick: () -> Unit = {},
+) {
     // safeDrawing drops the status bar's height while it is hidden, so the arrow would slide as the bar returns.
     val insets = WindowInsets.statusBarsIgnoringVisibility.union(WindowInsets.displayCutout)
     val scrim = Brush.verticalGradient(listOf(ViewerColors.ChromeScrim, ViewerColors.ChromeScrim.copy(alpha = 0f)))
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .background(scrim)
             .windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
             .padding(horizontal = 4.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         IconButton(onClick = onBackClick) {
             Icon(
@@ -89,6 +102,15 @@ private fun ViewerTopBar(modifier: Modifier = Modifier, onBackClick: () -> Unit 
                 contentDescription = stringResource(R.string.viewer_back),
                 tint = ViewerColors.OnStage,
             )
+        }
+        if (opensInGallery) {
+            IconButton(onClick = onOpenInGalleryClick) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_photo_library),
+                    contentDescription = stringResource(R.string.viewer_open_in_gallery),
+                    tint = ViewerColors.OnStage,
+                )
+            }
         }
     }
 }
@@ -123,4 +145,4 @@ private fun PhotoViewerScreenLoadingPreview() {
     CatsRadarTheme { PhotoViewerScreen(state = PhotoViewerState.Loading) }
 }
 
-private val sampleShowing = PhotoViewerState.Showing(photoPath = "photos/5f1c2d9e-4b7a.jpg")
+private val sampleShowing = PhotoViewerState.Showing(photoPath = "photos/5f1c2d9e-4b7a.jpg", opensInGallery = true)

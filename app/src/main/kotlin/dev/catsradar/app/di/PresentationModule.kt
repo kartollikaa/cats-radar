@@ -55,7 +55,12 @@ val presentationModule = module {
     }
     factoryOf(::PhotoViewerStateMapper)
     viewModel { (encounterId: String) ->
-        PhotoViewerStore(encounterId = encounterId, observeEncounter = get(), stateMapper = get())
+        PhotoViewerStore(
+            encounterId = encounterId,
+            observeEncounter = get(),
+            resolveGalleryLink = get(),
+            stateMapper = get(),
+        )
     }
     viewModel { (encounterId: String) ->
         EncounterDetailStore(

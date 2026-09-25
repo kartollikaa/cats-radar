@@ -182,6 +182,9 @@
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
     <string name="viewer_back">Назад</string>
+    <string name="viewer_open_in_gallery">Открыть в галерее</string>
+    <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
+    <string name="viewer_no_gallery_app">Нет приложения, которое покажет это фото</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>

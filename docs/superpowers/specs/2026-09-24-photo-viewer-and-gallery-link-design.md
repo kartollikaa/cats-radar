@@ -65,7 +65,7 @@ tile or the Map.
 | Set by | `LogPhoto`, `AttachPhoto` from the camera, when saving originals is on | `ImportPhotos`, `AttachPhoto` from the gallery |
 | Can the app read it | Yes — MediaStore lets an app see the rows it owns | No — the app holds no permission to read the gallery |
 | Checked before opening | Yes: still there, or *No longer in the gallery* | No: a deleted item is the gallery app's own "not found" |
-| Read grant on `ACTION_VIEW` | `FLAG_GRANT_READ_URI_PERMISSION` | None — granting a URI the app cannot read throws `SecurityException` |
+| Read grant on `ACTION_VIEW` | `FLAG_GRANT_READ_URI_PERMISSION` | Refused with `SecurityException`, so the view goes without it (the opener's fallback) |
 
 They stay two columns because they are two different promises. `galleryUri` is also what
 `RegeneratePhotoCopies` reads the original back from; filling it with a URI the app cannot open
@@ -88,12 +88,15 @@ one keeps the other install's `deviceId`, so its new photo offers no link.
 
 ### Opening
 
-`Encounter.galleryLink(thisInstall)` in `:domain` is the one decision — `Owned(uri)`,
-`Picked(uri)`, or null — used both by the viewer's mapper (show the action or not) and by the use
-case that resolves a tap. `ResolveGalleryLink(encounterId)` loads the cat, applies the rule, and for
-an `Owned` link asks `GalleryItems.exists(uri)`; it returns `Open(uri, grantRead)`, `Gone`, or
-`Unavailable`. The Store turns those into `OpenInGallery(uri, grantRead)` or a
-`GalleryItemGone` message. `:app` starts `ACTION_VIEW` with the image MIME type; no activity to
+`Encounter.galleryLink(thisInstall)` in `:domain` is the one decision — a `GalleryLink(uri)` or null
+(V3 adds whether the app owns the item) — used both by the viewer's mapper (show the action or not)
+and by the use case that resolves a tap. `ResolveGalleryLink(encounter)` takes the cat the Store is
+showing, applies the rule, and asks `GalleryItems.exists(uri)` of a link the app owns; it returns
+`Open(uri)`, `Gone`, or `Unavailable`. A second tap while one is being resolved opens nothing, so the
+gallery never opens twice. The Store turns those into `OpenInGallery(uri)` or a `GalleryItemGone`
+message. `:app` starts `ACTION_VIEW` with the image MIME type and `FLAG_GRANT_READ_URI_PERMISSION`;
+when the platform refuses that grant — the app no longer holds the item, or never did — it sends the
+view again without it, since the gallery can open the item with its own access. No activity to
 handle it is a *No app can show this photo* message, never a crash.
 
 The chooser is the system's: the user's default gallery handles it, or the system asks. Whether the
