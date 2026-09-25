@@ -27,9 +27,9 @@ opened for, and on the cat's cover when it was opened for none or for one the ca
 (`PhotoViewerStateMapperTest`, *the viewer opens on the photo it was opened for*; *opened for no photo,
 or for one the cat does not have, the viewer opens on the cover*). While the cat has more than one, a
 position — "2 / 3" — sits at the bottom and hides with the rest of the chrome; a cat with one shows none
-(*a cat with one photo shows no position*). Which photo is on screen is the pager's own state: a
-rotation keeps it, and a viewer brought back after the process was killed opens on the photo it was
-opened for. The time and day in the bar are the cat's, the same on every page.
+(*a cat with one photo shows no position*). Which photo is on screen is the pager's own state, kept
+when the screen is recreated (`PhotoViewerScreenTest`, *the photo on screen survives the screen being
+recreated*). The time and day in the bar are the cat's, the same on every page.
 
 ## Chrome
 
@@ -70,8 +70,8 @@ cat*). The detail screen stays drawn underneath.
   photo*).
 
 The key holds only the cat's id and the photo it was opened for, so after the process is killed the
-restored viewer loads the cat again and opens on that photo. A key saved before cats had several
-photos carries no photo and opens on the cover (`PhotoViewerSavedStateTest`, *a viewer key saved before
+restored viewer loads the cat again. A key saved before cats had several photos carries no photo and
+opens on the cover (`PhotoViewerSavedStateTest`, *a viewer key saved before
 photo ids comes back opening on the cover*).
 
 ## Open in gallery
