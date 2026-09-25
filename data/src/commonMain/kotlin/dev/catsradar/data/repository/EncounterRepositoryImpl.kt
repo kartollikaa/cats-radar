@@ -20,7 +20,7 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override suspend fun insert(encounter: Encounter) = dao.insert(encounter.toEntity())
 
-    override suspend fun update(encounter: Encounter) = dao.update(encounter.toEntity())
+    override suspend fun update(encounter: Encounter) = dao.updateKeepingPhoto(encounter.toEntity())
 
     override suspend fun attachLocation(id: String, stamp: LocationStamp) = dao.attachLocation(
         id = id,
@@ -43,6 +43,8 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         sourceDigest = photo.sourceDigest,
         updatedAt = photo.addedAt,
     ) > 0
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>) = dao.restorePhotos(photos)
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         dao.setCoat(id, coat, updatedAt)

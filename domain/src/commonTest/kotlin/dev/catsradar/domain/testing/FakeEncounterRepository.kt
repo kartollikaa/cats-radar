@@ -51,7 +51,24 @@ class FakeEncounterRepository :
     }
 
     override suspend fun update(encounter: Encounter) {
-        encounters.update { list -> list.map { if (it.id == encounter.id) encounter else it } }
+        encounters.update { list -> list.map { if (it.id == encounter.id) encounter.copy(photos = it.photos) else it } }
+    }
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>) {
+        photos.forEach { photo ->
+            encounters.update { list ->
+                val known = list.any { cat -> cat.photos.any { it.id == photo.id } }
+                list.map { cat ->
+                    if (cat.id == photo.encounterId && !known) {
+                        cat.copy(
+                            photos = (cat.photos + photo).oldestFirst()
+                        )
+                    } else {
+                        cat
+                    }
+                }
+            }
+        }
     }
 
     // Re-checks deletedAt against the state at write time, not a caller's earlier snapshot -
@@ -165,3 +182,5 @@ class FakeEncounterRepository :
         return doomed.size
     }
 }
+
+private fun List<EncounterPhoto>.oldestFirst() = sortedWith(compareBy<EncounterPhoto>({ it.addedAt }, { it.id }))

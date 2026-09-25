@@ -6,6 +6,7 @@ import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
 import dev.catsradar.domain.model.CatCoat
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,24 @@ interface EncounterDao {
 
     @Update
     suspend fun update(encounter: EncounterEntity)
+
+    @Query("SELECT * FROM encounters WHERE id = :id")
+    suspend fun loadById(id: String): EncounterEntity?
+
+    // Photos reach a row through their own writes; a full-row update would drop the one it has.
+    @Transaction
+    suspend fun updateKeepingPhoto(encounter: EncounterEntity) {
+        val kept = loadById(encounter.id) ?: return
+        update(
+            encounter.copy(
+                photoPath = kept.photoPath,
+                thumbPath = kept.thumbPath,
+                galleryUri = kept.galleryUri,
+                sourceMediaUri = kept.sourceMediaUri,
+                sourceDigest = kept.sourceDigest,
+            ),
+        )
+    }
 
     // The deletedAt IS NULL guard stops a repeat soft-delete (e.g. "Undo import") from restarting
     // an already-deleted row's purge clock.
@@ -93,6 +112,31 @@ interface EncounterDao {
         sourceDigest: String?,
         updatedAt: Instant,
     ): Int
+
+    @Suppress("LongParameterList") // Room binds one :placeholder per parameter; no POJO destructuring in a raw @Query
+    @Query(
+        """
+        UPDATE encounters SET
+            photoPath = :photoPath, thumbPath = :thumbPath, galleryUri = :galleryUri,
+            sourceMediaUri = :sourceMediaUri, sourceDigest = :sourceDigest
+        WHERE id = :id AND photoPath IS NULL
+        """
+    )
+    suspend fun restorePhoto(
+        id: String,
+        photoPath: String,
+        thumbPath: String?,
+        galleryUri: String?,
+        sourceMediaUri: String?,
+        sourceDigest: String?,
+    )
+
+    @Transaction
+    suspend fun restorePhotos(photos: List<EncounterPhoto>) {
+        photos.forEach {
+            restorePhoto(it.encounterId, it.photoPath, it.thumbPath, it.galleryUri, it.sourceMediaUri, it.sourceDigest)
+        }
+    }
 
     // A full-row update here would undo a photo or a location attached between the read and this write.
     @Query("UPDATE encounters SET coat = :coat, updatedAt = :updatedAt WHERE id = :id AND deletedAt IS NULL")

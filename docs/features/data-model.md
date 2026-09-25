@@ -42,7 +42,9 @@ an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
 *reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `attachPhoto` is guarded both ways
 at once: it writes only the photo columns and `updatedAt`, and only `WHERE deletedAt IS NULL AND
 photoPath IS NULL`, so giving a cat a photo can neither bring back a deleted one nor replace a photo
-it has (`EncounterDaoAttachPhotoTest`). `setCoat` writes only the `coat` column and `updatedAt`,
+it has (`EncounterDaoAttachPhotoTest`). `update`, which a backup's later edit uses, rewrites a row
+but keeps the photo columns it has, and a backup's photos are restored only onto a row without one,
+leaving its `updatedAt` alone (`EncounterDaoRestorePhotoTest`). `setCoat` writes only the `coat` column and `updatedAt`,
 `WHERE deletedAt IS NULL`, so changing a cat's coat can neither resurrect a deleted row nor undo a
 photo or a location attached a moment earlier (`EncounterDaoSetCoatTest`). Two writes clear
 `deletedAt` on purpose, unguarded:

@@ -20,6 +20,7 @@ import dev.catsradar.domain.testing.FakeTransactionRunner
 import dev.catsradar.domain.testing.FakeWalkRepository
 import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -350,6 +351,46 @@ class ImportBackupTest {
 
         assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
         assertEquals(listOf(later), encounters.loadEvery())
+    }
+
+    @Test
+    fun `an archive's photo reaches a cat here that had none, and importing it again writes nothing more`() = runTest {
+        encounters.insert(encounterAt(EARLY).copy(id = "cat", updatedAt = LATE))
+        val archived = encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY).withPhoto(photoPath = "archive.jpg")
+        val imported = BackupContents(encounters = listOf(archived))
+
+        val first = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+        val again = importBackup(BackupReadResult.Readable(imported))("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), first)
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 0, unchanged = 1), again)
+        assertEquals(
+            encounterAt(EARLY).copy(id = "cat", updatedAt = LATE).copy(photos = archived.photos),
+            encounters.loadEvery().single()
+        )
+    }
+
+    @Test
+    fun `a later copy of a cat from the archive does not replace the photo here`() = runTest {
+        val here = encounterAt(EARLY).copy(id = "cat", updatedAt = EARLY).withPhoto(photoPath = "here.jpg")
+        encounters.insert(here)
+        val later = encounterAt(EARLY).copy(id = "cat", updatedAt = LATE).withPhoto(photoPath = "archive.jpg")
+
+        val result = importBackup(
+            BackupReadResult.Readable(BackupContents(encounters = listOf(later)))
+        )("content://in.zip")
+
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 1, unchanged = 0), result)
+        assertEquals(here.copy(updatedAt = LATE), encounters.loadEvery().single())
+    }
+
+    @Test
+    fun `a new cat from the archive arrives with its photo`() = runTest {
+        val archived = encounterAt(EARLY).copy(id = "cat").withPhoto(photoPath = "archive.jpg")
+
+        importBackup(BackupReadResult.Readable(BackupContents(encounters = listOf(archived))))("content://in.zip")
+
+        assertEquals(listOf(archived), encounters.loadEvery())
     }
 
     @Test
