@@ -34,14 +34,9 @@ class UpdateStateMapperTest {
     @Test
     fun `a download in progress shows whole percents, never 100 before it ends`() {
         assertEquals(
-            listOf(0, 45, 99),
-            listOf(
-                0f,
-                0.456f,
-                0.999f
-            ).map { (mapper.downloading("1.5.0-beta", it).status as UpdateStatus.Downloading).percent },
+            listOf(0, 45, 99).map { UpdateState(UpdateStatus.Downloading("1.5.0-beta", it), UpdateAction.Busy) },
+            listOf(0f, 0.456f, 0.999f).map { mapper.downloading("1.5.0-beta", it) },
         )
-        assertEquals(UpdateAction.Busy, mapper.downloading("1.5.0-beta", 0.5f).action)
     }
 
     @Test
