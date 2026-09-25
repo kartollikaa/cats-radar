@@ -6,6 +6,4 @@ data class AboutState(
     val device: String,
     val androidRelease: String,
     val sdkInt: Int,
-    /** What the copy button puts on the clipboard. */
-    val report: String,
 )

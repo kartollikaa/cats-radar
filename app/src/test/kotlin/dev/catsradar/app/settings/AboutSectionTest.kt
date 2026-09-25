@@ -37,7 +37,6 @@ class AboutSectionTest {
         device = "Google Pixel 7",
         androidRelease = "16",
         sdkInt = 36,
-        report = "Cats Radar 1.4.1-beta (7)",
     )
 
     @Test

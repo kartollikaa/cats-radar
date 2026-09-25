@@ -6,15 +6,21 @@ import dev.catsradar.domain.about.BuildInfo
 import dev.catsradar.domain.about.DeviceInfo
 import dev.catsradar.domain.about.InstalledApp
 import dev.catsradar.domain.platform.BuildInfoReader
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 
 class AndroidBuildInfoReader(
     private val context: Context,
     private val app: InstalledApp,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BuildInfoReader {
 
-    override suspend fun read(): BuildInfo = BuildInfo(
+    override suspend fun read(): BuildInfo = withContext(ioDispatcher) { readNow() }
+
+    private fun readNow(): BuildInfo = BuildInfo(
         app = app,
         device = DeviceInfo(
             manufacturer = Build.MANUFACTURER,

@@ -11,11 +11,10 @@ class AboutStateMapper {
         device = info.device.displayName(),
         androidRelease = info.device.androidRelease,
         sdkInt = info.device.sdkInt,
-        report = report(info),
     )
 
     // A developer reads the report, so its keys stay English whatever the app's language.
-    private fun report(info: BuildInfo): String = with(info) {
+    fun report(info: BuildInfo): String = with(info) {
         listOf(
             "Cats Radar ${app.versionName} (${app.versionCode})",
             "Build type: ${app.buildType}",

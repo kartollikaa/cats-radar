@@ -40,8 +40,9 @@ Database: 3
   application convention plugin into `BuildConfig.GIT_COMMIT`; outside a git checkout it is
   `unknown`. It is what maps a crash or a report to the code.
 - **Installed by** is the package Android records as the installer — a browser, a file manager,
-  `adb` shows as none. **Locale** is the app's own, **Time zone** the phone's now; both are read
-  when Settings opens, as is everything else, so a changed language shows up the next time.
+  `adb` shows as none. **Locale** is the app's own, **Time zone** the phone's. The report is read
+  afresh on every tap, so it names the language and zone the phone has at that moment, even when
+  they changed while Settings stayed open.
 - **Database** is the Room schema version (`CATS_DATABASE_VERSION`), the first thing a backup or
   migration question needs. `DatabaseVersionTest` keeps it equal to the newest exported schema.
 - Nothing personal is in it: no id, no location, no cat.
@@ -50,10 +51,10 @@ Database: 3
 ## Where the code lives
 
 - `:domain` — `InstalledApp`, `DeviceInfo`, `BuildInfo` (`domain/about/`), the `BuildInfoReader` port.
-- `:data` — `AndroidBuildInfoReader`: `Build`, the configuration's locale, the install source
-  (`getInstallSourceInfo` from Android 11, `getInstallerPackageName` on 10).
+- `:data` — `AndroidBuildInfoReader`, off the main thread: `Build`, the configuration's locale, the
+  install source (`getInstallSourceInfo` from Android 11, `getInstallerPackageName` on 10).
 - `:presentation` — `AboutStateMapper` builds the rows and the report; `SettingsStore` reads the
-  build info once and turns a copy click into `CopyBuildInfo(report)`.
+  build info for the rows when it starts and again for each copy, which it emits as `CopyBuildInfo(report)`.
 - `:ui` — the About section in `SettingsScreen`; `SectionCard` has an `action` slot for the icon.
 - `:app` — `InstalledApp` from `BuildConfig` in `dataModule`; `copyBuildInfo` writes the clipboard
   from `SettingsDestination`.

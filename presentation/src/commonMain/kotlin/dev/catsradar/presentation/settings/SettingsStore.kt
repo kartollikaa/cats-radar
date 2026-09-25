@@ -39,8 +39,9 @@ class SettingsStore(
                 settingsRepository.setSaveOriginalsToGallery(intent.enabled)
             is SettingsIntent.EncountersGridToggled -> settingsRepository.setEncountersGrid(intent.enabled)
             is SettingsIntent.Backup -> handleBackup(intent)
+            // Read again rather than kept: the locale or the zone may have changed since the screen opened.
             SettingsIntent.BuildInfoCopyClicked ->
-                state.value.about?.let { emit(SettingsEffect.CopyBuildInfo(it.report)) }
+                emit(SettingsEffect.CopyBuildInfo(aboutStateMapper.report(buildInfoReader.read())))
         }
     }
 

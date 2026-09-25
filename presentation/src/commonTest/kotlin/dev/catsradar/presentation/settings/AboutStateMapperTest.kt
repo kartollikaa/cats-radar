@@ -9,7 +9,7 @@ class AboutStateMapperTest {
     private val mapper = AboutStateMapper()
 
     @Test
-    fun `a release build on a Pixel reads as its rows and its report`() {
+    fun `a release build on a Pixel reads as its rows`() {
         assertEquals(
             AboutState(
                 version = "1.4.1-beta (7)",
@@ -17,21 +17,28 @@ class AboutStateMapperTest {
                 device = "Google Pixel 7",
                 androidRelease = "16",
                 sdkInt = 36,
-                report = """
-                    Cats Radar 1.4.1-beta (7)
-                    Build type: release
-                    Commit: 5989a92c1f3e
-                    Application id: com.kartollika.catsradar
-                    Installed by: com.google.android.packageinstaller
-                    Device: Google Pixel 7 (panther)
-                    Android: 16 (API 36)
-                    ABIs: arm64-v8a, armeabi-v7a
-                    Locale: ru-RU
-                    Time zone: Europe/Moscow
-                    Database: 3
-                """.trimIndent(),
             ),
             mapper.map(pixelBuildInfo),
+        )
+    }
+
+    @Test
+    fun `its report lists every fact under an English key`() {
+        assertEquals(
+            """
+                Cats Radar 1.4.1-beta (7)
+                Build type: release
+                Commit: 5989a92c1f3e
+                Application id: com.kartollika.catsradar
+                Installed by: com.google.android.packageinstaller
+                Device: Google Pixel 7 (panther)
+                Android: 16 (API 36)
+                ABIs: arm64-v8a, armeabi-v7a
+                Locale: ru-RU
+                Time zone: Europe/Moscow
+                Database: 3
+            """.trimIndent(),
+            mapper.report(pixelBuildInfo),
         )
     }
 
@@ -51,9 +58,9 @@ class AboutStateMapperTest {
 
     @Test
     fun `an install Android records no installer for reports none`() {
-        val about = mapper.map(pixelBuildInfo.copy(device = pixelBuildInfo.device.copy(installer = null)))
+        val report = mapper.report(pixelBuildInfo.copy(device = pixelBuildInfo.device.copy(installer = null)))
 
-        assertEquals("Installed by: none", about.report.lines().single { it.startsWith("Installed by") })
+        assertEquals("Installed by: none", report.lines().single { it.startsWith("Installed by") })
     }
 
     private fun BuildInfo.onDevice(manufacturer: String, model: String) =

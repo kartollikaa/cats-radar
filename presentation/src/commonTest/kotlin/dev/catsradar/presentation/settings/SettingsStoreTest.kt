@@ -1,7 +1,6 @@
 package dev.catsradar.presentation.settings
 
 import app.cash.turbine.test
-import dev.catsradar.domain.about.BuildInfo
 import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
@@ -277,22 +276,24 @@ class SettingsStoreTest {
             store.dispatch(SettingsIntent.BuildInfoCopyClicked)
             runCurrent()
 
-            assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().map(pixelBuildInfo).report), awaitItem())
+            assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().report(pixelBuildInfo)), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `a copy before the build info is read copies nothing`() = runTest(mainDispatcher) {
-        val never = CompletableDeferred<BuildInfo>()
-        val store = settingsStore(buildInfoReader = BuildInfoReader { never.await() })
-        store.effects.test {
-            store.dispatch(SettingsIntent.BuildInfoCopyClicked)
+    fun `a copy reports the locale the phone has now, not the one it had when the screen opened`() =
+        runTest(mainDispatcher) {
+            var current = pixelBuildInfo
+            val store = settingsStore(buildInfoReader = BuildInfoReader { current })
             runCurrent()
+            current = pixelBuildInfo.copy(device = pixelBuildInfo.device.copy(localeTag = "en-GB"))
+            store.effects.test {
+                store.dispatch(SettingsIntent.BuildInfoCopyClicked)
+                runCurrent()
 
-            expectNoEvents()
-            assertNull(store.state.value.about)
-            cancelAndIgnoreRemainingEvents()
+                assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().report(current)), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 }
