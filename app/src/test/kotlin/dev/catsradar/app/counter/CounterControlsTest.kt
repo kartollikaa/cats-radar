@@ -154,16 +154,21 @@ class CounterControlsTest {
         compose.mainClock.autoAdvance = false
 
         walkButton(walking = true).performTouchInput { down(center) }
-        compose.mainClock.advanceTimeBy(HOLD_MS / 2)
-        val halfway = haptics.toList()
-        compose.mainClock.advanceTimeBy(HOLD_MS / 2 + 100)
-        val ticks = haptics.dropLast(1)
+        val perFrame = List(HOLD_FRAMES + 10) {
+            val before = haptics.size
+            compose.mainClock.advanceTimeByFrame()
+            haptics.drop(before)
+        }
+        val tickFrames = perFrame.indices.filter { HapticFeedbackType.SegmentFrequentTick in perFrame[it] }
+        val confirmFrames = perFrame.indices.filter { HapticFeedbackType.Confirm in perFrame[it] }
 
-        assertTrue(halfway.isNotEmpty(), "no haptic halfway through the hold")
-        assertTrue(halfway.all { it == HapticFeedbackType.SegmentFrequentTick }, "halfway: $halfway")
-        assertTrue(ticks.all { it == HapticFeedbackType.SegmentFrequentTick }, "before the stop: $ticks")
-        assertTrue(ticks.size > halfway.size, "${ticks.size} ticks by the stop, $halfway halfway")
-        assertEquals(HapticFeedbackType.Confirm, haptics.last())
+        assertEquals(1, confirmFrames.size, "Confirm on frames $confirmFrames")
+        val confirmFrame = confirmFrames.single()
+        assertEquals(listOf(HapticFeedbackType.Confirm), perFrame[confirmFrame])
+        assertTrue(tickFrames.all { it < confirmFrame }, "ticks $tickFrames, Confirm $confirmFrame")
+        assertTrue(tickFrames.first() < HOLD_FRAMES / 5, "first tick on frame ${tickFrames.first()}")
+        assertTrue(tickFrames.last() > HOLD_FRAMES * 4 / 5, "last tick on frame ${tickFrames.last()}")
+        assertTrue(tickFrames.zipWithNext().all { (a, b) -> b - a > 1 }, "ticks on neighbouring frames: $tickFrames")
     }
 
     @Test
@@ -270,5 +275,6 @@ class CounterControlsTest {
 
     private companion object {
         const val HOLD_MS = 1_000L
+        const val HOLD_FRAMES = (HOLD_MS / 16).toInt()
     }
 }
