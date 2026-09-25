@@ -30,7 +30,7 @@ class EncounterDaoSetPlaceCellTest {
     }
 
     private fun unplaced(id: String) =
-        fullEncounterEntity(id = id, sourceDigest = "digest-$id").copy(geohash = null, placeCellId = null)
+        fullEncounterEntity(id = id).copy(geohash = null, placeCellId = null)
 
     @Test
     fun setPlaceCellsWritesTheGeohashAndCellAndNothingElse() = runTest {
@@ -41,7 +41,7 @@ class EncounterDaoSetPlaceCellTest {
 
         assertEquals(
             entity.copy(geohash = "ucfv0hg7", placeCellId = "ucfv0h"),
-            dao.observeById(entity.id).first(),
+            dao.observeById(entity.id).first()?.encounter,
         )
     }
 
@@ -59,8 +59,8 @@ class EncounterDaoSetPlaceCellTest {
             ),
         )
 
-        assertEquals(moved, dao.observeById(moved.id).first())
-        assertEquals("ucfv0h", dao.observeById(still.id).first()!!.placeCellId)
+        assertEquals(moved, dao.observeById(moved.id).first()?.encounter)
+        assertEquals("ucfv0h", dao.observeById(still.id).first()!!.encounter.placeCellId)
     }
 
     @Test
@@ -71,6 +71,6 @@ class EncounterDaoSetPlaceCellTest {
 
         dao.setPlaceCells(listOf(PlaceCellAssignment(deleted.id, deleted.lat!!, deleted.lon!!, "ucfv0hg7", "ucfv0h")))
 
-        assertEquals("ucfv0h", dao.loadEvery().single().placeCellId)
+        assertEquals("ucfv0h", dao.loadEvery().map { it.encounter }.single().placeCellId)
     }
 }

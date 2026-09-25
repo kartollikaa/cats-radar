@@ -122,6 +122,10 @@ internal class FakeEncounterRepository : EncounterRepository {
         return added
     }
 
+    override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit = throw NotImplementedError(
+        "the Counter restores no backup"
+    )
+
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         setCoatGate?.await()
         setCoatShouldThrow?.let { throw it }

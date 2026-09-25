@@ -9,12 +9,14 @@ import kotlinx.coroutines.Dispatchers
 /** Builds the app's [CatsDatabase], backed by the bundled SQLite driver, for Koin wiring in `:app`. */
 fun createCatsDatabase(context: Context): CatsDatabase {
     val appContext = context.applicationContext
-    val dbFile = appContext.getDatabasePath(DATABASE_FILE_NAME)
-    return Room.databaseBuilder<CatsDatabase>(context = appContext, name = dbFile.absolutePath)
+    return catsDatabaseBuilder(appContext, appContext.getDatabasePath(DATABASE_FILE_NAME).absolutePath).build()
+}
+
+internal fun catsDatabaseBuilder(context: Context, path: String): RoomDatabase.Builder<CatsDatabase> =
+    Room.databaseBuilder<CatsDatabase>(context = context, name = path)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .build()
-}
+        .addMigrations(MigrationFrom3To4)
 
 internal fun <T : RoomDatabase> RoomDatabase.Builder<T>.withBundledDriver(): RoomDatabase.Builder<T> =
     setDriver(BundledSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO)

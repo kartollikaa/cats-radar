@@ -2,6 +2,7 @@ package dev.catsradar.data.db
 
 import androidx.room3.Dao
 import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
@@ -14,14 +15,25 @@ import kotlin.time.Instant
 @Dao
 @Suppress("TooManyFunctions") // one function per query; splitting a DAO by count would help nobody
 interface EncounterDao {
+    @Transaction
     @Query("SELECT * FROM encounters WHERE deletedAt IS NULL ORDER BY occurredAt DESC")
-    fun observeAll(): Flow<List<EncounterEntity>>
+    fun observeAll(): Flow<List<EncounterWithPhotos>>
 
+    @Transaction
     @Query("SELECT * FROM encounters WHERE id = :id AND deletedAt IS NULL")
-    fun observeById(id: String): Flow<EncounterEntity?>
+    fun observeById(id: String): Flow<EncounterWithPhotos?>
 
     @Insert
     suspend fun insert(encounter: EncounterEntity)
+
+    @Insert
+    suspend fun insertPhotos(photos: List<EncounterPhotoEntity>)
+
+    @Transaction
+    suspend fun insertWithPhotos(encounter: EncounterEntity, photos: List<EncounterPhotoEntity>) {
+        insert(encounter)
+        insertPhotos(photos)
+    }
 
     @Update
     suspend fun update(encounter: EncounterEntity)
@@ -74,27 +86,32 @@ interface EncounterDao {
         updatedAt: Instant,
     )
 
-    // A full-row update here would resurrect a cat deleted while its photo was being copied.
-    @Suppress("LongParameterList") // Room binds one :placeholder per parameter; no POJO destructuring in a raw @Query
     @Query(
         """
-        UPDATE encounters SET
-            photoPath = :photoPath, thumbPath = :thumbPath, galleryUri = :galleryUri,
-            sourceMediaUri = :sourceMediaUri, sourceDigest = :sourceDigest, updatedAt = :updatedAt
-        WHERE id = :id AND deletedAt IS NULL AND photoPath IS NULL
+        SELECT COUNT(*) FROM encounters
+        WHERE id = :id AND deletedAt IS NULL
+            AND NOT EXISTS (SELECT 1 FROM encounter_photos WHERE encounterId = :id)
         """
     )
-    suspend fun attachPhoto(
-        id: String,
-        photoPath: String,
-        thumbPath: String?,
-        galleryUri: String?,
-        sourceMediaUri: String?,
-        sourceDigest: String?,
-        updatedAt: Instant,
-    ): Int
+    suspend fun countLiveWithoutPhotos(id: String): Int
 
-    // A full-row update here would undo a photo or a location attached between the read and this write.
+    @Query("UPDATE encounters SET updatedAt = :updatedAt WHERE id = :id")
+    suspend fun stampUpdatedAt(id: String, updatedAt: Instant)
+
+    // Checked and written in one transaction: a cat deleted, or given a photo, while its photo was being
+    // copied must get none.
+    @Transaction
+    suspend fun addPhoto(photo: EncounterPhotoEntity, updatedAt: Instant): Boolean {
+        if (countLiveWithoutPhotos(photo.encounterId) == 0) return false
+        insertPhotos(listOf(photo))
+        stampUpdatedAt(photo.encounterId, updatedAt)
+        return true
+    }
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addPhotos(photos: List<EncounterPhotoEntity>)
+
+    // A full-row update here would undo a location attached between the read and this write.
     @Query("UPDATE encounters SET coat = :coat, updatedAt = :updatedAt WHERE id = :id AND deletedAt IS NULL")
     suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int
 
@@ -113,25 +130,30 @@ interface EncounterDao {
         assignments.forEach { setPlaceCell(it.encounterId, it.lat, it.lon, it.geohash, it.placeCellId) }
     }
 
-    // A digest on a row without a copy names no photo: the row reads back as a cat without one.
+    @Transaction
     @Query(
         """
-        SELECT * FROM encounters
-        WHERE sourceDigest = :sourceDigest AND photoPath IS NOT NULL AND deletedAt IS NULL LIMIT 1
+        SELECT encounters.* FROM encounters
+        JOIN encounter_photos ON encounter_photos.encounterId = encounters.id
+        WHERE encounter_photos.sourceDigest = :sourceDigest AND encounters.deletedAt IS NULL
+        LIMIT 1
         """
     )
-    suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity?
+    suspend fun findBySourceDigest(sourceDigest: String): EncounterWithPhotos?
 
     // Deleted rows included: a merge has to know that a row it is being offered was deleted here,
     // which observeAll() cannot tell it.
+    @Transaction
     @Query("SELECT * FROM encounters ORDER BY occurredAt DESC")
-    suspend fun loadEvery(): List<EncounterEntity>
+    suspend fun loadEvery(): List<EncounterWithPhotos>
 
     // observeAll() hides soft-deleted rows, so the purge needs its own way to see them: without
     // this, their photo files would be orphaned and nothing would ever look for them again.
+    @Transaction
     @Query("SELECT * FROM encounters WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")
-    suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterEntity>
+    suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterWithPhotos>
 
+    // Their photo rows go with them, by the foreign key's cascade.
     @Query("DELETE FROM encounters WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")
     suspend fun purgeDeletedBefore(cutoff: Instant): Int
 }

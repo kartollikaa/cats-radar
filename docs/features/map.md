@@ -56,7 +56,8 @@ globe, past a pole or the 180th meridian.
   It lists the cats it was opened with, under the coat choice the map had then; the choice cannot
   change while it is open, because it is made on the map beneath. While a cat opened from the list
   is on top, the list is out of sight: the back gesture from the cat shows the map as the cat shrinks
-  away, and the list slides back up once the gesture lands.
+  away, and the list slides back up once the gesture lands. Like every sheet in the app, the coat
+  grid's included, it opens all the way and has no half-open stop (see [app-shell.md](./app-shell.md)).
 
 ## An outing's route
 

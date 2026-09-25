@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
+import dev.catsradar.domain.model.oldestFirst
 import dev.catsradar.domain.repository.EncounterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +52,24 @@ class FakeEncounterRepository :
     }
 
     override suspend fun update(encounter: Encounter) {
-        encounters.update { list -> list.map { if (it.id == encounter.id) encounter else it } }
+        encounters.update { list -> list.map { if (it.id == encounter.id) encounter.copy(photos = it.photos) else it } }
+    }
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>) {
+        photos.forEach { photo ->
+            encounters.update { list ->
+                val known = list.any { cat -> cat.photos.any { it.id == photo.id } }
+                list.map { cat ->
+                    if (cat.id == photo.encounterId && !known) {
+                        cat.copy(
+                            photos = (cat.photos + photo).oldestFirst()
+                        )
+                    } else {
+                        cat
+                    }
+                }
+            }
+        }
     }
 
     // Re-checks deletedAt against the state at write time, not a caller's earlier snapshot -
