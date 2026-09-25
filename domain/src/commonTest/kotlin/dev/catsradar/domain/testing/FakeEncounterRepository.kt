@@ -96,16 +96,16 @@ class FakeEncounterRepository :
         }
     }
 
-    // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
+    // Mirrors the DAO's live-cat guard, checked at write time.
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean {
         addPhotoShouldThrow?.let { throw it }
         var added = false
         encounters.update { list ->
             added = false
             list.map { encounter ->
-                if (encounter.id == photo.encounterId && encounter.deletedAt == null && encounter.photos.isEmpty()) {
+                if (encounter.id == photo.encounterId && encounter.deletedAt == null) {
                     added = true
-                    encounter.copy(photos = listOf(photo), updatedAt = photo.addedAt)
+                    encounter.copy(photos = (encounter.photos + photo).oldestFirst(), updatedAt = photo.addedAt)
                 } else {
                     encounter
                 }

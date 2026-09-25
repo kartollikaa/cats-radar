@@ -24,7 +24,17 @@ than just the day. An outing that runs past midnight keeps that one header for i
 never gains a second header partway through. Soft-deleted encounters never appear as a cat and
 never start or extend a group, because `groupByOuting()` filters them the same way `split()`
 always has — so a deleted cat between two photos leaves them free to pair. Cats within an outing,
-and outings within the list, both come back newest first.
+and outings within the list, both come back newest first; cats sharing a time — a burst of photos
+imported from one second — keep the order they were recorded in, however the database returns them.
+
+**Back from a cat returns to the same place in the list.** The list's scroll position is saved with
+the Encounters entry while a cat's screen covers it, and it comes back when that screen closes
+(`EncountersListPositionTest`, *back from a cat returns to the list scrolled where it was*); a
+rotation restores it the same way. The position is kept by row index, not by row, so a cat logged
+from the walking notification meanwhile shifts the view by the rows it adds above. The pull
+to the top described under *Rows coming back above the screen* checks that restored position, not
+whether the list can scroll back: a returning list is not laid out yet and reports it cannot, so it
+would look like it was resting at the top and jump there.
 
 **The bottom-nav hazard.** `NavEntry.contentKey` defaults to the nav key, and
 `ViewModelStoreNavEntryDecorator` keys each entry's `ViewModelStore` by that key; navigation3-runtime
@@ -68,7 +78,8 @@ row counts stop being trivial to read and group on every emission.
 
 An outing's header ends in "On the map" when at least one of its cats has a location. The mapper
 decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
-that outing alone (`map.md`).
+that outing alone (`map.md`). The map's spot sheet and the cats of a place (`places.md`) use the same
+rows and offer the same action.
 
 ## What the grid shows
 
@@ -142,7 +153,8 @@ need two Stores to talk. Here the list's own Store made it.
 - **Rows coming back above the screen.** A keyed `LazyColumn` keeps its first visible row in place
   when rows are inserted above it, so undoing the delete of the top outing would bring it back out
   of sight. A list resting at the very top, and not being scrolled, asks to stay at the top on every
-  change, so the restored outing is what the user sees; a drag that has just started is left alone.
+  change, so the restored outing is what the user sees (*an outing coming back above a list resting
+  at the top is shown*); a drag that has just started is left alone.
 - **Screen readers** hear the removed count when the bar appears and the selected count as it
   changes; a row's actions are read as Select or Deselect while selecting.
 - **The bar covers the bottom of the list** for its window, as a Material snackbar does; the list

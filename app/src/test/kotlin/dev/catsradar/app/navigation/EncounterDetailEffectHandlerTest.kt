@@ -10,11 +10,12 @@ class EncounterDetailEffectHandlerTest {
     private fun handle(effect: EncounterDetailEffect) = handleEncounterDetailEffect(
         effect,
         onNavigateBack = { calls += "back" },
-        onOpenPhoto = { calls += "photo" },
+        onOpenPhoto = { photoId -> calls += "photo $photoId" },
         onOpenMap = { calls += "map" },
         cameraLauncher = { calls += "camera" },
         photoPickerLauncher = { calls += "picker" },
         photoFailureReporter = { calls += "failure" },
+        alreadyThereReporter = { calls += "already there" },
         captureDiscarder = { uri -> calls += "discard $uri" },
     )
 
@@ -23,13 +24,23 @@ class EncounterDetailEffectHandlerTest {
         handle(EncounterDetailEffect.NavigateBack)
         handle(EncounterDetailEffect.OpenCamera)
         handle(EncounterDetailEffect.OpenPhotoPicker)
-        handle(EncounterDetailEffect.OpenPhoto)
+        handle(EncounterDetailEffect.OpenPhoto("second"))
         handle(EncounterDetailEffect.PhotoNotAttached)
+        handle(EncounterDetailEffect.PhotoAlreadyThere)
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
         handle(EncounterDetailEffect.OpenMap)
 
         assertEquals(
-            listOf("back", "camera", "picker", "photo", "failure", "discard content://captures/1", "map"),
+            listOf(
+                "back",
+                "camera",
+                "picker",
+                "photo second",
+                "failure",
+                "already there",
+                "discard content://captures/1",
+                "map",
+            ),
             calls,
         )
     }

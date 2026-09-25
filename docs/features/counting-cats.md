@@ -61,9 +61,11 @@ label: Undo is never squeezed. A tap on the button starts a walk, but stopping o
 held until a fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)).
 The button keeps one height whether it starts or stops a walk, and the outing line keeps its line,
 empty when no outing is open, so a walk or an outing starting or ending leaves the block the same
-size. The location hint and the import progress and summary appear above the count and take their
-room from it, so the number shrinks and the walk button, the coat grid and the Photo button stay
-where they are — unless the block is already at its floor, when the Counter scrolls instead.
+size. The location hint and the import progress and summary appear above the count, each as the
+same notice card: a round icon, its words, read by TalkBack as one item, and its actions (see
+`import.md`). They take their room from the count, so the number shrinks and the walk button, the
+coat grid and the Photo button stay where they are, unless the block is already at its floor, when
+the Counter scrolls instead.
 
 ## Undoing a run of taps
 

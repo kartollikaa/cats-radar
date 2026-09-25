@@ -30,7 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
@@ -43,6 +42,7 @@ import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.encounters.PhotoCell
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
@@ -52,6 +52,8 @@ import kotlinx.collections.immutable.toPersistentList
 
 private val RowInset = 16.dp
 private val CardTextInset = 12.dp
+
+private const val LEADING_ITEM_KEY = "leading"
 
 /** Where a list row's text starts, for a heading above [EncounterRows] that lines up with it. */
 internal val EncounterListTextInset = RowInset + CardTextInset
@@ -82,7 +84,7 @@ fun EncountersScreen(
     val listState = rememberLazyListState()
     // A keyed list keeps its first visible row in place when rows land above it, so an undone
     // outing would come back out of sight; a list resting at the top moves up to show them.
-    SideEffect { listState.run { if (!canScrollBackward && !isScrollInProgress) requestScrollToItem(0) } }
+    SideEffect { if (listState.isRestingAtTop()) listState.requestScrollToItem(0) }
     Column(modifier = modifier.fillMaxSize()) {
         if (state.isSelecting) {
             SelectionBar(
@@ -122,7 +124,11 @@ fun EncountersScreen(
     }
 }
 
-/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout]. */
+// Not canScrollBackward: it reads false until the first layout, so a list restored mid-way would look at the top.
+private fun LazyListState.isRestingAtTop(): Boolean =
+    firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0 && !isScrollInProgress
+
+/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any. */
 @Composable
 internal fun EncounterRows(
     rows: ImmutableList<EncountersRow>,
@@ -132,8 +138,9 @@ internal fun EncounterRows(
     contentPadding: PaddingValues = PaddingValues(),
     selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
-    onEncounterLongClick: (String) -> Unit = {},
+    onEncounterLongClick: ((String) -> Unit)? = null,
     onOutingMapClick: (String) -> Unit = {},
+    leadingItem: (@Composable () -> Unit)? = null,
 ) {
     val list = layout == EncountersLayout.LIST
     LazyColumn(
@@ -142,6 +149,7 @@ internal fun EncounterRows(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(if (list) ListRowGap else CellGap),
     ) {
+        leadingItem?.let { item(key = LEADING_ITEM_KEY, contentType = LEADING_ITEM_KEY) { it() } }
         items(items = rows, key = { it.key }, contentType = { it::class }) { row ->
             val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
             when (row) {
@@ -205,29 +213,12 @@ private fun OutingHeaderRow(
 
 @Composable
 private fun EmptyEncounters(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_nav_pets),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(56.dp),
-        )
-        Text(
-            text = stringResource(R.string.encounters_empty),
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = stringResource(R.string.encounters_empty_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
+    EmptyState(
+        iconRes = R.drawable.ic_nav_pets,
+        title = stringResource(R.string.encounters_empty),
+        modifier = modifier,
+        hint = stringResource(R.string.encounters_empty_hint),
+    )
 }
 
 @ThemePreviews

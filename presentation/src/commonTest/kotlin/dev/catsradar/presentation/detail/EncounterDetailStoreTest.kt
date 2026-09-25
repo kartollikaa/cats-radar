@@ -1,13 +1,17 @@
 package dev.catsradar.presentation.detail
 
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
@@ -18,6 +22,7 @@ import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeGallerySaver
 import dev.catsradar.presentation.counter.FakeIdGenerator
 import dev.catsradar.presentation.counter.FakeImageResizer
+import dev.catsradar.presentation.counter.FakePlaceCellRepository
 import dev.catsradar.presentation.counter.FakeSettingsRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
@@ -50,6 +55,7 @@ class EncounterDetailStoreTest {
 
     private val mainDispatcher = StandardTestDispatcher()
     private val repository = FakeEncounterRepository()
+    private val cells = FakePlaceCellRepository()
     private val clock = FakeClock(NOW)
     private val resizer = FakeImageResizer()
 
@@ -286,16 +292,75 @@ class EncounterDetailStoreTest {
     }
 
     @Test
-    fun `a cat that already has a photo opens neither`() = runTest(mainDispatcher) {
+    fun `a cat that already has a photo can still be given another`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
         val store = newStore()
         runCurrent()
 
         store.effects.test {
             store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
             runCurrent()
-            expectNoEvents()
+            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a photo taken of a cat that has one is added after it`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
+        assertEquals(AddPhoto.READY, state.addPhoto)
+    }
+
+    @Test
+    fun `a photo picked for a cat that has one is added after it`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
+    }
+
+    @Test
+    fun `leaving mid-attempt leaves the cat as the attempt found it`() = runTest(mainDispatcher) {
+        val tally = encounterFixture(ID, OCCURRED)
+        repository.insert(tally)
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+
+        ViewModelStore().apply { put("detail", store) }.clear()
+        advanceTimeBy(2.seconds)
+        runCurrent()
+
+        assertEquals(listOf(tally), repository.encounters())
+    }
+
+    @Test
+    fun `a tap on a cat's second photo opens the viewer on that photo`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        runCurrent()
+        val second = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.last().id
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked(second))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto(second), awaitItem())
         }
     }
 
@@ -332,8 +397,8 @@ class EncounterDetailStoreTest {
             assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
         }
         val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-        assertEquals("/data/photos/cat.jpg", state.photoPath)
-        assertEquals(null, state.addPhoto)
+        assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
+        assertEquals(AddPhoto.READY, state.addPhoto)
     }
 
     @Test
@@ -347,7 +412,8 @@ class EncounterDetailStoreTest {
             runCurrent()
             expectNoEvents()
         }
-        assertEquals("/data/photos/cat.jpg", assertIs<EncounterDetailState.Loaded>(store.state.value).photoPath)
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
     }
 
     @Test
@@ -379,7 +445,7 @@ class EncounterDetailStoreTest {
 
         advanceTimeBy(2.seconds)
         runCurrent()
-        assertEquals(null, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
     }
 
     @Test
@@ -394,11 +460,15 @@ class EncounterDetailStoreTest {
             runCurrent()
             assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
 
-            advanceTimeBy(6.seconds)
+            advanceTimeBy(4.seconds)
+            runCurrent()
+            assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+
+            advanceTimeBy(2.seconds)
             runCurrent()
             val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-            assertEquals(null, state.addPhoto)
-            assertEquals("/data/photos/cat.jpg", state.photoPath)
+            assertEquals(AddPhoto.READY, state.addPhoto)
+            assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
         }
 
     @Test
@@ -440,7 +510,7 @@ class EncounterDetailStoreTest {
             runCurrent()
             val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
             assertEquals(AddPhoto.READY, state.addPhoto)
-            assertEquals(null, state.photoPath)
+            assertEquals(emptyList(), state.photos)
         }
 
     @Test
@@ -457,6 +527,24 @@ class EncounterDetailStoreTest {
             assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
         }
         assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+    }
+
+    @Test
+    fun `a picked photo the cat already has is not added again, and the screen says so`() = runTest(mainDispatcher) {
+        val photographed = encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg")
+            .let { cat -> cat.copy(photos = cat.photos.map { it.copy(sourceDigest = "digest") }) }
+        repository.insert(photographed)
+        val store = newStore()
+        runCurrent()
+        val before = store.state.value
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.PhotoAlreadyThere, awaitItem())
+        }
+        assertEquals(before, store.state.value)
+        assertEquals(listOf(photographed), repository.encounters())
     }
 
     @Test
@@ -483,9 +571,9 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto, awaitItem())
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID), awaitItem())
         }
     }
 
@@ -496,7 +584,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            store.dispatch(EncounterDetailIntent.PhotoClicked("anything"))
             runCurrent()
             expectNoEvents()
         }
@@ -546,6 +634,7 @@ class EncounterDetailStoreTest {
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
+        observeEncounterPlace = ObserveEncounterPlace(cells),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
@@ -565,6 +654,39 @@ class EncounterDetailStoreTest {
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,
+    )
+
+    @Test
+    fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
+        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
+            .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q")
+        repository.insert(located)
+        val store = newStore()
+        runCurrent()
+        assertEquals(null, (store.state.value as EncounterDetailState.Loaded).place)
+
+        cells.upsert(namedCell("sp3e3q"))
+        runCurrent()
+
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            (store.state.value as EncounterDetailState.Loaded).place,
+        )
+    }
+
+    private fun namedCell(cellId: String) = PlaceCell(
+        cellId = cellId,
+        centerLat = 41.39,
+        centerLon = 2.17,
+        countryCode = "ES",
+        countryName = "Spain",
+        adminArea = null,
+        locality = "Barcelona",
+        subLocality = null,
+        status = PlaceStatus.RESOLVED,
+        attempts = 1,
+        lastAttemptAt = NOW,
+        resolvedAt = NOW,
     )
 
     private suspend fun <T> Flow<T>.value(): T = first()

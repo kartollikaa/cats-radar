@@ -89,16 +89,24 @@ A walk is matched by `id`, as a cat is: the later edit wins, and a tie keeps the
 
 ## The archive
 
-A ZIP holding `manifest.json`, `encounters.json`, `placecells.json`, `walks.json`,
-`trackpoints.json`, and a `photos/` entry for every file the rows point at. Instants travel as epoch milliseconds and enums as their names, so a future
-version reordering a column changes nothing.
+A ZIP holding `manifest.json`, `encounters.json`, `encounter_photos.json`, `placecells.json`,
+`walks.json`, `trackpoints.json`, and a `photos/` entry for every file the photos point at. Instants
+travel as epoch milliseconds and enums as their names, so a future version reordering a column changes
+nothing.
 
-The manifest records `formatVersion` — 2 since walks joined the archive, 3 since cats carry the gallery item a picked photo came from — when it was exported, which device wrote it, and that build's
+**Every photo is its own record** in `encounter_photos.json`, naming its cat, with every field it has
+here; a cat's record carries no photo (`ZipBackupPhotoListTest`, *everyPhotoOfEveryCatIsListedWithEveryFieldAndNoneRidesOnItsCat*).
+A cat with several photos comes back with all of them (*aCatWithTwoPhotosSurvivesTheRoundTripWithBoth*).
+A photo whose cat the archive does not carry is left out and the rest imports: nothing could show it.
+
+The manifest records `formatVersion` — 2 since walks joined the archive, 3 since cats carry the gallery
+item a picked photo came from, 4 since photos travel in their own list — when it was exported, which
+device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
 
-**Photos are taken from the rows themselves.** The writer reads each encounter's `photoPath` and
-`thumbPath` out of photo storage; a file that has gone missing since the row was written, or that
+**Photo files are taken from the photos themselves.** The writer reads every photo's `photoPath` and
+`thumbPath` out of photo storage, not only a cat's first; a file that has gone missing since the row was written, or that
 cannot be read, is skipped rather than failing the export, because the rest of the archive is still
 worth having. Each photo is read whole before its entry is opened, so the archive never holds an
 empty or truncated one — which would restore as a broken image rather than the placeholder.
@@ -130,22 +138,28 @@ written only where no file was here, so importing the same archive again finds t
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
   fields this version would silently drop. Nothing is written. It is judged by its manifest before
   any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
-  still say "newer version", not "not a backup". That is why the walks raised the version, and the
-  picked gallery items raised it again: an app from before them refuses an archive rather than
-  losing its walks or its links (`ZipBackupArchiveTest`,
-  *anArchiveSaysItIsFormatThreeSoAnAppBeforePickedGalleryItemsRefusesIt*).
+  still say "newer version", not "not a backup". That is why the walks raised the version, the
+  picked gallery items raised it again, and the photo list again: an app from before them refuses an
+  archive rather than losing its walks, its links, or every photo after a cat's first
+  (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt*).
 - **An archive from before walks** still imports, with no walks in it.
 - **An archive from before picked gallery items** still imports, its cats keeping none
   (`ZipBackupReaderOlderFormatTest`). A picked item restored on another phone is kept but offers no
   link there, since gallery ids mean nothing off the phone that picked them (see
   [photo-viewer.md](./photo-viewer.md#open-in-gallery)).
+- **An archive from before the photo list** carries a cat's one photo on the cat's own record. A cat
+  with a copy gets that photo, named after the cat and dated at its creation — the rule the database
+  migration moves such a photo by — and a cat without a copy gets none, whatever else its record holds
+  (`ZipBackupReaderOlderFormatTest`, *aFormatThreeArchiveGivesEachCatWithACopyThePhotoItsRecordCarries*).
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.
 - **A file cut off between two entries** looks, to a ZIP read entry by entry, like its end. An
-  archive of any format since walks always carries all five lists, so one that lacks any of them was
-  cut off and is refused as unreadable, an archive from before picked gallery items included
-  (`ZipBackupReaderOlderFormatTest`, *aFormatTwoArchiveCutOffBetweenItsListsIsRefusedRatherThanReadWithoutItsWalks*).
+  archive always carries every list its format has — the four since walks, and the photo list since
+  format 4 — so one that lacks any of them was cut off and is refused as unreadable, whatever its
+  format (`ZipBackupReaderOlderFormatTest`,
+  *aFormatTwoArchiveCutOffBetweenItsListsIsRefusedRatherThanReadWithoutItsWalks*; `ZipBackupPhotoListTest`,
+  *aCurrentArchiveWithoutItsPhotoListWasCutOffAndIsRefused*).
   The lists come before the photos, so a clean cut after them
   can only lose photos: the cats arrive, and those whose photos were past the cut show the
   placeholder until an archive that has them is imported.
@@ -158,7 +172,8 @@ written only where no file was here, so importing the same archive again finds t
   already moved; they are the archive's own bytes, and importing it again keeps them.
 - **A photo entry whose name climbs out of the photo directory refuses the whole archive.** Photo
   storage rejects the path, and an archive that tried it is not one to take rows from either.
-- **So does a row whose photo or thumbnail path climbs out of it.** Every screen that shows a cat
+- **So does a photo whose copy or thumbnail path climbs out of it**, listed or carried on its cat
+  (`ZipBackupPhotoListTest`, `ZipBackupReaderPhotosTest`). Every screen that shows a cat
   resolves those paths through photo storage, which refuses them by throwing, so such a row would
   not be a cat without a photo but a screen that cannot open.
 - **A cat whose location is not a point on the globe is imported without one.** A latitude beyond
