@@ -109,15 +109,12 @@ class BottomSheetNavigationTest {
     }
 
     @Test
-    fun `dragging a tall sheet part of the way down closes it rather than stopping half open`() {
+    fun `dragging a sheet part of the way down from its full height closes it rather than stopping half open`() {
         sheetHeight = TALL_SHEET
         settle { backStack.push(SPOT) }
+        dragSheet(by = -PART_OF_THE_WAY)
 
-        compose.onNodeWithTag(SHEET).performTouchInput {
-            val start = Offset(centerX, 20.dp.toPx())
-            swipe(start = start, end = start + Offset(0f, PART_OF_THE_WAY.toPx()), durationMillis = 1_000)
-        }
-        compose.waitForIdle()
+        dragSheet(by = PART_OF_THE_WAY)
 
         assertEquals(listOf(Counter, CatsMap), backStack.toList())
         assertFalse(isShown(SHEET), "the sheet is still open")
@@ -174,6 +171,14 @@ class BottomSheetNavigationTest {
 
     private fun settle(change: () -> Unit) {
         compose.runOnUiThread(change)
+        compose.waitForIdle()
+    }
+
+    private fun dragSheet(by: Dp) {
+        compose.onNodeWithTag(SHEET).performTouchInput {
+            val start = Offset(centerX, PART_OF_THE_WAY.toPx())
+            swipe(start = start, end = start + Offset(0f, by.toPx()), durationMillis = 1_000)
+        }
         compose.waitForIdle()
     }
 
