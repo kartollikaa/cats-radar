@@ -72,9 +72,8 @@ class WidgetTileShapeTest {
     private fun corners(shape: TileShape): Corners =
         (context.getDrawable(shape.background) as GradientDrawable).corners()
 
-    // A shape with four equal corners keeps one radius and no per-corner array.
     private fun GradientDrawable.corners(): Corners {
-        val radii = cornerRadii ?: return Corners(cornerRadius, cornerRadius, cornerRadius, cornerRadius)
+        val radii = checkNotNull(cornerRadii) { "the shape sets its corners one by one" }
         return Corners(topLeft = radii[0], topRight = radii[2], bottomRight = radii[4], bottomLeft = radii[6])
     }
 
