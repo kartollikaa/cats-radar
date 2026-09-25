@@ -129,8 +129,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Where the code lives
 
-- `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt` (with `RegionTree.placeOf`),
-  `DeleteEncounter.kt`, `UndoDelete.kt`
+- `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
+  `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`; `ui/…/components/BackBar.kt` — the bar,
   `Flag.kt` — a flag TalkBack skips

@@ -10,9 +10,6 @@ import dev.catsradar.domain.model.locatedPoint
 /** One row of a region list: a real place, or one of the pseudo-nodes. */
 data class RegionNode(val key: RegionKey, val label: RegionLabel, val count: Int)
 
-/** [city] is null for a cell that names its country but no locality or admin area. */
-data class EncounterPlace(val countryCode: String, val country: String, val city: String?)
-
 sealed interface RegionKey {
     sealed interface AreaParent : RegionKey
 
@@ -107,13 +104,6 @@ object RegionTree {
             .sortedByDescending { it.count }
     }
 
-    /** The named place Places files [encounter] under; null while it sits in Not named yet or No location. */
-    fun placeOf(encounter: Encounter, cells: List<PlaceCell>): EncounterPlace? {
-        val cell = encounter.resolvedCell(cells.associateBy { it.cellId }) ?: return null
-        val countryCode = cell.countryCode ?: return null
-        return EncounterPlace(countryCode, country = cell.countryName ?: countryCode, city = cell.cityName())
-    }
-
     fun encountersIn(parent: RegionKey, encounters: List<Encounter>, cells: List<PlaceCell>): List<Encounter> {
         val byCell = cells.associateBy { it.cellId }
         return encounters.filter { it.deletedAt == null }.filter { it.belongsTo(parent, byCell) }
@@ -148,13 +138,6 @@ object RegionTree {
         }
     }
 
-    /** A cell names a located encounter only once it is RESOLVED and has a country. */
-    private fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
-        placeCellId
-            ?.takeIf { locatedPoint() != null }
-            ?.let(byCell::get)
-            ?.takeIf { it.status == PlaceStatus.RESOLVED && it.countryCode != null }
-
     private fun Encounter.areaHash(): String? =
         locatedPoint()?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) }
 
@@ -165,5 +148,12 @@ object RegionTree {
         if (count == 0) emptyList() else listOf(RegionNode(key, label, count))
 }
 
+/** A cell names a located encounter only once it is RESOLVED and has a country. */
+internal fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
+    placeCellId
+        ?.takeIf { locatedPoint() != null }
+        ?.let(byCell::get)
+        ?.takeIf { it.status == PlaceStatus.RESOLVED && it.countryCode != null }
+
 // adminArea is the fallback because a rural point often has a region but no locality.
-private fun PlaceCell.cityName(): String? = locality ?: adminArea
+internal fun PlaceCell.cityName(): String? = locality ?: adminArea

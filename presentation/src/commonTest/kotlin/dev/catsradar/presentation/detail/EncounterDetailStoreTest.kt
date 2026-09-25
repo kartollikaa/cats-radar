@@ -4,11 +4,11 @@ import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.PlaceCell
+import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
-import dev.catsradar.domain.model.PlaceCell
-import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.SetCoat

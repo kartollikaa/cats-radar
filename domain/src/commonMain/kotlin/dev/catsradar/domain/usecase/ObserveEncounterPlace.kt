@@ -1,7 +1,7 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.region.EncounterPlace
-import dev.catsradar.domain.region.RegionTree
+import dev.catsradar.domain.region.placeIn
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +15,6 @@ class ObserveEncounterPlace(
     /** Where cat [encounterId] was seen, again whenever its cell is named or renamed; null while it has none. */
     operator fun invoke(encounterId: String): Flow<EncounterPlace?> =
         combine(encounterRepository.observeById(encounterId), placeCellRepository.observeAll()) { encounter, cells ->
-            encounter?.let { RegionTree.placeOf(it, cells) }
+            encounter?.placeIn(cells)
         }.distinctUntilChanged()
 }
