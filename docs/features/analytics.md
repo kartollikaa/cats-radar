@@ -17,8 +17,7 @@ says which one it came from. There is no switch to turn it off.
   one of them fails in a way nobody expected — an exception, or an error such as running out of
   memory — it is sent as a *non-fatal* report, and the job ends the way it does for any unexpected
   failure: a repair waits for the next start, a one-off job fails, a job that retries tries again later:
-  - the two repairs that run at every start — tidying place cells, and rebuilding the app's own copy
-    of a photo that has gone missing;
+  - the repair that runs at every start, tidying place cells;
   - every background worker: attaching a location, naming places, purging deleted cats, importing
     photos, exporting and importing a backup.
   A worker that tries again later reports only its first failure, not one per retry. A job stopped

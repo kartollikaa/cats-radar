@@ -2,7 +2,6 @@ package dev.catsradar.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 
-@Suppress("TooManyFunctions") // one getter and one setter per stored preference
 interface SettingsRepository {
     /** Whether a captured original is copied into the device gallery. On unless turned off. */
     fun saveOriginalsToGallery(): Flow<Boolean>
@@ -28,9 +27,4 @@ interface SettingsRepository {
     fun acknowledgedRun(job: ReportedJob): Flow<String?>
 
     suspend fun setAcknowledgedRun(job: ReportedJob, runId: String)
-
-    /** Whether photo copies have been rebuilt from their gallery originals. Off until that pass completes. */
-    fun photoCopiesRegenerated(): Flow<Boolean>
-
-    suspend fun setPhotoCopiesRegenerated(done: Boolean)
 }

@@ -51,7 +51,6 @@ import dev.catsradar.domain.usecase.ObserveWalkStats
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
-import dev.catsradar.domain.usecase.RegeneratePhotoCopies
 import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.presentation.detail.EncounterDetailStore
@@ -152,7 +151,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<EndInterruptedWalk>())
         assertNotNull(koin.get<FollowWalkingMode>())
         assertNotNull(koin.get<RepairPlaceCells>())
-        assertNotNull(koin.get<RegeneratePhotoCopies>())
         assertNotNull(koin.get<AttachLocation>())
         assertNotNull(koin.get<ResolvePendingPlaces>())
         assertNotNull(koin.get<PurgeDeleted>())
