@@ -12,7 +12,7 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | planned |
+| S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | in-review |
 | S2 | Backup format 5 carries shots | Photo records carry `shotId`, the archive says format 5, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | planned |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | planned |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
@@ -88,6 +88,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-26: **S1 in review** as #174 (~255 reviewable lines, 23 production). `/code-review` found 5, fixed 4; the
+  gate's first round was green on all 14 mechanical criteria, the on-device upgrade awaits the owner's look.
 
 - 2026-09-26: **S1's migration is hand-written.** The plan's `AutoMigration(4, 5)` made Room generate a rebuild of
   `encounter_photos` ending in a foreign key check, which throws on a photo row whose cat is gone and would stop
