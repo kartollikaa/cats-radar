@@ -3,6 +3,7 @@ package dev.catsradar.presentation.settings
 sealed interface SettingsIntent {
     data class SaveOriginalsToggled(val enabled: Boolean) : SettingsIntent
     data class EncountersGridToggled(val enabled: Boolean) : SettingsIntent
+    data object BuildInfoCopyClicked : SettingsIntent
 
     /** Backing up: a sub-flow of Settings, not a screen of its own. */
     sealed interface Backup : SettingsIntent {

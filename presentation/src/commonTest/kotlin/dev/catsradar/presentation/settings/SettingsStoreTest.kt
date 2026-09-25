@@ -1,7 +1,10 @@
 package dev.catsradar.presentation.settings
 
 import app.cash.turbine.test
+import dev.catsradar.domain.about.BuildInfo
+import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.repository.ReportedJob
+import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.presentation.counter.FakeSettingsRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +32,12 @@ class SettingsStoreTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun newStore() = SettingsStore(FakeSettingsRepository())
+    private fun newStore() = settingsStore()
+
+    private fun settingsStore(
+        repository: SettingsRepository = FakeSettingsRepository(),
+        buildInfoReader: BuildInfoReader = BuildInfoReader { pixelBuildInfo },
+    ) = SettingsStore(repository, buildInfoReader, AboutStateMapper())
 
     @Test
     fun `asking to export opens the file picker and starts nothing yet`() = runTest(mainDispatcher) {
@@ -129,13 +137,13 @@ class SettingsStoreTest {
     @Test
     fun `a dismissed outcome is not shown by a new screen reading its run back`() = runTest(mainDispatcher) {
         val repository = FakeSettingsRepository()
-        val first = SettingsStore(repository)
+        val first = settingsStore(repository)
         first.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
         runCurrent()
         first.dispatch(SettingsIntent.Backup.OutcomeDismissed)
         runCurrent()
 
-        val second = SettingsStore(repository)
+        val second = settingsStore(repository)
         second.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
         runCurrent()
 
@@ -145,11 +153,11 @@ class SettingsStoreTest {
     @Test
     fun `an outcome nobody dismissed is shown again by a new screen`() = runTest(mainDispatcher) {
         val repository = FakeSettingsRepository()
-        val first = SettingsStore(repository)
+        val first = settingsStore(repository)
         first.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.IMPORTED))
         runCurrent()
 
-        val second = SettingsStore(repository)
+        val second = settingsStore(repository)
         second.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.IMPORTED))
         runCurrent()
 
@@ -174,7 +182,7 @@ class SettingsStoreTest {
     fun `dismissing while a newer run is being checked records the run that was on screen`() =
         runTest(mainDispatcher) {
             val repository = FakeSettingsRepository()
-            val store = SettingsStore(repository)
+            val store = settingsStore(repository)
             store.dispatch(SettingsIntent.Backup.Finished("run-1", BackupOutcome.EXPORTED))
             runCurrent()
             val gate = CompletableDeferred<Unit>()
@@ -210,7 +218,7 @@ class SettingsStoreTest {
     @Test
     fun `the gallery switch still follows the stored value, not the tap`() = runTest(mainDispatcher) {
         val repository = FakeSettingsRepository(saveOriginals = true)
-        val store = SettingsStore(repository)
+        val store = settingsStore(repository)
         runCurrent()
 
         store.dispatch(SettingsIntent.SaveOriginalsToggled(false))
@@ -221,7 +229,7 @@ class SettingsStoreTest {
 
     @Test
     fun `the grid switch shows the stored value`() = runTest(mainDispatcher) {
-        val store = SettingsStore(FakeSettingsRepository(encountersGrid = false))
+        val store = settingsStore(FakeSettingsRepository(encountersGrid = false))
         runCurrent()
 
         assertEquals(false, store.state.value.encountersGrid)
@@ -230,7 +238,7 @@ class SettingsStoreTest {
     @Test
     fun `turning the grid switch off stores it, and the switch follows the stored value`() = runTest(mainDispatcher) {
         val repository = FakeSettingsRepository(encountersGrid = true)
-        val store = SettingsStore(repository)
+        val store = settingsStore(repository)
         runCurrent()
 
         store.dispatch(SettingsIntent.EncountersGridToggled(false))
@@ -243,7 +251,7 @@ class SettingsStoreTest {
     @Test
     fun `turning the grid switch back on stores it`() = runTest(mainDispatcher) {
         val repository = FakeSettingsRepository(encountersGrid = false)
-        val store = SettingsStore(repository)
+        val store = settingsStore(repository)
         runCurrent()
 
         store.dispatch(SettingsIntent.EncountersGridToggled(true))
@@ -251,5 +259,40 @@ class SettingsStoreTest {
 
         assertEquals(true, repository.encountersGrid().first())
         assertEquals(true, store.state.value.encountersGrid)
+    }
+
+    @Test
+    fun `the about section shows the build it was read from`() = runTest(mainDispatcher) {
+        val store = newStore()
+        runCurrent()
+
+        assertEquals(AboutStateMapper().map(pixelBuildInfo), store.state.value.about)
+    }
+
+    @Test
+    fun `copying the build info hands its report to the screen`() = runTest(mainDispatcher) {
+        val store = newStore()
+        runCurrent()
+        store.effects.test {
+            store.dispatch(SettingsIntent.BuildInfoCopyClicked)
+            runCurrent()
+
+            assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().map(pixelBuildInfo).report), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a copy before the build info is read copies nothing`() = runTest(mainDispatcher) {
+        val never = CompletableDeferred<BuildInfo>()
+        val store = settingsStore(buildInfoReader = BuildInfoReader { never.await() })
+        store.effects.test {
+            store.dispatch(SettingsIntent.BuildInfoCopyClicked)
+            runCurrent()
+
+            expectNoEvents()
+            assertNull(store.state.value.about)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }
