@@ -52,7 +52,12 @@ class EncounterDaoAttachLocationTest {
         assertEquals(1, changed)
         assertEquals(expected = 1.23, actual = updated.lat)
         assertEquals(expected = 4.56, actual = updated.lon)
+        assertEquals(9f, updated.accuracyMeters)
         assertEquals(LocationSource.LAST_KNOWN, updated.locationSource)
+        assertEquals(Instant.parse("2026-09-21T09:00:00Z"), updated.locationFixedAt)
+        assertEquals("u4pruydq", updated.geohash)
+        assertEquals("u4pruy", updated.placeCellId)
+        assertEquals(Instant.parse("2026-09-21T09:05:00Z"), updated.updatedAt)
         assertEquals(entity.kind, updated.kind)
         assertEquals(entity.occurredAt, updated.occurredAt)
     }
