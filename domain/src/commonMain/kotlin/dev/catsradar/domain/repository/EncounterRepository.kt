@@ -24,7 +24,7 @@ interface EncounterRepository {
 
     /**
      * Gives [photo] to its cat and stamps the cat's `updatedAt` with [EncounterPhoto.addedAt]. True only when the
-     * cat was live and had no photo; otherwise writes nothing.
+     * cat was live; otherwise writes nothing.
      */
     suspend fun addPhoto(photo: EncounterPhoto): Boolean
 
