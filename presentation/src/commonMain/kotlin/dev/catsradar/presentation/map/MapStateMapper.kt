@@ -51,9 +51,7 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
     }
 
     private fun focusedOuting(encounters: List<Encounter>, id: String): List<Encounter>? =
-        SessionSplitter.groupByOuting(encounters)
-            .firstOrNull { outing -> outing.any { it.id == id } }
-            ?.takeIf { outing -> outing.any { it.isOnTheMap() } }
+        SessionSplitter.outingOf(encounters, id)?.takeIf { outing -> outing.any { it.isOnTheMap() } }
 
     // The same header the Encounters list gives the outing, so the chip and the list never disagree.
     private fun headerLabel(outing: List<Encounter>, today: LocalDate): String =

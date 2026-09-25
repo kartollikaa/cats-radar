@@ -15,6 +15,7 @@ import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveOpenWalk
+import dev.catsradar.domain.usecase.ObserveOutingTracks
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
@@ -35,6 +36,7 @@ import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
+import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -78,7 +80,8 @@ val domainModule = module {
     factory { ObserveOpenWalk(walkRepository = get()) }
     factory { ObserveWalkElapsed(observeOpenWalk = get(), clock = get()) }
     factoryOf(::ObserveWalkTracks)
-    factoryOf(::ObserveWalkStats)
+    factory { ObserveWalkStats(observeWalkTracks = get(), computeDispatcher = Dispatchers.Default) }
+    factoryOf(::ObserveOutingTracks)
     // No zone passed: this one outlives a trip across time zones, so it reads the zone each time.
     factory { ObserveTodayCount(encounterRepository = get(), clock = get()) }
     factoryOf(::AttachLocation)

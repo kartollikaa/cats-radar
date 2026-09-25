@@ -104,20 +104,31 @@ negative however wrong the clock was.
 - `domain/…/stats/Streaks.kt` — runs of consecutive days
 - `domain/…/stats/Stats.kt` — `Stats`, `Rate`, `Milestone`, `RatedOuting`, `CurrentOuting`
 - `domain/…/stats/WalkStats.kt` — `WalkStats`, `WalkStatsCalculator` — distance and cats per km
-- `domain/…/walk/WalkSpan.kt` — `Walk.covers`, `Walk.overlaps`, which moments a walk's cats-per-km
-  window counts
+- `domain/…/stats/CatTimes.kt` — the cats a walk's cats-per-km window counts, from its start to its
+  end, both included, and with no end for a walk still on
 
 ## Where the screen lives
 
 - `presentation/…/statistics/` — `StatisticsState`, `StatisticsStateMapper`, `StatisticsStore`
 - `ui/…/statistics/StatisticsScreen.kt`
-- `domain/…/usecase/ObserveStats.kt`, `ObserveWalkStats.kt` — combined by `StatisticsStore`
+- `domain/…/usecase/ObserveStats.kt`, `ObserveWalkStats.kt` — combined by `StatisticsStore`, which
+  reads the encounter list once and hands the same list to both
 - `domain/…/usecase/ObserveWalkTracks.kt` — every walk with its route, which `ObserveWalkStats` sums
+- `domain/…/stats/WalkMeasures.kt`, `CatTimes.kt` — each walk's length and cats, kept from one
+  recompute to the next
 
 The numbers recompute whenever the encounter list changes **and on a ticker**, because the outing in
 progress is measured against "now" and goes stale on its own between cats; the walk rows recompute on
 top of that whenever a walk starts, ends, or gains a point. `ObserveStats` takes the ticker as a
 constructor parameter so a test can drive it instead of waiting.
+
+The walk rows are worked out off the main thread, and when the screen falls behind — a recording walk
+keeps adding points — it gets only the latest result. Each recompute redoes only what changed. A
+walk's length is measured again only when its route has gained points, which a walk that has ended
+can still do when a backup brings more of its route. Its cats are counted again only when the cats
+change or the walk starts or ends somewhere else. Counting them is a binary search over the cats'
+times, sorted once each time the encounter list changes, not a pass over every cat for every walk.
+Every point is still read from the database on each change.
 
 ## Not built yet
 

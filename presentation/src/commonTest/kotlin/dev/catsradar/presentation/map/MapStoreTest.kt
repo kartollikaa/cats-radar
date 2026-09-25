@@ -4,9 +4,11 @@ import app.cash.turbine.test
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.TrackPoint
 import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.usecase.ObserveEncounters
-import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.domain.usecase.ObserveOutingTracks
+import dev.catsradar.presentation.CountingEncounterRepository
 import dev.catsradar.presentation.DelayedWalkRepository
 import dev.catsradar.presentation.StoredWalkRepository
 import dev.catsradar.presentation.coat.CoatOption
@@ -60,9 +62,12 @@ class MapStoreTest {
         Dispatchers.resetMain()
     }
 
-    private fun newStore(walks: WalkRepository = StoredWalkRepository()) = MapStore(
-        observeEncounters = ObserveEncounters(repository),
-        observeWalkTracks = ObserveWalkTracks(walks),
+    private fun newStore(
+        walks: WalkRepository = StoredWalkRepository(),
+        encounters: EncounterRepository = repository,
+    ) = MapStore(
+        observeEncounters = ObserveEncounters(encounters),
+        observeOutingTracks = ObserveOutingTracks(walks),
         stateMapper = MapStateMapper(encountersMapper),
         clock = FakeClock(BASE + 3.hours),
         timeZone = TimeZone.UTC,
@@ -70,6 +75,19 @@ class MapStoreTest {
 
     private fun located(id: String, minute: Int) =
         encounterFixture(id, BASE + minute.minutes).copy(lat = 41.39, lon = 2.17)
+
+    private fun walk(id: String, fromMinute: Int, toMinute: Int) = Walk(
+        id = id,
+        startedAt = BASE + fromMinute.minutes,
+        endedAt = BASE + toMinute.minutes,
+        deviceId = "device",
+        createdAt = BASE + fromMinute.minutes,
+        updatedAt = BASE + toMinute.minutes,
+    )
+
+    private fun route(walk: Walk, vararg positions: MapPosition) = positions.mapIndexed { index, position ->
+        TrackPoint(walk.id, walk.startedAt + index.minutes, position.latitude, position.longitude, 5f)
+    }
 
     @Test
     fun `the map is loading until the cats have been read, then empty with none located`() =
@@ -271,7 +289,8 @@ class MapStoreTest {
             repository.insert(x1)
             repository.insert(x2)
             repository.insert(y1)
-            val store = newStore(DelayedWalkRepository())
+            val afternoon = walk("afternoon", fromMinute = 170, toMinute = 200)
+            val store = newStore(DelayedWalkRepository(walks = listOf(afternoon), points = route(afternoon, NEAR, FAR)))
             runCurrent()
 
             store.dispatch(MapIntent.OutingFocused("x1"))
@@ -290,34 +309,96 @@ class MapStoreTest {
             runCurrent()
 
             assertEquals("y1", assertIs<MapState.Located>(store.state.value).focus?.outingId)
+            assertEquals(listOf(listOf(NEAR, FAR)), focusedLines(store))
         }
 
     @Test
-    fun `an unfocused store never collects walk tracks, and focusing an outing starts collecting them`() =
+    fun `an unfocused store collects no walk data at all`() = runTest(mainDispatcher) {
+        val walk = walk("walk-1", fromMinute = 0, toMinute = 10)
+        val walks = CountingWalkRepository(walks = listOf(walk), points = route(walk, NEAR, FAR))
+        repository.insert(located("first", minute = 0))
+        newStore(walks)
+        runCurrent()
+
+        assertEquals(0, walks.walkListCollections)
+        assertEquals(emptyList(), walks.trackCollections)
+    }
+
+    @Test
+    fun `focusing an outing collects the track of the walk overlapping it and not of a walk outside it`() =
         runTest(mainDispatcher) {
-            val walk = Walk(
-                id = "walk-1",
-                startedAt = BASE,
-                endedAt = BASE + 10.minutes,
-                deviceId = "device",
-                createdAt = BASE,
-                updatedAt = BASE,
+            val during = walk("during", fromMinute = 0, toMinute = 10)
+            val earlier = walk("earlier", fromMinute = -300, toMinute = -240)
+            val walks = CountingWalkRepository(
+                walks = listOf(during, earlier),
+                points = route(during, NEAR, FAR) + route(earlier, FAR, NEAR),
             )
-            val points = listOf(
-                TrackPoint(walkId = "walk-1", at = BASE, lat = 41.388, lon = 2.168, accuracyMeters = 5f),
-                TrackPoint(walkId = "walk-1", at = BASE + 1.minutes, lat = 41.395, lon = 2.175, accuracyMeters = 5f),
-            )
-            val walks = CountingWalkRepository(walks = listOf(walk), points = points)
             repository.insert(located("first", minute = 0))
             val store = newStore(walks)
             runCurrent()
-            assertEquals(0, walks.everyPointCollections)
 
             store.dispatch(MapIntent.OutingFocused("first"))
             runCurrent()
 
-            assertEquals(1, walks.everyPointCollections)
+            assertEquals(listOf("during"), walks.trackCollections)
         }
+
+    @Test
+    fun `the map never collects every point of every walk, focused or not`() = runTest(mainDispatcher) {
+        val walk = walk("walk-1", fromMinute = 0, toMinute = 10)
+        val walks = CountingWalkRepository(walks = listOf(walk), points = route(walk, NEAR, FAR))
+        repository.insert(located("first", minute = 0))
+        val store = newStore(walks)
+        runCurrent()
+
+        store.dispatch(MapIntent.OutingFocused("first"))
+        runCurrent()
+        store.dispatch(MapIntent.FocusCleared)
+        runCurrent()
+
+        assertEquals(0, walks.everyPointCollections)
+    }
+
+    @Test
+    fun `a cat that stretches the focused outing into another walk brings that walk's track onto the map`() =
+        runTest(mainDispatcher) {
+            val morning = walk("morning", fromMinute = -20, toMinute = 10)
+            val noon = walk("noon", fromMinute = 40, toMinute = 120)
+            val walks = StoredWalkRepository(
+                walks = listOf(morning, noon),
+                points = route(morning, NEAR, FAR) + route(noon, FAR, NEAR),
+            )
+            repository.insert(located("first", minute = 0))
+            val store = newStore(walks)
+            runCurrent()
+            store.dispatch(MapIntent.OutingFocused("first"))
+            runCurrent()
+            assertEquals(listOf(listOf(NEAR, FAR)), focusedLines(store))
+
+            repository.insert(located("second", minute = 25))
+            repository.insert(located("third", minute = 45))
+            runCurrent()
+
+            assertEquals(listOf(listOf(NEAR, FAR), listOf(FAR, NEAR)), focusedLines(store))
+        }
+
+    @Test
+    fun `the map reads the cats once, focused or not`() = runTest(mainDispatcher) {
+        val encounters = CountingEncounterRepository(repository)
+        encounters.insert(located("first", minute = 0))
+        val store = newStore(encounters = encounters)
+        runCurrent()
+
+        store.dispatch(MapIntent.OutingFocused("first"))
+        runCurrent()
+        store.dispatch(MapIntent.FocusCleared)
+        runCurrent()
+
+        assertEquals(1, encounters.everyCollection)
+    }
+
+    private fun focusedLines(store: MapStore): List<List<MapPosition>>? =
+        assertIs<MapState.Located>(store.state.value).focus?.lines?.map { it.positions }
 
     @Test
     fun `coats are chosen one at a time and cleared back to every cat, and heat turns on and off`() =
@@ -456,18 +537,30 @@ class MapStoreTest {
 
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
+        val NEAR = MapPosition(41.388, 2.168)
+        val FAR = MapPosition(41.395, 2.175)
     }
 }
 
-/** A read-only stand-in that counts how many times [observeEveryPoint] is collected. */
+/** A read-only stand-in that counts what is collected: the walk list, each walk's track, and every point. */
 private class CountingWalkRepository(
     walks: List<Walk> = emptyList(),
     points: List<TrackPoint> = emptyList(),
     private val delegate: WalkRepository = StoredWalkRepository(walks, points),
 ) : WalkRepository by delegate {
 
+    var walkListCollections = 0
+        private set
+
+    val trackCollections = mutableListOf<String>()
+
     var everyPointCollections = 0
         private set
+
+    override fun observeAll(): Flow<List<Walk>> = delegate.observeAll().onStart { walkListCollections++ }
+
+    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> =
+        delegate.observeTrack(walkId).onStart { trackCollections += walkId }
 
     override fun observeEveryPoint(): Flow<List<TrackPoint>> =
         delegate.observeEveryPoint().onStart { everyPointCollections++ }

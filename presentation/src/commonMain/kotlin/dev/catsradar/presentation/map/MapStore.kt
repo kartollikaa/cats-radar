@@ -3,15 +3,17 @@ package dev.catsradar.presentation.map
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.ObserveEncounters
-import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.domain.usecase.ObserveOutingTracks
 import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
@@ -46,7 +48,7 @@ sealed interface MapEffect {
 
 class MapStore(
     observeEncounters: ObserveEncounters,
-    observeWalkTracks: ObserveWalkTracks,
+    observeOutingTracks: ObserveOutingTracks,
     private val stateMapper: MapStateMapper,
     private val clock: Clock,
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -55,14 +57,15 @@ class MapStore(
     private val choices = MutableStateFlow(MapChoices())
 
     init {
+        val encounters = observeEncounters().shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
         // A fresh combine per focus id: a pairing can only carry that focus's own walks answer, never the
         // unfocused branch's empty list or one still pending from a focus switch in flight.
         val chosenWithWalks = choices.distinctUntilChangedBy { it.focus }.flatMapLatest { chosen ->
-            val walks = if (chosen.focus == null) flowOf(emptyList()) else observeWalkTracks()
+            val walks = chosen.focus?.let { observeOutingTracks(encounters, it) } ?: flowOf(emptyList())
             combine(walks, choices) { tracks, latest -> latest to tracks }
         }
-        combine(observeEncounters(), chosenWithWalks) { encounters, (chosen, tracks) ->
-            val mapped = stateMapper.map(encounters, clock.today(timeZone), chosen, tracks)
+        combine(encounters, chosenWithWalks) { cats, (chosen, tracks) ->
+            val mapped = stateMapper.map(cats, clock.today(timeZone), chosen, tracks)
             val shown = mapped as? MapState.Located
             // A focus or a cat the cats no longer match is let go, so it cannot come back by itself later — but
             // only while it is still the live choice: a pairing catching up to a newer one must not clear that.
