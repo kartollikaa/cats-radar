@@ -74,7 +74,7 @@ A ZIP holding `manifest.json`, `encounters.json`, `placecells.json`, `walks.json
 `trackpoints.json`, and a `photos/` entry for every file the rows point at. Instants travel as epoch milliseconds and enums as their names, so a future
 version reordering a column changes nothing.
 
-The manifest records `formatVersion`, 2 since walks joined the archive, when it was exported, which device wrote it, and that build's
+The manifest records `formatVersion` — 2 since walks joined the archive, 3 since cats carry the gallery item a picked photo came from — when it was exported, which device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
 
@@ -111,9 +111,15 @@ written only where no file was here, so importing the same archive again finds t
 - **An archive from a newer version of the app is refused**, not partially read: its rows may carry
   fields this version would silently drop. Nothing is written. It is judged by its manifest before
   any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
-  still say "newer version", not "not a backup". That is why the walks raised the version: an app
-  from before them refuses an archive rather than losing its walks.
+  still say "newer version", not "not a backup". That is why the walks raised the version, and the
+  picked gallery items raised it again: an app from before them refuses an archive rather than
+  losing its walks or its links (`ZipBackupArchiveTest`,
+  *anArchiveSaysItIsFormatThreeSoAnAppBeforePickedGalleryItemsRefusesIt*).
 - **An archive from before walks** still imports, with no walks in it.
+- **An archive from before picked gallery items** still imports, its cats keeping none
+  (`ZipBackupReaderOlderFormatTest`). A picked item restored on another phone is kept but offers no
+  link there, since gallery ids mean nothing off the phone that picked them (see
+  [photo-viewer.md](./photo-viewer.md#open-in-gallery)).
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.

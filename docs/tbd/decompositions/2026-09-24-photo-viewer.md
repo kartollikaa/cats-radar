@@ -14,7 +14,7 @@
 |---|----------|------------------------|----------|-------------|------------|--------|
 | V1 | Fullscreen photo viewer | Tapping a cat's photo opens it fullscreen with pinch, double-tap, pan and fling, above the bottom bar. | safe | ~550 | — | merged |
 | V2 | Open a camera photo in the gallery | The viewer's top bar opens the gallery original the app saved, when this install saved it and it is still there. | safe | ~500 | V1 | merged |
-| V3 | Gallery link for imported and picked photos | Imports and gallery attachments remember the MediaStore item they came from, and the viewer opens it. | safe | ~600 | V2, #122 | in-progress |
+| V3 | Gallery link for imported and picked photos | Imports and gallery attachments remember the MediaStore item they came from, and the viewer opens it. | safe | ~600 | V2, #122 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -51,6 +51,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-25: **V3 in review.** The picked item is read off the URI, never queried: the app holds no
+  permission to read the gallery. A picked link is opened without an existence check and without a grant;
+  a deleted one is the gallery's own "not found". The field raised the backup format, so an app before it
+  refuses a new archive rather than dropping the links.
 - 2026-09-25: **V2 merged** as #131. The read grant moved to the shell after review: it always asks for it
   and sends the view again without it when Android refuses, which is also how V3's picked links open. The
   picker URIs V3 parses were captured on an API 37 AVD before any code: `picker_get_content/…/media/<id>`

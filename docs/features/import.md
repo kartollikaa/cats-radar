@@ -14,7 +14,35 @@ whole batch.
 
 An encounter with `kind = PHOTO` and `origin = GALLERY`. The app writes its own compressed copy and
 thumbnail exactly as the camera path does, and leaves the original alone: it is already in the
-gallery, so `galleryUri` stays null. Copying it back would give the user two of the same picture.
+gallery, so `galleryUri` stays null. Copying it back would give the user two of the same picture
+(`ImportPhotosTest`, *an import from the phone's gallery remembers the item it came from, and is still
+not copied back*).
+
+## The gallery item it came from
+
+The imported cat also keeps the gallery item the photo was picked as, in `sourceMediaUri`, so the
+photo viewer can open the original where the user keeps it (see
+[photo-viewer.md](./photo-viewer.md#open-in-gallery)). Which item that is comes from the URI the
+gallery handed over, not from reading the gallery, which the app has no permission to do:
+
+- **The system photo picker** names the item as `content://media/picker…/<user>/<provider>/media/<id>`.
+  When the provider is the phone's own, `<id>` is the item's MediaStore id, so the cat keeps
+  `content://media/external/images/media/<id>` (`MediaStoreItemLocatorTest`,
+  *aPhotoImportedThroughGetContentIsTheMediaStoreItemItNames*). That shape is not public API; it is
+  pinned by tests on URIs captured from a device.
+- **A photo only in the cloud** comes from the cloud provider, whose `<id>` is its own, and **a photo
+  from another profile** (a work profile) names another user — neither has an item here, so the cat
+  keeps none (*aCloudOnlyPhotoHasNoItemOnThisDevice*, *aPhotoFromAnotherProfileHasNoItemForThisOne*).
+- **The Files app** hands over a documents URI, which Android's own `MediaStore.getMediaUri`
+  converts; when it cannot, no item (*aFilesAppImageIsTheItemAndroidsOwnConversionNames*,
+  *aFilesAppImageAndroidCannotConvertHasNoItem*).
+- **A gallery app that answers with the MediaStore item itself** is kept as it is; any other app's
+  provider, or a file, has no item (*aMediaStoreItemHandedOverAsItselfIsKept*,
+  *anotherAppsProviderHasNoItem*).
+
+A pick with no item is imported all the same, just without the link (`ImportPhotosTest`, *a pick that
+names no item on the phone is imported with no link to one*). Cats imported before the app kept the
+item have none either.
 
 ## When it happened
 
@@ -143,6 +171,8 @@ takes them back*).
 - `app/…/photo/PhotoReadAccess.kt` — the picked photos' read grants, held for the run
 - `app/…/worker/ImportBatches.kt` — the picked photos' URIs, stored for the run under its work id
 - `data/…/androidMain/platform/PhotoStream.android.kt` — how every photo is opened, original first
+- `domain/…/platform/GalleryItemLocator.kt`, `data/…/androidMain/platform/MediaStoreItemLocator.android.kt`
+  — which gallery item a picked photo is
 
 ## Walking away mid-import
 

@@ -9,7 +9,8 @@ layer leaking into the other.
 `Encounter`'s fields fall into a few groups: identity (`id`, `deviceId`); when and how it happened
 (`occurredAt`, `tzOffsetMinutes`, `kind`, `origin`); the cat (`coat`, which the user can change
 after creation, see `coat.md`); photo fields (`photoPath`, `thumbPath`, `galleryUri`,
-`sourceDigest`, covered in `photos.md`; set once — at creation, or later on a cat that had none);
+`sourceMediaUri`, `sourceDigest`, covered in `photos.md` and `import.md`; set once — at creation, or
+later on a cat that had none);
 location (`lat`, `lon`, `accuracyMeters`, `locationSource`, `locationFixedAt`, `geohash`,
 `placeCellId`, covered in `location.md`); and row lifecycle (`createdAt`, `updatedAt`, `deletedAt`).
 `tzOffsetMinutes` is the UTC offset at the moment the encounter happened, not the device's offset
@@ -89,6 +90,10 @@ and records their routes while location is allowed (`walking-mode.md`).
 The database went from version 1 to 2 for these two tables, by an automatic migration that only adds
 them; `CatsDatabaseMigrationTest` opens a version-1 database with a cat in it, migrates, and checks
 the cat is still there.
+
+Version 3 adds `sourceMediaUri`, the gallery item a picked photo came from, by the same kind of
+migration: a nullable column, so every cat already stored has none
+(`CatsDatabaseMigrationTest.versionTwoBecomesThreeKeepingEveryCatWithNoPickedGalleryItem`).
 
 ## Where the code lives
 

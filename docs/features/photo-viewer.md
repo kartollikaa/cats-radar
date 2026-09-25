@@ -56,29 +56,37 @@ again and shows the same photo.
 
 **When it is offered.** A cat whose camera original the app saved to `Pictures/Cats Radar` (see
 [photos.md](./photos.md#the-gallery-setting)) shows a gallery button at the other end of the top bar.
-A tap hands that item to whatever app the phone opens images with — the user's default gallery, or
-the system's choice — with the app's own read access passed on. If Android refuses to pass it on
-(the item was deleted in the moment between the check and the tap reaching the gallery), the view
-goes again without it rather than crashing, and the gallery opens the item with its own access or
-says it cannot find it (`GalleryOpenerTest`, *a grant the app can no longer give is dropped and the
-item still opens*). Whether that gallery lets the user
-swipe on to the photos around it is its own behaviour. A camera photo taken with saving to the gallery
-turned off, and a photo imported or picked from the gallery, offer nothing: the app kept no link to
-where they are (`PhotoViewerStateMapperTest`, *a photo with no original in the gallery offers nothing
-there*).
+So does a cat whose photo was imported, or chosen from the gallery for it, when the pick named an item
+in this phone's gallery (see [import.md](./import.md#the-gallery-item-it-came-from)) — the item the
+user picked, not a copy (`GalleryLinkTest`, *a photo this install picked from the gallery is a link to
+the item, one the app does not own*). A cat with both opens the original the app saved (*the original
+the app saved wins over a picked item on the same cat*). A tap hands that item to whatever app the
+phone opens images with — the user's default gallery, or the system's choice — with the app's own read
+access passed on. If Android refuses to pass it on — always for a picked item, which the app cannot
+read, and for a saved one deleted in the moment between the check and the tap reaching the gallery —
+the view goes again without it rather than crashing, and the gallery opens the item with its own access
+or says it cannot find it (`GalleryOpenerTest`, *a grant the app can no longer give is dropped and the
+item still opens*). Whether that gallery lets the user swipe on to the photos around it is its own
+behaviour. A camera photo taken with saving to the gallery turned off, a cloud-only pick, and a cat
+imported before the app kept the picked item offer nothing: the app has no link to where they are
+(`PhotoViewerStateMapperTest`, *a photo with no original in the gallery offers nothing there*).
 
-**The install rule.** The button appears only on the installation that saved the original
-(`GalleryLinkTest`, *an original recorded by another install is never a link here*). A gallery item
+**The install rule.** The button appears only on the installation that saved the original or made
+the pick (`GalleryLinkTest`, *an original recorded by another install is never a link here*; *a photo
+another install picked is never a link here*). A gallery item
 is known by an id that is only meaningful on the phone that made it, so on another phone — after a
 backup was restored there — the same id may be a different picture, possibly another cat the app saved
 there. A reinstall is another installation too, and Android takes away an uninstalled app's hold on
 the items it saved, so there is nothing the app could check either.
 
-**A deleted original.** The item is checked at the tap, not when the viewer opens: MediaStore shows an
-app only the items it owns, and hides one moved to the trash, so an item the query no longer returns
-is gone. Then nothing opens and a message says the photo is no longer in the gallery
+**A deleted original.** A saved original is checked at the tap, not when the viewer opens:
+MediaStore shows an app only the items it owns, and hides one moved to the trash, so an item the query
+no longer returns is gone. Then nothing opens and a message says the photo is no longer in the gallery
 (`ResolveGalleryLinkTest`, *an original deleted from the gallery is gone*; `MediaStoreGalleryItemsTest`
-— a refused query or an unparseable URI reads as gone, never as a crash).
+— a refused query or an unparseable URI reads as gone, never as a crash). A picked item is not the
+app's to see, so it is never checked: the gallery opens and gives its own "not found" if the user has
+deleted it since (`ResolveGalleryLinkTest`, *a picked item opens without asking the gallery, which the
+app cannot read*).
 
 **No gallery app.** A phone with nothing that shows images gets a message that no app can show the
 photo (`GalleryOpenerTest`, *with no app to show an image it reports so instead of crashing*).
@@ -95,8 +103,10 @@ second tap while the first is being checked opens the gallery once*).
   wired into `CatsRadarNavHost.kt` next to `EncounterDetail`; `GalleryOpener.kt` — `ACTION_VIEW`
 - `domain/…/model/GalleryLink.kt` — whether a cat has a link here; `domain/…/usecase/ResolveGalleryLink.kt`;
   `domain/…/platform/GalleryItems.kt`, answered by `data/…/androidMain/platform/MediaStoreGalleryItems.android.kt`
+- `data/…/androidMain/platform/MediaStoreItemLocator.android.kt` — which gallery item a picked photo is
+  (see [import.md](./import.md#the-gallery-item-it-came-from))
 
 ## Not built yet
 
-Opening an imported or gallery-picked photo in the gallery. Swiping down to close, swiping to the
+A link for cats imported before the app kept the picked item. Swiping down to close, swiping to the
 next cat, sharing, and opening the viewer from an Encounters tile or the Map.
