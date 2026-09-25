@@ -53,6 +53,7 @@ fun Encounter.withPhoto(
     galleryUri: String? = null,
     sourceMediaUri: String? = null,
     sourceDigest: String? = null,
+    shotId: String? = null,
 ): Encounter = copy(
     photos = listOf(
         EncounterPhoto(
@@ -65,7 +66,7 @@ fun Encounter.withPhoto(
             sourceDigest = sourceDigest,
             deviceId = deviceId,
             addedAt = createdAt,
-            shotId = null,
+            shotId = shotId,
         ),
     ),
 )

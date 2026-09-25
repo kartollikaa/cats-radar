@@ -44,6 +44,12 @@ private fun cell(
     resolvedAt = resolvedAt,
 )
 
+private fun shotOfThree() = Triple(
+    encounter("first", MIDDLE).copy(coat = CatCoat.GINGER).withPhoto(),
+    encounter("second", MIDDLE).copy(coat = CatCoat.GINGER).withPhoto(shotId = "first"),
+    encounter("third", MIDDLE).withPhoto(shotId = "first"),
+)
+
 class BackupMergeTest {
 
     @Test
@@ -165,6 +171,44 @@ class BackupMergeTest {
         )
 
         assertEquals(first.photos, merged.photos)
+    }
+
+    @Test
+    fun `a cat of a shot that is not here yet joins its shot`() {
+        val (first, second, third) = shotOfThree()
+        val loggedElsewhere = third.copy(deviceId = "other-install")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(first, second)),
+            imported = BackupContents(encounters = listOf(first, second, loggedElsewhere)),
+        )
+
+        assertEquals(listOf(loggedElsewhere.copy(photos = emptyList())), merged.encounters)
+        assertEquals(loggedElsewhere.photos, merged.photos)
+        assertEquals(listOf("first"), merged.photos.map { it.shot })
+    }
+
+    @Test
+    fun `a first cat deleted here after the export stays deleted and the others keep their shot`() {
+        val (first, second, third) = shotOfThree()
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(first.copy(deletedAt = LATE))),
+            imported = BackupContents(encounters = listOf(first, second, third)),
+        )
+
+        assertEquals(listOf("second", "third"), merged.encounters.map { it.id })
+        assertEquals(listOf("first", "first"), merged.photos.map { it.shotId })
+        assertEquals(1, merged.unchanged)
+    }
+
+    @Test
+    fun `a later cat whose shot's first row is not in the archive keeps its shot`() {
+        val (_, _, third) = shotOfThree()
+
+        val merged = BackupMerge.merge(local = BackupContents(), imported = BackupContents(encounters = listOf(third)))
+
+        assertEquals(listOf("first"), merged.photos.map { it.shotId })
     }
 
     @Test
