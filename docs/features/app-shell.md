@@ -221,8 +221,6 @@ because building it reaches Play Services, which only a real location call shoul
 
 ## Not handled yet
 
-Three surfaces still wear the layouts they had before the look above was set: the Places
-drill-down, the Counter's import progress and summary, and the two coat sheets — the coat question
-after a photo and the map's coat filter. The
-[design pass on the remaining screens](../tbd/decompositions/2026-09-25-design-pass-remaining-screens.md)
-covers them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
+The two sheets a screen opens itself — the coat choice over the map and the coat question after a
+photo — are not back-stack destinations yet, so *Sheets are destinations* above does not hold for
+them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.

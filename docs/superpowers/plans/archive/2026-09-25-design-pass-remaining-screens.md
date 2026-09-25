@@ -12,7 +12,7 @@ layout changes with Robolectric tests in `:app`.
 **Tech Stack:** Kotlin Multiplatform (`:domain`, `:presentation`), Compose Material 3 (`:ui`),
 Navigation 3 + Koin (`:app`), kotlin.test + Turbine, Robolectric + compose-ui-test in `:app`.
 
-**Spec:** [docs/superpowers/specs/2026-09-25-design-pass-remaining-screens-design.md](../specs/2026-09-25-design-pass-remaining-screens-design.md)
+**Spec:** [docs/superpowers/specs/2026-09-25-design-pass-remaining-screens-design.md](../../specs/2026-09-25-design-pass-remaining-screens-design.md)
 
 ## Global Constraints
 
