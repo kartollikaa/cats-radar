@@ -5,6 +5,17 @@ release list whether a version newer than the installed one has been published a
 one, downloads it and installs it. The system's own confirmation screen is the last word: nothing
 installs without the user saying yes there.
 
+## The switch
+
+The whole section is behind the Firebase Remote Config boolean **`in_app_updates`**. While it is off —
+and it is off wherever nobody set it in the Firebase console — Settings shows no Updates section and
+the app asks no release list; About stays. Turning it on in the console shows the section: Settings
+reads the switch when it opens and follows changes while it stays open (Remote Config's real-time
+channel; without that channel a fetch brings the value within Remote Config's own cache interval).
+A download or an install already under way is not affected by the switch.
+
+The switch exists until a public place for the builds is chosen; removing it is its own slice.
+
 ## Where releases come from
 
 The GitHub REST API's release list of one repository, read anonymously:
@@ -151,3 +162,5 @@ The check runs only on the tap: nothing checks in the background and nothing not
   which carries the session's ending from the receiver to the screen; `installPermissionPage`.
 - `:domain`/`:data` also hold the `InstallPermission` port and `AndroidInstallPermission`, and
   `PruneInstalledUpdates`, run among the start-up repairs.
+- The switch: the `FeatureToggles` port and `Feature.IN_APP_UPDATES` in `:domain`, `RemoteConfigFeatureToggles`
+  in `:data`; `SettingsStore` follows it into `SettingsState.updatesShown`.
