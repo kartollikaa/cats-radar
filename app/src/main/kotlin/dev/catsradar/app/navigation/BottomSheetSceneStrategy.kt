@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -19,6 +17,7 @@ import androidx.navigation3.scene.Scene
 import androidx.navigation3.scene.SceneStrategy
 import androidx.navigation3.scene.SceneStrategyScope
 import androidx.navigation3.scene.SinglePaneSceneStrategy
+import dev.catsradar.ui.components.CatsRadarBottomSheet
 
 /** Shows an entry marked with [bottomSheet] in a modal sheet over the entries under it. */
 internal class BottomSheetSceneStrategy<T : Any>(private val backStack: List<T>) : SceneStrategy<T> {
@@ -44,7 +43,6 @@ internal val NavEntry<*>.isSheet: Boolean get() = metadata[BottomSheetKey] == tr
 
 private data object BottomSheetKey : NavMetadataKey<Boolean>
 
-@OptIn(ExperimentalMaterial3Api::class)
 private class BottomSheetScene<T : Any>(
     private val entry: NavEntry<T>,
     override val previousEntries: List<NavEntry<T>>,
@@ -57,7 +55,7 @@ private class BottomSheetScene<T : Any>(
 
     override val content: @Composable () -> Unit = {
         val lifecycleOwner = rememberLifecycleOwner()
-        ModalBottomSheet(
+        CatsRadarBottomSheet(
             onDismissRequest = onBack,
             contentWindowInsets = {
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)

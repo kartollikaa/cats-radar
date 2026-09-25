@@ -14,6 +14,13 @@ alone, since two targets in one upright cell are two targets too small.
 The sizes that switch the layout sit between the platform's reference cell sizes rather than on
 them, because launchers round cells differently: a single upright cell must never read as two.
 
+Each tile is rounded, and less so on the side it shares with the other one, across the gap between
+them, so the two read as one widget split in two. Side by side, right to left, the corners mirror
+with the tiles. A press ripples inside the tile's own outline (`WidgetTileShapeTest`;
+`WidgetContentTest` names each layout's tiles). The outlines are shape drawables tinted with the
+widget's colours rather than Glance's corner radius, which rounds all four corners alike and does
+nothing before Android 12 — so the tiles are rounded on Android 10 and 11 too.
+
 ## What a tap does
 
 It inserts the encounter, then hands the location to `AttachLocationWorker`. The row is written with
@@ -112,7 +119,8 @@ for it in every process the app runs in.
 
 ## Where the code lives
 
-- `app/…/widget/CatsRadarWidget.kt` — what it draws, at each size
+- `app/…/widget/CatsRadarWidget.kt` — what it draws, at each size; `res/drawable/widget_tile*.xml` (and
+  `drawable-ldrtl/`) — the tiles' outlines and their ripples, `res/values/dimens.xml` — their radii
 - `app/…/widget/TallyAction.kt` — what a tap on the count does
 - `app/…/photo/TakePhotoShortcut.kt`, `CameraRequest.kt` — how Photo reaches the Counter's camera
 - `app/…/photo/PendingCaptures.kt` — which camera a result belongs to

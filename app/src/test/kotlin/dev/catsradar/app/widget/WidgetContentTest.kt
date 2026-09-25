@@ -30,6 +30,11 @@ class WidgetContentTest {
         provideComposable { WidgetContent(count = 6) }
     }
 
+    private fun GlanceAppWidgetUnitTest.assertTiles(count: TileShape, photo: TileShape) {
+        onNode(hasRunCallbackClickAction<TallyAction>() and hasTestTag(count.name)).assertExists()
+        onNode(hasStartActivityClickAction(TakePhotoShortcut.intent(context)) and hasTestTag(photo.name)).assertExists()
+    }
+
     private fun GlanceAppWidgetUnitTest.assertPhotoOpensTheCamera() {
         onNode(hasRunCallbackClickAction<TallyAction>()).assertExists()
         onNode(hasText("Photo")).assertExists()
@@ -54,7 +59,7 @@ class WidgetContentTest {
     fun aWidgetShortOfTwoTilesEitherWayIsTheCountAlone() = runGlanceAppWidgetUnitTest {
         render(DpSize(109.dp, 159.dp))
 
-        onNode(hasRunCallbackClickAction<TallyAction>()).assertExists()
+        onNode(hasRunCallbackClickAction<TallyAction>() and hasTestTag(TileShape.ALONE.name)).assertExists()
         onNode(hasText("Photo")).assertDoesNotExist()
         onNode(hasStartActivityClickAction(TakePhotoShortcut.intent(context))).assertDoesNotExist()
     }
@@ -66,6 +71,7 @@ class WidgetContentTest {
         assertPhotoOpensTheCamera()
         onNode(hasTestTag(WidgetLayout.SIDE_BY_SIDE)).assertExists()
         onNode(hasTestTag(WidgetLayout.STACKED)).assertDoesNotExist()
+        assertTiles(count = TileShape.START, photo = TileShape.END)
     }
 
     @Test
@@ -75,6 +81,7 @@ class WidgetContentTest {
         assertPhotoOpensTheCamera()
         onNode(hasTestTag(WidgetLayout.STACKED)).assertExists()
         onNode(hasTestTag(WidgetLayout.SIDE_BY_SIDE)).assertDoesNotExist()
+        assertTiles(count = TileShape.TOP, photo = TileShape.BOTTOM)
     }
 
     @Test
@@ -83,5 +90,6 @@ class WidgetContentTest {
 
         assertPhotoOpensTheCamera()
         onNode(hasTestTag(WidgetLayout.STACKED)).assertExists()
+        assertTiles(count = TileShape.TOP, photo = TileShape.BOTTOM)
     }
 }

@@ -3,6 +3,7 @@ package dev.catsradar.presentation.detail
 import dev.catsradar.presentation.coat.CoatOption
 
 sealed interface EncounterDetailIntent {
+    data object BackClicked : EncounterDetailIntent
     data object DeleteClicked : EncounterDetailIntent
     data object UndoClicked : EncounterDetailIntent
 

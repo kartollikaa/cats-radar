@@ -148,11 +148,11 @@
         <item quantity="many">%1$d котиков за %2$s</item>
         <item quantity="other">%1$d котика за %2$s</item>
     </plurals>
-    <plurals name="counter_outing_now">
-        <item quantity="one">%1$d котик · %2$s</item>
-        <item quantity="few">%1$d котика · %2$s</item>
-        <item quantity="many">%1$d котиков · %2$s</item>
-        <item quantity="other">%1$d котика · %2$s</item>
+    <plurals name="counter_outing_cats">
+        <item quantity="one">%1$d котик</item>
+        <item quantity="few">%1$d котика</item>
+        <item quantity="many">%1$d котиков</item>
+        <item quantity="other">%1$d котика</item>
     </plurals>
     <plurals name="counter_milestone">
         <item quantity="one">%1$d котик!</item>
@@ -183,6 +183,7 @@
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
+    <string name="detail_back">Назад</string>
     <string name="detail_show_on_map">Показать на карте</string>
     <string name="viewer_back">Назад</string>
     <string name="viewer_open_in_gallery">Открыть в галерее</string>

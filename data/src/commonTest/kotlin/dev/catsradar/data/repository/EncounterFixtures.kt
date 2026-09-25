@@ -1,5 +1,6 @@
 package dev.catsradar.data.repository
 
+import dev.catsradar.data.db.EncounterWithPhotos
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
@@ -79,3 +80,6 @@ internal fun Encounter.withPhoto(
         ),
     ),
 )
+
+/** The cat as its row and photo rows read back together. */
+internal fun Encounter.toRelation(): EncounterWithPhotos = EncounterWithPhotos(toEntity(), photos.map { it.toEntity() })

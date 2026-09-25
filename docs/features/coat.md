@@ -44,6 +44,8 @@ logs a cat (*no prompt without a logged camera photo*).
 
 ### The sheet at the edges
 
+- **It opens all the way** and has no half-open stop, like every sheet in the app (see
+  [app-shell.md](./app-shell.md)).
 - **A newer photo takes the sheet over** — it asks about the newer cat, and the earlier one keeps
   no coat (*a newer photo takes over the prompt*).
 - **The sheet closes before the coat is written**, so it never waits on storage; a write that fails

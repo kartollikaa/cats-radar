@@ -25,11 +25,16 @@ the gallery (`galleryUri`), the gallery item a picked photo came from (`sourceMe
 the bytes the source handed over (`sourceDigest`), the install that recorded those two links
 (`deviceId`), and when it joined the cat (`addedAt`).
 
-The database still holds a cat's one photo in five columns of its own row, `photoPath` to
-`sourceDigest`. A row with a copy reads back as one photo that takes the cat's id, install and creation
-time — the columns name nothing else — and a row without a copy reads back as no photo, whatever the
-other four columns hold (`EncounterMapperTest`). An archive's encounter record carries its photo the
-same way and is read by the same rule (`carriedPhoto`).
+Each photo is a row of `encounter_photos`, keyed by its own `id`, with a foreign key to its cat that
+deletes the photo rows with the cat. Every read returns a cat with its photos (`EncounterWithPhotos`),
+ordered as above whatever order they were written in (`EncounterDaoPhotosTest`). Inserting a cat writes
+it and all its photos in one transaction, so a photo that cannot be written leaves no cat either
+(*aCatWhosePhotoCannotBeWrittenIsNotStoredEither*). A full-row `update` touches only the cat's own
+table, so it can never drop or replace a photo (`EncounterDaoRestorePhotoTest`).
+
+An archive's encounter record still carries at most one photo in five fields; it is read by `carriedPhoto`,
+the rule the migration below uses: the photo takes the cat's id, install and creation time, and a record
+without a copy carries none, whatever its other four fields hold (`CarriedPhotoTest`).
 
 ## At the edges
 
@@ -39,12 +44,12 @@ soft-deleted rows: `loadEvery` for the backup merge (see `backup.md`) and `loadD
 the purge. `softDelete` itself is guarded the same way in reverse — its `UPDATE` only fires
 `WHERE deletedAt IS NULL`, so calling it twice cannot restart a row's purge clock by overwriting
 an earlier `deletedAt` with a later one (`EncounterDaoResilienceTest`,
-*reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `attachPhoto` is guarded both ways
-at once: it writes only the photo columns and `updatedAt`, and only `WHERE deletedAt IS NULL AND
-photoPath IS NULL`, so giving a cat a photo can neither bring back a deleted one nor replace a photo
-it has (`EncounterDaoAttachPhotoTest`). `update`, which a backup's later edit uses, rewrites a row
-but keeps the photo columns it has, and a backup's photos are restored only onto a row without one,
-leaving its `updatedAt` alone (`EncounterDaoRestorePhotoTest`). `setCoat` writes only the `coat` column and `updatedAt`,
+*reSoftDeletingAnAlreadyDeletedRowDoesNotRestartItsPurgeClock*). `addPhoto` is guarded both ways
+at once: it adds the photo row and stamps only `updatedAt`, and only on a live cat that has no photo,
+checked in the same transaction, so giving a cat a photo can neither bring back a deleted one nor
+replace a photo it has (`EncounterDaoAttachPhotoTest`). A backup's photos are added only where their id
+is not here yet, leaving every cat's `updatedAt` alone (`EncounterDaoRestorePhotoTest`). `setCoat`
+writes only the `coat` column and `updatedAt`,
 `WHERE deletedAt IS NULL`, so changing a cat's coat can neither resurrect a deleted row nor undo a
 photo or a location attached a moment earlier (`EncounterDaoSetCoatTest`). Two writes clear
 `deletedAt` on purpose, unguarded:
@@ -110,11 +115,25 @@ Version 3 adds `sourceMediaUri`, the gallery item a picked photo came from, by t
 migration: a nullable column, so every cat already stored has none
 (`CatsDatabaseMigrationTest.versionTwoBecomesThreeKeepingEveryCatWithNoPickedGalleryItem`).
 
+Version 4 moves photos out of the cat's row, by a hand-written migration (`MigrationFrom3To4`), since an
+automatic one cannot move data before it drops a column. In one transaction it creates
+`encounter_photos`, copies each cat's photo into it by the `carriedPhoto` rule (a cat without a copy gets
+no row), drops the digest index, then drops the five columns with `ALTER TABLE … DROP COLUMN`. It does
+not rebuild the table the way Room's own migrations do: a rebuild drops `encounters`, and wherever
+foreign keys are on that `DROP TABLE` first deletes every cat and the cascade takes every photo just
+copied. Room runs migrations before it turns foreign keys on, so that never fires today, and
+`PhotosMigrationTest` runs the migration with them on to keep it so
+(*theMigrationKeepsEveryPhotoOnAConnectionWithForeignKeysOn*). The same class migrates a version 3 database
+holding every kind of photo a cat could have — a camera original, a picked item, no thumbnail, a deleted
+cat, another install's cat — and opens the result with the app's own builder, and brings a photographed
+cat from versions 1 and 2 through every migration in between.
+
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Encounter.kt`, `EncounterPhoto.kt`,
   `PlaceCell.kt`, `LocationStamp.kt`, `CatCoat.kt`
-- `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterEntity.kt`, `PlaceCellEntity.kt`,
+- `data/src/commonMain/kotlin/dev/catsradar/data/db/EncounterEntity.kt`, `EncounterPhotoEntity.kt`,
+  `Migrations.kt`, `PlaceCellEntity.kt`,
   `EnumConverters.kt`, `InstantConverters.kt`, `CatsDatabase.kt`
 - `data/src/commonMain/kotlin/dev/catsradar/data/repository/EncounterMapper.kt`, `CarriedPhoto.kt`,
   `PlaceCellMapper.kt`, `EncounterRepositoryImpl.kt`, `PlaceCellRepositoryImpl.kt`
@@ -132,7 +151,8 @@ is idle**, and removes rows whose `deletedAt` is older than `Tuning.PURGE_AFTER`
 photo files.
 
 The files go **before** the rows: a row deleted first would leave photos nothing points at, and
-nothing would ever look for them again.
+nothing would ever look for them again. The photo rows go with their cats, by the foreign key's cascade
+(`EncounterDaoPhotosTest`, *aPurgeTakesEveryPhotoRowOfItsCatsWithThem*).
 
 This needed its own query. `observeAll()` filters soft-deleted rows out — correctly, for every other
 caller — so the purge cannot find its own targets through it. `loadDeletedBefore` selects them
