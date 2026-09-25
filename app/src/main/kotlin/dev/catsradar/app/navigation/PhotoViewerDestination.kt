@@ -30,7 +30,7 @@ internal fun handlePhotoViewerEffect(
 
 @Composable
 internal fun PhotoViewerDestination(key: PhotoViewer, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    val store = koinViewModel<PhotoViewerStore> { parametersOf(key.encounterId) }
+    val store = koinViewModel<PhotoViewerStore> { parametersOf(key.encounterId, key.photoId) }
     val state by store.state.collectAsStateWithLifecycle()
     val close by rememberUpdatedState(onClose)
     val galleryOpener = rememberGalleryOpener()
@@ -51,6 +51,6 @@ internal fun PhotoViewerDestination(key: PhotoViewer, onClose: () -> Unit, modif
         state = state,
         modifier = modifier,
         onBackClick = { store.dispatch(PhotoViewerIntent.BackClicked) },
-        onOpenInGalleryClick = { store.dispatch(PhotoViewerIntent.OpenInGalleryClicked) },
+        onOpenInGalleryClick = { photoId -> store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId)) },
     )
 }

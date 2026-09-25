@@ -16,8 +16,8 @@
 | M2 | Backup merges photos by their own id | An imported cat's photos are added only where absent, independently of its row, and `update` never touches photos. | safe | ~300 | M1 | merged |
 | M3 | Photos move to their own table | Database v4: `encounter_photos`, a hand-written migration moving every photo, and the repository reading and writing the table. | safe | ~650 | M2 | merged |
 | M4 | Backup format 4 carries every photo | `encounter_photos.json` in the archive; older formats read by the migration's rule. | safe | ~450 | M3 | merged |
-| M5 | Attaching a photo to a cat that has one | `AttachPhoto` adds to any live cat, skips a photo already on it, keeps links on every cat. | safe | ~350 | M3 | in-review |
-| M6 | The viewer pages through a cat's photos | `PhotoViewer(encounterId, photoId)` with a pager and a per-photo gallery link. | safe | ~550 | M3 | planned |
+| M5 | Attaching a photo to a cat that has one | `AttachPhoto` adds to any live cat, skips a photo already on it, keeps links on every cat. | safe | ~350 | M3 | merged |
+| M6 | The viewer pages through a cat's photos | `PhotoViewer(encounterId, photoId)` with a pager and a per-photo gallery link. | safe | ~550 | M3 | in-review |
 | M7 | Adding photos from the detail screen | A pager of the cat's photos and an always-on *Add photo* with a multi-select gallery pick. | safe | ~650 | M4, M5, M6 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -92,6 +92,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-25: **M5 merged** as #161. A cat given a photo some other way while an attempt runs now keeps both;
+  the detail screen shows only the cover until M7.
 
 - 2026-09-25: **M4 merged** as #159. A photo whose cat the archive does not carry is left out; its file is still
   unpacked, as any file an archive carries without a row.
