@@ -8,11 +8,18 @@ import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -59,7 +66,7 @@ class BottomSheetNavigationTest {
                 entryProvider = entryProvider {
                     entry<Counter>(metadata = tabRootMetadata()) { Screen(COUNTER) }
                     entry<CatsMap>(metadata = tabRootMetadata()) { Screen(MAP) }
-                    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { Text(SHEET) }
+                    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { TallSheet(SHEET) }
                     entry<EncounterDetail> { Screen(CAT) }
                 },
             )
@@ -73,6 +80,15 @@ class BottomSheetNavigationTest {
 
         assertTrue(isShown(SHEET), "the sheet is shown")
         assertTrue(isShown(MAP), "the map is shown under it")
+    }
+
+    @Test
+    fun `a sheet taller than half the screen opens at its full height`() {
+        settle { backStack.push(SPOT) }
+
+        val sheetTop = compose.onNodeWithTag(SHEET).getUnclippedBoundsInRoot().top
+        val screenHeight = compose.onNodeWithTag(MAP).getUnclippedBoundsInRoot().height
+        assertTrue(sheetTop < screenHeight / 2, "the sheet's content starts at $sheetTop on a $screenHeight screen")
     }
 
     @Test
@@ -143,5 +159,10 @@ class BottomSheetNavigationTest {
 
 @Composable
 private fun Screen(label: String) {
-    Box(Modifier.fillMaxSize()) { Text(label) }
+    Box(Modifier.fillMaxSize().testTag(label)) { Text(label) }
+}
+
+@Composable
+private fun TallSheet(label: String) {
+    Box(Modifier.fillMaxWidth().height(2000.dp).testTag(label)) { Text(label) }
 }
