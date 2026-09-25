@@ -52,8 +52,7 @@ rhythm of the list, detail and statistics is to come, but 23d shipped it. The ro
 - The map's overlay controls are Material filter chips on the theme's containers.
 - Turning `MapCoatSheet` into a Navigation 3 destination is behaviour, not look. It stays a
   follow-up on its own.
-- A top bar with a back arrow on Places, like #146's, waits until #146's `CenterAppBar` is on
-  `main`.
+- A top bar with a back arrow on Places, like #146's. #146 landed during review, so it is slice D4.
 
 ## 1. Places
 
@@ -129,6 +128,10 @@ shape), the same surface Statistics and Settings rows sit on.
 
 What the lines say, and when each appears, stays as it is; only the layout changes.
 
+The location-permission hint shares that slot above the count. It takes the same card (the location
+pin, its line, Grant and Dismiss), so the notices there read as one family. Each card's words are
+one TalkBack item.
+
 ## 3. The coat sheets
 
 Both sheets share one layout: a header, the coat grid, an action row.
@@ -147,6 +150,10 @@ Both sheets share one layout: a header, the coat grid, an action row.
   today.
 
 Which coat a tap notes or toggles does not change.
+
+The map's spot list, the app's third sheet, opens on the same header without a supporting line,
+since its title ("3 cats seen here") says what it is. The header and the action row are shared
+components (`SheetHeader`, `SheetActions`), and `app-shell.md` states the rule.
 
 ## Testing
 
