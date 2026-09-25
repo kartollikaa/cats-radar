@@ -12,8 +12,8 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| M1 | A cat's photos become a list | `Encounter` carries `photos: List<EncounterPhoto>` instead of five columns' worth of fields, still stored in those columns; nothing changes on screen or on disk. | safe | ~700 | — | planned |
-| M2 | Backup merges photos by their own id | An imported cat's photos are added only where absent, independently of its row, and `update` never touches photos. | safe | ~300 | M1 | planned |
+| M1 | A cat's photos become a list | `Encounter` carries `photos: List<EncounterPhoto>` instead of five columns' worth of fields, still stored in those columns; nothing changes on screen or on disk. | safe | ~700 | — | merged |
+| M2 | Backup merges photos by their own id | An imported cat's photos are added only where absent, independently of its row, and `update` never touches photos. | safe | ~300 | M1 | in-review |
 | M3 | Photos move to their own table | Database v4: `encounter_photos`, a hand-written migration moving every photo, and the repository reading and writing the table. | safe | ~650 | M2 | planned |
 | M4 | Backup format 4 carries every photo | `encounter_photos.json` in the archive; older formats read by the migration's rule. | safe | ~450 | M3 | planned |
 | M5 | Attaching a photo to a cat that has one | `AttachPhoto` adds to any live cat, skips a photo already on it, keeps links on every cat. | safe | ~350 | M3 | planned |
@@ -92,6 +92,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-25: **M1 merged** as #151 (~910 reviewable lines, fixture churn). A row with a thumbnail but no
+  copy now reads as a cat without a photo, and the import's digest lookup skips it too; no writer makes
+  such a row. The gate's round 2 caught that its criteria contradicted each other on that shape.
 
 - 2026-09-25: owner asked for many photos per cat, added from the detail screen, and chose **every
   photo in one table** over keeping the first on the cat's row. The migration moves data only phones
