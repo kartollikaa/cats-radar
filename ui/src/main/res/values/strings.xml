@@ -129,9 +129,9 @@
         <item quantity="one">%1$d cat in %2$s</item>
         <item quantity="other">%1$d cats in %2$s</item>
     </plurals>
-    <plurals name="counter_outing_now">
-        <item quantity="one">%1$d cat · %2$s</item>
-        <item quantity="other">%1$d cats · %2$s</item>
+    <plurals name="counter_outing_cats">
+        <item quantity="one">%1$d cat</item>
+        <item quantity="other">%1$d cats</item>
     </plurals>
     <plurals name="counter_milestone">
         <item quantity="one">%1$d cat!</item>
@@ -160,6 +160,7 @@
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_attaching">Attaching the photo</string>
     <string name="detail_open_photo">Open full screen</string>
+    <string name="detail_back">Back</string>
     <string name="detail_show_on_map">Show on the map</string>
     <string name="viewer_back">Back</string>
     <string name="viewer_open_in_gallery">Open in gallery</string>

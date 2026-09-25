@@ -1,5 +1,7 @@
 package dev.catsradar.presentation
 
+import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.time.localDate
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
 import kotlin.time.Duration
@@ -16,3 +18,11 @@ interface DateTimeFormatter {
     /** [duration] as a short span; the hour part is left out below one hour. */
     fun duration(duration: Duration): String
 }
+
+/** The wall-clock time [encounter] was logged at, where it was logged. */
+fun DateTimeFormatter.time(encounter: Encounter): String =
+    time(encounter.occurredAt, UtcOffset(minutes = encounter.tzOffsetMinutes))
+
+/** The day [encounter] was logged on where it was logged, named relative to [today]. */
+fun DateTimeFormatter.dayHeader(encounter: Encounter, today: LocalDate): String =
+    dayHeader(encounter.localDate(), today)

@@ -83,8 +83,13 @@ coat of the newest cat still in it (`coat.md`). The cases below that concern und
 
 ## The outing in progress
 
-While an outing is open the counter shows how many cats it holds and how long it has been running,
-with its rate once there is enough to measure one. It is derived, not tracked: see
+While an outing is open, the line above the walk button shows how many cats it holds, how long it
+has been running and, once there is enough to measure one, its rate — in that order, each part
+parted from the next by the same small dot, with the count in the primary colour. Without a rate the
+count and the time sit centred on their own, with no dot trailing after them. TalkBack reads the line
+as one item. It stays one line: short of room — a large font on a small phone — the count gives way
+to an ellipsis first, then the time, and the rate stays whole (`CurrentOutingLineTest`). It is
+derived, not tracked: see
 [statistics.md](./statistics.md). The numbers advance on a ticker as well as on each cat, so the
 elapsed time moves while nothing is being logged.
 
@@ -152,7 +157,7 @@ the window closed does not reopen it*).
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
   press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
   block's floor and the scroll past it), `WalkRow.kt` (the walk button and Undo's place beside it),
-  `UndoChip.kt`
+  `CurrentOutingLine.kt` (the outing in progress), `UndoChip.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`
 

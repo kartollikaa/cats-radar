@@ -37,7 +37,7 @@ class EncounterDaoSetCoatTest {
         val written = dao.setCoat("live", CatCoat.BLACK, UPDATED)
 
         assertEquals(1, written)
-        assertEquals(entity.copy(coat = CatCoat.BLACK, updatedAt = UPDATED), dao.observeById("live").first())
+        assertEquals(entity.copy(coat = CatCoat.BLACK, updatedAt = UPDATED), dao.observeById("live").first()?.encounter)
     }
 
     @Test
@@ -48,7 +48,7 @@ class EncounterDaoSetCoatTest {
         val written = dao.setCoat("live", null, UPDATED)
 
         assertEquals(1, written)
-        assertEquals(entity.copy(coat = null, updatedAt = UPDATED), dao.observeById("live").first())
+        assertEquals(entity.copy(coat = null, updatedAt = UPDATED), dao.observeById("live").first()?.encounter)
     }
 
     @Test
@@ -57,7 +57,7 @@ class EncounterDaoSetCoatTest {
         dao.insert(entity)
 
         assertEquals(0, dao.setCoat("deleted", CatCoat.BLACK, UPDATED))
-        assertEquals(listOf(entity), dao.loadEvery())
+        assertEquals(listOf(entity), dao.loadEvery().map { it.encounter })
     }
 
     private companion object {

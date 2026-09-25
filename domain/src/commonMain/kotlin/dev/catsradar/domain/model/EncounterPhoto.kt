@@ -19,3 +19,7 @@ data class EncounterPhoto(
     val deviceId: String,
     val addedAt: Instant,
 )
+
+/** The order [Encounter.photos] keeps: by [EncounterPhoto.addedAt], then [EncounterPhoto.id]. */
+fun Iterable<EncounterPhoto>.oldestFirst(): List<EncounterPhoto> =
+    sortedWith(compareBy<EncounterPhoto>({ it.addedAt }, { it.id }))
