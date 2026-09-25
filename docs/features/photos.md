@@ -49,12 +49,18 @@ has both.
 
 ## Giving a cat a photo later
 
-A tally — logged with no photo, from any origin — can be given one afterwards from its detail screen
-(see [encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the
-gallery. `AttachPhoto` stores the app's copy and thumbnail the same way `LogPhoto` does, but under a
-name fresh to this attempt rather than the encounter's id, so an attempt that finds the cat already
-photographed removes only its own files, never the ones the cat now points at (`AttachPhotoTest`,
-*the files are named afresh for the attempt, never after the cat*).
+A cat can be given a photo afterwards — a tally with none from its detail screen (see
+[encounter-detail.md](./encounter-detail.md)): the camera, or a single image picked from the gallery.
+`AttachPhoto` adds a photo to any live cat, one that already has photos included: the new one goes after
+the others (`AttachPhotoTest`, *a cat that has a photo gets another after it and keeps the first*). It
+stores the app's copy and thumbnail the same way `LogPhoto` does, under the new photo's own id rather
+than the cat's, so an attempt that fails removes only its own files (*the files are named afresh for the
+attempt, never after the cat*).
+
+**The same photo twice on one cat is not added.** The photo's digest is taken before any copy is
+written; if one of this cat's photos already carries it, the attempt stops there, with no copy and
+nothing sent to the gallery (*a photo this cat already has is not added again and costs no disk*). A
+photo whose digest cannot be read is never taken for a duplicate.
 
 From the camera the original goes to the gallery under the same setting as a photo taken from the
 counter (see *The gallery setting* below); from the gallery it is never copied back in
@@ -62,10 +68,10 @@ counter (see *The gallery setting* below); from the gallery it is never copied b
 gallery keeps the item it was picked as instead, by the same rule as an import (see
 [import.md](./import.md#the-gallery-item-it-came-from); `AttachPhotoTest`, *a photo chosen from the
 gallery remembers the item it came from*); a camera photo never does (*a photo from the camera is never
-linked to a picked item*). A cat another install logged keeps neither link — its camera original still
-goes to the gallery, the cat just does not point at it — because gallery ids are only this phone's (see
-[photo-viewer.md](./photo-viewer.md#open-in-gallery); `AttachPhotoTest`, *a cat another install logged
-keeps no link to the original, which still goes to the gallery*).
+linked to a picked item*). Both links are kept on every cat, one another install logged included: the
+photo names this install, so its links open here and never on the phone that logged the cat (see
+[photo-viewer.md](./photo-viewer.md#open-in-gallery); *a photo given to a cat another install logged
+opens its original here and not on that install*).
 
 The write adds the photo's row and stamps the cat's `updatedAt`, nothing else. The cat
 keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
@@ -84,11 +90,12 @@ photo later is skipped while either cat is live (see `import.md`).
   photo leaves the cat as it was and nothing in the gallery*; *a write that fails removes the files
   it had written*; `EncounterDetailStoreTest`, *an unreadable photo says so and the offer comes
   back*; *a failed write says the photo was not attached*).
-- **The cat is deleted, or already given a photo some other way, while the attempt is running** — it
-  is left exactly as it was and the attempt's own copies are removed (`AttachPhotoTest`, *a cat
-  deleted while its photo was being copied keeps no files from the attempt*;
-  `EncounterDaoAttachPhotoTest`, *attachPhotoNeverReplacesAPhotoTheRowAlreadyHas*). A camera
-  original already handed to the gallery stays there: it is the user's photo either way.
+- **The cat is deleted while the attempt is running** — it is left exactly as it was and the
+  attempt's own copies are removed (`AttachPhotoTest`, *a cat deleted while its photo was being copied
+  keeps no files from the attempt*; `EncounterDaoAttachPhotoTest`,
+  *attachPhotoOnASoftDeletedRowNeitherResurrectsItNorGivesItAPhoto*). A camera original already handed to
+  the gallery stays there: it is the user's photo either way. A cat given another photo in the meantime
+  simply has one more (*attachPhotoAddsAnotherPhotoBesideTheOneTheRowHas*).
 - **Leaving mid-attempt** — once the attempt's copies are written, a cancellation before the write
   lands removes them. Once the write has landed, the files are the cat's and stay
   (`AttachPhotoTest`, *a cancellation while the original goes to the gallery removes the copies*;

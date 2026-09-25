@@ -460,6 +460,24 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `a picked photo the cat already has is not added again and nothing is said`() = runTest(mainDispatcher) {
+        val photographed = encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg")
+            .let { cat -> cat.copy(photos = cat.photos.map { it.copy(sourceDigest = "digest") }) }
+        repository.insert(photographed)
+        val store = newStore()
+        runCurrent()
+        val before = store.state.value
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            runCurrent()
+            expectNoEvents()
+        }
+        assertEquals(before, store.state.value)
+        assertEquals(listOf(photographed), repository.encounters())
+    }
+
+    @Test
     fun `a failed write says the photo was not attached`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         repository.addPhotoShouldThrow = IllegalStateException("disk full")
