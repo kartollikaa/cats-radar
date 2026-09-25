@@ -12,7 +12,6 @@ import dev.catsradar.domain.usecase.PhotoSource
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.Store
-import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
@@ -41,6 +40,7 @@ class EncounterDetailStore(
     private var undoTimeoutJob: Job? = null
     private var attachingPhoto = false
     private var awaitingPhoto = false
+    private var leaving = false
 
     init {
         observeEncounter(encounterId)
@@ -60,9 +60,11 @@ class EncounterDetailStore(
 
     override suspend fun handle(intent: EncounterDetailIntent) {
         when (intent) {
+            EncounterDetailIntent.BackClicked -> navigateBack()
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
-            is EncounterDetailIntent.CoatPicked -> onCoatPicked(intent.coat)
+            // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
+            is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(encounterId, intent.coat?.toCatCoat()) }
             EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
             EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
             EncounterDetailIntent.PhotoClicked ->
@@ -123,8 +125,14 @@ class EncounterDetailStore(
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
             setState { EncounterDetailState.Deleted(undoVisible = false) }
-            emit(EncounterDetailEffect.NavigateBack)
+            navigateBack()
         }
+    }
+
+    private suspend fun navigateBack() {
+        if (leaving) return
+        leaving = true
+        emit(EncounterDetailEffect.NavigateBack)
     }
 
     private suspend fun onUndoClicked() {
@@ -135,11 +143,6 @@ class EncounterDetailStore(
             undoDelete(encounterId)
             deletedHere = false
         }
-    }
-
-    private suspend fun onCoatPicked(coat: CoatOption?) {
-        // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
-        runStorageWrite { setCoat(encounterId, coat?.toCatCoat()) }
     }
 
     private fun restoreAfterFailedDelete() {

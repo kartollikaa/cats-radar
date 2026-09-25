@@ -2,13 +2,13 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
-import dev.catsradar.domain.time.localDate
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.encounters.toLocationLabel
 import dev.catsradar.presentation.map.isOnTheMap
+import dev.catsradar.presentation.time
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.UtcOffset
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -23,8 +23,8 @@ class EncounterDetailStateMapper(
         val lat = encounter.lat
         val lon = encounter.lon
         return EncounterDetailState.Loaded(
-            dayLabel = dateTimeFormatter.dayHeader(encounter.localDate(), today),
-            timeLabel = dateTimeFormatter.time(encounter.occurredAt, UtcOffset(minutes = encounter.tzOffsetMinutes)),
+            dayLabel = dateTimeFormatter.dayHeader(encounter, today),
+            timeLabel = dateTimeFormatter.time(encounter),
             location = encounter.locationSource.toLocationLabel(),
             coordinatesLabel = if (lat != null && lon != null) {
                 "${formatCoordinate(lat)}, ${formatCoordinate(lon)}"

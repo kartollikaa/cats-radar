@@ -60,6 +60,8 @@ val presentationModule = module {
             observeEncounter = get(),
             resolveGalleryLink = get(),
             stateMapper = get(),
+            clock = get(),
+            timeZone = get(),
         )
     }
     viewModel { (encounterId: String) ->
