@@ -22,8 +22,14 @@ class DownloadUpdateWorkerTest {
     private val apk = ReleasePackage("https://x/cats-radar-1.5.0-beta.apk", sizeBytes = 1_000, sha256 = null)
     private val reporter = RecordingNonFatalReporter()
 
+    private val progress = mutableListOf<Long>()
+
     private fun worker(downloader: PackageDownloader) = TestListenableWorkerBuilder<DownloadUpdateWorker>(context)
         .setInputData(UpdateWork.input("1.5.0-beta", apk))
+        .setProgressUpdater { _, _, data ->
+            progress += data.getLong(UpdateWork.KEY_RECEIVED, -1)
+            androidx.concurrent.futures.ResolvableFuture.create<Void>().apply { set(null) }
+        }
         .setWorkerFactory(
             object : androidx.work.WorkerFactory() {
                 override fun createWorker(
@@ -51,6 +57,22 @@ class DownloadUpdateWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(UpdateWork.output("/cache/updates/1.5.0-beta.apk")), result)
         assertEquals(apk.url to "1.5.0-beta.apk", downloader.asked)
+    }
+
+    @Test
+    fun progressIsWrittenOncePerWholePercent() = runTest {
+        val stepping = object : PackageDownloader {
+            override suspend fun download(url: String, fileName: String, onProgress: suspend (Long) -> Unit) =
+                DownloadedPackage("/cache/updates/1.5.0-beta.apk", 1_000, "ab").also {
+                    listOf(500L, 505L, 1_000L).forEach { onProgress(it) }
+                }
+
+            override suspend fun discard(path: String) = Unit
+        }
+
+        worker(stepping).doWork()
+
+        assertEquals(listOf(500L, 1_000L), progress)
     }
 
     @Test

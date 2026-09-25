@@ -71,6 +71,16 @@ class DownloadUpdateTest {
     }
 
     @Test
+    fun `an asset published without a digest is still thrown away when its size differs`() = runTest {
+        val downloader = FakeDownloader(DownloadedPackage("/cache/updates/1.5.0-beta.apk", 999, "ab".repeat(32)))
+
+        val result = DownloadUpdate(downloader)("1.5.0-beta", apk.copy(sha256 = null)) {}
+
+        assertEquals(DownloadResult.Failed(DownloadFailure.DAMAGED), result)
+        assertEquals(listOf("/cache/updates/1.5.0-beta.apk"), downloader.discarded)
+    }
+
+    @Test
     fun `a download that broke off is a network failure`() = runTest {
         assertEquals(
             DownloadResult.Failed(DownloadFailure.NETWORK),

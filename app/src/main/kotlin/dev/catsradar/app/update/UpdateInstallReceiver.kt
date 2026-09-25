@@ -15,6 +15,7 @@ class UpdateInstallReceiver : BroadcastReceiver(), KoinComponent {
     private val results: InstallResults by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (!intent.hasExtra(PackageInstaller.EXTRA_STATUS)) return
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             // The system's own confirmation screen; the session waits until the user answers there.
             PackageInstaller.STATUS_PENDING_USER_ACTION ->

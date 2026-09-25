@@ -21,16 +21,14 @@ class PackageInstallerUpdater(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : UpdateInstaller {
 
+    // Android's installer throws both when it cannot take a session: no room, or no installer service.
     @Suppress("SwallowedException") // a package Android was never given is reported as not installed
     override suspend fun install(path: String): Boolean = withContext(ioDispatcher) {
         val apk = File(path)
         if (!apk.isFile) return@withContext false
-        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
-            setAppPackageName(context.packageName)
-            setSize(apk.length())
-        }
-        val sessionId = packageInstaller.createSession(params)
+        var sessionId: Int? = null
         try {
+            sessionId = packageInstaller.createSession(sessionParams(apk.length()))
             packageInstaller.openSession(sessionId).use { session ->
                 apk.inputStream().use { input ->
                     session.openWrite("base.apk", 0, apk.length()).use { output ->
@@ -42,10 +40,19 @@ class PackageInstallerUpdater(
             }
             true
         } catch (e: IOException) {
-            packageInstaller.abandonSession(sessionId)
+            sessionId?.let(packageInstaller::abandonSession)
+            false
+        } catch (e: SecurityException) {
+            sessionId?.let(packageInstaller::abandonSession)
             false
         }
     }
+
+    private fun sessionParams(size: Long) =
+        PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+            setAppPackageName(context.packageName)
+            setSize(size)
+        }
 
     // Mutable, because the installer fills in the status; explicit, which Android requires of a mutable one.
     private fun statusReceiver(sessionId: Int): PendingIntent = PendingIntent.getBroadcast(

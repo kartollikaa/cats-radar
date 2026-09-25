@@ -82,6 +82,11 @@ class UpdateInstallReceiverTest {
     }
 
     @Test
+    fun aBroadcastThatCarriesNoStatusIsNotAnAnswer() {
+        assertEquals(emptyList(), outcomesOf(Intent(context, UpdateInstallReceiver::class.java)))
+    }
+
+    @Test
     fun successReportsNothing() {
         assertEquals(emptyList(), outcomesOf(status(PackageInstaller.STATUS_SUCCESS)))
         assertNull(shadowOf(context as Application).nextStartedActivity)

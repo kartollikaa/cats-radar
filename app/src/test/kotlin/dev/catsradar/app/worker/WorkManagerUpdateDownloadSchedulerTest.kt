@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.NetworkType
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.domain.update.ReleasePackage
@@ -46,8 +47,11 @@ class WorkManagerUpdateDownloadSchedulerTest {
         val scheduler = WorkManagerUpdateDownloadScheduler(workManager)
 
         scheduler.download("1.5.0-beta", apk)
+        val first = workManager.getWorkInfosForUniqueWork(UpdateWork.UNIQUE_NAME).get().single()
         scheduler.download("1.5.0-beta", apk)
 
-        assertEquals(1, workManager.getWorkInfosForUniqueWork(UpdateWork.UNIQUE_NAME).get().size)
+        val runs = workManager.getWorkInfosForUniqueWork(UpdateWork.UNIQUE_NAME).get()
+        assertEquals(listOf(first.id), runs.map { it.id })
+        assertEquals(WorkInfo.State.ENQUEUED, runs.single().state)
     }
 }
