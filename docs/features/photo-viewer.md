@@ -78,11 +78,11 @@ imported before the app kept the picked item offer nothing: the app has no link 
 (`PhotoViewerStateMapperTest`, *a photo with no original in the gallery offers nothing there*).
 
 **The install rule.** The button appears only on the installation that saved the original or made
-the pick (`GalleryLinkTest`, *an original recorded by another install is never a link here*; *a photo
-another install picked is never a link here*). A photo given on this phone to a cat another install
-logged — one a backup brought here — keeps no link at all, since back on that phone the row would pass
-the rule and open a different picture (`AttachPhotoTest`, *a cat another install logged keeps no link to
-a gallery item on this phone*). A gallery item
+the pick: each photo names the install that recorded its links (`GalleryLinkTest`, *an original recorded
+by another install is never a link here*; *a photo another install picked is never a link here*). A photo
+given on this phone to a cat another install logged — one a backup brought here — names this phone, so
+it opens here and not back on the phone that logged the cat (`AttachPhotoTest`, *a photo given to a cat
+another install logged opens its original here and not on that install*). A gallery item
 is known by an id that is only meaningful on the phone that made it, so on another phone — after a
 backup was restored there — the same id may be a different picture, possibly another cat the app saved
 there. A reinstall is another installation too, and Android takes away an uninstalled app's hold on
