@@ -5,6 +5,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -66,7 +67,7 @@ class EncounterDetailStateMapperTest {
 
     @Test
     fun `a photo encounter carries the app's own copy, resolved to a full path`() {
-        val encounter = encounterFixture("e1", OCCURRED).copy(photoPath = "e1.jpg", thumbPath = "e1_thumb.jpg")
+        val encounter = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg", thumbPath = "e1_thumb.jpg")
 
         val state = mapper.map(encounter, today)
 
@@ -102,7 +103,7 @@ class EncounterDetailStateMapperTest {
 
     @Test
     fun `a cat with a photo is never offered another, even while one is being attached`() {
-        val photo = encounterFixture("e1", OCCURRED).copy(photoPath = "e1.jpg")
+        val photo = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
 
         assertEquals(null, mapper.map(photo, today).addPhoto)
         assertEquals(null, mapper.map(photo, today, attachingPhoto = true).addPhoto)

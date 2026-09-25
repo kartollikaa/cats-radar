@@ -11,6 +11,7 @@ import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
+import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.CatCoat
@@ -118,6 +119,7 @@ class BackupRestoreTest {
                 kind = EncounterKind.PHOTO,
                 origin = EncounterOrigin.GALLERY,
                 coat = CatCoat.GINGER_WHITE,
+            ).withPhoto(
                 photoPath = "photo.jpg",
                 thumbPath = "photo_thumb.jpg",
                 galleryUri = "content://media/external/images/media/42",
@@ -210,10 +212,6 @@ private fun tally(id: String, at: Instant) = Encounter(
     kind = EncounterKind.TALLY,
     origin = EncounterOrigin.APP,
     coat = null,
-    photoPath = null,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
     lat = null,
     lon = null,
     accuracyMeters = null,

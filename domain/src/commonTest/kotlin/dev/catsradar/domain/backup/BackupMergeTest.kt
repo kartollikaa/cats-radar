@@ -1,8 +1,10 @@
 package dev.catsradar.domain.backup
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.testing.encounterAt
+import dev.catsradar.domain.testing.withPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -16,13 +18,10 @@ private fun encounter(
     id: String,
     updatedAt: Instant,
     deletedAt: Instant? = null,
-    coatless: Boolean = true,
-) = encounterAt(EARLY).copy(
-    id = id,
-    updatedAt = updatedAt,
-    deletedAt = deletedAt,
-    photoPath = if (coatless) null else "$id.jpg",
-)
+    photographed: Boolean = false,
+) = encounterAt(EARLY).copy(id = id, updatedAt = updatedAt, deletedAt = deletedAt).let {
+    if (photographed) it.withPhoto() else it
+}
 
 private fun cell(
     id: String = "ucfv0h",
@@ -85,12 +84,87 @@ class BackupMergeTest {
     @Test
     fun `two rows edited at the same moment keep what is already here`() {
         val merged = BackupMerge.merge(
-            local = BackupContents(encounters = listOf(encounter("cat", MIDDLE))),
-            imported = BackupContents(encounters = listOf(encounter("cat", MIDDLE, coatless = false))),
+            local = BackupContents(encounters = listOf(encounter("cat", MIDDLE).copy(coat = CatCoat.BLACK))),
+            imported = BackupContents(encounters = listOf(encounter("cat", MIDDLE).copy(coat = CatCoat.WHITE))),
         )
 
         assertEquals(emptyList(), merged.encounters)
         assertEquals(1, merged.unchanged)
+    }
+
+    @Test
+    fun `a new cat's photos arrive beside it, and its row carries none`() {
+        val cat = encounter("new", MIDDLE, photographed = true)
+
+        val merged = BackupMerge.merge(local = BackupContents(), imported = BackupContents(encounters = listOf(cat)))
+
+        assertEquals(
+            MergeResult(encounters = listOf(cat.copy(photos = emptyList())), photos = cat.photos, added = 1),
+            merged,
+        )
+    }
+
+    @Test
+    fun `a cat here without a photo gains the archive's even when its own row is kept`() {
+        val offered = encounter("cat", EARLY, photographed = true)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", LATE))),
+            imported = BackupContents(encounters = listOf(offered)),
+        )
+
+        assertEquals(MergeResult(photos = offered.photos, updated = 1), merged)
+    }
+
+    @Test
+    fun `a photo already here is never replaced, even by a later copy of its cat`() {
+        val here = encounter("cat", EARLY).withPhoto(photoPath = "here.jpg")
+        val later = encounter("cat", LATE).withPhoto(photoPath = "archive.jpg")
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(here)),
+            imported = BackupContents(encounters = listOf(later)),
+        )
+
+        assertEquals(MergeResult(encounters = listOf(later.copy(photos = emptyList())), updated = 1), merged)
+    }
+
+    @Test
+    fun `a cat that stays deleted here gains no photo`() {
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", EARLY, deletedAt = LATE))),
+            imported = BackupContents(encounters = listOf(encounter("cat", MIDDLE, photographed = true))),
+        )
+
+        assertEquals(MergeResult(unchanged = 1), merged)
+    }
+
+    @Test
+    fun `a cat the archive brings back gains its photos`() {
+        val offered = encounter("cat", LATE, photographed = true)
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(encounters = listOf(encounter("cat", EARLY, deletedAt = MIDDLE))),
+            imported = BackupContents(encounters = listOf(offered)),
+        )
+
+        assertEquals(
+            MergeResult(encounters = listOf(offered.copy(photos = emptyList())), photos = offered.photos, updated = 1),
+            merged,
+        )
+    }
+
+    @Test
+    fun `one photo the archive lists on two cats arrives once`() {
+        val first = encounter("first", MIDDLE, photographed = true)
+        val second = encounter("second", MIDDLE).copy(photos = first.photos.map { it.copy(encounterId = "second") })
+
+        val merged = BackupMerge.merge(
+            local = BackupContents(),
+            imported = BackupContents(encounters = listOf(first, second)),
+        )
+
+        assertEquals(first.photos, merged.photos)
     }
 
     @Test
@@ -207,7 +281,7 @@ class BackupMergeTest {
 
         val merged = BackupMerge.merge(
             local = BackupContents(),
-            imported = BackupContents(encounters = listOf(first, encounter("cat", MIDDLE, coatless = false))),
+            imported = BackupContents(encounters = listOf(first, encounter("cat", MIDDLE, photographed = true))),
         )
 
         assertEquals(MergeResult(encounters = listOf(first), added = 1), merged)

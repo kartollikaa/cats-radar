@@ -4,9 +4,9 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.PlaceStatus
@@ -51,7 +51,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     var softDeleteAllGate: CompletableDeferred<Unit>? = null
     var undoDeleteAllShouldThrow: Throwable? = null
     var undoDeleteAllGate: CompletableDeferred<Unit>? = null
-    var attachPhotoShouldThrow: Throwable? = null
+    var addPhotoShouldThrow: Throwable? = null
     var setCoatShouldThrow: Throwable? = null
     var setCoatGate: CompletableDeferred<Unit>? = null
 
@@ -105,29 +105,26 @@ internal class FakeEncounterRepository : EncounterRepository {
     }
 
     // Mirrors the DAO's WHERE deletedAt IS NULL AND photoPath IS NULL guard, checked at write time.
-    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean {
-        attachPhotoShouldThrow?.let { throw it }
-        var attached = false
+    override suspend fun addPhoto(photo: EncounterPhoto): Boolean {
+        addPhotoShouldThrow?.let { throw it }
+        var added = false
         encounters.update { list ->
-            attached = false
+            added = false
             list.map { encounter ->
-                if (encounter.id == id && encounter.deletedAt == null && encounter.photoPath == null) {
-                    attached = true
-                    encounter.copy(
-                        photoPath = stamp.photoPath,
-                        thumbPath = stamp.thumbPath,
-                        galleryUri = stamp.galleryUri,
-                        sourceMediaUri = stamp.sourceMediaUri,
-                        sourceDigest = stamp.sourceDigest,
-                        updatedAt = stamp.updatedAt,
-                    )
+                if (encounter.id == photo.encounterId && encounter.deletedAt == null && encounter.photos.isEmpty()) {
+                    added = true
+                    encounter.copy(photos = listOf(photo), updatedAt = photo.addedAt)
                 } else {
                     encounter
                 }
             }
         }
-        return attached
+        return added
     }
+
+    override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit = throw NotImplementedError(
+        "the Counter restores no backup"
+    )
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {
         setCoatGate?.await()
@@ -194,10 +191,6 @@ internal fun externalEncounter(id: String, occurredAt: Instant = Instant.parse("
         kind = EncounterKind.TALLY,
         origin = EncounterOrigin.WIDGET,
         coat = null,
-        photoPath = null,
-        thumbPath = null,
-        galleryUri = null,
-        sourceDigest = null,
         lat = null,
         lon = null,
         accuracyMeters = null,

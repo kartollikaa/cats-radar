@@ -11,10 +11,10 @@ class PhotoViewerStateMapper(
 ) {
 
     /** Null when the cat has no photo to show. */
-    fun map(encounter: Encounter): PhotoViewerState.Showing? = encounter.photoPath?.let {
+    fun map(encounter: Encounter): PhotoViewerState.Showing? = encounter.cover?.let { cover ->
         PhotoViewerState.Showing(
-            photoPath = photoStorage.resolve(it),
-            opensInGallery = encounter.galleryLink(deviceIdProvider.deviceId) != null,
+            photoPath = photoStorage.resolve(cover.photoPath),
+            opensInGallery = cover.galleryLink(deviceIdProvider.deviceId) != null,
         )
     }
 }

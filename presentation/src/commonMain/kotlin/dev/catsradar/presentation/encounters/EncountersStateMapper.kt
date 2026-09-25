@@ -79,12 +79,12 @@ class EncountersStateMapper(
             id = id,
             timeLabel = timeLabel(),
             location = locationSource.toLocationLabel(),
-            photoPath = photoPath?.let(photoStorage::resolve) ?: thumbnail,
+            photoPath = photoStorage.resolve(photos.first().photoPath),
             thumbnailPath = thumbnail,
         )
     }
 
-    private fun Encounter.thumbnail(): String? = thumbPath?.let(photoStorage::resolve)
+    private fun Encounter.thumbnail(): String? = cover?.thumbPath?.let(photoStorage::resolve)
 
     private fun Encounter.lead(): CellLead {
         val thumbnail = thumbnail()

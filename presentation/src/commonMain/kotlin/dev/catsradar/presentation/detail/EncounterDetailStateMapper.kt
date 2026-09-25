@@ -32,10 +32,10 @@ class EncounterDetailStateMapper(
                 null
             },
             accuracyMeters = encounter.accuracyMeters?.takeIf { lat != null && lon != null }?.roundToInt(),
-            photoPath = encounter.photoPath?.let(photoStorage::resolve),
+            photoPath = encounter.cover?.photoPath?.let(photoStorage::resolve),
             coat = encounter.coat?.toOption(),
             addPhoto = when {
-                encounter.photoPath != null -> null
+                encounter.photos.isNotEmpty() -> null
                 attachingPhoto -> AddPhoto.ATTACHING
                 else -> AddPhoto.READY
             },

@@ -1,7 +1,7 @@
 package dev.catsradar.data.repository
 
 import dev.catsradar.domain.model.CatCoat
-import dev.catsradar.domain.model.PhotoStamp
+import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.PlaceCellAssignment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -37,9 +37,70 @@ class EncounterRepositoryImplTest {
 
     @Test
     fun updateMapsDomainToEntity() = runTest {
+        dao.loadByIdResult = distinctEncounter().toEntity()
+
         repository.update(distinctEncounter())
 
         assertEquals(listOf(distinctEncounter().toEntity()), dao.updated)
+    }
+
+    @Test
+    fun updateKeepsThePhotoTheRowHasWhateverTheCatCarries() = runTest {
+        val here = distinctEncounter().toEntity()
+        dao.loadByIdResult = here
+        val offered = distinctEncounter().copy(photos = emptyList(), updatedAt = Instant.parse("2026-03-01T00:00:00Z"))
+
+        repository.update(offered)
+
+        assertEquals(
+            listOf(
+                offered.toEntity().copy(
+                    photoPath = here.photoPath,
+                    thumbPath = here.thumbPath,
+                    galleryUri = here.galleryUri,
+                    sourceMediaUri = here.sourceMediaUri,
+                    sourceDigest = here.sourceDigest,
+                )
+            ),
+            dao.updated,
+        )
+    }
+
+    @Test
+    fun updateOfARowThatIsGoneWritesNothing() = runTest {
+        repository.update(distinctEncounter())
+
+        assertEquals(emptyList(), dao.updated)
+    }
+
+    @Test
+    fun addPhotosRestoresEachPhotoOntoItsCatWithoutTouchingUpdatedAt() = runTest {
+        val first = distinctEncounter().cover!!
+        val second = first.copy(id = "encounter-id-2", encounterId = "encounter-id-2", photoPath = "photos/b.jpg")
+
+        repository.addPhotos(listOf(first, second))
+
+        assertEquals(
+            listOf(
+                RestorePhotoCall(
+                    "encounter-id-1",
+                    first.photoPath,
+                    first.thumbPath,
+                    first.galleryUri,
+                    first.sourceMediaUri,
+                    first.sourceDigest,
+                ),
+                RestorePhotoCall(
+                    "encounter-id-2",
+                    "photos/b.jpg",
+                    first.thumbPath,
+                    first.galleryUri,
+                    first.sourceMediaUri,
+                    first.sourceDigest,
+                ),
+            ),
+            dao.restorePhotoCalls,
+        )
     }
 
     @Test
@@ -65,17 +126,20 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
-    fun attachPhotoForwardsEveryStampFieldAndReportsWhetherARowWasWritten() = runTest {
-        val stamp = PhotoStamp(
+    fun addPhotoForwardsEveryPhotoFieldToItsCatAndReportsWhetherARowWasWritten() = runTest {
+        val photo = EncounterPhoto(
+            id = "id-1",
+            encounterId = "id-1",
             photoPath = "p.jpg",
             thumbPath = "p_thumb.jpg",
             galleryUri = "content://gallery/7",
             sourceMediaUri = "content://media/external/images/media/7",
             sourceDigest = "sha",
-            updatedAt = Instant.parse("2026-02-01T00:00:00Z"),
+            deviceId = "device-1",
+            addedAt = Instant.parse("2026-02-01T00:00:00Z"),
         )
 
-        assertEquals(true, repository.attachPhoto("id-1", stamp))
+        assertEquals(true, repository.addPhoto(photo))
         assertEquals(
             AttachPhotoCall(
                 "id-1",
@@ -84,13 +148,13 @@ class EncounterRepositoryImplTest {
                 "content://gallery/7",
                 "content://media/external/images/media/7",
                 "sha",
-                stamp.updatedAt,
+                photo.addedAt,
             ),
             dao.attachPhotoCall,
         )
 
         dao.attachPhotoResult = 0
-        assertEquals(false, repository.attachPhoto("id-1", stamp))
+        assertEquals(false, repository.addPhoto(photo))
     }
 
     @Test
