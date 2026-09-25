@@ -185,8 +185,8 @@ come back as separate cats, and every test that looks only at cats would stay gr
     group with every cat's coat and its own files. Imported again, it changes nothing.
 - **Older archives.** A format 4 archive, and a format 3 one through `carriedPhoto`, read with every
   photo starting its own shot and every other field unchanged (`ZipBackupReaderOlderFormatTest`). The
-  archive says format 5, so a format 4 reader refuses it (mirroring
-  *anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt*).
+  archive says format 5, so a format 4 reader refuses it
+  (`ZipBackupArchiveTest.anArchiveSaysItIsFormatFiveSoAnAppBeforeShotsRefusesIt`).
 - **Merging across phones.** Each of these is a `BackupMerge` test:
   - a phone holding the first two cats of a shot imports an archive with the third, and the third
     joins the shot;

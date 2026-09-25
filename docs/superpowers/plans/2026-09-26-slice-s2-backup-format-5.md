@@ -36,7 +36,7 @@
 
 ### Task 2: A shot across the merge and a real restore
 
-**Files:** `domain/src/commonTest/…/testing/Fixtures.kt` (`withPhoto(shotId = …)`), `domain/src/commonTest/…/backup/BackupMergeTest.kt`, `data/src/androidHostTest/…/backup/BackupRestoreTest.kt`.
+**Files:** `domain/src/commonTest/…/testing/Fixtures.kt` and `data/src/commonTest/…/repository/EncounterFixtures.kt` (`Encounter.inShotOf(firstPhotoId)` — a sixth `withPhoto` parameter trips detekt's `LongParameterList`), `domain/src/commonTest/…/backup/BackupMergeTest.kt`, `data/src/androidHostTest/…/backup/BackupRestoreTest.kt`.
 
 - [ ] `BackupMergeTest`:
   - `a cat of a shot that is not here yet joins its shot` — here: the first two cats of a shot; archive: all three, the third logged on another install. The third and its photo arrive with `shotId` = the first photo's id.
