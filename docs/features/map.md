@@ -63,7 +63,8 @@ globe, past a pole or the 180th meridian.
 "On the map" on an outing's header in the Encounters list switches to the Map tab showing that outing
 alone. Only its cats are on the map, and the view fits around them and their route. A chip names the
 outing above the map; closing it, or pressing back, returns to every cat and fits the view around
-them again. A spot's list offers the same action for its outings.
+them again. A spot's list and the cats at the bottom of Places offer the same action for their
+outings.
 
 The route is the recorded track of every walk that overlaps the outing's time span, drawn whole and
 oldest first — the way to the first cat is part of the walk, not only the stretch between cats. A

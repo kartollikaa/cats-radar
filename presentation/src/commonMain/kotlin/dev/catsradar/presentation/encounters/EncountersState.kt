@@ -52,21 +52,12 @@ sealed interface EncountersRow {
 /** Where a row sits among the rows of its outing. */
 enum class GroupPosition { FIRST, MIDDLE, LAST, ONLY }
 
-/** One row per cat, for lists that show every cat the same way. */
-sealed interface EncounterListItem {
-    val key: String
-
-    data class Row(val id: String, val timeLabel: String, val location: LocationLabel) : EncounterListItem {
-        override val key: String get() = id
-    }
-}
-
 data class OutingHeader(
     override val key: String,
     val label: String,
     /** The id the map focuses this outing by, when one of its cats has a location. */
     val mapOutingId: String? = null,
-) : EncountersRow, EncounterListItem
+) : EncountersRow
 
 data class EncounterCell(
     val id: String,
