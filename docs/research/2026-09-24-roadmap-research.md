@@ -9,9 +9,9 @@ Sizes: **S** one PR · **M** two to four PRs · **L** an epic with its own decom
 
 ## 1. Where the app stands
 
-- v1 and most of the Map epic have shipped: map tab, clustering, outing routes, heatmap with a coat
-  filter, walk tracks stored, backed up and recorded. **M6** — a walk's track on the map, distance
-  and cats per km — is the one slice left ([map epic](../tbd/decompositions/2026-09-23-map-epic.md)).
+- v1 and the whole Map epic have shipped: map tab, clustering, outing routes, heatmap with a coat
+  filter, walk tracks recorded and drawn on the map, distance walked and cats per km
+  ([map epic](../tbd/decompositions/2026-09-23-map-epic.md)).
 - Photos for logged cats and the coat question after a photo have shipped
   ([cat-photos map](../tbd/decompositions/2026-09-23-cat-photos.md)).
 - Loose ends already written down: the design pass has not reached the list, detail and statistics
@@ -86,7 +86,7 @@ colonies, caretakers and health, which this app does not collect. Not worth an e
 | Live Update for the walk | Already built, from API 36.1 | done |
 | Lock-screen widgets | Still rolling out on phones | not yet; the walking notification already serves the lock screen |
 | Wear OS tile and complication | Tiles + Data Layer sync; a second app surface | fits later, L |
-| Walk into Health Connect | `ExerciseSessionRecord` with an `ExerciseRoute` ([docs](https://developer.android.com/health-and-fitness/health-connect/features/exercise-routes)) | fits after M6, S–M |
+| Walk into Health Connect | `ExerciseSessionRecord` with an `ExerciseRoute` ([docs](https://developer.android.com/health-and-fitness/health-connect/features/exercise-routes)) | fits now, S–M |
 | Shareable image | Compose `GraphicsLayer.toImageBitmap()` + FileProvider; maplibre-compose has no snapshotter yet ([#28](https://github.com/maplibre/maplibre-compose/issues/28)) | fits now without map tiles, M |
 | Keep cats across phones | [Auto Backup](https://developer.android.com/identity/data/autobackup) caps cloud at 25 MB per app; device-to-device transfer has its own rules — its limit is to verify before relying on it for photos | fits now, S |
 | Two phones, no server | Backup ZIP to a folder both phones see (SAF), reusing the existing merge; Drive `appDataFolder` ([docs](https://developers.google.com/workspace/drive/api/guides/appdata)) means writing the sync loop; PowerSync, Automerge and the like need a backend or unofficial bindings | SAF fits, M; the rest do not |
@@ -115,7 +115,6 @@ no new permission come first.
 
 | Item | Why now | Size |
 |---|---|---|
-| **M6** — walks on the map, cats per km | Last slice of the Map epic | S |
 | **Keep cats across phones** — include the database and settings in device transfer and cloud backup; photos in device transfer only if its limit allows | Losing the log on a phone switch is the one irreversible failure left (pillar 6) | S |
 | **Design pass** on Encounters, detail and Statistics | The theme is done; three screens still wear old layouts | M |
 | **Follow-ups** — resizer leftovers on a failed store, the Counter's double-tapped camera, no camera app crashing the launch, `CounterStore` at detekt's ceiling, the coat sheet's missing slide, Places' cat row, reboot mid-walk | Each is written down already; they are cheaper now than after N1–N4 build on those screens | S each |
@@ -129,7 +128,7 @@ Each is derived from data the app already stores; none changes the Room schema.
 - A year calendar of cats per day, one square a day, shaded by count — the spec's "30-day
   cats-per-day chart" grown to a year; a day opens its cats.
 - Personal records: best day, best outing (the best session exists), fastest ten cats, most cats in
-  one area in a day, busiest hour of the day and day of the week; longest walk once M6 lands.
+  one area in a day, busiest hour of the day and day of the week; longest walk.
 - A broken record is announced once, the way milestones are.
 - Shape: pure additions to `StatsCalculator`, a Statistics section, one calendar composable.
 - Owner call: which records.
@@ -137,7 +136,7 @@ Each is derived from data the app already stores; none changes the Room schema.
 **N2 · Travel log** — M
 - Countries and cities with their first cat's date, cats and outings; a headline "cats in N
   countries".
-- **Where the cats are:** cities ranked by cats per hour (per km after M6). An outing counts toward
+- **Where the cats are:** cities ranked by cats per hour and per km. An outing counts toward
   the city most of its cats were in.
 - **Trips:** consecutive days with cats outside the home country form a trip, with its own page —
   days, cities, coats, the map focused on it. Home is inferred as the country with the most cat
@@ -209,7 +208,7 @@ Each is derived from data the app already stores; none changes the Room schema.
 
 **L5 · Walks, extended** — S–M
 - A walk written to Health Connect as an exercise session with its route (opt-in permission).
-- A walk history list, once M6 gives walks their own figures.
+- A walk history list: each walk with its own distance and cats per km.
 
 **L6 · iOS** — L. The spec's §9 item 1. Most of the stack is multiplatform-ready; background walk
 tracking and the widget are native rewrites. Gated by L2's question.
@@ -232,7 +231,7 @@ tracking and the widget are native rewrites. Gated by L2's question.
 
 ## 5. Suggested order
 
-1. **M6**, then **keep cats across phones** — the one irreversible loss goes first.
+1. **Keep cats across phones** — the one irreversible loss goes first.
 2. **N1 Records and the calendar** — statistics are the reason the app exists, and it touches no
    schema.
 3. **N3 Coats and achievements**, then **N4 Postcards and the year in cats** — N4 is date-bound.
