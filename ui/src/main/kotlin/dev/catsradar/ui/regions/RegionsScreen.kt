@@ -155,7 +155,11 @@ private fun RegionsScreenEmptyPreview() {
     CatsRadarTheme {
         Surface {
             Column {
-                RegionsEmptyLabel.entries.forEach { label ->
+                RegionsScreen(
+                    state = RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR),
+                    modifier = Modifier.height(240.dp),
+                )
+                listOf(RegionsEmptyLabel.NO_PLACES_HERE, RegionsEmptyLabel.NO_CATS_HERE).forEach { label ->
                     RegionsScreen(state = RegionsState.Empty(label), modifier = Modifier.height(240.dp))
                 }
             }
