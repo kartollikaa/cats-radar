@@ -17,8 +17,8 @@ class KoinModulesTest {
     @Test
     fun `domain, data, presentation and worker modules resolve together`() {
         module { includes(domainModule, dataModule, presentationModule, workerModule) }
-            // verify() sees neither parameters handed in with parametersOf (Context, RegionKey, a spot's Sets)
-            // nor inside a definition's lambda, where ObserveWalkStats gets its dispatcher: it has to be told.
+            // verify() checks constructor types against bindings, so it is told about what arrives otherwise:
+            // parametersOf (Context, RegionKey, a spot's Sets) and the dispatcher ObserveWalkStats is built with.
             .verify(extraTypes = listOf(Context::class, RegionKey::class, Set::class, CoroutineDispatcher::class))
     }
 }
