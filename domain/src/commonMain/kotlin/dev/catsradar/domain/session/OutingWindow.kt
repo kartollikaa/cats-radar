@@ -18,10 +18,10 @@ data class OutingWindow(
 /** Null when no cat in [shown] is live. */
 fun outingWindow(encounters: List<Encounter>, shown: Set<String>): OutingWindow? {
     val outings = SessionSplitter.groupByOuting(encounters)
-    val holding = outings.indices.filter { index -> outings[index].any { it.id in shown } }
-    if (holding.isEmpty()) return null
-    val oldest = holding.first()
-    val newest = holding.last()
+    val holdsShown: (List<Encounter>) -> Boolean = { outing -> outing.any { it.id in shown } }
+    val oldest = outings.indexOfFirst(holdsShown)
+    if (oldest == -1) return null
+    val newest = outings.indexOfLast(holdsShown)
     return OutingWindow(
         cats = outings.subList(oldest, newest + 1).flatten().asReversed(),
         newer = outings.getOrNull(newest + 1),

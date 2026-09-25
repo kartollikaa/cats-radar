@@ -9,8 +9,11 @@ mapping each group to a `Session` (`count`, `start` — first encounter's time, 
 encounter's time, `duration = end - start`), so a single encounter is a zero-duration, one-cat
 outing, and "duration" measures first-cat-to-last-cat, not any independent notion of when a walk
 began or ended. Callers that only need the aggregate use `split()`; callers that need the
-encounters themselves — grouping the Encounters list, for instance — use `groupByOuting()` directly
-rather than re-deriving the boundary, so it has exactly one implementation.
+encounters themselves — grouping the Encounters list, for instance — use `groupByOuting()`
+directly; `outingOf()` returns the one outing holding a given live encounter, built on
+`groupByOuting()` rather than re-deriving the boundary, so it has exactly one implementation. What
+statistics build on outings — rates, the best outing, the outing in progress, the Outings count and
+active time — is in [statistics.md](./statistics.md).
 
 ## The window around a set of cats
 
@@ -33,9 +36,9 @@ starts a new session*). Both sort their own input, so callers don't need to pre-
 doesn't change the result (*unsorted input yields the same sessions as sorted input*). Empty input
 produces an empty list, not a single empty session.
 
-Because outings are derived and not stored, anything that needs "which outing does this encounter
-belong to" has to run the splitter over the live encounter list itself rather than reading a
-foreign key — `AttachLocation`'s backfill (`split`, see `location.md`), `StatsCalculator`
+Because outings are derived and not stored, anything built on outings — the outings themselves, or
+which one a cat is in — has to run the splitter over the live encounter list itself rather than
+reading a foreign key — `AttachLocation`'s backfill (`split`, see `location.md`), `StatsCalculator`
 (`groupByOuting`, `split`), the Encounters list's grouping and headers (`groupByOuting`, see
 `browsing-cats.md`), the map's outing focus (`outingOf`, in `MapStateMapper`) and walk tracks
 (`outingOf`, in `ObserveOutingTracks`) all do this today. That keeps the two concepts (an
@@ -45,7 +48,7 @@ at the cost of recomputing the split from scratch on every call.
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/session/SessionSplitter.kt` (`split`,
-  `groupByOuting`)
+  `groupByOuting`, `outingOf`)
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/session/OutingWindow.kt` (`outingWindow`)
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Session.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/Tuning.kt` (`SESSION_GAP`)
@@ -53,7 +56,7 @@ at the cost of recomputing the split from scratch on every call.
   (`split`), `domain/src/commonMain/kotlin/dev/catsradar/domain/stats/StatsCalculator.kt`
   (`groupByOuting`, `split`),
   `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/EncountersStateMapper.kt`
-  (`groupByOuting`, see `browsing-cats.md`),
+  (`groupByOuting`),
   `presentation/src/commonMain/kotlin/dev/catsradar/presentation/map/MapStateMapper.kt`
   (`outingOf`) and
   `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveOutingTracks.kt` (`outingOf`)
@@ -61,6 +64,4 @@ at the cost of recomputing the split from scratch on every call.
 ## Not handled yet
 
 `SESSION_GAP` is a constant, not a setting, as the design spec has it for v1: a default parameter on
-`split()` and `groupByOuting()`, read from no settings store. What statistics build on outings — rates,
-the best outing, the outing in progress, the Outings count and active time — is in
-[statistics.md](./statistics.md).
+`split()` and `groupByOuting()`, read from no settings store.

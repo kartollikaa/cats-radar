@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.testing.encounterFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -38,7 +39,7 @@ class OutingWindowTest {
     fun `the newest and the oldest outing have nothing beyond them`() {
         assertNull(outingWindow(all, setOf("l1"))?.newer)
         assertEquals(listOf(m1, m2, m3), outingWindow(all, setOf("l1"))?.older)
-        assertNull(outingWindow(all, setOf("e2"))?.older)
+        assertNull(assertNotNull(outingWindow(all, setOf("e2"))).older)
         assertEquals(
             OutingWindow(cats = listOf(m3, m2, m1), newer = null, older = null),
             outingWindow(listOf(m1, m2, m3), setOf("m1")),
@@ -51,8 +52,8 @@ class OutingWindowTest {
 
         assertEquals(l1, window?.newerLanding)
         assertEquals(e2, window?.olderLanding)
-        assertNull(outingWindow(all, setOf("l2"))?.newerLanding)
-        assertNull(outingWindow(all, setOf("e1"))?.olderLanding)
+        assertNull(assertNotNull(outingWindow(all, setOf("l2"))).newerLanding)
+        assertNull(assertNotNull(outingWindow(all, setOf("e1"))).olderLanding)
     }
 
     @Test
