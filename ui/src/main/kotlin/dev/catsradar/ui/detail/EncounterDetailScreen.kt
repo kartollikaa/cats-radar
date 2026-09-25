@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -27,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -40,6 +44,8 @@ import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatPicker
+import dev.catsradar.ui.components.CenterAppBar
+import dev.catsradar.ui.components.CenterAppBarDefaults
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.encounters.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -50,6 +56,7 @@ fun EncounterDetailScreen(
     state: EncounterDetailState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onBackClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
@@ -58,11 +65,22 @@ fun EncounterDetailScreen(
     onPhotoClick: () -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
 ) {
-    Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
+    val layoutDirection = LocalLayoutDirection.current
+    val start = contentPadding.calculateStartPadding(layoutDirection)
+    val end = contentPadding.calculateEndPadding(layoutDirection)
+    val top = contentPadding.calculateTopPadding()
+    val belowBar = PaddingValues(
+        start = start,
+        top = top + CenterAppBarDefaults.Height,
+        end = end,
+        bottom = contentPadding.calculateBottomPadding(),
+    )
+    Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             EncounterDetailState.Loading -> Unit
             is EncounterDetailState.Loaded -> LoadedDetail(
                 state,
+                contentPadding = belowBar,
                 onDeleteClick = onDeleteClick,
                 onCoatClick = onCoatClick,
                 onTakePhotoClick = onTakePhotoClick,
@@ -70,9 +88,21 @@ fun EncounterDetailScreen(
                 onPhotoClick = onPhotoClick,
                 onCoordinatesClick = onCoordinatesClick,
             )
-            is EncounterDetailState.Deleted -> DeletedDetail(state, onUndoClick = onUndoClick)
-            EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing)
+            is EncounterDetailState.Deleted ->
+                DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
+            EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing, Modifier.padding(belowBar))
         }
+        CenterAppBar(
+            modifier = Modifier.padding(start = start, top = top, end = end),
+            startContent = {
+                FilledTonalIconButton(onClick = onBackClick) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.detail_back),
+                    )
+                }
+            },
+        )
     }
 }
 
@@ -80,6 +110,7 @@ fun EncounterDetailScreen(
 private fun LoadedDetail(
     state: EncounterDetailState.Loaded,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     onDeleteClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
@@ -88,7 +119,11 @@ private fun LoadedDetail(
     onCoordinatesClick: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
+            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         val photoPath = state.photoPath
