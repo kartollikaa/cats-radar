@@ -2,6 +2,8 @@ package dev.catsradar.data.repository
 
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.data.db.EncounterEntity
+import dev.catsradar.data.db.EncounterPhotoEntity
+import dev.catsradar.data.db.EncounterWithPhotos
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCellAssignment
@@ -21,36 +23,19 @@ internal data class AttachLocationCall(
     val updatedAt: Instant,
 )
 
-internal data class AttachPhotoCall(
-    val id: String,
-    val photoPath: String,
-    val thumbPath: String?,
-    val galleryUri: String?,
-    val sourceMediaUri: String?,
-    val sourceDigest: String?,
-    val updatedAt: Instant,
-)
-
-internal data class RestorePhotoCall(
-    val id: String,
-    val photoPath: String,
-    val thumbPath: String?,
-    val galleryUri: String?,
-    val sourceMediaUri: String?,
-    val sourceDigest: String?,
-)
+internal data class AddPhotoCall(val photo: EncounterPhotoEntity, val updatedAt: Instant)
 
 internal data class SetCoatCall(val id: String, val coat: CatCoat?, val updatedAt: Instant)
 
 internal class FakeEncounterDao : EncounterDao {
-    var observeAllResult: List<EncounterEntity> = emptyList()
-    var observeByIdResult: EncounterEntity? = null
-    var findBySourceDigestResult: EncounterEntity? = null
+    var observeAllResult: List<EncounterWithPhotos> = emptyList()
+    var observeByIdResult: EncounterWithPhotos? = null
+    var findBySourceDigestResult: EncounterWithPhotos? = null
     var purgeDeletedBeforeResult: Int = 0
-    var loadDeletedBeforeResult: List<EncounterEntity> = emptyList()
-    var loadEveryResult: List<EncounterEntity> = emptyList()
-    var loadByIdResult: EncounterEntity? = null
-    val restorePhotoCalls = mutableListOf<RestorePhotoCall>()
+    var loadDeletedBeforeResult: List<EncounterWithPhotos> = emptyList()
+    var loadEveryResult: List<EncounterWithPhotos> = emptyList()
+    val insertedPhotos = mutableListOf<EncounterPhotoEntity>()
+    val addedPhotos = mutableListOf<EncounterPhotoEntity>()
 
     val inserted = mutableListOf<EncounterEntity>()
     val updated = mutableListOf<EncounterEntity>()
@@ -59,17 +44,17 @@ internal class FakeEncounterDao : EncounterDao {
     var clearDeletedAtCall: String? = null
     val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
     var attachLocationCall: AttachLocationCall? = null
-    var attachPhotoResult: Int = 1
-    var attachPhotoCall: AttachPhotoCall? = null
+    var addPhotoResult: Boolean = true
+    var addPhotoCall: AddPhotoCall? = null
     var setCoatCall: SetCoatCall? = null
     val setPlaceCellCalls = mutableListOf<PlaceCellAssignment>()
     var findBySourceDigestCall: String? = null
     var purgeDeletedBeforeCall: Instant? = null
     var loadDeletedBeforeCall: Instant? = null
 
-    override fun observeAll(): Flow<List<EncounterEntity>> = flowOf(observeAllResult)
+    override fun observeAll(): Flow<List<EncounterWithPhotos>> = flowOf(observeAllResult)
 
-    override fun observeById(id: String): Flow<EncounterEntity?> {
+    override fun observeById(id: String): Flow<EncounterWithPhotos?> {
         observeByIdCall = id
         return flowOf(observeByIdResult)
     }
@@ -82,18 +67,21 @@ internal class FakeEncounterDao : EncounterDao {
         updated += encounter
     }
 
-    override suspend fun loadById(id: String): EncounterEntity? = loadByIdResult?.takeIf { it.id == id }
+    override suspend fun insertPhotos(photos: List<EncounterPhotoEntity>) {
+        insertedPhotos += photos
+    }
 
-    @Suppress("LongParameterList") // mirrors EncounterDao.restorePhoto's own Room binding constraint
-    override suspend fun restorePhoto(
-        id: String,
-        photoPath: String,
-        thumbPath: String?,
-        galleryUri: String?,
-        sourceMediaUri: String?,
-        sourceDigest: String?,
-    ) {
-        restorePhotoCalls += RestorePhotoCall(id, photoPath, thumbPath, galleryUri, sourceMediaUri, sourceDigest)
+    override suspend fun countLiveWithoutPhotos(id: String): Int = error("addPhoto is recorded whole")
+
+    override suspend fun stampUpdatedAt(id: String, updatedAt: Instant) = error("addPhoto is recorded whole")
+
+    override suspend fun addPhoto(photo: EncounterPhotoEntity, updatedAt: Instant): Boolean {
+        addPhotoCall = AddPhotoCall(photo, updatedAt)
+        return addPhotoResult
+    }
+
+    override suspend fun addPhotos(photos: List<EncounterPhotoEntity>) {
+        addedPhotos += photos
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
@@ -125,20 +113,6 @@ internal class FakeEncounterDao : EncounterDao {
         )
     }
 
-    @Suppress("LongParameterList") // mirrors EncounterDao.attachPhoto's own Room binding constraint
-    override suspend fun attachPhoto(
-        id: String,
-        photoPath: String,
-        thumbPath: String?,
-        galleryUri: String?,
-        sourceMediaUri: String?,
-        sourceDigest: String?,
-        updatedAt: Instant,
-    ): Int {
-        attachPhotoCall = AttachPhotoCall(id, photoPath, thumbPath, galleryUri, sourceMediaUri, sourceDigest, updatedAt)
-        return attachPhotoResult
-    }
-
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Int {
         setCoatCall = SetCoatCall(id, coat, updatedAt)
         return 1
@@ -148,13 +122,13 @@ internal class FakeEncounterDao : EncounterDao {
         setPlaceCellCalls += PlaceCellAssignment(id, lat, lon, geohash, placeCellId)
     }
 
-    override suspend fun findBySourceDigest(sourceDigest: String): EncounterEntity? {
+    override suspend fun findBySourceDigest(sourceDigest: String): EncounterWithPhotos? {
         findBySourceDigestCall = sourceDigest
         return findBySourceDigestResult
     }
-    override suspend fun loadEvery(): List<EncounterEntity> = loadEveryResult
+    override suspend fun loadEvery(): List<EncounterWithPhotos> = loadEveryResult
 
-    override suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterEntity> {
+    override suspend fun loadDeletedBefore(cutoff: Instant): List<EncounterWithPhotos> {
         loadDeletedBeforeCall = cutoff
         return loadDeletedBeforeResult
     }

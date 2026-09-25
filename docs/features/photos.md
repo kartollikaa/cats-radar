@@ -67,8 +67,7 @@ goes to the gallery, the cat just does not point at it — because gallery ids a
 [photo-viewer.md](./photo-viewer.md#open-in-gallery); `AttachPhotoTest`, *a cat another install logged
 keeps no link to the original, which still goes to the gallery*).
 
-The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceMediaUri`, `sourceDigest` and
-`updatedAt`. The cat
+The write adds the photo's row and stamps the cat's `updatedAt`, nothing else. The cat
 keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
 photo this way is still a tally (`AttachPhotoTest`, *a cat without a photo gets the copy, thumbnail
 and digest, and keeps everything else*), and it now counts as "With photo" in Statistics like any
