@@ -30,7 +30,7 @@ internal fun distinctEncounter(): Encounter = Encounter(
             sourceDigest = "digest-1",
             deviceId = "device-1",
             addedAt = Instant.parse("2026-01-01T03:00:00Z"),
-            shotId = null,
+            shotId = "shot-1",
         ),
     ),
     lat = 10.111,

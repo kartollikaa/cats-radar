@@ -104,4 +104,28 @@ class EncounterDaoPhotosTest {
         assertEquals(1, database.schemaProbeDao().photoRowCount())
         assertEquals(listOf("live"), dao.loadEvery().flatMap { cat -> cat.photos.map { it.encounterId } })
     }
+
+    @Test
+    fun eachWayAPhotoRowIsWrittenKeepsItsShot() = runTest {
+        dao.insertWithPhotos(fullEncounterEntity(id = "ginger"), listOf(photoEntity("ginger", id = "p1")))
+        dao.insertWithPhotos(
+            fullEncounterEntity(id = "ginger-too"),
+            listOf(photoEntity("ginger-too", id = "p2", shotId = "p1")),
+        )
+        dao.insertWithPhotos(
+            fullEncounterEntity(id = "unseen"),
+            listOf(photoEntity("unseen", id = "p3", shotId = "p1")),
+        )
+        dao.insert(fullEncounterEntity(id = "added-later"))
+        dao.addPhoto(
+            photoEntity("added-later", id = "p4", shotId = "p1"),
+            updatedAt = Instant.parse("2026-09-21T00:00:00Z"),
+        )
+        dao.insert(fullEncounterEntity(id = "restored"))
+        dao.addPhotos(listOf(photoEntity("restored", id = "p5", shotId = "p1")))
+
+        val shots = dao.loadEvery().flatMap { it.photos }.associate { it.id to it.shotId }
+
+        assertEquals(mapOf("p1" to null, "p2" to "p1", "p3" to "p1", "p4" to "p1", "p5" to "p1"), shots)
+    }
 }
