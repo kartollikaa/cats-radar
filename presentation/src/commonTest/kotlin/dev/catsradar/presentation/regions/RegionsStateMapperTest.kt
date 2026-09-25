@@ -60,6 +60,7 @@ class RegionsStateMapperTest {
                         countLabel = "3",
                         share = 0.75f,
                         pseudo = false,
+                        flag = "🇪🇸",
                     ),
                     RegionRowState(
                         RegionRowKey.NoLocation,
@@ -87,7 +88,10 @@ class RegionsStateMapperTest {
 
         val state = assertIs<RegionsState.Places>(mapper.map(view, parent = spain, TODAY))
 
-        assertEquals(RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 4), state.header)
+        assertEquals(
+            RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 4, flag = "🇪🇸"),
+            state.header,
+        )
         assertEquals(RegionsSection.CITIES, state.section)
     }
 
@@ -138,6 +142,40 @@ class RegionsStateMapperTest {
         val view = RegionView.Places(listOf(RegionNode(barcelona, RegionLabel.Named("Barcelona"), count = 0)))
 
         assertEquals(listOf(0f), assertIs<RegionsState.Places>(mapper.map(view, spain, TODAY)).rows.map { it.share })
+    }
+
+    @Test
+    fun `only country rows carry a flag`() {
+        val flags = assertIs<RegionsState.Places>(mapper.map(oneRowPerKey, spain, TODAY)).rows.map { it.flag }
+
+        assertEquals(listOf("🇪🇸", null, null, null, null, null), flags)
+    }
+
+    @Test
+    fun `a country's header carries its flag, and the places above a level ride along its header`() {
+        val spainNode = RegionNode(spain, RegionLabel.Named("Spain"), 3)
+        val country = RegionView.Places(listOf(RegionNode(barcelona, RegionLabel.Named("Barcelona"), 3)), spainNode)
+        val city = RegionView.Places(
+            children = listOf(RegionNode(RegionKey.Area("sp3e9", barcelona), RegionLabel.Named("Gràcia"), 2)),
+            self = RegionNode(barcelona, RegionLabel.Named("Barcelona"), 2),
+            trail = listOf(spainNode),
+        )
+
+        val countryHeader = assertIs<RegionsState.Places>(mapper.map(country, spain, TODAY)).header
+        val cityHeader = assertIs<RegionsState.Places>(mapper.map(city, barcelona, TODAY)).header
+
+        assertEquals(
+            RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("Spain")), count = 3, flag = "🇪🇸"),
+            countryHeader,
+        )
+        assertEquals(
+            RegionsHeader(
+                RegionsTitle.Of(RegionRowLabel.Named("Barcelona")),
+                count = 2,
+                trail = persistentListOf(RegionsCrumb(RegionRowLabel.Named("Spain"), flag = "🇪🇸")),
+            ),
+            cityHeader,
+        )
     }
 
     @Test

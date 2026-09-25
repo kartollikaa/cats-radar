@@ -2,6 +2,7 @@ package dev.catsradar.presentation.regions
 
 import dev.catsradar.presentation.encounters.EncountersRow
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 sealed interface RegionsState {
     data object Loading : RegionsState
@@ -22,7 +23,15 @@ enum class RegionsEmptyLabel { NO_PLACES_YET, NO_PLACES_HERE, NO_CATS_HERE }
 
 enum class RegionsEmptyHint { HOW_PLACES_APPEAR }
 
-data class RegionsHeader(val title: RegionsTitle, val count: Int)
+/** [trail] names the levels above this one, the outermost first. */
+data class RegionsHeader(
+    val title: RegionsTitle,
+    val count: Int,
+    val flag: String? = null,
+    val trail: ImmutableList<RegionsCrumb> = persistentListOf(),
+)
+
+data class RegionsCrumb(val label: RegionRowLabel, val flag: String?)
 
 sealed interface RegionsTitle {
     data object AllPlaces : RegionsTitle
@@ -43,6 +52,7 @@ data class RegionRowState(
     val share: Float,
     /** Not named yet, No city and No location: rows that stand for the lack of a place. */
     val pseudo: Boolean,
+    val flag: String? = null,
 )
 
 /** A row's name, or the pieces the platform needs to build one. */
