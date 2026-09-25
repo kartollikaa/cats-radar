@@ -60,7 +60,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
     }
 }
 
-// A tree with no git history (a source archive) has no commit to name.
+// Outside a git checkout rev-parse fails; the build then names the commit `unknown` rather than failing.
 private fun Project.gitCommit(): Provider<String> =
     providers.exec {
         commandLine("git", "rev-parse", "--short=12", "HEAD")
