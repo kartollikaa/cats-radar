@@ -131,7 +131,8 @@ is not two letters. Below the top, the headline names the places a level sits in
 the outermost first: a city's headline and No city's show the country, and an area's shows the
 country and then its city (or No city). Not named yet stands in for the country above its areas.
 TalkBack reads that line as one item, "Part of Spain, Barcelona", and skips the flags, which would
-only repeat the name beside them.
+only repeat the name beside them. A cat's detail names its city and country the same way (see
+[encounter-detail.md](./encounter-detail.md#where-it-was-found)).
 
 **The cats** at the bottom are laid out the way the map's spot sheet and the Encounters list lay
 them out: one card per cat with its coat face or photo, in a run of cards under each outing header.
