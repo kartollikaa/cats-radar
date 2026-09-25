@@ -200,7 +200,9 @@ come back as separate cats, and every test that looks only at cats would stay gr
     original, a picked item, no thumbnail, a soft-deleted cat, another install's cat, a tally) reaches
     v5 with the same number of cats and photos, every value unchanged, and a null `shotId` on every
     photo;
-  - the same with foreign keys on, since a table rebuild with them on is what could take rows away;
+  - the migration's own SQL, read from what Room generates, only adds the column and its index: it
+    rebuilds no table. Foreign keys cannot take rows away here, since nothing references
+    `encounter_photos` and `encounters` is not touched, so v4 → v5 needs no foreign-keys-on test;
   - the app's own builder opening a v1, a v2 and a v3 file reaches v5. The existing purge test, which
     removes a cat's photo rows with it, now runs at v5;
   - `5.json` exported, with its test-asset copy kept identical by `SchemaAssetSyncTest`.
