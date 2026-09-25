@@ -5,6 +5,8 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.domain.backup.BackupContents
+import dev.catsradar.domain.model.EncounterPhoto
+import dev.catsradar.domain.model.oldestFirst
 import dev.catsradar.domain.platform.BackupReadResult
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupRejection
@@ -71,10 +73,11 @@ class ZipBackupWriter(
     private fun ZipOutputStream.putArchive(contents: BackupContents) {
         putJson(MANIFEST_ENTRY, ArchiveJson.encodeToString(manifest()))
         putJson(ENCOUNTERS_ENTRY, ArchiveJson.encodeToString(contents.encounters.map { it.toRecord() }))
+        putJson(ENCOUNTER_PHOTOS_ENTRY, ArchiveJson.encodeToString(contents.photos().map { it.toRecord() }))
         putJson(PLACE_CELLS_ENTRY, ArchiveJson.encodeToString(contents.placeCells.map { it.toRecord() }))
         putJson(WALKS_ENTRY, ArchiveJson.encodeToString(contents.walks.map { it.toRecord() }))
         putJson(TRACK_POINTS_ENTRY, ArchiveJson.encodeToString(contents.trackPoints.map { it.toRecord() }))
-        contents.photoFiles().distinct().forEach { path ->
+        contents.photos().flatMap { it.files() }.distinct().forEach { path ->
             readPhoto(path)?.let { putEntry(PHOTOS_PREFIX + path, it) }
         }
     }
@@ -153,22 +156,33 @@ class ZipBackupReader(
             // the rest of its manifest, may not be what this one expects at all.
             manifest.formatVersion > BACKUP_FORMAT_VERSION -> BackupReadResult.Rejected(BackupRejection.TOO_NEW)
             encounters == null -> BackupReadResult.Rejected(BackupRejection.UNREADABLE)
-            // Every format since walks writes all five lists, so an archive of one that lacks a list was cut off.
-            manifest.formatVersion >= FIRST_FORMAT_WITH_WALKS && !unpacked.texts.keys.containsAll(archiveTextEntries) ->
+            // Every format writes all of its own lists, so an archive of one that lacks a list was cut off.
+            !unpacked.texts.keys.containsAll(listsOfFormat(manifest.formatVersion)) ->
                 BackupReadResult.Rejected(BackupRejection.UNREADABLE)
             else -> {
-                val contents = BackupContents(
-                    encounters = ArchiveJson.decodeFromString<List<EncounterRecord>>(encounters).map { it.toDomain() },
-                    placeCells = unpacked.decoded<PlaceCellRecord>(PLACE_CELLS_ENTRY).map { it.toDomain() },
-                    walks = unpacked.decoded<WalkRecord>(WALKS_ENTRY).map { it.toDomain() },
-                    trackPoints = unpacked.decoded<TrackPointRecord>(TRACK_POINTS_ENTRY).map { it.toDomain() },
-                )
-                // fileFor throws for a path outside the photo directory, so such a row is refused, not stored.
-                contents.photoFiles().forEach(photoStorage::fileFor)
+                val contents = unpacked.contents(manifest.formatVersion, encounters)
                 unpacked.stagedPhotos.forEach { (relativePath, staged) -> moveIntoPlace(relativePath, staged) }
                 BackupReadResult.Readable(contents)
             }
         }
+    }
+
+    private fun Unpacked.contents(formatVersion: Int, encounters: String): BackupContents {
+        val cats = ArchiveJson.decodeFromString<List<EncounterRecord>>(encounters)
+        val photos = if (formatVersion >= FIRST_FORMAT_WITH_PHOTO_LIST) {
+            decoded<EncounterPhotoRecord>(ENCOUNTER_PHOTOS_ENTRY).map { it.toDomain() }
+        } else {
+            cats.flatMap { it.carriedPhotos() }
+        }
+        // fileFor throws for a path outside the photo directory, so such an archive is refused, not stored.
+        photos.flatMap { it.files() }.forEach(photoStorage::fileFor)
+        val photosOf = photos.groupBy { it.encounterId }
+        return BackupContents(
+            encounters = cats.map { it.toDomain(photosOf[it.id].orEmpty().oldestFirst()) },
+            placeCells = decoded<PlaceCellRecord>(PLACE_CELLS_ENTRY).map { it.toDomain() },
+            walks = decoded<WalkRecord>(WALKS_ENTRY).map { it.toDomain() },
+            trackPoints = decoded<TrackPointRecord>(TRACK_POINTS_ENTRY).map { it.toDomain() },
+        )
     }
 
     private inline fun <reified T> Unpacked.decoded(entry: String): List<T> =
@@ -220,8 +234,9 @@ class ZipBackupReader(
     private fun ZipInputStream.readText(): String = readBytes().decodeToString()
 }
 
-private fun BackupContents.photoFiles(): List<String> =
-    encounters.flatMap { it.photos }.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }
+private fun BackupContents.photos(): List<EncounterPhoto> = encounters.flatMap { it.photos }
+
+private fun EncounterPhoto.files(): List<String> = listOfNotNull(photoPath, thumbPath)
 
 @Serializable
 private data class ManifestVersion(val formatVersion: Int)
@@ -246,8 +261,15 @@ private class SourceStream(source: InputStream) : FilterInputStream(source) {
     override fun skip(n: Long): Long = deviceSide { super.skip(n) }
 }
 
-private val archiveTextEntries =
-    setOf(MANIFEST_ENTRY, ENCOUNTERS_ENTRY, PLACE_CELLS_ENTRY, WALKS_ENTRY, TRACK_POINTS_ENTRY)
+private val listsSinceWalks = setOf(ENCOUNTERS_ENTRY, PLACE_CELLS_ENTRY, WALKS_ENTRY, TRACK_POINTS_ENTRY)
+
+private fun listsOfFormat(formatVersion: Int): Set<String> = when {
+    formatVersion >= FIRST_FORMAT_WITH_PHOTO_LIST -> listsSinceWalks + ENCOUNTER_PHOTOS_ENTRY
+    formatVersion >= FIRST_FORMAT_WITH_WALKS -> listsSinceWalks
+    else -> emptySet()
+}
+
+private val archiveTextEntries = setOf(MANIFEST_ENTRY, ENCOUNTER_PHOTOS_ENTRY) + listsSinceWalks
 
 // Beside the photo directory, not in the cache: a staged photo moves into place by rename.
 internal const val STAGING_DIR = "backup-import"
