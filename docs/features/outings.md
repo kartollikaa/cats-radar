@@ -19,11 +19,12 @@ outing's size nor its span (*a soft-deleted encounter is excluded from count and
 *groupByOuting excludes a soft-deleted encounter from its outing*). A gap of exactly `SESSION_GAP`
 stays inside the same outing; one millisecond more starts a new one — the boundary is `>`, not `>=`
 (*a gap exactly equal to SESSION_GAP stays one session*; *a gap one millisecond over SESSION_GAP
-starts a new session*). Both sort their own input — by time, and encounters logged at the same
-instant by id — so callers don't need to pre-sort, and neither pre-sorting nor the input's order
-changes the result (*unsorted input yields the same sessions as sorted input*; *encounters logged at
-the same instant keep one order whatever the input order*). Empty input produces an empty list, not a
-single empty session.
+starts a new session*). Both sort their own input — by time, and encounters sharing a time in the
+order they were recorded, then by id — so callers don't need to pre-sort, and neither pre-sorting nor
+the input's order changes the result (*unsorted input yields the same sessions as sorted input*;
+*encounters logged at the same instant keep one order whatever the input order*; *encounters sharing a
+time come in the order they were recorded*). Empty input produces an empty list, not a single empty
+session.
 
 Because outings are derived and not stored, anything that needs "which outing does this encounter
 belong to" has to run the splitter over the live encounter list itself rather than reading a

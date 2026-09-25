@@ -73,6 +73,17 @@ class SessionSplitterTest {
     }
 
     @Test
+    fun `encounters sharing a time come in the order they were recorded`() {
+        val recordedSecond = encounterFixture("a", BASE).copy(createdAt = BASE + 2.minutes)
+        val recordedFirst = encounterFixture("b", BASE).copy(createdAt = BASE + 1.minutes)
+
+        assertEquals(
+            listOf(listOf(recordedFirst, recordedSecond)),
+            SessionSplitter.groupByOuting(listOf(recordedSecond, recordedFirst)),
+        )
+    }
+
+    @Test
     fun `a soft-deleted encounter is excluded from count and duration`() {
         val kept = encounterAt(BASE)
         val deleted = encounterAt(BASE + 15.minutes, deletedAt = BASE + 1.hours)
