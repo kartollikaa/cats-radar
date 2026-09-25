@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.repository.EncounterRepositoryImpl
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -72,6 +74,20 @@ class EncounterDaoPhotosTest {
         val photos = EncounterRepositoryImpl(dao).observeById("cat").first()?.photos
 
         assertEquals(listOf("a-tie", "b-tie", "late"), photos?.map { it.id })
+    }
+
+    @Test
+    fun anObservedCatEmitsAgainWhenOnlyItsPhotosChange() = runTest {
+        val cat = fullEncounterEntity(id = "cat")
+        dao.insert(cat)
+        val emissions = Channel<Int>(Channel.UNLIMITED)
+        val job = launch { dao.observeById("cat").collect { emissions.send(it?.photos?.size ?: -1) } }
+        assertEquals(0, emissions.receive())
+
+        dao.addPhotos(listOf(photoEntity("cat")))
+
+        assertEquals(1, emissions.receive())
+        job.cancel()
     }
 
     @Test
