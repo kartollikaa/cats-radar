@@ -283,6 +283,24 @@ class SettingsStoreTest {
     }
 
     @Test
+    fun `a copy reports the locale the phone has now, not the one it had when the screen opened`() =
+        runTest(mainDispatcher) {
+            var current = pixelBuildInfo
+            val store = settingsStore(buildInfoReader = BuildInfoReader { current })
+            runCurrent()
+            current = pixelBuildInfo.copy(
+                device = pixelBuildInfo.device.copy(localeTag = "en-GB", timeZoneId = "Europe/London"),
+            )
+            store.effects.test {
+                store.dispatch(SettingsIntent.BuildInfoCopyClicked)
+                runCurrent()
+
+                assertEquals(SettingsEffect.CopyBuildInfo(AboutStateMapper().report(current)), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `a copy reports the locale and zone the phone has at the tap, even while the screen's own read is pending`() =
         runTest(mainDispatcher) {
             val firstRead = CompletableDeferred<BuildInfo>()
