@@ -12,6 +12,16 @@ began or ended. Callers that only need the aggregate use `split()`; callers that
 encounters themselves — grouping the Encounters list, for instance — use `groupByOuting()` directly
 rather than re-deriving the boundary, so it has exactly one implementation.
 
+## The window around a set of cats
+
+`outingWindow(encounters, shown)` answers "which outings are these cats in, and what is on either side".
+Its `cats` are every live cat from the oldest to the newest outing that holds a cat in `shown`, newest
+first — so an outing a delete split in two stays whole for as long as a cat of each half is in `shown`,
+while `groupByOuting()` itself keeps splitting it. A cat logged into one of those outings, or one that
+merges the next outing into them, is in the window too. `newer` and `older` are the outings just outside
+it, oldest first, or null at either end of history; `newerLanding` and `olderLanding` are the cats of
+each nearest to the window. No live cat in `shown` means no window (`OutingWindowTest`).
+
 ## At the edges
 
 Both functions only ever exclude soft-deleted encounters — deleted rows count neither toward an
@@ -25,27 +35,32 @@ produces an empty list, not a single empty session.
 
 Because outings are derived and not stored, anything that needs "which outing does this encounter
 belong to" has to run the splitter over the live encounter list itself rather than reading a
-foreign key — `AttachLocation`'s backfill (see `location.md`) and the Encounters list's grouping
-(see `browsing-cats.md`) both do this today. That keeps the two concepts (an encounter's own
-fields, and the grouping over them) from ever going stale relative to each other, at the cost of
-recomputing the split from scratch on every call.
+foreign key — `AttachLocation`'s backfill (`split`, see `location.md`), `StatsCalculator`
+(`groupByOuting`, `split`), the Encounters list's grouping and headers (`groupByOuting`, see
+`browsing-cats.md`), the map's outing focus (`outingOf`, in `MapStateMapper`) and walk tracks
+(`outingOf`, in `ObserveOutingTracks`) all do this today. That keeps the two concepts (an
+encounter's own fields, and the grouping over them) from ever going stale relative to each other,
+at the cost of recomputing the split from scratch on every call.
 
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/session/SessionSplitter.kt` (`split`,
   `groupByOuting`)
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/session/OutingWindow.kt` (`outingWindow`)
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/model/Session.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/Tuning.kt` (`SESSION_GAP`)
 - consumed by `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`
-  (`split`) and
+  (`split`), `domain/src/commonMain/kotlin/dev/catsradar/domain/stats/StatsCalculator.kt`
+  (`groupByOuting`, `split`),
   `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/EncountersStateMapper.kt`
-  (`groupByOuting`)
+  (`groupByOuting`, see `browsing-cats.md`),
+  `presentation/src/commonMain/kotlin/dev/catsradar/presentation/map/MapStateMapper.kt`
+  (`outingOf`) and
+  `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveOutingTracks.kt` (`outingOf`)
 
 ## Not handled yet
 
-Everything statistics-facing that the design spec builds on top of outings — rate-eligible
-sessions, overall/session rate, a live "current outing" on the Counter screen, best session, the
-Outings count and total active time (§5) — is specified but not implemented; there is no
-`StatsCalculator` and no Statistics screen yet. `SESSION_GAP` is described in the spec as "a
-constant, not a setting, in v1," which the code matches: it's a default parameter on `split()`,
-not read from any settings store.
+`SESSION_GAP` is a constant, not a setting, as the design spec has it for v1: a default parameter on
+`split()` and `groupByOuting()`, read from no settings store. What statistics build on outings — rates,
+the best outing, the outing in progress, the Outings count and active time — is in
+[statistics.md](./statistics.md).
