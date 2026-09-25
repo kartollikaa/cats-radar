@@ -6,18 +6,22 @@ import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
@@ -32,6 +36,7 @@ import dev.catsradar.ui.navigation.BottomNavTab
 import dev.catsradar.ui.navigation.CatsRadarBottomBar
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.settings.SettingsScreen
+import kotlinx.coroutines.flow.filterNotNull
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -42,6 +47,11 @@ import java.time.format.DateTimeFormatter
 fun CatsRadarNavHost(cameraRequest: CameraRequest, modifier: Modifier = Modifier) {
     val backStack = rememberBottomNavBackStack()
     val mapFocus = remember { MapFocusRequest() }
+    val screenViews = koinInject<ScreenViewTracker>()
+    LaunchedEffect(backStack, screenViews) {
+        snapshotFlow { backStack.lastOrNull() }.filterNotNull().collect(screenViews::onTop)
+    }
+    DisposableEffect(screenViews) { onDispose(screenViews::onHostGone) }
     LaunchedEffect(cameraRequest.isPending) {
         if (cameraRequest.isPending) backStack.selectTab(BottomNavTab.COUNTER)
     }
@@ -70,11 +80,12 @@ internal fun CatsRadarNavDisplay(
 ) {
     val density = LocalDensity.current
     val sheets = remember(backStack) { BottomSheetSceneStrategy(backStack) }
+    val dialogs = remember { DialogSceneStrategy<NavKey>() }
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popOrNull() },
-        sceneStrategies = listOf(sheets),
+        sceneStrategies = listOf(sheets, dialogs),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -100,7 +111,7 @@ internal fun catsRadarEntries(
             contentPadding = contentPadding,
             onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
             onOutingMapClick = { id ->
-                mapFocus.post(id)
+                mapFocus.postOuting(id)
                 backStack.selectTab(BottomNavTab.MAP)
             },
         )
@@ -118,7 +129,7 @@ internal fun catsRadarEntries(
             key = key,
             onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
             onFocusOuting = { id ->
-                mapFocus.post(id)
+                mapFocus.postOuting(id)
                 backStack.popIfOnTop(key)
             },
             onClose = { backStack.popIfOnTop(key) },
@@ -136,14 +147,31 @@ internal fun catsRadarEntries(
             key = key,
             contentPadding = contentPadding,
             onRegionClick = { row -> backStack.push(row.toNavKey()) },
+            onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
         )
     }
+    catEntries(backStack, contentPadding, mapFocus)
+}
+
+private fun EntryProviderScope<NavKey>.catEntries(
+    backStack: BottomNavBackStack,
+    contentPadding: PaddingValues,
+    mapFocus: MapFocusRequest,
+) {
     entry<EncounterDetail> { key ->
         EncounterDetailDestination(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popOrNull() },
+            onOpenPhoto = { backStack.push(PhotoViewer(key.id)) },
+            onOpenMap = {
+                mapFocus.postCat(key.id)
+                backStack.selectTab(BottomNavTab.MAP)
+            },
         )
+    }
+    entry<PhotoViewer>(metadata = photoViewerMetadata()) { key ->
+        PhotoViewerDestination(key = key, onClose = { backStack.popIfOnTop(key) })
     }
 }
 
@@ -199,8 +227,9 @@ private fun defaultBackupName(): String =
 private fun RegionsDestination(
     key: Regions,
     contentPadding: PaddingValues,
+    onRegionClick: (RegionRowKey) -> Unit,
+    onEncounterClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onRegionClick: (RegionRowKey) -> Unit = {},
 ) {
     val store = koinViewModel<RegionsStore> { parametersOf(key.toRegionKey()) }
     val state by store.state.collectAsStateWithLifecycle()
@@ -209,5 +238,6 @@ private fun RegionsDestination(
         modifier = modifier,
         contentPadding = contentPadding,
         onRegionClick = onRegionClick,
+        onEncounterClick = onEncounterClick,
     )
 }

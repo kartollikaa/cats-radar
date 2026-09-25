@@ -6,6 +6,7 @@ import dev.catsradar.domain.stats.CurrentOuting
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.toRateState
+import kotlin.time.Duration
 
 class CounterStateMapper(
     private val dateTimeFormatter: DateTimeFormatter,
@@ -22,6 +23,7 @@ class CounterStateMapper(
         tapBurst: Int? = null,
         lastCoat: CoatOption? = null,
         walkingMode: Boolean = false,
+        walkElapsedLabel: String? = null,
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
@@ -34,10 +36,14 @@ class CounterStateMapper(
         tapBurst = tapBurst,
         lastCoat = lastCoat,
         walkingMode = walkingMode,
+        walkElapsedLabel = walkElapsedLabel,
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
     )
+
+    fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =
+        elapsed?.takeIf { walking }?.let(dateTimeFormatter::duration)
 
     fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
         added = addedCount,

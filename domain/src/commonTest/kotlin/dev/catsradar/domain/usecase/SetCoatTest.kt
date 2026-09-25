@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.PhotoStamp
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -15,7 +16,7 @@ import kotlin.time.Instant
 class SetCoatTest {
 
     private val encounters = FakeEncounterRepository()
-    private val setCoat = SetCoat(encounters, FakeClock(NOW))
+    private val setCoat = SetCoat(encounters, FakeClock(NOW), analytics = RecordingAnalytics())
 
     private val tally: Encounter = encounterFixture(ID, OCCURRED)
 
@@ -57,6 +58,7 @@ class SetCoatTest {
             photoPath = "p.jpg",
             thumbPath = "p_thumb.jpg",
             galleryUri = null,
+            sourceMediaUri = null,
             sourceDigest = "sha",
             updatedAt = NOW - 1.minutes,
         )

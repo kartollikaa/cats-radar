@@ -41,6 +41,7 @@ private fun encounter(id: String, photoPath: String? = null, thumbPath: String? 
     photoPath = photoPath,
     thumbPath = thumbPath,
     galleryUri = "content://media/1",
+    sourceMediaUri = "content://media/external/images/media/17",
     sourceDigest = "abc",
     lat = 41.39864,
     lon = 2.17842,
@@ -135,7 +136,7 @@ class ZipBackupArchiveTest {
     }
 
     @Test
-    fun anArchiveSaysItIsFormatTwoSoAnAppBeforeWalksRefusesIt() = runTest {
+    fun anArchiveSaysItIsFormatThreeSoAnAppBeforePickedGalleryItemsRefusesIt() = runTest {
         val path = target()
 
         assertTrue(writer().write(path, BackupContents()))
@@ -143,7 +144,7 @@ class ZipBackupArchiveTest {
         val manifest = ZipFile(path).use { zip ->
             zip.getInputStream(zip.getEntry(MANIFEST_ENTRY)).readBytes().decodeToString()
         }
-        assertTrue("\"formatVersion\":2" in manifest, manifest)
+        assertTrue("\"formatVersion\":3" in manifest, manifest)
     }
 
     @Test

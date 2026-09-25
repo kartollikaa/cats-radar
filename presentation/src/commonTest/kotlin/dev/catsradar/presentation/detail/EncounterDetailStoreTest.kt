@@ -2,13 +2,17 @@ package dev.catsradar.presentation.detail
 
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
+import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
+import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeGallerySaver
@@ -419,21 +423,91 @@ class EncounterDetailStoreTest {
         assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
     }
 
+    @Test
+    fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO, photoPath = "cat-1.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat without a photo has no viewer to open`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a tap on the coordinates of a cat on the map opens the map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenMap, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat that is not on the map opens no map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 123.4, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a removed cat opens no map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
-        deleteEncounter = DeleteEncounter(repository, clock),
-        undoDelete = UndoDelete(repository),
-        setCoat = SetCoat(repository, clock),
+        deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
+        undoDelete = UndoDelete(repository, analytics = NoAnalytics),
+        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
         attachPhoto = AttachPhoto(
             encounterRepository = repository,
             settingsRepository = FakeSettingsRepository(),
             imageResizer = resizer,
             digest = FakeDigest(),
             gallerySaver = FakeGallerySaver(),
+            galleryItemLocator = LocatesNoGalleryItem,
             photoStorage = FakePhotoStorage(),
             idGenerator = FakeIdGenerator(),
+            deviceIdProvider = FakeDeviceIdProvider(),
             clock = clock,
+            analytics = NoAnalytics,
         ),
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
@@ -449,4 +523,8 @@ class EncounterDetailStoreTest {
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
+}
+
+private object LocatesNoGalleryItem : GalleryItemLocator {
+    override suspend fun locate(pickedUri: String): String? = null
 }

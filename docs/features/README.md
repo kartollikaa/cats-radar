@@ -25,6 +25,8 @@ a document nobody updates is worse than none.
   a translatable resource.
 - `photos.md` — reading a photo's metadata, the app's own copies, hashing, the gallery, and why
   the pixel tests need Robolectric's native graphics.
+- `photo-viewer.md` — a cat's photo fullscreen: the gestures, the chrome a tap hides, and why it
+  sits in a dialog window above the bottom bar.
 - `import.md` — turning gallery photos into encounters: where their date and their location
   come from, and why a historical photo never gets today's.
 - `statistics.md` — what every number means: day windows, streaks, milestones, and why the
@@ -41,6 +43,9 @@ a document nobody updates is worse than none.
 - `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
   things that redraw it.
 - `map.md` — the Map tab: which cats are on it, where the tiles come from, and why it is the
-  one screen that goes online.
+  one screen that fetches from the network.
+- `analytics.md` — crash reports to Crashlytics, screen views and product events to Analytics: the
+  event catalogue, what never leaves the phone, no advertising, the failures the app recovers from that are still reported, and why every
+  build reports.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

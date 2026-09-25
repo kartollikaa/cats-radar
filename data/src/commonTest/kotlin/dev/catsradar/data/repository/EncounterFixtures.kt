@@ -20,6 +20,7 @@ internal fun distinctEncounter(): Encounter = Encounter(
     photoPath = "photos/a.jpg",
     thumbPath = "thumbs/a.jpg",
     galleryUri = "content://gallery/1",
+    sourceMediaUri = "content://media/external/images/media/1",
     sourceDigest = "digest-1",
     lat = 10.111,
     lon = 20.222,

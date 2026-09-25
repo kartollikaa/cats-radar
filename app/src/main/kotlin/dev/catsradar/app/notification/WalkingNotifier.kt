@@ -11,6 +11,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
@@ -18,7 +20,9 @@ import androidx.core.content.ContextCompat
 import dev.catsradar.app.MainActivity
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.ui.R
-import dev.catsradar.app.R as AppR
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 // Android lets an app lower a channel's importance but never raise it; a raised one needs a new id.
 private const val CHANNEL_ID = "walking_lock_screen"
@@ -31,10 +35,16 @@ private const val NOTIFICATION_ID = 2
  * With location allowed it is carried by [WalkRecordingService], which records the walk's route;
  * without, it is a plain ongoing notification, which outlives the app leaving the screen on its own.
  */
-class WalkingNotifier(private val context: Context) : WalkingNotifications {
+class WalkingNotifier internal constructor(
+    private val context: Context,
+    private val manager: NotificationManagerCompat,
+    private val recording: WalkRecordingControl,
+    private val clock: Clock,
+    private val sdkInt: Int = Build.VERSION.SDK_INT,
+) : WalkingNotifications {
 
-    private val manager = NotificationManagerCompat.from(context)
-    private val recording = WalkRecordingControl(context)
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.CINNAMON_BUN)
+    private val hasMetricStyle = sdkInt >= Build.VERSION_CODES.CINNAMON_BUN
 
     fun ensureChannel() {
         manager.deleteNotificationChannel(RETIRED_CHANNEL_ID)
@@ -48,18 +58,18 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         )
     }
 
-    override fun show(count: Int, appOnScreen: Boolean) {
+    override fun show(count: Int, startedAt: Instant?, appOnScreen: Boolean) {
         // A service may only gain location access while the app is on screen; one running keeps it.
-        val recorded = appOnScreen && context.hasPreciseLocation() && recording.start(count)
-        if (!recorded) post(build(count))
+        val recorded = appOnScreen && context.hasPreciseLocation() && recording.start(count, startedAt)
+        if (!recorded) post(build(count, startedAt))
     }
 
     /** Makes the notification [service]'s own, running it in the foreground with location access. */
-    fun carry(service: Service, count: Int) {
+    fun carry(service: Service, count: Int, startedAt: Instant?) {
         ServiceCompat.startForeground(
             service,
             NOTIFICATION_ID,
-            build(count),
+            build(count, startedAt),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
         )
     }
@@ -69,11 +79,13 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         manager.cancel(NOTIFICATION_ID)
     }
 
-    private fun build(count: Int): Notification =
+    private fun build(count: Int, startedAt: Instant?): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(AppR.drawable.ic_notification_cat)
+            .setSmallIcon(R.drawable.ic_cat_walking)
             .setContentTitle(context.getString(R.string.notification_walking_title))
             .setContentText(context.resources.getQuantityString(R.plurals.notification_walking_count, count, count))
+            // A start ahead of the clock would count up from below zero.
+            .showWalkTime(count, startedAt?.let { minOf(it, clock.now()) })
             .setOngoing(true)
             .setSilent(true)
             // API 36.1 and up may promote an ongoing notification to the status-bar chip and the
@@ -103,6 +115,16 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
                 broadcast(WalkingAction.STOP),
             )
             .build()
+
+    // Both clocks are ticked by the system, so the time moves with no repost and no process alive.
+    // The header draws a chronometer even with showWhen off, so beside MetricStyle's stopwatch there is none.
+    private fun NotificationCompat.Builder.showWalkTime(count: Int, startedAt: Instant?): NotificationCompat.Builder =
+        when {
+            hasMetricStyle ->
+                setShowWhen(false).setStyle(context.walkMetrics(count, startedAt))
+            startedAt == null -> setShowWhen(false)
+            else -> setWhen(startedAt.toEpochMilliseconds()).setShowWhen(true).setUsesChronometer(true)
+        }
 
     private fun broadcast(action: String): PendingIntent = PendingIntent.getBroadcast(
         context,
@@ -141,6 +163,26 @@ class WalkingNotifier(private val context: Context) : WalkingNotifications {
         }
         manager.notify(NOTIFICATION_ID, notification)
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
+internal fun Context.walkMetrics(count: Int, startedAt: Instant?): NotificationCompat.MetricStyle {
+    val style = NotificationCompat.MetricStyle().addMetric(
+        NotificationCompat.Metric(
+            NotificationCompat.Metric.FixedInt(count),
+            getString(R.string.notification_walking_metric_cats),
+        ),
+    )
+    if (startedAt == null) return style
+    return style.addMetric(
+        NotificationCompat.Metric(
+            NotificationCompat.Metric.TimeDifference.forStopwatch(
+                startedAt.toJavaInstant(),
+                NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
+            ),
+            getString(R.string.notification_walking_metric_time),
+        ),
+    )
 }
 
 // Approximate location alone gives fixes too rough for any of them to join a route.

@@ -8,6 +8,7 @@ import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.domain.stats.Rate
 import dev.catsradar.domain.stats.RatedOuting
 import dev.catsradar.domain.stats.Stats
+import dev.catsradar.domain.stats.WalkStats
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
@@ -195,5 +196,43 @@ class StatisticsStateMapperTest {
             ),
             mapper.map(stats),
         )
+    }
+
+    private fun walked(meters: Double, catsPerKm: Double? = null) =
+        WalkStats(walkedMeters = meters, catsPerKm = catsPerKm)
+
+    @Test
+    fun `with nothing walked the walk rows are left out`() {
+        assertNull(mapper.map(stats(total = 3), walked(0.0)).walked)
+        assertNull(mapper.map(stats(total = 3)).walked)
+    }
+
+    @Test
+    fun `under a kilometre the distance reads in whole metres`() {
+        val state = mapper.map(stats(total = 1), walked(350.4))
+
+        assertEquals(WalkedState(DistanceState("350", DistanceUnit.METERS), catsPerKm = null), state.walked)
+    }
+
+    @Test
+    fun `a distance that rounds to a thousand metres reads as a kilometre`() {
+        val justUnder = mapper.map(stats(total = 1), walked(999.4)).walked?.distance
+        val justOver = mapper.map(stats(total = 1), walked(999.6)).walked?.distance
+
+        assertEquals(DistanceState("999", DistanceUnit.METERS), justUnder)
+        assertEquals(DistanceState("1.0", DistanceUnit.KILOMETERS), justOver)
+    }
+
+    @Test
+    fun `from a kilometre the distance reads in kilometres to one decimal`() {
+        val state = mapper.map(stats(total = 1), walked(12_449.0))
+
+        assertEquals(DistanceState("12.4", DistanceUnit.KILOMETERS), state.walked?.distance)
+    }
+
+    @Test
+    fun `cats per km reads to one decimal, and stays unmeasured without a long enough walk`() {
+        assertEquals("3.3", mapper.map(stats(total = 1), walked(4_000.0, catsPerKm = 3.26)).walked?.catsPerKm)
+        assertNull(mapper.map(stats(total = 1), walked(300.0, catsPerKm = null)).walked?.catsPerKm)
     }
 }

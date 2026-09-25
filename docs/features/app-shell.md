@@ -81,9 +81,8 @@ blip just behind the sweep line. The cat is the adaptive icon's foreground and t
 background, so the launcher's parallax moves them apart. The themed (monochrome) layer is the head's
 silhouette with the eyes and nose cut out, plus the blip. A vector drawable cannot read a Kotlin
 constant, so the foreground and monochrome drawables carry their own copies of the face's paths.
-The walking notification's icon ([walking-mode.md](./walking-mode.md#a-live-update-from-api-361)) is
-another copy. `CatIconTest` fails if any copy stops matching `CatFacePaths`, so a change to the face
-has to be copied into every one of them. The two inner rings stay inside the safe zone, so a
+`CatIconTest` fails if either copy stops matching `CatFacePaths`, so a change to the face has to be
+copied into both. The two inner rings stay inside the safe zone, so a
 launcher shape with inward curves never cuts them. The third ring lies beyond the circle and shows
 only in the corners of squarer shapes.
 
@@ -166,17 +165,22 @@ goes away (*work started in handle is cancelled when the scope closes*).
 
 Dependency injection has a deliberately narrow single owner: only `:app`'s `di` package constructs
 Koin `module {}` blocks; `:domain`, `:data`, and `:presentation` expose plain constructors and are
-otherwise Koin-agnostic. Two different tests check the DI graph against two different failure
+otherwise Koin-agnostic. Every class receives its collaborators through its constructor — a
+`Vibrator`, a `SharedPreferences` file, `WorkManager`, the Firebase instances, the Play Services
+location client, another mapper — and only the Koin modules and `CatsRadarApplication` obtain them
+([docs/rules/dependency-injection.md](../rules/dependency-injection.md), guarded by
+`DependencyLookupTest`). Two different tests check the DI graph against two different failure
 shapes: `KoinModulesTest` walks constructor parameters statically (`module.verify()`) to prove the
 graph is *declarable*, but that check is blind to anything resolved by hand inside a lambda
 binding or a composable (`androidContext()`, `koinInject<Haptics>()`) — nothing reflects a
 constructor for those. `KoinRuntimeResolutionTest` closes that gap by actually starting Koin and
 resolving exactly those hand-resolved types, so a deleted binding fails a JVM test instead of
-surfacing on the user's first tap. A few singletons are deliberately lazy inside their own
-constructor (`FusedLocationProvider`'s Play Services client, `WorkManagerLocationAttachScheduler`'s
-`WorkManager` instance), specifically so Koin's own eager DI-graph resolution doesn't itself
-trigger a Play Services connection or touch `WorkManager` before `WorkManager.initialize()` has
-run.
+surfacing on the user's first tap. It has WorkManager running before it resolves anything, as the
+app does: every scheduler takes the `WorkManager` instance, which exists from
+`WorkManager.initialize()` on, right after `startKoin()`. It also reads the three preference files
+back through the real bindings, so renaming one — which would lose what installed versions stored
+there — fails a test. Only the Play Services client reaches `FusedLocationProvider` as `Lazy<T>`,
+because building it reaches Play Services, which only a real location call should do.
 
 ## Where the code lives
 

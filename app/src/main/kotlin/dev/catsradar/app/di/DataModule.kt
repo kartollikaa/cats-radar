@@ -1,6 +1,14 @@
 package dev.catsradar.app.di
 
+import android.content.Context
+import android.content.SharedPreferences
+import android.location.Geocoder
+import android.os.Vibrator
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.firebase.analytics.FirebaseAnalytics
 import dev.catsradar.app.BuildConfig
+import dev.catsradar.data.analytics.FirebaseAnalyticsReporter
 import dev.catsradar.data.backup.ZipBackupReader
 import dev.catsradar.data.backup.ZipBackupWriter
 import dev.catsradar.data.db.CatsDatabase
@@ -15,7 +23,9 @@ import dev.catsradar.data.platform.AndroidImageResizer
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.platform.AndroidReverseGeocoder
 import dev.catsradar.data.platform.FusedLocationProvider
+import dev.catsradar.data.platform.MediaStoreGalleryItems
 import dev.catsradar.data.platform.MediaStoreGallerySaver
+import dev.catsradar.data.platform.MediaStoreItemLocator
 import dev.catsradar.data.platform.MediaStoreSourceFileTime
 import dev.catsradar.data.platform.RandomIdGenerator
 import dev.catsradar.data.platform.Sha256Digest
@@ -27,11 +37,14 @@ import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
+import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.GalleryItemLocator
+import dev.catsradar.domain.platform.GalleryItems
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.IdGenerator
@@ -48,12 +61,15 @@ import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.repository.TransactionRunner
 import dev.catsradar.domain.repository.WalkRepository
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.scope.Scope
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
     single { createCatsDatabase(androidContext()) }
     single<EncounterDao> { get<CatsDatabase>().encounterDao() }
     single<EncounterRepository> { EncounterRepositoryImpl(get()) }
+    single<Analytics> { FirebaseAnalyticsReporter(FirebaseAnalytics.getInstance(androidContext())) }
     single<PlaceCellDao> { get<CatsDatabase>().placeCellDao() }
     single<PlaceCellRepository> { PlaceCellRepositoryImpl(get()) }
     single<WalkDao> { get<CatsDatabase>().walkDao() }
@@ -63,11 +79,17 @@ val dataModule = module {
     factory<IdGenerator> { RandomIdGenerator() }
     // createdAtStart: the one-time SharedPreferences read must land at app start, not on the
     // first tap that resolves LogTally.
-    single<DeviceIdProvider>(createdAtStart = true) { SharedPreferencesDeviceIdProvider(androidContext(), get()) }
-    single<Haptics> { VibratorHaptics(androidContext()) }
-    single<LocationProvider> { FusedLocationProvider(androidContext(), get()) }
-    single<LocationPermissionRequestState> { SharedPreferencesLocationPermissionRequestState(androidContext()) }
-    single<WalkRecordingState> { SharedPreferencesWalkRecordingState(androidContext()) }
+    single<DeviceIdProvider>(createdAtStart = true) {
+        SharedPreferencesDeviceIdProvider(preferences("device"), get())
+    }
+    single<Haptics> { VibratorHaptics(androidContext().getSystemService(Vibrator::class.java)) }
+    single<FusedLocationProviderClient> { LocationServices.getFusedLocationProviderClient(androidContext()) }
+    // Lazy: building the client reaches Play Services, which only a real location call should do.
+    single { FusedLocationProvider(androidContext(), inject(), get()) } bind LocationProvider::class
+    single<LocationPermissionRequestState> {
+        SharedPreferencesLocationPermissionRequestState(preferences("location_permission"))
+    }
+    single<WalkRecordingState> { SharedPreferencesWalkRecordingState(preferences("walk_recording")) }
     single { AndroidPhotoStorage(androidContext()) }
     // The resizer needs the concrete store: it writes through it, which the interface does not expose.
     single<PhotoStorage> { get<AndroidPhotoStorage>() }
@@ -75,6 +97,8 @@ val dataModule = module {
     single<ImageResizer> { AndroidImageResizer(androidContext(), get()) }
     single<Digest> { Sha256Digest(androidContext()) }
     single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
+    single<GalleryItems> { MediaStoreGalleryItems(androidContext()) }
+    single<GalleryItemLocator> { MediaStoreItemLocator(androidContext()) }
     single<SourceFileTime> { MediaStoreSourceFileTime(androidContext()) }
     single<BackupWriter> {
         ZipBackupWriter(
@@ -86,6 +110,13 @@ val dataModule = module {
         )
     }
     single<BackupReader> { ZipBackupReader(androidContext(), get<AndroidPhotoStorage>()) }
-    single<ReverseGeocoder> { AndroidReverseGeocoder(androidContext()) }
+    single<ReverseGeocoder> {
+        val context = androidContext()
+        AndroidReverseGeocoder(newGeocoder = { Geocoder(context) })
+    }
     single<SettingsRepository> { createSettingsRepository(androidContext()) }
 }
+
+// A preferences file's name is where its data lives: renaming one loses everything stored in it.
+private fun Scope.preferences(name: String): SharedPreferences =
+    androidContext().getSharedPreferences(name, Context.MODE_PRIVATE)

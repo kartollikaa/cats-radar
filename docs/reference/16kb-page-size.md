@@ -16,7 +16,7 @@ Three things have to hold, and only the third ever failed here:
 
 | | Requirement | State |
 |---|---|---|
-| APK packaging | `.so` entries stored uncompressed, at 16 KB-aligned offsets | already correct — AGP does this |
+| APK packaging | `.so` entries stored uncompressed, at 16 KB-aligned offsets — or compressed and unpacked at install, as a release build does | already correct — AGP does this |
 | ELF load segments | every `PT_LOAD` has `p_align` ≥ 16384 | already correct in every dependency |
 | ELF relocation-read-only segment | `PT_GNU_RELRO` fits the `PT_LOAD` that holds it | **failed** in one dependency |
 
@@ -43,7 +43,7 @@ The platform's own verdict is the check, and the emulator this project uses is a
 image. Install, launch, and read the log:
 
 ```bash
-adb logcat -c && adb shell am force-stop dev.catsradar && adb shell monkey -p dev.catsradar -c android.intent.category.LAUNCHER 1 && sleep 6 && adb logcat -d | grep -c PageSizeMismatchDialog
+adb logcat -c && adb shell am force-stop com.kartollika.catsradar && adb shell monkey -p com.kartollika.catsradar -c android.intent.category.LAUNCHER 1 && sleep 6 && adb logcat -d | grep -c PageSizeMismatchDialog
 ```
 
 `0` is a pass. Anything else prints the offending libraries in the dialog itself.

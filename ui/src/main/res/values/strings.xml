@@ -104,6 +104,11 @@
     <string name="statistics_rate_per_hour">%1$s / h</string>
     <string name="statistics_rate_per_minute">%1$s / min</string>
     <string name="statistics_rate_unavailable">—</string>
+    <string name="statistics_walked">Walked</string>
+    <string name="statistics_cats_per_km">Cats per km</string>
+    <string name="statistics_distance_meters">%1$s m</string>
+    <string name="statistics_distance_kilometers">%1$s km</string>
+    <string name="statistics_rate_per_km">%1$s / km</string>
     <string name="statistics_places">Places</string>
 
     <string name="regions_no_places_yet">No places yet</string>
@@ -153,6 +158,12 @@
     <string name="detail_pick_photo">Choose from gallery</string>
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_attaching">Attaching the photo</string>
+    <string name="detail_open_photo">Open full screen</string>
+    <string name="detail_show_on_map">Show on the map</string>
+    <string name="viewer_back">Back</string>
+    <string name="viewer_open_in_gallery">Open in gallery</string>
+    <string name="viewer_gallery_gone">This photo is no longer in the gallery</string>
+    <string name="viewer_no_gallery_app">No app can show this photo</string>
 
     <string name="tab_settings">Settings</string>
     <string name="settings_save_originals">Keep photos in the gallery</string>
@@ -176,6 +187,8 @@
     <string name="notification_walking_tally">Cat!</string>
     <string name="notification_walking_stop">Done</string>
     <string name="notification_walking_photo">Photo</string>
+    <string name="notification_walking_metric_cats">Cats</string>
+    <string name="notification_walking_metric_time">Walk</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d cat this outing</item>
         <item quantity="other">%1$d cats this outing</item>
@@ -188,6 +201,7 @@
     <string name="counter_walk_start_hint">tap to begin</string>
     <string name="counter_walk_stop">Stop the walk</string>
     <string name="counter_walk_stop_hint">press and hold</string>
+    <string name="counter_walk_stop_hint_timed">%1$s · press and hold</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">cat today</item>

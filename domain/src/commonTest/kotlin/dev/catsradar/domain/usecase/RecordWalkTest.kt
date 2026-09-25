@@ -6,6 +6,7 @@ import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeLocationProvider
 import dev.catsradar.domain.testing.FakeWalkRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -18,7 +19,13 @@ class RecordWalkTest {
     @Test
     fun `every fix the device reports goes to the route of the walk that is on`() = runTest {
         val walks = FakeWalkRepository()
-        StartWalk(walks, FakeIdGenerator(), FakeDeviceIdProvider(), FakeClock(START))()
+        StartWalk(
+            walks,
+            FakeIdGenerator(),
+            FakeDeviceIdProvider(),
+            FakeClock(START),
+            analytics = RecordingAnalytics()
+        )()
         val fixes = flowOf(fix(atSecond = 5, latOffset = 0.0), fix(10, 0.001), fix(15, 0.002))
 
         RecordWalk(FakeLocationProvider(trackedFixes = fixes), RecordTrackPoint(walks))()

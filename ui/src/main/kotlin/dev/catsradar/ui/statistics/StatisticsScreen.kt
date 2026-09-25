@@ -26,10 +26,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.statistics.BestOutingState
 import dev.catsradar.presentation.statistics.CoatShareState
+import dev.catsradar.presentation.statistics.DistanceState
+import dev.catsradar.presentation.statistics.DistanceUnit
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.presentation.statistics.StatisticsState
+import dev.catsradar.presentation.statistics.WalkedState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CatFace
 import dev.catsradar.ui.coat.labelRes
@@ -78,6 +81,17 @@ fun StatisticsScreen(
             StatRow(R.string.statistics_outing_count, state.outingsLabel)
             StatRow(R.string.statistics_active_time, state.activeTimeLabel)
             StatRow(R.string.statistics_overall_rate, state.overallRate.label())
+            state.walked?.let { walked ->
+                val distance = walked.distance
+                val distanceLabel = when (distance.unit) {
+                    DistanceUnit.METERS -> stringResource(R.string.statistics_distance_meters, distance.value)
+                    DistanceUnit.KILOMETERS -> stringResource(R.string.statistics_distance_kilometers, distance.value)
+                }
+                val catsPerKmLabel = walked.catsPerKm?.let { stringResource(R.string.statistics_rate_per_km, it) }
+                    ?: stringResource(R.string.statistics_rate_unavailable)
+                StatRow(R.string.statistics_walked, distanceLabel)
+                StatRow(R.string.statistics_cats_per_km, catsPerKmLabel)
+            }
             state.bestOuting?.let { best ->
                 StatRow(
                     R.string.statistics_best_outing,
@@ -227,6 +241,7 @@ private val sampleStatistics = StatisticsState(
     outingsLabel = "38",
     activeTimeLabel = "14 h 20 min",
     overallRate = RateState(value = "4.2", unit = RateUnit.PER_HOUR),
+    walked = WalkedState(DistanceState("42.7", DistanceUnit.KILOMETERS), catsPerKm = "3.1"),
     bestOuting = BestOutingState(
         count = 9,
         durationLabel = "42 min",

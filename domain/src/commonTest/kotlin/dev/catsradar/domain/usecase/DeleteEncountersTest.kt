@@ -3,6 +3,7 @@ package dev.catsradar.domain.usecase
 import dev.catsradar.domain.model.DeletedBatch
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -16,7 +17,7 @@ class DeleteEncountersTest {
     @Test
     fun `soft deletes every given id with one instant taken from the clock`() = runTest {
         val repository = FakeEncounterRepository()
-        val deleteEncounters = DeleteEncounters(repository, FakeClock(now))
+        val deleteEncounters = DeleteEncounters(repository, FakeClock(now), analytics = RecordingAnalytics())
 
         val batch = deleteEncounters(listOf("a", "b", "c"))
 
@@ -29,7 +30,7 @@ class DeleteEncountersTest {
         val repository = FakeEncounterRepository()
         val batch = DeletedBatch(ids = listOf("a", "b"), deletedAt = now)
 
-        UndoDeleteEncounters(repository)(batch)
+        UndoDeleteEncounters(repository, analytics = RecordingAnalytics())(batch)
 
         assertEquals(listOf(listOf("a", "b") to now), repository.undoDeleteAllCalls)
     }
@@ -39,10 +40,10 @@ class DeleteEncountersTest {
         val repository = FakeEncounterRepository()
         listOf("a", "b", "c").forEach { repository.insert(encounterFixture(it, Instant.parse("2026-09-23T09:00:00Z"))) }
 
-        val batch = DeleteEncounters(repository, FakeClock(now))(listOf("a", "b"))
+        val batch = DeleteEncounters(repository, FakeClock(now), analytics = RecordingAnalytics())(listOf("a", "b"))
         assertEquals(listOf("c"), repository.observeAll().first().map { it.id })
 
-        UndoDeleteEncounters(repository)(batch)
+        UndoDeleteEncounters(repository, analytics = RecordingAnalytics())(batch)
         assertEquals(listOf("a", "b", "c"), repository.observeAll().first().map { it.id })
     }
 }

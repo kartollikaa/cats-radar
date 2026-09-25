@@ -41,6 +41,8 @@ class WorkManagerLocationAttachSchedulerEnqueueTest {
         )
     }
 
+    private fun scheduler(sdkInt: Int) = WorkManagerLocationAttachScheduler(WorkManager.getInstance(context), sdkInt)
+
     @After
     fun tearDown() {
         WorkManager.getInstance(context).cancelAllWork().result.get()
@@ -49,21 +51,21 @@ class WorkManagerLocationAttachSchedulerEnqueueTest {
 
     @Test
     fun `enqueues expedited work on API 31 and above`() {
-        WorkManagerLocationAttachScheduler(context, sdkInt = 31).schedule("encounter-1")
+        scheduler(sdkInt = 31).schedule("encounter-1")
 
         assertTrue(enqueuedWorkSpec("encounter-1").expedited)
     }
 
     @Test
     fun `enqueues ordinary work below API 31`() {
-        WorkManagerLocationAttachScheduler(context, sdkInt = 30).schedule("encounter-2")
+        scheduler(sdkInt = 30).schedule("encounter-2")
 
         assertFalse(enqueuedWorkSpec("encounter-2").expedited)
     }
 
     @Test
     fun `cancel cancels the unique work scheduled for that encounter id`() {
-        val scheduler = WorkManagerLocationAttachScheduler(context, sdkInt = 30)
+        val scheduler = scheduler(sdkInt = 30)
         scheduler.schedule("encounter-3")
         scheduler.cancel("encounter-3")
         shadowOf(Looper.getMainLooper()).idle()

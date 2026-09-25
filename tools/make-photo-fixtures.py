@@ -85,8 +85,10 @@ def upright_quadrants(size):
     image = Image.new("RGB", size)
     width, height = size
     for index, color in enumerate(UPRIGHT_QUADRANTS):
-        left, top = (index % 2) * width // 2, (index // 2) * height // 2
-        image.paste(color, (left, top, left + width // 2, top + height // 2))
+        # The right and bottom quadrants take the odd pixel, so an odd size leaves no unpainted edge.
+        left, right = (width // 2, width) if index % 2 else (0, width // 2)
+        top, bottom = (height // 2, height) if index // 2 else (0, height // 2)
+        image.paste(color, (left, top, right, bottom))
     return image
 
 
@@ -99,8 +101,8 @@ def nearest(color):
     return min(UPRIGHT_QUADRANTS, key=lambda c: sum((a - b) ** 2 for a, b in zip(c, color)))
 
 
-def oriented(path, orientation):
-    upright = upright_quadrants((300, 400))
+def oriented(path, orientation, size=(300, 400)):
+    upright = upright_quadrants(size)
     sensor = upright.transpose(SENSOR_LAYOUT[orientation]) if orientation in SENSOR_LAYOUT else upright
     exif = sensor.getexif()
     exif[ExifTags.Base.Orientation] = orientation
@@ -118,6 +120,9 @@ def main():
     small_no_exif(f"{OUT}/small_no_exif.jpg")
     for orientation in range(1, 9):
         oriented(f"{OUT}/orientation_{orientation}.jpg", orientation)
+    # Over twice the resizer's cap, so the decode has to shrink it. The odd long side rounds up once
+    # halved, and at exactly this size that puts a copy sized from the shrunk decode a pixel off.
+    oriented(f"{OUT}/large_orientation_6.jpg", 6, size=(3082, 4099))
     with open(f"{OUT}/landscape_with_gps.jpg", "rb") as source:
         head = source.read(400)
     with open(f"{OUT}/truncated.jpg", "wb") as truncated:

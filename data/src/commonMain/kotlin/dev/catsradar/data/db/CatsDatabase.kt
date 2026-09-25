@@ -11,8 +11,8 @@ internal const val DATABASE_FILE_NAME = "cats_radar.db"
 
 @Database(
     entities = [EncounterEntity::class, PlaceCellEntity::class, WalkEntity::class, TrackPointEntity::class],
-    version = 2,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    version = 3,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 // @ColumnTypeConverter(s), not Room 2.x's @TypeConverter(s): the old names compile but fail KSP
 // with an opaque [MissingType] error on CatsDatabase that never mentions converters.

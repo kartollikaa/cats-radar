@@ -22,6 +22,7 @@ dependencies {
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.compose.compiler.gradlePlugin)
     compileOnly(libs.detekt.gradlePlugin)
+    compileOnly(libs.firebase.crashlytics.gradlePlugin)
 }
 
 gradlePlugin {
@@ -45,6 +46,10 @@ gradlePlugin {
         register("detekt") {
             id = "catsradar.detekt"
             implementationClass = "DetektConventionPlugin"
+        }
+        register("firebase") {
+            id = "catsradar.firebase"
+            implementationClass = "FirebaseConventionPlugin"
         }
     }
 }

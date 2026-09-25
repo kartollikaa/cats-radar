@@ -1,19 +1,14 @@
 package dev.catsradar.app.notification
 
-import dev.catsradar.domain.model.CatCoat
-import dev.catsradar.domain.model.Encounter
-import dev.catsradar.domain.model.EncounterKind
-import dev.catsradar.domain.model.EncounterOrigin
-import dev.catsradar.domain.model.LocationSource
-import dev.catsradar.domain.model.LocationStamp
-import dev.catsradar.domain.model.PhotoStamp
-import dev.catsradar.domain.model.PlaceCellAssignment
-import dev.catsradar.domain.repository.EncounterRepository
+import dev.catsradar.domain.model.TrackPoint
+import dev.catsradar.domain.model.Walk
+import dev.catsradar.domain.repository.WalkRepository
+import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -25,42 +20,21 @@ import kotlin.time.Instant
 
 private val Now = Instant.parse("2026-09-22T10:00:00Z")
 
-private fun tally(id: String, at: Instant): Encounter = Encounter(
-    id = id,
-    occurredAt = at,
-    tzOffsetMinutes = 0,
-    kind = EncounterKind.TALLY,
-    origin = EncounterOrigin.APP,
-    coat = null,
-    photoPath = null,
-    thumbPath = null,
-    galleryUri = null,
-    sourceDigest = null,
-    lat = null,
-    lon = null,
-    accuracyMeters = null,
-    locationSource = LocationSource.NONE,
-    locationFixedAt = null,
-    geohash = null,
-    placeCellId = null,
-    deviceId = "device-1",
-    createdAt = at,
-    updatedAt = at,
-    deletedAt = null,
-)
-
 class WalkingNotificationSyncTest {
 
-    private val encounters = FakeEncounterRepository()
+    private val encounters = InMemoryEncounters()
+    private val walks = OpenWalkOnly()
     private val settings = FakeWalkingSettings()
     private val notifications = RecordingWalkingNotifications()
     private val ticks = MutableSharedFlow<Unit>(replay = 1)
     private val appOnScreen = MutableStateFlow(false)
 
-    private fun TestScope.startSync() {
+    private fun TestScope.startSync(walkStarted: Boolean = true) {
+        if (walkStarted) walks.start(WalkStart)
         ticks.tryEmit(Unit)
         WalkingNotificationSync(
             settingsRepository = settings,
+            observeOpenWalk = ObserveOpenWalk(walks),
             observeStats = ObserveStats(
                 encounterRepository = encounters,
                 clock = object : Clock {
@@ -132,6 +106,34 @@ class WalkingNotificationSyncTest {
             )
         }
 
+    // The flag leads and the walk row follows it; until the row exists there is no start to count from.
+    @Test
+    fun `the walk's start reaches the notification once the walk has begun`() =
+        runTest(UnconfinedTestDispatcher()) {
+            startSync(walkStarted = false)
+            settings.walking.value = true
+
+            walks.start(WalkStart)
+
+            assertEquals(
+                listOf(Posted.Clear, Posted.Show(0, startedAt = null), Posted.Show(0)),
+                notifications.actions,
+            )
+        }
+
+    // Done writes the flag and then ends the walk; the two can reach the sync in either order.
+    @Test
+    fun `a walk ending while the mode still reads on does not put the notification back up`() =
+        runTest(UnconfinedTestDispatcher()) {
+            startSync()
+            settings.walking.value = true
+
+            walks.end()
+            settings.walking.value = false
+
+            assertEquals(listOf(Posted.Clear, Posted.Show(0), Posted.Clear), notifications.actions)
+        }
+
     @Test
     fun `stopping the walk takes the notification away`() = runTest(UnconfinedTestDispatcher()) {
         startSync()
@@ -144,15 +146,15 @@ class WalkingNotificationSyncTest {
 }
 
 private sealed interface Posted {
-    data class Show(val count: Int, val appOnScreen: Boolean = false) : Posted
+    data class Show(val count: Int, val startedAt: Instant? = WalkStart, val appOnScreen: Boolean = false) : Posted
     data object Clear : Posted
 }
 
 private class RecordingWalkingNotifications : WalkingNotifications {
     val actions = mutableListOf<Posted>()
 
-    override fun show(count: Int, appOnScreen: Boolean) {
-        actions += Posted.Show(count, appOnScreen)
+    override fun show(count: Int, startedAt: Instant?, appOnScreen: Boolean) {
+        actions += Posted.Show(count, startedAt, appOnScreen)
     }
 
     override fun clear() {
@@ -160,42 +162,30 @@ private class RecordingWalkingNotifications : WalkingNotifications {
     }
 }
 
-private class FakeEncounterRepository : EncounterRepository {
-    private val rows = MutableStateFlow(emptyList<Encounter>())
+/** At most the one open walk, which is all the sync reads. */
+private class OpenWalkOnly : WalkRepository {
+    private val open = MutableStateFlow<Walk?>(null)
 
-    fun add(id: String, at: Instant) {
-        rows.update { it + tally(id, at) }
+    fun start(at: Instant) {
+        open.value = Walk("walk-1", startedAt = at, endedAt = null, "device-1", createdAt = at, updatedAt = at)
     }
 
-    override fun observeAll(): Flow<List<Encounter>> = rows
+    fun end() {
+        open.value = null
+    }
 
-    override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
-    override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
-    override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
-    override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
+    override fun observeAll(): Flow<List<Walk>> = open.map { listOfNotNull(it) }
+    override suspend fun openWalk(): Walk? = open.value
+
+    override suspend fun startIfNoneOpen(walk: Walk): Walk = throw NotImplementedError("unused by this test")
+    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean =
         throw NotImplementedError("unused by this test")
 
-    override suspend fun attachPhoto(id: String, stamp: PhotoStamp): Boolean =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant): Unit =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun softDelete(id: String, deletedAt: Instant): Unit =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun undoDelete(id: String): Unit = throw NotImplementedError("unused by this test")
-    override suspend fun softDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun undoDeleteAll(ids: List<String>, deletedAt: Instant): Unit =
-        throw NotImplementedError("unused by this test")
-
-    override suspend fun findBySourceDigest(sourceDigest: String): Encounter? = null
-    override suspend fun loadEvery(): List<Encounter> = rows.value
-    override suspend fun loadDeletedBefore(cutoff: Instant): List<Encounter> = emptyList()
-    override suspend fun purgeDeletedBefore(cutoff: Instant): Int = 0
+    override suspend fun appendPoint(point: TrackPoint): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun lastPoint(walkId: String): TrackPoint? = throw NotImplementedError("unused by this test")
+    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = throw NotImplementedError("unused by this test")
+    override suspend fun loadEveryPoint(): List<TrackPoint> = throw NotImplementedError("unused by this test")
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> = throw NotImplementedError("unused by this test")
+    override suspend fun upsert(walk: Walk): Unit = throw NotImplementedError("unused by this test")
+    override suspend fun appendPoints(points: List<TrackPoint>): Unit = throw NotImplementedError("unused by this test")
 }

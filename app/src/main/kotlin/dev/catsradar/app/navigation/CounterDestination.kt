@@ -4,7 +4,6 @@ import android.Manifest
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -20,11 +19,9 @@ import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
-import dev.catsradar.app.photo.PickPhotosWithLocation
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.toCounterIntent
-import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
@@ -133,18 +130,11 @@ private fun rememberLocationPermissionRequester(store: CounterStore): LocationPe
 @Composable
 private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLauncher {
     val notificationPermission = rememberNotificationPermissionRequest()
-    val resultLauncher = rememberLauncherForActivityResult(PickPhotosWithLocation(Tuning.IMPORT_BATCH_MAX)) { uris ->
+    return rememberGalleryImportPicker { uris ->
         // Asked for after the pick, not before it: a run the user has actually started is the only
         // moment a progress notification is worth a dialog, and a refusal still imports.
         if (uris.isNotEmpty()) notificationPermission()
         store.dispatch(CounterIntent.Import.PhotosPicked(uris.map(Uri::toString).toImmutableList()))
-    }
-    return remember(resultLauncher) {
-        PhotoPickerLauncher {
-            resultLauncher.launch(
-                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-            )
-        }
     }
 }
 

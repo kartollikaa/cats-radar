@@ -14,14 +14,20 @@ import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounters
+import dev.catsradar.domain.usecase.ObserveOpenWalk
+import dev.catsradar.domain.usecase.ObserveOutingTracks
 import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
+import dev.catsradar.domain.usecase.ObserveWalkElapsed
+import dev.catsradar.domain.usecase.ObserveWalkStats
+import dev.catsradar.domain.usecase.ObserveWalkTracks
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
 import dev.catsradar.domain.usecase.RepairPlaceCells
+import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.StartWalk
@@ -29,6 +35,7 @@ import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
+import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -55,10 +62,12 @@ val domainModule = module {
             imageResizer = get(),
             digest = get(),
             sourceFileTime = get(),
+            galleryItemLocator = get(),
             idGenerator = get(),
             deviceIdProvider = get(),
             clock = get(),
             timeZone = get(),
+            analytics = get(),
         )
     }
     factoryOf(::UndoLastTally)
@@ -67,6 +76,11 @@ val domainModule = module {
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
+    factory { ObserveOpenWalk(walkRepository = get()) }
+    factory { ObserveWalkElapsed(observeOpenWalk = get(), clock = get()) }
+    factoryOf(::ObserveWalkTracks)
+    factory { ObserveWalkStats(observeWalkTracks = get(), computeDispatcher = Dispatchers.Default) }
+    factoryOf(::ObserveOutingTracks)
     // No zone passed: this one outlives a trip across time zones, so it reads the zone each time.
     factory { ObserveTodayCount(encounterRepository = get(), clock = get()) }
     factoryOf(::AttachLocation)
@@ -78,6 +92,7 @@ val domainModule = module {
     factoryOf(::SetCoat)
     factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
+    factoryOf(::ResolveGalleryLink)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)
     factoryOf(::DeleteEncounters)

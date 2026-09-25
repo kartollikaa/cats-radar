@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.Walk
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
+@Suppress("TooManyFunctions") // one function per operation on one aggregate
 interface WalkRepository {
     /** Newest start first. */
     fun observeAll(): Flow<List<Walk>>
@@ -29,6 +30,9 @@ interface WalkRepository {
 
     /** Every point of every walk, each walk's in route order. */
     suspend fun loadEveryPoint(): List<TrackPoint>
+
+    /** Every point of every walk, each walk's in route order, again whenever one is added. */
+    fun observeEveryPoint(): Flow<List<TrackPoint>>
 
     /** Writes [walk] as given, with none of [startIfNoneOpen]'s one-walk-at-a-time check. */
     suspend fun upsert(walk: Walk)

@@ -58,9 +58,17 @@ photographed removes only its own files, never the ones the cat now points at (`
 
 From the camera the original goes to the gallery under the same setting as a photo taken from the
 counter (see *The gallery setting* below); from the gallery it is never copied back in
-(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*).
+(`AttachPhotoTest`, *a photo from the gallery is never copied back into it*). A photo chosen from the
+gallery keeps the item it was picked as instead, by the same rule as an import (see
+[import.md](./import.md#the-gallery-item-it-came-from); `AttachPhotoTest`, *a photo chosen from the
+gallery remembers the item it came from*); a camera photo never does (*a photo from the camera is never
+linked to a picked item*). A cat another install logged keeps neither link — its camera original still
+goes to the gallery, the cat just does not point at it — because gallery ids are only this phone's (see
+[photo-viewer.md](./photo-viewer.md#open-in-gallery); `AttachPhotoTest`, *a cat another install logged
+keeps no link to the original, which still goes to the gallery*).
 
-The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceDigest` and `updatedAt`. The cat
+The write touches only `photoPath`, `thumbPath`, `galleryUri`, `sourceMediaUri`, `sourceDigest` and
+`updatedAt`. The cat
 keeps the time and place it was logged at, its coat, and its `kind` and `origin` — a tally given a
 photo this way is still a tally (`AttachPhotoTest`, *a cat without a photo gets the copy, thumbnail
 and digest, and keeps everything else*), and it now counts as "With photo" in Statistics like any
@@ -97,6 +105,10 @@ dependency off `:app`'s classpath.
 The switch renders what is *stored*, not what was last tapped: it follows the settings flow rather
 than keeping its own optimistic state, so a failed write cannot leave the two disagreeing.
 
+The `galleryUri` a saved original leaves on its cat is also what the photo viewer's *Open in gallery*
+opens, on the installation that saved it and while the gallery still holds the item, ahead of any
+picked item the cat also keeps (see [photo-viewer.md](./photo-viewer.md#open-in-gallery)).
+
 ## Reading a photo's metadata
 
 `ExifReader` returns latitude, longitude, the moment the shutter fired, and the UTC offset the
@@ -124,12 +136,30 @@ left alone — enlarging costs bytes and quality and adds no detail.
 
 Neither copy carries the original's metadata. The app republishes nobody's GPS.
 
+The original is never decoded larger than it needs to be. A phone camera's photo can run to
+hundreds of megapixels, and holding one whole in memory fails on a phone; a decode that fails reads
+as an unreadable photo, and the cat goes unsaved. The resizer reads the file's
+dimensions first and has `BitmapFactory` shrink the decode by the largest power of two that still
+leaves the longest side at or above the copy's cap, so the bitmap in memory is never more than
+twice the cap on a side, whatever the camera.
+
+- **Powers of two** because the JPEG decoder shrinks by those while decoding, averaging the pixels
+  it drops. `BitmapFactory` accepts any other factor too, but meets it by skipping pixels, which
+  turns fine detail such as fur into false patterns.
+- **The step is chosen rounding down.** JPEG rounds a shrunk side up while other formats may round
+  it down, and only rounding down keeps every format at or above the cap, so a copy is never
+  enlarged.
+- **Both copies are sized from the file's own dimensions,** not from the shrunk bitmap. The decoder
+  rounds a halved odd side, and sizing from its result would put a copy a pixel off the original's
+  proportions.
+
 Both copies are stored the way the photo is meant to be seen. A phone camera usually saves the
 sensor's pixels as they came off it plus an EXIF Orientation tag saying how to turn them — for a
-phone held upright, a quarter turn. The decoder ignores that tag, and the copies have no EXIF to
+phone held upright, a quarter turn. `BitmapFactory` ignores that tag, and the copies have no EXIF to
 pass it on, so the resizer applies the turn, or the mirroring, to the pixels itself. Without it a
 portrait photo lies on its side in the app while the gallery, which keeps the original, shows it
-upright.
+upright. `ImageDecoder` would shrink to an exact size in one call, but it applies the tag on its own,
+so on top of the resizer's turn it would turn every rotated photo twice.
 
 The arithmetic — which side is longest, what the other becomes, when to do nothing — is
 `scaleToFit` in `:domain`, a pure function with its own tests. That split is deliberate: see
@@ -180,6 +210,14 @@ corners after JPEG and resampling tell apart less reliably. The generator checks
 Pillow's `ImageOps.exif_transpose` before keeping it, so the answer `AndroidImageResizerOrientationTest` expects
 never comes from the code under test.
 
+One of them is phone-sized: the quarter-turn case at more than twice the copy's cap on its longest
+side, so its decode has to shrink. `AndroidImageResizerLargePhotoTest` checks the decode itself —
+shrunk, but never below the cap — and the sizes of both copies. The fixture's size is picked on
+purpose: its long side is odd, so halving rounds it up, and at this size that moves the copy's short
+side by a pixel. A copy sized from the shrunk bitmap instead of the file comes out a pixel narrower,
+and the size test fails; most sizes, odd or not, would hide that. Flat quadrants compress to almost
+nothing, which keeps a fixture that large small in the repository.
+
 ## Where the code lives
 
 - `domain/…/photo/ScaledSize.kt` — `scaleToFit`
@@ -194,7 +232,8 @@ never comes from the code under test.
 
 A photo encounter shows its thumbnail in an Encounters tile or card, the app's full copy when it
 shares a pair row with the photo next to it (see `browsing-cats.md`), and the full copy on the detail
-screen, all loaded from app-private storage with Coil. The mapper resolves the stored **relative**
+screen, all loaded from app-private storage with Coil; a tap on the detail screen's photo opens the
+same copy fullscreen (see [photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens
 to hold. A pair tile with no full copy falls back to its thumbnail.
 

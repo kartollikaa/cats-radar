@@ -4,7 +4,11 @@ Tapping a row in the Encounters list opens that one cat: the day it was logged (
 "Yesterday" — or a calendar date), the time, where its coordinates came from in words, and the
 coordinates themselves when there are any, with the fix's accuracy under them. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
-return to the list, never to the Counter root. The screen scrolls: a photo and the coat picker
+return to the list, never to the Counter root. The same screen opens from a dot on the Map
+([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
+above the screen it was tapped in. A cat that is on the map has its coordinates drawn in the theme's
+primary colour with a map mark beside them, and a tap anywhere in its **Where** section switches to the
+Map tab with the view on that cat (see [map.md](./map.md#a-cats-coordinates)). The screen scrolls: a photo and the coat picker
 together are taller than most phones, and Delete must never end up below the bottom edge. The coat
 picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
 [coat.md](./coat.md#changing-it-later).
@@ -34,7 +38,8 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 ## Giving a cat a photo
 
-A cat with a photo of its own shows the app's copy (see [photos.md](./photos.md#seeing-one)); one
+A cat with a photo of its own shows the app's copy (see [photos.md](./photos.md#seeing-one)), and a
+tap on it opens the photo fullscreen (see [photo-viewer.md](./photo-viewer.md)); one
 without shows a **Photo** section instead, with *Take a photo* and *Choose from gallery* — the system
 camera, or the system picker for a single image. A second tap before the camera or the picker
 answers opens nothing, so a double tap never opens two cameras (`EncounterDetailStoreTest`, *a
@@ -87,6 +92,10 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   *Missing*, or the other photo (see [photos.md](./photos.md) for the attempt's files).
 - **Setting the coat while a photo is being attached** keeps both (see
   [coat.md](./coat.md#at-the-edges)).
+- **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown
+  as numbers, but the map does not draw that cat, so its **Where** section opens nothing
+  (`EncounterDetailStoreTest`, *a cat that is not on the map opens no map*). A cat with no
+  coordinates has nothing to open either.
 
 ## Where the code lives
 
@@ -94,10 +103,12 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/detail/EncounterDetailScreen.kt`, `AddPhotoCard.kt`
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
-  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`),
-  `PhotoLaunchers.kt` (the camera and gallery-picker launchers)
+  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
+  pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
+  `MapFocusRequest` and selects the Map tab), `PhotoLaunchers.kt` (the camera and gallery-picker
+  launchers)
 
 ## Not built yet
 
-No place name and no map. The coordinates are shown as numbers only. A photo already on a cat
-cannot be replaced or removed from this screen (see `photos.md`).
+No place name: the coordinates are shown as numbers, and the map is a tap away rather than drawn on
+this screen. A photo already on a cat cannot be replaced or removed from this screen (see `photos.md`).

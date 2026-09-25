@@ -1,8 +1,6 @@
 package dev.catsradar.app.worker
 
-import android.content.Context
 import android.os.Build
-import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -18,26 +16,22 @@ interface ImportScheduler {
     fun observe(): Flow<WorkInfo?>
 }
 
-class WorkManagerImportScheduler(
-    context: Context,
+class WorkManagerImportScheduler internal constructor(
+    private val workManager: WorkManager,
+    private val batches: ImportBatches,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : ImportScheduler {
-    private val appContext = context.applicationContext
-
-    // Lazy for the same reason as the location scheduler: WorkManager.initialize() runs after Koin.
-    private val workManager by lazy { WorkManager.getInstance(appContext) }
 
     override fun start(uris: List<String>) {
         val requestBuilder = OneTimeWorkRequestBuilder<ImportPhotosWorker>()
-            .setInputData(
-                Data.Builder().putStringArray(ImportPhotosWorker.KEY_URIS, uris.toTypedArray()).build(),
-            )
         if (shouldExpedite(sdkInt)) {
             requestBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
         }
-        // REPLACE, not KEEP: the user picking a second batch means they want that batch, and the
-        // picker's read grants are per-process anyway, so a queued older run has nothing to lose.
-        workManager.enqueueUniqueWork(UNIQUE_NAME, ExistingWorkPolicy.REPLACE, requestBuilder.build())
+        val request = requestBuilder.build()
+        // Not input data: WorkManager caps it at Data.MAX_DATA_BYTES, which a batch of long URIs outgrows.
+        batches.replaceWith(request.id, uris)
+        // REPLACE, not KEEP: the user picking a second batch means they want that batch.
+        workManager.enqueueUniqueWork(UNIQUE_NAME, ExistingWorkPolicy.REPLACE, request)
     }
 
     override fun observe(): Flow<WorkInfo?> =

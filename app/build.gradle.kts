@@ -1,6 +1,7 @@
 plugins {
     id("catsradar.android.application")
     id("catsradar.compose")
+    id("catsradar.firebase")
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -19,6 +20,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.play.services.location)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
 

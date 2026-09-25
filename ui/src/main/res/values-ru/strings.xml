@@ -118,6 +118,11 @@
     <string name="statistics_rate_per_hour">%1$s / ч</string>
     <string name="statistics_rate_per_minute">%1$s / мин</string>
     <string name="statistics_rate_unavailable">—</string>
+    <string name="statistics_walked">Пройдено</string>
+    <string name="statistics_cats_per_km">Котиков на км</string>
+    <string name="statistics_distance_meters">%1$s м</string>
+    <string name="statistics_distance_kilometers">%1$s км</string>
+    <string name="statistics_rate_per_km">%1$s / км</string>
     <string name="statistics_places">Места</string>
 
     <string name="regions_no_places_yet">Мест пока нет</string>
@@ -175,6 +180,12 @@
     <string name="detail_pick_photo">Выбрать из галереи</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
+    <string name="detail_open_photo">Открыть на весь экран</string>
+    <string name="detail_show_on_map">Показать на карте</string>
+    <string name="viewer_back">Назад</string>
+    <string name="viewer_open_in_gallery">Открыть в галерее</string>
+    <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
+    <string name="viewer_no_gallery_app">Нет приложения, которое покажет это фото</string>
 
     <string name="tab_settings">Настройки</string>
     <string name="settings_save_originals">Сохранять фото в галерею</string>
@@ -198,6 +209,8 @@
     <string name="notification_walking_tally">Котик!</string>
     <string name="notification_walking_stop">Хватит</string>
     <string name="notification_walking_photo">Фото</string>
+    <string name="notification_walking_metric_cats">Котики</string>
+    <string name="notification_walking_metric_time">Прогулка</string>
     <plurals name="notification_walking_count">
         <item quantity="one">%1$d котик за прогулку</item>
         <item quantity="few">%1$d котика за прогулку</item>
@@ -212,6 +225,7 @@
     <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
     <string name="counter_walk_stop">Закончить прогулку</string>
     <string name="counter_walk_stop_hint">нажмите и удерживайте</string>
+    <string name="counter_walk_stop_hint_timed">%1$s · удерживайте</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик сегодня</item>

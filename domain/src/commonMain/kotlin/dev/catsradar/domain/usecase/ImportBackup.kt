@@ -1,5 +1,7 @@
 package dev.catsradar.domain.usecase
 
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.backup.BackupMerge
 import dev.catsradar.domain.backup.asImported
@@ -27,13 +29,22 @@ class ImportBackup(
     private val walkRepository: WalkRepository,
     private val transactionRunner: TransactionRunner,
     private val backupReader: BackupReader,
+    private val analytics: Analytics,
 ) {
-    suspend operator fun invoke(source: String): ImportBackupResult =
-        when (val read = backupReader.read(source)) {
+    suspend operator fun invoke(source: String): ImportBackupResult {
+        val result = when (val read = backupReader.read(source)) {
             is BackupReadResult.Rejected -> ImportBackupResult.Rejected(read.reason)
             // The merge's reads go inside too: deciding on rows another writer then changes would undo that change.
             is BackupReadResult.Readable -> transactionRunner.inTransaction { write(read.contents) }
         }
+        analytics.log(result.event())
+        return result
+    }
+
+    private fun ImportBackupResult.event(): AnalyticsEvent = when (this) {
+        is ImportBackupResult.Merged -> AnalyticsEvent.BackupImported(added, updated, unchanged)
+        is ImportBackupResult.Rejected -> AnalyticsEvent.BackupRejected(reason)
+    }
 
     private suspend fun write(archived: BackupContents): ImportBackupResult {
         val imported = archived.copy(

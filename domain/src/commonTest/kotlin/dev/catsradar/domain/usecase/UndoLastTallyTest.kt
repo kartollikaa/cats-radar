@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +13,7 @@ class UndoLastTallyTest {
     fun `soft deletes exactly the given id using the current time`() = runTest {
         val now = Instant.parse("2026-09-22T10:05:00Z")
         val repository = FakeEncounterRepository()
-        val undoLastTally = UndoLastTally(repository, FakeClock(now))
+        val undoLastTally = UndoLastTally(repository, FakeClock(now), analytics = RecordingAnalytics())
 
         undoLastTally("target-id")
 

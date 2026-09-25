@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 
+@Suppress("TooManyFunctions") // mirrors WalkRepository one for one
 class WalkRepositoryImpl(private val dao: WalkDao, private val points: TrackPointDao) : WalkRepository {
     override fun observeAll(): Flow<List<Walk>> = dao.observeAll().map { walks -> walks.map { it.toDomain() } }
 
@@ -29,6 +30,9 @@ class WalkRepositoryImpl(private val dao: WalkDao, private val points: TrackPoin
         points.observeTrack(walkId).map { track -> track.map { it.toDomain() } }
 
     override suspend fun loadEveryPoint(): List<TrackPoint> = points.loadEvery().map { it.toDomain() }
+
+    override fun observeEveryPoint(): Flow<List<TrackPoint>> =
+        points.observeEvery().map { every -> every.map { it.toDomain() } }
 
     override suspend fun upsert(walk: Walk) = dao.upsert(walk.toEntity())
 

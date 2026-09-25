@@ -13,6 +13,7 @@ import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakePlaceCellRepository
 import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
@@ -53,7 +54,7 @@ class RegionsStoreTest {
     private fun newStore(parent: RegionKey?) = RegionsStore(
         parent = parent,
         observeRegion = ObserveRegion(encounters, cells),
-        stateMapper = RegionsStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
+        stateMapper = RegionsStateMapper(EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())),
         clock = FakeClock(NOW),
         timeZone = TimeZone.UTC,
     )

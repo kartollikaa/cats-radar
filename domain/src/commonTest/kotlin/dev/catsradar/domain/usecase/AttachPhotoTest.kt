@@ -5,12 +5,15 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
+import dev.catsradar.domain.testing.FakeDeviceIdProvider
 import dev.catsradar.domain.testing.FakeDigest
 import dev.catsradar.domain.testing.FakeEncounterRepository
+import dev.catsradar.domain.testing.FakeGalleryItemLocator
 import dev.catsradar.domain.testing.FakeGallerySaver
 import dev.catsradar.domain.testing.FakeIdGenerator
 import dev.catsradar.domain.testing.FakeImageResizer
 import dev.catsradar.domain.testing.FakeSettingsRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
 import kotlinx.coroutines.Job
@@ -29,6 +32,7 @@ class AttachPhotoTest {
     private val settings = FakeSettingsRepository()
     private val resizer = FakeImageResizer()
     private val gallery = FakeGallerySaver()
+    private val locator = FakeGalleryItemLocator(mapOf(SOURCE to PHONE_ITEM))
     private val storage = RecordingPhotoStorage()
 
     private val attachPhoto = AttachPhoto(
@@ -37,9 +41,12 @@ class AttachPhotoTest {
         imageResizer = resizer,
         digest = FakeDigest(),
         gallerySaver = gallery,
+        galleryItemLocator = locator,
         photoStorage = storage,
         idGenerator = FakeIdGenerator(),
+        deviceIdProvider = FakeDeviceIdProvider(THIS_INSTALL),
         clock = FakeClock(NOW),
+        analytics = RecordingAnalytics(),
     )
 
     private val tally: Encounter = encounterFixture(
@@ -48,7 +55,7 @@ class AttachPhotoTest {
         locationSource = LocationSource.CURRENT_FIX,
         lat = 41.39864,
         lon = 2.17842,
-    ).copy(coat = CatCoat.GINGER)
+    ).copy(coat = CatCoat.GINGER, deviceId = THIS_INSTALL)
 
     private suspend fun stored(id: String = ID): Encounter = encounters.loadEvery().first { it.id == id }
 
@@ -62,6 +69,7 @@ class AttachPhotoTest {
             tally.copy(
                 photoPath = FakeImageResizer.PHOTO_PATH,
                 thumbPath = FakeImageResizer.THUMB_PATH,
+                sourceMediaUri = PHONE_ITEM,
                 sourceDigest = FakeDigest.SHA,
                 updatedAt = NOW,
             ),
@@ -224,8 +232,49 @@ class AttachPhotoTest {
         assertEquals(tally, stored())
     }
 
+    @Test
+    fun `a photo chosen from the gallery remembers the item it came from`() = runTest {
+        encounters.insert(tally)
+
+        attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
+
+        assertEquals(PHONE_ITEM, stored().sourceMediaUri)
+    }
+
+    @Test
+    fun `a photo from the camera is never linked to a picked item`() = runTest {
+        encounters.insert(tally)
+
+        attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
+
+        assertEquals(null, stored().sourceMediaUri)
+        assertEquals(emptyList(), locator.asked)
+    }
+
+    @Test
+    fun `a cat another install logged keeps no link to a gallery item on this phone`() = runTest {
+        encounters.insert(tally.copy(deviceId = "another-install"))
+
+        attachPhoto(ID, SOURCE, PhotoSource.GALLERY)
+
+        assertEquals(null, stored().sourceMediaUri)
+        assertEquals(FakeImageResizer.PHOTO_PATH, stored().photoPath)
+    }
+
+    @Test
+    fun `a cat another install logged keeps no link to the original, which still goes to the gallery`() = runTest {
+        encounters.insert(tally.copy(deviceId = "another-install"))
+
+        attachPhoto(ID, SOURCE, PhotoSource.CAMERA)
+
+        assertEquals(1, gallery.calls)
+        assertEquals(null, stored().galleryUri)
+    }
+
     private companion object {
         const val ID = "cat-1"
+        const val THIS_INSTALL = "install-1"
+        const val PHONE_ITEM = "content://media/external/images/media/18"
         const val SOURCE = "content://picker/1"
         val OCCURRED = Instant.parse("2026-09-21T10:00:00Z")
         val NOW = Instant.parse("2026-09-23T12:00:00Z")

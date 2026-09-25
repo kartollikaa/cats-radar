@@ -16,10 +16,12 @@ import dev.catsradar.app.photo.Launch
 import dev.catsradar.app.photo.TakePhotoShortcut
 import dev.catsradar.app.theme.rememberDeviceColorScheme
 import dev.catsradar.ui.theme.CatsRadarTheme
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
 
     private val cameraRequest = CameraRequest()
+    private val activityManager: ActivityManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +56,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // A task can vanish between listing it and reading it, and then its info throws.
-    private fun isOwnTask(): Boolean = getSystemService(ActivityManager::class.java).appTasks
+    private fun isOwnTask(): Boolean = activityManager.appTasks
         .any { task -> runCatching { task.taskInfo?.taskId == taskId }.getOrDefault(false) }
 
     override fun onSaveInstanceState(outState: Bundle) {

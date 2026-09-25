@@ -71,6 +71,7 @@ fun CounterScreen(
             CurrentOutingLine(state.currentOuting)
             WalkRow(
                 walkingMode = state.walkingMode,
+                walkElapsedLabel = state.walkElapsedLabel,
                 undoVisible = state.undoVisible,
                 onWalkingModeChange = onWalkingModeChange,
                 onUndoClick = onUndoClick,
@@ -188,4 +189,5 @@ private val sampleCounterStateOutingInProgress = CounterState(
         rate = RateState(value = "6.9", unit = RateUnit.PER_HOUR),
     ),
     walkingMode = true,
+    walkElapsedLabel = "48 min",
 )

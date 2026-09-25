@@ -1,9 +1,9 @@
 # Map
 
 The **Map** tab shows every cat that has a location as a dot on a map, in its coat's colours: a ginger
-cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted takes the
-theme's primary colour. The map opens fitted around all of them, and a single cat, or a handful on
-one street, opens on a street-sized area rather than a doorstep.
+cat is a ginger dot, a black-and-white one is black over white, a cat with no coat noted is a blue
+dot. The map opens fitted around all of them, and a single cat, or a handful on one street, opens
+on a street-sized area rather than a doorstep.
 
 ## How a dot shows its coat
 
@@ -25,8 +25,9 @@ The map is [MapLibre](https://maplibre.org/) drawing vector tiles from
 cookie. Its light style follows the light theme and its dark style the dark one. The attribution
 OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in.
 
-**This is the one screen that goes online.** Until the map, the app declared no `INTERNET`
-permission at all: geocoding runs through the platform. Tiles are fetched as the map is looked at,
+**This is the one screen that fetches content from the network.** Until the map, the app declared no
+`INTERNET` permission at all: geocoding runs through the platform. Crash reports and screen views go to
+Firebase as well (`analytics.md`), but no screen waits on them. Tiles are fetched as the map is looked at,
 so the tile server learns which area is on screen and from which address, as with any web map, and
 because the map opens fitted around your cats, the first area it asks for is the one around where
 you have seen them. No cat is sent: the dots are drawn on the phone from the phone's own database.
@@ -59,17 +60,45 @@ globe, past a pole or the 180th meridian.
 ## An outing's route
 
 "On the map" on an outing's header in the Encounters list switches to the Map tab showing that outing
-alone. Only its cats are on the map, and the view fits around them. A line joins the located ones in
-the order they were seen, with a chip naming the outing above them. Closing the chip, or pressing
-back, returns to every cat and fits the view around them again. A spot's list offers the same action
-for its outings. The line is drawn from cat to cat. It is not the route actually walked, which is
-the walk tracks' job.
+alone. Only its cats are on the map, and the view fits around them and their route. A chip names the
+outing above the map; closing it, or pressing back, returns to every cat and fits the view around
+them again. A spot's list offers the same action for its outings.
+
+The route is the recorded track of every walk that overlaps the outing's time span, drawn whole and
+oldest first — the way to the first cat is part of the walk, not only the stretch between cats. A
+line joining the located cats in the order they were seen stands in when no such walk has a track of
+two points or more. The coat filter never thins either kind of line.
+
+The map reads walks only while an outing is focused, and then only the tracks of the walks that
+overlap it — never every point of every walk. With no outing focused it reads no walk at all.
 
 - **No located cat in an outing:** its header offers no map.
 - **The outing changes while it is shown:** a cat added to it or deleted from it moves the line with
-  it. If its last located cat is deleted, the map returns to every cat, and stays there even when
-  another of its cats gets a location later.
-- **Cats sharing one fix** give the line no length there; their cluster still opens as a spot's list.
+  it, and a cat that stretches it into another walk's time brings that walk's track in. If its last
+  located cat is deleted, the map returns to every cat, and stays there even when another of its cats
+  gets a location later.
+- **Cats sharing one fix** give the cat-to-cat line no length there; their cluster still opens as a
+  spot's list.
+- **A walk still recording** grows on the map as its points arrive; the view does not refit to it — it
+  fits once, when the outing is focused.
+
+## A cat's coordinates
+
+A tap on the coordinates in a cat's detail ([encounter-detail.md](./encounter-detail.md)) switches to
+the Map tab with the view on that cat: a street-sized area centred on its dot, the size a lone cat
+opens on. Every other cat stays on the map around it.
+
+- **From the Map tab itself**, when a dot or a spot's list opened the cat, the map comes back showing
+  every cat: a focused outing, a coat choice and the heat are all let go, since each of them could
+  hide the dot the tap asked for. The same map every other tab gets.
+- **The view moves there once.** Afterwards a cat getting its location, or an outing focused and
+  closed again, leaves the view where it is; tapping the coordinates again brings it back to the cat.
+  A pan during the move stops it where it is, and that ends the request too.
+- **A cat inside a cluster** stays inside it: the view centres on the cluster, and nothing marks which
+  of its dots was asked for.
+- **A cat no longer on the map** by the time the map opens, deleted in between, does not move the
+  view: the map still comes back showing every cat, and its view stays where it was, or fits around
+  every cat on a first look.
 
 ## Heat and coats
 
@@ -77,22 +106,26 @@ Two chips sit at the map's top edge.
 
 - **Heatmap** draws where cats are seen most, weighing every cat alike, and hides the dots while it
   is on. Its heat is drawn from the cats themselves, not from their clusters, so ten cats at one
-  spot weigh ten times one. The heat is in the cats' colours: a street of ginger cats glows ginger,
-  one of black cats glows black, and where both were seen the two colours lie over each other, the
-  one with more cats showing most. A cat gives its heat in the same shares as its dot, so a
-  black-and-white cat is half black heat and half white. Each colour is its own layer laid over the
-  others in a fixed order, so at an even split the colour laid last leans ahead; the heat is a
-  picture of the mix, not a measure of it.
+  spot weigh ten times one. The heat is in the cats' own fur colours: a street of ginger cats glows
+  ginger, one of white cats glows white, one of black cats glows black. A cat gives its heat in the
+  same shares as its dot, so a black-and-white cat is half black heat and half white. Each colour
+  is its own layer, nearly opaque so the spots stay bright, and lighter furs lie over darker ones:
+  where coats mix, the colour with more cats shows most, and at an even split the lighter one covers
+  the darker, which shows only at the spot's edge. The heat is a picture of the mix, not a measure
+  of it.
+- **Cats with no coat noted** make smaller spots in the blue of their dots, blue rather than grey
+  so they never read as a grey or black coat.
 - **The heat follows the zoom.** Each cat's heat shrinks and fades as the map zooms out, so a whole
   city shows its neighbourhoods as separate spots rather than one glow over all of it, and grows back
   as the map closes in on a street.
 - **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
   shows the cats with none noted. The choice applies to the dots, the clusters, the heat, a
-  focused outing and a spot's list alike; a focused outing's line still runs through all of its
-  cats, since it is the order they were seen in. The view stays where it is when the choice changes, and "Every coat" clears
+  focused outing and a spot's list alike; a focused outing's route is never thinned by it, whichever
+  kind of line it draws. The view stays where it is when the choice changes, and "Every coat" clears
   it. A choice that matches no cat says so, rather than showing a map with nothing on it.
 
-Both last as long as the tab does; leaving the tab clears them.
+Both last as long as the tab does; leaving the tab clears them, and so does a cat's coordinates
+opening the map (above).
 
 ## At the edges
 
@@ -109,24 +142,31 @@ Both last as long as the tab does; leaving the tab clears them.
 - **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
   world: the fitted area runs west to east the long way round. Every dot is still on screen.
 - **White cats on a light street:** each dot has the same outline the coat faces carry, so a white
-  cat's dot does not disappear into the map. The heat has a faint haze of that outline's colour
-  under it for the same reason: white heat on the light map, and black heat on the dark one, still
-  have an edge.
+  cat's dot does not disappear into the map. A fur whose heat would melt into the map's own shade —
+  white on the light map, black on the dark one — gets a thin rim of that outline's colour around
+  its spots, and no other fur does, so the rest keep their colour clean.
 
 ## Where the code lives
 
 - `presentation/…/map/` — `MapState` (loading, empty, or the located points and the area to open
-  on), `MapStateMapper`, `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a
-  spot's list
-- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters, the
-  heat and their taps; `CoatDotPainter.kt` — a dot painted in its coat's colours;
-  `MapFeatures.kt` — cats as map features, and each coat's colour shares; `MapSpotScreen.kt` — a
-  spot's list, drawn by the Encounters tab's own `EncounterRows` in its list layout;
-  `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` — the coat choice
+  on), `MapFocus` (an outing's `MapLine`s, each a list of `MapPosition`), `MapStateMapper`,
+  `MapStore`; `MapSpotState`, `MapSpotStateMapper`, `MapSpotStore` — a spot's list
+- `domain/…/usecase/ObserveOutingTracks.kt` — the tracks of the walks overlapping a focused outing;
+  `domain/…/session/SessionSplitter.kt`'s `outingOf` — the outing that holds a cat, for the mapper and
+  the tracks alike
+- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
+  their taps; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
+  `MapFeatures.kt` — cats as map features, and each coat's colour shares; its `routeLines` — a
+  focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's layers, their order and
+  which need a rim; `MapSpotScreen.kt` — a spot's list, drawn by the Encounters tab's own
+  `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map; `MapCoatSheet.kt` —
+  the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
-  back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing
-  another tab, or a spot's list, asked the map to show
+  back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing,
+  or the single cat, another tab or a spot's list asked the map to show
 
 ## Not built yet
 
-Walk tracks are the next slices of the Map epic (`docs/tbd/decompositions/2026-09-23-map-epic.md`).
+A walk with no located cat of its own cannot be shown: the map only reaches a walk's track through an
+outing's "On the map", and an outing with no located cat offers none. There is no list of walks to
+pick one from directly.
