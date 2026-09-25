@@ -35,14 +35,13 @@ private const val NOTIFICATION_ID = 2
  * With location allowed it is carried by [WalkRecordingService], which records the walk's route;
  * without, it is a plain ongoing notification, which outlives the app leaving the screen on its own.
  */
-class WalkingNotifier(
+class WalkingNotifier internal constructor(
     private val context: Context,
+    private val manager: NotificationManagerCompat,
+    private val recording: WalkRecordingControl,
     private val clock: Clock,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : WalkingNotifications {
-
-    private val manager = NotificationManagerCompat.from(context)
-    private val recording = WalkRecordingControl(context)
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.CINNAMON_BUN)
     private val hasMetricStyle = sdkInt >= Build.VERSION_CODES.CINNAMON_BUN

@@ -5,6 +5,7 @@ import dev.catsradar.domain.region.RegionLabel
 import dev.catsradar.domain.region.RegionNode
 import dev.catsradar.domain.usecase.RegionView
 import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -20,7 +21,7 @@ import kotlin.time.Instant
 
 class RegionsStateMapperTest {
 
-    private val mapper = RegionsStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
+    private val mapper = RegionsStateMapper(EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()))
 
     private val oneRowPerKey = RegionView.Places(
         listOf(

@@ -41,7 +41,9 @@ guaranteed by the Gradle module graph today — no `implementation(projects.doma
 edge from `:ui`, and `:domain`'s `build.gradle.kts` declares no project dependency at all — rather
 than by a Konsist test. A future dependency edit could add either without a test catching it.
 
-- Only `:app` knows Koin modules exist; the other modules expose constructors.
+- Only `:app` knows Koin modules exist; the other modules expose constructors, and a class receives
+  its collaborators through its constructor rather than fetching them — see
+  [dependency-injection.md](./dependency-injection.md).
 
 Source-set convention inside a KMP module: `commonMain` is the default home; `androidMain` holds
 only the implementations that need the platform and the `actual` declarations; `commonTest` runs

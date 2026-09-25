@@ -1,6 +1,5 @@
 package dev.catsradar.app.worker
 
-import android.content.Context
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
@@ -18,11 +17,7 @@ interface BackupScheduler {
     fun observe(): Flow<WorkInfo?>
 }
 
-class WorkManagerBackupScheduler(context: Context) : BackupScheduler {
-    private val appContext = context.applicationContext
-
-    // Lazy for the same reason as the other schedulers: WorkManager.initialize() runs after Koin.
-    private val workManager by lazy { WorkManager.getInstance(appContext) }
+class WorkManagerBackupScheduler(private val workManager: WorkManager) : BackupScheduler {
 
     override fun export(target: String) {
         start(OneTimeWorkRequestBuilder<ExportBackupWorker>().setInputData(uriData(target)).build())

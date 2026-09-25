@@ -22,6 +22,7 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 class GeocodeWorkSchedulerTest {
     private lateinit var context: Context
+    private lateinit var scheduler: GeocodeWorkScheduler
 
     @Before
     fun setUp() {
@@ -30,6 +31,7 @@ class GeocodeWorkSchedulerTest {
             context,
             WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING,
         )
+        scheduler = GeocodeWorkScheduler(WorkManager.getInstance(context))
     }
 
     @After
@@ -39,7 +41,7 @@ class GeocodeWorkSchedulerTest {
 
     @Test
     fun `naming untried cells waits for the network`() {
-        GeocodeWorkScheduler.nameUntriedCells(context)
+        scheduler.nameUntriedCells()
 
         assertEquals(NetworkType.CONNECTED, untriedWork().single().constraints.requiredNetworkType)
     }
@@ -47,7 +49,7 @@ class GeocodeWorkSchedulerTest {
     @SuppressLint("RestrictedApi")
     @Test
     fun `naming untried cells runs the untried pass, not the full one`() {
-        GeocodeWorkScheduler.nameUntriedCells(context)
+        scheduler.nameUntriedCells()
 
         val dao = WorkManagerImpl.getInstance(context).workDatabase.workSpecDao()
         val input = dao.getWorkSpec(untriedWork().single().id.toString())!!.input
@@ -57,11 +59,11 @@ class GeocodeWorkSchedulerTest {
     // Under KEEP, a pass already past a cell written meanwhile would leave that cell for the periodic slot.
     @Test
     fun `a new request starts the pass over, so at most one is ever queued`() {
-        GeocodeWorkScheduler.nameUntriedCells(context)
+        scheduler.nameUntriedCells()
         val first = untriedWork().single()
         assertEquals(WorkInfo.State.ENQUEUED, first.state)
 
-        GeocodeWorkScheduler.nameUntriedCells(context)
+        scheduler.nameUntriedCells()
 
         val waiting = untriedWork().filterNot { it.state.isFinished }
         assertNotEquals(first.id, waiting.single().id)

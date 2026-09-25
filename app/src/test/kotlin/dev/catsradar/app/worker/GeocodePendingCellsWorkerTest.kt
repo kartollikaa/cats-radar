@@ -5,13 +5,17 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Data
 import androidx.work.ListenableWorker
+import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.testing.WorkManagerTestInitHelper
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.reporting.RecordingNonFatalReporter
 import dev.catsradar.domain.platform.GeocodeResult
 import dev.catsradar.domain.platform.ReverseGeocoder
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.koinApplication
@@ -23,6 +27,16 @@ import kotlin.time.Instant
 @RunWith(AndroidJUnit4::class)
 class GeocodePendingCellsWorkerTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+
+    @Before
+    fun startWorkManager() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+    }
+
+    @After
+    fun closeWorkManager() {
+        WorkManagerTestInitHelper.closeWorkDatabase()
+    }
     private val cells = InMemoryPlaceCells(
         untriedCell("sp3e3q").copy(attempts = 1, lastAttemptAt = Instant.parse("2026-09-23T04:00:00Z")),
     )
@@ -39,6 +53,7 @@ class GeocodePendingCellsWorkerTest {
             modules(
                 module {
                     single { resolve }
+                    single { GeocodeWorkScheduler(WorkManager.getInstance(context)) }
                     single<NonFatalReporter> { RecordingNonFatalReporter() }
                 },
             )

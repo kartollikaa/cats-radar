@@ -1,6 +1,5 @@
 package dev.catsradar.data.platform
 
-import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import dev.catsradar.domain.platform.GeocodeResult
@@ -11,7 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AndroidReverseGeocoder(
-    private val context: Context,
+    // A geocoder keeps the locale it was built with, so each lookup takes a fresh one.
+    private val newGeocoder: () -> Geocoder,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ReverseGeocoder {
 
@@ -22,7 +22,7 @@ class AndroidReverseGeocoder(
 
         val addresses = runCatching {
             @Suppress("DEPRECATION") // the listener overload is API 33+; minSdk here is 29
-            Geocoder(context).getFromLocation(lat, lon, 1)
+            newGeocoder().getFromLocation(lat, lon, 1)
         }.getOrNull()
 
         addresses?.firstOrNull()?.toPlaceName()?.let(GeocodeResult::Resolved) ?: GeocodeResult.Failed

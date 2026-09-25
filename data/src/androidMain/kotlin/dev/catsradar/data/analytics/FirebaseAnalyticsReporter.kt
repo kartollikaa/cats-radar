@@ -1,14 +1,11 @@
 package dev.catsradar.data.analytics
 
-import android.content.Context
 import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
 import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.analytics.AnalyticsEvent
 
-class FirebaseAnalyticsReporter(context: Context) : Analytics {
-    private val appContext = context.applicationContext
-    private val firebase by lazy { FirebaseAnalytics.getInstance(appContext) }
+class FirebaseAnalyticsReporter(private val firebase: FirebaseAnalytics) : Analytics {
 
     override fun log(event: AnalyticsEvent) {
         val encoded = event.encode()
