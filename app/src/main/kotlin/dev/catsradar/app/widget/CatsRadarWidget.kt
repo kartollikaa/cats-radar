@@ -46,7 +46,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.catsradar.app.photo.TakePhotoShortcut
-import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarDarkColors
 import dev.catsradar.ui.theme.CatsRadarLightColors
@@ -91,17 +90,17 @@ internal enum class TileShape(@DrawableRes val background: Int, @DrawableRes val
 /** The count is the button: a cat on a walk should not cost aim. */
 class CatsRadarWidget : GlanceAppWidget(), KoinComponent {
 
-    private val observeTodayCount: ObserveTodayCount by inject()
+    private val widgetCount: WidgetCount by inject()
 
     override val sizeMode = SizeMode.Responsive(WidgetSizes.all)
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Glance publishes a session's first frame before a flow answers, so a placeholder there
         // would flash on the home screen; the real count is read before the session starts.
-        val counts = observeTodayCount()
-        val current = counts.first()
+        widgetCount.refresh()
+        val current = widgetCount.shown.first()
         provideContent {
-            val today by counts.collectAsState(initial = current)
+            val today by widgetCount.shown.collectAsState(initial = current)
             GlanceTheme(colors = widgetColors()) {
                 WidgetContent(today)
             }

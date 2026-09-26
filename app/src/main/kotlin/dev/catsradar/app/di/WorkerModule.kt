@@ -18,6 +18,7 @@ import dev.catsradar.app.update.PackageInstallerUpdater
 import dev.catsradar.app.update.UpdateInstaller
 import dev.catsradar.app.update.readPackageArchive
 import dev.catsradar.app.widget.CatsRadarWidget
+import dev.catsradar.app.widget.WidgetCount
 import dev.catsradar.app.widget.WidgetRedraw
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.BackupScheduler
@@ -50,6 +51,7 @@ val workerModule = module {
     single<WalkingNotifications> { get<WalkingNotifier>() }
     single { WalkingNotificationSync(get(), get(), get(), get()) }
     single<WidgetRedraw> { WidgetRedraw { CatsRadarWidget().updateAll(androidContext()) } }
+    single { WidgetCount(get()) }
     single { WidgetRefresh(get(), get()) }
     single { GeocodeWorkScheduler(get()) }
     single<PlaceNamingScheduler> { get<GeocodeWorkScheduler>() }
