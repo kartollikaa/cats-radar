@@ -81,7 +81,7 @@ class ZipBackupReaderOlderFormatTest {
                         sourceDigest = "sha",
                         deviceId = "cat-install",
                         addedAt = Instant.fromEpochMilliseconds(5),
-                        shotId = null,
+                        shotId = "a",
                     ),
                 ),
                 emptyList(),
@@ -115,7 +115,7 @@ class ZipBackupReaderOlderFormatTest {
 
     @Test
     fun anArchiveFromBeforeShotsReadsEveryPhotoAsStartingItsOwnShot() = runTest {
-        listOf(FORMAT_FOUR_MANIFEST, FORMAT_FIVE_MANIFEST).forEach { manifest ->
+        listOf(FORMAT_FOUR_MANIFEST, FORMAT_FIVE_MANIFEST, FORMAT_SIX_MANIFEST).forEach { manifest ->
             val path = File(temporaryFolder.root, "backup.zip")
             path.writeArchive(
                 MANIFEST_ENTRY to manifest,
@@ -146,7 +146,7 @@ class ZipBackupReaderOlderFormatTest {
                         sourceDigest = "sha",
                         deviceId = "photo-install",
                         addedAt = Instant.fromEpochMilliseconds(7),
-                        shotId = null,
+                        shotId = "p",
                     ),
                 ),
                 read.contents.encounters.single().photos,
@@ -172,5 +172,6 @@ class ZipBackupReaderOlderFormatTest {
         const val FORMAT_THREE_MANIFEST = """{"formatVersion":3,"exportedAt":0,"deviceId":"d","appVersion":"1.4.1"}"""
         const val FORMAT_FOUR_MANIFEST = """{"formatVersion":4,"exportedAt":0,"deviceId":"d","appVersion":"1.5.0"}"""
         const val FORMAT_FIVE_MANIFEST = """{"formatVersion":5,"exportedAt":0,"deviceId":"d","appVersion":"1.5.0"}"""
+        const val FORMAT_SIX_MANIFEST = """{"formatVersion":6,"exportedAt":0,"deviceId":"d","appVersion":"1.5.0"}"""
     }
 }

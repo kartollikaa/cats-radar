@@ -28,6 +28,6 @@ internal fun carriedPhoto(
         sourceDigest = sourceDigest,
         deviceId = deviceId,
         addedAt = createdAt,
-        shotId = null,
+        shotId = encounterId,
     )
 }

@@ -29,11 +29,15 @@ widget and streaks all stay right without changing. A count or a list of coats o
 considered and dropped: every counter in the app would need rewriting, and the counting rule would
 stop being true.
 
-**The cats of one photo share a shot.** `EncounterPhoto` gains `shotId: String?`: the id of its shot's
-first row, or null on that first row itself. A photo's **shot** is `shotId ?: id`, so a row joining a
-shot always takes the shot, never the id of the row it was copied from. A shot's cats are the live
-cats that have a photo row with that shot. A row is still written once and never edited: joining a
-shot never touches the rows already in it, because the new row points at the first one.
+**The cats of one photo share a shot.** `EncounterPhoto.shotId: String` is the id of the photo's
+shot, never null: the id of the shot's first photo row. A photo of one cat is a shot of its own and
+names itself; a row joining a shot takes the shot's `shotId`, never the id of the row it was copied
+from. A shot's cats are the live cats that have a photo row with that `shotId`. A row is still written
+once and never edited: joining a shot never touches the rows already in it.
+
+(Decided 2026-09-26, S2b: a first version made `shotId` null on a shot's first row and on every photo
+of one cat, with the shot's id in a computed `shot`. The owner found it misleading — a field named the
+shot's id that is null on most photos — and every photo now names its shot.)
 
 **Each cat keeps its own copy of the files.** A new cat in a shot gets its own photo row with its own
 copy of the app's copy and thumbnail, named after its own photo id. The purge, an attempt's clean-up
@@ -55,6 +59,9 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
   a photo row whose cat is gone and would stop the app at start-up.
   `CatsDatabaseMigrationTest` opens a v4 database with photos and checks that each one comes through
   with a null `shotId` and every other value unchanged.
+- Database **v6** makes the column NOT NULL and fills it with the row's own id wherever it was null. A
+  column cannot be made NOT NULL in place, so this hand-written migration rebuilds `encounter_photos`
+  itself, with no foreign key check at the end; a photo row whose cat is gone survives it too.
 - **Adding cats to a shot** is one repository call that inserts every new cat with its photo row in
   one transaction, and only while the source cat is still live. Either all of them are written or
   none is.
@@ -62,9 +69,9 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
 ## Backup
 
 Format **6** writes `shotId` on each photo record (format 5 is the location set by hand, which landed
-first). A photo that starts its shot writes none, so its record reads exactly as format 5 wrote it. A
-format 5 or older archive has no `shotId` anywhere, so
-each of its photos is the first row of its own shot. Photos still merge by their own `id`, and
+first). Every record writes it; a record without one — from format 5 or older, or a shot's first photo
+written before every photo named its shot — is read as its photo's own shot, which is what such a
+record always meant. Photos still merge by their own `id`, and
 `shotId` travels with its row. A shot whose first row is not in the archive still groups by that id,
 and joins the first row once a later import brings it. The archive carries every cat's own copy of
 the files, as it carries every file a photo row points at today.
@@ -172,10 +179,10 @@ forgets the field, at a format number that does not move, or in the migration. T
 come back as separate cats, and every test that looks only at cats would stay green. So:
 
 - **`EncounterPhoto.shotId` has no default value.** Each place that builds a photo has to state it,
-  so a new construction site cannot forget it. The Room entity has no default either: Room fills a
-  missing column with null by itself. Only the archive's record needs a default of null, to read
-  older records, so its mapping is the one place that can still drop the field without a compile
-  error. The round trips below cover it and every other mapping.
+  so a new construction site cannot forget it. The Room entity has none either, and its column is
+  NOT NULL since v6. Only the archive's record needs a default of null, to read older records, so its
+  mapping is the one place that can still drop the field without a compile error. The round trips
+  below cover it and every other mapping.
 - **Every round trip carries a non-null `shotId`.** Each of these tests uses a shot of three cats; the
   ones that carry whole cats give one of them no coat:
   - the entity mapper, both directions;
@@ -210,9 +217,18 @@ come back as separate cats, and every test that looks only at cats would stay gr
   - the app's own builder opening a v1, a v2 and a v3 file reaches v5. The existing purge test, which
     removes a cat's photo rows with it, now runs at v5;
   - `5.json` exported, with its test-asset copy kept identical by `SchemaAssetSyncTest`.
+- **The migration v5 → v6** (S2b), in `CatsDatabaseMigrationTest` and `PhotosMigrationTest`:
+  - a v5 database with a photo whose `shotId` is null, one naming itself, one naming another photo,
+    and a photo whose cat is gone reaches v6 with every row and value kept, the null filled with the
+    row's own id, the column NOT NULL and exactly its three indices;
+  - the app's own builder opens a v5 file holding a photo whose cat is gone, keeps that row, and
+    brings v1, v2 and v3 files to v6 with every photo naming itself. Room migrates before it turns
+    foreign keys on, so the rebuild's copy of such a row is not refused;
+  - `6.json` exported and copied, and `CATS_DATABASE_VERSION` matching the newest schema.
 - **Each of these tests is seen failing once, on purpose**, before it is trusted. The breaks: a
-  mapping that drops `shotId`, the format number left at 4, and a migration that loses a row. A
-  deliberately broken build must turn each test red.
+  mapping that drops `shotId`, the format number left behind, a migration that loses a row, one that
+  leaves `shotId` null, and one that forgets an index. A deliberately broken build must turn each test
+  red.
 - **On a device.** After the storage slice (S1), a build of `main` with real data (a camera photo, a
   gallery photo, a deleted cat, a walk) is upgraded in place, and everything reads back. After the
   format slice (S2), an export from each build imports into the other, and the old one refuses the

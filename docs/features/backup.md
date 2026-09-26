@@ -104,8 +104,9 @@ nothing.
 **Every photo is its own record** in `encounter_photos.json`, naming its cat, with every field it has
 here; a cat's record carries no photo (`ZipBackupPhotoListTest`, *everyPhotoOfEveryCatIsListedWithEveryFieldAndNoneRidesOnItsCat*).
 A cat with several photos comes back with all of them (*aCatWithTwoPhotosSurvivesTheRoundTripWithBoth*).
-A photo's record carries its shot (`shotId`); the first photo of a shot writes none, so its record reads
-exactly as format 5 wrote it (*aPhotoThatStartsItsShotWritesNoShotKeyAndTheOthersNameTheFirst*). A shot
+Every photo's record carries its shot (`shotId`), and a photo of one cat names itself
+(*everyPhotoWritesItsShotAndAPhotoOfOneCatNamesItself*). A record without one — any photo from before
+shots, or a shot's first photo from a build that wrote none for it — is its photo's own shot. A shot
 of several cats comes back as one, each cat with its coat and its own files
 (*aShotOfThreeCatsSurvivesTheRoundTripAsOneShot*; `BackupRestoreTest`,
 *aShotOfThreeCatsComesBackAsOneShotWithEveryCoatAndItsOwnFiles*).
@@ -170,9 +171,9 @@ written only where no file was here, so importing the same archive again finds t
   with a copy gets that photo, named after the cat and dated at its creation — the rule the database
   migration moves such a photo by — and a cat without a copy gets none, whatever else its record holds
   (`ZipBackupReaderOlderFormatTest`, *aFormatThreeArchiveGivesEachCatWithACopyThePhotoItsRecordCarries*).
-- **An archive from before shots** reads every photo as the first of a shot of its own, with every
-  other field as its record has it (`ZipBackupReaderOlderFormatTest`,
-  *anArchiveFromBeforeShotsReadsEveryPhotoAsStartingItsOwnShot*).
+- **An archive from before shots** reads every photo as a shot of its own, naming itself, with every
+  other field as its record has it; so does a format 6 record that carries no shot
+  (`ZipBackupReaderOlderFormatTest`, *anArchiveFromBeforeShotsReadsEveryPhotoAsStartingItsOwnShot*).
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.

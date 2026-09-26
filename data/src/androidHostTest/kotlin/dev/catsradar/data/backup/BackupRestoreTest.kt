@@ -225,7 +225,7 @@ class BackupRestoreTest {
                 Triple("shot-b-ginger", CatCoat.GINGER, "shot-a-ginger"),
                 Triple("shot-c-unseen", null, "shot-a-ginger"),
             ),
-            shot.map { Triple(it.id, it.coat, it.photos.single().shot) },
+            shot.map { Triple(it.id, it.coat, it.photos.single().shotId) },
         )
         shot.flatMap { it.photos }.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }.forEach { path ->
             assertTrue(photos.getValue(path).contentEquals(photoStorage.fileFor(path).readBytes()), path)

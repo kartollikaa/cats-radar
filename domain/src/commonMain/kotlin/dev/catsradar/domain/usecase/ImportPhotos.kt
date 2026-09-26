@@ -135,7 +135,7 @@ class ImportPhotos(
                         sourceDigest = sourceDigest,
                         deviceId = deviceIdProvider.deviceId,
                         addedAt = now,
-                        shotId = null,
+                        shotId = id,
                     ),
                 ),
                 lat = exifPoint?.lat,

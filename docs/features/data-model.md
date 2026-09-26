@@ -25,12 +25,12 @@ the gallery (`galleryUri`), the gallery item a picked photo came from (`sourceMe
 the bytes the source handed over (`sourceDigest`), the install that recorded those two links
 (`deviceId`), and when it joined the cat (`addedAt`).
 
-A photo also names its **shot**, so the cats of one photo can be found together: `shotId` is the id of
-the shot's first photo row, and null on that first row itself, so `shot` (`shotId ?: id`) is the same on
-every row of one shot and on no other. A row joining a shot points at the first one and never edits it.
-Every photo taken, attached or imported starts a shot of its own, and one read from a backup keeps the
-shot it was written with (see `backup.md`); nothing writes a shot of several cats yet
-(`EncounterPhotoShotTest`; *eachWayAPhotoIsWrittenKeepsItsShot*).
+Every photo also names its **shot** (`shotId`), so the cats of one photo can be found together: it is
+never null, and it is the same on every row of one shot — the id of the shot's first photo row. A photo
+of one cat is a shot of its own and names itself. A row joining a shot takes the shot's id and never
+edits the rows already in it. Every photo taken, attached or imported names itself, and one read from a
+backup keeps the shot it was written with (see `backup.md`); nothing writes a shot of several cats yet
+(`LogPhotoTest`, `ImportPhotosTest`, *… starts a shot of its own*; *eachWayAPhotoIsWrittenKeepsItsShot*).
 
 Each photo is a row of `encounter_photos`, keyed by its own `id`, with a foreign key to its cat that
 deletes the photo rows with the cat. Every read returns a cat with its photos (`EncounterWithPhotos`),
@@ -142,8 +142,16 @@ a photo row whose cat is gone and would stop the app at start-up. Such a row, wh
 through as it was (`CatsDatabaseMigrationTest.aPhotoWhoseCatIsGoneDoesNotStopTheMigrationToFive`); the purge
 never finds it, since it looks for photos through their deleted cats.
 `CatsDatabaseMigrationTest.versionFourBecomesFiveKeepingEveryCatAndPhotoWithNoShot` migrates every kind of
-photo a cat can have and finds each cat and photo unchanged, with no shot; the app's own builder brings a
-photographed cat from versions 1, 2 and 3 to 5 (`PhotosMigrationTest`).
+photo a cat can have and finds each cat and photo unchanged, with no shot.
+
+Version 6 makes `shotId` NOT NULL and fills it with the row's own id wherever it was null, by a
+hand-written migration (`MigrationFrom5To6`). SQLite cannot add NOT NULL to an existing column, so this one
+rebuilds `encounter_photos` — copying every row into a new table, dropping the old, renaming the new and
+recreating its three indices — without the foreign key check Room's own rebuild ends in, so a photo row
+whose cat is gone still comes through. Nothing references `encounter_photos`, so dropping it takes no other
+row with it (`CatsDatabaseMigrationTest.versionFiveBecomesSixNamingEveryPhotosShot`). The app's own builder
+opens a version 5 file with such a row, and brings a photographed cat from versions 1, 2 and 3 to 6 naming
+its own shot (`PhotosMigrationTest`).
 
 ## Where the code lives
 
