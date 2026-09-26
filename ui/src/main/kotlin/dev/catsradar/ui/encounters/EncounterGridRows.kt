@@ -60,7 +60,7 @@ internal fun PhotoPairRow(
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
-    onEncounterLongClick: (String) -> Unit = {},
+    onEncounterLongClick: ((String) -> Unit)? = null,
 ) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(CellGap)) {
         listOf(row.first, row.second).forEach { cell ->
@@ -70,7 +70,7 @@ internal fun PhotoPairRow(
                     modifier = Modifier.weight(1f),
                     selecting = selecting,
                     onClick = { onEncounterClick(cell.id) },
-                    onLongClick = { onEncounterLongClick(cell.id) },
+                    onLongClick = onEncounterLongClick?.let { longClick -> { longClick(cell.id) } },
                 )
             }
         }
@@ -83,7 +83,7 @@ internal fun TileRow(
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
-    onEncounterLongClick: (String) -> Unit = {},
+    onEncounterLongClick: ((String) -> Unit)? = null,
 ) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(CellGap)) {
         row.cells.forEach { cell ->
@@ -93,7 +93,7 @@ internal fun TileRow(
                     modifier = Modifier.weight(1f),
                     selecting = selecting,
                     onClick = { onEncounterClick(cell.id) },
-                    onLongClick = { onEncounterLongClick(cell.id) },
+                    onLongClick = onEncounterLongClick?.let { longClick -> { longClick(cell.id) } },
                 )
             }
         }
@@ -106,7 +106,7 @@ internal fun CardRow(
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
-    onEncounterLongClick: (String) -> Unit = {},
+    onEncounterLongClick: ((String) -> Unit)? = null,
 ) {
     Row(
         modifier = modifier.height(IntrinsicSize.Min),
@@ -119,7 +119,7 @@ internal fun CardRow(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     selecting = selecting,
                     onClick = { onEncounterClick(cell.id) },
-                    onLongClick = { onEncounterLongClick(cell.id) },
+                    onLongClick = onEncounterLongClick?.let { longClick -> { longClick(cell.id) } },
                 )
             }
         }
@@ -132,7 +132,7 @@ private fun PhotoTile(
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
     onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {},
+    onLongClick: (() -> Unit)? = null,
 ) {
     val subject = stringResource(R.string.encounters_photo_description)
     val description = cellDescription(subject, cell.timeLabel, cell.location)
@@ -174,7 +174,7 @@ private fun EncounterTile(
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
     onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {},
+    onLongClick: (() -> Unit)? = null,
 ) {
     val description = cellDescription(cell.lead.description(), cell.timeLabel, cell.location)
     Column(
@@ -215,7 +215,7 @@ internal fun EncounterCard(
     shape: Shape = MaterialTheme.shapes.medium,
     selecting: Boolean = false,
     onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {},
+    onLongClick: (() -> Unit)? = null,
 ) {
     val background = if (cell.selected) {
         MaterialTheme.colorScheme.secondaryContainer
