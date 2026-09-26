@@ -179,10 +179,10 @@ forgets the field, at a format number that does not move, or in the migration. T
 come back as separate cats, and every test that looks only at cats would stay green. So:
 
 - **`EncounterPhoto.shotId` has no default value.** Each place that builds a photo has to state it,
-  so a new construction site cannot forget it. The Room entity has no default either: Room fills a
-  missing column with null by itself. Only the archive's record needs a default of null, to read
-  older records, so its mapping is the one place that can still drop the field without a compile
-  error. The round trips below cover it and every other mapping.
+  so a new construction site cannot forget it. The Room entity has none either, and its column is
+  NOT NULL since v6. Only the archive's record needs a default of null, to read older records, so its
+  mapping is the one place that can still drop the field without a compile error. The round trips
+  below cover it and every other mapping.
 - **Every round trip carries a non-null `shotId`.** Each of these tests uses a shot of three cats; the
   ones that carry whole cats give one of them no coat:
   - the entity mapper, both directions;
