@@ -40,6 +40,7 @@ import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
 import dev.catsradar.data.update.GitHubReleaseFeed
+import dev.catsradar.data.update.HttpPackageDownloader
 import dev.catsradar.domain.about.InstalledApp
 import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.platform.BackupReader
@@ -56,6 +57,7 @@ import dev.catsradar.domain.platform.IdGenerator
 import dev.catsradar.domain.platform.ImageResizer
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.platform.LocationProvider
+import dev.catsradar.domain.platform.PackageDownloader
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.ReverseGeocoder
 import dev.catsradar.domain.platform.SourceFileTime
@@ -70,6 +72,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import java.io.File
 
 val dataModule = module {
     single { createCatsDatabase(androidContext()) }
@@ -136,8 +139,11 @@ val dataModule = module {
         GitHubReleaseFeed(
             repository = BuildConfig.UPDATE_REPOSITORY,
             userAgent = "CatsRadar/${BuildConfig.VERSION_NAME}",
+            apiBase = BuildConfig.UPDATE_API,
         )
     }
+    // A cache folder: Android may clear it, which costs only a download.
+    single<PackageDownloader> { HttpPackageDownloader(File(androidContext().cacheDir, "updates")) }
 }
 
 // A preferences file's name is where its data lives: renaming one loses everything stored in it.

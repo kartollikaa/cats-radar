@@ -54,12 +54,14 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             onVariants(selector().withBuildType("release")) { it.packaging.jniLibs.useLegacyPackaging.set(true) }
             val commit = gitCommit()
             val updateRepository = providers.gradleProperty("catsradar.updateRepository")
+            val updateApi = providers.gradleProperty("catsradar.updateApi")
             onVariants { variant ->
                 variant.buildConfigFields?.put("GIT_COMMIT", commit.map { BuildConfigField("String", "\"$it\"", null) })
                 variant.buildConfigFields?.put(
                     "UPDATE_REPOSITORY",
                     updateRepository.map { BuildConfigField("String", "\"$it\"", null) },
                 )
+                variant.buildConfigFields?.put("UPDATE_API", updateApi.map { BuildConfigField("String", "\"$it\"", null) })
             }
         }
     }
