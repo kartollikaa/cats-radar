@@ -2,12 +2,14 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.region.EncounterPlace
+import dev.catsradar.domain.session.OutingWindow
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.withPhoto
 import dev.catsradar.presentation.map.MapPosition
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,10 +26,11 @@ class EncounterDetailStateMapperTest {
         val encounter = encounterFixture("e1", OCCURRED, locationSource = LocationSource.CURRENT_FIX)
             .copy(lat = 41.398644444, lon = 2.178419444, accuracyMeters = 12.4f)
 
-        val state = mapper.map(encounter, today)
+        val state = mapper.page(encounter, today)
 
         assertEquals(
-            EncounterDetailState.Loaded(
+            CatPage(
+                id = "e1",
                 dayLabel = "2026-09-22",
                 timeLabel = OCCURRED.toString(),
                 location = LocationLabel.CURRENT,
@@ -44,7 +47,7 @@ class EncounterDetailStateMapperTest {
     fun `an encounter without coordinates says so through the label and carries no coordinate text`() {
         val encounter = encounterFixture("e1", OCCURRED, locationSource = LocationSource.NONE)
 
-        val state = mapper.map(encounter, today)
+        val state = mapper.page(encounter, today)
 
         assertEquals(LocationLabel.NONE, state.location)
         assertEquals(null, state.coordinatesLabel)
@@ -57,16 +60,16 @@ class EncounterDetailStateMapperTest {
         val pastThePole = encounterFixture("e2", OCCURRED).copy(lat = 123.4, lon = 2.17)
         val pastTheMeridian = encounterFixture("e3", OCCURRED).copy(lat = 41.39, lon = 200.0)
 
-        assertEquals(null, mapper.map(unlocated, today).mapPosition)
-        assertEquals("123.40000, 2.17000", mapper.map(pastThePole, today).coordinatesLabel)
-        assertEquals(null, mapper.map(pastThePole, today).mapPosition)
-        assertEquals(null, mapper.map(pastTheMeridian, today).mapPosition)
+        assertEquals(null, mapper.page(unlocated, today).mapPosition)
+        assertEquals("123.40000, 2.17000", mapper.page(pastThePole, today).coordinatesLabel)
+        assertEquals(null, mapper.page(pastThePole, today).mapPosition)
+        assertEquals(null, mapper.page(pastTheMeridian, today).mapPosition)
     }
 
     @Test
     fun `only a cat with no location is offered one on a map`() {
         val offered = LocationSource.entries.associateWith { source ->
-            mapper.map(encounterFixture("e1", OCCURRED, locationSource = source), today).setsLocation
+            mapper.page(encounterFixture("e1", OCCURRED, locationSource = source), today).setsLocation
         }
 
         assertEquals(LocationSource.entries.associateWith { it == LocationSource.NONE }, offered)
@@ -76,14 +79,14 @@ class EncounterDetailStateMapperTest {
     fun `an accuracy with no coordinates to qualify is dropped`() {
         val encounter = encounterFixture("e1", OCCURRED).copy(lat = null, lon = null, accuracyMeters = 12f)
 
-        assertEquals(null, mapper.map(encounter, today).accuracyMeters)
+        assertEquals(null, mapper.page(encounter, today).accuracyMeters)
     }
 
     @Test
     fun `a photo encounter carries the app's own copy, resolved to a full path`() {
         val encounter = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg", thumbPath = "e1_thumb.jpg")
 
-        val state = mapper.map(encounter, today)
+        val state = mapper.page(encounter, today)
 
         // The full copy, not the thumbnail: the detail screen has the room for it.
         assertEquals(listOf(DetailPhoto(id = "e1", path = "/data/photos/e1.jpg")), state.photos)
@@ -94,7 +97,7 @@ class EncounterDetailStateMapperTest {
         val cat = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
         val second = cat.photos.single().copy(id = "second", photoPath = "second.jpg", addedAt = OCCURRED + 1.minutes)
 
-        val state = mapper.map(cat.copy(photos = cat.photos + second), today)
+        val state = mapper.page(cat.copy(photos = cat.photos + second), today)
 
         assertEquals(
             listOf(DetailPhoto("e1", "/data/photos/e1.jpg"), DetailPhoto("second", "/data/photos/second.jpg")),
@@ -104,7 +107,7 @@ class EncounterDetailStateMapperTest {
 
     @Test
     fun `a tally carries no photo at all`() {
-        val state = mapper.map(encounterFixture("e1", OCCURRED), today)
+        val state = mapper.page(encounterFixture("e1", OCCURRED), today)
 
         assertEquals(emptyList(), state.photos)
     }
@@ -115,7 +118,7 @@ class EncounterDetailStateMapperTest {
         val formatter = FakeDateTimeFormatter()
         val offsetMapper = EncounterDetailStateMapper(formatter, FakePhotoStorage())
 
-        offsetMapper.map(encounterFixture("west", justAfterMidnightUtc, tzOffsetMinutes = -60), today)
+        offsetMapper.page(encounterFixture("west", justAfterMidnightUtc, tzOffsetMinutes = -60), today)
 
         assertEquals(LocalDate(2026, 9, 21), formatter.dayHeaderCalls.single())
     }
@@ -124,23 +127,23 @@ class EncounterDetailStateMapperTest {
     fun `a cat without a photo is offered one, and shows one being attached`() {
         val tally = encounterFixture("e1", OCCURRED)
 
-        assertEquals(AddPhoto.READY, mapper.map(tally, today).addPhoto)
-        assertEquals(AddPhoto.ATTACHING, mapper.map(tally, today, attaching = AttachProgress(0, 1)).addPhoto)
+        assertEquals(AddPhoto.READY, mapper.page(tally, today).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.page(tally, today, attaching = AttachProgress(0, 1)).addPhoto)
     }
 
     @Test
     fun `a cat with a photo is offered another, and shows one being attached`() {
         val photo = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
 
-        assertEquals(AddPhoto.READY, mapper.map(photo, today).addPhoto)
-        assertEquals(AddPhoto.ATTACHING, mapper.map(photo, today, attaching = AttachProgress(0, 1)).addPhoto)
+        assertEquals(AddPhoto.READY, mapper.page(photo, today).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.page(photo, today, attaching = AttachProgress(0, 1)).addPhoto)
     }
 
     @Test
     fun `several photos being attached show how many are done out of how many`() {
         val tally = encounterFixture("e1", OCCURRED)
 
-        val state = mapper.map(tally, today, attaching = AttachProgress(done = 2, total = 5))
+        val state = mapper.page(tally, today, attaching = AttachProgress(done = 2, total = 5))
 
         assertEquals(AddPhoto.ATTACHING, state.addPhoto)
         assertEquals(AttachProgress(done = 2, total = 5), state.attachProgress)
@@ -151,8 +154,47 @@ class EncounterDetailStateMapperTest {
     fun `a single photo being attached, or none, shows no count`() {
         val tally = encounterFixture("e1", OCCURRED)
 
-        assertEquals(null, mapper.map(tally, today, attaching = AttachProgress(done = 0, total = 1)).attachProgress)
-        assertEquals(null, mapper.map(tally, today).attachProgress)
+        assertEquals(null, mapper.page(tally, today, attaching = AttachProgress(done = 0, total = 1)).attachProgress)
+        assertEquals(null, mapper.page(tally, today).attachProgress)
+    }
+
+    @Test
+    fun `a window maps to one page per cat, newest first, and names the cat on screen and its position`() {
+        val older = encounterFixture("older", OCCURRED)
+        val newer = encounterFixture("newer", OCCURRED + 5.minutes).withPhoto(photoPath = "newer.jpg")
+        val window = OutingWindow(cats = listOf(newer, older), newer = null, older = null)
+
+        val state = mapper.map(window, currentId = "older", today = today)
+
+        assertEquals(
+            EncounterDetailState.Loaded(
+                pages = persistentListOf(mapper.page(newer, today), mapper.page(older, today)),
+                currentId = "older",
+                currentNumber = 2,
+            ),
+            state,
+        )
+    }
+
+    @Test
+    fun `each page takes its own cat's place and attempt`() {
+        val older = encounterFixture("older", OCCURRED)
+        val newer = encounterFixture("newer", OCCURRED + 5.minutes)
+        val window = OutingWindow(cats = listOf(newer, older), newer = null, older = null)
+        val barcelona = EncounterPlace(countryCode = "ES", country = "Spain", city = "Barcelona")
+        val lisbon = EncounterPlace(countryCode = "PT", country = "Portugal", city = "Lisbon")
+
+        val state = mapper.map(
+            window,
+            currentId = "older",
+            today = today,
+            attaching = mapOf("newer" to AttachProgress(done = 1, total = 3)),
+            places = mapOf("newer" to lisbon, "older" to barcelona),
+        )
+
+        assertEquals(listOf("Lisbon", "Barcelona"), state.pages.map { it.place?.title })
+        assertEquals(listOf(AttachProgress(done = 1, total = 3), null), state.pages.map { it.attachProgress })
+        assertEquals(listOf(AddPhoto.ATTACHING, AddPhoto.READY), state.pages.map { it.addPhoto })
     }
 
     @Test
@@ -170,7 +212,7 @@ class EncounterDetailStateMapperTest {
 
         assertEquals(
             DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
-            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+            mapper.page(encounterFixture("e1", OCCURRED), today, place = place).place,
         )
     }
 
@@ -180,7 +222,7 @@ class EncounterDetailStateMapperTest {
 
         assertEquals(
             DetailPlace(title = "Spain", country = null, flag = "🇪🇸"),
-            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+            mapper.page(encounterFixture("e1", OCCURRED), today, place = place).place,
         )
     }
 
@@ -190,13 +232,13 @@ class EncounterDetailStateMapperTest {
 
         assertEquals(
             DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
-            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+            mapper.page(encounterFixture("e1", OCCURRED), today, place = place).place,
         )
     }
 
     @Test
     fun `a cat with no named place shows none`() {
-        assertEquals(null, mapper.map(encounterFixture("e1", OCCURRED), today).place)
+        assertEquals(null, mapper.page(encounterFixture("e1", OCCURRED), today).place)
     }
 
     private companion object {

@@ -75,9 +75,22 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(OCCURRED.toString(), state.timeLabel)
     }
+
+    @Test
+    fun `the observed cat is the one page, and it is on screen`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+
+            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            assertEquals(listOf(ID), state.pages.map { it.id })
+            assertEquals(ID, state.currentId)
+            assertEquals(1, state.currentNumber)
+        }
 
     @Test
     fun `an id nobody has ever seen renders as missing, without throwing`() = runTest(mainDispatcher) {
@@ -299,14 +312,14 @@ class EncounterDetailStoreTest {
         repository.insert(located)
         val store = newStore()
         runCurrent()
-        assertEquals(null, (store.state.value as EncounterDetailState.Loaded).place)
+        assertEquals(null, store.shownPage().place)
 
         cells.upsert(namedCell("sp3e3q"))
         runCurrent()
 
         assertEquals(
             DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
-            (store.state.value as EncounterDetailState.Loaded).place,
+            store.shownPage().place,
         )
     }
 
@@ -414,7 +427,7 @@ class EncounterDetailStorePhotoTest {
         store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
         runCurrent()
 
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
         assertEquals(AddPhoto.READY, state.addPhoto)
     }
@@ -428,7 +441,7 @@ class EncounterDetailStorePhotoTest {
         store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
         runCurrent()
 
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
     }
 
@@ -456,7 +469,7 @@ class EncounterDetailStorePhotoTest {
         runCurrent()
         store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
         runCurrent()
-        val second = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.last().id
+        val second = store.shownPage().photos.last().id
 
         store.effects.test {
             store.dispatch(EncounterDetailIntent.PhotoClicked(ID, second))
@@ -497,7 +510,7 @@ class EncounterDetailStorePhotoTest {
             runCurrent()
             assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
         }
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
         assertEquals(AddPhoto.READY, state.addPhoto)
     }
@@ -513,7 +526,7 @@ class EncounterDetailStorePhotoTest {
             runCurrent()
             expectNoEvents()
         }
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
     }
 
@@ -542,11 +555,11 @@ class EncounterDetailStorePhotoTest {
 
         store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
         runCurrent()
-        assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
 
         advanceTimeBy(2.seconds)
         runCurrent()
-        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
     }
 
     @Test
@@ -559,15 +572,15 @@ class EncounterDetailStorePhotoTest {
 
             store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
             runCurrent()
-            assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+            assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
 
             advanceTimeBy(4.seconds)
             runCurrent()
-            assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+            assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
 
             advanceTimeBy(2.seconds)
             runCurrent()
-            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            val state = store.shownPage()
             assertEquals(AddPhoto.READY, state.addPhoto)
             assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
         }
@@ -609,7 +622,7 @@ class EncounterDetailStorePhotoTest {
 
             store.dispatch(EncounterDetailIntent.UndoClicked)
             runCurrent()
-            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            val state = store.shownPage()
             assertEquals(AddPhoto.READY, state.addPhoto)
             assertEquals(emptyList(), state.photos)
         }
@@ -627,7 +640,7 @@ class EncounterDetailStorePhotoTest {
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
             assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
         }
-        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
     }
 
     @Test
@@ -660,7 +673,7 @@ class EncounterDetailStorePhotoTest {
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
         }
-        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
     }
 
     @Test
@@ -799,7 +812,7 @@ class EncounterDetailStorePhotoTest {
         )
         val store = newStore()
         runCurrent()
-        val photoId = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.first().id
+        val photoId = store.shownPage().photos.first().id
 
         store.effects.test {
             store.dispatch(EncounterDetailIntent.PhotoClicked(ID, photoId))
@@ -820,7 +833,7 @@ class EncounterDetailStorePhotoTest {
             repository.insert(encounterFixture(OTHER, OCCURRED))
             val store = newStore()
             runCurrent()
-            val photoId = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.first().id
+            val photoId = store.shownPage().photos.first().id
 
             store.effects.test {
                 store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, photoId))
@@ -884,6 +897,11 @@ class EncounterDetailStorePhotoTest {
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
 }
+
+private fun EncounterDetailStore.shownPage(): CatPage =
+    assertIs<EncounterDetailState.Loaded>(state.value).let { loaded ->
+        loaded.pages.single { it.id == loaded.currentId }
+    }
 
 private object LocatesNoGalleryItem : GalleryItemLocator {
     override suspend fun locate(pickedUri: String): String? = null

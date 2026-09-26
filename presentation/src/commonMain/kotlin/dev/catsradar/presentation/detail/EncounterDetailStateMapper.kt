@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.EncounterPlace
+import dev.catsradar.domain.session.OutingWindow
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.dayHeader
@@ -24,15 +25,32 @@ class EncounterDetailStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
+    /** [currentId] is one of [window]'s cats; [attaching] and [places] are keyed by cat id. */
     fun map(
+        window: OutingWindow,
+        currentId: String,
+        today: LocalDate,
+        attaching: Map<String, AttachProgress> = emptyMap(),
+        places: Map<String, EncounterPlace?> = emptyMap(),
+    ): EncounterDetailState.Loaded {
+        val pages = window.cats.map { cat -> page(cat, today, attaching[cat.id], places[cat.id]) }
+        return EncounterDetailState.Loaded(
+            pages = pages.toImmutableList(),
+            currentId = currentId,
+            currentNumber = pages.indexOfFirst { it.id == currentId } + 1,
+        )
+    }
+
+    internal fun page(
         encounter: Encounter,
         today: LocalDate,
         attaching: AttachProgress? = null,
         place: EncounterPlace? = null,
-    ): EncounterDetailState.Loaded {
+    ): CatPage {
         val lat = encounter.lat
         val lon = encounter.lon
-        return EncounterDetailState.Loaded(
+        return CatPage(
+            id = encounter.id,
             dayLabel = dateTimeFormatter.dayHeader(encounter, today),
             timeLabel = dateTimeFormatter.time(encounter),
             location = encounter.locationSource.toLocationLabel(),

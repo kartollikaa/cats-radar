@@ -66,7 +66,7 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
 
         assertEquals(listOf("own", FIRST, SECOND, THIRD), photoSources())
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = shownPage(store)
         assertEquals(4, state.photos.size)
         assertEquals(AddPhoto.READY, state.addPhoto)
         assertEquals(null, state.attachProgress)
@@ -81,22 +81,22 @@ class EncounterDetailPickSeveralTest {
 
         store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
         runCurrent()
-        assertEquals(AttachProgress(done = 0, total = 3), loaded(store).attachProgress)
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
+        assertEquals(AttachProgress(done = 0, total = 3), shownPage(store).attachProgress)
+        assertEquals(AddPhoto.ATTACHING, shownPage(store).addPhoto)
 
         advanceTimeBy(1.seconds)
         runCurrent()
-        assertEquals(AttachProgress(done = 1, total = 3), loaded(store).attachProgress)
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
+        assertEquals(AttachProgress(done = 1, total = 3), shownPage(store).attachProgress)
+        assertEquals(AddPhoto.ATTACHING, shownPage(store).addPhoto)
 
         advanceTimeBy(1.seconds)
         runCurrent()
-        assertEquals(AttachProgress(done = 2, total = 3), loaded(store).attachProgress)
+        assertEquals(AttachProgress(done = 2, total = 3), shownPage(store).attachProgress)
 
         advanceTimeBy(1.seconds)
         runCurrent()
-        assertEquals(AddPhoto.READY, loaded(store).addPhoto)
-        assertEquals(null, loaded(store).attachProgress)
+        assertEquals(AddPhoto.READY, shownPage(store).addPhoto)
+        assertEquals(null, shownPage(store).attachProgress)
     }
 
     @Test
@@ -108,15 +108,15 @@ class EncounterDetailPickSeveralTest {
 
         store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST)))
         runCurrent()
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
-        assertEquals(null, loaded(store).attachProgress)
+        assertEquals(AddPhoto.ATTACHING, shownPage(store).addPhoto)
+        assertEquals(null, shownPage(store).attachProgress)
         advanceTimeBy(2.seconds)
         runCurrent()
 
         store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
         runCurrent()
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
-        assertEquals(null, loaded(store).attachProgress)
+        assertEquals(AddPhoto.ATTACHING, shownPage(store).addPhoto)
+        assertEquals(null, shownPage(store).attachProgress)
     }
 
     @Test
@@ -148,19 +148,19 @@ class EncounterDetailPickSeveralTest {
         store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND)))
         advanceTimeBy(3.seconds)
         runCurrent()
-        assertEquals(0, loaded(store).photos.size)
-        assertEquals(AttachProgress(done = 2, total = 2), loaded(store).attachProgress)
+        assertEquals(0, shownPage(store).photos.size)
+        assertEquals(AttachProgress(done = 2, total = 2), shownPage(store).attachProgress)
 
         advanceTimeBy(4.seconds)
         runCurrent()
-        assertEquals(1, loaded(store).photos.size)
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
-        assertEquals(AttachProgress(done = 2, total = 2), loaded(store).attachProgress)
+        assertEquals(1, shownPage(store).photos.size)
+        assertEquals(AddPhoto.ATTACHING, shownPage(store).addPhoto)
+        assertEquals(AttachProgress(done = 2, total = 2), shownPage(store).attachProgress)
 
         advanceTimeBy(5.seconds)
         runCurrent()
-        assertEquals(2, loaded(store).photos.size)
-        assertEquals(AddPhoto.READY, loaded(store).addPhoto)
+        assertEquals(2, shownPage(store).photos.size)
+        assertEquals(AddPhoto.READY, shownPage(store).addPhoto)
     }
 
     @Test
@@ -177,7 +177,7 @@ class EncounterDetailPickSeveralTest {
             expectNoEvents()
         }
         assertEquals(listOf(FIRST, THIRD), photoSources())
-        assertEquals(AddPhoto.READY, loaded(store).addPhoto)
+        assertEquals(AddPhoto.READY, shownPage(store).addPhoto)
     }
 
     @Test
@@ -277,7 +277,10 @@ class EncounterDetailPickSeveralTest {
         assertEquals(emptyList(), photoSources(ID))
     }
 
-    private fun loaded(store: EncounterDetailStore) = assertIs<EncounterDetailState.Loaded>(store.state.value)
+    private fun shownPage(store: EncounterDetailStore): CatPage =
+        assertIs<EncounterDetailState.Loaded>(store.state.value).let { state ->
+            state.pages.single { it.id == state.currentId }
+        }
 
     private fun photoSources(catId: String = ID): List<String?> =
         repository.encounters().single { it.id == catId }.photos.map { it.sourceDigest }

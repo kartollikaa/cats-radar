@@ -33,6 +33,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.detail.AddPhoto
 import dev.catsradar.presentation.detail.AttachProgress
+import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
@@ -66,7 +67,7 @@ class EncounterDetailScreenTest {
     @Test
     fun `a cat on screen offers back, and the tap reports`() {
         var backs = 0
-        show(loaded, onBackClick = { backs++ })
+        show(loadedWith(cat), onBackClick = { backs++ })
 
         back().assertIsDisplayed().performClick()
 
@@ -93,7 +94,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `the list runs under the status bar while its first line starts below the bar`() {
-        show(loaded)
+        show(loadedWith(cat))
 
         val list = compose.onNode(scrollsVertically).fetchSemanticsNode().boundsInRoot
         val photo = compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
@@ -105,7 +106,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `the back button lines up with the content under it`() {
-        show(loaded)
+        show(loadedWith(cat))
 
         val photo = compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
             .fetchSemanticsNode().boundsInRoot
@@ -116,7 +117,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `scrolled to the end, delete clears the bottom bar`() {
-        show(loaded)
+        show(loadedWith(cat))
         val screenBottom = compose.onRoot().fetchSemanticsNode().boundsInRoot.bottom
 
         compose.onNode(scrollsVertically).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 10_000f) }
@@ -130,7 +131,10 @@ class EncounterDetailScreenTest {
         var taps = 0
         compose.setContent {
             CatsRadarTheme {
-                EncounterDetailScreen(state = loaded.copy(setsLocation = true), onSetLocationClick = { taps++ })
+                EncounterDetailScreen(
+                    state = loadedWith(cat.copy(setsLocation = true)),
+                    onSetLocationClick = { taps++ },
+                )
             }
         }
 
@@ -141,14 +145,14 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `a cat with a location offers no set on map`() {
-        show(loaded.copy(location = LocationLabel.CURRENT, coordinatesLabel = "41.39000, 2.17000"))
+        show(loadedWith(cat.copy(location = LocationLabel.CURRENT, coordinatesLabel = "41.39000, 2.17000")))
 
         setOnMap().assertDoesNotExist()
     }
 
     @Test
     fun `several photos being attached show how many are through out of how many`() {
-        show(loaded.copy(addPhoto = AddPhoto.ATTACHING, attachProgress = AttachProgress(done = 2, total = 5)))
+        show(loadedWith(cat.copy(addPhoto = AddPhoto.ATTACHING, attachProgress = AttachProgress(done = 2, total = 5))))
 
         val bar = compose.onNodeWithContentDescription("Attached 2 of 5 photos")
         bar.assertExists()
@@ -159,14 +163,14 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `a single photo being attached shows the bar without a count`() {
-        show(loaded.copy(addPhoto = AddPhoto.ATTACHING))
+        show(loadedWith(cat.copy(addPhoto = AddPhoto.ATTACHING)))
 
         compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_attaching)).assertExists()
     }
 
     @Test
     fun `the where card names the cat's city and country after its flag, and TalkBack reads them without it`() {
-        show(loaded.copy(place = DetailPlace(title = "Barcelona", country = "Spain", flag = FLAG)))
+        show(loadedWith(cat.copy(place = DetailPlace(title = "Barcelona", country = "Spain", flag = FLAG))))
 
         val city = compose.onNodeWithText("Barcelona", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         val flag = compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
@@ -179,7 +183,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `a cat with no named place shows no place line`() {
-        show(loaded)
+        show(loadedWith(cat))
 
         compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithText("Barcelona", useUnmergedTree = true).assertDoesNotExist()
@@ -187,7 +191,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `a cat on the map shows a map with the cat's dot at its centre`() {
-        show(onTheMap)
+        show(loadedWith(onTheMap))
 
         val map = map().assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val dot = compose.onNodeWithTag(CatDotTestTag, useUnmergedTree = true).assertIsDisplayed()
@@ -199,7 +203,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `a cat not on the map shows no map`() {
-        show(loaded.copy(location = LocationLabel.CURRENT, coordinatesLabel = "123.40000, 2.17000"))
+        show(loadedWith(cat.copy(location = LocationLabel.CURRENT, coordinatesLabel = "123.40000, 2.17000")))
 
         map().assertDoesNotExist()
     }
@@ -207,7 +211,7 @@ class EncounterDetailScreenTest {
     @Test
     fun `a tap on the map opens the map`() {
         var opened = 0
-        show(onTheMap, onCoordinatesClick = { opened++ })
+        show(loadedWith(onTheMap), onCoordinatesClick = { opened++ })
 
         map().performTouchInput { click() }
 
@@ -216,7 +220,7 @@ class EncounterDetailScreenTest {
 
     @Test
     fun `a drag across the map scrolls the screen`() {
-        show(onTheMap)
+        show(loadedWith(onTheMap))
         val before = map().fetchSemanticsNode().boundsInRoot.top
 
         map().performTouchInput { swipeUp() }
@@ -251,7 +255,8 @@ class EncounterDetailScreenTest {
         }
     }
 
-    private fun EncounterDetailState.hasMap() = (this as? EncounterDetailState.Loaded)?.mapPosition != null
+    private fun EncounterDetailState.hasMap() =
+        (this as? EncounterDetailState.Loaded)?.pages?.any { it.mapPosition != null } == true
 
     private fun map() = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true)
 
@@ -270,7 +275,8 @@ class EncounterDetailScreenTest {
         val BOTTOM_BAR = 80.dp
 
         // The photo makes the list taller than the screen, so it has somewhere to scroll.
-        val loaded = EncounterDetailState.Loaded(
+        val cat = CatPage(
+            id = "cat-1",
             dayLabel = DAY,
             timeLabel = "14:32",
             location = LocationLabel.NONE,
@@ -280,7 +286,7 @@ class EncounterDetailScreenTest {
         )
 
         // No photo, so the map sits on screen as it opens.
-        val onTheMap = loaded.copy(
+        val onTheMap = cat.copy(
             location = LocationLabel.CURRENT,
             coordinatesLabel = "41.39864, 2.17842",
             photos = persistentListOf(),

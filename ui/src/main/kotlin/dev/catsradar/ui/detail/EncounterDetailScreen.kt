@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.AddPhoto
+import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
@@ -58,8 +59,8 @@ fun EncounterDetailScreen(
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             EncounterDetailState.Loading -> Unit
-            is EncounterDetailState.Loaded -> LoadedDetail(
-                state,
+            is EncounterDetailState.Loaded -> CatPageContent(
+                state.pages.first { it.id == state.currentId },
                 contentPadding = belowBar,
                 onDeleteClick = onDeleteClick,
                 onCoatClick = onCoatClick,
@@ -82,8 +83,8 @@ fun EncounterDetailScreen(
 }
 
 @Composable
-private fun LoadedDetail(
-    state: EncounterDetailState.Loaded,
+private fun CatPageContent(
+    page: CatPage,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onDeleteClick: () -> Unit = {},
@@ -102,25 +103,25 @@ private fun LoadedDetail(
             .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        if (state.photos.isNotEmpty()) DetailPhotoPager(state.photos, onPhotoClick = onPhotoClick)
+        if (page.photos.isNotEmpty()) DetailPhotoPager(page.photos, onPhotoClick = onPhotoClick)
         AddPhotoCard(
-            state.addPhoto,
-            progress = state.attachProgress,
+            page.addPhoto,
+            progress = page.attachProgress,
             onTakePhotoClick = onTakePhotoClick,
             onPickPhotoClick = onPickPhotoClick,
         )
         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
             Text(
-                text = state.dayLabel,
+                text = page.dayLabel,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
+            Text(text = page.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        WhereCard(state, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
+        WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             CoatPicker(
-                selected = state.coat,
+                selected = page.coat,
                 modifier = Modifier.padding(vertical = 8.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 onCoatClick = onCoatClick,
@@ -199,24 +200,38 @@ private fun EncounterDetailScreenMissingPreview() {
 }
 
 private val sampleLoaded = EncounterDetailState.Loaded(
-    dayLabel = "Today",
-    timeLabel = "14:32",
-    location = LocationLabel.CURRENT,
-    coordinatesLabel = "41.39864, 2.17842",
-    accuracyMeters = 12,
-    photos = persistentListOf(
-        DetailPhoto(id = "5f1c2d9e", path = "photos/5f1c2d9e-4b7a.jpg"),
-        DetailPhoto(id = "8a03b6c1", path = "photos/8a03b6c1-77d2.jpg"),
+    pages = persistentListOf(
+        CatPage(
+            id = "5f1c2d9e",
+            dayLabel = "Today",
+            timeLabel = "14:32",
+            location = LocationLabel.CURRENT,
+            coordinatesLabel = "41.39864, 2.17842",
+            accuracyMeters = 12,
+            photos = persistentListOf(
+                DetailPhoto(id = "5f1c2d9e", path = "photos/5f1c2d9e-4b7a.jpg"),
+                DetailPhoto(id = "8a03b6c1", path = "photos/8a03b6c1-77d2.jpg"),
+            ),
+            mapPosition = MapPosition(latitude = 41.39864, longitude = 2.17842),
+            place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+        ),
     ),
-    mapPosition = MapPosition(latitude = 41.39864, longitude = 2.17842),
-    place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+    currentId = "5f1c2d9e",
+    currentNumber = 1,
 )
 
 private val sampleNoLocation = EncounterDetailState.Loaded(
-    dayLabel = "Yesterday",
-    timeLabel = "09:05",
-    location = LocationLabel.NONE,
-    coordinatesLabel = null,
-    accuracyMeters = null,
-    addPhoto = AddPhoto.READY,
+    pages = persistentListOf(
+        CatPage(
+            id = "2b6d0f73",
+            dayLabel = "Yesterday",
+            timeLabel = "09:05",
+            location = LocationLabel.NONE,
+            coordinatesLabel = null,
+            accuracyMeters = null,
+            addPhoto = AddPhoto.READY,
+        ),
+    ),
+    currentId = "2b6d0f73",
+    currentNumber = 1,
 )
