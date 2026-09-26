@@ -47,16 +47,18 @@ The map is [MapLibre](https://maplibre.org/) drawing vector tiles from
 cookie. Its light style follows the light theme and its dark style the dark one. The attribution
 OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in.
 
-**The Map tab and the location picker ([location.md](./location.md#on-a-map)) fetch their content from the
-network as they are looked at.** Until the map, the app declared no
-`INTERNET` permission at all: geocoding runs through the platform. Crash reports and screen views go to
-Firebase as well (`analytics.md`), but no screen waits on them, and Settings asks GitHub for its release
-list only when *Check for updates* is tapped (`updates.md`). Tiles are fetched as the map is looked at,
-so the tile server learns which area is on screen and from which address, as with any web map, and
-because the map opens fitted around your cats, the first area it asks for is the one around where
-you have seen them; the picker opens around one of your cats or the phone's last position, so the same
-holds there. No cat is sent: the dots are drawn on the phone from the phone's own database.
-Tiles already seen, and the style, are kept in the app's cache, which no backup includes.
+**The Map tab, the location picker ([location.md](./location.md#on-a-map)) and the small map a cat's
+detail draws around it ([encounter-detail.md](./encounter-detail.md#its-map)) fetch their tiles from the
+network as they are looked at.** Until the map, the app declared no `INTERNET` permission at all:
+geocoding runs through the platform. Crash reports and screen views go to Firebase as well
+(`analytics.md`), but no screen waits on them, and Settings asks GitHub for its release list only when
+*Check for updates* is tapped (`updates.md`). Tiles are fetched as a map is looked at, so the tile server
+learns which area is on screen and from which address, as with any web map. Because the Map tab opens
+fitted around your cats, the first area it asks for is the one around where you have seen them; the
+picker opens around one of your cats or the phone's last position, so the same holds there, and a cat's
+detail asks for the few streets around that one cat. No cat is sent: the dots, the detail's included,
+are drawn on the phone from the phone's own database. Tiles already seen, and the style, are kept in the
+app's cache, which no backup includes.
 
 ## Which cats are on it
 
@@ -113,9 +115,10 @@ overlap it — never every point of every walk. With no outing focused it reads 
 
 ## A cat's coordinates
 
-A tap on the coordinates in a cat's detail ([encounter-detail.md](./encounter-detail.md)) switches to
-the Map tab with the view on that cat: a street-sized area centred on its dot, the size a lone cat
-opens on. Every other cat stays on the map around it.
+A tap in a cat's **Where** section, on its map or its coordinates
+([encounter-detail.md](./encounter-detail.md)), switches to the Map tab with the view on that cat: a
+street-sized area centred on its dot, the size a lone cat opens on. Every other cat stays on the map
+around it.
 
 - **From the Map tab itself**, when a dot or a spot's list opened the cat, the map comes back showing
   every cat: a focused outing, a coat choice and the heat are all let go, since each of them could
@@ -190,16 +193,17 @@ opening the map (above).
 - `domain/…/usecase/ObserveOutingTracks.kt` — the tracks of the walks overlapping a focused outing;
   `domain/…/session/SessionSplitter.kt`'s `outingOf` — the outing that holds a cat, for the mapper and
   the tracks alike
-- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and their
-  taps; `CatPhotos.kt` — the cats' photos, a cluster's photo and its badge, and `PhotoTiles`, which
-  draws each tile when the map first asks for it; `PhotoTile.kt` — a thumbnail drawn as a tile;
-  `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
-  `MapFeatures.kt` — cats as map features, each coat's colour shares, and each photo's rank, newest
-  first; its `routeLines` — a focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's
-  layers, their order and which need a rim; `MapSpotScreen.kt` — a spot's list, drawn by the
-  Encounters tab's own `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map;
-  `MapAttribution.kt` — the attribution, the one library control kept on it; `MapCoatSheet.kt` — the
-  coat choice
+- `ui/…/map/MapScreen.kt` — the map; `MapShared.kt` — its light and dark style, which the location
+  picker and a cat's detail map share; `CatLayers.kt` — the dots, the clusters and their taps;
+  `CatPhotos.kt` — the cats' photos, a cluster's photo and its badge, and `PhotoTiles`, which draws each
+  tile when the map first asks for it; `PhotoTile.kt` — a thumbnail drawn as a tile; `CatHeat.kt` — the
+  heat; `CoatDotPainter.kt` — a dot painted in its coat's colours; `MapFeatures.kt` — cats as map
+  features, each coat's colour shares (`dotShares`, which a cat's detail map draws its dot with too), and
+  each photo's rank, newest first; its `routeLines` — a focused outing's `MapLine`s as map features;
+  `HeatInk.kt` — the heat's layers, their order and which need a rim; `MapSpotScreen.kt` — a spot's
+  list, drawn by the Encounters tab's own `EncounterRows` in its list layout; `MapOverlay.kt` — the chips
+  over the map; `MapAttribution.kt` — the attribution, the one library control kept on it;
+  `MapCoatSheet.kt` — the coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
   back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing,
   or the single cat, another tab or a spot's list asked the map to show

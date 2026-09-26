@@ -3,6 +3,8 @@ package dev.catsradar.presentation.settings
 import app.cash.turbine.test
 import dev.catsradar.domain.about.BuildInfo
 import dev.catsradar.domain.platform.BuildInfoReader
+import dev.catsradar.domain.platform.Feature
+import dev.catsradar.domain.platform.FeatureToggles
 import dev.catsradar.domain.platform.InstallPermission
 import dev.catsradar.domain.platform.UpdateSource
 import dev.catsradar.domain.repository.ReportedJob
@@ -16,7 +18,10 @@ import dev.catsradar.presentation.counter.FakeSettingsRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -46,6 +51,7 @@ class SettingsStoreTest {
         buildInfoReader: BuildInfoReader = BuildInfoReader { pixelBuildInfo },
         updateSource: UpdateSource = UpdateSource { ReleaseFeed.Listed(emptyList()) },
         installPermission: InstallPermission = InstallPermission { true },
+        updatesFlag: Flow<Boolean> = flowOf(true),
     ) = SettingsStore(
         settingsRepository = repository,
         buildInfoReader = buildInfoReader,
@@ -56,6 +62,10 @@ class SettingsStoreTest {
             installPermission = installPermission,
             mapper = UpdateStateMapper(),
         ),
+        featureToggles = object : FeatureToggles {
+            override fun isOn(feature: Feature): Flow<Boolean> =
+                if (feature == Feature.IN_APP_UPDATES) updatesFlag else flowOf(false)
+        },
     )
 
     @Test
@@ -661,5 +671,38 @@ class SettingsStoreTest {
             assertEquals(SettingsEffect.OpenInstallPermission, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `the updates section is hidden while its flag is off`() = runTest(mainDispatcher) {
+        val store = settingsStore(updatesFlag = flowOf(false))
+        runCurrent()
+
+        assertEquals(false, store.state.value.updatesShown)
+    }
+
+    @Test
+    fun `the updates section shows while its flag is on`() = runTest(mainDispatcher) {
+        val store = settingsStore(updatesFlag = flowOf(true))
+        runCurrent()
+
+        assertEquals(true, store.state.value.updatesShown)
+    }
+
+    @Test
+    fun `a flag that changes while the screen is open shows or hides the section`() = runTest(mainDispatcher) {
+        val flag = MutableStateFlow(false)
+        val store = settingsStore(updatesFlag = flag)
+        runCurrent()
+        val shown = mutableListOf(store.state.value.updatesShown)
+
+        flag.value = true
+        runCurrent()
+        shown += store.state.value.updatesShown
+        flag.value = false
+        runCurrent()
+        shown += store.state.value.updatesShown
+
+        assertEquals(listOf(false, true, false), shown)
     }
 }

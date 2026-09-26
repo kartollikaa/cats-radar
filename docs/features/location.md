@@ -141,7 +141,7 @@ it says so the same way. Its tiles are fetched as the Map tab's are (see
   tally and *Where am I* share
 - `presentation/…/locationpicker/` — `LocationPickerState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/locationpicker/LocationPickerScreen.kt`; `ui/…/map/MapShared.kt` — the style and messages the picker
-  shares with the Map tab
+  shares with the Map tab (the style with a cat's detail map too)
 - `app/…/navigation/LocationPicker.kt` (the key), `LocationPickerDestination.kt`;
   `app/…/permission/LocationPermissionRequester.kt` — the permission request the Counter shares
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/geo/Geohash.kt`

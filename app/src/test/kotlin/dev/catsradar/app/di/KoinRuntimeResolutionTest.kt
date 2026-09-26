@@ -71,6 +71,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.parameter.parametersOf
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
@@ -108,8 +109,9 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<UpdateDownloadScheduler>())
         assertNotNull(koin.get<UpdateInstaller>())
         assertNotNull(koin.get<InstallResults>())
-        assertNotNull(koin.get<SettingsStore>())
         assertNotNull(koin.get<PruneInstalledUpdates>())
+        // Settings follows a Remote Config switch, which a JVM test without FirebaseApp cannot create.
+        assertStopsAtFirebase { koin.get<SettingsStore>() }
     }
 
     @Test
@@ -135,8 +137,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<WalkingNotifier>())
         assertNotNull(koin.get<ActivityManager>())
         // A JVM test has no FirebaseApp: the reporter's binding is proven by reaching Crashlytics, which then refuses.
-        val noFirebase = assertFailsWith<InstanceCreationException> { koin.get<NonFatalReporter>() }
-        assertIs<IllegalStateException>(generateSequence<Throwable>(noFirebase) { it.cause }.last())
+        assertStopsAtFirebase { koin.get<NonFatalReporter>() }
         assertNotNull(koin.get<Analytics>())
         assertNotNull(koin.get<ReverseGeocoder>())
         assertNotNull(koin.get<DeviceIdProvider>())
@@ -205,5 +206,12 @@ class KoinRuntimeResolutionTest {
         }.koin
 
         assertSame(koin.get<RecordTrackPoint>(), koin.get<RecordTrackPoint>())
+    }
+
+    private fun assertStopsAtFirebase(resolve: () -> Any) {
+        val failure = assertFailsWith<InstanceCreationException> { resolve() }
+        val root = generateSequence<Throwable>(failure) { it.cause }.last()
+        assertIs<IllegalStateException>(root)
+        assertContains(root.message.orEmpty(), "FirebaseApp")
     }
 }
