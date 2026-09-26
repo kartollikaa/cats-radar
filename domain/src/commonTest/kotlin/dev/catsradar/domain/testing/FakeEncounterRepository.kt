@@ -26,6 +26,12 @@ class FakeEncounterRepository :
     val setPlaceCellsCalls = mutableListOf<List<PlaceCellAssignment>>()
     val purgeCalls = mutableListOf<Instant>()
     var addPhotoShouldThrow: Throwable? = null
+    val insertAllIfSourceLiveCalls = mutableListOf<Pair<String, List<Encounter>>>()
+    var insertAllIfSourceLiveResult: Boolean? = null
+    var insertAllIfSourceLiveShouldThrow: Throwable? = null
+
+    /** Runs immediately before the guarded batch checks whether its source is live. */
+    var beforeInsertAllIfSourceLive: suspend () -> Unit = {}
 
     /** Runs after a successful write, before the result returns. */
     var afterAddPhoto: suspend () -> Unit = {}
@@ -50,6 +56,29 @@ class FakeEncounterRepository :
         check(encounters.value.none { it.id == encounter.id }) { "UNIQUE constraint failed: ${encounter.id}" }
         inserted += encounter
         encounters.update { it + encounter }
+    }
+
+    override suspend fun insertAllIfSourceLive(
+        sourceEncounterId: String,
+        encounters: List<Encounter>,
+    ): Boolean {
+        beforeInsertAllIfSourceLive()
+        insertAllIfSourceLiveCalls += sourceEncounterId to encounters
+        insertAllIfSourceLiveShouldThrow?.let { throw it }
+        val allowed = insertAllIfSourceLiveResult
+            ?: this.encounters.value.any { it.id == sourceEncounterId && it.deletedAt == null }
+        if (!allowed) return false
+
+        val savedEncounters = this.encounters.value
+        val insertedSize = inserted.size
+        try {
+            encounters.forEach { insert(it) }
+        } catch (failure: Throwable) {
+            this.encounters.value = savedEncounters
+            while (inserted.size > insertedSize) inserted.removeLast()
+            throw failure
+        }
+        return true
     }
 
     override suspend fun update(encounter: Encounter) {

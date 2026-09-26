@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 class EncounterRepositoryImplTest {
@@ -37,6 +38,22 @@ class EncounterRepositoryImplTest {
 
         assertEquals(listOf(cat.toEntity()), dao.inserted)
         assertEquals(listOf(cover.toEntity(), second.toEntity()), dao.insertedPhotos)
+    }
+
+    @Test
+    fun insertAllIfSourceLiveHandsOneCompleteBatchToTheDaoAndReturnsItsAnswer() = runTest {
+        val first = distinctEncounter()
+        val secondPhoto = first.cover!!.copy(
+            id = "photo-2",
+            encounterId = "encounter-id-2",
+            photoPath = "photos/b.jpg",
+        )
+        val cats = listOf(first, first.copy(id = "encounter-id-2", photos = listOf(secondPhoto)))
+
+        assertTrue(repository.insertAllIfSourceLive("source", cats))
+
+        assertEquals(cats.map { it.toEntity() }, dao.insertAllIfSourceLiveCall?.encounters)
+        assertEquals(cats.flatMap { it.photos }.map { it.toEntity() }, dao.insertAllIfSourceLiveCall?.photos)
     }
 
     @Test

@@ -21,6 +21,13 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
     override suspend fun insert(encounter: Encounter) =
         dao.insertWithPhotos(encounter.toEntity(), encounter.photos.map { it.toEntity() })
 
+    override suspend fun insertAllIfSourceLive(sourceEncounterId: String, encounters: List<Encounter>): Boolean =
+        dao.insertAllIfSourceLive(
+            sourceEncounterId = sourceEncounterId,
+            encounters = encounters.map { it.toEntity() },
+            photos = encounters.flatMap { it.photos }.map { it.toEntity() },
+        )
+
     override suspend fun update(encounter: Encounter) = dao.update(encounter.toEntity())
 
     override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean = dao.attachLocation(

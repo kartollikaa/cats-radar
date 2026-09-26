@@ -16,6 +16,9 @@ interface EncounterRepository {
 
     suspend fun insert(encounter: Encounter)
 
+    /** Inserts the whole batch only while [sourceEncounterId] still names a live cat. */
+    suspend fun insertAllIfSourceLive(sourceEncounterId: String, encounters: List<Encounter>): Boolean
+
     /** Rewrites the cat's own fields; its photos are never touched. */
     suspend fun update(encounter: Encounter)
 
