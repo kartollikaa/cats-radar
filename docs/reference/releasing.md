@@ -68,7 +68,8 @@ proves nothing about a release one.
 - **Code that creates a class from its name breaks only at run time.** R8 cannot see that use, so it
   drops the constructor or the class. Libraries ship rules for what they look up;
   `app/proguard-rules.pro` covers what theirs miss. No test runs the minified code, which is why a
-  release is launched on a device before it is tagged.
+  release is launched on a device before it is tagged, unless the owner skips that for it (step 4
+  below).
 - **Resources are shrunk in strict mode** (`app/src/main/res/raw/keep.xml`): a resource reached only
   through a name built at run time (`Resources.getIdentifier`) is removed. Reference resources
   through `R`.
@@ -87,6 +88,7 @@ proves nothing about a release one.
    key's certificate, not `Android Debug`.
 4. Install that APK and go through the paths that work by class name: a tap on the home-screen
    widget, a tally (a worker attaches its location), a backup export and its import, and a screen
-   other than Counter coming back after the process is killed in the background.
+   other than Counter coming back after the process is killed in the background. The owner may skip
+   this for one release; the release notes then say it was not walked.
 5. `gh release create v<versionName> --prerelease --target <merge commit>`, with the APK attached as
    `cats-radar-<versionName>.apk` and its `mapping.txt` zipped as `cats-radar-<versionName>-mapping.zip`.
