@@ -24,9 +24,9 @@ nothing before Android 12 — so the tiles are rounded on Android 10 and 11 too.
 ## What a tap does
 
 The count goes up at once, before anything is written, so the tap answers with a number as well as
-the haptic tick (see *The number a tap shows* for when it cannot). Then it inserts the encounter and hands the location to `AttachLocationWorker`. The
-row is written with `origin = WIDGET`, so a cat logged here is distinguishable from one logged in the
-app, from the notification, or from a photo.
+the haptic tick (*The number a tap shows* says when it cannot). Then it inserts the encounter and
+hands the location to `AttachLocationWorker`. The row is written with `origin = WIDGET`, so a cat
+logged here is distinguishable from one logged in the app, from the notification, or from a photo.
 
 The tap runs inside a broadcast, and Android gives a broadcast only a short window — which is why the
 location is handed to a worker and never waited for, and handed over before the count is read back.
@@ -118,10 +118,10 @@ for it in every process the app runs in.
 - **A tap whose write never finishes** — the process killed between the two — leaves its number on
   the home screen until the next redraw. The number is held in the app process, so the next session
   starts from storage's count.
-- **A number that does not change costs no redraw** — a row that does not change today's count
-  (importing an old photo, a cat that lands on another day), and this morning's first cat after
-  yesterday's single one, both "1". Every frame is drawn from the count the app holds, and a session
-  reads that count afresh before drawing, so the home screen already shows that number.
+- **A number that does not change costs no redraw.** Importing an old photo, or logging a cat that
+  lands on another day, leaves today's count alone; so does this morning's first cat after yesterday's
+  single one — both "1". Every frame is drawn from the count the app holds, and a session reads that
+  count afresh before drawing, so the home screen already shows that number.
 - **The time zone is read each time the count is worked out**, not once when the app starts, so
   flying across zones mid-trip does not leave "today" pinned to the old one.
 - **A cat deleted or undone after it was counted comes off the count** on the next redraw, because
