@@ -58,6 +58,7 @@ class GalleryLinkTest {
         sourceDigest = null,
         deviceId = deviceId,
         addedAt = OCCURRED,
+        shotId = null,
     )
 
     private companion object {

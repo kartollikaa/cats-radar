@@ -15,7 +15,7 @@ import kotlin.time.Instant
  * An archive whose own version is ahead of this one is refused rather than half-read: its rows may
  * carry fields this build would silently drop on the next export.
  */
-internal const val BACKUP_FORMAT_VERSION = 5
+internal const val BACKUP_FORMAT_VERSION = 6
 
 internal const val FIRST_FORMAT_WITH_WALKS = 2
 internal const val FIRST_FORMAT_WITH_PHOTO_LIST = 4
@@ -74,6 +74,7 @@ internal data class EncounterPhotoRecord(
     val galleryUri: String? = null,
     val sourceMediaUri: String? = null,
     val sourceDigest: String? = null,
+    val shotId: String? = null,
 )
 
 @Serializable
@@ -156,6 +157,7 @@ internal fun EncounterPhoto.toRecord(): EncounterPhotoRecord = EncounterPhotoRec
     galleryUri = galleryUri,
     sourceMediaUri = sourceMediaUri,
     sourceDigest = sourceDigest,
+    shotId = shotId,
 )
 
 internal fun EncounterPhotoRecord.toDomain(): EncounterPhoto = EncounterPhoto(
@@ -168,6 +170,7 @@ internal fun EncounterPhotoRecord.toDomain(): EncounterPhoto = EncounterPhoto(
     sourceDigest = sourceDigest,
     deviceId = deviceId,
     addedAt = Instant.fromEpochMilliseconds(addedAt),
+    shotId = shotId,
 )
 
 internal fun PlaceCell.toRecord(): PlaceCellRecord = PlaceCellRecord(

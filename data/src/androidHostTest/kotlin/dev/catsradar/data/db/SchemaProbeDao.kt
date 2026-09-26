@@ -19,6 +19,9 @@ internal interface SchemaProbeDao {
     @RawQuery
     suspend fun tableInfo(query: RoomRawQuery): List<PragmaColumn>
 
+    @RawQuery
+    suspend fun indexList(query: RoomRawQuery): List<PragmaIndex>
+
     @Query("SELECT kind FROM encounters WHERE id = :id")
     suspend fun rawEncounterKind(id: String): String
 
@@ -55,6 +58,8 @@ internal interface SchemaProbeDao {
     )
     suspend fun insertRawEncounter(id: String, occurredAt: Long, tzOffsetMinutes: Int, kind: String)
 }
+
+internal data class PragmaIndex(val name: String)
 
 internal data class PragmaColumn(
     val name: String,

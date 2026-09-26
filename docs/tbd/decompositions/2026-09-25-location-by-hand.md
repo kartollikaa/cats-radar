@@ -12,8 +12,8 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| L1 | A location set by hand | `MANUAL` source, `SetLocationByHand`, the `NONE` guard on every location write, backup format 5. | safe | ~400 | — | in-review |
-| L2 | Set a cat's location on a map | The picker screen with *Where am I*, opened from the detail of a cat with no location. | safe | ~700 | L1 | in-review |
+| L1 | A location set by hand | `MANUAL` source, `SetLocationByHand`, the `NONE` guard on every location write, backup format 5. | safe | ~400 | — | merged |
+| L2 | Set a cat's location on a map | The picker screen with *Where am I*, opened from the detail of a cat with no location. | safe | ~700 | L1 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -40,6 +40,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-26: **L1 merged** as #170 and **L2** as #175; **the epic is complete**. Review before L2 merged made
+  *Save* and *Where am I* wait for a loaded, placed map, since until then MapLibre's camera sits at 0°, 0°; its gate
+  added a message for a failed save and wraps a longitude panned past the antimeridian. Left for the owner's phone:
+  the picker end to end, and *Where am I* against a real fix.
 - 2026-09-26: **L1 opened as #170**, reviewed and gated green; L2 stacked on it. On the emulator the picker
   opened on a street around the cat logged closest in time, and *Save* gave the cat the point under the pin
   (the Map tab then drew it there). *Where am I* refused was not checked on the device: other sessions kept
