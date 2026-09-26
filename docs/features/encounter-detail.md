@@ -74,9 +74,10 @@ screen (*a drag across the map scrolls the screen*), and a tap on it opens the M
 tap anywhere else in the section does (*a tap on the map opens the map*). Should the cat's coordinates
 change while the screen is open, the map is drawn afresh around the new spot rather than moved there.
 
-Its tiles come over the network, like the Map tab's (see [map.md](./map.md#where-the-map-comes-from)):
-an area seen before loads from the cache, and a first look with no connection says the map could not
-load, with no dot on an empty area.
+Its tiles come over the network, like the Map tab's (see [map.md](./map.md#where-the-map-comes-from)).
+With no connection, an area seen before loads from the cache. When not even the map's style has been
+fetched yet, the map says it could not load, with no dot on an empty area; when the style has been but
+this area has not, the dot sits on the map's plain background.
 
 MapLibre's runtime is native, so neither a Compose preview nor a JVM test can start it. Under
 `LocalInspectionMode` the map is a plain block with the dot at its centre, and the screen tests switch
