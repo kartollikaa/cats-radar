@@ -41,7 +41,8 @@ encounter, which a phone with a long history takes long enough to see. The tap's
 first, and storage's count takes over once it has caught up with the tap:
 
 - the number never drops back below a tap already shown, and never counts one twice, whichever comes
-  first — the write finishing or storage's new count;
+  first — the write finishing or storage's new count — as long as the count can be read back after
+  the write;
 - taps faster than storage answers each count, one on top of the other;
 - a write that fails takes its cat back off;
 - a tap that has to start the app has no count to raise yet, so its number appears once storage has

@@ -37,10 +37,10 @@ class WidgetCount(private val observeTodayCount: ObserveTodayCount) {
      * settles, since the tap reads the count back itself.
      */
     suspend fun refresh() {
-        if (state.value.settling) return
-        val observationsBefore = state.value.observations
+        val before = state.value
+        if (before.settling) return
         val today = observeTodayCount().first()
-        state.update { it.read(today, observationsBefore) }
+        state.update { it.refreshed(today, since = before) }
     }
 
     /**
@@ -86,6 +86,14 @@ private data class Counting(
     // An announcement made while the read ran is at least as new as the read.
     fun read(count: Int, observationsBefore: Long) =
         if (observations == observationsBefore) copy(stored = count) else this
+
+    // Nothing was announced or tapped while the read ran, so it outranks any promise left over.
+    fun refreshed(count: Int, since: Counting) =
+        if (observations == since.observations && tapsStarted == since.tapsStarted) {
+            copy(stored = count, atLeast = null)
+        } else {
+            this
+        }
 
     fun tapped() = copy(
         tapsStarted = tapsStarted + 1,

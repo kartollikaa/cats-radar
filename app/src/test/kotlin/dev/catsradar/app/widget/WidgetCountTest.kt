@@ -229,6 +229,22 @@ class WidgetCountTest {
     }
 
     @Test
+    fun aReadBackOlderThanStoragesLatestWordIsIgnored() = runTest {
+        encounters.add(id = "a", at = Morning)
+        val shown = started()
+        val release = encounters.holdNextRead()
+        backgroundScope.launch { count.tally { encounters.add(id = "b", at = Morning) } }
+        runCurrent()
+        encounters.add(id = "c", at = Morning)
+        runCurrent()
+
+        release.complete(Unit)
+        runCurrent()
+
+        assertEquals(listOf(1, 2, 3), shown)
+    }
+
+    @Test
     fun aTapBeforeTheCountIsKnownIsWrittenAtOnce() = runTest {
         val tap = backgroundScope.launch { count.tally { encounters.add(id = "a", at = Morning) } }
         runCurrent()
@@ -289,6 +305,39 @@ class WidgetCountTest {
         count.refresh()
 
         assertEquals(readsBefore + 1, encounters.newReads)
+    }
+
+    @Test
+    fun aRefreshRetiresAPromiseStorageNeverReached() = runTest {
+        encounters.add(id = "a", at = Morning)
+        val shown = started()
+        encounters.holdAnnouncements()
+        count.tally { encounters.add(id = "b", at = Morning) }
+        encounters.softDelete("b", deletedAt = Morning)
+        encounters.announce(encounters.snapshot())
+        runCurrent()
+
+        count.refresh()
+
+        assertEquals(listOf(1, 2, 1), shown)
+    }
+
+    @Test
+    fun aRefreshOvertakenByATapIsIgnored() = runTest {
+        encounters.add(id = "a", at = Morning)
+        val shown = started()
+        encounters.holdAnnouncements()
+        val release = encounters.holdNextRead()
+        backgroundScope.launch { count.refresh() }
+        runCurrent()
+        count.tally { encounters.add(id = "b", at = Morning) }
+
+        release.complete(Unit)
+        runCurrent()
+        encounters.resumeAnnouncements()
+        runCurrent()
+
+        assertEquals(listOf(1, 2), shown)
     }
 
     @Test
