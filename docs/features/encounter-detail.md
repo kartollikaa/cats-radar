@@ -139,9 +139,10 @@ A tap on the photo, on the coordinates or on *Set on map* only ever acts on the 
 showing, and opens the viewer, the map or the location picker for that cat; a stray result naming a
 different cat opens none of them (`EncounterDetailStorePhotoTest`, *a tap naming a cat the screen does
 not show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat
-the screen does not show opens nothing*). The screen names that cat in every tap: each button, the photo
-and the map send the id of the page they sit on (`EncounterDetailPagesTest`, *the screen draws the cat on
-screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
+the screen does not show opens nothing*). The coat cell, *Take a photo*, *Choose from gallery*, the photo,
+the coordinates and *Set on map* send the id of the page they sit on; Delete, Undo and Back act on the cat
+on screen (`EncounterDetailPagesTest`, *the screen draws the cat on screen, and its taps name that cat*; *a
+tap on the map of the cat on screen names that cat*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
