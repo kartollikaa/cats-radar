@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.statistics.BestOutingState
 import dev.catsradar.presentation.statistics.CoatShareState
@@ -36,6 +35,8 @@ import dev.catsradar.presentation.statistics.WalkedState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CatFace
 import dev.catsradar.ui.coat.labelRes
+import dev.catsradar.ui.components.EmptyState
+import dev.catsradar.ui.components.HeadlineCard
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.components.ValueRow
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -131,12 +132,7 @@ private fun ByCoatSection(shares: ImmutableList<CoatShareState>, modifier: Modif
 
 @Composable
 private fun Headline(state: StatisticsState, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    ) {
+    HeadlineCard(modifier = modifier) {
         Column(
             modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -186,23 +182,11 @@ private fun StatRow(@StringRes labelRes: Int, value: String, modifier: Modifier 
 
 @Composable
 private fun EmptyStatistics(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_nav_bar_chart),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(56.dp),
-        )
-        Text(
-            text = stringResource(R.string.statistics_empty),
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-        )
-    }
+    EmptyState(
+        iconRes = R.drawable.ic_nav_bar_chart,
+        title = stringResource(R.string.statistics_empty),
+        modifier = modifier,
+    )
 }
 
 @ThemePreviews

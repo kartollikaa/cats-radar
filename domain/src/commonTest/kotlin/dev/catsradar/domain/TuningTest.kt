@@ -30,6 +30,7 @@ class TuningTest {
         assertEquals(20, Tuning.GEOCODE_BATCH)
         assertEquals(5, Tuning.MAX_GEOCODE_ATTEMPTS)
         assertEquals(100, Tuning.IMPORT_BATCH_MAX)
+        assertEquals(20, Tuning.ATTACH_BATCH_MAX)
     }
 
     @Test

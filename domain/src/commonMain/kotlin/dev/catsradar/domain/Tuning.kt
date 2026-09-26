@@ -26,6 +26,7 @@ object Tuning {
     const val GEOCODE_BATCH: Int = 20
     const val MAX_GEOCODE_ATTEMPTS: Int = 5
     const val IMPORT_BATCH_MAX: Int = 100
+    const val ATTACH_BATCH_MAX: Int = 20
 
     /** A fix less precise than this is left out of a walk's route rather than bending it. */
     const val TRACK_MAX_ACCURACY_METERS: Float = 50f

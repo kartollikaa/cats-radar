@@ -8,10 +8,12 @@ import kotlinx.coroutines.flow.flowOf
 
 internal class FakePlaceCellDao : PlaceCellDao {
     var observeAllResult: List<PlaceCellEntity> = emptyList()
+    var observeByIdResult: PlaceCellEntity? = null
     var loadByIdResult: PlaceCellEntity? = null
     var loadPageResult: List<PlaceCellEntity> = emptyList()
 
     val upserted = mutableListOf<PlaceCellEntity>()
+    var observeByIdCall: String? = null
     var loadByIdCall: String? = null
     var loadPageCall: Triple<PlaceStatus, String?, Int>? = null
 
@@ -20,6 +22,11 @@ internal class FakePlaceCellDao : PlaceCellDao {
     }
 
     override fun observeAll(): Flow<List<PlaceCellEntity>> = flowOf(observeAllResult)
+
+    override fun observeById(cellId: String): Flow<PlaceCellEntity?> {
+        observeByIdCall = cellId
+        return flowOf(observeByIdResult)
+    }
 
     override suspend fun loadById(cellId: String): PlaceCellEntity? {
         loadByIdCall = cellId

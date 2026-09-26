@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +41,7 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 
 private val CellWidth = 70.dp
+private val FaceSize = 34.dp
 private val PickerGap = 12.dp
 private const val CoatsPerRow = 4
 
@@ -57,13 +60,17 @@ fun CoatGrid(
     CoatGrid(selected = selected, modifier = modifier, onCoatClick = onCoatClick)
 }
 
-/** The same grid with any number of coats marked, for choosing several at once; a null marks none. */
+/**
+ * The same grid with any number of coats marked, for choosing several at once. A null in [selected]
+ * marks "no coat", which gets a cell of its own after the coats only when [onUnspecifiedClick] is given.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CoatGrid(
     selected: ImmutableSet<CoatOption?>,
     modifier: Modifier = Modifier,
     onCoatClick: (CoatOption) -> Unit = {},
+    onUnspecifiedClick: (() -> Unit)? = null,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -72,12 +79,29 @@ fun CoatGrid(
         maxItemsInEachRow = CoatsPerRow,
     ) {
         CoatOption.entries.forEach { coat ->
-            CoatColumn(
-                coat = coat,
+            CoatCell(
+                label = stringResource(coat.labelRes()),
                 selected = coat in selected,
                 modifier = Modifier.fillMaxRowHeight(),
                 onClick = { onCoatClick(coat) },
-            )
+            ) {
+                CatFace(coat = coat, modifier = Modifier.size(FaceSize))
+            }
+        }
+        onUnspecifiedClick?.let { onClick ->
+            CoatCell(
+                label = stringResource(R.string.coat_not_specified),
+                selected = null in selected,
+                modifier = Modifier.fillMaxRowHeight(),
+                onClick = onClick,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_nav_pets),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(FaceSize).padding(4.dp),
+                )
+            }
         }
     }
 }
@@ -104,22 +128,25 @@ fun CoatPicker(
         horizontalArrangement = Arrangement.spacedBy(PickerGap),
     ) {
         coats.forEach { coat ->
-            CoatColumn(
-                coat = coat,
+            CoatCell(
+                label = stringResource(coat.labelRes()),
                 selected = coat == selected,
                 modifier = Modifier.fillMaxHeight(),
                 onClick = { onCoatClick(coat.takeIf { it != selected }) },
-            )
+            ) {
+                CatFace(coat = coat, modifier = Modifier.size(FaceSize))
+            }
         }
     }
 }
 
 @Composable
-private fun CoatColumn(
-    coat: CoatOption,
+private fun CoatCell(
+    label: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
+    face: @Composable () -> Unit,
 ) {
     val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     Column(
@@ -133,9 +160,9 @@ private fun CoatColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        CatFace(coat = coat, modifier = Modifier.size(34.dp))
+        face()
         Text(
-            text = stringResource(coat.labelRes()),
+            text = label,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
         )
@@ -162,6 +189,14 @@ fun CoatOption.labelRes(): Int = when (this) {
 private fun CoatGridPreview() {
     CatsRadarTheme {
         Surface { CoatGrid(highlighted = CoatOption.GREY_WHITE) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun CoatGridWithUnspecifiedPreview() {
+    CatsRadarTheme {
+        Surface { CoatGrid(selected = persistentSetOf(CoatOption.GINGER, null), onUnspecifiedClick = {}) }
     }
 }
 

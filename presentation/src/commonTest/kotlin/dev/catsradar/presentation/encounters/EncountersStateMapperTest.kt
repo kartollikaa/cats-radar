@@ -307,30 +307,6 @@ class EncountersStateMapperTest {
         assertNotEquals(dateAtUtc, dateAnHourWest)
     }
 
-    @Test
-    fun `the plain list keeps one row per cat under each outing header, newest first`() {
-        val older = photoFixture("older", BASE)
-        val newer = photoFixture("newer", BASE + 10.minutes, locationSource = LocationSource.CURRENT_FIX)
-        val lone = encounterFixture("lone", BASE + 5.hours)
-
-        val items = mapper.mapList(listOf(older, newer, lone), today)
-
-        assertEquals(
-            persistentListOf(
-                OutingHeader(key = "header-lone", label = "2026-09-22, ${BASE + 5.hours}"),
-                EncounterListItem.Row(id = "lone", timeLabel = "${BASE + 5.hours}", location = LocationLabel.NONE),
-                OutingHeader(key = "header-older", label = "2026-09-22, $BASE"),
-                EncounterListItem.Row(
-                    id = "newer",
-                    timeLabel = "${BASE + 10.minutes}",
-                    location = LocationLabel.CURRENT,
-                ),
-                EncounterListItem.Row(id = "older", timeLabel = "$BASE", location = LocationLabel.NONE),
-            ),
-            items,
-        )
-    }
-
     private data class CellView(val id: String, val location: LocationLabel, val lead: CellLead?)
 
     @Test

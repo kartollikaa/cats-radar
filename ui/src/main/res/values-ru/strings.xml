@@ -12,6 +12,7 @@
     <string name="map_heat">Тепловая карта</string>
     <string name="map_coats">Окрасы</string>
     <string name="map_coats_title">Показать котиков по окрасу</string>
+    <string name="map_coats_hint">На карте останутся только котики отмеченных окрасов</string>
     <string name="map_coats_all">Все окрасы</string>
     <string name="map_filter_none">На карте нет котиков этих окрасов</string>
     <plurals name="map_summary">
@@ -33,6 +34,7 @@
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
     <string name="counter_import">Импорт из галереи</string>
+    <string name="counter_import_running">Импорт фото</string>
     <string name="counter_import_progress">%1$d из %2$d</string>
     <string name="counter_import_ok">Понятно</string>
     <plurals name="counter_import_added">
@@ -58,6 +60,7 @@
     <string name="counter_location_grant">Разрешить</string>
     <string name="counter_location_dismiss">Не надо</string>
     <string name="counter_coat_prompt_title">Какого окраса котик?</string>
+    <string name="counter_coat_prompt_hint">Нажмите на окрас, чтобы отметить его</string>
     <string name="counter_coat_prompt_skip">Не сейчас</string>
     <string name="counter_coat_prompt_photo">Только что снятое фото</string>
 
@@ -126,7 +129,20 @@
     <string name="statistics_rate_per_km">%1$s / км</string>
     <string name="statistics_places">Места</string>
 
+    <string name="regions_title">Места</string>
+    <string name="regions_back">Назад</string>
+    <string name="regions_trail_description">Входит в: %1$s</string>
+    <string name="regions_section_countries">Страны</string>
+    <string name="regions_section_cities">Города</string>
+    <string name="regions_section_areas">Районы</string>
+    <plurals name="regions_cat_count">
+        <item quantity="one">%d котик</item>
+        <item quantity="few">%d котика</item>
+        <item quantity="many">%d котиков</item>
+        <item quantity="other">%d котика</item>
+    </plurals>
     <string name="regions_no_places_yet">Мест пока нет</string>
+    <string name="regions_no_places_yet_hint">Котики с местом соберутся здесь по странам и городам</string>
     <string name="regions_no_places_here">Здесь нет мест</string>
     <string name="regions_no_cats_here">Здесь нет котиков</string>
     <string name="regions_unresolved">Пока без названия</string>
@@ -181,6 +197,19 @@
     <string name="detail_pick_photo">Выбрать из галереи</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_already_there">Это фото уже есть у котика</string>
+    <string name="detail_photos_already_there">Эти фото уже есть у котика</string>
+    <plurals name="detail_photos_attaching">
+        <item quantity="one">Прикреплено %1$d из %2$d фото</item>
+        <item quantity="few">Прикреплено %1$d из %2$d фото</item>
+        <item quantity="many">Прикреплено %1$d из %2$d фото</item>
+        <item quantity="other">Прикреплено %1$d из %2$d фото</item>
+    </plurals>
+    <plurals name="detail_photos_not_attached">
+        <item quantity="one">%d фото не прикрепилось</item>
+        <item quantity="few">%d фото не прикрепились</item>
+        <item quantity="many">%d фото не прикрепились</item>
+        <item quantity="other">%d фото не прикрепилось</item>
+    </plurals>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
     <string name="detail_back">Назад</string>

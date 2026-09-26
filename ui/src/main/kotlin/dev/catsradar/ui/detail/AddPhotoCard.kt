@@ -17,11 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.detail.AddPhoto
+import dev.catsradar.presentation.detail.AttachProgress
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -31,6 +33,7 @@ import dev.catsradar.ui.theme.ThemePreviews
 internal fun AddPhotoCard(
     addPhoto: AddPhoto,
     modifier: Modifier = Modifier,
+    progress: AttachProgress? = null,
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
 ) {
@@ -46,13 +49,23 @@ internal fun AddPhotoCard(
             OutlinedButton(onClick = onPickPhotoClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
                 ButtonLabel(R.drawable.ic_photo_library, R.string.detail_pick_photo)
             }
-            if (addPhoto == AddPhoto.ATTACHING) {
-                val attaching = stringResource(R.string.detail_photo_attaching)
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = attaching },
-                )
-            }
+            if (addPhoto == AddPhoto.ATTACHING) AttachingBar(progress)
         }
+    }
+}
+
+@Composable
+private fun AttachingBar(progress: AttachProgress?) {
+    if (progress == null) {
+        val attaching = stringResource(R.string.detail_photo_attaching)
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().semantics { contentDescription = attaching })
+    } else {
+        val attached =
+            pluralStringResource(R.plurals.detail_photos_attaching, progress.total, progress.done, progress.total)
+        LinearProgressIndicator(
+            progress = { progress.fraction },
+            modifier = Modifier.fillMaxWidth().semantics { contentDescription = attached },
+        )
     }
 }
 
@@ -73,6 +86,7 @@ private fun AddPhotoCardPreview() {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
             AddPhotoCard(addPhoto = AddPhoto.READY)
             AddPhotoCard(addPhoto = AddPhoto.ATTACHING)
+            AddPhotoCard(addPhoto = AddPhoto.ATTACHING, progress = AttachProgress(done = 2, total = 5))
         }
     }
 }
