@@ -13,6 +13,7 @@ import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.update.InstallResults
 import dev.catsradar.app.update.UpdateInstaller
+import dev.catsradar.app.widget.WidgetCount
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.GeocodeWorkScheduler
@@ -115,6 +116,17 @@ class KoinRuntimeResolutionTest {
     }
 
     @Test
+    fun `the widget's types resolved by hand are bound`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+
+        assertNotNull(koin.get<WidgetCount>())
+        assertNotNull(koin.get<WidgetRefresh>())
+    }
+
+    @Test
     fun `types resolved outside constructor injection are bound`() {
         val koin = startKoin {
             androidContext(ApplicationProvider.getApplicationContext<Context>())
@@ -162,7 +174,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<RegionsStore> { parametersOf(null) })
         assertNotNull(koin.get<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
         assertNotNull(koin.get<ScreenViewTracker>())
-        assertNotNull(koin.get<WidgetRefresh>())
         assertNotNull(koin.get<WalkingNotificationSync>())
         assertNotNull(koin.get<WalkRecordingState>())
         assertNotNull(koin.get<SettingsRepository>())

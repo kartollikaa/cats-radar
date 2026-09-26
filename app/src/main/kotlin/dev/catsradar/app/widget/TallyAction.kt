@@ -24,10 +24,11 @@ class TallyAction : ActionCallback, KoinComponent {
     private val logTally: LogTally by inject()
     private val locationAttachScheduler: LocationAttachScheduler by inject()
     private val haptics: Haptics by inject()
+    private val widgetCount: WidgetCount by inject()
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         haptics.tick()
-        val encounter = logTally(origin = EncounterOrigin.WIDGET)
+        val encounter = widgetCount.tally { logTally(origin = EncounterOrigin.WIDGET) }
         locationAttachScheduler.schedule(encounter.id)
         CatsRadarWidget().updateAll(context)
     }

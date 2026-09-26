@@ -23,15 +23,30 @@ nothing before Android 12 — so the tiles are rounded on Android 10 and 11 too.
 
 ## What a tap does
 
-It inserts the encounter, then hands the location to `AttachLocationWorker`. The row is written with
-`origin = WIDGET`, so a cat logged here is distinguishable from one logged in the app, from the
-notification, or from a photo.
+The count goes up at once, before anything is written, so the tap answers with a number as well as
+the haptic tick. Then it inserts the encounter and hands the location to `AttachLocationWorker`. The
+row is written with `origin = WIDGET`, so a cat logged here is distinguishable from one logged in the
+app, from the notification, or from a photo.
 
 The tap runs inside a broadcast, and Android gives a broadcast only a short window — which is why the
 location is handed to a worker and never waited for.
 
 **No undo.** The undo window belongs to the Counter, where there is a chip to show and a screen to
 show it on; a mis-tap on the widget is undone by opening the app.
+
+## The number a tap shows
+
+The widget does not wait for storage to count the new cat: counting today's cats means reading every
+encounter, which a phone with a long history takes long enough to see. The tap's number is shown
+first, and storage's count takes over once it has caught up with the tap:
+
+- the number never drops back below a tap already shown, and never counts one twice, whichever comes
+  first — the write finishing or storage's new count;
+- taps faster than storage answers each count, one on top of the other;
+- a write that fails takes its cat back off;
+- once the last tap is written the count is read back from storage, so the number ends on what
+  storage holds even when that is not the tap's number — a tap after midnight, on a widget still
+  showing yesterday's count, shows yesterday's count plus one for a moment, then today's.
 
 ## What Photo does
 
@@ -59,7 +74,7 @@ Four things redraw it, because no single one covers every case:
 - **its own session**, which Glance opens on an update or a tap and closes again after a while — not
   whenever the widget happens to be on screen;
 - **`WidgetRefresh`** in the app process, for a cat logged or undone anywhere else — the app, the
-  walking notification, an import;
+  walking notification, an import — and for a tap's number, which opens a session when none is open;
 - **the launcher's periodic update**, for the case where no process is alive at all.
 
 A tap on the widget is usually redrawn twice — by itself and by `WidgetRefresh` — which costs nothing
@@ -71,7 +86,9 @@ lock-screen tap has just written a row.
 
 A session never shows a placeholder. The count is read before the session starts, because Glance
 publishes a session's first frame before a flow has answered, and a "0" drawn there would flash on
-the home screen.
+the home screen. It is read afresh from storage, not taken from what the process last heard: storage
+says nothing when only the day changes, so a session the periodic update opens after midnight would
+otherwise draw yesterday's count.
 
 ## Colours
 
@@ -96,6 +113,9 @@ for it in every process the app runs in.
 - **Midnight is not an event.** Nothing wakes up to reset the count at 00:00, so a widget left
   untouched over midnight keeps yesterday's number until the periodic update, the next cat, or the
   next time the app starts. The number is never wrong about the data — only about the clock.
+- **A tap whose write never finishes** — the process killed between the two — leaves its number on
+  the home screen until the next redraw. The number is held in the app process, so the next session
+  starts from storage's count.
 - **The same number on a new day is still news.** Yesterday's 1 and this morning's first cat are
   both "1", and the second one still redraws the widget.
 - **A row that does not change today's number costs no redraw.** Importing an old photo, or logging
@@ -122,6 +142,8 @@ for it in every process the app runs in.
 - `app/…/widget/CatsRadarWidget.kt` — what it draws, at each size; `res/drawable/widget_tile*.xml` (and
   `drawable-ldrtl/`) — the tiles' outlines and their ripples, `res/values/dimens.xml` — their radii
 - `app/…/widget/TallyAction.kt` — what a tap on the count does
+- `app/…/widget/WidgetCount.kt` — the number the widget shows: a tap's at once, storage's once it has
+  caught up
 - `app/…/photo/TakePhotoShortcut.kt`, `CameraRequest.kt` — how Photo reaches the Counter's camera
 - `app/…/photo/PendingCaptures.kt` — which camera a result belongs to
 - `app/…/widget/WidgetRefresh.kt` — redrawing it when the app changes the count
