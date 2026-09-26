@@ -12,11 +12,11 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| U1 | Build info in Settings | Settings shows the version, build and device, and copies a developer report to the clipboard. | safe | ~450 | — | in-review |
-| U2 | Check for updates | A Settings button reads the configured GitHub release list and says whether a newer version exists. | safe | ~650 | U1 | in-review |
-| U3 | Download and install an update | A newer version found by the check downloads in a worker, is verified, and installs through `PackageInstaller`. | safe | ~900 | U2 | in-review |
-| U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | in-review |
-| U5 | Updates behind a runtime toggle | The Updates section shows only while the `in_app_updates` Remote Config flag is on; off by default. | toggle:in_app_updates | ~350 | U4 | in-review |
+| U1 | Build info in Settings | Settings shows the version, build and device, and copies a developer report to the clipboard. | safe | ~450 | — | merged |
+| U2 | Check for updates | A Settings button reads the configured GitHub release list and says whether a newer version exists. | safe | ~650 | U1 | merged |
+| U3 | Download and install an update | A newer version found by the check downloads in a worker, is verified, and installs through `PackageInstaller`. | safe | ~900 | U2 | merged |
+| U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | merged |
+| U5 | Updates behind a runtime toggle | The Updates section shows only while the `in_app_updates` Remote Config flag is on; off by default. | toggle:in_app_updates | ~350 | U4 | merged |
 | U6 | Remove the in_app_updates flag | Once a source is chosen and the section should always show, the flag and its port go. | safe | ~100 | U5 + a chosen source | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -75,6 +75,10 @@ bottom-up, each retargeted to `main` after the one below merges.
 
 ## Decision log
 
+- 2026-09-26: **U1–U5 merged** as #152, #158, #167, #171 and #179, bottom-up, each once `check` passed on its
+  head with the latest `main` merged down the chain; the database version constant took main's version 5. The
+  Updates section stays hidden until `in_app_updates` is set in the Firebase console. U6 waits for the owner's
+  choice of where the builds live; the update flow against that source is still to be seen on a phone.
 - 2026-09-26: the owner keeps the source repository private and will choose where builds live later (a
   public releases-only repository, or Google Drive). A slice U5 hides the Updates section behind a Firebase
   Remote Config flag, off by default, so the chain can merge now. While the repository was briefly public,
