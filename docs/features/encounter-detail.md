@@ -106,7 +106,7 @@ the last one — the newest, unless a backup brought an older photo in (*a photo
 pager to it*).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
-*Choose from gallery* — the system camera, or the system picker for a single image — on every live cat,
+*Choose from gallery* — the system camera, or the system picker for several images — on every live cat,
 one that has photos included (`EncounterDetailStoreTest`, *a cat that already has a photo can still be
 given another*). The new photo goes after the others (*a photo taken of a cat that has one is added
 after it*). A photo the cat already has is not added again, and the screen says so (*a picked photo
@@ -120,6 +120,26 @@ The attempt ends only when the observed cat carries the photo it attached: until
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
 have the photo yet, and offer the buttons back for a moment before the photo appeared
 (*a successful attach stays in progress until the photo arrives, never offering again*).
+
+**Several from the gallery.** The picker lets the user choose up to `Tuning.ATTACH_BATCH_MAX` images; a
+picker that ignores the limit — the document picker used where no photo picker is available — is cut to the
+first ones chosen (`PickSeveralPhotosTest`). The photos are attached one after another, in the order
+picked, after the cat's own (`EncounterDetailPickSeveralTest`, *every picked photo lands after the
+cat's own, in the order picked*). While they are, both buttons stay disabled and the progress bar fills
+as each one goes through, read out as "Attached 2 of 5 photos"; a single photo, picked or taken, shows the
+bar without a count as before (*a pick of several shows how many are through as it goes*; *a single
+picked photo or a camera photo shows the attempt without a count*; *a tap on either button mid-pick
+opens nothing*; `EncounterDetailScreenTest`). The attempt ends only once the cat carries every photo the
+pick attached (*the progress stays until the cat carries every photo the pick attached*). A pick ends in
+one message at most: one photo not attached says "Photo not attached", several say how many (*one photo
+of a pick not attached says so once, and the others land*; *several photos not attached say how many in
+one message*); a pick the cat already has in full says so (*a pick of several the cat already has says
+so once and changes nothing*); a duplicate among photos that were added is skipped without a word (*a
+duplicate among photos that were added is skipped without a word*). A photo that fails still lets the
+rest land. Leaving the screen mid-pick keeps the photos already attached and attaches no more (*leaving
+mid-pick keeps the photos attached so far and attaches no more*); a cat removed elsewhere mid-pick gets
+none of the rest, and nothing is said, since the screen already shows it gone (*the cat removed
+mid-pick is given no more photos and nothing is said*).
 
 A cancelled camera or a dismissed picker leaves the screen exactly as it was — no attempt starts
 (`EncounterDetailStoreTest`, *a cancelled camera or picker changes nothing*). A photo the camera
@@ -183,5 +203,4 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-A cat's photos cannot be removed or reordered, nor several chosen from the gallery at once (see
-`photos.md`).
+A cat's photos cannot be removed or reordered (see `photos.md`).

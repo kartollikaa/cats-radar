@@ -114,7 +114,7 @@ class EncounterDetailStateMapperTest {
         val tally = encounterFixture("e1", OCCURRED)
 
         assertEquals(AddPhoto.READY, mapper.map(tally, today).addPhoto)
-        assertEquals(AddPhoto.ATTACHING, mapper.map(tally, today, attachingPhoto = true).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.map(tally, today, attaching = AttachProgress(0, 1)).addPhoto)
     }
 
     @Test
@@ -122,7 +122,26 @@ class EncounterDetailStateMapperTest {
         val photo = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
 
         assertEquals(AddPhoto.READY, mapper.map(photo, today).addPhoto)
-        assertEquals(AddPhoto.ATTACHING, mapper.map(photo, today, attachingPhoto = true).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.map(photo, today, attaching = AttachProgress(0, 1)).addPhoto)
+    }
+
+    @Test
+    fun `several photos being attached show how many are done out of how many`() {
+        val tally = encounterFixture("e1", OCCURRED)
+
+        val state = mapper.map(tally, today, attaching = AttachProgress(done = 2, total = 5))
+
+        assertEquals(AddPhoto.ATTACHING, state.addPhoto)
+        assertEquals(AttachProgress(done = 2, total = 5), state.attachProgress)
+        assertEquals(0.4f, state.attachProgress?.fraction)
+    }
+
+    @Test
+    fun `a single photo being attached, or none, shows no count`() {
+        val tally = encounterFixture("e1", OCCURRED)
+
+        assertEquals(null, mapper.map(tally, today, attaching = AttachProgress(done = 0, total = 1)).attachProgress)
+        assertEquals(null, mapper.map(tally, today).attachProgress)
     }
 
     @Test
