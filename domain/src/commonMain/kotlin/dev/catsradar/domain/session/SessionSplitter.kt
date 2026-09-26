@@ -18,12 +18,14 @@ object SessionSplitter {
         }
 
     /**
-     * The same outing boundary as [split], returning each outing's own encounters (oldest first)
-     * instead of aggregate counts - the one place that boundary is computed; [split] is defined in
-     * terms of it rather than re-deriving the gap comparison.
+     * The same outing boundary as [split], returning each outing's own encounters (oldest first; ones
+     * sharing a time in the order they were recorded, then by id) instead of aggregate counts - the one
+     * place that boundary is computed; [split] is defined in terms of it rather than re-deriving the gap
+     * comparison.
      */
     fun groupByOuting(encounters: List<Encounter>, gap: Duration = Tuning.SESSION_GAP): List<List<Encounter>> {
-        val sorted = encounters.filter { it.deletedAt == null }.sortedBy { it.occurredAt }
+        val sorted = encounters.filter { it.deletedAt == null }
+            .sortedWith(compareBy<Encounter> { it.occurredAt }.thenBy { it.createdAt }.thenBy { it.id })
         if (sorted.isEmpty()) return emptyList()
 
         val outings = mutableListOf<MutableList<Encounter>>()

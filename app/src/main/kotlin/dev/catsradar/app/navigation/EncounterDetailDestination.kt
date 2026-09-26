@@ -26,6 +26,8 @@ internal fun handleEncounterDetailEffect(
     photoPickerLauncher: PhotoPickerLauncher,
     photoFailureReporter: MessageReporter,
     alreadyThereReporter: MessageReporter,
+    notAttachedCountReporter: PhotoCountReporter,
+    allAlreadyThereReporter: MessageReporter,
     captureDiscarder: CaptureDiscarder,
 ) {
     when (effect) {
@@ -36,7 +38,9 @@ internal fun handleEncounterDetailEffect(
         EncounterDetailEffect.OpenMap -> onOpenMap()
         EncounterDetailEffect.OpenLocationPicker -> onOpenLocationPicker()
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
+        is EncounterDetailEffect.PhotosNotAttached -> notAttachedCountReporter.report(effect.count)
         EncounterDetailEffect.PhotoAlreadyThere -> alreadyThereReporter.report()
+        EncounterDetailEffect.PhotosAlreadyThere -> allAlreadyThereReporter.report()
         is EncounterDetailEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
     }
 }
@@ -58,11 +62,22 @@ internal fun EncounterDetailDestination(
     val currentOnOpenMap by rememberUpdatedState(onOpenMap)
     val currentOnOpenLocationPicker by rememberUpdatedState(onOpenLocationPicker)
     val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(EncounterDetailIntent.PhotoTaken(uri)) }
-    val photoPicker = rememberSinglePhotoPicker { uri -> store.dispatch(EncounterDetailIntent.PhotoPicked(uri)) }
+    val photoPicker = rememberSeveralPhotosPicker { uris -> store.dispatch(EncounterDetailIntent.PhotosPicked(uris)) }
     val photoFailureReporter = rememberMessageReporter(R.string.detail_photo_not_attached)
     val alreadyThereReporter = rememberMessageReporter(R.string.detail_photo_already_there)
+    val notAttachedCountReporter = rememberPhotoCountReporter(R.plurals.detail_photos_not_attached)
+    val allAlreadyThereReporter = rememberMessageReporter(R.string.detail_photos_already_there)
     val captureDiscarder = rememberCaptureDiscarder()
-    LaunchedEffect(store, cameraLauncher, photoPicker, photoFailureReporter, alreadyThereReporter, captureDiscarder) {
+    LaunchedEffect(
+        store,
+        cameraLauncher,
+        photoPicker,
+        photoFailureReporter,
+        alreadyThereReporter,
+        notAttachedCountReporter,
+        allAlreadyThereReporter,
+        captureDiscarder,
+    ) {
         store.effects.collect { effect ->
             handleEncounterDetailEffect(
                 effect,
@@ -74,6 +89,8 @@ internal fun EncounterDetailDestination(
                 photoPickerLauncher = photoPicker,
                 photoFailureReporter = photoFailureReporter,
                 alreadyThereReporter = alreadyThereReporter,
+                notAttachedCountReporter = notAttachedCountReporter,
+                allAlreadyThereReporter = allAlreadyThereReporter,
                 captureDiscarder = captureDiscarder,
             )
         }

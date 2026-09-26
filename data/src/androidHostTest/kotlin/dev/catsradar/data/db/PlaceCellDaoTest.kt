@@ -4,13 +4,19 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.domain.model.PlaceStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
@@ -46,6 +52,29 @@ class PlaceCellDaoTest {
         assertEquals(1, rows.size)
         assertEquals(resolved, rows.single())
         assertEquals("RESOLVED", database.schemaProbeDao().rawPlaceCellStatus(cellId))
+    }
+
+    @Test
+    fun observeByIdEmitsOnlyItsOwnRowOnceItExists() = runTest {
+        dao.upsert(pendingPlaceCellEntity("other"))
+
+        assertEquals(null, dao.observeById("ucfv0h").first())
+
+        dao.upsert(pendingPlaceCellEntity("ucfv0h"))
+
+        assertEquals(pendingPlaceCellEntity("ucfv0h"), dao.observeById("ucfv0h").first())
+    }
+
+    @Test
+    fun observeByIdEmitsAgainWhenItsRowIsWrittenWhileObserved() = runTest {
+        val cellId = "ucfv0h"
+        val emissions = Channel<PlaceCellEntity?>(Channel.UNLIMITED)
+        backgroundScope.launch(Dispatchers.Default) { dao.observeById(cellId).collect { emissions.send(it) } }
+        assertEquals(null, emissions.receiveWithin())
+
+        dao.upsert(pendingPlaceCellEntity(cellId))
+
+        assertEquals(pendingPlaceCellEntity(cellId), emissions.receiveWithin())
     }
 
     @Test
@@ -98,3 +127,7 @@ class PlaceCellDaoTest {
         assertEquals(listOf("charlie"), secondPage.map { it.cellId })
     }
 }
+
+// Room notifies on its own threads, so the wait runs in real time rather than the test's virtual time.
+private suspend fun <T> Channel<T>.receiveWithin(): T =
+    withContext(Dispatchers.Default) { withTimeout(5.seconds) { receive() } }

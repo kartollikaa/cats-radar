@@ -14,6 +14,7 @@ import dev.catsradar.domain.usecase.LocatePhone
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveOutingTracks
@@ -75,7 +76,10 @@ val domainModule = module {
     }
     factoryOf(::UndoLastTally)
     factoryOf(::ObserveEncounters)
-    factoryOf(::ObserveRegion)
+    factoryOf(::ObserveEncounterPlace)
+    factory {
+        ObserveRegion(encounterRepository = get(), placeCellRepository = get(), computeDispatcher = Dispatchers.Default)
+    }
     // Constructed by hand, not factoryOf: reflection injects every constructor parameter
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }

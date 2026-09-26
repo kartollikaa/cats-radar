@@ -11,6 +11,8 @@ class PlaceCellRepositoryImpl(private val dao: PlaceCellDao) : PlaceCellReposito
     override fun observeAll(): Flow<List<PlaceCell>> =
         dao.observeAll().map { entities -> entities.map { it.toDomain() } }
 
+    override fun observeById(cellId: String): Flow<PlaceCell?> = dao.observeById(cellId).map { it?.toDomain() }
+
     override suspend fun upsert(cell: PlaceCell) = dao.upsert(cell.toEntity())
 
     override suspend fun loadById(cellId: String): PlaceCell? = dao.loadById(cellId)?.toDomain()

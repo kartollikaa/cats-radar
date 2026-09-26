@@ -24,7 +24,8 @@ than just the day. An outing that runs past midnight keeps that one header for i
 never gains a second header partway through. Soft-deleted encounters never appear as a cat and
 never start or extend a group, because `groupByOuting()` filters them the same way `split()`
 always has — so a deleted cat between two photos leaves them free to pair. Cats within an outing,
-and outings within the list, both come back newest first.
+and outings within the list, both come back newest first; cats sharing a time — a burst of photos
+imported from one second — keep the order they were recorded in, however the database returns them.
 
 **Back from a cat returns to the same place in the list.** The list's scroll position is saved with
 the Encounters entry while a cat's screen covers it, and it comes back when that screen closes
@@ -77,7 +78,8 @@ row counts stop being trivial to read and group on every emission.
 
 An outing's header ends in "On the map" when at least one of its cats has a location. The mapper
 decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
-that outing alone (`map.md`).
+that outing alone (`map.md`). The map's spot sheet and the cats of a place (`places.md`) use the same
+rows and offer the same action.
 
 ## What the grid shows
 

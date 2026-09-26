@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -121,7 +122,7 @@ class EncounterDetailStateMapperTest {
         val tally = encounterFixture("e1", OCCURRED)
 
         assertEquals(AddPhoto.READY, mapper.map(tally, today).addPhoto)
-        assertEquals(AddPhoto.ATTACHING, mapper.map(tally, today, attachingPhoto = true).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.map(tally, today, attaching = AttachProgress(0, 1)).addPhoto)
     }
 
     @Test
@@ -129,7 +130,26 @@ class EncounterDetailStateMapperTest {
         val photo = encounterFixture("e1", OCCURRED).withPhoto(photoPath = "e1.jpg")
 
         assertEquals(AddPhoto.READY, mapper.map(photo, today).addPhoto)
-        assertEquals(AddPhoto.ATTACHING, mapper.map(photo, today, attachingPhoto = true).addPhoto)
+        assertEquals(AddPhoto.ATTACHING, mapper.map(photo, today, attaching = AttachProgress(0, 1)).addPhoto)
+    }
+
+    @Test
+    fun `several photos being attached show how many are done out of how many`() {
+        val tally = encounterFixture("e1", OCCURRED)
+
+        val state = mapper.map(tally, today, attaching = AttachProgress(done = 2, total = 5))
+
+        assertEquals(AddPhoto.ATTACHING, state.addPhoto)
+        assertEquals(AttachProgress(done = 2, total = 5), state.attachProgress)
+        assertEquals(0.4f, state.attachProgress?.fraction)
+    }
+
+    @Test
+    fun `a single photo being attached, or none, shows no count`() {
+        val tally = encounterFixture("e1", OCCURRED)
+
+        assertEquals(null, mapper.map(tally, today, attaching = AttachProgress(done = 0, total = 1)).attachProgress)
+        assertEquals(null, mapper.map(tally, today).attachProgress)
     }
 
     @Test
@@ -139,6 +159,41 @@ class EncounterDetailStateMapperTest {
         assertEquals("-73.98571", formatCoordinate(-73.985708))
         assertEquals("0.00000", formatCoordinate(0.0))
         assertEquals("180.00000", formatCoordinate(180.0))
+    }
+
+    @Test
+    fun `a cat found in a city shows the city over its country, with the country's flag`() {
+        val place = EncounterPlace(countryCode = "ES", country = "Spain", city = "Barcelona")
+
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a cat found in a country with no city shows the country alone`() {
+        val place = EncounterPlace(countryCode = "ES", country = "Spain", city = null)
+
+        assertEquals(
+            DetailPlace(title = "Spain", country = null, flag = "🇪🇸"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a city named like its country shows the name once`() {
+        val place = EncounterPlace(countryCode = "SG", country = "Singapore", city = "SINGAPORE")
+
+        assertEquals(
+            DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
+            mapper.map(encounterFixture("e1", OCCURRED), today, place = place).place,
+        )
+    }
+
+    @Test
+    fun `a cat with no named place shows none`() {
+        assertEquals(null, mapper.map(encounterFixture("e1", OCCURRED), today).place)
     }
 
     private companion object {
