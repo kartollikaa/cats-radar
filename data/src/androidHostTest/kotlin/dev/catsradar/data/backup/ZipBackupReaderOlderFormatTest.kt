@@ -81,6 +81,7 @@ class ZipBackupReaderOlderFormatTest {
                         sourceDigest = "sha",
                         deviceId = "cat-install",
                         addedAt = Instant.fromEpochMilliseconds(5),
+                        shotId = null,
                     ),
                 ),
                 emptyList(),

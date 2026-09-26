@@ -66,6 +66,13 @@ class LogPhotoTest {
     }
 
     @Test
+    fun `a photo taken starts a shot of its own`() = runTest {
+        val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
+
+        assertNull(logged.encounter.photos.single().shotId)
+    }
+
+    @Test
     fun `EXIF coordinates become the encounter's own, marked as coming from the photo`() = runTest {
         exif.data = ExifData(lat = 41.39864, lon = 2.17842)
 

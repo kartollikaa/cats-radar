@@ -32,3 +32,9 @@ internal val MigrationFrom3To4 = Migration(startVersion = 3, endVersion = 4) { c
     connection.execSQL("DROP INDEX IF EXISTS `index_encounters_sourceDigest`")
     photoColumns.forEach { column -> connection.execSQL("ALTER TABLE `encounters` DROP COLUMN `$column`") }
 }
+
+// Not Room's auto-migration: it rebuilds the table and fails at start-up on any photo row whose cat is gone.
+internal val MigrationFrom4To5 = Migration(startVersion = 4, endVersion = 5) { connection ->
+    connection.execSQL("ALTER TABLE `encounter_photos` ADD COLUMN `shotId` TEXT")
+    connection.execSQL("CREATE INDEX IF NOT EXISTS `index_encounter_photos_shotId` ON `encounter_photos` (`shotId`)")
+}
