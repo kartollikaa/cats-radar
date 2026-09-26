@@ -219,13 +219,14 @@ class LocationPickerStoreTest {
     }
 
     @Test
-    fun `a save that fails keeps the picker open with save available again`() = runTest(mainDispatcher) {
+    fun `a save that fails says so and keeps the picker open with save available again`() = runTest(mainDispatcher) {
         repository.attachLocationShouldThrow = IllegalStateException("disk full")
         val store = picking()
 
         store.effects.test {
             store.dispatch(LocationPickerIntent.SaveClicked(PICKED.lat, PICKED.lon))
             runCurrent()
+            assertEquals(LocationPickerEffect.NotSaved, awaitItem())
             expectNoEvents()
         }
         assertEquals(LocationPickerState.Picking(start = null), store.state.value)

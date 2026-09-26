@@ -54,6 +54,13 @@ import org.maplibre.compose.map.MapState as MaplibreMapState
 
 private val PinSize = 48.dp
 
+private const val HALF_TURN = 180.0
+private const val FULL_TURN = 360.0
+
+// A camera panned across the antimeridian is free to report a longitude past ±180; the place is the same.
+internal fun wrapLongitude(longitude: Double): Double =
+    ((longitude + HALF_TURN) % FULL_TURN + FULL_TURN) % FULL_TURN - HALF_TURN
+
 /** The point under the pin when Save was tapped. */
 data class SaveLocationInteraction(val latitude: Double, val longitude: Double)
 
@@ -154,7 +161,8 @@ private fun PickerMap(
             onWhereAmIClick = onWhereAmIClick,
             onSaveClick = {
                 val target = mapState.cameraPosition.target
-                onSaveClick(SaveLocationInteraction(latitude = target.latitude, longitude = target.longitude))
+                val longitude = wrapLongitude(target.longitude)
+                onSaveClick(SaveLocationInteraction(latitude = target.latitude, longitude = longitude))
             },
         )
     }

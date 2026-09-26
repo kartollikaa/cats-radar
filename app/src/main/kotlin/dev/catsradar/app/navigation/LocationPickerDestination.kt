@@ -22,11 +22,13 @@ internal fun handleLocationPickerEffect(
     onClose: () -> Unit,
     permissionRequester: LocationPermissionRequester,
     positionUnknownReporter: MessageReporter,
+    notSavedReporter: MessageReporter,
 ) {
     when (effect) {
         LocationPickerEffect.Close -> onClose()
         LocationPickerEffect.RequestLocationPermission -> permissionRequester.request()
         LocationPickerEffect.PositionUnknown -> positionUnknownReporter.report()
+        LocationPickerEffect.NotSaved -> notSavedReporter.report()
     }
 }
 
@@ -44,13 +46,15 @@ internal fun LocationPickerDestination(
         store.dispatch(LocationPickerIntent.LocationPermissionResult(granted))
     }
     val positionUnknownReporter = rememberMessageReporter(R.string.picker_position_unknown)
-    LaunchedEffect(store, permissionRequester, positionUnknownReporter) {
+    val notSavedReporter = rememberMessageReporter(R.string.picker_not_saved)
+    LaunchedEffect(store, permissionRequester, positionUnknownReporter, notSavedReporter) {
         store.effects.collect { effect ->
             handleLocationPickerEffect(
                 effect,
                 onClose = { currentOnClose() },
                 permissionRequester = permissionRequester,
                 positionUnknownReporter = positionUnknownReporter,
+                notSavedReporter = notSavedReporter,
             )
         }
     }

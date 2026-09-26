@@ -66,8 +66,10 @@ class LocationPickerStore(
         if (picking()?.saving != false) return
         update { copy(saving = true) }
         var saved = false
-        runStorageWrite { saved = setLocationByHand(encounterId, latitude, longitude) }
+        var failed = false
+        runStorageWrite(onFailure = { failed = true }) { saved = setLocationByHand(encounterId, latitude, longitude) }
         if (saved) close() else update { copy(saving = false) }
+        if (failed) emit(LocationPickerEffect.NotSaved)
     }
 
     private suspend fun close() {

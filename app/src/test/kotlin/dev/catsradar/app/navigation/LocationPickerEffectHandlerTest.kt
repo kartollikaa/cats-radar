@@ -12,6 +12,7 @@ class LocationPickerEffectHandlerTest {
         onClose = { calls += "close" },
         permissionRequester = { calls += "permission" },
         positionUnknownReporter = { calls += "unknown" },
+        notSavedReporter = { calls += "not saved" },
     )
 
     @Test
@@ -19,7 +20,8 @@ class LocationPickerEffectHandlerTest {
         handle(LocationPickerEffect.Close)
         handle(LocationPickerEffect.RequestLocationPermission)
         handle(LocationPickerEffect.PositionUnknown)
+        handle(LocationPickerEffect.NotSaved)
 
-        assertEquals(listOf("close", "permission", "unknown"), calls)
+        assertEquals(listOf("close", "permission", "unknown", "not saved"), calls)
     }
 }

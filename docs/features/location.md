@@ -125,7 +125,8 @@ the map stays (`LocationPickerStoreTest`; `LocatePhoneTest`).
 once the cat is no longer without a location — its own save landing, a fix landing first, the cat
 deleted elsewhere — so the detail screen underneath always shows what the cat actually has
 (*a cat located some other way closes the picker once*; *a cat deleted elsewhere closes the picker
-once*). A save that fails keeps the picker open with *Save* available again.
+once*). A save that fails says so and keeps the picker open with *Save* available again. A map panned
+across the antimeridian saves its longitude wrapped back into −180°…180° (`WrapLongitudeTest`).
 
 The map is the Map tab's, in the same light or dark style, without its cats; with the style unloadable
 it says so the same way. Its tiles are fetched as the Map tab's are (see
