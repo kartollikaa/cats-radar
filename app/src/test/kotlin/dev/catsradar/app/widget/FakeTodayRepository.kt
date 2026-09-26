@@ -20,6 +20,8 @@ import kotlin.time.Instant
 
 internal class FakeTodayRepository : EncounterRepository {
     private val rows = MutableStateFlow(emptyList<Encounter>())
+    private val announced = MutableStateFlow(emptyList<Encounter>())
+    private var announcing = true
     private var heldRead: CompletableDeferred<Unit>? = null
 
     /** A reader that starts while this is set fails; one already reading carries on. */
@@ -30,6 +32,24 @@ internal class FakeTodayRepository : EncounterRepository {
 
     fun add(id: String, at: Instant) {
         rows.update { it + tally(id, at) }
+        if (announcing) announced.value = rows.value
+    }
+
+    fun snapshot(): List<Encounter> = rows.value
+
+    /** Readers already following the rows stop hearing of changes; a new reader still reads them all. */
+    fun holdAnnouncements() {
+        announcing = false
+    }
+
+    /** Tells readers already following the rows that they are [rows], as a query started earlier would. */
+    fun announce(rows: List<Encounter>) {
+        announced.value = rows
+    }
+
+    fun resumeAnnouncements() {
+        announcing = true
+        announced.value = rows.value
     }
 
     /** The next new reader sees the rows as they are when it starts, but only once the result completes. */
@@ -44,11 +64,13 @@ internal class FakeTodayRepository : EncounterRepository {
             release.await()
             emit(snapshot.live())
         }
-        emitAll(rows.map { it.live() })
+        emit(rows.value.live())
+        emitAll(announced.map { it.live() })
     }
 
     override suspend fun softDelete(id: String, deletedAt: Instant) {
         rows.update { list -> list.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it } }
+        if (announcing) announced.value = rows.value
     }
 
     override suspend fun setPlaceCells(assignments: List<PlaceCellAssignment>): Unit =

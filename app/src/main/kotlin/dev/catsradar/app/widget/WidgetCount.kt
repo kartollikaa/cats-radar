@@ -29,15 +29,14 @@ class WidgetCount(private val observeTodayCount: ObserveTodayCount) {
 
     fun start(scope: CoroutineScope): Job =
         observeTodayCount()
-            .onEach { stored -> state.update { it.withStored(stored) } }
+            .onEach { count -> state.update { it.withObserved(count) } }
             .launchIn(scope)
 
     /** Reads the stored count again: storage stays silent when only the day changes. */
     suspend fun refresh() {
-        val readSince = state.value.storedAnswers
+        val observationsBefore = state.value.observations
         val today = observeTodayCount().first()
-        // An answer storage gave while this read ran is at least as new as the read.
-        state.update { if (it.storedAnswers == readSince) it.copy(stored = today) else it }
+        state.update { it.read(today, observationsBefore) }
     }
 
     /**
@@ -55,22 +54,31 @@ class WidgetCount(private val observeTodayCount: ObserveTodayCount) {
     }
 
     private suspend fun readBack(afterTap: Long) {
+        val observationsBefore = state.value.observations
         val today = withContext(NonCancellable) { runCatching { observeTodayCount().first() }.getOrNull() }
-        state.update { if (it.tapsStarted == afterTap) it.readBack(today) else it }
+        state.update { if (it.tapsStarted == afterTap) it.readBack(today, observationsBefore) else it }
     }
 }
 
-/** [atLeast] is what the widget has promised: it holds until the stored count reaches it. */
+/**
+ * [stored] is the newest count known, [observed] the last one storage announced by itself. [atLeast] is what
+ * the widget has promised: it holds until storage announces at least as much.
+ */
 private data class Counting(
     val stored: Int? = null,
-    val storedAnswers: Long = 0,
+    val observed: Int? = null,
+    val observations: Long = 0,
     val tapsStarted: Long = 0,
     val tapsWriting: Int = 0,
     val atLeast: Int? = null,
 ) {
     val shown: Int? get() = stored?.let { stored -> atLeast?.let { maxOf(stored, it) } ?: stored }
 
-    fun withStored(count: Int) = copy(stored = count, storedAnswers = storedAnswers + 1).caughtUp()
+    fun withObserved(count: Int) = copy(stored = count, observed = count, observations = observations + 1).caughtUp()
+
+    // An announcement made while the read ran is at least as new as the read.
+    fun read(count: Int, observationsBefore: Long) =
+        if (observations == observationsBefore) copy(stored = count) else this
 
     fun tapped() = copy(
         tapsStarted = tapsStarted + 1,
@@ -80,7 +88,11 @@ private data class Counting(
 
     fun written() = copy(tapsWriting = tapsWriting - 1)
 
-    fun readBack(today: Int?) = copy(atLeast = today).caughtUp()
+    fun readBack(count: Int?, observationsBefore: Long): Counting {
+        val known = if (count == null) this else read(count, observationsBefore)
+        return known.copy(atLeast = count).caughtUp()
+    }
 
-    private fun caughtUp() = if (stored != null && atLeast != null && stored >= atLeast) copy(atLeast = null) else this
+    private fun caughtUp() =
+        if (observed != null && atLeast != null && observed >= atLeast) copy(atLeast = null) else this
 }

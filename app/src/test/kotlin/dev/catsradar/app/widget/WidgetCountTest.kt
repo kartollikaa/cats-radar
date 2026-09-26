@@ -139,6 +139,7 @@ class WidgetCountTest {
             }
         }
         runCurrent()
+        assertEquals(listOf(1, 2, 3), shown)
 
         firstWrite.complete(Unit)
         runCurrent()
@@ -194,6 +195,40 @@ class WidgetCountTest {
     }
 
     @Test
+    fun aLateAnnouncementFromBeforeTheLastWriteTakesNoTapBack() = runTest {
+        encounters.add(id = "a", at = Morning)
+        val shown = started()
+        encounters.holdAnnouncements()
+        val firstWrite = CompletableDeferred<Unit>()
+        val secondWrite = CompletableDeferred<Unit>()
+        launch {
+            count.tally {
+                firstWrite.await()
+                encounters.add(id = "b", at = Morning)
+            }
+        }
+        launch {
+            count.tally {
+                secondWrite.await()
+                encounters.add(id = "c", at = Morning)
+            }
+        }
+        runCurrent()
+        firstWrite.complete(Unit)
+        runCurrent()
+        val afterFirstWrite = encounters.snapshot()
+        secondWrite.complete(Unit)
+        runCurrent()
+
+        encounters.announce(afterFirstWrite)
+        runCurrent()
+        encounters.resumeAnnouncements()
+        runCurrent()
+
+        assertEquals(listOf(1, 2, 3), shown)
+    }
+
+    @Test
     fun aTapBeforeTheCountIsKnownIsWrittenAtOnce() = runTest {
         val tap = backgroundScope.launch { count.tally { encounters.add(id = "a", at = Morning) } }
         runCurrent()
@@ -213,7 +248,7 @@ class WidgetCountTest {
         count.tally { encounters.add(id = "c", at = AfterMidnight) }
         runCurrent()
 
-        assertEquals(1, shown.last())
+        assertEquals(listOf(2, 3, 1), shown)
     }
 
     @Test
