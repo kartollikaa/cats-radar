@@ -263,10 +263,24 @@ class EncounterDetailPickSeveralTest {
         assertEquals(EncounterDetailState.Missing, store.state.value)
     }
 
+    @Test
+    fun `a pick lands every photo on the cat it names, not on the one the screen observes`() = runTest(mainDispatcher) {
+        repository.insert(catWithPhotosOf())
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotosPicked(OTHER, listOf(FIRST, SECOND)))
+        runCurrent()
+
+        assertEquals(listOf(FIRST, SECOND), photoSources(OTHER))
+        assertEquals(emptyList(), photoSources(ID))
+    }
+
     private fun loaded(store: EncounterDetailStore) = assertIs<EncounterDetailState.Loaded>(store.state.value)
 
-    private fun photoSources(): List<String?> =
-        repository.encounters().single { it.id == ID }.photos.map { it.sourceDigest }
+    private fun photoSources(catId: String = ID): List<String?> =
+        repository.encounters().single { it.id == catId }.photos.map { it.sourceDigest }
 
     private fun catWithPhotosOf(vararg digests: String): Encounter = encounterFixture(ID, OCCURRED).copy(
         photos = digests.mapIndexed { index, digest ->
@@ -311,6 +325,7 @@ class EncounterDetailPickSeveralTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val OTHER = "cat-2"
         const val CAPTURE = "content://captures/1"
         const val FIRST = "content://picker/1"
         const val SECOND = "content://picker/2"
