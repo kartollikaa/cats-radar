@@ -16,6 +16,12 @@ logged earlier in a walk — before GPS had a chance to settle — end up with t
 eventually produced. A last-known fix never does this; it only updates the encounter it was
 requested for.
 
+When `AddCatsToPhoto` adds cats to an existing photo, each one copies every current location field
+from the source cat. Its result pairs each new id with `needsLocation`: `true` only when that copied
+source is `NONE`. A Counter caller can schedule the ordinary background attach for each such id; a
+detail-screen caller deliberately will not, because the later detail flow adds a cat to a past shot.
+No shipped screen calls this operation yet.
+
 ## At the edges
 
 A fix is dated on the phone's own clock, the one every encounter is stamped with. Android dates a
@@ -137,8 +143,8 @@ it says so the same way. Its tiles are fetched as the Map tab's are (see
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/location/LocationPolicy.kt`, `LocationFix.kt`,
   `ClosestLocated.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`, `SetLocationByHand.kt`,
-  `WhereToLook.kt`, `LocatePhone.kt`, `RecordWalk.kt`; `domain/…/location/PhonePosition.kt` — the resolution a
-  tally and *Where am I* share
+  `WhereToLook.kt`, `LocatePhone.kt`, `RecordWalk.kt`, `AddCatsToPhoto.kt`;
+  `domain/…/location/PhonePosition.kt` — the resolution a tally and *Where am I* share
 - `presentation/…/locationpicker/` — `LocationPickerState`, `Intent`, `Effect`, `StateMapper`, `Store`
 - `ui/…/locationpicker/LocationPickerScreen.kt`; `ui/…/map/MapShared.kt` — the style and messages the picker
   shares with the Map tab (the style with a cat's detail map too)

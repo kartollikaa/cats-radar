@@ -86,6 +86,14 @@ The same photo can go on more than one cat — one picture of two cats together 
 *the same photo can go on two cats*). Each cat stores the photo's digest, so importing that picked
 photo later is skipped while either cat is live (see `import.md`).
 
+`AddCatsToPhoto` can now add several ordinary encounter rows to one photo's shot. Each added cat
+gets its own encounter and photo ids and independent app copy and thumbnail, while every photo keeps
+the source photo's `shotId`, gallery links and digest. The cats are committed together only while the
+source cat is still live; a refused or failed batch keeps none of its rows or files. Purging one cat
+therefore removes only that cat's copies, and undoing the gallery import that supplied the source
+leaves cats added later intact. No shipped screen invokes this capability yet; the **Several** control
+and shot presentation belong to later slices.
+
 ### At the edges
 
 - **An undecodable image, or a write that fails,** leaves the cat unchanged and the screen says

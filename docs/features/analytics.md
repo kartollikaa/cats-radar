@@ -39,7 +39,7 @@ Firebase Remote Config.
 
   | Event | Parameters | When |
   |---|---|---|
-  | `cat_logged` | `kind` (`tally`, `photo`), `origin` (`app`, `widget`, `notification` for a tally; `camera` for a photo), `has_coat` (`true`/`false`) | a cat is saved |
+  | `cat_logged` | `kind` (`tally`, `photo`), `origin` (`app`, `widget`, `notification` for a tally; `camera` or `gallery` for a photo), `has_coat` (`true`/`false`) | a cat is saved, including each cat added later to an existing photo |
   | `tally_undone` | — | the Undo chip removes a tally |
   | `coat_set` | `coat` (one of the eleven, or `none` when cleared) | a coat is written; setting the same coat again logs nothing |
   | `photo_attached` | `source` (`camera`, `gallery`) | a logged cat gets a photo |
@@ -56,6 +56,12 @@ Firebase Remote Config.
 
   Every parameter is a word from a fixed list or a count. A Konsist rule fails `check` if an event
   type ever gains a text, fraction or time field.
+
+  A gallery import still emits one `photos_imported` event for the original batch, never one
+  `cat_logged` per imported photo. A cat added later to one of those photos is a separate saved fact:
+  after the whole add operation commits, it emits `cat_logged` with the copied `gallery` origin and
+  its own coat presence. A refused or failed add emits nothing. No shipped screen invokes the add
+  operation yet.
 - **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
   updates, the phone's model and Android version, and the country the phone's network address places
   it in.
