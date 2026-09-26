@@ -39,10 +39,20 @@ class AddCatsToPhoto(
     ): AddCatsResult {
         if (coats.isEmpty()) return AddCatsResult.Added(emptyList())
         val source = encounterRepository.observeById(sourceEncounterId).first()
-            ?: return AddCatsResult.NotAddable
-        val sourcePhoto = source.photos.firstOrNull { it.id == photoId }
-            ?: return AddCatsResult.NotAddable
+        val sourcePhoto = source?.photos?.firstOrNull { it.id == photoId }
+        return if (source == null || sourcePhoto == null) {
+            AddCatsResult.NotAddable
+        } else {
+            copyAndInsert(sourceEncounterId, source, sourcePhoto, coats)
+        }
+    }
 
+    private suspend fun copyAndInsert(
+        sourceEncounterId: String,
+        source: Encounter,
+        sourcePhoto: EncounterPhoto,
+        coats: List<CatCoat?>,
+    ): AddCatsResult {
         val copied = mutableListOf<StoredPhoto>()
         var committed = false
         try {

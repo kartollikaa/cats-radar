@@ -26,6 +26,7 @@ class AndroidPhotoStorage(
         val thumbDestination = thumbPath?.let(::fileFor)
         var photoCopied = false
         var thumbCopied = false
+        var completed = false
 
         try {
             require(!photoDestination.exists()) { "photo destination already exists: $photoPath" }
@@ -38,11 +39,12 @@ class AndroidPhotoStorage(
                 thumbCopied = true
             }
 
-            StoredPhoto(photoPath, thumbPath)
-        } catch (failure: Throwable) {
-            if (thumbCopied) thumbDestination?.delete()
-            if (photoCopied) photoDestination.delete()
-            throw failure
+            StoredPhoto(photoPath, thumbPath).also { completed = true }
+        } finally {
+            if (!completed) {
+                if (thumbCopied) thumbDestination?.delete()
+                if (photoCopied) photoDestination.delete()
+            }
         }
     }
 
