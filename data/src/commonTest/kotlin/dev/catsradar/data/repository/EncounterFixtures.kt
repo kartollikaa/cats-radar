@@ -83,5 +83,8 @@ internal fun Encounter.withPhoto(
     ),
 )
 
+internal fun Encounter.inShotOf(firstPhotoId: String): Encounter =
+    copy(photos = photos.map { it.copy(shotId = firstPhotoId) })
+
 /** The cat as its row and photo rows read back together. */
 internal fun Encounter.toRelation(): EncounterWithPhotos = EncounterWithPhotos(toEntity(), photos.map { it.toEntity() })

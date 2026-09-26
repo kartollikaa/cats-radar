@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
+import dev.catsradar.data.repository.inShotOf
 import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.model.CatCoat
@@ -108,7 +109,7 @@ class ZipBackupArchiveTest {
     fun everyFieldOfEveryRowSurvivesTheRoundTrip() = runTest {
         val contents = BackupContents(
             encounters = listOf(
-                encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg"),
+                encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg").inShotOf("first-of-a-shot"),
                 encounter("b"),
                 encounter("by-hand").copy(locationSource = LocationSource.MANUAL, accuracyMeters = null),
             ),
@@ -148,7 +149,7 @@ class ZipBackupArchiveTest {
     }
 
     @Test
-    fun anArchiveSaysItIsFormatFiveSoAnAppBeforeLocationsByHandRefusesIt() = runTest {
+    fun anArchiveSaysItIsFormatSixSoAnAppBeforeShotsRefusesIt() = runTest {
         val path = target()
 
         assertTrue(writer().write(path, BackupContents()))
@@ -156,7 +157,7 @@ class ZipBackupArchiveTest {
         val manifest = ZipFile(path).use { zip ->
             zip.getInputStream(zip.getEntry(MANIFEST_ENTRY)).readBytes().decodeToString()
         }
-        assertTrue("\"formatVersion\":5" in manifest, manifest)
+        assertTrue("\"formatVersion\":6" in manifest, manifest)
     }
 
     @Test
