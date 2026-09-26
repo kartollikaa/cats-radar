@@ -110,6 +110,8 @@ class PhotosMigrationTest {
                 cats.mapValues { (_, cat) -> cat.photos.map { it.photoPath } }.toSortedMap(),
             )
             assertEquals(cameraPhoto, cats.getValue("camera").cover)
+            val photos = cats.values.flatMap { it.photos }
+            assertEquals(photos.map { it.id }, photos.map { it.shotId })
 
             assertEquals(1, database.encounterDao().purgeDeletedBefore(Instant.parse("2027-01-01T00:00:00Z")))
 
@@ -132,6 +134,12 @@ class PhotosMigrationTest {
         try {
             val cats = EncounterRepositoryImpl(database.encounterDao()).loadEvery()
             assertEquals(listOf("cat" to listOf("cat")), cats.map { cat -> cat.id to cat.photos.map { it.shotId } })
+            val photoRows = database.useReaderConnection { connection ->
+                connection.usePrepared("SELECT id, shotId FROM encounter_photos ORDER BY id") { statement ->
+                    buildList { while (statement.step()) add(statement.getText(0) to statement.getText(1)) }
+                }
+            }
+            assertEquals(listOf("cat" to "cat", "orphan" to "orphan"), photoRows)
         } finally {
             database.close()
         }

@@ -217,9 +217,18 @@ come back as separate cats, and every test that looks only at cats would stay gr
   - the app's own builder opening a v1, a v2 and a v3 file reaches v5. The existing purge test, which
     removes a cat's photo rows with it, now runs at v5;
   - `5.json` exported, with its test-asset copy kept identical by `SchemaAssetSyncTest`.
+- **The migration v5 → v6** (S2b), in `CatsDatabaseMigrationTest` and `PhotosMigrationTest`:
+  - a v5 database with a photo whose `shotId` is null, one naming itself, one naming another photo,
+    and a photo whose cat is gone reaches v6 with every row and value kept, the null filled with the
+    row's own id, the column NOT NULL and exactly its three indices;
+  - the app's own builder opens a v5 file holding a photo whose cat is gone, keeps that row, and
+    brings v1, v2 and v3 files to v6 with every photo naming itself. Room migrates before it turns
+    foreign keys on, so the rebuild's copy of such a row is not refused;
+  - `6.json` exported and copied, and `CATS_DATABASE_VERSION` matching the newest schema.
 - **Each of these tests is seen failing once, on purpose**, before it is trusted. The breaks: a
-  mapping that drops `shotId`, the format number left at 4, and a migration that loses a row. A
-  deliberately broken build must turn each test red.
+  mapping that drops `shotId`, the format number left behind, a migration that loses a row, one that
+  leaves `shotId` null, and one that forgets an index. A deliberately broken build must turn each test
+  red.
 - **On a device.** After the storage slice (S1), a build of `main` with real data (a camera photo, a
   gallery photo, a deleted cat, a walk) is upgraded in place, and everything reads back. After the
   format slice (S2), an export from each build imports into the other, and the old one refuses the
