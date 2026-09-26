@@ -2,13 +2,22 @@ package dev.catsradar.ui.map
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.maplibre.compose.expressions.ast.Expression
 import org.maplibre.compose.expressions.dsl.and
 import org.maplibre.compose.expressions.dsl.asNumber
@@ -18,6 +27,7 @@ import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.convertToString
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.format
+import org.maplibre.compose.expressions.dsl.gte
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.expressions.dsl.interpolate
 import org.maplibre.compose.expressions.dsl.linear
@@ -36,9 +46,15 @@ import org.maplibre.compose.map.MapState
 import org.maplibre.compose.map.ResolvedStyleImage
 import org.maplibre.compose.sources.GeoJsonOptions.ClusterPropertyAggregator
 import org.maplibre.compose.sources.GeoJsonSource
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val COVER_RANK = "cover_rank"
-private const val NO_COVER = Int.MAX_VALUE
+
+// Past any photo's rank, and whole: map expressions compute in floats, exact up to this.
+private const val NO_COVER = 1 shl 24
+
+private const val IMAGE_CHECKS = 50
+private val ImageCheckInterval = 50.milliseconds
 
 private const val SMALL_TILE_ZOOM = 11
 private const val LARGE_TILE_ZOOM = 16
@@ -47,7 +63,7 @@ private val SmallestTile = 20.dp
 internal val LargestTile = 44.dp
 private val TileCorner = 11.dp
 private val TileRim = 3.dp
-private val BadgeRadius = 10.dp
+private val BadgeRadius = 9.dp
 
 internal val coverAggregator = mapOf(
     COVER_RANK to ClusterPropertyAggregator(
@@ -77,12 +93,14 @@ private val BadgeOffset = interpolate(
 /**
  * The photos of cats that have one, over their dots: a single cat's photo gives way to a newer one it
  * would overlap, leaving its dot, and a cluster holding a photographed cat shows the newest one's photo
- * and its count. [photos] is [photoImages] of the points in [source].
+ * and its count. [photos] is [photoImages] of the points in [source]; [tilesAdded] counts the photo tiles
+ * the map has been given so far.
  */
 @Composable
 internal fun CatPhotos(
     source: GeoJsonSource,
     photos: ImmutableList<String>,
+    tilesAdded: Int,
     visible: Boolean,
     colors: CatLayerColors,
     onClusterTap: (ClusterTap) -> Unit,
@@ -91,7 +109,7 @@ internal fun CatPhotos(
     SymbolLayer(
         id = "cat-photos",
         source = source,
-        filter = !isCluster and feature.has(CAT_PHOTO),
+        filter = !isCluster and feature.has(CAT_PHOTO) and layOutAgainAfter(tilesAdded),
         visible = visible,
         sortKey = feature[CAT_PHOTO_RANK].asNumber(),
         iconImage = image(feature[CAT_PHOTO].asString()),
@@ -106,7 +124,7 @@ internal fun CatPhotos(
     SymbolLayer(
         id = "cat-cluster-photos",
         source = source,
-        filter = isCluster and hasCover,
+        filter = isCluster and hasCover and layOutAgainAfter(tilesAdded),
         visible = visible,
         iconImage = image(rememberCovers(photos)),
         iconSize = TileScale,
@@ -137,13 +155,18 @@ internal fun CatPhotos(
         textField = format(span(feature[POINT_COUNT].convertToString())),
         textFont = const(listOf(COUNT_FONT)),
         textColor = const(colors.clusterCount),
-        textSize = const(11.sp),
+        textSize = const(10.sp),
         textAllowOverlap = const(true),
         textIgnorePlacement = const(true),
         textTranslate = BadgeOffset,
         textTranslateAnchor = const(TranslateAnchor.Viewport),
     )
 }
+
+// Always true, but each count is a new filter, which lays the tiles out again: one laid out before its photo
+// reached the map leaves the photo out until then. It reads a feature, or the map would fold it away.
+private fun layOutAgainAfter(tilesAdded: Int) =
+    feature[CAT_PHOTO_RANK].asNumber(const(0)) gte const(-1 - tilesAdded)
 
 @Composable
 private fun rememberCovers(photos: ImmutableList<String>): Expression<StringValue> = remember(photos) {
@@ -158,14 +181,50 @@ private fun rememberCovers(photos: ImmutableList<String>): Expression<StringValu
     }
 }
 
-/** Draws each photo tile the first time the map asks for it. */
+/** What drawing photo tiles has taught the map: the thumbnails that are no image, and how many tiles it holds. */
+@Stable
+internal class PhotoTileProgress {
+    var unreadable by mutableStateOf(persistentSetOf<String>())
+        private set
+    var added by mutableIntStateOf(0)
+        private set
+
+    fun markUnreadable(thumbnail: String) {
+        unreadable = unreadable.adding(thumbnail)
+    }
+
+    fun countAdded() {
+        added++
+    }
+}
+
+/** Draws each photo tile the first time the map asks for it, and tells [progress] how it went. */
 @Composable
-internal fun PhotoTiles(mapState: MapState, rim: Color) {
+internal fun PhotoTiles(mapState: MapState, rim: Color, progress: PhotoTileProgress) {
     val density = LocalDensity.current
     val tile = remember(density, rim) {
         with(density) { PhotoTile(LargestTile.roundToPx(), TileCorner.toPx(), TileRim.toPx(), rim) }
     }
-    LaunchedEffect(mapState, tile) {
-        mapState.missingImageResolver = { id -> thumbnailOf(id)?.let { tile.draw(it) }?.let { ResolvedStyleImage(it) } }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(mapState, tile, progress) {
+        mapState.missingImageResolver = resolver@{ id ->
+            val thumbnail = thumbnailOf(id) ?: return@resolver null
+            val drawn = tile.draw(thumbnail)
+            if (drawn == null) {
+                progress.markUnreadable(thumbnail)
+                return@resolver null
+            }
+            // The map adds the tile after this returns.
+            scope.launch { if (mapState.awaitImage(id)) progress.countAdded() }
+            ResolvedStyleImage(drawn)
+        }
     }
+}
+
+private suspend fun MapState.awaitImage(id: String): Boolean {
+    repeat(IMAGE_CHECKS) {
+        if (style.images[id] != null) return true
+        delay(ImageCheckInterval)
+    }
+    return false
 }

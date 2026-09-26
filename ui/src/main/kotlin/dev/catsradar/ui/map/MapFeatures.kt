@@ -33,6 +33,15 @@ internal fun photoImageId(thumbnailPath: String): String = PHOTO_IMAGE_PREFIX + 
 internal fun thumbnailOf(imageId: String): String? =
     imageId.takeIf { it.startsWith(PHOTO_IMAGE_PREFIX) }?.removePrefix(PHOTO_IMAGE_PREFIX)
 
+/** These points with every thumbnail in [unreadable] let go, so its cat draws as a dot. */
+internal fun ImmutableList<MapPoint>.withoutThumbnails(unreadable: Set<String>): ImmutableList<MapPoint> =
+    if (unreadable.isEmpty()) {
+        this
+    } else {
+        map { point -> if (point.thumbnailPath in unreadable) point.copy(thumbnailPath = null) else point }
+            .toImmutableList()
+    }
+
 /** The photo of every point that has one, in the points' order: a photo's rank is its index here. */
 internal fun photoImages(points: ImmutableList<MapPoint>): ImmutableList<String> =
     points.mapNotNull { point -> point.thumbnailPath?.let(::photoImageId) }.toImmutableList()

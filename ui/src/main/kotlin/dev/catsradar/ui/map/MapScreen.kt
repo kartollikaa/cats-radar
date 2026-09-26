@@ -104,8 +104,10 @@ private fun CatsMap(
     onCatReach: () -> Unit = {},
 ) {
     val colors = catLayerColors()
-    val cats = remember(state.points) { catFeatures(state.points) }
-    val photos = remember(state.points) { photoImages(state.points) }
+    val tiles = remember { PhotoTileProgress() }
+    val drawable = remember(state.points, tiles.unreadable) { state.points.withoutThumbnails(tiles.unreadable) }
+    val cats = remember(drawable) { catFeatures(drawable) }
+    val photos = remember(drawable) { photoImages(drawable) }
     val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
@@ -116,6 +118,7 @@ private fun CatsMap(
         CatLayers(
             cats,
             photos,
+            tiles.added,
             route,
             state.heat,
             colors,
@@ -123,7 +126,7 @@ private fun CatsMap(
             onCatsTap = { tapCats(it) },
         )
     }
-    PhotoTiles(mapState, rim = colors.tileRim)
+    PhotoTiles(mapState, rim = colors.tileRim, progress = tiles)
     MapCamera(
         mapState,
         area = state.area,
