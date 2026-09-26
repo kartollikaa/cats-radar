@@ -32,8 +32,12 @@ class WidgetCount(private val observeTodayCount: ObserveTodayCount) {
             .onEach { count -> state.update { it.withObserved(count) } }
             .launchIn(scope)
 
-    /** Reads the stored count again: storage stays silent when only the day changes. */
+    /**
+     * Reads the stored count again: storage stays silent when only the day changes. Skipped while a tap
+     * settles, since the tap reads the count back itself.
+     */
     suspend fun refresh() {
+        if (state.value.settling) return
         val observationsBefore = state.value.observations
         val today = observeTodayCount().first()
         state.update { it.read(today, observationsBefore) }
@@ -70,9 +74,12 @@ private data class Counting(
     val observations: Long = 0,
     val tapsStarted: Long = 0,
     val tapsWriting: Int = 0,
+    val readingBack: Boolean = false,
     val atLeast: Int? = null,
 ) {
     val shown: Int? get() = stored?.let { stored -> atLeast?.let { maxOf(stored, it) } ?: stored }
+
+    val settling: Boolean get() = tapsWriting > 0 || readingBack
 
     fun withObserved(count: Int) = copy(stored = count, observed = count, observations = observations + 1).caughtUp()
 
@@ -86,11 +93,11 @@ private data class Counting(
         atLeast = shown?.plus(1) ?: atLeast,
     )
 
-    fun written() = copy(tapsWriting = tapsWriting - 1)
+    fun written() = copy(tapsWriting = tapsWriting - 1, readingBack = readingBack || tapsWriting == 1)
 
     fun readBack(count: Int?, observationsBefore: Long): Counting {
         val known = if (count == null) this else read(count, observationsBefore)
-        return known.copy(atLeast = count).caughtUp()
+        return known.copy(atLeast = count, readingBack = false).caughtUp()
     }
 
     private fun caughtUp() =

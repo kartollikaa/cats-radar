@@ -264,6 +264,34 @@ class WidgetCountTest {
     }
 
     @Test
+    fun aRefreshWhileATapSettlesDrawsTheTapWithoutReading() = runTest {
+        encounters.add(id = "a", at = Morning)
+        started()
+        val readBack = encounters.holdNextRead()
+        backgroundScope.launch { count.tally { encounters.add(id = "b", at = Morning) } }
+        runCurrent()
+        val readsBefore = encounters.newReads
+
+        count.refresh()
+
+        assertEquals(readsBefore, encounters.newReads)
+        assertEquals(2, count.shown.first())
+        readBack.complete(Unit)
+    }
+
+    @Test
+    fun aRefreshAfterATapHasSettledReadsAgain() = runTest {
+        encounters.add(id = "a", at = Morning)
+        started()
+        count.tally { encounters.add(id = "b", at = Morning) }
+        val readsBefore = encounters.newReads
+
+        count.refresh()
+
+        assertEquals(readsBefore + 1, encounters.newReads)
+    }
+
+    @Test
     fun aStaleRefreshIsIgnored() = runTest {
         encounters.add(id = "a", at = Morning)
         val shown = started()

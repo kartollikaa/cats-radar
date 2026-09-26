@@ -90,7 +90,8 @@ A session never shows a placeholder. The count is read before the session starts
 publishes a session's first frame before a flow has answered, and a "0" drawn there would flash on
 the home screen. It is read afresh from storage, not taken from what the process last heard: storage
 says nothing when only the day changes, so a session the periodic update opens after midnight would
-otherwise draw yesterday's count.
+otherwise draw yesterday's count. A session opened while a tap is still being written or read back
+skips that read and draws the tap's number straight away, since the tap reads the count back itself.
 
 ## Colours
 
