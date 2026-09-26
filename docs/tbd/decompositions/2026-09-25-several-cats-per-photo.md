@@ -13,7 +13,7 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | in-review |
-| S2 | Backup format 5 carries shots | Photo records carry `shotId`, the archive says format 5, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | planned |
+| S2 | Backup format 6 carries shots | Photo records carry `shotId`, the archive says format 6, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | planned |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | planned |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
 | S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | planned |
@@ -36,13 +36,13 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   photo reads back.
 - **Cleanup owed:** none.
 
-### Slice S2 — Backup format 5 carries shots
+### Slice S2 — Backup format 6 carries shots
 - **In scope:** `EncounterPhotoRecord.shotId` (default null, for older records); `BACKUP_FORMAT_VERSION` 5;
   record mapping both ways; round trips carrying a non-null `shotId` (records, the zip, `BackupRestoreTest`
-  export → wipe → import, twice); format 3 and 4 archives reading as one shot per photo; a format 4 reader
-  refusing format 5; `BackupMerge` tests for shots across phones; each seen failing once; `backup.md`.
+  export → wipe → import, twice); format 3, 4 and 5 archives reading as one shot per photo; a format 5 reader
+  refusing format 6; `BackupMerge` tests for shots across phones; each seen failing once; `backup.md`.
 - **Out of scope:** merge rules — none change.
-- **Ships safely because:** until S5 every `shotId` is null, which a format 5 record writes exactly as format 4.
+- **Ships safely because:** until S5 every `shotId` is null, which a format 6 record writes exactly as format 5.
 - **Verified on a device:** export and import in both directions between `main` and this build, the older
   build refusing the new archive; the same on the release APK.
 - **Cleanup owed:** none.
@@ -88,6 +88,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-26: **S2's archive format is 6, not 5.** While S1 waited to merge, #170 (location set by hand) took
+  format 5. An app on format 5 would read a shot's archive and drop every `shotId`, so shots need their own
+  number. The database version was untouched there, so S1's v5 stands.
 
 - 2026-09-26: **S1 in review** as #174 (~255 reviewable lines, 23 production). `/code-review` found 5, fixed 4; the
   gate's first round was green on all 14 mechanical criteria, the on-device upgrade awaits the owner's look.

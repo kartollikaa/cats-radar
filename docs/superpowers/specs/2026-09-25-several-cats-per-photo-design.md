@@ -61,16 +61,17 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
 
 ## Backup
 
-Format **5** writes `shotId` on each photo record. A photo that starts its shot writes none, so its
-record reads exactly as format 4 wrote it. A format 4 or older archive has no `shotId` anywhere, so
+Format **6** writes `shotId` on each photo record (format 5 is the location set by hand, which landed
+first). A photo that starts its shot writes none, so its record reads exactly as format 5 wrote it. A
+format 5 or older archive has no `shotId` anywhere, so
 each of its photos is the first row of its own shot. Photos still merge by their own `id`, and
 `shotId` travels with its row. A shot whose first row is not in the archive still groups by that id,
 and joins the first row once a later import brings it. The archive carries every cat's own copy of
 the files, as it carries every file a photo row points at today.
 
 **The format number is what protects an older app.** The reader ignores keys it does not know. An app
-before this one, handed an archive that still said format 4, would read it, drop every `shotId`, and
-write the shots out as separate cats on its next export. Saying 5 makes that app refuse the archive as
+before this one, handed an archive that still said format 5, would read it, drop every `shotId`, and
+write the shots out as separate cats on its next export. Saying 6 makes that app refuse the archive as
 too new instead, the way it refuses any newer format.
 
 ## Adding cats to a photo
@@ -183,9 +184,9 @@ come back as separate cats, and every test that looks only at cats would stay gr
     zip;
   - `BackupRestoreTest` on a real database: export, wipe, import. It brings back the shot as one
     group with every cat's coat and its own files. Imported again, it changes nothing.
-- **Older archives.** A format 4 archive, and a format 3 one through `carriedPhoto`, read with every
+- **Older archives.** A format 5 or 4 archive, and a format 3 one through `carriedPhoto`, read with every
   photo starting its own shot and every other field unchanged (`ZipBackupReaderOlderFormatTest`). The
-  archive says format 5, so a format 4 reader refuses it (mirroring
+  archive says format 6, so a format 5 reader refuses it (mirroring
   *anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt*).
 - **Merging across phones.** Each of these is a `BackupMerge` test:
   - a phone holding the first two cats of a shot imports an archive with the third, and the third
@@ -229,7 +230,7 @@ Nothing creates a shot of several cats until S5, and by then storage, backup, th
 Encounters all handle one.
 
 1. **S1 Photos know their shot.** `shotId` on `EncounterPhoto`, database v5 and its migration tests.
-2. **S2 Backup format 5 carries shots.** The record field, the format number, older formats, and the
+2. **S2 Backup format 6 carries shots.** The record field, the format number, older formats, and the
    round trips.
 3. **S3 Adding cats to a photo.** `AddCatsToPhoto`, the repository's all-or-nothing insert, the
    location rules, and analytics.
