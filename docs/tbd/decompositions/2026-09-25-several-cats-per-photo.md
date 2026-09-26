@@ -13,7 +13,8 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | merged |
-| S2 | Backup format 6 carries shots | Photo records carry `shotId`, the archive says format 6, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | in-review |
+| S2 | Backup format 6 carries shots | Photo records carry `shotId`, the archive says format 6, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | merged |
+| S2b | Every photo names its shot | `shotId` becomes the shot's id on every photo, never null: a photo of one cat names itself. Database v6; archive format unchanged. | safe | ~350 | S2 | in-progress |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | planned |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
 | S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | planned |
@@ -45,6 +46,18 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** until S5 every `shotId` is null, which a format 6 record writes exactly as format 5.
 - **Verified on a device:** export and import in both directions between `main` and this build, the older
   build refusing the new archive; the same on the release APK.
+- **Cleanup owed:** none.
+
+### Slice S2b — Every photo names its shot
+- **In scope:** `EncounterPhoto.shotId: String`, non-null, the shot's id; `shot` removed; every writer naming
+  the photo's own id; `EncounterPhotoEntity.shotId` NOT NULL; database v6 by a hand-written `MigrationFrom5To6`
+  that rebuilds `encounter_photos` (the only way to make a column NOT NULL), filling a null `shotId` with the
+  row's own id; the archive record still optional, read as the photo's own id when absent, always written;
+  the tests of S1 and S2 moved to the new meaning, the migration's own tests; `data-model.md`, `backup.md`, the
+  spec's § The model.
+- **Out of scope:** the archive format number — every format 6 archive already means exactly this.
+- **Ships safely because:** nothing yet writes a shot of several cats; every stored and archived photo keeps
+  the shot it had, now spelled out.
 - **Cleanup owed:** none.
 
 ### Slice S3 — Adding cats to a photo
@@ -88,6 +101,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-26: **S2 merged** as #176. **S2b added**, asked by the owner: a nullable `shotId` read as "the id of a
+  shot" but was null on every photo of one cat and on a shot's first photo, with the real id in a computed
+  `shot`. Now every photo carries its shot's id, and a photo of one cat names itself. It costs one table rebuild
+  (v6); the archive keeps format 6, since an absent key there already meant "this photo's own id".
 
 - 2026-09-26: **S1 merged** as #174. Merging main into it found a photo built without `shotId` in a test that
   had landed meanwhile (#177): the missing default did its job at compile time.
