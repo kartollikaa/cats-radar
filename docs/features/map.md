@@ -22,8 +22,8 @@ Clusters keep the theme's primary colour, whatever coats they hold.
 ## How a photo shows
 
 A cat with a photo shows as a small rounded tile of its cover, its first photo, inside a thin rim in
-the theme's surface colour, instead of its dot. The tile is drawn from the cover's thumbnail, the one
-the Encounters tab shows.
+the theme's bright surface colour, instead of its dot. The tile is drawn from the cover's thumbnail,
+the one the Encounters tab shows.
 
 - **Tiles grow with the zoom:** small at the scale of a city, larger as the map closes in on a
   street, full size from street level on. They grow smoothly as the map zooms, with no jump between
@@ -187,15 +187,16 @@ opening the map (above).
 - `domain/…/usecase/ObserveOutingTracks.kt` — the tracks of the walks overlapping a focused outing;
   `domain/…/session/SessionSplitter.kt`'s `outingOf` — the outing that holds a cat, for the mapper and
   the tracks alike
-- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and
-  their taps; `CatPhotos.kt` — the cats' photos, a cluster's photo and its badge, and `PhotoTiles`,
-  which draws each tile when the map first asks for it; `PhotoTile.kt` — a thumbnail drawn as a tile; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
+- `ui/…/map/MapScreen.kt` — the map and its style; `CatLayers.kt` — the dots, the clusters and their
+  taps; `CatPhotos.kt` — the cats' photos, a cluster's photo and its badge, and `PhotoTiles`, which
+  draws each tile when the map first asks for it; `PhotoTile.kt` — a thumbnail drawn as a tile;
+  `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
   `MapFeatures.kt` — cats as map features, each coat's colour shares, and each photo's rank, newest
-  first; its `routeLines` — a
-  focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's layers, their order and
-  which need a rim; `MapSpotScreen.kt` — a spot's list, drawn by the Encounters tab's own
-  `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map; `MapAttribution.kt` —
-  the attribution, the one library control kept on it; `MapCoatSheet.kt` — the coat choice
+  first; its `routeLines` — a focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's
+  layers, their order and which need a rim; `MapSpotScreen.kt` — a spot's list, drawn by the
+  Encounters tab's own `EncounterRows` in its list layout; `MapOverlay.kt` — the chips over the map;
+  `MapAttribution.kt` — the attribution, the one library control kept on it; `MapCoatSheet.kt` — the
+  coat choice
 - `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `MapSpot.kt` — a spot's list on the
   back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing,
   or the single cat, another tab or a spot's list asked the map to show
