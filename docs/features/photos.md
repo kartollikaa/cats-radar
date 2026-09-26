@@ -103,7 +103,8 @@ photo later is skipped while either cat is live (see `import.md`).
   lands removes them. Once the write has landed, the files are the cat's and stay
   (`AttachPhotoTest`, *a cancellation while the original goes to the gallery removes the copies*;
   *a cancellation after the write has landed keeps the files the cat now points at*). In a pick of
-  several, the photos already attached stay and the rest are never started
+  several, the photos already attached stay, the one in progress goes as above, and the rest are never
+  started
   (`EncounterDetailPickSeveralTest`, *leaving mid-pick keeps the photos attached so far and attaches no
   more*).
 - **Some photos of a pick fail** — the others still land, and the screen says how many did not
