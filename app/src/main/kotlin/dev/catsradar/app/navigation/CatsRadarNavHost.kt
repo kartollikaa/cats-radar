@@ -155,12 +155,12 @@ private fun EntryProviderScope<NavKey>.catEntries(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popIfOnTop(key) },
-            onOpenPhoto = { photoId -> backStack.push(PhotoViewer(key.id, photoId)) },
-            onOpenMap = {
-                mapFocus.postCat(key.id)
+            onOpenPhoto = { viewer -> backStack.push(viewer) },
+            onOpenMap = { catId ->
+                mapFocus.postCat(catId)
                 backStack.selectTab(BottomNavTab.MAP)
             },
-            onOpenLocationPicker = { backStack.push(LocationPicker(key.id)) },
+            onOpenLocationPicker = { catId -> backStack.push(LocationPicker(catId)) },
         )
     }
     entry<PhotoViewer>(metadata = photoViewerMetadata()) { key ->

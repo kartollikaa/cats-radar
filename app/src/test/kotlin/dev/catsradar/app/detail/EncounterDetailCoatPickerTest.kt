@@ -9,7 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.detail.EncounterDetailState
+import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.detail.EncounterDetailScreen
@@ -57,13 +57,16 @@ class EncounterDetailCoatPickerTest {
         compose.setContent {
             CatsRadarTheme {
                 EncounterDetailScreen(
-                    state = EncounterDetailState.Loaded(
-                        dayLabel = "Today",
-                        timeLabel = "14:32",
-                        location = LocationLabel.NONE,
-                        coordinatesLabel = null,
-                        accuracyMeters = null,
-                        coat = coat,
+                    state = loadedWith(
+                        CatPage(
+                            id = "cat-1",
+                            dayLabel = "Today",
+                            timeLabel = "14:32",
+                            location = LocationLabel.NONE,
+                            coordinatesLabel = null,
+                            accuracyMeters = null,
+                            coat = coat,
+                        ),
                     ),
                 )
             }

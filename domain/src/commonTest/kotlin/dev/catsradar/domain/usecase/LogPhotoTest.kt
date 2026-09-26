@@ -69,7 +69,8 @@ class LogPhotoTest {
     fun `a photo taken starts a shot of its own`() = runTest {
         val logged = assertIs<PhotoResult.Logged>(logPhoto()(SOURCE))
 
-        assertNull(logged.encounter.photos.single().shotId)
+        val photo = logged.encounter.photos.single()
+        assertEquals(photo.id, photo.shotId)
     }
 
     @Test

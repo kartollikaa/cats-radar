@@ -19,11 +19,11 @@ import org.koin.core.parameter.parametersOf
 internal fun handleEncounterDetailEffect(
     effect: EncounterDetailEffect,
     onNavigateBack: () -> Unit,
-    onOpenPhoto: (photoId: String) -> Unit,
-    onOpenMap: () -> Unit,
-    onOpenLocationPicker: () -> Unit,
+    onOpenPhoto: (PhotoViewer) -> Unit,
+    onOpenMap: (catId: String) -> Unit,
+    onOpenLocationPicker: (catId: String) -> Unit,
     cameraLauncher: CameraLauncher,
-    photoPickerLauncher: PhotoPickerLauncher,
+    photoPickerLauncher: CatPhotosPickerLauncher,
     photoFailureReporter: MessageReporter,
     alreadyThereReporter: MessageReporter,
     notAttachedCountReporter: PhotoCountReporter,
@@ -32,11 +32,11 @@ internal fun handleEncounterDetailEffect(
 ) {
     when (effect) {
         EncounterDetailEffect.NavigateBack -> onNavigateBack()
-        EncounterDetailEffect.OpenCamera -> cameraLauncher.launch()
-        EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch()
-        is EncounterDetailEffect.OpenPhoto -> onOpenPhoto(effect.photoId)
-        EncounterDetailEffect.OpenMap -> onOpenMap()
-        EncounterDetailEffect.OpenLocationPicker -> onOpenLocationPicker()
+        is EncounterDetailEffect.OpenCamera -> cameraLauncher.launch(effect.catId)
+        is EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch(effect.catId)
+        is EncounterDetailEffect.OpenPhoto -> onOpenPhoto(PhotoViewer(effect.catId, effect.photoId))
+        is EncounterDetailEffect.OpenMap -> onOpenMap(effect.catId)
+        is EncounterDetailEffect.OpenLocationPicker -> onOpenLocationPicker(effect.catId)
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
         is EncounterDetailEffect.PhotosNotAttached -> notAttachedCountReporter.report(effect.count)
         EncounterDetailEffect.PhotoAlreadyThere -> alreadyThereReporter.report()
@@ -45,13 +45,18 @@ internal fun handleEncounterDetailEffect(
     }
 }
 
+// A shot naming no cat is dropped: a photo on a guessed cat can never be removed.
+internal fun dispatchCameraShot(shot: CameraShot, dispatch: (EncounterDetailIntent) -> Unit) {
+    shot.catId?.let { dispatch(EncounterDetailIntent.PhotoTaken(it, shot.uri)) }
+}
+
 @Composable
 internal fun EncounterDetailDestination(
     key: EncounterDetail,
     contentPadding: PaddingValues,
-    onOpenPhoto: (photoId: String) -> Unit,
-    onOpenMap: () -> Unit,
-    onOpenLocationPicker: () -> Unit,
+    onOpenPhoto: (PhotoViewer) -> Unit,
+    onOpenMap: (catId: String) -> Unit,
+    onOpenLocationPicker: (catId: String) -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
 ) {
@@ -61,8 +66,10 @@ internal fun EncounterDetailDestination(
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
     val currentOnOpenMap by rememberUpdatedState(onOpenMap)
     val currentOnOpenLocationPicker by rememberUpdatedState(onOpenLocationPicker)
-    val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(EncounterDetailIntent.PhotoTaken(uri)) }
-    val photoPicker = rememberSeveralPhotosPicker { uris -> store.dispatch(EncounterDetailIntent.PhotosPicked(uris)) }
+    val cameraLauncher = rememberCameraLauncher { shot -> dispatchCameraShot(shot, store::dispatch) }
+    val photoPicker = rememberCatPhotosPicker { picked ->
+        store.dispatch(EncounterDetailIntent.PhotosPicked(picked.catId, picked.uris))
+    }
     val photoFailureReporter = rememberMessageReporter(R.string.detail_photo_not_attached)
     val alreadyThereReporter = rememberMessageReporter(R.string.detail_photo_already_there)
     val notAttachedCountReporter = rememberPhotoCountReporter(R.plurals.detail_photos_not_attached)
@@ -82,9 +89,9 @@ internal fun EncounterDetailDestination(
             handleEncounterDetailEffect(
                 effect,
                 onNavigateBack = { currentOnNavigateBack() },
-                onOpenPhoto = { photoId -> currentOnOpenPhoto(photoId) },
-                onOpenMap = { currentOnOpenMap() },
-                onOpenLocationPicker = { currentOnOpenLocationPicker() },
+                onOpenPhoto = { viewer -> currentOnOpenPhoto(viewer) },
+                onOpenMap = { catId -> currentOnOpenMap(catId) },
+                onOpenLocationPicker = { catId -> currentOnOpenLocationPicker(catId) },
                 cameraLauncher = cameraLauncher,
                 photoPickerLauncher = photoPicker,
                 photoFailureReporter = photoFailureReporter,
@@ -102,11 +109,11 @@ internal fun EncounterDetailDestination(
         onBackClick = { store.dispatch(EncounterDetailIntent.BackClicked) },
         onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
-        onCoatClick = { coat -> store.dispatch(EncounterDetailIntent.CoatPicked(coat)) },
-        onTakePhotoClick = { store.dispatch(EncounterDetailIntent.TakePhotoClicked) },
-        onPickPhotoClick = { store.dispatch(EncounterDetailIntent.PickPhotoClicked) },
-        onPhotoClick = { photoId -> store.dispatch(EncounterDetailIntent.PhotoClicked(photoId)) },
-        onCoordinatesClick = { store.dispatch(EncounterDetailIntent.CoordinatesClicked) },
-        onSetLocationClick = { store.dispatch(EncounterDetailIntent.SetLocationClicked) },
+        onCoatClick = { pick -> store.dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
+        onTakePhotoClick = { catId -> store.dispatch(EncounterDetailIntent.TakePhotoClicked(catId)) },
+        onPickPhotoClick = { catId -> store.dispatch(EncounterDetailIntent.PickPhotoClicked(catId)) },
+        onPhotoClick = { tap -> store.dispatch(EncounterDetailIntent.PhotoClicked(tap.catId, tap.photoId)) },
+        onCoordinatesClick = { catId -> store.dispatch(EncounterDetailIntent.CoordinatesClicked(catId)) },
+        onSetLocationClick = { catId -> store.dispatch(EncounterDetailIntent.SetLocationClicked(catId)) },
     )
 }

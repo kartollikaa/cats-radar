@@ -41,7 +41,7 @@ internal fun CounterDestination(
     val haptics = koinInject<Haptics>()
     val locationAttachScheduler = koinInject<LocationAttachScheduler>()
     val locationPermissionRequester = rememberPermissionRequester(store)
-    val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(CounterIntent.PhotoCaptured(uri)) }
+    val cameraLauncher = rememberCameraLauncher { shot -> store.dispatch(CounterIntent.PhotoCaptured(shot.uri)) }
     val photoFailureReporter = rememberMessageReporter(R.string.counter_photo_not_saved)
     val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()

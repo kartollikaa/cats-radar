@@ -12,11 +12,13 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | in-review |
-| P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | planned |
-| P3 | The detail screen pages through its outing | One Store serves the outing; a pager keyed by cat id, the position in the bar, restore by id. | safe | ~800 | P1, P2 | planned |
-| P4 | A delete leaves the pager with an undo bar | The deleted cat leaves the pages, the neighbour shows, and an undo bar replaces the *removed* state except for the last cat. | safe | ~500 | P3 | planned |
-| P5a | Moving to the neighbouring outing | Neighbours in state, `OutingEdgeReleased`, the slide keyed by the jump counter, TalkBack's *Newer/Older outing*. | safe | ~400 | P3 | planned |
+| P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | merged |
+| P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | merged |
+| P3a-1 | The detail state holds pages | `Loaded` carries `pages` of `CatPage` and the cat on screen; the screen draws that page and every tap names it; the Store still reads one cat. | safe | ~630 | P2 | in-review |
+| P3a-2 | One Store serves the outing | The Store reads the outing through `outingWindow` with `OutingPages` (anchor and shown set); per-cat attaching; a cat deleted elsewhere hands over to its neighbour. | safe | ~700 | P3a-1 | planned |
+| P3b | The detail screen pages through its outing | The pager keyed by cat id, following `currentId`; "2 / 5" in the bar; `PageSettled`; restore by id. | safe | ~300 | P3a-2 | planned |
+| P4 | A delete leaves the pager with an undo bar | The deleted cat leaves the pages, the neighbour shows, and an undo bar replaces the *removed* state except for the last cat. | safe | ~500 | P3b | planned |
+| P5a | Moving to the neighbouring outing | Neighbours in state, `OutingEdgeReleased`, the slide keyed by the jump counter, TalkBack's *Newer/Older outing*. | safe | ~400 | P3b | planned |
 | P5b | Stretching past the edge opens the next outing | The pull on the pager's nested scroll: the give, the label, the threshold haptic, cancel, RTL. | safe | ~550 | P5a | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -31,7 +33,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice P2 — The detail screen's intents and effects name their cat
-- **In scope:** the cat id on `CoatPicked`, `TakePhotoClicked`, `PickPhotoClicked`, `PhotoTaken`, `PhotoPicked`,
+- **In scope:** the cat id on `CoatPicked`, `TakePhotoClicked`, `PickPhotoClicked`, `PhotoTaken`, `PhotosPicked`,
   `PhotoClicked` (beside its `photoId`), `CoordinatesClicked` and on `OpenCamera`, `OpenPhotoPicker`, `OpenPhoto`
   (beside its `photoId`), `OpenMap`;
   `PendingCaptures` saving each target with its cat id, and restoring the old shape without inventing one; the
@@ -41,18 +43,36 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** every id is still `key.id`.
 - **Cleanup owed:** none.
 
-### Slice P3 — The detail screen pages through its outing
-- **In scope:** the Store collecting `ObserveEncounters` through `outingWindow`, with the anchor and the shown
-  set, starting from `restoredId`, `openedId` or *Missing*; `CatPage` with its photos, each page keeping its
-  photo pager; `PageSettled`; per-cat attaching and one
-  screen-wide *waiting* flag; a cat deleted elsewhere leaving the pages; the pager keyed by id and following
-  `currentId`; "2 / 5" and "Cat 2 of 5" in EN/RU; the destination saving the anchor; the Store and entry tests
-  rewritten around ids; `encounter-detail.md`, `browsing-cats.md`, `map.md`, `places.md`, `photo-viewer.md`,
-  `coat.md`.
+### Slice P3a-1 — The detail state holds pages
+- **In scope:** `CatPage` (per cat: id, the detail labels, photos, the photo and location offers, the place);
+  `Loaded(pages, currentId, currentNumber, …)`; the mapper building pages from an `OutingWindow`; the Store wrapping
+  its one observed cat in a one-cat window; the screen drawing the page for `currentId` and every tap naming its cat
+  (`*Interaction` payloads where a callback carries two values); the destination dispatching the page's id instead of
+  `key.id`; the screen and mapper tests migrated; `encounter-detail.md`.
+- **Out of scope:** more than one cat in the window (P3a-2); the pager (P3b).
+- **Ships safely because:** the window always holds exactly the observed cat, so the screen looks and behaves as today.
+- **Cleanup owed:** none.
+
+### Slice P3a-2 — One Store serves the outing
+- **In scope:** `EncounterDetailStore(openedId, restoredId, …)` collecting `ObserveEncounters` through
+  `outingWindow`; `OutingPages` (anchor, shown set, hand-over to the next older else newer page, `settle`,
+  `release`) with its own tests; start from `restoredId`, `openedId` or *Missing*; per-cat attaching including the
+  several-photos batch across a swipe; one screen-wide *waiting* flag; the tap guards widened from "the observed
+  cat" to "a cat on the pages"; each page's place; Koin binding and `KoinRuntimeResolutionTest`; the Store tests on
+  multi-cat outings; `encounter-detail.md`, `outings.md`.
+- **Out of scope:** the pager and `PageSettled` from the screen (P3b); the undo bar (P4).
+- **Ships safely because:** the screen still draws one page; the visible change is that a cat deleted elsewhere
+  hands the screen to its neighbour instead of *Missing*.
+- **Cleanup owed:** none.
+
+### Slice P3b — The detail screen pages through its outing
+- **In scope:** the `HorizontalPager` keyed by cat id with its own overscroll off, following `currentId` and
+  reporting a settled page only when its cat differs; each page nesting its photo pager; "2 / 5" and "Cat 2 of 5" in
+  EN/RU; the destination saving the anchor and passing it as `restoredId`; entry tests for the viewer, the map and the
+  location picker opening on the cat swiped to; `encounter-detail.md`, `browsing-cats.md`, `map.md`, `places.md`,
+  `photo-viewer.md`, `coat.md`.
 - **Out of scope:** the undo bar (P4); neighbours and jumps (P5a).
 - **Ships safely because:** a delete still shows the *removed* state and closes the screen, as today.
-- **Size:** over target because `EncounterDetailStoreTest` is rebuilt on a whole-table fake; the Store and its
-  tests cannot change shape separately.
 - **Cleanup owed:** none.
 
 ### Slice P4 — A delete leaves the pager with an undo bar
@@ -92,3 +112,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   #166; each cat page nests the photo pager, and a drag past a cat's last photo moves on to the next cat.
   P2 adds the cat's id beside M7's `photoId`. M8 (several photos at once) and P2 both change what the
   picker hands back; whichever lands second carries the other's change.
+- 2026-09-26: **P1 merged** as #166 (~190 reviewable lines of Kotlin). Its gate caught that cats sharing an
+  `occurredAt` made the window depend on input order; `groupByOuting` now orders them by when they were
+  recorded, then by id (#172), and the window relies on that.
+- 2026-09-26: **P2 merged** as #183 (~880 reviewable lines, three quarters tests). It merged main twice and carried
+  the cat into what landed meanwhile — M8's several-photos picker and L2's *Set on map*. Taps act only on the cat the
+  screen shows until P3a-2 widens that to the pages. The plan review for P3 measured it at ~1,230 lines, so it splits
+  into P3a-1, P3a-2 and P3b.

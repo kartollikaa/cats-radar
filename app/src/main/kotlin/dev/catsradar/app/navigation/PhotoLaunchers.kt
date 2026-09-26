@@ -8,21 +8,34 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import dev.catsradar.app.photo.CaptureTarget
+import dev.catsradar.app.photo.PendingCapture
 import dev.catsradar.app.photo.PendingCaptures
 import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.photo.PickSeveralPhotos
 import dev.catsradar.app.photo.holdReadAccess
 import dev.catsradar.domain.Tuning
 
-/** Opens the camera; it owns the file the camera writes to. */
+/** Opens the camera for [catId] — null when the shot logs a new cat; it owns the file the camera writes to. */
 internal fun interface CameraLauncher {
-    fun launch()
+    fun launch(catId: String?)
 }
+
+/** [uri] is null when the camera was cancelled or its capture could not be matched (no camera waiting). */
+internal data class CameraShot(val catId: String?, val uri: String?)
+
+internal fun interface CatPhotosPickerLauncher {
+    fun launch(catId: String)
+}
+
+internal data class PickedPhotos(val catId: String, val uris: List<String>)
 
 internal fun interface MessageReporter {
     fun report()
@@ -41,31 +54,40 @@ internal fun interface PhotoPickerLauncher {
 }
 
 @Composable
-internal fun rememberCameraLauncher(onResult: (String?) -> Unit): CameraLauncher {
+internal fun rememberCameraLauncher(onResult: (CameraShot) -> Unit): CameraLauncher {
     val context = LocalContext.current
     // Saveable: the process can die while a camera is in front, and its result says nothing about
-    // where it wrote.
+    // where it wrote or for which cat.
     val pending = rememberSaveable(saver = PendingCaptures.Saver) { PendingCaptures() }
     val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val target = pending.answered()
-        onResult(target.takeIf { saved })
-        if (!saved && target != null) CaptureTarget.discard(context, target)
+        val capture = pending.answered()
+        onResult(CameraShot(catId = capture?.catId, uri = capture?.target?.takeIf { saved }))
+        if (!saved && capture != null) CaptureTarget.discard(context, capture.target)
     }
     return remember(resultLauncher, context, pending) {
-        CameraLauncher {
+        CameraLauncher { catId ->
             val target = CaptureTarget.newUri(context)
-            pending.launched(target.toString())
+            pending.launched(PendingCapture(target.toString(), catId))
             resultLauncher.launch(target)
         }
     }
 }
 
 @Composable
-internal fun rememberSeveralPhotosPicker(onResult: (List<String>) -> Unit): PhotoPickerLauncher {
+internal fun rememberCatPhotosPicker(onResult: (PickedPhotos) -> Unit): CatPhotosPickerLauncher {
+    // Saveable for the same reason as the camera's queue: the picker's answer names no cat.
+    var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
     val resultLauncher = rememberLauncherForActivityResult(PickSeveralPhotos(Tuning.ATTACH_BATCH_MAX)) { uris ->
-        onResult(uris.map(Uri::toString))
+        val catId = pickingFor
+        pickingFor = null
+        if (catId != null) onResult(PickedPhotos(catId, uris.map(Uri::toString)))
     }
-    return remember(resultLauncher) { PhotoPickerLauncher { resultLauncher.launch(Unit) } }
+    return remember(resultLauncher) {
+        CatPhotosPickerLauncher { catId ->
+            pickingFor = catId
+            resultLauncher.launch(Unit)
+        }
+    }
 }
 
 @Composable

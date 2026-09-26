@@ -11,21 +11,36 @@ class PendingCapturesTest {
     @Test
     fun eachResultBelongsToTheOldestCameraStillWaiting() {
         val pending = PendingCaptures()
-        pending.launched("closed-under-the-newer-one")
-        pending.launched("newer")
+        pending.launched(PendingCapture("closed-under-the-newer-one", catId = "cat-a"))
+        pending.launched(PendingCapture("newer", catId = "cat-b"))
 
-        assertEquals("closed-under-the-newer-one", pending.answered())
-        assertEquals("newer", pending.answered())
+        assertEquals(PendingCapture("closed-under-the-newer-one", "cat-a"), pending.answered())
+        assertEquals(PendingCapture("newer", "cat-b"), pending.answered())
         assertNull(pending.answered())
     }
 
     @Test
-    fun theWaitingTargetsSurviveTheProcessDying() {
-        val pending = PendingCaptures().apply { launched("in-front-when-the-process-died") }
+    fun theWaitingTargetsAndTheirCatsSurviveTheProcessDying() {
+        val pending = PendingCaptures().apply {
+            launched(PendingCapture("for-a-cat", catId = "cat-a"))
+            launched(PendingCapture("for-a-new-cat", catId = null))
+        }
 
-        val saved = assertNotNull(with(PendingCaptures.Saver) { SaverScope { true }.save(pending) })
-        val restored = assertNotNull(PendingCaptures.Saver.restore(saved))
+        val restored = restore(save(pending))
 
-        assertEquals("in-front-when-the-process-died", restored.answered())
+        assertEquals(PendingCapture("for-a-cat", "cat-a"), restored.answered())
+        assertEquals(PendingCapture("for-a-new-cat", null), restored.answered())
     }
+
+    @Test
+    fun aQueueSavedBeforeShotsNamedTheirCatRestoresEmptyRatherThanGuessingOne() {
+        val restored = restore(listOf("content://captures/1", "content://captures/2"))
+
+        assertNull(restored.answered())
+    }
+
+    private fun save(pending: PendingCaptures): Any =
+        assertNotNull(with(PendingCaptures.Saver) { SaverScope { true }.save(pending) })
+
+    private fun restore(saved: Any): PendingCaptures = assertNotNull(PendingCaptures.Saver.restore(saved))
 }

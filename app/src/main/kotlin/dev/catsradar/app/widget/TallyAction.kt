@@ -24,11 +24,15 @@ class TallyAction : ActionCallback, KoinComponent {
     private val logTally: LogTally by inject()
     private val locationAttachScheduler: LocationAttachScheduler by inject()
     private val haptics: Haptics by inject()
+    private val widgetCount: WidgetCount by inject()
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         haptics.tick()
-        val encounter = logTally(origin = EncounterOrigin.WIDGET)
-        locationAttachScheduler.schedule(encounter.id)
-        CatsRadarWidget().updateAll(context)
+        // Inside the tally, which returns only after reading the count back: the window may close first.
+        widgetCount.tally {
+            val encounter = logTally(origin = EncounterOrigin.WIDGET)
+            locationAttachScheduler.schedule(encounter.id)
+            CatsRadarWidget().updateAll(context)
+        }
     }
 }

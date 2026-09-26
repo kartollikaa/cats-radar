@@ -44,11 +44,10 @@ private class FakeLocationPermissionRequester : LocationPermissionRequester {
 }
 
 private class CountingCameraLauncher : CameraLauncher {
-    var launchCount = 0
-        private set
+    val launchedCatIds = mutableListOf<String?>()
 
-    override fun launch() {
-        launchCount++
+    override fun launch(catId: String?) {
+        launchedCatIds += catId
     }
 }
 
@@ -178,10 +177,10 @@ class CounterEffectHandlerPhotoTest {
     )
 
     @Test
-    fun `OpenCamera launches the camera and nothing else`() {
+    fun `OpenCamera launches the camera for no named cat, and nothing else`() {
         handle(CounterEffect.OpenCamera)
 
-        assertEquals(1, cameraLauncher.launchCount)
+        assertEquals(listOf<String?>(null), cameraLauncher.launchedCatIds)
         assertEquals(0, photoFailureReporter.reportCount)
         assertEquals(0, haptics.tickCount)
         assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
@@ -192,7 +191,7 @@ class CounterEffectHandlerPhotoTest {
         handle(CounterEffect.PhotoNotSaved)
 
         assertEquals(1, photoFailureReporter.reportCount)
-        assertEquals(0, cameraLauncher.launchCount)
+        assertEquals(emptyList<String?>(), cameraLauncher.launchedCatIds)
     }
 
     @Test

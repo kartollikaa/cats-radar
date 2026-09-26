@@ -14,7 +14,7 @@ import androidx.room3.RoomDatabase
         WalkEntity::class,
         TrackPointEntity::class,
     ],
-    version = 5,
+    version = CATS_DATABASE_VERSION,
     exportSchema = false,
 )
 @ColumnTypeConverters(InstantConverters::class, EnumConverters::class)

@@ -38,7 +38,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -62,11 +61,11 @@ class EncounterDetailPickSeveralTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
         runCurrent()
 
         assertEquals(listOf("own", FIRST, SECOND, THIRD), photoSources())
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(4, state.photos.size)
         assertEquals(AddPhoto.READY, state.addPhoto)
         assertEquals(null, state.attachProgress)
@@ -79,24 +78,24 @@ class EncounterDetailPickSeveralTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
         runCurrent()
-        assertEquals(AttachProgress(done = 0, total = 3), loaded(store).attachProgress)
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
+        assertEquals(AttachProgress(done = 0, total = 3), store.shownPage().attachProgress)
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
 
         advanceTimeBy(1.seconds)
         runCurrent()
-        assertEquals(AttachProgress(done = 1, total = 3), loaded(store).attachProgress)
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
+        assertEquals(AttachProgress(done = 1, total = 3), store.shownPage().attachProgress)
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
 
         advanceTimeBy(1.seconds)
         runCurrent()
-        assertEquals(AttachProgress(done = 2, total = 3), loaded(store).attachProgress)
+        assertEquals(AttachProgress(done = 2, total = 3), store.shownPage().attachProgress)
 
         advanceTimeBy(1.seconds)
         runCurrent()
-        assertEquals(AddPhoto.READY, loaded(store).addPhoto)
-        assertEquals(null, loaded(store).attachProgress)
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
+        assertEquals(null, store.shownPage().attachProgress)
     }
 
     @Test
@@ -106,17 +105,17 @@ class EncounterDetailPickSeveralTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST)))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST)))
         runCurrent()
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
-        assertEquals(null, loaded(store).attachProgress)
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+        assertEquals(null, store.shownPage().attachProgress)
         advanceTimeBy(2.seconds)
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
+        store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
         runCurrent()
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
-        assertEquals(null, loaded(store).attachProgress)
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+        assertEquals(null, store.shownPage().attachProgress)
     }
 
     @Test
@@ -125,13 +124,13 @@ class EncounterDetailPickSeveralTest {
         resizer.storeDelay = 1.seconds
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
         advanceTimeBy(1.seconds)
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
             runCurrent()
             expectNoEvents()
         }
@@ -145,22 +144,22 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
         repository.observeDelay = 5.seconds
 
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND)))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND)))
         advanceTimeBy(3.seconds)
         runCurrent()
-        assertEquals(0, loaded(store).photos.size)
-        assertEquals(AttachProgress(done = 2, total = 2), loaded(store).attachProgress)
+        assertEquals(0, store.shownPage().photos.size)
+        assertEquals(AttachProgress(done = 2, total = 2), store.shownPage().attachProgress)
 
         advanceTimeBy(4.seconds)
         runCurrent()
-        assertEquals(1, loaded(store).photos.size)
-        assertEquals(AddPhoto.ATTACHING, loaded(store).addPhoto)
-        assertEquals(AttachProgress(done = 2, total = 2), loaded(store).attachProgress)
+        assertEquals(1, store.shownPage().photos.size)
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+        assertEquals(AttachProgress(done = 2, total = 2), store.shownPage().attachProgress)
 
         advanceTimeBy(5.seconds)
         runCurrent()
-        assertEquals(2, loaded(store).photos.size)
-        assertEquals(AddPhoto.READY, loaded(store).addPhoto)
+        assertEquals(2, store.shownPage().photos.size)
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
     }
 
     @Test
@@ -171,13 +170,13 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
             expectNoEvents()
         }
         assertEquals(listOf(FIRST, THIRD), photoSources())
-        assertEquals(AddPhoto.READY, loaded(store).addPhoto)
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
     }
 
     @Test
@@ -188,7 +187,7 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotosNotAttached(count = 2), awaitItem())
             expectNoEvents()
@@ -204,7 +203,7 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(SECOND, FIRST)))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(SECOND, FIRST)))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotosAlreadyThere, awaitItem())
             expectNoEvents()
@@ -219,7 +218,7 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, SECOND)))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, SECOND)))
             runCurrent()
             expectNoEvents()
         }
@@ -232,7 +231,7 @@ class EncounterDetailPickSeveralTest {
         resizer.storeDelay = 1.seconds
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
         runCurrent()
         advanceTimeBy(1.seconds)
         runCurrent()
@@ -252,7 +251,7 @@ class EncounterDetailPickSeveralTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(FIRST, SECOND, THIRD)))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(FIRST, SECOND, THIRD)))
             runCurrent()
             repository.softDelete(ID, NOW)
             advanceTimeBy(5.seconds)
@@ -263,10 +262,22 @@ class EncounterDetailPickSeveralTest {
         assertEquals(EncounterDetailState.Missing, store.state.value)
     }
 
-    private fun loaded(store: EncounterDetailStore) = assertIs<EncounterDetailState.Loaded>(store.state.value)
+    @Test
+    fun `a pick lands every photo on the cat it names, not on the one the screen observes`() = runTest(mainDispatcher) {
+        repository.insert(catWithPhotosOf())
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
 
-    private fun photoSources(): List<String?> =
-        repository.encounters().single { it.id == ID }.photos.map { it.sourceDigest }
+        store.dispatch(EncounterDetailIntent.PhotosPicked(OTHER, listOf(FIRST, SECOND)))
+        runCurrent()
+
+        assertEquals(listOf(FIRST, SECOND), photoSources(OTHER))
+        assertEquals(emptyList(), photoSources(ID))
+    }
+
+    private fun photoSources(catId: String = ID): List<String?> =
+        repository.encounters().single { it.id == catId }.photos.map { it.sourceDigest }
 
     private fun catWithPhotosOf(vararg digests: String): Encounter = encounterFixture(ID, OCCURRED).copy(
         photos = digests.mapIndexed { index, digest ->
@@ -280,7 +291,7 @@ class EncounterDetailPickSeveralTest {
                 sourceDigest = digest,
                 deviceId = "device-1",
                 addedAt = OCCURRED,
-                shotId = null,
+                shotId = "own-$index",
             )
         },
     )
@@ -312,6 +323,7 @@ class EncounterDetailPickSeveralTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val OTHER = "cat-2"
         const val CAPTURE = "content://captures/1"
         const val FIRST = "content://picker/1"
         const val SECOND = "content://picker/2"

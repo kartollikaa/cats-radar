@@ -11,23 +11,11 @@ sealed interface EncounterDetailState {
     data object Loading : EncounterDetailState
 
     data class Loaded(
-        val dayLabel: String,
-        val timeLabel: String,
-        val location: LocationLabel,
-        val coordinatesLabel: String?,
-        val accuracyMeters: Int?,
-        /** Oldest first. */
-        val photos: ImmutableList<DetailPhoto> = persistentListOf(),
-        val coat: CoatOption? = null,
-        val addPhoto: AddPhoto = AddPhoto.READY,
-        /** Null unless several photos are being attached. */
-        val attachProgress: AttachProgress? = null,
-        /** Null when the map does not draw this cat. */
-        val mapPosition: MapPosition? = null,
-        /** Whether the cat can be given a location on a map: it has none. */
-        val setsLocation: Boolean = false,
-        /** Null while the cat has no named place: no location, or its cell not named yet. */
-        val place: DetailPlace? = null,
+        /** Newest first. */
+        val pages: ImmutableList<CatPage>,
+        val currentId: String,
+        /** 1-based position of [currentId] on [pages]. */
+        val currentNumber: Int,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */
@@ -36,6 +24,27 @@ sealed interface EncounterDetailState {
     /** No live encounter has this id: it was never there, was purged, or was deleted elsewhere. */
     data object Missing : EncounterDetailState
 }
+
+data class CatPage(
+    val id: String,
+    val dayLabel: String,
+    val timeLabel: String,
+    val location: LocationLabel,
+    val coordinatesLabel: String?,
+    val accuracyMeters: Int?,
+    /** Oldest first. */
+    val photos: ImmutableList<DetailPhoto> = persistentListOf(),
+    val coat: CoatOption? = null,
+    val addPhoto: AddPhoto = AddPhoto.READY,
+    /** Null unless several photos are being attached. */
+    val attachProgress: AttachProgress? = null,
+    /** Null when the map does not draw this cat. */
+    val mapPosition: MapPosition? = null,
+    /** Whether the cat can be given a location on a map: it has none. */
+    val setsLocation: Boolean = false,
+    /** Null while the cat has no named place: no location, or its cell not named yet. */
+    val place: DetailPlace? = null,
+)
 
 /** [path] is the absolute path of the app's full copy. */
 data class DetailPhoto(val id: String, val path: String)

@@ -289,7 +289,9 @@ never touched by the app.
 
 Glance `AppWidget` showing today's count (local date) and a "+1" button. The action inserts the
 encounter (§4.1 step 1) and enqueues the worker (step 2) inside the Glance action callback, then
-`updateAll()`. No undo on the widget; a mis-tap is undone in the app. Widget count updates
+`updateAll()`. No undo on the widget; a mis-tap is undone in the app. A tap raises the widget's
+count at once, before the insert; the stored count takes over once it has caught up, never dropping
+below a tap already shown and never counting one twice. Widget count updates
 whenever the encounter table changes (a `Flow` collector in the app process triggers
 `updateAll()`; a periodic Glance refresh covers the process-dead case).
 

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -93,18 +94,23 @@ class DetailPhotoPagerTest {
     }
 
     private fun show(state: EncounterDetailState, onPhotoClick: (String) -> Unit = {}) {
-        compose.setContent { CatsRadarTheme { EncounterDetailScreen(state = state, onPhotoClick = onPhotoClick) } }
+        compose.setContent {
+            CatsRadarTheme { EncounterDetailScreen(state = state, onPhotoClick = { onPhotoClick(it.photoId) }) }
+        }
     }
 
     private fun position(page: Int, of: Int) =
         compose.onNodeWithText(context.getString(R.string.viewer_position, page, of))
 
-    private fun catWith(vararg photoIds: String) = EncounterDetailState.Loaded(
-        dayLabel = "Today",
-        timeLabel = "14:32",
-        location = LocationLabel.NONE,
-        coordinatesLabel = null,
-        accuracyMeters = null,
-        photos = photoIds.map { DetailPhoto(id = it, path = "/data/photos/$it.jpg") }.toImmutableList(),
+    private fun catWith(vararg photoIds: String) = loadedWith(
+        CatPage(
+            id = "cat-1",
+            dayLabel = "Today",
+            timeLabel = "14:32",
+            location = LocationLabel.NONE,
+            coordinatesLabel = null,
+            accuracyMeters = null,
+            photos = photoIds.map { DetailPhoto(id = it, path = "/data/photos/$it.jpg") }.toImmutableList(),
+        ),
     )
 }

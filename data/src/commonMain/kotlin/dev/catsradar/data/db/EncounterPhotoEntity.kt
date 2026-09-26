@@ -30,7 +30,7 @@ data class EncounterPhotoEntity(
     val sourceDigest: String?,
     val deviceId: String,
     val addedAt: Instant,
-    val shotId: String?,
+    val shotId: String,
 )
 
 data class EncounterWithPhotos(

@@ -15,6 +15,8 @@ import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
+import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
@@ -46,6 +48,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -71,9 +75,22 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        val state = store.shownPage()
         assertEquals(OCCURRED.toString(), state.timeLabel)
     }
+
+    @Test
+    fun `the observed cat is the one page, and it is on screen`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+
+            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            assertEquals(listOf(ID), state.pages.map { it.id })
+            assertEquals(ID, state.currentId)
+            assertEquals(1, state.currentNumber)
+        }
 
     @Test
     fun `an id nobody has ever seen renders as missing, without throwing`() = runTest(mainDispatcher) {
@@ -275,387 +292,35 @@ class EncounterDetailStoreTest {
         }
 
     @Test
-    fun `take a photo opens the camera and choose from gallery opens the picker`() = runTest(mainDispatcher) {
+    fun `a coat lands on the cat it was picked for`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
         val store = newStore()
         runCurrent()
 
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
-            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhotoPicker, awaitItem())
-        }
+        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
+        runCurrent()
+
+        assertEquals(CoatOption.GINGER, repository.observeById(OTHER).value()?.coat?.toOption())
+        assertNull(assertNotNull(repository.observeById(ID).value()).coat)
     }
 
     @Test
-    fun `a cat that already has a photo can still be given another`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
-        }
-    }
-
-    @Test
-    fun `a photo taken of a cat that has one is added after it`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
-        val store = newStore()
-        runCurrent()
-
-        store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
-        runCurrent()
-
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
-        assertEquals(AddPhoto.READY, state.addPhoto)
-    }
-
-    @Test
-    fun `a photo picked for a cat that has one is added after it`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
-        val store = newStore()
-        runCurrent()
-
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-        runCurrent()
-
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
-    }
-
-    @Test
-    fun `leaving mid-attempt leaves the cat as the attempt found it`() = runTest(mainDispatcher) {
-        val tally = encounterFixture(ID, OCCURRED)
-        repository.insert(tally)
-        resizer.storeDelay = 1.seconds
-        val store = newStore()
-        runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-        runCurrent()
-
-        ViewModelStore().apply { put("detail", store) }.clear()
-        advanceTimeBy(2.seconds)
-        runCurrent()
-
-        assertEquals(listOf(tally), repository.encounters())
-    }
-
-    @Test
-    fun `a tap on a cat's second photo opens the viewer on that photo`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
-        val store = newStore()
-        runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-        runCurrent()
-        val second = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.last().id
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked(second))
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto(second), awaitItem())
-        }
-    }
-
-    @Test
-    fun `a second tap before the camera answers opens nothing`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
-            expectNoEvents()
-
-            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenCamera, awaitItem())
-        }
-    }
-
-    @Test
-    fun `a photo from the camera lands on the cat and its original is discarded`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
-            runCurrent()
-            assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
-        }
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-        assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
-        assertEquals(AddPhoto.READY, state.addPhoto)
-    }
-
-    @Test
-    fun `a photo from the gallery lands on the cat and nothing is discarded`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-            runCurrent()
-            expectNoEvents()
-        }
-        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-        assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
-    }
-
-    @Test
-    fun `a cancelled camera or picker changes nothing`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        val store = newStore()
-        runCurrent()
-        val before = store.state.value
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.PhotosPicked(emptyList()))
-            runCurrent()
-            expectNoEvents()
-        }
-        assertEquals(before, store.state.value)
-    }
-
-    @Test
-    fun `the offer shows the photo being attached until it lands`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        resizer.storeDelay = 1.seconds
-        val store = newStore()
-        runCurrent()
-
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-        runCurrent()
-        assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
-
-        advanceTimeBy(2.seconds)
-        runCurrent()
-        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
-    }
-
-    @Test
-    fun `a successful attach stays in progress until the photo arrives, never offering again`() =
-        runTest(mainDispatcher) {
-            repository.insert(encounterFixture(ID, OCCURRED))
-            val store = newStore()
-            runCurrent()
-            repository.observeDelay = 5.seconds
-
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-            runCurrent()
-            assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
-
-            advanceTimeBy(4.seconds)
-            runCurrent()
-            assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
-
-            advanceTimeBy(2.seconds)
-            runCurrent()
-            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-            assertEquals(AddPhoto.READY, state.addPhoto)
-            assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
-        }
-
-    @Test
-    fun `taking a photo while one is being attached opens nothing`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        resizer.storeDelay = 1.seconds
-        val store = newStore()
-        runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.TakePhotoClicked)
-            store.dispatch(EncounterDetailIntent.PickPhotoClicked)
-            runCurrent()
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `deleting while a photo is being attached leaves the removed state, and undo brings the offer back`() =
-        runTest(mainDispatcher) {
-            repository.insert(encounterFixture(ID, OCCURRED))
-            resizer.storeDelay = 1.seconds
-            val store = newStore()
-            runCurrent()
-
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-            runCurrent()
-            store.dispatch(EncounterDetailIntent.DeleteClicked)
-            runCurrent()
-            assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
-
-            advanceTimeBy(2.seconds)
-            runCurrent()
-            assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
-
-            store.dispatch(EncounterDetailIntent.UndoClicked)
-            runCurrent()
-            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-            assertEquals(AddPhoto.READY, state.addPhoto)
-            assertEquals(emptyList(), state.photos)
-        }
-
-    @Test
-    fun `an unreadable photo says so and the offer comes back`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        resizer.result = null
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoTaken(CAPTURE))
-            runCurrent()
-            assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
-            assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
-        }
-        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
-    }
-
-    @Test
-    fun `a picked photo the cat already has is not added again, and the screen says so`() = runTest(mainDispatcher) {
-        val photographed = encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg")
-            .let { cat -> cat.copy(photos = cat.photos.map { it.copy(sourceDigest = "digest") }) }
-        repository.insert(photographed)
-        val store = newStore()
-        runCurrent()
-        val before = store.state.value
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-            runCurrent()
-            assertEquals(EncounterDetailEffect.PhotoAlreadyThere, awaitItem())
-        }
-        assertEquals(before, store.state.value)
-        assertEquals(listOf(photographed), repository.encounters())
-    }
-
-    @Test
-    fun `a failed write says the photo was not attached`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        repository.addPhotoShouldThrow = IllegalStateException("disk full")
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
-            runCurrent()
-            assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
-        }
-        assertEquals(AddPhoto.READY, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
-    }
-
-    @Test
-    fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
-        repository.insert(
-            encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO).withPhoto(photoPath = "cat-1.jpg")
-        )
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked(ID))
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto(ID), awaitItem())
-        }
-    }
-
-    @Test
-    fun `a cat without a photo has no viewer to open`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked("anything"))
-            runCurrent()
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `a tap on the coordinates of a cat on the map opens the map`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenMap, awaitItem())
-        }
-    }
-
-    @Test
-    fun `set on map opens the picker for a cat with no location`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.SetLocationClicked)
-            runCurrent()
-            assertEquals(EncounterDetailEffect.OpenLocationPicker, awaitItem())
-        }
-    }
-
-    @Test
-    fun `a cat with a location opens no picker`() = runTest(mainDispatcher) {
-        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.EXIF).copy(lat = 41.39, lon = 2.17)
+    fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
+        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
+            .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q")
         repository.insert(located)
         val store = newStore()
         runCurrent()
+        assertEquals(null, store.shownPage().place)
 
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.SetLocationClicked)
-            runCurrent()
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `a cat that is not on the map opens no map`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 123.4, lon = 2.17))
-        val store = newStore()
+        cells.upsert(namedCell("sp3e3q"))
         runCurrent()
 
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
-            runCurrent()
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `a removed cat opens no map`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
-        val store = newStore()
-        runCurrent()
-        store.dispatch(EncounterDetailIntent.DeleteClicked)
-        runCurrent()
-
-        store.effects.test {
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked)
-            runCurrent()
-            expectNoEvents()
-        }
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            store.shownPage().place,
+        )
     }
 
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
@@ -683,24 +348,6 @@ class EncounterDetailStoreTest {
         timeZone = TimeZone.UTC,
     )
 
-    @Test
-    fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
-        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
-            .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q")
-        repository.insert(located)
-        val store = newStore()
-        runCurrent()
-        assertEquals(null, (store.state.value as EncounterDetailState.Loaded).place)
-
-        cells.upsert(namedCell("sp3e3q"))
-        runCurrent()
-
-        assertEquals(
-            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
-            (store.state.value as EncounterDetailState.Loaded).place,
-        )
-    }
-
     private fun namedCell(cellId: String) = PlaceCell(
         cellId = cellId,
         centerLat = 41.39,
@@ -720,6 +367,530 @@ class EncounterDetailStoreTest {
 
     private companion object {
         const val ID = "cat-1"
+        const val OTHER = "cat-2"
+        val NOW = Instant.parse("2026-09-22T12:00:00Z")
+        val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class EncounterDetailStorePhotoTest {
+
+    private val mainDispatcher = StandardTestDispatcher()
+    private val repository = FakeEncounterRepository()
+    private val cells = FakePlaceCellRepository()
+    private val clock = FakeClock(NOW)
+    private val resizer = FakeImageResizer()
+
+    @BeforeTest
+    fun setUp() = Dispatchers.setMain(mainDispatcher)
+
+    @AfterTest
+    fun tearDown() = Dispatchers.resetMain()
+
+    @Test
+    fun `take a photo opens the camera and choose from gallery opens the picker`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat that already has a photo can still be given another`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a photo taken of a cat that has one is added after it`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
+        runCurrent()
+
+        val state = store.shownPage()
+        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
+        assertEquals(AddPhoto.READY, state.addPhoto)
+    }
+
+    @Test
+    fun `a photo picked for a cat that has one is added after it`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+        runCurrent()
+
+        val state = store.shownPage()
+        assertEquals(listOf("/data/photos/own.jpg", "/data/photos/cat.jpg"), state.photos.map { it.path })
+    }
+
+    @Test
+    fun `leaving mid-attempt leaves the cat as the attempt found it`() = runTest(mainDispatcher) {
+        val tally = encounterFixture(ID, OCCURRED)
+        repository.insert(tally)
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+        runCurrent()
+
+        ViewModelStore().apply { put("detail", store) }.clear()
+        advanceTimeBy(2.seconds)
+        runCurrent()
+
+        assertEquals(listOf(tally), repository.encounters())
+    }
+
+    @Test
+    fun `a tap on a cat's second photo opens the viewer on that photo`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+        runCurrent()
+        val second = store.shownPage().photos.last().id
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, second))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, second), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a second tap before the camera answers opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+            expectNoEvents()
+
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a photo from the camera lands on the cat and its original is discarded`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
+        }
+        val state = store.shownPage()
+        assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
+        assertEquals(AddPhoto.READY, state.addPhoto)
+    }
+
+    @Test
+    fun `a photo from the gallery lands on the cat and nothing is discarded`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+            runCurrent()
+            expectNoEvents()
+        }
+        val state = store.shownPage()
+        assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
+    }
+
+    @Test
+    fun `a cancelled camera or picker changes nothing`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+        val before = store.state.value
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, emptyList()))
+            runCurrent()
+            expectNoEvents()
+        }
+        assertEquals(before, store.state.value)
+    }
+
+    @Test
+    fun `the offer shows the photo being attached until it lands`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+        runCurrent()
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+
+        advanceTimeBy(2.seconds)
+        runCurrent()
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
+    }
+
+    @Test
+    fun `a successful attach stays in progress until the photo arrives, never offering again`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+            repository.observeDelay = 5.seconds
+
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+            runCurrent()
+            assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+
+            advanceTimeBy(4.seconds)
+            runCurrent()
+            assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+
+            advanceTimeBy(2.seconds)
+            runCurrent()
+            val state = store.shownPage()
+            assertEquals(AddPhoto.READY, state.addPhoto)
+            assertEquals(listOf("/data/photos/cat.jpg"), state.photos.map { it.path })
+        }
+
+    @Test
+    fun `taking a photo while one is being attached opens nothing`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(ID))
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `deleting while a photo is being attached leaves the removed state, and undo brings the offer back`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            resizer.storeDelay = 1.seconds
+            val store = newStore()
+            runCurrent()
+
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+            runCurrent()
+            store.dispatch(EncounterDetailIntent.DeleteClicked)
+            runCurrent()
+            assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+            advanceTimeBy(2.seconds)
+            runCurrent()
+            assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+            store.dispatch(EncounterDetailIntent.UndoClicked)
+            runCurrent()
+            val state = store.shownPage()
+            assertEquals(AddPhoto.READY, state.addPhoto)
+            assertEquals(emptyList(), state.photos)
+        }
+
+    @Test
+    fun `an unreadable photo says so and the offer comes back`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.result = null
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, CAPTURE))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
+            assertEquals(EncounterDetailEffect.DiscardCapture(CAPTURE), awaitItem())
+        }
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
+    }
+
+    @Test
+    fun `a picked photo the cat already has is not added again, and the screen says so`() = runTest(mainDispatcher) {
+        val photographed = encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg")
+            .let { cat -> cat.copy(photos = cat.photos.map { it.copy(sourceDigest = "digest") }) }
+        repository.insert(photographed)
+        val store = newStore()
+        runCurrent()
+        val before = store.state.value
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.PhotoAlreadyThere, awaitItem())
+        }
+        assertEquals(before, store.state.value)
+        assertEquals(listOf(photographed), repository.encounters())
+    }
+
+    @Test
+    fun `a failed write says the photo was not attached`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.addPhotoShouldThrow = IllegalStateException("disk full")
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotosPicked(ID, listOf(PICKED)))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
+        }
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
+    }
+
+    @Test
+    fun `a tap on the photo opens the viewer`() = runTest(mainDispatcher) {
+        repository.insert(
+            encounterFixture(ID, OCCURRED).copy(kind = EncounterKind.PHOTO).withPhoto(photoPath = "cat-1.jpg")
+        )
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat without a photo has no viewer to open`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, "anything"))
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a tap on the coordinates of a cat on the map opens the map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenMap(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat that is not on the map opens no map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 123.4, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `a removed cat opens no map`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `set on map opens the picker for a cat with no location`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.SetLocationClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenLocationPicker(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat with a location opens no picker`() = runTest(mainDispatcher) {
+        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.EXIF).copy(lat = 41.39, lon = 2.17)
+        repository.insert(located)
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.SetLocationClicked(ID))
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `the camera and the picker open for the cat they were asked for`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(OTHER))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(OTHER), awaitItem())
+            store.dispatch(EncounterDetailIntent.PhotoTaken(OTHER, uri = null))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(OTHER))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker(OTHER), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a photo lands on the cat its result names, not on the one the screen observes`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+        store.dispatch(EncounterDetailIntent.PhotoTaken(OTHER, CAPTURE))
+        runCurrent()
+
+        assertEquals(1, repository.observeById(OTHER).value()?.photos?.size)
+        assertEquals(0, repository.observeById(ID).value()?.photos?.size)
+    }
+
+    @Test
+    fun `the viewer and the map open on the cat that was tapped`() = runTest(mainDispatcher) {
+        repository.insert(
+            encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
+        )
+        val store = newStore()
+        runCurrent()
+        val photoId = store.shownPage().photos.first().id
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, photoId))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, photoId), awaitItem())
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenMap(ID), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a tap naming a cat the screen does not show opens neither the viewer nor the map`() =
+        runTest(mainDispatcher) {
+            repository.insert(
+                encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
+            )
+            repository.insert(encounterFixture(OTHER, OCCURRED))
+            val store = newStore()
+            runCurrent()
+            val photoId = store.shownPage().photos.first().id
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, photoId))
+                store.dispatch(EncounterDetailIntent.CoordinatesClicked(OTHER))
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `set on map names the cat it was tapped for, and a cat the screen does not show opens nothing`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            repository.insert(encounterFixture(OTHER, OCCURRED))
+            val store = newStore()
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.SetLocationClicked(ID))
+                runCurrent()
+                assertEquals(EncounterDetailEffect.OpenLocationPicker(ID), awaitItem())
+                store.dispatch(EncounterDetailIntent.SetLocationClicked(OTHER))
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+
+    private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
+        encounterId = ID,
+        observeEncounter = ObserveEncounter(repository),
+        observeEncounterPlace = ObserveEncounterPlace(cells),
+        deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
+        undoDelete = UndoDelete(repository, analytics = NoAnalytics),
+        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
+        attachPhoto = AttachPhoto(
+            encounterRepository = repository,
+            settingsRepository = FakeSettingsRepository(),
+            imageResizer = resizer,
+            digest = FakeDigest(),
+            gallerySaver = FakeGallerySaver(),
+            galleryItemLocator = LocatesNoGalleryItem,
+            photoStorage = FakePhotoStorage(),
+            idGenerator = FakeIdGenerator(),
+            deviceIdProvider = FakeDeviceIdProvider(),
+            clock = clock,
+            analytics = NoAnalytics,
+        ),
+        stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
+        clock = clock,
+        timeZone = TimeZone.UTC,
+    )
+
+    private suspend fun <T> Flow<T>.value(): T = first()
+
+    private companion object {
+        const val ID = "cat-1"
+        const val OTHER = "cat-2"
         const val CAPTURE = "content://captures/1"
         const val PICKED = "content://picker/1"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")

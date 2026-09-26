@@ -21,8 +21,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.DetailPlace
-import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.R
@@ -35,12 +35,12 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 @Composable
 internal fun WhereCard(
-    state: EncounterDetailState.Loaded,
+    page: CatPage,
     modifier: Modifier = Modifier,
     onCoordinatesClick: () -> Unit = {},
     onSetLocationClick: () -> Unit = {},
 ) {
-    val opensMap = if (state.mapPosition != null) {
+    val opensMap = if (page.mapPosition != null) {
         Modifier.clickable(
             onClickLabel = stringResource(R.string.detail_show_on_map),
             role = Role.Button,
@@ -51,10 +51,10 @@ internal fun WhereCard(
     }
     SectionCard(R.string.detail_where, modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth().then(opensMap)) {
-            state.mapPosition?.let { position ->
+            page.mapPosition?.let { position ->
                 SpotMap(
                     position = position,
-                    coat = state.coat,
+                    coat = page.coat,
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .fillMaxWidth()
@@ -63,7 +63,7 @@ internal fun WhereCard(
                 )
             }
             WhereLines(
-                state,
+                page,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 onSetLocationClick = onSetLocationClick,
             )
@@ -73,15 +73,15 @@ internal fun WhereCard(
 
 @Composable
 private fun WhereLines(
-    state: EncounterDetailState.Loaded,
+    page: CatPage,
     modifier: Modifier = Modifier,
     onSetLocationClick: () -> Unit = {},
 ) {
-    val onTheMap = state.mapPosition != null
+    val onTheMap = page.mapPosition != null
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        state.place?.let { PlaceLine(it, Modifier.padding(bottom = 4.dp)) }
-        Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
-        state.coordinatesLabel?.let { coordinates ->
+        page.place?.let { PlaceLine(it, Modifier.padding(bottom = 4.dp)) }
+        Text(text = stringResource(page.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
+        page.coordinatesLabel?.let { coordinates ->
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -105,14 +105,14 @@ private fun WhereLines(
                 }
             }
         }
-        state.accuracyMeters?.let { accuracy ->
+        page.accuracyMeters?.let { accuracy ->
             Text(
                 text = stringResource(R.string.detail_accuracy, accuracy),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (state.setsLocation) {
+        if (page.setsLocation) {
             SetLocationButton(modifier = Modifier.padding(top = 8.dp), onClick = onSetLocationClick)
         }
     }
@@ -142,16 +142,17 @@ private fun PlaceLine(place: DetailPlace, modifier: Modifier = Modifier) {
 @ThemePreviews
 @Composable
 private fun WhereCardPreview() {
-    CatsRadarTheme { WhereCard(state = sampleOnTheMap, modifier = Modifier.padding(16.dp)) }
+    CatsRadarTheme { WhereCard(page = sampleOnTheMap, modifier = Modifier.padding(16.dp)) }
 }
 
 @ThemePreviews
 @Composable
 private fun WhereCardNotOnTheMapPreview() {
-    CatsRadarTheme { WhereCard(state = sampleNotOnTheMap, modifier = Modifier.padding(16.dp)) }
+    CatsRadarTheme { WhereCard(page = sampleNotOnTheMap, modifier = Modifier.padding(16.dp)) }
 }
 
-private val sampleOnTheMap = EncounterDetailState.Loaded(
+private val sampleOnTheMap = CatPage(
+    id = "7c2e91a4",
     dayLabel = "Today",
     timeLabel = "14:32",
     location = LocationLabel.CURRENT,
@@ -162,7 +163,8 @@ private val sampleOnTheMap = EncounterDetailState.Loaded(
     place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
 )
 
-private val sampleNotOnTheMap = EncounterDetailState.Loaded(
+private val sampleNotOnTheMap = CatPage(
+    id = "d05b3f18",
     dayLabel = "Today",
     timeLabel = "14:32",
     location = LocationLabel.NONE,
