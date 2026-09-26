@@ -65,6 +65,10 @@ class HttpPackageDownloader(
         written
     }
 
+    override suspend fun kept(): List<String> = withContext(ioDispatcher) {
+        directory.listFiles().orEmpty().filter { it.isFile }.map { it.absolutePath }
+    }
+
     override suspend fun discard(path: String) {
         withContext(ioDispatcher) { File(path).delete() }
     }
