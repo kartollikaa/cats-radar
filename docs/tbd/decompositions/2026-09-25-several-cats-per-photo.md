@@ -64,7 +64,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **In scope:** a `PhotoStorage` capability copying a stored photo and its thumbnail under a new name, with
   its Android implementation; the repository inserting several cats with their photos in one transaction
   while the source cat is live; `AddCatsToPhoto(sourceEncounterId, photoId, coats)` — what a new cat
-  copies, `shotId` = the source photo's `shot`, files removed on any failure, the result saying which cats
+  copies, `shotId` = the source photo's `shotId`, files removed on any failure, the result saying which cats
   still need a fix; `cat_logged` per cat; purging one cat of a shot keeps the others' files; an undone
   gallery import keeps a cat added to its photo; `photos.md`, `location.md`, `analytics.md`.
 - **Out of scope:** any screen.

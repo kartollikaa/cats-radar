@@ -29,11 +29,15 @@ widget and streaks all stay right without changing. A count or a list of coats o
 considered and dropped: every counter in the app would need rewriting, and the counting rule would
 stop being true.
 
-**The cats of one photo share a shot.** `EncounterPhoto` gains `shotId: String?`: the id of its shot's
-first row, or null on that first row itself. A photo's **shot** is `shotId ?: id`, so a row joining a
-shot always takes the shot, never the id of the row it was copied from. A shot's cats are the live
-cats that have a photo row with that shot. A row is still written once and never edited: joining a
-shot never touches the rows already in it, because the new row points at the first one.
+**The cats of one photo share a shot.** `EncounterPhoto.shotId: String` is the id of the photo's
+shot, never null: the id of the shot's first photo row. A photo of one cat is a shot of its own and
+names itself; a row joining a shot takes the shot's `shotId`, never the id of the row it was copied
+from. A shot's cats are the live cats that have a photo row with that `shotId`. A row is still written
+once and never edited: joining a shot never touches the rows already in it.
+
+(Decided 2026-09-26, S2b: a first version made `shotId` null on a shot's first row and on every photo
+of one cat, with the shot's id in a computed `shot`. The owner found it misleading — a field named the
+shot's id that is null on most photos — and every photo now names its shot.)
 
 **Each cat keeps its own copy of the files.** A new cat in a shot gets its own photo row with its own
 copy of the app's copy and thumbnail, named after its own photo id. The purge, an attempt's clean-up
@@ -55,6 +59,9 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
   a photo row whose cat is gone and would stop the app at start-up.
   `CatsDatabaseMigrationTest` opens a v4 database with photos and checks that each one comes through
   with a null `shotId` and every other value unchanged.
+- Database **v6** makes the column NOT NULL and fills it with the row's own id wherever it was null. A
+  column cannot be made NOT NULL in place, so this hand-written migration rebuilds `encounter_photos`
+  itself, with no foreign key check at the end; a photo row whose cat is gone survives it too.
 - **Adding cats to a shot** is one repository call that inserts every new cat with its photo row in
   one transaction, and only while the source cat is still live. Either all of them are written or
   none is.
@@ -62,9 +69,9 @@ copy on disk for each extra cat. The links (`galleryUri`, `sourceMediaUri`, `sou
 ## Backup
 
 Format **6** writes `shotId` on each photo record (format 5 is the location set by hand, which landed
-first). A photo that starts its shot writes none, so its record reads exactly as format 5 wrote it. A
-format 5 or older archive has no `shotId` anywhere, so
-each of its photos is the first row of its own shot. Photos still merge by their own `id`, and
+first). Every record writes it; a record without one — from format 5 or older, or a shot's first photo
+written before every photo named its shot — is read as its photo's own shot, which is what such a
+record always meant. Photos still merge by their own `id`, and
 `shotId` travels with its row. A shot whose first row is not in the archive still groups by that id,
 and joins the first row once a later import brings it. The archive carries every cat's own copy of
 the files, as it carries every file a photo row points at today.
