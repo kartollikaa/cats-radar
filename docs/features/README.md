@@ -40,8 +40,8 @@ a document nobody updates is worse than none.
 - `walking-mode.md` — the lock-screen tally: one tap from the notification, why a silent channel
   would keep it off the lock screen, how the walk's route is recorded, and why it does not define
   an outing.
-- `widget.md` — the home-screen widget: today's count, what a tap writes, and the four
-  things that redraw it.
+- `widget.md` — the home-screen widget: today's count, what a tap writes, the number a tap shows
+  before storage has counted it, and the four things that redraw it.
 - `map.md` — the Map tab: which cats are on it, where the tiles come from, and what the tile
   server learns from the requests.
 - `analytics.md` — crash reports to Crashlytics, screen views and product events to Analytics: the

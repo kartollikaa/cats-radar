@@ -18,6 +18,7 @@ import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.reporting.tagReports
+import dev.catsradar.app.widget.WidgetCount
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.GeocodeWorkScheduler
 import dev.catsradar.app.worker.KoinWorkerFactory
@@ -76,6 +77,7 @@ class CatsRadarApplication : Application() {
                 }
             },
         )
+        koin.get<WidgetCount>().start(appScope)
         koin.get<WidgetRefresh>().start(appScope)
         koin.get<PlaceNamingTrigger>().start(appScope)
         StartupRepairs(
