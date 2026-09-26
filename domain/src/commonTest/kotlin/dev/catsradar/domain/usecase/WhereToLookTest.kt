@@ -23,13 +23,22 @@ class WhereToLookTest {
 
     @Test
     fun `the located cat logged closest in time is where to look, before the phone's own position`() = runTest {
+        repository.insert(locatedFixture(id = "far", occurredAt = LoggedAt + 3.days, lat = 55.7558, lon = 37.6173))
         repository.insert(encounterFixture(id = "cat", occurredAt = LoggedAt))
         repository.insert(locatedFixture(id = "near", occurredAt = LoggedAt + 5.minutes, lat = 41.39864, lon = 2.17842))
-        repository.insert(locatedFixture(id = "far", occurredAt = LoggedAt + 3.days, lat = 55.7558, lon = 37.6173))
 
         val look = WhereToLook(repository, FakeLocationProvider(lastKnownFix = OldFix))
 
         assertEquals(GeoPoint(41.39864, 2.17842), look("cat"))
+    }
+
+    @Test
+    fun `a located cat logged just before this one is closer than one logged a day after`() = runTest {
+        repository.insert(locatedFixture(id = "day-after", occurredAt = LoggedAt + 1.days, lat = 55.75, lon = 37.61))
+        repository.insert(locatedFixture(id = "before", occurredAt = LoggedAt - 2.minutes, lat = 41.40, lon = 2.17))
+        repository.insert(encounterFixture(id = "cat", occurredAt = LoggedAt))
+
+        assertEquals(GeoPoint(41.40, 2.17), WhereToLook(repository, FakeLocationProvider())("cat"))
     }
 
     @Test

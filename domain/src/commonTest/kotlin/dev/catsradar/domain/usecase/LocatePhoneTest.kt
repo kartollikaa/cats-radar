@@ -26,6 +26,14 @@ class LocatePhoneTest {
     }
 
     @Test
+    fun `a fresh fix wins over a recent last known one`() = runTest {
+        val recent = Fresh.copy(lat = 55.7558, lon = 37.6173, fixedAt = Now - 10.minutes)
+        val locate = LocatePhone(FakeLocationProvider(currentFix = Fresh, lastKnownFix = recent), FakeClock(Now))
+
+        assertEquals(GeoPoint(Fresh.lat, Fresh.lon), locate())
+    }
+
+    @Test
     fun `without a fresh fix, a recent last known one answers`() = runTest {
         val recent = Fresh.copy(lat = 55.7558, lon = 37.6173, fixedAt = Now - 10.minutes)
         val locate = LocatePhone(FakeLocationProvider(lastKnownFix = recent), FakeClock(Now))
