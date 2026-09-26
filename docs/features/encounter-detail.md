@@ -16,7 +16,8 @@ A back arrow sits at the top, pinned while the rest scrolls, whether the screen 
 once however often it is tapped, and only if the screen is still on top (`EncounterDetailStoreTest`,
 *back navigates back once, however often it is tapped*; `EncounterDetailEntryTest`). The bar has no
 fill of its own: the list runs edge to edge, under the status bar and under the arrow, which sits in
-a tonal circle so it stays readable over whatever passes beneath it. Only the list's content is
+a tonal circle so it stays readable over whatever passes beneath it, its edge in line with the
+content's (*the back button lines up with the content under it*). Only the list's content is
 inset, so at rest the first line starts below the bar and, scrolled to the end, Delete ends above the
 bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar while its first line
 starts below the bar*; *scrolled to the end, delete clears the bottom bar*). The coat
@@ -30,6 +31,25 @@ locale — that is how coordinates are conventionally written, so it is a fixed 
 rather than a `DateTimeFormatter` concern. The day is derived from the encounter's **own** UTC
 offset, not the device's, so a cat logged abroad stays on the day it was logged
 (`EncounterDetailStateMapperTest`, *the day comes from the encounter's own offset*).
+
+## Where it was found
+
+The **Where** section opens with the place the cat was found in, named the way Places files it (see
+[places.md](./places.md#browsing-them)): the city, the country under it, and the country's flag
+before both, unless the country's code is not two letters, as in Places. The city is the cat's
+cell's locality, or its admin area when it has none, and a country with no name of its own shows its
+two-letter code (`ObserveEncounterPlaceTest`). A cell that names a country but no city — the cats
+Places lists under No city — shows the country alone, in the city's place, and so does a city named
+like its country, such as Singapore, which would otherwise show the one name twice
+(`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named yet, has no
+place line; the section starts with where its coordinates came from. The line appears while the
+screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place reaches the
+screen once its cell is named*). TalkBack reads the city and the country with the rest of the
+section and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
+
+The names are the cat's own cell's. Places names a country after the first of its cats whose cell
+has a name for it, so the two differ only when cells of one country were named differently — in
+another language, say.
 
 ## Delete and undo
 
@@ -59,7 +79,7 @@ the last one — the newest, unless a backup brought an older photo in (*a photo
 pager to it*).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
-*Choose from gallery* — the system camera, or the system picker for a single image — on every live cat,
+*Choose from gallery* — the system camera, or the system picker for several images — on every live cat,
 one that has photos included (`EncounterDetailStoreTest`, *a cat that already has a photo can still be
 given another*). The new photo goes after the others (*a photo taken of a cat that has one is added
 after it*). A photo the cat already has is not added again, and the screen says so (*a picked photo
@@ -70,14 +90,34 @@ it back — even when the process died while they were in front, since the camer
 picker remember the cat with the rest of the screen's saved state (`PhotoLaunchersTest`;
 `PendingCapturesTest`). A queue saved by an older version, whose shots named no cat, restores empty:
 the capture file waits for the start-up cleanup rather than landing on a guessed cat. Once the camera
-or the picker hands a photo back, the attempt starts: both
-buttons disable and a progress bar shows under them, so a tap in the meantime opens nothing (*taking a
-photo while one is being attached opens nothing*).
+or the picker hands its photos back, the attempt starts: both buttons disable and a progress bar shows
+under them, so a tap in the meantime opens nothing (*taking a photo while one is being attached opens
+nothing*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
 have the photo yet, and offer the buttons back for a moment before the photo appeared
 (*a successful attach stays in progress until the photo arrives, never offering again*).
+
+**Several from the gallery.** The picker lets the user choose up to `Tuning.ATTACH_BATCH_MAX` images; a
+picker that ignores the limit — the document picker used where no photo picker is available — is cut to the
+first ones chosen (`PickSeveralPhotosTest`). The photos are attached one after another, in the order
+picked, after the cat's own (`EncounterDetailPickSeveralTest`, *every picked photo lands after the
+cat's own, in the order picked*). While they are, both buttons stay disabled and the progress bar fills
+as each one goes through, read out as "Attached 2 of 5 photos"; a single photo, picked or taken, shows the
+bar without a count as before (*a pick of several shows how many are through as it goes*; *a single
+picked photo or a camera photo shows the attempt without a count*; *a tap on either button mid-pick
+opens nothing*; `EncounterDetailScreenTest`). The attempt ends only once the cat carries every photo the
+pick attached (*the progress stays until the cat carries every photo the pick attached*). A pick ends in
+one message at most: one photo not attached says "Photo not attached", several say how many (*one photo
+of a pick not attached says so once, and the others land*; *several photos not attached say how many in
+one message*); a pick the cat already has in full says so (*a pick of several the cat already has says
+so once and changes nothing*); a duplicate among photos that were added is skipped without a word (*a
+duplicate among photos that were added is skipped without a word*). A photo that fails still lets the
+rest land. Leaving the screen mid-pick keeps the photos already attached and attaches no more (*leaving
+mid-pick keeps the photos attached so far and attaches no more*); a cat removed elsewhere mid-pick gets
+none of the rest, and nothing is said, since the screen already shows it gone (*the cat removed
+mid-pick is given no more photos and nothing is said*).
 
 A cancelled camera or a dismissed picker leaves the screen exactly as it was — no attempt starts
 (`EncounterDetailStoreTest`, *a cancelled camera or picker changes nothing*). A photo the camera
@@ -127,9 +167,11 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Where the code lives
 
-- `domain/…/usecase/ObserveEncounter.kt`, `DeleteEncounter.kt`, `UndoDelete.kt`
+- `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
+  `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`; `ui/…/components/CenterAppBar.kt` — the bar
+- `ui/…/detail/EncounterDetailScreen.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`;
+  `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
@@ -138,6 +180,5 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-No place name: the coordinates are shown as numbers, and the map is a tap away rather than drawn on
-this screen. A cat's photos cannot be removed or reordered, nor several chosen from the gallery at once
-(see `photos.md`).
+The coordinates are shown as numbers, and the map is a tap away rather than drawn on this screen. A
+cat's photos cannot be removed or reordered (see `photos.md`).

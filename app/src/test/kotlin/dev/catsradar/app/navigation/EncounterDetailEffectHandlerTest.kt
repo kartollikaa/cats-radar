@@ -16,6 +16,8 @@ class EncounterDetailEffectHandlerTest {
         photoPickerLauncher = { catId -> calls += "picker $catId" },
         photoFailureReporter = { calls += "failure" },
         alreadyThereReporter = { calls += "already there" },
+        notAttachedCountReporter = { count -> calls += "$count not attached" },
+        allAlreadyThereReporter = { calls += "all already there" },
         captureDiscarder = { uri -> calls += "discard $uri" },
     )
 
@@ -27,6 +29,8 @@ class EncounterDetailEffectHandlerTest {
         handle(EncounterDetailEffect.OpenPhoto("cat-1", "second"))
         handle(EncounterDetailEffect.PhotoNotAttached)
         handle(EncounterDetailEffect.PhotoAlreadyThere)
+        handle(EncounterDetailEffect.PhotosNotAttached(3))
+        handle(EncounterDetailEffect.PhotosAlreadyThere)
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
         handle(EncounterDetailEffect.OpenMap("cat-1"))
 
@@ -38,6 +42,8 @@ class EncounterDetailEffectHandlerTest {
                 "photo cat-1 second",
                 "failure",
                 "already there",
+                "3 not attached",
+                "all already there",
                 "discard content://captures/1",
                 "map cat-1",
             ),

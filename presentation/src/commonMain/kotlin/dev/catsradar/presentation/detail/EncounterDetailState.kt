@@ -19,7 +19,11 @@ sealed interface EncounterDetailState {
         val photos: ImmutableList<DetailPhoto> = persistentListOf(),
         val coat: CoatOption? = null,
         val addPhoto: AddPhoto = AddPhoto.READY,
+        /** Null unless several photos are being attached. */
+        val attachProgress: AttachProgress? = null,
         val onTheMap: Boolean = false,
+        /** Null while the cat has no named place: no location, or its cell not named yet. */
+        val place: DetailPlace? = null,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */
@@ -33,3 +37,11 @@ sealed interface EncounterDetailState {
 data class DetailPhoto(val id: String, val path: String)
 
 enum class AddPhoto { READY, ATTACHING }
+
+/** [done] of the [total] photos being attached are through, whether or not each one landed. */
+data class AttachProgress(val done: Int, val total: Int) {
+    val fraction: Float get() = done.toFloat() / total
+}
+
+/** [title] is the city, or the country when no city is known; [country] is set only under a city. */
+data class DetailPlace(val title: String, val country: String?, val flag: String?)

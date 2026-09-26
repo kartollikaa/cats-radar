@@ -86,38 +86,38 @@ class PhotoLaunchersTest {
 
     @Test
     fun aPickReachesTheCatThePickerWasOpenedForAfterTheScreenIsRecreated() {
-        val picks = mutableListOf<PickedPhoto>()
-        lateinit var picker: CatPhotoPickerLauncher
+        val picks = mutableListOf<PickedPhotos>()
+        lateinit var picker: CatPhotosPickerLauncher
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides registry) {
-                picker = rememberCatPhotoPicker { picks += it }
+                picker = rememberCatPhotosPicker { picks += it }
             }
         }
 
         compose.runOnIdle { picker.launch("cat-b") }
         restoration.emulateSavedInstanceStateRestore()
-        compose.runOnIdle { registry.answer(Uri.parse(PHOTO)) }
+        compose.runOnIdle { registry.answer(listOf(Uri.parse(PHOTO))) }
 
-        assertEquals(PickedPhoto(catId = "cat-b", uri = PHOTO), picks.single())
+        assertEquals(PickedPhotos(catId = "cat-b", uris = listOf(PHOTO)), picks.single())
     }
 
     @Test
     fun aDismissedPickerNamesItsCatAndNoPhoto() {
-        val picks = mutableListOf<PickedPhoto>()
-        lateinit var picker: CatPhotoPickerLauncher
+        val picks = mutableListOf<PickedPhotos>()
+        lateinit var picker: CatPhotosPickerLauncher
         compose.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides registry) {
-                picker = rememberCatPhotoPicker { picks += it }
+                picker = rememberCatPhotosPicker { picks += it }
             }
         }
 
         compose.runOnIdle {
             picker.launch("cat-b")
-            registry.answer<Uri?>(null)
+            registry.answer(emptyList<Uri>())
         }
 
-        assertEquals(PickedPhoto(catId = "cat-b", uri = null), picks.single())
+        assertEquals(PickedPhotos(catId = "cat-b", uris = emptyList()), picks.single())
     }
 
     private companion object {
