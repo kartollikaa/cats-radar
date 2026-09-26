@@ -13,4 +13,5 @@ dependencies {
     runtimeOnly(libs.maplibre.compose.runtime.opengl)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }

@@ -37,6 +37,9 @@ sealed interface MapIntent {
     data object CoatFilterCleared : MapIntent
 
     data object HeatToggled : MapIntent
+
+    /** The thumbnail at [path] turned out to be no image. */
+    data class ThumbnailUnreadable(val path: String) : MapIntent
 }
 
 sealed interface MapEffect {
@@ -55,6 +58,7 @@ class MapStore(
 ) : Store<MapState, MapIntent, MapEffect>(MapState.Loading) {
 
     private val choices = MutableStateFlow(MapChoices())
+    private val unreadableThumbnails = MutableStateFlow<Set<String>>(emptySet())
 
     init {
         val encounters = observeEncounters().shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
@@ -64,8 +68,8 @@ class MapStore(
             val walks = chosen.focus?.let { observeOutingTracks(encounters, it) } ?: flowOf(emptyList())
             combine(walks, choices) { tracks, latest -> latest to tracks }
         }
-        combine(encounters, chosenWithWalks) { cats, (chosen, tracks) ->
-            val mapped = stateMapper.map(cats, clock.today(timeZone), chosen, tracks)
+        combine(encounters, chosenWithWalks, unreadableThumbnails) { cats, (chosen, tracks), unreadable ->
+            val mapped = stateMapper.map(cats, clock.today(timeZone), chosen, tracks, unreadable)
             val shown = mapped as? MapState.Located
             // A focus or a cat the cats no longer match is let go, so it cannot come back by itself later — but
             // only while it is still the live choice: a pairing catching up to a newer one must not clear that.
@@ -99,6 +103,7 @@ class MapStore(
             MapIntent.HeatToggled -> choices.update { it.copy(heat = !it.heat) }
             is MapIntent.CatRequested -> choices.value = MapChoices(cat = intent.encounterId)
             MapIntent.CatReached -> choices.update { it.copy(cat = null) }
+            is MapIntent.ThumbnailUnreadable -> unreadableThumbnails.update { it + intent.path }
         }
     }
 }
