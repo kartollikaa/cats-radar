@@ -173,6 +173,7 @@ class ZipBackupPhotoListTest {
             sourceDigest = "digest-$id",
             deviceId = "install-$id",
             addedAt = addedAt,
+            shotId = null,
         )
     }
 }

@@ -16,7 +16,7 @@ internal fun catsDatabaseBuilder(context: Context, path: String): RoomDatabase.B
     Room.databaseBuilder<CatsDatabase>(context = context, name = path)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .addMigrations(MigrationFrom3To4)
+        .addMigrations(MigrationFrom3To4, MigrationFrom4To5)
 
 internal fun <T : RoomDatabase> RoomDatabase.Builder<T>.withBundledDriver(): RoomDatabase.Builder<T> =
     setDriver(BundledSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO)

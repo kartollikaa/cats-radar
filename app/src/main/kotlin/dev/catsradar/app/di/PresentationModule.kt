@@ -9,6 +9,8 @@ import dev.catsradar.presentation.detail.EncounterDetailStateMapper
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.locationpicker.LocationPickerStateMapper
+import dev.catsradar.presentation.locationpicker.LocationPickerStore
 import dev.catsradar.presentation.map.MapSpotStateMapper
 import dev.catsradar.presentation.map.MapSpotStore
 import dev.catsradar.presentation.map.MapStateMapper
@@ -77,6 +79,17 @@ val presentationModule = module {
             stateMapper = get(),
             clock = get(),
             timeZone = get(),
+        )
+    }
+    factoryOf(::LocationPickerStateMapper)
+    viewModel { (encounterId: String) ->
+        LocationPickerStore(
+            encounterId = encounterId,
+            observeEncounter = get(),
+            whereToLook = get(),
+            locatePhone = get(),
+            setLocationByHand = get(),
+            stateMapper = get(),
         )
     }
 }

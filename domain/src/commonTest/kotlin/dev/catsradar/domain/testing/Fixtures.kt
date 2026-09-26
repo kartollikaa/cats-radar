@@ -65,6 +65,7 @@ fun Encounter.withPhoto(
             sourceDigest = sourceDigest,
             deviceId = deviceId,
             addedAt = createdAt,
+            shotId = null,
         ),
     ),
 )

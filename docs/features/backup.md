@@ -100,7 +100,8 @@ A cat with several photos comes back with all of them (*aCatWithTwoPhotosSurvive
 A photo whose cat the archive does not carry is left out and the rest imports: nothing could show it.
 
 The manifest records `formatVersion` — 2 since walks joined the archive, 3 since cats carry the gallery
-item a picked photo came from, 4 since photos travel in their own list — when it was exported, which
+item a picked photo came from, 4 since photos travel in their own list, 5 since a cat's location can be
+set by hand — when it was exported, which
 device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
@@ -139,9 +140,13 @@ written only where no file was here, so importing the same archive again finds t
   fields this version would silently drop. Nothing is written. It is judged by its manifest before
   any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
   still say "newer version", not "not a backup". That is why the walks raised the version, the
-  picked gallery items raised it again, and the photo list again: an app from before them refuses an
-  archive rather than losing its walks, its links, or every photo after a cat's first
-  (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatFourSoAnAppBeforeThePhotoListRefusesIt*).
+  picked gallery items raised it again, the photo list again, and locations set by hand again: an app
+  from before them refuses an archive rather than losing its walks, its links, or every photo after a
+  cat's first, or failing on a `MANUAL` row it cannot parse and calling the archive no backup at all
+  (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatFiveSoAnAppBeforeLocationsByHandRefusesIt*). A cat
+  located by hand comes back as it left (*everyFieldOfEveryRowSurvivesTheRoundTrip*).
+- **An archive from before locations by hand** still imports, photo list included
+  (`ZipBackupReaderOlderFormatTest`, *aFormatFourArchiveStillReadsWithItsPhotoList*).
 - **An archive from before walks** still imports, with no walks in it.
 - **An archive from before picked gallery items** still imports, its cats keeping none
   (`ZipBackupReaderOlderFormatTest`). A picked item restored on another phone is kept but offers no

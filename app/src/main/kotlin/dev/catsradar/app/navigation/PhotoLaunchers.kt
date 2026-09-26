@@ -24,7 +24,7 @@ internal fun interface CameraLauncher {
     fun launch()
 }
 
-internal fun interface PhotoFailureReporter {
+internal fun interface MessageReporter {
     fun report()
 }
 
@@ -69,10 +69,10 @@ internal fun rememberSeveralPhotosPicker(onResult: (List<String>) -> Unit): Phot
 }
 
 @Composable
-internal fun rememberPhotoFailureReporter(@StringRes messageRes: Int): PhotoFailureReporter {
+internal fun rememberMessageReporter(@StringRes messageRes: Int): MessageReporter {
     val context = LocalContext.current
     return remember(context, messageRes) {
-        PhotoFailureReporter { Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show() }
+        MessageReporter { Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show() }
     }
 }
 

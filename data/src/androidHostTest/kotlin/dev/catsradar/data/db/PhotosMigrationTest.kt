@@ -124,6 +124,21 @@ class PhotosMigrationTest {
         }
     }
 
+    @Test
+    fun theAppsOwnBuilderBringsAPhotographedCatFromVersionsOneAndTwoToFive() = runTest {
+        listOf(1, 2).forEach { version ->
+            helper.createDatabase(version).use { it.execSQL(PHOTOGRAPHED_BEFORE_VERSION_THREE) }
+            val database = catsDatabaseBuilder(instrumentation.targetContext, file.absolutePath).build()
+            try {
+                val cat = EncounterRepositoryImpl(database.encounterDao()).loadEvery().single()
+                assertEquals(listOf("old.jpg" to null), cat.photos.map { it.photoPath to it.shotId }, "from v$version")
+            } finally {
+                database.close()
+                instrumentation.targetContext.deleteDatabase(file.name)
+            }
+        }
+    }
+
     private fun SQLiteConnection.rows(sql: String): List<List<String?>> = prepare(sql).use { statement ->
         buildList { while (statement.step()) add(statement.row()) }
     }
@@ -196,6 +211,7 @@ class PhotosMigrationTest {
             sourceDigest = "d-camera",
             deviceId = "this-install",
             addedAt = Instant.fromEpochMilliseconds(1001),
+            shotId = null,
         )
 
         const val PHOTOGRAPHED_BEFORE_VERSION_THREE = "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, " +

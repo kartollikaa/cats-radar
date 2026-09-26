@@ -81,12 +81,36 @@ class ZipBackupReaderOlderFormatTest {
                         sourceDigest = "sha",
                         deviceId = "cat-install",
                         addedAt = Instant.fromEpochMilliseconds(5),
+                        shotId = null,
                     ),
                 ),
                 emptyList(),
             ),
             read.contents.encounters.map { it.photos },
         )
+    }
+
+    @Test
+    fun aFormatFourArchiveStillReadsWithItsPhotoList() = runTest {
+        val path = File(temporaryFolder.root, "backup.zip")
+        path.writeArchive(
+            MANIFEST_ENTRY to FORMAT_FOUR_MANIFEST,
+            ENCOUNTERS_ENTRY to """[{"id":"a","occurredAt":0,"tzOffsetMinutes":0,"kind":"PHOTO","origin":"CAMERA",""" +
+                """"locationSource":"CURRENT_FIX","lat":41.39864,"lon":2.17842,"deviceId":"d","createdAt":0,""" +
+                """"updatedAt":0}]""",
+            ENCOUNTER_PHOTOS_ENTRY to
+                """[{"id":"p","encounterId":"a","photoPath":"a.jpg","deviceId":"d","addedAt":5}]""",
+            PLACE_CELLS_ENTRY to "[]",
+            WALKS_ENTRY to "[]",
+            TRACK_POINTS_ENTRY to "[]",
+        )
+
+        val read = reader.read(path.path)
+
+        assertIs<BackupReadResult.Readable>(read)
+        val cat = read.contents.encounters.single()
+        assertEquals(41.39864, cat.lat)
+        assertEquals(listOf("p"), cat.photos.map { it.id })
     }
 
     @Test
@@ -104,5 +128,6 @@ class ZipBackupReaderOlderFormatTest {
     private companion object {
         const val FORMAT_TWO_MANIFEST = """{"formatVersion":2,"exportedAt":0,"deviceId":"d","appVersion":"1.3.0"}"""
         const val FORMAT_THREE_MANIFEST = """{"formatVersion":3,"exportedAt":0,"deviceId":"d","appVersion":"1.4.1"}"""
+        const val FORMAT_FOUR_MANIFEST = """{"formatVersion":4,"exportedAt":0,"deviceId":"d","appVersion":"1.5.0"}"""
     }
 }

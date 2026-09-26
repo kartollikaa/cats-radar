@@ -18,7 +18,7 @@ class SchemaAssetSyncTest {
     @Test
     fun everyExportedSchemaHasAByteIdenticalAssetCopy() {
         val exported = File("schemas/$SCHEMA_DIRECTORY").listFiles().orEmpty().map { it.name }.sorted()
-        assertEquals(listOf("1.json", "2.json", "3.json", "4.json"), exported)
+        assertEquals(listOf("1.json", "2.json", "3.json", "4.json", "5.json"), exported)
 
         exported.forEach { name ->
             val relative = "$SCHEMA_DIRECTORY/$name"
