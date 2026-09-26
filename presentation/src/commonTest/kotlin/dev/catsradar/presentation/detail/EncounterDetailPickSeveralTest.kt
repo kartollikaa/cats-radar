@@ -8,6 +8,7 @@ import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
@@ -18,6 +19,7 @@ import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeGallerySaver
 import dev.catsradar.presentation.counter.FakeIdGenerator
 import dev.catsradar.presentation.counter.FakeImageResizer
+import dev.catsradar.presentation.counter.FakePlaceCellRepository
 import dev.catsradar.presentation.counter.FakeSettingsRepository
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
@@ -285,6 +287,7 @@ class EncounterDetailPickSeveralTest {
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),
+        observeEncounterPlace = ObserveEncounterPlace(FakePlaceCellRepository()),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),

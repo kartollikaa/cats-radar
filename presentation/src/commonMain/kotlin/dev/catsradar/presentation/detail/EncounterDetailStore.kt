@@ -3,11 +3,13 @@ package dev.catsradar.presentation.detail
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.AttachResult
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.PhotoSource
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
@@ -16,7 +18,9 @@ import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -26,6 +30,7 @@ import kotlin.time.Clock
 class EncounterDetailStore(
     private val encounterId: String,
     observeEncounter: ObserveEncounter,
+    observeEncounterPlace: ObserveEncounterPlace,
     private val deleteEncounter: DeleteEncounter,
     private val undoDelete: UndoDelete,
     private val setCoat: SetCoat,
@@ -36,6 +41,7 @@ class EncounterDetailStore(
 ) : Store<EncounterDetailState, EncounterDetailIntent, EncounterDetailEffect>(EncounterDetailState.Loading) {
 
     private var lastSeen: Encounter? = null
+    private var lastPlace: EncounterPlace? = null
     private var deletedHere = false
     private var undoTimeoutJob: Job? = null
     private var attachingPhotos = false
@@ -48,8 +54,10 @@ class EncounterDetailStore(
 
     init {
         observeEncounter(encounterId)
-            .onEach { encounter ->
+            .flatMapLatest { encounter -> observeEncounterPlace(encounter).map { place -> encounter to place } }
+            .onEach { (encounter, place) ->
                 lastSeen = encounter
+                lastPlace = place
                 if (encounter == null) arrivingPhotoIds.clear() else arrivingPhotoIds -= encounter.photoIds()
                 setState { reduce(encounter) }
             }
@@ -62,6 +70,7 @@ class EncounterDetailStore(
             encounter,
             clock.today(timeZone),
             attachProgress.takeIf { attachingPhotos || arrivingPhotoIds.isNotEmpty() },
+            lastPlace,
         )
         deletedHere -> this
         else -> EncounterDetailState.Missing

@@ -22,6 +22,8 @@ sealed interface EncounterDetailState {
         /** Null unless several photos are being attached. */
         val attachProgress: AttachProgress? = null,
         val onTheMap: Boolean = false,
+        /** Null while the cat has no named place: no location, or its cell not named yet. */
+        val place: DetailPlace? = null,
     ) : EncounterDetailState
 
     /** The user deleted this encounter from this screen; [undoVisible] is false once the window closed. */
@@ -40,3 +42,6 @@ enum class AddPhoto { READY, ATTACHING }
 data class AttachProgress(val done: Int, val total: Int) {
     val fraction: Float get() = done.toFloat() / total
 }
+
+/** [title] is the city, or the country when no city is known; [country] is set only under a city. */
+data class DetailPlace(val title: String, val country: String?, val flag: String?)

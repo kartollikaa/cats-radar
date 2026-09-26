@@ -16,7 +16,8 @@ A back arrow sits at the top, pinned while the rest scrolls, whether the screen 
 once however often it is tapped, and only if the screen is still on top (`EncounterDetailStoreTest`,
 *back navigates back once, however often it is tapped*; `EncounterDetailEntryTest`). The bar has no
 fill of its own: the list runs edge to edge, under the status bar and under the arrow, which sits in
-a tonal circle so it stays readable over whatever passes beneath it. Only the list's content is
+a tonal circle so it stays readable over whatever passes beneath it, its edge in line with the
+content's (*the back button lines up with the content under it*). Only the list's content is
 inset, so at rest the first line starts below the bar and, scrolled to the end, Delete ends above the
 bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar while its first line
 starts below the bar*; *scrolled to the end, delete clears the bottom bar*). The coat
@@ -30,6 +31,25 @@ locale — that is how coordinates are conventionally written, so it is a fixed 
 rather than a `DateTimeFormatter` concern. The day is derived from the encounter's **own** UTC
 offset, not the device's, so a cat logged abroad stays on the day it was logged
 (`EncounterDetailStateMapperTest`, *the day comes from the encounter's own offset*).
+
+## Where it was found
+
+The **Where** section opens with the place the cat was found in, named the way Places files it (see
+[places.md](./places.md#browsing-them)): the city, the country under it, and the country's flag
+before both, unless the country's code is not two letters, as in Places. The city is the cat's
+cell's locality, or its admin area when it has none, and a country with no name of its own shows its
+two-letter code (`ObserveEncounterPlaceTest`). A cell that names a country but no city — the cats
+Places lists under No city — shows the country alone, in the city's place, and so does a city named
+like its country, such as Singapore, which would otherwise show the one name twice
+(`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named yet, has no
+place line; the section starts with where its coordinates came from. The line appears while the
+screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place reaches the
+screen once its cell is named*). TalkBack reads the city and the country with the rest of the
+section and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
+
+The names are the cat's own cell's. Places names a country after the first of its cats whose cell
+has a name for it, so the two differ only when cells of one country were named differently — in
+another language, say.
 
 ## Delete and undo
 
@@ -142,9 +162,11 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Where the code lives
 
-- `domain/…/usecase/ObserveEncounter.kt`, `DeleteEncounter.kt`, `UndoDelete.kt`
+- `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
+  `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`; `ui/…/components/CenterAppBar.kt` — the bar
+- `ui/…/detail/EncounterDetailScreen.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`;
+  `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
@@ -153,6 +175,6 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-No place name: the coordinates are shown as numbers, and the map is a tap away rather than drawn on
-this screen. A cat's photos cannot be removed or reordered, nor several chosen from the gallery at once
-(see `photos.md`).
+The coordinates are shown as numbers, and the map is a tap away rather than drawn on this screen. A
+cat's photos cannot be removed or reordered, nor several chosen from the gallery at once (see
+`photos.md`).
