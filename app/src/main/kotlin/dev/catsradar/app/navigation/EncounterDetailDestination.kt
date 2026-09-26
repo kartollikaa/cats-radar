@@ -22,15 +22,15 @@ internal fun handleEncounterDetailEffect(
     onOpenPhoto: (PhotoViewer) -> Unit,
     onOpenMap: (catId: String) -> Unit,
     cameraLauncher: CameraLauncher,
-    photoPickerLauncher: PhotoPickerLauncher,
+    photoPickerLauncher: CatPhotoPickerLauncher,
     photoFailureReporter: PhotoFailureReporter,
     alreadyThereReporter: PhotoFailureReporter,
     captureDiscarder: CaptureDiscarder,
 ) {
     when (effect) {
         EncounterDetailEffect.NavigateBack -> onNavigateBack()
-        is EncounterDetailEffect.OpenCamera -> cameraLauncher.launch()
-        is EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch()
+        is EncounterDetailEffect.OpenCamera -> cameraLauncher.launch(effect.catId)
+        is EncounterDetailEffect.OpenPhotoPicker -> photoPickerLauncher.launch(effect.catId)
         is EncounterDetailEffect.OpenPhoto -> onOpenPhoto(PhotoViewer(effect.catId, effect.photoId))
         is EncounterDetailEffect.OpenMap -> onOpenMap(effect.catId)
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
@@ -53,9 +53,12 @@ internal fun EncounterDetailDestination(
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
     val currentOnOpenMap by rememberUpdatedState(onOpenMap)
-    val cameraLauncher = rememberCameraLauncher { uri -> store.dispatch(EncounterDetailIntent.PhotoTaken(key.id, uri)) }
+    // A shot with no cat came from a queue that lost it and has nothing to attach to.
+    val cameraLauncher = rememberCameraLauncher { shot ->
+        shot.catId?.let { store.dispatch(EncounterDetailIntent.PhotoTaken(it, shot.uri)) }
+    }
     val photoPicker =
-        rememberSinglePhotoPicker { uri -> store.dispatch(EncounterDetailIntent.PhotoPicked(key.id, uri)) }
+        rememberCatPhotoPicker { picked -> store.dispatch(EncounterDetailIntent.PhotoPicked(picked.catId, picked.uri)) }
     val photoFailureReporter = rememberPhotoFailureReporter(R.string.detail_photo_not_attached)
     val alreadyThereReporter = rememberPhotoFailureReporter(R.string.detail_photo_already_there)
     val captureDiscarder = rememberCaptureDiscarder()

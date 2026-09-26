@@ -65,7 +65,12 @@ given another*). The new photo goes after the others (*a photo taken of a cat th
 after it*). A photo the cat already has is not added again, and the screen says so (*a picked photo
 the cat already has is not added again, and the screen says so*). A second tap before the camera or the
 picker answers opens nothing, so a double tap never opens two cameras (*a second tap before the camera
-answers opens nothing*). Once the camera or the picker hands a photo back, the attempt starts: both
+answers opens nothing*). The camera and the picker are opened for a named cat, and their answer names
+it back — even when the process died while they were in front, since the camera's queue and the
+picker remember the cat with the rest of the screen's saved state (`PhotoLaunchersTest`;
+`PendingCapturesTest`). A queue saved by an older version, whose shots named no cat, restores empty:
+the capture file waits for the start-up cleanup rather than landing on a guessed cat. Once the camera
+or the picker hands a photo back, the attempt starts: both
 buttons disable and a progress bar shows under them, so a tap in the meantime opens nothing (*taking a
 photo while one is being attached opens nothing*).
 
@@ -128,8 +133,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
-  `MapFocusRequest` and selects the Map tab), `PhotoLaunchers.kt` (the camera and gallery-picker
-  launchers)
+  `MapFocusRequest` and selects the Map tab), `PhotoLaunchers.kt` (the camera and the cat's photo
+  picker), `app/…/photo/PendingCaptures.kt` (which camera a result belongs to, and for which cat)
 
 ## Not built yet
 

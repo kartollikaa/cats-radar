@@ -8,19 +8,33 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import dev.catsradar.app.photo.CaptureTarget
+import dev.catsradar.app.photo.PendingCapture
 import dev.catsradar.app.photo.PendingCaptures
 import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.photo.holdReadAccess
 import dev.catsradar.domain.Tuning
 
-/** Opens the camera; it owns the file the camera writes to. */
+/** Opens the camera for [catId] — null when the shot logs a new cat; it owns the file the camera writes to. */
 internal fun interface CameraLauncher {
-    fun launch()
+    fun launch(catId: String?)
 }
+
+/** [uri] is null when the camera was cancelled. */
+internal data class CameraShot(val catId: String?, val uri: String?)
+
+internal fun interface CatPhotoPickerLauncher {
+    fun launch(catId: String)
+}
+
+/** [uri] is null when the picker was dismissed. */
+internal data class PickedPhoto(val catId: String, val uri: String?)
 
 internal fun interface PhotoFailureReporter {
     fun report()
@@ -35,32 +49,37 @@ internal fun interface PhotoPickerLauncher {
 }
 
 @Composable
-internal fun rememberCameraLauncher(onResult: (String?) -> Unit): CameraLauncher {
+internal fun rememberCameraLauncher(onResult: (CameraShot) -> Unit): CameraLauncher {
     val context = LocalContext.current
     // Saveable: the process can die while a camera is in front, and its result says nothing about
-    // where it wrote.
+    // where it wrote or for which cat.
     val pending = rememberSaveable(saver = PendingCaptures.Saver) { PendingCaptures() }
     val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val target = pending.answered()
-        onResult(target.takeIf { saved })
-        if (!saved && target != null) CaptureTarget.discard(context, target)
+        val capture = pending.answered()
+        onResult(CameraShot(catId = capture?.catId, uri = capture?.target?.takeIf { saved }))
+        if (!saved && capture != null) CaptureTarget.discard(context, capture.target)
     }
     return remember(resultLauncher, context, pending) {
-        CameraLauncher {
+        CameraLauncher { catId ->
             val target = CaptureTarget.newUri(context)
-            pending.launched(target.toString())
+            pending.launched(PendingCapture(target.toString(), catId))
             resultLauncher.launch(target)
         }
     }
 }
 
 @Composable
-internal fun rememberSinglePhotoPicker(onResult: (String?) -> Unit): PhotoPickerLauncher {
+internal fun rememberCatPhotoPicker(onResult: (PickedPhoto) -> Unit): CatPhotoPickerLauncher {
+    // Saveable for the same reason as the camera's queue: the picker's answer names no cat.
+    var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
     val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        onResult(uri?.toString())
+        val catId = pickingFor
+        pickingFor = null
+        if (catId != null) onResult(PickedPhoto(catId, uri?.toString()))
     }
     return remember(resultLauncher) {
-        PhotoPickerLauncher {
+        CatPhotoPickerLauncher { catId ->
+            pickingFor = catId
             resultLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
     }

@@ -12,8 +12,8 @@ class EncounterDetailEffectHandlerTest {
         onNavigateBack = { calls += "back" },
         onOpenPhoto = { viewer -> calls += "photo ${viewer.encounterId} ${viewer.photoId}" },
         onOpenMap = { catId -> calls += "map $catId" },
-        cameraLauncher = { calls += "camera" },
-        photoPickerLauncher = { calls += "picker" },
+        cameraLauncher = { catId -> calls += "camera $catId" },
+        photoPickerLauncher = { catId -> calls += "picker $catId" },
         photoFailureReporter = { calls += "failure" },
         alreadyThereReporter = { calls += "already there" },
         captureDiscarder = { uri -> calls += "discard $uri" },
@@ -33,8 +33,8 @@ class EncounterDetailEffectHandlerTest {
         assertEquals(
             listOf(
                 "back",
-                "camera",
-                "picker",
+                "camera cat-1",
+                "picker cat-1",
                 "photo cat-1 second",
                 "failure",
                 "already there",

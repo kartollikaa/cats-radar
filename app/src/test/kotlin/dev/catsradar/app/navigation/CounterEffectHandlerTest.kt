@@ -47,7 +47,7 @@ private class CountingCameraLauncher : CameraLauncher {
     var launchCount = 0
         private set
 
-    override fun launch() {
+    override fun launch(catId: String?) {
         launchCount++
     }
 }
