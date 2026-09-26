@@ -5,7 +5,8 @@ import org.junit.rules.ExternalResource
 
 private const val CACHE_FIELD_NAME = "sCache"
 
-// FileProvider caches path roots per authority for the process, while Robolectric gives each test a new files directory.
+// FileProvider caches path roots per authority for the process, while Robolectric gives each test a
+// new files directory.
 internal class FileProviderCacheReset : ExternalResource() {
     override fun before() {
         val field = try {
