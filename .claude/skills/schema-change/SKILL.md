@@ -30,36 +30,42 @@ NEXT_DB=$((CURRENT_DB + 1))
 NEXT_BACKUP=$((CURRENT_BACKUP + 1))
 ```
 
-Run the same matcher against each current value on `origin/main` as a positive control, then search
-the open PR heads for the proposed next value:
+Run the same matcher against each current value on `origin/main` as a positive control. Search every
+pushed branch on `origin`, including claims that do not have a PR yet:
 
 ```bash
 git show "origin/main:$DB_PATH" | grep "CATS_DATABASE_VERSION = $CURRENT_DB"
 git show "origin/main:$BACKUP_PATH" | grep "BACKUP_FORMAT_VERSION = $CURRENT_BACKUP"
-gh api repos/kartollikaa/cats-radar/pulls -X GET -f state=open --paginate \
-  --jq '.[].head.ref' | while IFS= read -r branch; do
-    git show "origin/$branch:$DB_PATH" 2>/dev/null | grep "CATS_DATABASE_VERSION = $NEXT_DB" \
-      && printf 'claimed by %s\n' "$branch"
-    git show "origin/$branch:$BACKUP_PATH" 2>/dev/null | grep "BACKUP_FORMAT_VERSION = $NEXT_BACKUP" \
-      && printf 'claimed by %s\n' "$branch"
+git for-each-ref --format='%(refname:short)' refs/remotes/origin/ | while IFS= read -r ref; do
+    [[ $ref == origin/HEAD || $ref == origin/main ]] && continue
+    git show "$ref:$DB_PATH" 2>/dev/null | grep "CATS_DATABASE_VERSION = $NEXT_DB" \
+      && printf 'database version claimed by %s\n' "$ref"
+    git show "$ref:$BACKUP_PATH" 2>/dev/null | grep "BACKUP_FORMAT_VERSION = $NEXT_BACKUP" \
+      && printf 'backup version claimed by %s\n' "$ref"
   done
 ```
+
+Also inspect open fork PRs: fetch each live `.head.repo.clone_url` at `.head.sha` into a temporary
+ref and run the same two matchers there. Do not assume `origin/<head.ref>` exists for a fork.
 
 A hit means the number is already claimed: stop, refresh `origin/main`, and coordinate rather than
 silently taking the same number.
 
 ## Room database change
 
-1. Add the new column/table to the entity and bump `CATS_DATABASE_VERSION`.
-2. Generate Room output with `./gradlew :data:kspAndroidMain`, then find
-   `CatsDatabase_AutoMigration_<from>_<to>_Impl.kt` under `data/build/generated/ksp/` and read every
+1. Add the new column/table to the entity, bump `CATS_DATABASE_VERSION`, and add a temporary
+   `AutoMigration(from = <from>, to = <to>)` declaration to the Room database annotation. It exists
+   only to make Room show the migration it would generate.
+2. Run `./gradlew :data:kspAndroidMain`, locate the generated
+   `CatsDatabase_AutoMigration_<from>_<to>_Impl.kt` under the module's build output, and read every
    SQL statement.
 3. A generated rebuild (`CREATE _new_`, copy, drop, rename) of a table with a foreign key plus
    `foreignKeyCheck` is not safe for historical orphan rows. For a nullable-column change, write an
    `ALTER TABLE ... ADD COLUMN` `Migration` in
    `data/src/commonMain/kotlin/dev/catsradar/data/db/Migrations.kt`, register it in
    `data/src/androidMain/kotlin/dev/catsradar/data/db/CatsDatabaseFactory.android.kt`, and remove the
-   unsafe AutoMigration declaration.
+   unsafe temporary AutoMigration declaration. If the generated SQL is safe, retain the declaration
+   and cover it with the migration tests instead.
 4. In `CatsDatabaseMigrationTest`, create the old schema with an orphan child row, run the explicit
    migration, and prove both the orphan and the new default survive. Also run `DatabaseSchemaTest`
    and any domain-specific migration test such as `PhotosMigrationTest`.
