@@ -13,7 +13,8 @@ the merge commit, and proves it from GitHub's side, never from the upload comman
 
 ## Inputs — stop if one is missing
 
-- `<sha>`: the pinned merge commit of `tech/release-<version>`.
+- `<sha>`: the pinned merge commit of `tech/release-<version>`, all 40 characters — GitHub rejects a
+  short sha as an invalid `target_commitish`.
 - From that one `assembleRelease` run: `app/build/outputs/apk/release/app-release.apk` and
   `app/build/outputs/mapping/release/mapping.txt`. `apksigner verify --print-certs` on the APK shows
   the release key, not `Android Debug`.
