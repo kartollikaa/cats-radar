@@ -170,7 +170,7 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
   `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`;
+- `ui/…/detail/EncounterDetailScreen.kt`, `WhereCard.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`;
   `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/PinnedMap.kt` —
   the **Where** section's map and its pin
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
