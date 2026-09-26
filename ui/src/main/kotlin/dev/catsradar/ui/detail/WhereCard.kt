@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
@@ -28,7 +29,7 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.components.Flag
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.encounters.labelRes
-import dev.catsradar.ui.map.PinnedMap
+import dev.catsradar.ui.map.SpotMap
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -51,8 +52,9 @@ internal fun WhereCard(
     SectionCard(R.string.detail_where, modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth().then(opensMap)) {
             state.mapPosition?.let { position ->
-                PinnedMap(
+                SpotMap(
                     position = position,
+                    coat = state.coat,
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .fillMaxWidth()
@@ -155,6 +157,7 @@ private val sampleOnTheMap = EncounterDetailState.Loaded(
     location = LocationLabel.CURRENT,
     coordinatesLabel = "41.40363, 2.17436",
     accuracyMeters = 12,
+    coat = CoatOption.GINGER_WHITE,
     mapPosition = MapPosition(latitude = 41.40363, longitude = 2.17436),
     place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
 )

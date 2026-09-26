@@ -36,6 +36,10 @@ internal fun CoatLook.shares(): List<ColourShare> {
     return parts.groupBy { it.colour }.map { (colour, same) -> ColourShare(colour, same.sumOf { it.share }) }
 }
 
+/** The colours of a cat's dot: its coat's, or the blue of a cat with none noted. */
+internal fun dotShares(coat: CoatOption?): List<ColourShare> =
+    coat?.look()?.shares() ?: listOf(ColourShare(UnnotedColour, 1.0))
+
 internal val CoatHeatColours: List<Color> =
     CoatOption.entries.flatMap { coat -> coat.look().shares().map { it.colour } }.distinct()
 

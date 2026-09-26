@@ -33,8 +33,8 @@ well (`analytics.md`), but no screen waits on them. Tiles are fetched as a map i
 server learns which area is on screen and from which address, as with any web map. Because the Map tab
 opens fitted around your cats, the first area it asks for is the one around where you have seen them;
 the picker opens around one of your cats or the phone's last position, so the same holds there, and a
-cat's detail asks for the few streets around that one cat. No cat is sent: the dots and the pin are
-drawn on the phone from the phone's own database. Tiles already seen, and the style, are kept in the
+cat's detail asks for the few streets around that one cat. No cat is sent: the dots, the detail's
+included, are drawn on the phone from the phone's own database. Tiles already seen, and the style, are kept in the
 app's cache, which no backup includes.
 
 ## Which cats are on it

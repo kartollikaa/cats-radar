@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.coat.faceRim
-import dev.catsradar.ui.coat.look
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
 import org.maplibre.compose.expressions.dsl.asString
@@ -171,8 +170,8 @@ private fun rememberCoatDots(colors: CatLayerColors) = remember(colors.rim) {
     fun dot(shares: List<ColourShare>) = image(CoatDotPainter(shares, colors.rim, RimWidth), DpSize(DotSize, DotSize))
     switch(
         feature[CAT_COAT].asString(const("")),
-        CoatOption.entries.map { case(it.name, dot(it.look().shares())) },
-        fallback = dot(listOf(ColourShare(UnnotedColour, 1.0))),
+        CoatOption.entries.map { case(it.name, dot(dotShares(it))) },
+        fallback = dot(dotShares(null)),
     )
 }
 

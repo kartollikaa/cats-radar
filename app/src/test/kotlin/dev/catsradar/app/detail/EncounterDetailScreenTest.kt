@@ -41,8 +41,8 @@ import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.FlagTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
-import dev.catsradar.ui.map.MapPinTestTag
-import dev.catsradar.ui.map.PinnedMapTestTag
+import dev.catsradar.ui.map.CatDotTestTag
+import dev.catsradar.ui.map.SpotMapTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
@@ -186,15 +186,15 @@ class EncounterDetailScreenTest {
     }
 
     @Test
-    fun `a cat on the map shows a map with the pin's point at its centre`() {
+    fun `a cat on the map shows a map with the cat's dot at its centre`() {
         show(onTheMap)
 
         val map = map().assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        val pin = compose.onNodeWithTag(MapPinTestTag, useUnmergedTree = true).assertIsDisplayed()
+        val dot = compose.onNodeWithTag(CatDotTestTag, useUnmergedTree = true).assertIsDisplayed()
             .fetchSemanticsNode().boundsInRoot
 
-        assertEquals(map.center.x, pin.center.x, 1f)
-        assertEquals(map.center.y, pin.bottom, 1f)
+        assertEquals(map.center.x, dot.center.x, 1f)
+        assertEquals(map.center.y, dot.center.y, 1f)
     }
 
     @Test
@@ -253,7 +253,7 @@ class EncounterDetailScreenTest {
 
     private fun EncounterDetailState.hasMap() = (this as? EncounterDetailState.Loaded)?.mapPosition != null
 
-    private fun map() = compose.onNodeWithTag(PinnedMapTestTag, useUnmergedTree = true)
+    private fun map() = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true)
 
     private val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
