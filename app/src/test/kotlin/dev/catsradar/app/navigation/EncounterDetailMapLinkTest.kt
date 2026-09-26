@@ -120,7 +120,7 @@ class EncounterDetailMapLinkTest {
         val entries = catsRadarEntries(backStack, PaddingValues(), CameraRequest(), mapFocus)
         compose.setContent {
             // A located cat's map needs MapLibre's native runtime, which the JVM cannot start.
-            CompositionLocalProvider(LocalInspectionMode provides true) {
+            CompositionLocalProvider(LocalInspectionMode provides (cat.lat != null)) {
                 CatsRadarTheme { entries(keys.last()).Content() }
             }
         }

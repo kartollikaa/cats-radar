@@ -9,11 +9,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,6 +26,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -34,7 +37,6 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.faceRim
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
-import org.maplibre.compose.camera.CameraAnimation
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.interaction.MapInteractions
 import org.maplibre.compose.map.AndroidRenderMode
@@ -82,7 +84,8 @@ internal fun PinnedMap(position: MapPosition, modifier: Modifier = Modifier) {
             Box(modifier = Modifier.matchParentSize().clearAndSetSemantics { testTag = PinnedMapTestTag })
             CentrePin()
         } else {
-            TileMap(position)
+            // Built afresh at a new position rather than moved there, so it never shows a stale spot.
+            key(position) { TileMap(position) }
         }
     }
 }
@@ -91,7 +94,6 @@ internal fun PinnedMap(position: MapPosition, modifier: Modifier = Modifier) {
 private fun BoxScope.TileMap(position: MapPosition) {
     val camera = CameraPosition(target = Position(position.longitude, position.latitude), zoom = StreetZoom)
     val mapState = rememberMapState(baseStyle = themedMapStyle(), initialCameraPosition = camera)
-    LaunchedEffect(mapState, camera) { mapState.animateCameraPosition(camera, CameraAnimation.Ease()) }
     MaplibreMap(
         modifier = Modifier.matchParentSize().clearAndSetSemantics { testTag = PinnedMapTestTag },
         state = mapState,
@@ -109,15 +111,22 @@ private fun BoxScope.TileMap(position: MapPosition) {
         )
     } else {
         CentrePin()
-        // The tiles' licence requires this attribution wherever they show.
+        // The tiles' licence requires it; TalkBack skips it, or the card would read it before the place.
         CompositionLocalProvider(LocalMapState provides mapState) {
             ExpandingAttributionButton(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(MaplibreMapOverlay.Spacing),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(MaplibreMapOverlay.Spacing)
+                    .clearAndSetSemantics {},
+                // Text without the default's links: a tap anywhere on this map belongs to whatever holds it.
+                expandedContent = { attributions, textStyle -> BasicText(plainText(attributions), style = textStyle) },
                 expandedStyle = SmallAttribution,
             )
         }
     }
 }
+
+private fun plainText(attributions: List<String>) = attributions.joinToString(" ") { AnnotatedString.fromHtml(it).text }
 
 @Composable
 private fun BoxScope.CentrePin() {

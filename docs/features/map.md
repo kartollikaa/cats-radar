@@ -88,9 +88,10 @@ overlap it — never every point of every walk. With no outing focused it reads 
 
 ## A cat's coordinates
 
-A tap on the coordinates in a cat's detail ([encounter-detail.md](./encounter-detail.md)) switches to
-the Map tab with the view on that cat: a street-sized area centred on its dot, the size a lone cat
-opens on. Every other cat stays on the map around it.
+A tap in a cat's **Where** section, on its map or its coordinates
+([encounter-detail.md](./encounter-detail.md)), switches to the Map tab with the view on that cat: a
+street-sized area centred on its dot, the size a lone cat opens on. Every other cat stays on the map
+around it.
 
 - **From the Map tab itself**, when a dot or a spot's list opened the cat, the map comes back showing
   every cat: a focused outing, a coat choice and the heat are all let go, since each of them could

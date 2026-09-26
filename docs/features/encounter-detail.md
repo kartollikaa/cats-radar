@@ -59,13 +59,15 @@ A cat the map draws, one whose coordinates lie on the globe, opens its **Where**
 the few streets around it, centred on the cat, with a pin whose point is the cat's spot
 (`EncounterDetailScreenTest`, *a cat on the map shows a map with the pin's point at its centre*). It is
 drawn in the Map tab's light or dark style, whichever the theme is, and carries the tiles' attribution
-in its corner, open at first, until its ⓘ folds it away. A cat with no coordinates, or with coordinates
-off the globe, shows no map (*a cat not on the map shows no map*).
+in its corner, open at first, until its ⓘ folds it away. The attribution is plain text, without the Map
+tab's links, and TalkBack skips it, since the section would otherwise read it before the place. A cat
+with no coordinates, or with coordinates off the globe, shows no map (*a cat not on the map shows no
+map*).
 
 The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
 screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a
 tap anywhere else in the section does (*a tap on the map opens the map*). Should the cat's coordinates
-change while the screen is open, the map moves to the new spot.
+change while the screen is open, the map is drawn afresh around the new spot rather than moved there.
 
 Its tiles come over the network, like the Map tab's (see [map.md](./map.md#where-the-map-comes-from)):
 an area seen before loads from the cache, and a first look with no connection says the map could not

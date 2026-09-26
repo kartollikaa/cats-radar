@@ -193,11 +193,12 @@ class EncounterDetailScreenTest {
         state: () -> EncounterDetailState,
     ) {
         compose.setContent {
+            val shown = state()
             // A located cat's map needs MapLibre's native runtime, which the JVM cannot start.
-            CompositionLocalProvider(LocalInspectionMode provides true) {
+            CompositionLocalProvider(LocalInspectionMode provides shown.hasMap()) {
                 CatsRadarTheme {
                     EncounterDetailScreen(
-                        state = state(),
+                        state = shown,
                         contentPadding = PaddingValues(top = STATUS_BAR, bottom = BOTTOM_BAR),
                         onBackClick = onBackClick,
                         onCoordinatesClick = onCoordinatesClick,
@@ -206,6 +207,8 @@ class EncounterDetailScreenTest {
             }
         }
     }
+
+    private fun EncounterDetailState.hasMap() = (this as? EncounterDetailState.Loaded)?.mapPosition != null
 
     private fun map() = compose.onNodeWithTag(PinnedMapTestTag, useUnmergedTree = true)
 
