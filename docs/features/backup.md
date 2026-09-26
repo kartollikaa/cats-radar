@@ -105,15 +105,15 @@ nothing.
 here; a cat's record carries no photo (`ZipBackupPhotoListTest`, *everyPhotoOfEveryCatIsListedWithEveryFieldAndNoneRidesOnItsCat*).
 A cat with several photos comes back with all of them (*aCatWithTwoPhotosSurvivesTheRoundTripWithBoth*).
 A photo's record carries its shot (`shotId`); the first photo of a shot writes none, so its record reads
-exactly as format 4 wrote it (*aPhotoThatStartsItsShotWritesNoShotKeyAndTheOthersNameTheFirst*). A shot
+exactly as format 5 wrote it (*aPhotoThatStartsItsShotWritesNoShotKeyAndTheOthersNameTheFirst*). A shot
 of several cats comes back as one, each cat with its coat and its own files
 (*aShotOfThreeCatsSurvivesTheRoundTripAsOneShot*; `BackupRestoreTest`,
 *aShotOfThreeCatsComesBackAsOneShotWithEveryCoatAndItsOwnFiles*).
 A photo whose cat the archive does not carry is left out and the rest imports: nothing could show it.
 
 The manifest records `formatVersion` — 2 since walks joined the archive, 3 since cats carry the gallery
-item a picked photo came from, 4 since photos travel in their own list, 5 since a photo carries its
-shot — when it was exported, which
+item a picked photo came from, 4 since photos travel in their own list, 5 since a cat's location can be
+set by hand, 6 since a photo carries its shot — when it was exported, which
 device wrote it, and that build's
 version name — the last being the only thing that could ever explain an archive a later build cannot
 read.
@@ -152,11 +152,15 @@ written only where no file was here, so importing the same archive again finds t
   fields this version would silently drop. Nothing is written. It is judged by its manifest before
   any row is read, wherever the manifest sits in the ZIP, so rows this version cannot even parse
   still say "newer version", not "not a backup". That is why the walks raised the version, the
-  picked gallery items raised it again, the photo list again, and the shots again: an app from before
-  them refuses an archive rather than losing its walks, its links, every photo after a cat's first, or
-  which cats share a photo. The reader ignores keys it does not know, so without the new number an
-  older app would read a shot's cats as separate photos and write them out that way on its next export
-  (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatFiveSoAnAppBeforeShotsRefusesIt*).
+  picked gallery items raised it again, the photo list again, locations set by hand again, and the
+  shots again. An app from before them refuses an archive rather than losing its walks, its links,
+  every photo after a cat's first or which cats share a photo, or failing on a `MANUAL` row it cannot
+  parse and calling the archive no backup at all. The reader ignores keys it does not know, so without
+  the newest number an older app would read a shot's cats as separate photos and write them out that
+  way on its next export (`ZipBackupArchiveTest`, *anArchiveSaysItIsFormatSixSoAnAppBeforeShotsRefusesIt*).
+  A cat located by hand comes back as it left (*everyFieldOfEveryRowSurvivesTheRoundTrip*).
+- **An archive from before locations by hand** still imports, photo list included
+  (`ZipBackupReaderOlderFormatTest`, *aFormatFourArchiveStillReadsWithItsPhotoList*).
 - **An archive from before walks** still imports, with no walks in it.
 - **An archive from before picked gallery items** still imports, its cats keeping none
   (`ZipBackupReaderOlderFormatTest`). A picked item restored on another phone is kept but offers no
@@ -168,7 +172,7 @@ written only where no file was here, so importing the same archive again finds t
   (`ZipBackupReaderOlderFormatTest`, *aFormatThreeArchiveGivesEachCatWithACopyThePhotoItsRecordCarries*).
 - **An archive from before shots** reads every photo as the first of a shot of its own, with every
   other field as its record has it (`ZipBackupReaderOlderFormatTest`,
-  *aFormatFourArchiveReadsEveryPhotoAsStartingItsOwnShot*).
+  *anArchiveFromBeforeShotsReadsEveryPhotoAsStartingItsOwnShot*).
 - **An unreadable archive is refused the same way** — not a ZIP, no manifest, rows that will not
   parse, or a file cut off inside one of its entries. Both reasons reach the caller, which decides
   what to say.

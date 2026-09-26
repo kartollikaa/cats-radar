@@ -111,6 +111,7 @@ class ZipBackupArchiveTest {
             encounters = listOf(
                 encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg").inShotOf("first-of-a-shot"),
                 encounter("b"),
+                encounter("by-hand").copy(locationSource = LocationSource.MANUAL, accuracyMeters = null),
             ),
             placeCells = listOf(placeCell()),
         )
@@ -148,7 +149,7 @@ class ZipBackupArchiveTest {
     }
 
     @Test
-    fun anArchiveSaysItIsFormatFiveSoAnAppBeforeShotsRefusesIt() = runTest {
+    fun anArchiveSaysItIsFormatSixSoAnAppBeforeShotsRefusesIt() = runTest {
         val path = target()
 
         assertTrue(writer().write(path, BackupContents()))
@@ -156,7 +157,7 @@ class ZipBackupArchiveTest {
         val manifest = ZipFile(path).use { zip ->
             zip.getInputStream(zip.getEntry(MANIFEST_ENTRY)).readBytes().decodeToString()
         }
-        assertTrue("\"formatVersion\":5" in manifest, manifest)
+        assertTrue("\"formatVersion\":6" in manifest, manifest)
     }
 
     @Test

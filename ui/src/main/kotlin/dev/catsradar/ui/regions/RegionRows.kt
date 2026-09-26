@@ -29,8 +29,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTag
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionRowLabel
@@ -39,6 +37,7 @@ import dev.catsradar.presentation.regions.RegionsCrumb
 import dev.catsradar.presentation.regions.RegionsHeader
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.Flag
 import dev.catsradar.ui.components.HeadlineCard
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -46,11 +45,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 private val ShareBarHeight = 4.dp
-
-/** What tests find the parts of Places by. */
-object RegionsTestTags {
-    const val FLAG = "regions-flag"
-}
 
 @Composable
 internal fun RegionsHeadline(header: RegionsHeader, modifier: Modifier = Modifier) {
@@ -134,12 +128,6 @@ private fun RegionsTrail(trail: ImmutableList<RegionsCrumb>, modifier: Modifier 
             }
         }
     }
-}
-
-// TalkBack would read the emoji as "flag: Spain" right before the name that already says Spain.
-@Composable
-private fun Flag(flag: String, style: TextStyle, modifier: Modifier = Modifier) {
-    Text(text = flag, style = style, modifier = modifier.clearAndSetSemantics { testTag = RegionsTestTags.FLAG })
 }
 
 @Composable

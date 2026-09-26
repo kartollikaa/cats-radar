@@ -42,6 +42,7 @@ private val Fix = LocationFix(lat = 55.7558, lon = 37.6173, accuracyMeters = 12f
 
 private class FakePlaceCellRepository : PlaceCellRepository {
     override fun observeAll(): Flow<List<PlaceCell>> = MutableStateFlow(emptyList())
+    override fun observeById(cellId: String): Flow<PlaceCell?> = MutableStateFlow(null)
     override suspend fun upsert(cell: PlaceCell) = Unit
     override suspend fun loadById(cellId: String): PlaceCell? = null
     override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> = emptyList()
@@ -55,10 +56,13 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
 
-    override suspend fun attachLocation(id: String, stamp: LocationStamp) {
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean {
+        var written = false
         encounters.update { list ->
+            written = false
             list.map { encounter ->
                 if (encounter.id == id) {
+                    written = true
                     encounter.copy(
                         lat = stamp.lat,
                         lon = stamp.lon,
@@ -74,6 +78,7 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
                 }
             }
         }
+        return written
     }
 
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =

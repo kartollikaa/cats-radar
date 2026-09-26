@@ -12,10 +12,13 @@ class EncounterDetailEffectHandlerTest {
         onNavigateBack = { calls += "back" },
         onOpenPhoto = { photoId -> calls += "photo $photoId" },
         onOpenMap = { calls += "map" },
+        onOpenLocationPicker = { calls += "location picker" },
         cameraLauncher = { calls += "camera" },
         photoPickerLauncher = { calls += "picker" },
         photoFailureReporter = { calls += "failure" },
         alreadyThereReporter = { calls += "already there" },
+        notAttachedCountReporter = { count -> calls += "$count not attached" },
+        allAlreadyThereReporter = { calls += "all already there" },
         captureDiscarder = { uri -> calls += "discard $uri" },
     )
 
@@ -27,8 +30,11 @@ class EncounterDetailEffectHandlerTest {
         handle(EncounterDetailEffect.OpenPhoto("second"))
         handle(EncounterDetailEffect.PhotoNotAttached)
         handle(EncounterDetailEffect.PhotoAlreadyThere)
+        handle(EncounterDetailEffect.PhotosNotAttached(3))
+        handle(EncounterDetailEffect.PhotosAlreadyThere)
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
         handle(EncounterDetailEffect.OpenMap)
+        handle(EncounterDetailEffect.OpenLocationPicker)
 
         assertEquals(
             listOf(
@@ -38,8 +44,11 @@ class EncounterDetailEffectHandlerTest {
                 "photo second",
                 "failure",
                 "already there",
+                "3 not attached",
+                "all already there",
                 "discard content://captures/1",
                 "map",
+                "location picker",
             ),
             calls,
         )

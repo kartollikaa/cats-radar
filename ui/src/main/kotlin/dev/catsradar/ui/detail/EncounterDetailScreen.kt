@@ -33,11 +33,13 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.AddPhoto
 import dev.catsradar.presentation.detail.DetailPhoto
+import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatPicker
 import dev.catsradar.ui.components.BackBar
+import dev.catsradar.ui.components.Flag
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.encounters.labelRes
@@ -58,6 +60,7 @@ fun EncounterDetailScreen(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
@@ -72,6 +75,7 @@ fun EncounterDetailScreen(
                 onPickPhotoClick = onPickPhotoClick,
                 onPhotoClick = onPhotoClick,
                 onCoordinatesClick = onCoordinatesClick,
+                onSetLocationClick = onSetLocationClick,
             )
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
@@ -96,6 +100,7 @@ private fun LoadedDetail(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -106,7 +111,12 @@ private fun LoadedDetail(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (state.photos.isNotEmpty()) DetailPhotoPager(state.photos, onPhotoClick = onPhotoClick)
-        AddPhotoCard(state.addPhoto, onTakePhotoClick = onTakePhotoClick, onPickPhotoClick = onPickPhotoClick)
+        AddPhotoCard(
+            state.addPhoto,
+            progress = state.attachProgress,
+            onTakePhotoClick = onTakePhotoClick,
+            onPickPhotoClick = onPickPhotoClick,
+        )
         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
             Text(
                 text = state.dayLabel,
@@ -115,7 +125,7 @@ private fun LoadedDetail(
             )
             Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        WhereCard(state, onCoordinatesClick = onCoordinatesClick)
+        WhereCard(state, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             CoatPicker(
                 selected = state.coat,
@@ -140,6 +150,7 @@ private fun WhereCard(
     state: EncounterDetailState.Loaded,
     modifier: Modifier = Modifier,
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val opensMap = if (state.onTheMap) {
         Modifier.clickable(
@@ -158,6 +169,7 @@ private fun WhereCard(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            state.place?.let { PlaceLine(it, Modifier.padding(bottom = 4.dp)) }
             Text(text = stringResource(state.location.labelRes()), style = MaterialTheme.typography.bodyLarge)
             state.coordinatesLabel?.let { coordinates ->
                 Row(
@@ -187,6 +199,30 @@ private fun WhereCard(
                 Text(
                     text = stringResource(R.string.detail_accuracy, accuracy),
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (state.setsLocation) {
+                SetLocationButton(modifier = Modifier.padding(top = 8.dp), onClick = onSetLocationClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaceLine(place: DetailPlace, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        place.flag?.let { Flag(it, MaterialTheme.typography.headlineSmall) }
+        Column {
+            Text(text = place.title, style = MaterialTheme.typography.titleMedium)
+            place.country?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -266,6 +302,7 @@ private val sampleLoaded = EncounterDetailState.Loaded(
         DetailPhoto(id = "8a03b6c1", path = "photos/8a03b6c1-77d2.jpg"),
     ),
     onTheMap = true,
+    place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
 )
 
 private val sampleNoLocation = EncounterDetailState.Loaded(

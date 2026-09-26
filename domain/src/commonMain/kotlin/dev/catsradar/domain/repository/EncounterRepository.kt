@@ -19,8 +19,8 @@ interface EncounterRepository {
     /** Rewrites the cat's own fields; its photos are never touched. */
     suspend fun update(encounter: Encounter)
 
-    /** No-ops if the row was soft-deleted in the meantime; never resurrects it. */
-    suspend fun attachLocation(id: String, stamp: LocationStamp)
+    /** Writes only a live cat that has no location yet; true when it did. */
+    suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean
 
     /**
      * Gives [photo] to its cat and stamps the cat's `updatedAt` with [EncounterPhoto.addedAt]. True only when the

@@ -25,12 +25,14 @@ The map is [MapLibre](https://maplibre.org/) drawing vector tiles from
 cookie. Its light style follows the light theme and its dark style the dark one. The attribution
 OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in.
 
-**This is the one screen that fetches content from the network.** Until the map, the app declared no
+**The Map tab and the location picker ([location.md](./location.md#on-a-map)) are the screens that fetch
+content from the network.** Until the map, the app declared no
 `INTERNET` permission at all: geocoding runs through the platform. Crash reports and screen views go to
 Firebase as well (`analytics.md`), but no screen waits on them. Tiles are fetched as the map is looked at,
 so the tile server learns which area is on screen and from which address, as with any web map, and
 because the map opens fitted around your cats, the first area it asks for is the one around where
-you have seen them. No cat is sent: the dots are drawn on the phone from the phone's own database.
+you have seen them; the picker opens around one of your cats or the phone's last position, so the same
+holds there. No cat is sent: the dots are drawn on the phone from the phone's own database.
 Tiles already seen, and the style, are kept in the app's cache, which no backup includes.
 
 ## Which cats are on it
@@ -120,11 +122,14 @@ Two chips sit at the map's top edge.
 - **The heat follows the zoom.** Each cat's heat shrinks and fades as the map zooms out, so a whole
   city shows its neighbourhoods as separate spots rather than one glow over all of it, and grows back
   as the map closes in on a street.
-- **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
-  shows the cats with none noted. The choice applies to the dots, the clusters, the heat, a
-  focused outing and a spot's list alike; a focused outing's route is never thinned by it, whichever
-  kind of line it draws. The view stays where it is when the choice changes, and "Every coat" clears
-  it. A choice that matches no cat says so, rather than showing a map with nothing on it.
+- **Coats** opens the coat grid in a sheet, under a line saying that only cats of the marked coats
+  stay on the map. Choosing coats shows only cats of those coats, and "Not specified" shows the cats
+  with none noted. "Not specified" is the grid's twelfth cell, a paw marked like any coat; that cell
+  is the filter's alone, and the Counter's grid and the detail's picker have none. The choice applies
+  to the dots, the clusters, the heat, a focused outing and a spot's list alike; a focused outing's
+  route is never thinned by it, whichever kind of line it draws. The view stays where it is when the
+  choice changes. "Every coat" clears it, and is disabled while nothing is chosen. A choice that
+  matches no cat says so, rather than showing a map with nothing on it.
 
 Both last as long as the tab does; leaving the tab clears them, and so does a cat's coordinates
 opening the map (above).

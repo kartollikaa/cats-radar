@@ -55,6 +55,9 @@ internal class FakeEncounterRepository : EncounterRepository {
     var addPhotoShouldThrow: Throwable? = null
     var setCoatShouldThrow: Throwable? = null
     var setCoatGate: CompletableDeferred<Unit>? = null
+    val attachLocationCalls = mutableListOf<Pair<String, LocationStamp>>()
+    var attachLocationShouldThrow: Throwable? = null
+    var attachLocationGate: CompletableDeferred<Unit>? = null
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -84,10 +87,17 @@ internal class FakeEncounterRepository : EncounterRepository {
         encounters.update { list -> list.map { if (it.id == encounter.id) encounter else it } }
     }
 
-    override suspend fun attachLocation(id: String, stamp: LocationStamp) {
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean {
+        attachLocationCalls += id to stamp
+        attachLocationGate?.await()
+        attachLocationShouldThrow?.let { throw it }
+        var written = false
         encounters.update { list ->
+            written = false
             list.map { encounter ->
-                if (encounter.id == id && encounter.deletedAt == null) {
+                val unlocated = encounter.deletedAt == null && encounter.locationSource == LocationSource.NONE
+                if (encounter.id == id && unlocated) {
+                    written = true
                     encounter.copy(
                         lat = stamp.lat,
                         lon = stamp.lon,
@@ -103,6 +113,7 @@ internal class FakeEncounterRepository : EncounterRepository {
                 }
             }
         }
+        return written
     }
 
     // Mirrors the DAO's live-cat guard, checked at write time.
@@ -237,21 +248,25 @@ internal class FakeImageResizer(
     var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
 ) : ImageResizer {
     var storeDelay: Duration = Duration.ZERO
+    var unreadable: Set<String> = emptySet()
 
     override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
         delay(storeDelay)
-        return result
+        return result.takeUnless { sourceUri in unreadable }
     }
 }
 
-internal class FakeDigest : Digest {
-    override suspend fun sha256(uri: String): String? = "digest"
+internal class FakeDigest(private val digestOf: (uri: String) -> String? = { "digest" }) : Digest {
+    override suspend fun sha256(uri: String): String? = digestOf(uri)
 }
 
 internal class FakePlaceCellRepository : PlaceCellRepository {
     private val cells = MutableStateFlow<List<PlaceCell>>(emptyList())
 
     override fun observeAll(): Flow<List<PlaceCell>> = cells
+
+    override fun observeById(cellId: String): Flow<PlaceCell?> =
+        cells.map { list -> list.firstOrNull { it.cellId == cellId } }
 
     override suspend fun upsert(cell: PlaceCell) {
         cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }
