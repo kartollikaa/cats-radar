@@ -87,21 +87,26 @@ class EncounterDetailStore(
             is EncounterDetailIntent.PickPhotoClicked ->
                 requestPhoto(EncounterDetailEffect.OpenPhotoPicker(intent.catId))
             is EncounterDetailIntent.PhotoClicked ->
-                emitIfOffered(intent.catId, EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) {
+                emitIfShownAndOffered(intent.catId, EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) {
                     photos.any { it.id == intent.photoId }
                 }
             is EncounterDetailIntent.CoordinatesClicked ->
-                emitIfOffered(intent.catId, EncounterDetailEffect.OpenMap(intent.catId)) { mapPosition != null }
+                emitIfShownAndOffered(
+                    intent.catId,
+                    EncounterDetailEffect.OpenMap(intent.catId),
+                ) { mapPosition != null }
             is EncounterDetailIntent.SetLocationClicked ->
-                emitIfOffered(intent.catId, EncounterDetailEffect.OpenLocationPicker(intent.catId)) { setsLocation }
+                emitIfShownAndOffered(
+                    intent.catId,
+                    EncounterDetailEffect.OpenLocationPicker(intent.catId),
+                ) { setsLocation }
             is EncounterDetailIntent.PhotoTaken ->
                 onPhotosChosen(intent.catId, listOfNotNull(intent.uri), PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotosPicked -> onPhotosChosen(intent.catId, intent.uris, PhotoSource.GALLERY)
         }
     }
 
-    // A tap only ever acts on the cat this Store observes.
-    private suspend fun emitIfOffered(
+    private suspend fun emitIfShownAndOffered(
         catId: String,
         effect: EncounterDetailEffect,
         offered: EncounterDetailState.Loaded.() -> Boolean,
