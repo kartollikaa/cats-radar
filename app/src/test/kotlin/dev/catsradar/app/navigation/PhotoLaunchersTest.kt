@@ -14,8 +14,6 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 @RunWith(AndroidJUnit4::class)
 class PhotoLaunchersTest {
@@ -45,7 +43,7 @@ class PhotoLaunchersTest {
 
         val shot = shots.single()
         assertEquals("cat-b", shot.catId)
-        assertNotNull(shot.uri)
+        assertEquals(registry.launches.last().input.toString(), shot.uri)
     }
 
     @Test
@@ -81,7 +79,7 @@ class PhotoLaunchersTest {
             registry.answer(true)
         }
 
-        assertNull(shots.single().catId)
+        assertEquals(CameraShot(catId = null, uri = registry.launches.last().input.toString()), shots.single())
     }
 
     @Test

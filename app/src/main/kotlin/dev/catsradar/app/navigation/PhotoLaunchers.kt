@@ -28,14 +28,13 @@ internal fun interface CameraLauncher {
     fun launch(catId: String?)
 }
 
-/** [uri] is null when the camera was cancelled. */
+/** [uri] is null when the camera was cancelled or its capture could not be matched (no camera waiting). */
 internal data class CameraShot(val catId: String?, val uri: String?)
 
 internal fun interface CatPhotosPickerLauncher {
     fun launch(catId: String)
 }
 
-/** [uris] in the order picked; empty when the picker was dismissed. */
 internal data class PickedPhotos(val catId: String, val uris: List<String>)
 
 internal fun interface PhotoFailureReporter {

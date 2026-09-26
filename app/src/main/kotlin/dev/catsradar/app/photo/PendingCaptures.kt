@@ -3,7 +3,7 @@ package dev.catsradar.app.photo
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 
-/** A camera told to write to [target] for [catId]; null when the shot logs a new cat. */
+/** A camera told to write to [target] for [catId]. */
 data class PendingCapture(val target: String, val catId: String?)
 
 /**
