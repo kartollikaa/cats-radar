@@ -16,6 +16,7 @@ import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.update.InstallResults
 import dev.catsradar.app.update.PackageInstallerUpdater
 import dev.catsradar.app.update.UpdateInstaller
+import dev.catsradar.app.update.readPackageArchive
 import dev.catsradar.app.widget.CatsRadarWidget
 import dev.catsradar.app.widget.WidgetRedraw
 import dev.catsradar.app.widget.WidgetRefresh
@@ -32,6 +33,7 @@ import dev.catsradar.app.worker.WorkManagerBackupScheduler
 import dev.catsradar.app.worker.WorkManagerImportScheduler
 import dev.catsradar.app.worker.WorkManagerLocationAttachScheduler
 import dev.catsradar.app.worker.WorkManagerUpdateDownloadScheduler
+import dev.catsradar.domain.about.InstalledApp
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -60,7 +62,13 @@ val workerModule = module {
     single<UpdateDownloadScheduler> { WorkManagerUpdateDownloadScheduler(get()) }
     single { InstallResults() }
     single<UpdateInstaller> {
-        PackageInstallerUpdater(androidContext(), androidContext().packageManager.packageInstaller)
+        val packageManager = androidContext().packageManager
+        PackageInstallerUpdater(
+            context = androidContext(),
+            packageInstaller = packageManager.packageInstaller,
+            installedVersionCode = get<InstalledApp>().versionCode,
+            readArchive = { path -> readPackageArchive(packageManager, path) },
+        )
     }
     single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class
     single { ScreenViewTracker(get()) }

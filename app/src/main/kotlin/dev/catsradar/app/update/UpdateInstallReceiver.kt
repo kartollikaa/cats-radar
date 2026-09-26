@@ -24,6 +24,9 @@ class UpdateInstallReceiver : BroadcastReceiver(), KoinComponent {
             // Android replaces the app and ends its process; nothing is left to tell.
             PackageInstaller.STATUS_SUCCESS -> Unit
             PackageInstaller.STATUS_FAILURE_ABORTED -> results.post(InstallOutcome.CANCELLED)
+            PackageInstaller.STATUS_FAILURE_CONFLICT -> results.post(InstallOutcome.CONFLICT)
+            PackageInstaller.STATUS_FAILURE_INCOMPATIBLE -> results.post(InstallOutcome.INCOMPATIBLE)
+            PackageInstaller.STATUS_FAILURE_STORAGE -> results.post(InstallOutcome.STORAGE)
             else -> results.post(InstallOutcome.FAILED)
         }
     }

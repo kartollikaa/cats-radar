@@ -68,17 +68,25 @@ class UpdateInstallReceiverTest {
     }
 
     @Test
-    fun everyOtherFailureIsReportedAsFailed() {
-        val failures = listOf(
-            PackageInstaller.STATUS_FAILURE,
-            PackageInstaller.STATUS_FAILURE_BLOCKED,
-            PackageInstaller.STATUS_FAILURE_CONFLICT,
-            PackageInstaller.STATUS_FAILURE_INCOMPATIBLE,
-            PackageInstaller.STATUS_FAILURE_INVALID,
-            PackageInstaller.STATUS_FAILURE_STORAGE,
+    fun aFailureAndroidNamesIsReportedByItsName() {
+        val named = mapOf(
+            PackageInstaller.STATUS_FAILURE_CONFLICT to InstallOutcome.CONFLICT,
+            PackageInstaller.STATUS_FAILURE_INCOMPATIBLE to InstallOutcome.INCOMPATIBLE,
+            PackageInstaller.STATUS_FAILURE_STORAGE to InstallOutcome.STORAGE,
         )
 
-        assertEquals(List(failures.size) { InstallOutcome.FAILED }, outcomesOf(*failures.map(::status).toTypedArray()))
+        assertEquals(named.values.toList(), outcomesOf(*named.keys.map(::status).toTypedArray()))
+    }
+
+    @Test
+    fun everyOtherFailureIsReportedAsFailed() {
+        val others = listOf(
+            PackageInstaller.STATUS_FAILURE,
+            PackageInstaller.STATUS_FAILURE_BLOCKED,
+            PackageInstaller.STATUS_FAILURE_INVALID,
+        )
+
+        assertEquals(List(others.size) { InstallOutcome.FAILED }, outcomesOf(*others.map(::status).toTypedArray()))
     }
 
     @Test

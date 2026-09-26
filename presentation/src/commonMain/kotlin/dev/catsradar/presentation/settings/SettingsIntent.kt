@@ -9,6 +9,10 @@ sealed interface SettingsIntent {
     sealed interface Update : SettingsIntent {
         data object CheckClicked : Update
         data object InstallClicked : Update
+        data object AllowInstallsClicked : Update
+
+        /** Back from the system page for installing apps, whatever the user chose there. */
+        data object InstallPermissionReturned : Update
 
         /** [fraction] is null while the size is not known yet. */
         data class DownloadProgressed(val version: String, val fraction: Float?) : Update

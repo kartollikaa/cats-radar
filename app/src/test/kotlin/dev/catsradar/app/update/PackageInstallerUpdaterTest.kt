@@ -47,7 +47,14 @@ class PackageInstallerUpdaterTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val packageInstaller: PackageInstaller = context.packageManager.packageInstaller
     private val results = InstallResults()
-    private val updater = PackageInstallerUpdater(context, packageInstaller, ioDispatcher = Dispatchers.Unconfined)
+    private var archive: PackageArchive? = PackageArchive(context.packageName, versionCode = 8)
+    private val updater = PackageInstallerUpdater(
+        context = context,
+        packageInstaller = packageInstaller,
+        installedVersionCode = 7,
+        readArchive = { archive },
+        ioDispatcher = Dispatchers.Unconfined,
+    )
 
     @Before
     fun setUp() {
@@ -70,7 +77,7 @@ class PackageInstallerUpdaterTest {
     fun aPackageBecomesASessionForThisAppOnly() = runTest {
         val started = updater.install(apk().absolutePath)
 
-        assertEquals(true, started)
+        assertEquals(InstallStart.Committed, started)
         assertEquals(context.packageName, packageInstaller.mySessions.single().appPackageName)
     }
 
@@ -101,13 +108,37 @@ class PackageInstallerUpdaterTest {
     fun aPackageThatIsGoneStartsNoSession() = runTest {
         val started = updater.install(File(temporary.root, "missing.apk").absolutePath)
 
-        assertEquals(false, started)
+        assertEquals(InstallStart.Refused(InstallOutcome.MISSING_PACKAGE), started)
         assertEquals(emptyList(), packageInstaller.mySessions)
     }
 
     @Test
     @Config(shadows = [RefusingPackageInstaller::class])
     fun anInstallerThatRefusesASessionIsReportedNotThrown() = runTest {
-        assertEquals(false, updater.install(apk().absolutePath))
+        assertEquals(InstallStart.Refused(InstallOutcome.FAILED), updater.install(apk().absolutePath))
+    }
+
+    @Test
+    fun aPackageForAnotherAppNeverReachesASession() = runTest {
+        archive = PackageArchive("com.example.other", versionCode = 8)
+
+        assertEquals(InstallStart.Refused(InstallOutcome.NOT_THIS_APP), updater.install(apk().absolutePath))
+        assertEquals(emptyList(), packageInstaller.mySessions)
+    }
+
+    @Test
+    fun aPackageNoNewerThanTheInstalledOneNeverReachesASession() = runTest {
+        archive = PackageArchive(context.packageName, versionCode = 7)
+
+        assertEquals(InstallStart.Refused(InstallOutcome.NOT_NEWER), updater.install(apk().absolutePath))
+        assertEquals(emptyList(), packageInstaller.mySessions)
+    }
+
+    @Test
+    fun aFileAndroidCannotReadAsAPackageIsRefused() = runTest {
+        archive = null
+
+        assertEquals(InstallStart.Refused(InstallOutcome.FAILED), updater.install(apk().absolutePath))
+        assertEquals(emptyList(), packageInstaller.mySessions)
     }
 }

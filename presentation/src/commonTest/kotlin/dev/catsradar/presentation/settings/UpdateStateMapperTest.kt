@@ -66,9 +66,31 @@ class UpdateStateMapperTest {
     @Test
     fun `a failed install offers a new check, which downloads the package afresh`() {
         assertEquals(
-            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Check),
-            mapper.installFailed("1.5.0-beta"),
+            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta", InstallFailure.OTHER), UpdateAction.Check),
+            mapper.installFailed("1.5.0-beta", InstallOutcome.FAILED),
         )
+    }
+
+    @Test
+    fun `each way an install fails has its own message, and none share one`() {
+        val failures = InstallOutcome.entries.filter { it != InstallOutcome.CANCELLED }
+        val tokens = failures.associateWith { outcome ->
+            (mapper.installFailed("1.5.0-beta", outcome).status as UpdateStatus.InstallFailed).reason
+        }
+
+        assertEquals(
+            mapOf(
+                InstallOutcome.CONFLICT to InstallFailure.SIGNED_DIFFERENTLY,
+                InstallOutcome.INCOMPATIBLE to InstallFailure.INCOMPATIBLE,
+                InstallOutcome.STORAGE to InstallFailure.NO_SPACE,
+                InstallOutcome.MISSING_PACKAGE to InstallFailure.PACKAGE_GONE,
+                InstallOutcome.NOT_THIS_APP to InstallFailure.NOT_THIS_APP,
+                InstallOutcome.NOT_NEWER to InstallFailure.NOT_NEWER,
+                InstallOutcome.FAILED to InstallFailure.OTHER,
+            ),
+            tokens,
+        )
+        assertEquals(tokens.size, tokens.values.toSet().size)
     }
 
     @Test
@@ -100,5 +122,13 @@ class UpdateStateMapperTest {
             tokens,
         )
         assertEquals(tokens.size, tokens.toSet().size)
+    }
+
+    @Test
+    fun `an install waiting for the permission offers its page`() {
+        assertEquals(
+            UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls),
+            mapper.needsInstallPermission("1.5.0-beta"),
+        )
     }
 }

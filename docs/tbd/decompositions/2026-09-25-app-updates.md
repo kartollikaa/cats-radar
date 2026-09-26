@@ -15,7 +15,7 @@
 | U1 | Build info in Settings | Settings shows the version, build and device, and copies a developer report to the clipboard. | safe | ~450 | — | in-review |
 | U2 | Check for updates | A Settings button reads the configured GitHub release list and says whether a newer version exists. | safe | ~650 | U1 | in-review |
 | U3 | Download and install an update | A newer version found by the check downloads in a worker, is verified, and installs through `PackageInstaller`. | safe | ~900 | U2 | in-review |
-| U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | planned |
+| U4 | Install permission and failure reasons | A missing install permission leads to its system page, a failed install says why, and a finished update's package is deleted. | safe | ~450 | U3 | in-review |
 | U5 | Updates behind a runtime toggle | The Updates section shows only while the `in_app_updates` Remote Config flag is on; off by default. | toggle:in_app_updates | ~350 | U4 | in-progress |
 | U6 | Remove the in_app_updates flag | Once a source is chosen and the section should always show, the flag and its port go. | safe | ~100 | U5 + a chosen source | planned |
 

@@ -51,6 +51,7 @@ import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveWalkStats
+import dev.catsradar.domain.usecase.PruneInstalledUpdates
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
@@ -108,6 +109,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<UpdateInstaller>())
         assertNotNull(koin.get<InstallResults>())
         assertNotNull(koin.get<SettingsStore>())
+        assertNotNull(koin.get<PruneInstalledUpdates>())
     }
 
     @Test
