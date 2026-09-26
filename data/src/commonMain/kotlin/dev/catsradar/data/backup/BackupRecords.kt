@@ -170,7 +170,7 @@ internal fun EncounterPhotoRecord.toDomain(): EncounterPhoto = EncounterPhoto(
     sourceDigest = sourceDigest,
     deviceId = deviceId,
     addedAt = Instant.fromEpochMilliseconds(addedAt),
-    shotId = shotId,
+    shotId = shotId ?: id,
 )
 
 internal fun PlaceCell.toRecord(): PlaceCellRecord = PlaceCellRecord(

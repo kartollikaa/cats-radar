@@ -35,7 +35,7 @@ fun photoEntity(
     id: String = encounterId,
     sourceDigest: String? = "digest-1",
     addedAt: Instant = Instant.parse("2026-09-20T12:45:00Z"),
-    shotId: String? = null,
+    shotId: String = id,
 ): EncounterPhotoEntity = EncounterPhotoEntity(
     id = id,
     encounterId = encounterId,

@@ -280,7 +280,7 @@ class EncounterDetailPickSeveralTest {
                 sourceDigest = digest,
                 deviceId = "device-1",
                 addedAt = OCCURRED,
-                shotId = null,
+                shotId = "own-$index",
             )
         },
     )

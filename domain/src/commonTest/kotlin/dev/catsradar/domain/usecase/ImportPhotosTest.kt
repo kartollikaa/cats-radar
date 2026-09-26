@@ -71,7 +71,8 @@ class ImportPhotosTest {
     fun `an imported photo starts a shot of its own`() = runTest {
         importPhotos()(listOf("content://picked/1"))
 
-        assertNull(repository.inserted.single().photos.single().shotId)
+        val photo = repository.inserted.single().photos.single()
+        assertEquals(photo.id, photo.shotId)
     }
 
     @Test

@@ -38,3 +38,30 @@ internal val MigrationFrom4To5 = Migration(startVersion = 4, endVersion = 5) { c
     connection.execSQL("ALTER TABLE `encounter_photos` ADD COLUMN `shotId` TEXT")
     connection.execSQL("CREATE INDEX IF NOT EXISTS `index_encounter_photos_shotId` ON `encounter_photos` (`shotId`)")
 }
+
+// SQLite cannot make an existing column NOT NULL, so the table is rebuilt; unlike Room's rebuild, nothing here
+// checks foreign keys, so a photo row whose cat is gone survives as it did from 4 to 5.
+internal val MigrationFrom5To6 = Migration(startVersion = 5, endVersion = 6) { connection ->
+    connection.execSQL(
+        "CREATE TABLE IF NOT EXISTS `_new_encounter_photos` (`id` TEXT NOT NULL, `encounterId` TEXT NOT NULL, " +
+            "`photoPath` TEXT NOT NULL, `thumbPath` TEXT, `galleryUri` TEXT, `sourceMediaUri` TEXT, " +
+            "`sourceDigest` TEXT, `deviceId` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `shotId` TEXT NOT NULL, " +
+            "PRIMARY KEY(`id`), FOREIGN KEY(`encounterId`) REFERENCES `encounters`(`id`) " +
+            "ON UPDATE NO ACTION ON DELETE CASCADE )",
+    )
+    connection.execSQL(
+        "INSERT INTO `_new_encounter_photos` (`id`, `encounterId`, `photoPath`, `thumbPath`, `galleryUri`, " +
+            "`sourceMediaUri`, `sourceDigest`, `deviceId`, `addedAt`, `shotId`) " +
+            "SELECT `id`, `encounterId`, `photoPath`, `thumbPath`, `galleryUri`, `sourceMediaUri`, `sourceDigest`, " +
+            "`deviceId`, `addedAt`, COALESCE(`shotId`, `id`) FROM `encounter_photos`",
+    )
+    connection.execSQL("DROP TABLE `encounter_photos`")
+    connection.execSQL("ALTER TABLE `_new_encounter_photos` RENAME TO `encounter_photos`")
+    connection.execSQL(
+        "CREATE INDEX IF NOT EXISTS `index_encounter_photos_encounterId` ON `encounter_photos` (`encounterId`)",
+    )
+    connection.execSQL(
+        "CREATE INDEX IF NOT EXISTS `index_encounter_photos_sourceDigest` ON `encounter_photos` (`sourceDigest`)",
+    )
+    connection.execSQL("CREATE INDEX IF NOT EXISTS `index_encounter_photos_shotId` ON `encounter_photos` (`shotId`)")
+}

@@ -85,7 +85,7 @@ class AttachPhotoTest {
                         sourceDigest = FakeDigest.SHA,
                         deviceId = THIS_INSTALL,
                         addedAt = NOW,
-                        shotId = null,
+                        shotId = "id-1",
                     ),
                 ),
                 updatedAt = NOW,
@@ -162,7 +162,7 @@ class AttachPhotoTest {
             sourceDigest = FakeDigest.SHA,
             deviceId = THIS_INSTALL,
             addedAt = NOW,
-            shotId = null,
+            shotId = "id-1",
         )
         assertEquals(photographed.copy(photos = photographed.photos + added, updatedAt = NOW), stored())
     }
