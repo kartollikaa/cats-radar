@@ -60,6 +60,14 @@ cat*). The detail screen stays drawn underneath.
 
 ## Closing
 
+- **Swipe down** — while the photo is fully zoomed out, a downward drag moves and gently shrinks the
+  photo, hides the chrome, and fades the black stage to uncover the detail screen below. Releasing
+  before one quarter of the screen or losing the gesture returns the viewer to rest; releasing at
+  or beyond one quarter closes it once. A zoomed photo keeps the same drag for panning instead
+  (`PhotoViewerScreenTest`, *a downward drag moves and shrinks the photo, fades the stage, and hides
+  the chrome*; *a short downward drag restores the viewer without closing it*; *a downward drag
+  beyond one quarter of the screen closes the viewer once*; *a zoomed photo keeps a downward drag
+  for panning instead of closing*).
 - **Back** — the system gesture, or the arrow — pops the viewer and nothing else, leaving the back
   stack exactly as it was before it opened (`PhotoViewerNavigationTest`, *back from the viewer
   uncovers the cat as it was*; `PhotoViewerEntryTest`, *the back arrow in the nav host's own viewer
@@ -159,5 +167,5 @@ second tap while the first is being checked opens the gallery once*).
 
 ## Not built yet
 
-A link for cats imported before the app kept the picked item. Swiping down to close, swiping to the
-next cat, sharing, and opening the viewer from an Encounters tile or the Map.
+A link for cats imported before the app kept the picked item. Swiping to the next cat, sharing, and
+opening the viewer from an Encounters tile or the Map.

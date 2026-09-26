@@ -17,6 +17,9 @@ Owner decisions, 2026-09-24:
   now on, accepting a schema change and a link derived from the picker's URI shape. Cats imported
   before the change get no link.
 - "Open in gallery" lives in the viewer's top bar only, not as a second control on the detail screen.
+- A downward drag closes the viewer from minimum zoom, with the photo following and shrinking under
+  the finger while the stage reveals the detail screen; a zoomed photo keeps the drag for panning
+  (owner decision, 2026-09-26).
 
 ## The viewer
 
@@ -43,6 +46,12 @@ image's bounds, fling, rubber-banding at the edges. It is pure Kotlin — no nat
 new for the 16 KB page-size check. Hand-rolled `detectTransformGestures` was rejected: bounds,
 fling and zoom-to-the-tapped-point are exactly what it gets wrong.
 
+At minimum zoom, a downward drag belongs to the viewer instead: the photo follows the finger and
+shrinks to 85% over half the screen while the black stage fades to transparent and the chrome hides.
+Releasing before one quarter of the screen or cancelling the gesture springs it back; releasing at
+or beyond one quarter animates it off the bottom and closes once. Above minimum zoom, Telephoto keeps
+the vertical drag for panning. Horizontal paging keeps its own gesture.
+
 **Chrome.** A top bar with a back arrow (and, from slice V2, *Open in gallery*) over a scrim. A
 single tap on the photo hides the bar and the system bars together; another tap brings them back.
 Whether the chrome shows is view-only state (`rememberSaveable` in `:ui`), not Store state.
@@ -52,8 +61,7 @@ with the resolved photo path. When the encounter disappears (deleted elsewhere, 
 photo, the Store emits `Close` once and the destination pops the viewer — the viewer never shows an
 empty black screen pretending to be a photo.
 
-**Not built.** Swipe down to dismiss; swiping between cats; share; the viewer from an Encounters
-tile or the Map.
+**Not built.** Swiping between cats; share; the viewer from an Encounters tile or the Map.
 
 ## The gallery link
 
