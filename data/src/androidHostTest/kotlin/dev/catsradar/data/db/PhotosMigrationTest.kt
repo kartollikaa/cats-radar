@@ -125,7 +125,20 @@ class PhotosMigrationTest {
     }
 
     @Test
-    fun theAppsOwnBuilderBringsAPhotographedCatFromVersionsOneAndTwoToFive() = runTest {
+    fun theAppsOwnBuilderOpensAVersionFiveFileWithAPhotoWhoseCatIsGone() = runTest {
+        helper.createDatabase(5).use { v5 -> versionFiveCatAndOrphan.forEach { v5.execSQL(it) } }
+
+        val database = catsDatabaseBuilder(instrumentation.targetContext, file.absolutePath).build()
+        try {
+            val cats = EncounterRepositoryImpl(database.encounterDao()).loadEvery()
+            assertEquals(listOf("cat" to listOf("cat")), cats.map { cat -> cat.id to cat.photos.map { it.shotId } })
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun theAppsOwnBuilderBringsAPhotographedCatFromVersionsOneAndTwoToSix() = runTest {
         listOf(1, 2).forEach { version ->
             helper.createDatabase(version).use { it.execSQL(PHOTOGRAPHED_BEFORE_VERSION_THREE) }
             val database = catsDatabaseBuilder(instrumentation.targetContext, file.absolutePath).build()
@@ -212,6 +225,15 @@ class PhotosMigrationTest {
             deviceId = "this-install",
             addedAt = Instant.fromEpochMilliseconds(1001),
             shotId = "camera",
+        )
+
+        val versionFiveCatAndOrphan = listOf(
+            "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, kind, origin, locationSource, deviceId, " +
+                "createdAt, updatedAt) VALUES ('cat', 1, 0, 'PHOTO', 'CAMERA', 'NONE', 'device', 7, 8)",
+            "INSERT INTO encounter_photos (id, encounterId, photoPath, deviceId, addedAt, shotId) " +
+                "VALUES ('cat', 'cat', 'cat.jpg', 'device', 7, NULL)",
+            "INSERT INTO encounter_photos (id, encounterId, photoPath, deviceId, addedAt, shotId) " +
+                "VALUES ('orphan', 'no-such-cat', 'orphan.jpg', 'device', 1, NULL)",
         )
 
         const val PHOTOGRAPHED_BEFORE_VERSION_THREE = "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, " +

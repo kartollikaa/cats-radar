@@ -72,7 +72,7 @@ class DatabaseSchemaTest {
             "sourceDigest" to false,
             "deviceId" to true,
             "addedAt" to true,
-            "shotId" to false,
+            "shotId" to true,
         )
 
         val columns = database.schemaProbeDao().tableInfo(RoomRawQuery("PRAGMA table_info(`encounter_photos`)"))
