@@ -3,7 +3,8 @@
 The app reports its crashes to Firebase Crashlytics, so a failure on a phone is seen without anyone
 having to describe it, and counts which screens are opened and what is done on them in Google Analytics for Firebase, so
 it is clear which parts of the app are used and from where. Every build reports, debug and release alike, and each report
-says which one it came from. There is no switch to turn it off.
+says which one it came from. There is no switch to turn it off. The app also reads its feature switches from
+Firebase Remote Config.
 
 ## What is sent
 
@@ -58,6 +59,16 @@ says which one it came from. There is no switch to turn it off.
 - **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
   updates, the phone's model and Android version, and the country the phone's network address places
   it in.
+
+### To Remote Config
+
+- **A request for the app's switches**, made when Settings opens and the copy Remote Config keeps is older
+  than its fetch interval, and a real-time channel held open for their changes while Settings stays open.
+  The request carries what Remote Config sends to decide conditions: the installation id and its token, the
+  app's id, package name and version, the SDK's version, the phone's language, country, time zone and
+  Android version, and — since Analytics is present — the time of the app's first open and its user
+  properties (`build_type`). Nothing the app records is in it. The one switch today is `in_app_updates`
+  ([updates.md](./updates.md)).
 
 ### To both
 

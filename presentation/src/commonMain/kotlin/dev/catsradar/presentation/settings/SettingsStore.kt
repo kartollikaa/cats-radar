@@ -2,9 +2,10 @@ package dev.catsradar.presentation.settings
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.platform.BuildInfoReader
+import dev.catsradar.domain.platform.Feature
+import dev.catsradar.domain.platform.FeatureToggles
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
-import dev.catsradar.domain.usecase.CheckForUpdate
 import dev.catsradar.presentation.ReportedRun
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.flow.launchIn
@@ -15,11 +16,19 @@ class SettingsStore(
     private val settingsRepository: SettingsRepository,
     private val buildInfoReader: BuildInfoReader,
     private val aboutStateMapper: AboutStateMapper,
-    private val checkForUpdate: CheckForUpdate,
-    private val updateStateMapper: UpdateStateMapper,
+    private val updates: SettingsUpdates,
+    featureToggles: FeatureToggles,
 ) : Store<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
 
     private val backupRun = ReportedRun(settingsRepository, ReportedJob.BACKUP)
+
+    private val updateScreen = object : UpdateScreen {
+        override val update: UpdateState get() = state.value.update
+
+        override fun show(update: UpdateState) = setState { copy(update = update) }
+
+        override suspend fun send(effect: SettingsEffect) = emit(effect)
+    }
 
     init {
         settingsRepository.saveOriginalsToGallery()
@@ -27,6 +36,9 @@ class SettingsStore(
             .launchIn(viewModelScope)
         settingsRepository.encountersGrid()
             .onEach { enabled -> setState { copy(encountersGrid = enabled) } }
+            .launchIn(viewModelScope)
+        featureToggles.isOn(Feature.IN_APP_UPDATES)
+            .onEach { on -> setState { copy(updatesShown = on) } }
             .launchIn(viewModelScope)
         viewModelScope.launch {
             val about = aboutStateMapper.map(buildInfoReader.read())
@@ -45,15 +57,8 @@ class SettingsStore(
             // Read again rather than kept: the locale or the zone may have changed since the screen opened.
             SettingsIntent.BuildInfoCopyClicked ->
                 emit(SettingsEffect.CopyBuildInfo(aboutStateMapper.report(buildInfoReader.read())))
-            SettingsIntent.UpdateCheckClicked -> checkForUpdates()
+            is SettingsIntent.Update -> updates.handle(intent, updateScreen)
         }
-    }
-
-    private suspend fun checkForUpdates() {
-        if (state.value.update.status == UpdateStatus.Checking) return
-        setState { copy(update = updateStateMapper.checking()) }
-        val result = checkForUpdate()
-        setState { copy(update = updateStateMapper.map(result)) }
     }
 
     private suspend fun handleBackup(intent: SettingsIntent.Backup) {

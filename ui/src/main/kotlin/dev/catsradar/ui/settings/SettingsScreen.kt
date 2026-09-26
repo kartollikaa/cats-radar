@@ -32,9 +32,6 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.settings.AboutState
 import dev.catsradar.presentation.settings.BackupOutcome
 import dev.catsradar.presentation.settings.SettingsState
-import dev.catsradar.presentation.settings.UpdateFailure
-import dev.catsradar.presentation.settings.UpdateState
-import dev.catsradar.presentation.settings.UpdateStatus
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.components.ValueRow
@@ -52,6 +49,8 @@ fun SettingsScreen(
     onImportClick: () -> Unit = {},
     onBackupOutcomeDismiss: () -> Unit = {},
     onCheckForUpdatesClick: () -> Unit = {},
+    onInstallUpdateClick: () -> Unit = {},
+    onAllowInstallsClick: () -> Unit = {},
     onCopyBuildInfoClick: () -> Unit = {},
 ) {
     Column(
@@ -86,45 +85,18 @@ fun SettingsScreen(
                 onBackupOutcomeDismiss = onBackupOutcomeDismiss,
             )
         }
-        SectionCard(R.string.settings_updates) {
-            UpdatesSection(update = state.update, onCheckClick = onCheckForUpdatesClick)
+        if (state.updatesShown) {
+            SectionCard(R.string.settings_updates) {
+                UpdatesSection(
+                    update = state.update,
+                    onCheckClick = onCheckForUpdatesClick,
+                    onInstallClick = onInstallUpdateClick,
+                    onAllowInstallsClick = onAllowInstallsClick,
+                )
+            }
         }
         state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
     }
-}
-
-@Composable
-private fun UpdatesSection(update: UpdateState, modifier: Modifier = Modifier, onCheckClick: () -> Unit = {}) {
-    Column(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = update.status.message() ?: stringResource(R.string.settings_updates_explained),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (update.status == UpdateStatus.Checking) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        }
-        Button(onClick = onCheckClick, enabled = update.checkEnabled) {
-            Text(text = stringResource(R.string.settings_updates_check))
-        }
-    }
-}
-
-@Composable
-private fun UpdateStatus.message(): String? = when (this) {
-    UpdateStatus.Idle, UpdateStatus.Checking -> null
-    UpdateStatus.UpToDate -> stringResource(R.string.settings_updates_up_to_date)
-    is UpdateStatus.Available -> stringResource(R.string.settings_updates_available, version)
-    is UpdateStatus.Failed -> stringResource(
-        when (reason) {
-            UpdateFailure.OFFLINE -> R.string.settings_updates_offline
-            UpdateFailure.SOURCE_UNAVAILABLE -> R.string.settings_updates_source_unavailable
-            UpdateFailure.UNREADABLE_ANSWER -> R.string.settings_updates_unreadable
-        },
-    )
 }
 
 @Composable
@@ -248,7 +220,11 @@ private fun BackupOutcome.messageRes(): Int = when (this) {
 @Composable
 private fun SettingsScreenPreview() {
     CatsRadarTheme {
-        Surface { SettingsScreen(state = SettingsState(saveOriginalsToGallery = true, about = sampleAbout)) }
+        Surface {
+            SettingsScreen(
+                state = SettingsState(saveOriginalsToGallery = true, updatesShown = true, about = sampleAbout),
+            )
+        }
     }
 }
 

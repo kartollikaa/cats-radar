@@ -14,6 +14,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
@@ -124,6 +125,44 @@ class MapFeaturesTest {
         )
 
         assertNull(routeLines(lines))
+    }
+
+    @Test
+    fun aCatWithAThumbnailCarriesItsPhotoAndItsRankAmongPhotographedCatsAndOneWithoutCarriesNeither() {
+        val points = persistentListOf(
+            MapPoint("newest", 41.39, 2.17, coat = null, thumbnailPath = "/photos/newest_thumb.jpg"),
+            MapPoint("tally", 41.39, 2.17, CoatOption.GINGER),
+            MapPoint("older", 41.39, 2.17, CoatOption.BLACK, thumbnailPath = "/photos/older_thumb.jpg"),
+        )
+
+        val properties = catFeatures(points).features.map { it.properties }
+
+        assertEquals(
+            listOf(photoImageId("/photos/newest_thumb.jpg"), null, photoImageId("/photos/older_thumb.jpg")),
+            properties.map { it[CAT_PHOTO]?.jsonPrimitive?.content },
+        )
+        assertEquals(listOf(0, null, 1), properties.map { it[CAT_PHOTO_RANK]?.jsonPrimitive?.int })
+    }
+
+    @Test
+    fun theCoverTableHoldsEveryPhotographedCatAtItsRankAndNoOtherCat() {
+        val points = persistentListOf(
+            MapPoint("tally", 41.39, 2.17, coat = null),
+            MapPoint("newest", 41.39, 2.17, coat = null, thumbnailPath = "/photos/newest_thumb.jpg"),
+            MapPoint("older", 41.39, 2.17, coat = null, thumbnailPath = "/photos/older_thumb.jpg"),
+            MapPoint("oldest tally", 41.39, 2.17, CoatOption.GREY),
+        )
+
+        assertEquals(
+            listOf(photoImageId("/photos/newest_thumb.jpg"), photoImageId("/photos/older_thumb.jpg")),
+            photoImages(points),
+        )
+    }
+
+    @Test
+    fun aPhotoImageNamesItsThumbnailAndAnImageTheMapStyleAsksForNamesNone() {
+        assertEquals("/photos/a_thumb.jpg", thumbnailOf(photoImageId("/photos/a_thumb.jpg")))
+        assertNull(thumbnailOf("bus_stop"))
     }
 
     @Test

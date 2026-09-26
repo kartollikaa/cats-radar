@@ -13,4 +13,12 @@ class UpdateRepositoryConfigTest {
 
         assertEquals(properties.getProperty("catsradar.updateRepository"), BuildConfig.UPDATE_REPOSITORY)
     }
+
+    @Test
+    fun theReleaseListIsAskedOfTheApiGradlePropertiesNames() {
+        val properties = Properties().apply { File("../gradle.properties").reader().use(::load) }
+
+        assertEquals(properties.getProperty("catsradar.updateApi"), BuildConfig.UPDATE_API)
+        assertEquals("https://api.github.com", BuildConfig.UPDATE_API)
+    }
 }

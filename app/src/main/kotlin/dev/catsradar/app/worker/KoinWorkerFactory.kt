@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.domain.usecase.AttachLocation
+import dev.catsradar.domain.usecase.DownloadUpdate
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
@@ -48,6 +49,8 @@ class KoinWorkerFactory(private val koin: Koin) : WorkerFactory() {
                 koin.get<GeocodeWorkScheduler>(),
                 reporter,
             )
+        DownloadUpdateWorker::class.java.name ->
+            DownloadUpdateWorker(appContext, workerParameters, koin.get<DownloadUpdate>(), reporter)
         PurgeDeletedWorker::class.java.name ->
             PurgeDeletedWorker(appContext, workerParameters, koin.get<PurgeDeleted>(), reporter)
         else -> null
