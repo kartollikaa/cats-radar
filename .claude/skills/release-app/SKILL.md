@@ -58,12 +58,20 @@ the APK — no version bump, no PR, no tag).
    step 1's log and have no `First shipped in` line for it yet. Run `./gradlew check` in a worktree —
    the primary checkout fails it for reasons unrelated to the change — and confirm it's green; the
    merge rule is a green local check, not waiting on GitHub Actions. Open the PR
-   and run `/code-review` on it (trivial diff, but it's still a slice), then merge with a merge
-   commit (`gh pr merge <n> --merge`), never squash.
-3. **Re-fetch and pin the merge commit.** `git fetch origin main` and read the merge commit's SHA off
-   `git log --oneline -1 origin/main` — don't assume it's what you pushed; something else may have
-   merged in the gap. Build from that exact SHA (`git checkout --detach <sha>` in a clean worktree,
-   or check out `main` after a fast-forward pull).
+   and run `/code-review` on it (trivial diff, but it's still a slice). Record its number as
+   `RELEASE_PR`, then merge with a merge commit (`gh pr merge "$RELEASE_PR" --merge`), never squash.
+3. **Re-fetch and pin that PR's merge commit.** Do not substitute the current tip of `main`: another
+   PR may land in the gap. Resolve and verify the exact release merge instead:
+   ```bash
+   git fetch origin main
+   MERGE_SHA=$(gh api "repos/kartollikaa/cats-radar/pulls/$RELEASE_PR" --jq .merge_commit_sha)
+   test -n "$MERGE_SHA"
+   git merge-base --is-ancestor "$MERGE_SHA" origin/main
+   git show --no-patch --oneline "$MERGE_SHA"
+   ```
+   If `origin/main` is newer, report the later commits but still build the release from
+   `$MERGE_SHA`; silently widening the release would make its tag target the wrong PR. Check out
+   that object detached in a clean worktree.
 4. **Build the release APK — one invocation that builds it and uploads its mapping to Crashlytics**,
    with `CI` unset (the upload is off whenever `CI` is set) and the network up:
    ```
@@ -100,9 +108,8 @@ the APK — no version bump, no PR, no tag).
 
 ## Common mistakes
 
-- **Building from your local branch tip instead of the merge commit.** If the PR merged as a
-  non-fast-forward merge commit, your branch tip's tree can differ from what's actually on `main`
-  if anything landed in between. Always re-fetch and build from `origin/main`'s SHA.
+- **Building from a branch tip or the latest `main` instead of the release PR merge.** Resolve the
+  release PR's `merge_commit_sha`, prove it is on `origin/main`, and build that exact object.
 - **Squash-merging the release PR.** Breaks the per-PR merge-commit history convention; use
   `gh pr merge --merge`.
 - **Shipping without the signing file.** `app-release-unsigned.apk` installs on nothing, and a
