@@ -61,12 +61,13 @@ Firebase Remote Config.
 
 ### To Remote Config
 
-- **A request for the app's switches**, made when Settings opens and the copy Remote Config keeps is
-  older than its fetch interval, and a real-time channel held open for their changes while Settings
-  stays open. The request carries what Remote Config sends to decide
-  conditions: the installation id, the app's id and version, the phone's language, country, time zone
-  and Android version, and — since Analytics is present — its user properties (`build_type`). Nothing
-  the app records is in it. The one switch today is `in_app_updates` ([updates.md](./updates.md)).
+- **A request for the app's switches**, made when Settings opens and the copy Remote Config keeps is older
+  than its fetch interval, and a real-time channel held open for their changes while Settings stays open.
+  The request carries what Remote Config sends to decide conditions: the installation id and its token, the
+  app's id, package name and version, the SDK's version, the phone's language, country, time zone and
+  Android version, and — since Analytics is present — the time of the app's first open and its user
+  properties (`build_type`). Nothing the app records is in it. The one switch today is `in_app_updates`
+  ([updates.md](./updates.md)).
 
 ### To both
 
