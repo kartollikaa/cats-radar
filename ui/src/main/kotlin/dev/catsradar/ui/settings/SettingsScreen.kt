@@ -13,6 +13,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,13 +25,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.settings.AboutState
 import dev.catsradar.presentation.settings.BackupOutcome
 import dev.catsradar.presentation.settings.SettingsState
+import dev.catsradar.presentation.settings.UpdateFailure
+import dev.catsradar.presentation.settings.UpdateState
+import dev.catsradar.presentation.settings.UpdateStatus
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.SectionCard
+import dev.catsradar.ui.components.ValueRow
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -43,6 +51,8 @@ fun SettingsScreen(
     onExportClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
     onBackupOutcomeDismiss: () -> Unit = {},
+    onCheckForUpdatesClick: () -> Unit = {},
+    onCopyBuildInfoClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -76,6 +86,68 @@ fun SettingsScreen(
                 onBackupOutcomeDismiss = onBackupOutcomeDismiss,
             )
         }
+        SectionCard(R.string.settings_updates) {
+            UpdatesSection(update = state.update, onCheckClick = onCheckForUpdatesClick)
+        }
+        state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
+    }
+}
+
+@Composable
+private fun UpdatesSection(update: UpdateState, modifier: Modifier = Modifier, onCheckClick: () -> Unit = {}) {
+    Column(
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = update.status.message() ?: stringResource(R.string.settings_updates_explained),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (update.status == UpdateStatus.Checking) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+        Button(onClick = onCheckClick, enabled = update.checkEnabled) {
+            Text(text = stringResource(R.string.settings_updates_check))
+        }
+    }
+}
+
+@Composable
+private fun UpdateStatus.message(): String? = when (this) {
+    UpdateStatus.Idle, UpdateStatus.Checking -> null
+    UpdateStatus.UpToDate -> stringResource(R.string.settings_updates_up_to_date)
+    is UpdateStatus.Available -> stringResource(R.string.settings_updates_available, version)
+    is UpdateStatus.Failed -> stringResource(
+        when (reason) {
+            UpdateFailure.OFFLINE -> R.string.settings_updates_offline
+            UpdateFailure.SOURCE_UNAVAILABLE -> R.string.settings_updates_source_unavailable
+            UpdateFailure.UNREADABLE_ANSWER -> R.string.settings_updates_unreadable
+        },
+    )
+}
+
+@Composable
+private fun AboutSection(about: AboutState, modifier: Modifier = Modifier, onCopyClick: () -> Unit = {}) {
+    SectionCard(
+        titleRes = R.string.settings_about,
+        modifier = modifier,
+        action = {
+            IconButton(onClick = onCopyClick) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_copy),
+                    contentDescription = stringResource(R.string.settings_about_copy),
+                )
+            }
+        },
+    ) {
+        ValueRow(label = stringResource(R.string.settings_about_version), value = about.version)
+        ValueRow(label = stringResource(R.string.settings_about_build), value = about.build)
+        ValueRow(label = stringResource(R.string.settings_about_device), value = about.device)
+        ValueRow(
+            label = stringResource(R.string.settings_about_android),
+            value = stringResource(R.string.settings_about_android_value, about.androidRelease, about.sdkInt),
+        )
     }
 }
 
@@ -176,7 +248,7 @@ private fun BackupOutcome.messageRes(): Int = when (this) {
 @Composable
 private fun SettingsScreenPreview() {
     CatsRadarTheme {
-        Surface { SettingsScreen(state = SettingsState(saveOriginalsToGallery = true)) }
+        Surface { SettingsScreen(state = SettingsState(saveOriginalsToGallery = true, about = sampleAbout)) }
     }
 }
 
@@ -187,3 +259,11 @@ private fun SettingsScreenImportFailedPreview() {
         Surface { SettingsScreen(state = SettingsState(backupOutcome = BackupOutcome.IMPORT_FAILED)) }
     }
 }
+
+private val sampleAbout = AboutState(
+    version = "1.4.1-beta (7)",
+    build = "release · 5989a92c1f3e",
+    device = "Google Pixel 7",
+    androidRelease = "16",
+    sdkInt = 36,
+)

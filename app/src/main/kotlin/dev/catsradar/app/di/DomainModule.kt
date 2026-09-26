@@ -2,6 +2,7 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.AttachPhoto
+import dev.catsradar.domain.usecase.CheckForUpdate
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.EndInterruptedWalk
@@ -110,4 +111,5 @@ val domainModule = module {
     factoryOf(::UndoImport)
     factoryOf(::ExportBackup)
     factoryOf(::ImportBackup)
+    factoryOf(::CheckForUpdate)
 }

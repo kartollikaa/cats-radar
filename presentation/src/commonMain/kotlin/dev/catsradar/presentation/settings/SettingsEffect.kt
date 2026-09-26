@@ -7,4 +7,5 @@ sealed interface SettingsEffect {
     data object PickImportSource : SettingsEffect
     data class StartExport(val target: String) : SettingsEffect
     data class StartImport(val source: String) : SettingsEffect
+    data class CopyBuildInfo(val report: String) : SettingsEffect
 }
