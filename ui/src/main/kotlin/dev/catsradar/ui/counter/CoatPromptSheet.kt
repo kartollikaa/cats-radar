@@ -2,7 +2,6 @@ package dev.catsradar.ui.counter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -10,7 +9,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -22,6 +20,8 @@ import dev.catsradar.presentation.counter.CoatPromptState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
 import dev.catsradar.ui.components.CatsRadarBottomSheet
+import dev.catsradar.ui.components.SheetActions
+import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
@@ -33,44 +33,44 @@ internal fun CoatPromptSheet(
     onDismiss: () -> Unit = {},
 ) {
     CatsRadarBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
-        CoatPromptContent(prompt = prompt, onCoatClick = onCoatClick, onSkipClick = onDismiss)
+        CoatPrompt(prompt = prompt, onCoatClick = onCoatClick, onSkipClick = onDismiss)
     }
 }
 
 @Composable
-private fun CoatPromptContent(
+fun CoatPrompt(
     prompt: CoatPromptState,
     modifier: Modifier = Modifier,
     onCoatClick: (CoatOption) -> Unit = {},
     onSkipClick: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            prompt.thumbPath?.let {
-                AsyncImage(
-                    model = it,
-                    contentDescription = stringResource(R.string.counter_coat_prompt_photo),
-                    modifier = Modifier.size(56.dp).clip(MaterialTheme.shapes.small),
-                    contentScale = ContentScale.Crop,
-                )
-            }
-            Text(
-                text = stringResource(R.string.counter_coat_prompt_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
-        }
+        SheetHeader(
+            title = stringResource(R.string.counter_coat_prompt_title),
+            supporting = stringResource(R.string.counter_coat_prompt_hint),
+            leading = prompt.thumbPath?.let { path ->
+                {
+                    AsyncImage(
+                        model = path,
+                        contentDescription = stringResource(R.string.counter_coat_prompt_photo),
+                        modifier = Modifier.size(64.dp).clip(MaterialTheme.shapes.medium),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            },
+        )
         CoatGrid(onCoatClick = onCoatClick)
-        TextButton(onClick = onSkipClick, modifier = Modifier.align(Alignment.End)) {
-            Text(stringResource(R.string.counter_coat_prompt_skip))
+        SheetActions {
+            TextButton(onClick = onSkipClick) { Text(stringResource(R.string.counter_coat_prompt_skip)) }
         }
     }
 }
 
 @ThemePreviews
 @Composable
-private fun CoatPromptContentPreview() {
-    CatsRadarTheme { CoatPromptContent(prompt = CoatPromptState(thumbPath = null)) }
+private fun CoatPromptPreview() {
+    CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(thumbPath = null)) }
 }
