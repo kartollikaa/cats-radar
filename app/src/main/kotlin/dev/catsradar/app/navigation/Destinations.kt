@@ -92,6 +92,7 @@ internal fun MapDestination(
         onCoatToggle = { coat -> store.dispatch(MapIntent.CoatToggled(coat)) },
         onCoatFilterClear = { store.dispatch(MapIntent.CoatFilterCleared) },
         onCatReach = { store.dispatch(MapIntent.CatReached) },
+        onThumbnailUnreadable = { path -> store.dispatch(MapIntent.ThumbnailUnreadable(path)) },
     )
 }
 

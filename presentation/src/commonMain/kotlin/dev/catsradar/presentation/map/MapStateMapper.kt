@@ -2,6 +2,7 @@ package dev.catsradar.presentation.map
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.WalkTrack
+import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.walk.overlaps
 import dev.catsradar.presentation.coat.toOption
@@ -11,21 +12,28 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.datetime.LocalDate
 
-class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
+class MapStateMapper(
+    private val encountersMapper: EncountersStateMapper,
+    private val photoStorage: PhotoStorage,
+) {
 
-    /** A focus in [choices] that matches nothing is ignored. */
+    /** A focus in [choices] that matches nothing is ignored; no point carries a thumbnail in [unreadableThumbnails]. */
     fun map(
         encounters: List<Encounter>,
         today: LocalDate,
         choices: MapChoices = MapChoices(),
         walks: List<WalkTrack> = emptyList(),
+        unreadableThumbnails: Set<String> = emptySet(),
     ): MapState {
         val outing = choices.focus?.let { id -> focusedOuting(encounters, id) }
         val shown = outing ?: encounters
-        val located = shown.mapNotNull { it.toPoint() }
-        if (located.isEmpty()) return MapState.Empty
+        val seen = shown.mapNotNull { cat -> cat.toPoint(unreadableThumbnails)?.let { cat.occurredAt to it } }
+        if (seen.isEmpty()) return MapState.Empty
+        val located = seen.map { (_, point) -> point }
         val filtering = choices.coats.isNotEmpty()
-        val points = located.filter { choices.coats.shows(it.coat) }
+        val points = seen.sortedByDescending { (occurredAt, _) -> occurredAt }
+            .map { (_, point) -> point }
+            .filter { choices.coats.shows(it.coat) }
         val locatedPositions = located.map { MapPosition(it.latitude, it.longitude) }
         val focus = outing?.let {
             MapFocus(outingId = it.first().id, label = headerLabel(it, today), lines = routeOf(it, located, walks))
@@ -66,10 +74,16 @@ class MapStateMapper(private val encountersMapper: EncountersStateMapper) {
         return lines.map { MapLine(it.toImmutableList()) }.toImmutableList()
     }
 
-    private fun Encounter.toPoint(): MapPoint? {
+    private fun Encounter.toPoint(unreadableThumbnails: Set<String>): MapPoint? {
         val latitude = lat
         val longitude = lon
         if (!isOnTheMap() || latitude == null || longitude == null) return null
-        return MapPoint(id = id, latitude = latitude, longitude = longitude, coat = coat?.toOption())
+        return MapPoint(
+            id = id,
+            latitude = latitude,
+            longitude = longitude,
+            coat = coat?.toOption(),
+            thumbnailPath = cover?.thumbPath?.let(photoStorage::resolve)?.takeUnless { it in unreadableThumbnails },
+        )
     }
 }

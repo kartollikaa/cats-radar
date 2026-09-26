@@ -9,6 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -45,6 +46,7 @@ fun MapScreen(
     onCoatToggle: (CoatOption?) -> Unit = {},
     onCoatFilterClear: () -> Unit = {},
     onCatReach: () -> Unit = {},
+    onThumbnailUnreadable: (String) -> Unit = {},
 ) {
     when (state) {
         MapState.Loading -> Box(modifier = modifier.fillMaxSize())
@@ -60,6 +62,7 @@ fun MapScreen(
                 onHeatToggle = onHeatToggle,
                 onCoatsClick = { choosingCoats = true },
                 onCatReach = onCatReach,
+                onThumbnailUnreadable = onThumbnailUnreadable,
             )
             if (choosingCoats) {
                 MapCoatSheet(
@@ -83,16 +86,29 @@ private fun CatsMap(
     onHeatToggle: () -> Unit = {},
     onCoatsClick: () -> Unit = {},
     onCatReach: () -> Unit = {},
+    onThumbnailUnreadable: (String) -> Unit = {},
 ) {
     val colors = catLayerColors()
+    var tileRound by remember { mutableIntStateOf(0) }
     val cats = remember(state.points) { catFeatures(state.points) }
+    val photos = remember(state.points) { photoImages(state.points) }
     val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
     val style = mapStyle()
     val tapCats by rememberUpdatedState(onCatsTap)
     var clusterTap by remember { mutableStateOf<ClusterTap?>(null) }
     val mapState = rememberMapState(baseStyle = style) {
-        CatLayers(cats, route, state.heat, colors, onClusterTap = { clusterTap = it }, onCatsTap = { tapCats(it) })
+        CatLayers(
+            cats,
+            photos,
+            tileRound,
+            route,
+            state.heat,
+            colors,
+            onClusterTap = { clusterTap = it },
+            onCatsTap = { tapCats(it) },
+        )
     }
+    PhotoTiles(mapState, colors.tileRim, onTilesAdd = { tileRound++ }, onThumbnailUnreadable)
     MapCamera(
         mapState,
         area = state.area,
