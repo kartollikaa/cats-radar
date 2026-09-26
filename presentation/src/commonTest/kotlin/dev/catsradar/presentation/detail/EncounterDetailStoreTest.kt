@@ -830,6 +830,24 @@ class EncounterDetailStorePhotoTest {
             }
         }
 
+    @Test
+    fun `set on map names the cat it was tapped for, and a cat the screen does not show opens nothing`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            repository.insert(encounterFixture(OTHER, OCCURRED))
+            val store = newStore()
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.SetLocationClicked(ID))
+                runCurrent()
+                assertEquals(EncounterDetailEffect.OpenLocationPicker(ID), awaitItem())
+                store.dispatch(EncounterDetailIntent.SetLocationClicked(OTHER))
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,
         observeEncounter = ObserveEncounter(repository),

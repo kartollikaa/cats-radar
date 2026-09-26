@@ -131,7 +131,8 @@ photo while one is being attached opens nothing*).
 A tap on the photo, on the coordinates or on *Set on map* only ever acts on the cat the screen is
 showing, and opens the viewer, the map or the location picker for that cat; a stray result naming a
 different cat opens none of them (`EncounterDetailStoreTest`, *a tap naming a cat the screen does not
-show opens neither the viewer nor the map*).
+show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat the
+screen does not show opens nothing*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
