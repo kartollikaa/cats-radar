@@ -7,6 +7,7 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.FakePlaceCellRepository
+import dev.catsradar.domain.testing.RecordingAnalytics
 import dev.catsradar.domain.testing.encounterFixture
 import dev.catsradar.domain.testing.locatedFixture
 import kotlinx.coroutines.test.runTest
@@ -27,7 +28,7 @@ class SetLocationByHandTest {
 
     private val repository = FakeEncounterRepository()
     private val placeCells = FakePlaceCellRepository()
-    private val setLocationByHand = SetLocationByHand(repository, placeCells, FakeClock(Now))
+    private val setLocationByHand = SetLocationByHand(repository, placeCells, FakeClock(Now), RecordingAnalytics())
 
     private suspend fun cat(id: String) = repository.loadEvery().first { it.id == id }
 

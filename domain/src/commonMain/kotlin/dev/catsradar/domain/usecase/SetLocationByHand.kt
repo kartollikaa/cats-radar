@@ -1,6 +1,8 @@
 package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.geo.isOnGlobe
 import dev.catsradar.domain.model.LocationSource
@@ -15,6 +17,7 @@ class SetLocationByHand(
     private val encounterRepository: EncounterRepository,
     private val placeCellRepository: PlaceCellRepository,
     private val clock: Clock,
+    private val analytics: Analytics,
 ) {
     /** True when the cat now has this point; false when it is gone, already located, or the point is off the globe. */
     suspend operator fun invoke(encounterId: String, lat: Double, lon: Double): Boolean {
@@ -32,7 +35,9 @@ class SetLocationByHand(
             placeCellId = PlaceCells.remember(placeCellRepository, geohash),
             updatedAt = now,
         )
-        return encounterRepository.attachLocation(encounterId, stamp)
+        val set = encounterRepository.attachLocation(encounterId, stamp)
+        if (set) analytics.log(AnalyticsEvent.LocationSetByHand)
+        return set
     }
 
     private suspend fun isUnlocated(encounterId: String): Boolean =

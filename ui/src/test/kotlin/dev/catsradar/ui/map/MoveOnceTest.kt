@@ -10,22 +10,22 @@ import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class MoveOntoCatTest {
+class MoveOnceTest {
 
     @Test
-    fun aMoveThatEndsReportsTheCatReached() = runBlocking {
+    fun aMoveThatEndsReportsItsTargetReached() = runBlocking {
         var reached = 0
 
-        moveOntoCat(move = {}, onReach = { reached++ })
+        moveOnce(move = {}, onReach = { reached++ })
 
         assertEquals(1, reached)
     }
 
     @Test
-    fun aPanThatCancelsTheMoveStillReportsTheCatReached() = runBlocking {
+    fun aPanThatCancelsTheMoveStillReportsItsTargetReached() = runBlocking {
         var reached = 0
 
-        moveOntoCat(move = { cancelledByAPan() }, onReach = { reached++ })
+        moveOnce(move = { cancelledByAPan() }, onReach = { reached++ })
 
         assertEquals(1, reached)
     }
@@ -33,7 +33,7 @@ class MoveOntoCatTest {
     @Test
     fun aMapLeavingMidMoveReportsNothing() = runBlocking {
         var reached = 0
-        val moving = launch { moveOntoCat(move = { awaitCancellation() }, onReach = { reached++ }) }
+        val moving = launch { moveOnce(move = { awaitCancellation() }, onReach = { reached++ }) }
         yield()
 
         moving.cancelAndJoin()

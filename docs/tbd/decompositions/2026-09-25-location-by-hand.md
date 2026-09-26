@@ -13,7 +13,7 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | L1 | A location set by hand | `MANUAL` source, `SetLocationByHand`, the `NONE` guard on every location write, backup format 5. | safe | ~400 | — | in-review |
-| L2 | Set a cat's location on a map | The picker screen with *Where am I*, opened from the detail of a cat with no location. | safe | ~700 | L1 | planned |
+| L2 | Set a cat's location on a map | The picker screen with *Where am I*, opened from the detail of a cat with no location. | safe | ~700 | L1 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -40,6 +40,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-26: **L1 opened as #170**, reviewed and gated green; L2 stacked on it. On the emulator the picker
+  opened on a street around the cat logged closest in time, and *Save* gave the cat the point under the pin
+  (the Map tab then drew it there). *Where am I* refused was not checked on the device: other sessions kept
+  their builds in front of the shared emulator; it rests on `LocationPickerStoreTest`.
 - 2026-09-25: owner asked for a way to give a cat with no location one. Chose a map with a centre pin and
   a *Where am I* button, opening on the located cat closest in time (then the last known position, then
   the world); the point for this cat only; offered only for `NONE`. Two slices, L1 → L2.

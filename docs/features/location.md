@@ -95,17 +95,55 @@ so the geocoder names it (*the point's place cell is remembered for the geocoder
 
 It is only ever a first location. A cat that already has one keeps it, a deleted cat gets nothing,
 and a point off the globe is refused, each with `false` and nothing written. The point is this cat's
-alone: no other cat of its outing is backfilled from it. Nothing on screen offers it yet.
+alone: no other cat of its outing is backfilled from it.
 
-`closestLocatedInTime` picks the live located cat logged nearest in time to a given one, the earlier
-on a tie — the place a cat with no location was most likely seen (`ClosestLocatedTest`).
+### On a map
+
+The detail screen of a cat with no location offers *Set on map* (see
+[encounter-detail.md](./encounter-detail.md)), which opens the location picker above it: the app's
+map, a pin fixed at its centre, *Where am I* and *Save*. The pin's tip is the point saved — the centre
+of the map's padded view when *Save* is tapped. Neither button does anything until the map has loaded
+its style and been placed: before that its centre is MapLibre's default at 0°, 0°, a point nobody
+looked at (`LocationPickerControlsTest`, *until the map is ready neither save nor where am I does
+anything*). Back leaves without writing anything (`LocationPickerStoreTest`, *back leaves once and
+writes nothing*). A save that lands is logged as `location_set_by_hand` (`analytics.md`).
+
+**Where it opens** is decided once, by `WhereToLook`: a street around the located cat logged closest in
+time to this one — for a tally without a fix usually a cat of the same walk, for an old photo one of
+the same day — else the phone's last known position however old, else the whole world
+(`WhereToLookTest`; `closestLocatedInTime`, the earlier cat on a tie, `ClosestLocatedTest`). Opening
+asks for no permission; without one the last known position is simply unknown
+(*opening the picker asks for no permission*). After that the map moves only when asked to.
+
+**Where am I** asks for the location permission; the system answers at once when it is already
+granted. Granted, the button disables while `LocatePhone` resolves a position the way a tally does — a
+fresh fix, else a last known one no older than `Tuning.LAST_KNOWN_MAX_AGE` — and the map moves once to
+a street around it. Refused, or with nothing found, a short message says the position is unknown and
+the map stays (`LocationPickerStoreTest`; `LocatePhoneTest`).
+
+**Saving** disables *Save* while it writes, so a second tap writes nothing more. The picker closes
+once the cat is no longer without a location — its own save landing, a fix landing first, the cat
+deleted elsewhere — so the detail screen underneath always shows what the cat actually has
+(*a cat located some other way closes the picker once*; *a cat deleted elsewhere closes the picker
+once*). A save that fails says so and keeps the picker open with *Save* available again. A map panned
+across the antimeridian saves its longitude wrapped back into −180°…180° (`WrapLongitudeTest`).
+
+The map is the Map tab's, in the same light or dark style, without its cats; with the style unloadable
+it says so the same way. Its tiles are fetched as the Map tab's are (see
+[map.md](./map.md#where-the-map-comes-from)).
 
 ## Where the code lives
 
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/location/LocationPolicy.kt`, `LocationFix.kt`,
   `ClosestLocated.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`, `SetLocationByHand.kt`,
-  `RecordWalk.kt`
+  `WhereToLook.kt`, `LocatePhone.kt`, `RecordWalk.kt`; `domain/…/location/PhonePosition.kt` — the resolution a
+  tally and *Where am I* share
+- `presentation/…/locationpicker/` — `LocationPickerState`, `Intent`, `Effect`, `StateMapper`, `Store`
+- `ui/…/locationpicker/LocationPickerScreen.kt`; `ui/…/map/MapShared.kt` — the style and messages the picker
+  shares with the Map tab
+- `app/…/navigation/LocationPicker.kt` (the key), `LocationPickerDestination.kt`;
+  `app/…/permission/LocationPermissionRequester.kt` — the permission request the Counter shares
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/geo/Geohash.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/platform/LocationProvider.kt`
 - `data/src/androidMain/kotlin/dev/catsradar/data/platform/FusedLocationProvider.android.kt`
