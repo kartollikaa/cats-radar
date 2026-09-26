@@ -45,7 +45,8 @@ the one the Encounters tab shows.
 The map is [MapLibre](https://maplibre.org/) drawing vector tiles from
 [OpenFreeMap](https://openfreemap.org/), which serves OpenStreetMap data with no key, account or
 cookie. Its light style follows the light theme and its dark style the dark one. The attribution
-OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in.
+OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in. Its
+text and ⓘ sit directly over the tiles, without a white container behind them.
 
 **The Map tab, the location picker ([location.md](./location.md#on-a-map)) and the small map a cat's
 detail draws around it ([encounter-detail.md](./encounter-detail.md#its-map)) fetch their tiles from the

@@ -129,8 +129,8 @@ once*). A save that fails says so and keeps the picker open with *Save* availabl
 across the antimeridian saves its longitude wrapped back into −180°…180° (`WrapLongitudeTest`).
 
 The map is the Map tab's, in the same light or dark style, without its cats; with the style unloadable
-it says so the same way. Its tiles are fetched as the Map tab's are (see
-[map.md](./map.md#where-the-map-comes-from)).
+it says so the same way. Its required attribution sits directly over the tiles, without a white
+container. Its tiles are fetched as the Map tab's are (see [map.md](./map.md#where-the-map-comes-from)).
 
 ## Where the code lives
 

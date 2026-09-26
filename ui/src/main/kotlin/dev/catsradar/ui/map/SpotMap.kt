@@ -55,8 +55,7 @@ const val SpotMapTestTag = "spot-map"
 const val CatDotTestTag = "cat-dot"
 
 // Small enough for the whole line to fit across a phone-wide card.
-private val SmallAttribution = AttributionDefaults.expandedStyle()
-    .copy(textStyle = AttributionDefaults.ContentTextStyle.copy(fontSize = 10.sp))
+private val SmallAttributionTextStyle = AttributionDefaults.ContentTextStyle.copy(fontSize = 10.sp)
 
 // A texture view, unlike the default surface view, clips to rounded corners and scrolls with the screen.
 private val StillMap = MapUiOptions(from = MapUiOptions.None) { renderMode = AndroidRenderMode.Texture }
@@ -100,6 +99,7 @@ private fun BoxScope.TileMap(position: MapPosition, coat: CoatOption?) {
         )
     } else {
         CentreDot(coat)
+        val attributionColor = MaterialTheme.colorScheme.onSurface
         // The tiles' licence requires it; TalkBack skips it, or the card would read it before the place.
         CompositionLocalProvider(LocalMapState provides mapState) {
             ExpandingAttributionButton(
@@ -107,9 +107,13 @@ private fun BoxScope.TileMap(position: MapPosition, coat: CoatOption?) {
                     .align(Alignment.BottomEnd)
                     .padding(MaplibreMapOverlay.Spacing)
                     .clearAndSetSemantics {},
+                toggleButton = { onClick -> AttributionButton(attributionColor, onClick) },
                 // Text without the default's links: a tap anywhere on this map belongs to whatever holds it.
                 expandedContent = { attributions, textStyle -> BasicText(plainText(attributions), style = textStyle) },
-                expandedStyle = SmallAttribution,
+                expandedStyle = attributionStyle(
+                    contentColor = attributionColor,
+                    textStyle = SmallAttributionTextStyle,
+                ),
             )
         }
     }
