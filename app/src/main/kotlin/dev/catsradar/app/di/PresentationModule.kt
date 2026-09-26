@@ -73,6 +73,7 @@ val presentationModule = module {
         EncounterDetailStore(
             encounterId = encounterId,
             observeEncounter = get(),
+            observeEncounterPlace = get(),
             deleteEncounter = get(),
             undoDelete = get(),
             setCoat = get(),
