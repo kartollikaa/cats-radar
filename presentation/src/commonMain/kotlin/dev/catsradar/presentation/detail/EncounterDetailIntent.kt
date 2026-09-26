@@ -14,6 +14,7 @@ sealed interface EncounterDetailIntent {
     data object PickPhotoClicked : EncounterDetailIntent
     data class PhotoClicked(val photoId: String) : EncounterDetailIntent
     data object CoordinatesClicked : EncounterDetailIntent
+    data object SetLocationClicked : EncounterDetailIntent
 
     /** [uri] is null when the camera was cancelled. */
     data class PhotoTaken(val uri: String?) : EncounterDetailIntent

@@ -16,7 +16,11 @@ import org.maplibre.compose.overlay.MapOverlay as MaplibreMapOverlay
 
 // The tiles' licence requires this attribution; the MapLibre logo the library's own overlays add is optional.
 @Composable
-internal fun MapAttribution(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+internal fun MapAttribution(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    alignment: Alignment = Alignment.BottomEnd,
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -25,6 +29,6 @@ internal fun MapAttribution(contentPadding: PaddingValues, modifier: Modifier = 
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(MaplibreMapOverlay.Spacing),
     ) {
-        ExpandingAttributionButton(modifier = Modifier.align(Alignment.BottomEnd))
+        ExpandingAttributionButton(modifier = Modifier.align(alignment))
     }
 }

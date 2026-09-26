@@ -1,9 +1,11 @@
 package dev.catsradar.data.repository
 
+import dev.catsradar.data.db.EncounterPhotoEntity
 import dev.catsradar.data.db.EncounterWithPhotos
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 class EncounterMapperTest {
     @Test
@@ -47,4 +49,30 @@ class EncounterMapperTest {
         assertEquals(1080, tooFarEast.toDomain().tzOffsetMinutes)
         assertEquals(-1080, tooFarWest.toDomain().tzOffsetMinutes)
     }
+
+    @Test
+    fun thePhotosOfOneShotKeepTheirShotBothWays() {
+        val rows = listOf(
+            photoRow(id = "p1", encounterId = "ginger", shotId = null),
+            photoRow(id = "p2", encounterId = "ginger-too", shotId = "p1"),
+            photoRow(id = "p3", encounterId = "unseen", shotId = "p1"),
+        )
+
+        assertEquals(rows, rows.map { it.toDomain().toEntity() })
+        assertEquals(listOf(null, "p1", "p1"), rows.map { it.toDomain().shotId })
+        assertEquals(listOf("p1", "p1", "p1"), rows.map { it.toDomain().shot })
+    }
+
+    private fun photoRow(id: String, encounterId: String, shotId: String?) = EncounterPhotoEntity(
+        id = id,
+        encounterId = encounterId,
+        photoPath = "$id.jpg",
+        thumbPath = "${id}_thumb.jpg",
+        galleryUri = null,
+        sourceMediaUri = null,
+        sourceDigest = "d-shot",
+        deviceId = "device",
+        addedAt = Instant.fromEpochMilliseconds(1_000),
+        shotId = shotId,
+    )
 }

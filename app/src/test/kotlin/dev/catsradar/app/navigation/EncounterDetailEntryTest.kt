@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ApplicationProvider
@@ -62,6 +63,20 @@ class EncounterDetailEntryTest {
         compose.waitForIdle()
 
         assertEquals(listOf<NavKey>(Counter, Encounters), backStack.toList())
+    }
+
+    @Test
+    fun `set on map opens the picker for this cat above the detail, once however often it is tapped`() {
+        val backStack = show(listOf(Counter, Encounters, EncounterDetail(ID)))
+        val setOnMap = hasText(context.getString(R.string.detail_set_location))
+        awaitTheDatabase { compose.onAllNodes(setOnMap).fetchSemanticsNodes().isNotEmpty() }
+
+        compose.onNode(setOnMap).performScrollTo().performClick()
+        compose.onNode(setOnMap).performClick()
+        awaitTheDatabase { backStack.toList().last() is LocationPicker }
+        compose.waitForIdle()
+
+        assertEquals(listOf(Counter, Encounters, EncounterDetail(ID), LocationPicker(ID)), backStack.toList())
     }
 
     // Robolectric's paused main looper delivers the database's answer only when idled; a still screen never idles it.

@@ -18,8 +18,8 @@ internal fun handlePhotoViewerEffect(
     effect: PhotoViewerEffect,
     onClose: () -> Unit,
     galleryOpener: GalleryOpener,
-    galleryGoneReporter: PhotoFailureReporter,
-    noGalleryAppReporter: PhotoFailureReporter,
+    galleryGoneReporter: MessageReporter,
+    noGalleryAppReporter: MessageReporter,
 ) {
     when (effect) {
         PhotoViewerEffect.Close -> onClose()
@@ -34,8 +34,8 @@ internal fun PhotoViewerDestination(key: PhotoViewer, onClose: () -> Unit, modif
     val state by store.state.collectAsStateWithLifecycle()
     val close by rememberUpdatedState(onClose)
     val galleryOpener = rememberGalleryOpener()
-    val galleryGoneReporter = rememberPhotoFailureReporter(R.string.viewer_gallery_gone)
-    val noGalleryAppReporter = rememberPhotoFailureReporter(R.string.viewer_no_gallery_app)
+    val galleryGoneReporter = rememberMessageReporter(R.string.viewer_gallery_gone)
+    val noGalleryAppReporter = rememberMessageReporter(R.string.viewer_no_gallery_app)
     LaunchedEffect(store, galleryOpener, galleryGoneReporter, noGalleryAppReporter) {
         store.effects.collect { effect ->
             handlePhotoViewerEffect(
