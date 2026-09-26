@@ -61,16 +61,17 @@ fun EncounterDetailScreen(
             EncounterDetailState.Loading -> Unit
             is EncounterDetailState.Loaded -> {
                 val page = state.pages.first { it.id == state.currentId }
+                val catId = page.id
                 CatPageContent(
                     page,
                     contentPadding = belowBar,
                     onDeleteClick = onDeleteClick,
-                    onCoatClick = { coat -> onCoatClick(CoatInteraction(page.id, coat)) },
-                    onTakePhotoClick = { onTakePhotoClick(page.id) },
-                    onPickPhotoClick = { onPickPhotoClick(page.id) },
-                    onPhotoClick = { photoId -> onPhotoClick(PhotoInteraction(page.id, photoId)) },
-                    onCoordinatesClick = { onCoordinatesClick(page.id) },
-                    onSetLocationClick = { onSetLocationClick(page.id) },
+                    onCoatClick = { coat -> onCoatClick(CoatInteraction(catId, coat)) },
+                    onTakePhotoClick = { onTakePhotoClick(catId) },
+                    onPickPhotoClick = { onPickPhotoClick(catId) },
+                    onPhotoClick = { photoId -> onPhotoClick(PhotoInteraction(catId, photoId)) },
+                    onCoordinatesClick = { onCoordinatesClick(catId) },
+                    onSetLocationClick = { onSetLocationClick(catId) },
                 )
             }
             is EncounterDetailState.Deleted ->
