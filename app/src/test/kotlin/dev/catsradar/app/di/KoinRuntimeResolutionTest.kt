@@ -11,6 +11,8 @@ import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.app.update.InstallResults
+import dev.catsradar.app.update.UpdateInstaller
 import dev.catsradar.app.widget.WidgetRefresh
 import dev.catsradar.app.worker.BackupScheduler
 import dev.catsradar.app.worker.GeocodeWorkScheduler
@@ -19,6 +21,7 @@ import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
+import dev.catsradar.app.worker.UpdateDownloadScheduler
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.analytics.Analytics
@@ -56,6 +59,7 @@ import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.locationpicker.LocationPickerStore
 import dev.catsradar.presentation.regions.RegionsStore
+import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.viewer.PhotoViewerStore
 import org.junit.After
 import org.junit.Before
@@ -93,6 +97,19 @@ class KoinRuntimeResolutionTest {
     // binding or a composable, because no reflected constructor ever names that type. This starts
     // the real modules and asks for exactly those types, so a deleted binding fails here instead
     // of on the user's first tap.
+    @Test
+    fun `the update's types resolved by hand are bound`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+
+        assertNotNull(koin.get<UpdateDownloadScheduler>())
+        assertNotNull(koin.get<UpdateInstaller>())
+        assertNotNull(koin.get<InstallResults>())
+        assertNotNull(koin.get<SettingsStore>())
+    }
+
     @Test
     fun `types resolved outside constructor injection are bound`() {
         val koin = startKoin {

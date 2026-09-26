@@ -13,6 +13,9 @@ import dev.catsradar.app.notification.WalkingNotifications
 import dev.catsradar.app.notification.WalkingNotifier
 import dev.catsradar.app.reporting.CrashlyticsNonFatalReporter
 import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.app.update.InstallResults
+import dev.catsradar.app.update.PackageInstallerUpdater
+import dev.catsradar.app.update.UpdateInstaller
 import dev.catsradar.app.widget.CatsRadarWidget
 import dev.catsradar.app.widget.WidgetRedraw
 import dev.catsradar.app.widget.WidgetRefresh
@@ -24,9 +27,11 @@ import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.PlaceNamingScheduler
 import dev.catsradar.app.worker.PlaceNamingTrigger
 import dev.catsradar.app.worker.PurgeWorkScheduler
+import dev.catsradar.app.worker.UpdateDownloadScheduler
 import dev.catsradar.app.worker.WorkManagerBackupScheduler
 import dev.catsradar.app.worker.WorkManagerImportScheduler
 import dev.catsradar.app.worker.WorkManagerLocationAttachScheduler
+import dev.catsradar.app.worker.WorkManagerUpdateDownloadScheduler
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -52,6 +57,11 @@ val workerModule = module {
     single<LocationAttachScheduler> { WorkManagerLocationAttachScheduler(get()) }
     single<ImportScheduler> { WorkManagerImportScheduler(get(), get()) }
     single<BackupScheduler> { WorkManagerBackupScheduler(get()) }
+    single<UpdateDownloadScheduler> { WorkManagerUpdateDownloadScheduler(get()) }
+    single { InstallResults() }
+    single<UpdateInstaller> {
+        PackageInstallerUpdater(androidContext(), androidContext().packageManager.packageInstaller)
+    }
     single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class
     single { ScreenViewTracker(get()) }
 }

@@ -25,16 +25,17 @@ The map is [MapLibre](https://maplibre.org/) drawing vector tiles from
 cookie. Its light style follows the light theme and its dark style the dark one. The attribution
 OpenFreeMap and OpenStreetMap require stays on the map, in the corner the library draws it in.
 
-**Tiles are the only screen content fetched from the network**: the Map tab's, the location picker's
-([location.md](./location.md#on-a-map)) and those of the small map a cat's detail draws around it
-([encounter-detail.md](./encounter-detail.md#its-map)). Until the map, the app declared no `INTERNET`
-permission at all: geocoding runs through the platform. Crash reports and screen views go to Firebase as
-well (`analytics.md`), but no screen waits on them. Tiles are fetched as a map is looked at, so the tile
-server learns which area is on screen and from which address, as with any web map. Because the Map tab
-opens fitted around your cats, the first area it asks for is the one around where you have seen them;
-the picker opens around one of your cats or the phone's last position, so the same holds there, and a
-cat's detail asks for the few streets around that one cat. No cat is sent: the dots, the detail's
-included, are drawn on the phone from the phone's own database. Tiles already seen, and the style, are kept in the
+**The Map tab, the location picker ([location.md](./location.md#on-a-map)) and the small map a cat's
+detail draws around it ([encounter-detail.md](./encounter-detail.md#its-map)) fetch their tiles from the
+network as they are looked at.** Until the map, the app declared no `INTERNET` permission at all:
+geocoding runs through the platform. Crash reports and screen views go to Firebase as well
+(`analytics.md`), but no screen waits on them, and Settings asks GitHub for its release list only when
+*Check for updates* is tapped (`updates.md`). Tiles are fetched as a map is looked at, so the tile server
+learns which area is on screen and from which address, as with any web map. Because the Map tab opens
+fitted around your cats, the first area it asks for is the one around where you have seen them; the
+picker opens around one of your cats or the phone's last position, so the same holds there, and a cat's
+detail asks for the few streets around that one cat. No cat is sent: the dots, the detail's included,
+are drawn on the phone from the phone's own database. Tiles already seen, and the style, are kept in the
 app's cache, which no backup includes.
 
 ## Which cats are on it
