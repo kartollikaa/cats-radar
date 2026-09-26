@@ -7,6 +7,7 @@ import android.os.Vibrator
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dev.catsradar.app.BuildConfig
 import dev.catsradar.data.analytics.FirebaseAnalyticsReporter
 import dev.catsradar.data.backup.ZipBackupReader
@@ -30,6 +31,7 @@ import dev.catsradar.data.platform.MediaStoreGallerySaver
 import dev.catsradar.data.platform.MediaStoreItemLocator
 import dev.catsradar.data.platform.MediaStoreSourceFileTime
 import dev.catsradar.data.platform.RandomIdGenerator
+import dev.catsradar.data.platform.RemoteConfigFeatureToggles
 import dev.catsradar.data.platform.Sha256Digest
 import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
 import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestState
@@ -50,6 +52,7 @@ import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.FeatureToggles
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.platform.GalleryItems
 import dev.catsradar.domain.platform.GallerySaver
@@ -147,6 +150,9 @@ val dataModule = module {
     // A cache folder: Android may clear it, which costs only a download.
     single<PackageDownloader> { HttpPackageDownloader(File(androidContext().cacheDir, "updates")) }
     single<InstallPermission> { AndroidInstallPermission(androidContext().packageManager) }
+    single { FirebaseRemoteConfig.getInstance() }
+    // Bound by class, so that verify() checks the Remote Config binding a JVM test cannot build.
+    single { RemoteConfigFeatureToggles(get()) } bind FeatureToggles::class
 }
 
 // A preferences file's name is where its data lives: renaming one loses everything stored in it.

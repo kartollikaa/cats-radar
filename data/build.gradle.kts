@@ -30,6 +30,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.play.services)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.analytics)
+            implementation(libs.firebase.config)
         }
         getByName("androidHostTest").dependencies {
             implementation(libs.kotlin.test)
