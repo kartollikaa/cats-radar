@@ -324,7 +324,7 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
         runCurrent()
 
         val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
@@ -338,7 +338,7 @@ class EncounterDetailStoreTest {
         resizer.storeDelay = 1.seconds
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
         runCurrent()
 
         ViewModelStore().apply { put("detail", store) }.clear()
@@ -353,7 +353,7 @@ class EncounterDetailStoreTest {
         repository.insert(encounterFixture(ID, OCCURRED).withPhoto(photoPath = "own.jpg"))
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
         runCurrent()
         val second = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.last().id
 
@@ -408,7 +408,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
             runCurrent()
             expectNoEvents()
         }
@@ -425,7 +425,7 @@ class EncounterDetailStoreTest {
 
         store.effects.test {
             store.dispatch(EncounterDetailIntent.PhotoTaken(null))
-            store.dispatch(EncounterDetailIntent.PhotoPicked(null))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(emptyList()))
             runCurrent()
             expectNoEvents()
         }
@@ -439,7 +439,7 @@ class EncounterDetailStoreTest {
         val store = newStore()
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
         runCurrent()
         assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
 
@@ -456,7 +456,7 @@ class EncounterDetailStoreTest {
             runCurrent()
             repository.observeDelay = 5.seconds
 
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
             runCurrent()
             assertEquals(AddPhoto.ATTACHING, assertIs<EncounterDetailState.Loaded>(store.state.value).addPhoto)
 
@@ -477,7 +477,7 @@ class EncounterDetailStoreTest {
         resizer.storeDelay = 1.seconds
         val store = newStore()
         runCurrent()
-        store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+        store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
         runCurrent()
 
         store.effects.test {
@@ -496,7 +496,7 @@ class EncounterDetailStoreTest {
             val store = newStore()
             runCurrent()
 
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
             runCurrent()
             store.dispatch(EncounterDetailIntent.DeleteClicked)
             runCurrent()
@@ -539,7 +539,7 @@ class EncounterDetailStoreTest {
         val before = store.state.value
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoAlreadyThere, awaitItem())
         }
@@ -555,7 +555,7 @@ class EncounterDetailStoreTest {
         runCurrent()
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoPicked(PICKED))
+            store.dispatch(EncounterDetailIntent.PhotosPicked(listOf(PICKED)))
             runCurrent()
             assertEquals(EncounterDetailEffect.PhotoNotAttached, awaitItem())
         }

@@ -108,7 +108,12 @@ private fun LoadedDetail(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (state.photos.isNotEmpty()) DetailPhotoPager(state.photos, onPhotoClick = onPhotoClick)
-        AddPhotoCard(state.addPhoto, onTakePhotoClick = onTakePhotoClick, onPickPhotoClick = onPickPhotoClick)
+        AddPhotoCard(
+            state.addPhoto,
+            progress = state.attachProgress,
+            onTakePhotoClick = onTakePhotoClick,
+            onPickPhotoClick = onPickPhotoClick,
+        )
         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
             Text(
                 text = state.dayLabel,

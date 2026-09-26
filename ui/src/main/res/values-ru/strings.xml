@@ -196,6 +196,19 @@
     <string name="detail_pick_photo">Выбрать из галереи</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_already_there">Это фото уже есть у котика</string>
+    <string name="detail_photos_already_there">Эти фото уже есть у котика</string>
+    <plurals name="detail_photos_attaching">
+        <item quantity="one">Прикреплено %1$d из %2$d фото</item>
+        <item quantity="few">Прикреплено %1$d из %2$d фото</item>
+        <item quantity="many">Прикреплено %1$d из %2$d фото</item>
+        <item quantity="other">Прикреплено %1$d из %2$d фото</item>
+    </plurals>
+    <plurals name="detail_photos_not_attached">
+        <item quantity="one">%d фото не прикрепилось</item>
+        <item quantity="few">%d фото не прикрепились</item>
+        <item quantity="many">%d фото не прикрепились</item>
+        <item quantity="other">%d фото не прикрепилось</item>
+    </plurals>
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
     <string name="detail_back">Назад</string>

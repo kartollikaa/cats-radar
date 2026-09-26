@@ -44,10 +44,11 @@ class EncounterDetailStore(
     private var lastPlace: EncounterPlace? = null
     private var deletedHere = false
     private var undoTimeoutJob: Job? = null
-    private var attachingPhoto = false
+    private var attachingPhotos = false
+    private var attachProgress = AttachProgress(done = 0, total = 0)
 
-    // Attached but not emitted yet: until it arrives the section keeps showing the attempt, not a bare offer.
-    private var arrivingPhotoId: String? = null
+    // Attached but not emitted yet: until they arrive the section keeps showing the attempt, not a bare offer.
+    private val arrivingPhotoIds = mutableSetOf<String>()
     private var awaitingPhoto = false
     private var leaving = false
 
@@ -57,8 +58,7 @@ class EncounterDetailStore(
             .onEach { (encounter, place) ->
                 lastSeen = encounter
                 lastPlace = place
-                val arriving = arrivingPhotoId
-                if (encounter == null || encounter.photos.any { it.id == arriving }) arrivingPhotoId = null
+                if (encounter == null) arrivingPhotoIds.clear() else arrivingPhotoIds -= encounter.photoIds()
                 setState { reduce(encounter) }
             }
             .launchIn(viewModelScope)
@@ -69,7 +69,7 @@ class EncounterDetailStore(
         encounter != null -> stateMapper.map(
             encounter,
             clock.today(timeZone),
-            attachingPhoto || arrivingPhotoId != null,
+            attachProgress.takeIf { attachingPhotos || arrivingPhotoIds.isNotEmpty() },
             lastPlace,
         )
         deletedHere -> this
@@ -93,8 +93,8 @@ class EncounterDetailStore(
                 if ((state.value as? EncounterDetailState.Loaded)?.onTheMap == true) {
                     emit(EncounterDetailEffect.OpenMap)
                 }
-            is EncounterDetailIntent.PhotoTaken -> onPhotoChosen(intent.uri, PhotoSource.CAMERA)
-            is EncounterDetailIntent.PhotoPicked -> onPhotoChosen(intent.uri, PhotoSource.GALLERY)
+            is EncounterDetailIntent.PhotoTaken -> onPhotosChosen(listOfNotNull(intent.uri), PhotoSource.CAMERA)
+            is EncounterDetailIntent.PhotosPicked -> onPhotosChosen(intent.uris, PhotoSource.GALLERY)
         }
     }
 
@@ -105,31 +105,28 @@ class EncounterDetailStore(
         emit(opener)
     }
 
-    private suspend fun onPhotoChosen(uri: String?, source: PhotoSource) {
+    private suspend fun onPhotosChosen(uris: List<String>, source: PhotoSource) {
         awaitingPhoto = false
-        if (uri == null) return
-        attachingPhoto = true
-        refresh()
-        var result: AttachResult? = null
-        runStorageWrite { result = attachPhoto(encounterId, uri, source) }
-        attachingPhoto = false
-        when (val outcome = result) {
-            is AttachResult.Attached -> {
-                val arrived = lastSeen?.photos.orEmpty().any { it.id == outcome.photoId }
-                if (!arrived) arrivingPhotoId = outcome.photoId
-                refresh()
+        if (uris.isEmpty()) return
+        attachingPhotos = true
+        // Null for an attempt whose storage write failed.
+        val outcomes = mutableListOf<AttachResult?>()
+        for (uri in uris) {
+            attachProgress = AttachProgress(done = outcomes.size, total = uris.size)
+            refresh()
+            var result: AttachResult? = null
+            runStorageWrite { result = attachPhoto(encounterId, uri, source) }
+            val attached = result as? AttachResult.Attached
+            if (attached != null && attached.photoId !in lastSeen?.photoIds().orEmpty()) {
+                arrivingPhotoIds += attached.photoId
             }
-            AttachResult.AlreadyThere -> {
-                refresh()
-                emit(EncounterDetailEffect.PhotoAlreadyThere)
-            }
-            AttachResult.NotAttachable -> refresh()
-            AttachResult.Unreadable, null -> {
-                refresh()
-                emit(EncounterDetailEffect.PhotoNotAttached)
-            }
+            outcomes += result
         }
-        if (source == PhotoSource.CAMERA) emit(EncounterDetailEffect.DiscardCapture(uri))
+        attachProgress = AttachProgress(done = outcomes.size, total = uris.size)
+        attachingPhotos = false
+        refresh()
+        outcomes.message()?.let { emit(it) }
+        if (source == PhotoSource.CAMERA) uris.forEach { emit(EncounterDetailEffect.DiscardCapture(it)) }
     }
 
     private fun refresh() {
@@ -174,5 +171,19 @@ class EncounterDetailStore(
         undoTimeoutJob?.cancel()
         deletedHere = false
         setState { reduce(lastSeen) }
+    }
+}
+
+private fun Encounter.photoIds(): Set<String> = photos.mapTo(mutableSetOf()) { it.id }
+
+// A cat removed mid-pick answers NotAttachable, which says nothing: the screen already shows it gone.
+private fun List<AttachResult?>.message(): EncounterDetailEffect? {
+    val notAttached = count { it == null || it == AttachResult.Unreadable }
+    return when {
+        notAttached == 1 -> EncounterDetailEffect.PhotoNotAttached
+        notAttached > 1 -> EncounterDetailEffect.PhotosNotAttached(notAttached)
+        any { it != AttachResult.AlreadyThere } -> null
+        size == 1 -> EncounterDetailEffect.PhotoAlreadyThere
+        else -> EncounterDetailEffect.PhotosAlreadyThere
     }
 }

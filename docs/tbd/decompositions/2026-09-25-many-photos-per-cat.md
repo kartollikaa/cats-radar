@@ -18,8 +18,8 @@
 | M4 | Backup format 4 carries every photo | `encounter_photos.json` in the archive; older formats read by the migration's rule. | safe | ~450 | M3 | merged |
 | M5 | Attaching a photo to a cat that has one | `AttachPhoto` adds to any live cat, skips a photo already on it, keeps links on every cat. | safe | ~350 | M3 | merged |
 | M6 | The viewer pages through a cat's photos | `PhotoViewer(encounterId, photoId)` with a pager and a per-photo gallery link. | safe | ~550 | M3 | merged |
-| M7 | A cat's photos on its detail screen | A pager of the cat's photos opening the viewer on the tapped one, and *Add photo* on every live cat, one photo at a time. | safe | ~550 | M4, M5, M6 | in-review |
-| M8 | Several photos from the gallery at once | *Choose from gallery* picks several images and attaches them one after another, with progress and one message for the lot. | safe | ~450 | M7 | planned |
+| M7 | A cat's photos on its detail screen | A pager of the cat's photos opening the viewer on the tapped one, and *Add photo* on every live cat, one photo at a time. | safe | ~550 | M4, M5, M6 | merged |
+| M8 | Several photos from the gallery at once | *Choose from gallery* picks several images and attaches them one after another, with progress and one message for the lot. | safe | ~450 | M7 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -102,6 +102,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-26: **M7 merged** as #169. A photo attached while the observed cat has not caught up keeps the
+  attempt on screen until it arrives; a Room notification that never comes would leave it there, which no
+  path produces today. The spec named `Tuning.ATTACH_BATCH_MAX` but not its value; M8 chooses it.
 
 - 2026-09-25: **M6 merged** as #165. **M7 split in two**: the pager and adding one photo at a time (M7), then
   several photos from the gallery at once (M8). Each is a complete behaviour, and the batch — sequential

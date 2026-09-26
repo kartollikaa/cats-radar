@@ -25,7 +25,7 @@ class EncounterDetailStateMapper(
     fun map(
         encounter: Encounter,
         today: LocalDate,
-        attachingPhoto: Boolean = false,
+        attaching: AttachProgress? = null,
         place: EncounterPlace? = null,
     ): EncounterDetailState.Loaded {
         val lat = encounter.lat
@@ -42,7 +42,8 @@ class EncounterDetailStateMapper(
             accuracyMeters = encounter.accuracyMeters?.takeIf { lat != null && lon != null }?.roundToInt(),
             photos = encounter.photos.map { DetailPhoto(it.id, photoStorage.resolve(it.photoPath)) }.toImmutableList(),
             coat = encounter.coat?.toOption(),
-            addPhoto = if (attachingPhoto) AddPhoto.ATTACHING else AddPhoto.READY,
+            addPhoto = if (attaching != null) AddPhoto.ATTACHING else AddPhoto.READY,
+            attachProgress = attaching?.takeIf { it.total > 1 },
             onTheMap = encounter.isOnTheMap(),
             place = place?.let { found ->
                 // A city-state's locality repeats its country's name.
