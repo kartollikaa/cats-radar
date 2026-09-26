@@ -10,5 +10,6 @@ fun LocationLabel.labelRes(): Int = when (this) {
     LocationLabel.CURRENT -> R.string.location_current
     LocationLabel.LAST_KNOWN -> R.string.location_last_known
     LocationLabel.FROM_OUTING -> R.string.location_from_outing
+    LocationLabel.BY_HAND -> R.string.location_by_hand
     LocationLabel.NONE -> R.string.location_none
 }

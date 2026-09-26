@@ -41,6 +41,13 @@ completion. What actually stops the encounter from being wrongly resurrected is 
 soft-deleted, a fix that resolves afterward writes nothing (*a fix that resolves after the target
 was undone does not resurrect it*).
 
+The same write lands only on a row still at `NONE`, so the cat's location can arrive another way
+during that wait too — set by hand (below) — and the fix leaves it alone. `AttachLocation` then
+backfills nothing either, since its own write did not land (*a fix landing after the cat was placed
+by hand neither replaces the point nor backfills the outing*; `EncounterDaoAttachLocationTest`,
+*attachLocationLeavesACatThatAlreadyHasALocationAsItWas*). The check is the write itself rather than
+the read before it, because the read comes before a wait of up to `LOCATION_TIMEOUT`.
+
 Backfill only widens within a single outing. An encounter far enough before or after the
 target to be past `SESSION_GAP` belongs to a different outing, and is left at `NONE` even though
 a current fix was just obtained (*a current fix backfills NONE encounters in the same outing but
@@ -70,7 +77,7 @@ ends the stream rather than the app. Which fixes join the route is `RecordTrackP
 
 `locationSource` records which rung produced the value: `CURRENT_FIX`, `LAST_KNOWN`,
 `BACKFILLED`, or `NONE` from this code path; `EXIF` belongs to the photo flow, where a photo's own
-metadata beats anything the phone could measure later. `locationFixedAt` is the fix's own
+metadata beats anything the phone could measure later; `MANUAL` is a point set by hand. `locationFixedAt` is the fix's own
 timestamp — when GPS actually produced the reading — and is deliberately separate from
 `occurredAt`, the tally's own timestamp; the two diverge whenever a fix resolves late or is
 backfilled from a different tap's fix. `geohash` is encoded at `Tuning.GEOHASH_PRECISION`
@@ -78,10 +85,27 @@ backfilled from a different tap's fix. `geohash` is encoded at `Tuning.GEOHASH_P
 (6 characters) — the two precisions are asserted as distinct in `AttachLocationTest` (*geohash and
 placeCellId use their own distinct precisions*).
 
+## Set by hand
+
+A cat with no location can be given one: `SetLocationByHand(encounterId, lat, lon)` stamps the point
+as `MANUAL` (*a cat with no location gets the point as set by hand, with no accuracy, at the time it
+was set*). Nothing measured it, so it carries no accuracy; `locationFixedAt` is when it was saved,
+the moment the app learned where the cat was. Its place cell is remembered like any other point's,
+so the geocoder names it (*the point's place cell is remembered for the geocoder to name*).
+
+It is only ever a first location. A cat that already has one keeps it, a deleted cat gets nothing,
+and a point off the globe is refused, each with `false` and nothing written. The point is this cat's
+alone: no other cat of its outing is backfilled from it. Nothing on screen offers it yet.
+
+`closestLocatedInTime` picks the live located cat logged nearest in time to a given one, the earlier
+on a tie — the place a cat with no location was most likely seen (`ClosestLocatedTest`).
+
 ## Where the code lives
 
-- `domain/src/commonMain/kotlin/dev/catsradar/domain/location/LocationPolicy.kt`, `LocationFix.kt`
-- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`, `RecordWalk.kt`
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/location/LocationPolicy.kt`, `LocationFix.kt`,
+  `ClosestLocated.kt`
+- `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/AttachLocation.kt`, `SetLocationByHand.kt`,
+  `RecordWalk.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/geo/Geohash.kt`
 - `domain/src/commonMain/kotlin/dev/catsradar/domain/platform/LocationProvider.kt`
 - `data/src/androidMain/kotlin/dev/catsradar/data/platform/FusedLocationProvider.android.kt`

@@ -31,6 +31,7 @@ import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
+import dev.catsradar.domain.usecase.SetLocationByHand
 import dev.catsradar.domain.usecase.StartWalk
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
@@ -94,6 +95,7 @@ val domainModule = module {
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
     factory { PurgeDeleted(encounterRepository = get(), photoStorage = get(), clock = get()) }
     factoryOf(::SetCoat)
+    factoryOf(::SetLocationByHand)
     factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::ResolveGalleryLink)

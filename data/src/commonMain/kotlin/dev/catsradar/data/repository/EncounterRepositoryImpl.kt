@@ -23,7 +23,7 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override suspend fun update(encounter: Encounter) = dao.update(encounter.toEntity())
 
-    override suspend fun attachLocation(id: String, stamp: LocationStamp) = dao.attachLocation(
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean = dao.attachLocation(
         id = id,
         lat = stamp.lat,
         lon = stamp.lon,
@@ -33,7 +33,7 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
         geohash = stamp.geohash,
         placeCellId = stamp.placeCellId,
         updatedAt = stamp.updatedAt,
-    )
+    ) > 0
 
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean = dao.addPhoto(photo.toEntity(), photo.addedAt)
 

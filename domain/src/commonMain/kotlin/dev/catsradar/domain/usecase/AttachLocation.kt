@@ -45,12 +45,9 @@ class AttachLocation(
             updatedAt = clock.now(),
         )
 
-        // Touches only the location columns of this one row; a target undone during the wait
-        // above (getCurrentFix can take up to LOCATION_TIMEOUT) is never resurrected by this
-        // write - see EncounterDao.attachLocation.
-        encounterRepository.attachLocation(encounterId, stamp)
+        val attached = encounterRepository.attachLocation(encounterId, stamp)
 
-        if (result.source == LocationSource.CURRENT_FIX) {
+        if (attached && result.source == LocationSource.CURRENT_FIX) {
             backfillOuting(target.occurredAt, encounterId, stamp)
         }
     }
