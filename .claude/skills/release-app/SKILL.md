@@ -18,8 +18,9 @@ APK.
 
 ## When to use
 
-Triggers: "publish a release", "cut a release", "ship a new version", "tag a release", "build the
-release APK", or any request naming a version bump plus a GitHub release.
+Triggers: "publish a release", "cut a release", "ship a new version", "build the release APK", or
+any request naming a version bump plus a GitHub release. When the signed APK of a merged bump
+already exists and only the GitHub release is missing, go straight to `publish-release`.
 
 Not for: an internal test build with no tag/release (`./gradlew :app:assembleDebug` and hand over
 the APK — no version bump, no PR, no tag).
@@ -54,8 +55,9 @@ the APK — no version bump, no PR, no tag).
    branch). The PR carries the version bump and, for each epic whose slices reach a release for the
    first time, a Decision-log line in its map under `docs/tbd/decompositions/` saying they first
    shipped in `v<version>` — `releasing.md` requires it. Those epics are the maps that name a PR from
-   step 1's log and have no `First shipped in` line for it yet. Run `./gradlew check` locally and confirm
-   it's green — the merge rule is a green local check, not waiting on GitHub Actions. Open the PR
+   step 1's log and have no `First shipped in` line for it yet. Run `./gradlew check` in a worktree —
+   the primary checkout fails it for reasons unrelated to the change — and confirm it's green; the
+   merge rule is a green local check, not waiting on GitHub Actions. Open the PR
    and run `/code-review` on it (trivial diff, but it's still a slice), then merge with a merge
    commit (`gh pr merge <n> --merge`), never squash.
 3. **Re-fetch and pin the merge commit.** `git fetch origin main` and read the merge commit's SHA off
@@ -89,7 +91,8 @@ the APK — no version bump, no PR, no tag).
    `~/.android/avd/Pixel_7.avd/config.ini` into a new `<Name>.avd/` plus a `<Name>.ini` pointing at
    it, boot it on a free port, delete both afterwards): the shared emulator holds other sessions'
    debug-signed `com.kartollika.catsradar`, which a release-signed APK cannot update without
-   uninstalling it and their data. If the walk finds a bug, fix it through a PR and restart from
+   uninstalling it and their data. The emulator on this Apple-Silicon Mac is arm64, so the
+   `arm64-v8a`-only release APK installs there. If the walk finds a bug, fix it through a PR and restart from
    step 3; any local release build made just to try something runs with `CI=true`, so it uploads
    nothing.
 6. **Publish. REQUIRED NEXT SKILL: `publish-release`**, handing it the pinned merge SHA and this

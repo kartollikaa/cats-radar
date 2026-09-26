@@ -34,8 +34,7 @@ Rebuilt since that run → back to `release-app`; only the run whose mapping Cra
    ```
 2. **Write `build/release/notes.md`** from `git log --first-parent --oneline v<last>..<sha>` in the
    shape below.
-3. **Create the release in the background** — the upload is slow on this network and outlasts the
-   tool timeout. With assets, `gh` creates a draft, uploads, then publishes; the tag appears only at
+3. **Create the release in the background** — the upload can outlast the tool timeout. With assets, `gh` creates a draft, uploads, then publishes; the tag appears only at
    the publish.
    ```
    gh release create "v$V" --prerelease --target <sha> --title "v$V — <one-line theme>" \
@@ -46,18 +45,19 @@ Rebuilt since that run → back to `release-app`; only the run whose mapping Cra
    ```
    gh api repos/kartollikaa/cats-radar/releases --jq ".[] | select(.tag_name==\"v$V\") | {draft, prerelease, target_commitish, assets: [.assets[] | {name, size, state}]}"
    stat -f '%N %z' build/release/cats-radar-"$V"*
-   git fetch --tags origin && git rev-parse "v$V^{commit}"
+   git ls-remote origin "refs/tags/v$V"
    ```
    Done when: `draft` false, `prerelease` true, `target_commitish` is `<sha>`, exactly the two
-   assets, each `state` `uploaded` with the local file's size, and the tag resolves to `<sha>`.
+   assets, each `state` `uploaded` with the local file's size, and the remote tag is `<sha>`.
 
 ## When the upload stalls or dies
 
-- While the `gh release create` process lives (`pgrep -fl 'gh release'`), start nothing else that
+- While your upload lives (`pgrep -fl "gh release (create|upload) v$V"`), start nothing else that
   uploads: a second create fails on the existing draft, a second upload races the first.
 - Progress is the release list above, not the process's silence.
 - Process gone, release still a draft: `gh release upload "v$V" <each missing or non-uploaded file> --clobber`,
   then `gh release edit "v$V" --draft=false`, then step 4 again.
+- Process gone, no release in the list: nothing was kept, so step 3 again.
 - Wrong tag or wrong asset on a published release: stop and tell the owner — with immutable releases
   on, neither can be changed afterwards.
 
@@ -81,5 +81,5 @@ Match the last release (`gh release view <last-tag> --json body`):
 |---|---|
 | Notes from the full log | `--first-parent`: the full log carries every PR's `fix: review` / `test: gate` commits |
 | Trusting the exit code or the `\| tail` after it | Step 4's list, sizes and tag sha |
-| Re-running `gh release create` after a stall | Finish the draft with `upload --clobber` + `edit --draft=false` |
+| Re-running `gh release create` while a draft exists | Finish the draft with `upload --clobber` + `edit --draft=false` |
 | Attaching a debug APK "until the signed one exists" | No signed APK, no release — tell the owner |
