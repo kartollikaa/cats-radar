@@ -7,9 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -23,7 +21,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.Dp
@@ -120,7 +117,7 @@ class EncounterDetailScreenTest {
         show(loadedWith(cat))
         val screenBottom = compose.onRoot().fetchSemanticsNode().boundsInRoot.bottom
 
-        compose.onNode(scrollsVertically).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 10_000f) }
+        compose.scrollListToEnd()
         val delete = compose.onNodeWithText(context.getString(R.string.detail_delete)).fetchSemanticsNode()
 
         assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), delete.boundsInRoot.bottom, 1f)
@@ -259,8 +256,6 @@ class EncounterDetailScreenTest {
         (this as? EncounterDetailState.Loaded)?.pages?.any { it.mapPosition != null } == true
 
     private fun map() = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true)
-
-    private val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
     private fun back() = compose.onNodeWithContentDescription(context.getString(R.string.detail_back))
 

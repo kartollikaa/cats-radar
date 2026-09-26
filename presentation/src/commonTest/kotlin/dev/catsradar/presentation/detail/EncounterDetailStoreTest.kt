@@ -898,11 +898,6 @@ class EncounterDetailStorePhotoTest {
     }
 }
 
-private fun EncounterDetailStore.shownPage(): CatPage =
-    assertIs<EncounterDetailState.Loaded>(state.value).let { loaded ->
-        loaded.pages.single { it.id == loaded.currentId }
-    }
-
 private object LocatesNoGalleryItem : GalleryItemLocator {
     override suspend fun locate(pickedUri: String): String? = null
 }
