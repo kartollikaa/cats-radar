@@ -60,6 +60,7 @@ fun EncounterDetailScreen(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
@@ -74,6 +75,7 @@ fun EncounterDetailScreen(
                 onPickPhotoClick = onPickPhotoClick,
                 onPhotoClick = onPhotoClick,
                 onCoordinatesClick = onCoordinatesClick,
+                onSetLocationClick = onSetLocationClick,
             )
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
@@ -98,6 +100,7 @@ private fun LoadedDetail(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -122,7 +125,7 @@ private fun LoadedDetail(
             )
             Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        WhereCard(state, onCoordinatesClick = onCoordinatesClick)
+        WhereCard(state, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             CoatPicker(
                 selected = state.coat,
@@ -147,6 +150,7 @@ private fun WhereCard(
     state: EncounterDetailState.Loaded,
     modifier: Modifier = Modifier,
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val opensMap = if (state.onTheMap) {
         Modifier.clickable(
@@ -197,6 +201,9 @@ private fun WhereCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            if (state.setsLocation) {
+                SetLocationButton(modifier = Modifier.padding(top = 8.dp), onClick = onSetLocationClick)
             }
         }
     }

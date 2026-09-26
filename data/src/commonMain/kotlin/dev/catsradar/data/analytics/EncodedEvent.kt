@@ -9,6 +9,7 @@ import dev.catsradar.domain.analytics.AnalyticsEvent.CatsDeleted
 import dev.catsradar.domain.analytics.AnalyticsEvent.CoatSet
 import dev.catsradar.domain.analytics.AnalyticsEvent.DeleteUndone
 import dev.catsradar.domain.analytics.AnalyticsEvent.ImportUndone
+import dev.catsradar.domain.analytics.AnalyticsEvent.LocationSetByHand
 import dev.catsradar.domain.analytics.AnalyticsEvent.PhotoAttached
 import dev.catsradar.domain.analytics.AnalyticsEvent.PhotosImported
 import dev.catsradar.domain.analytics.AnalyticsEvent.ScreenViewed
@@ -37,6 +38,7 @@ fun AnalyticsEvent.encode(): EncodedEvent = when (this) {
     TallyUndone -> EncodedEvent("tally_undone")
     is CoatSet -> EncodedEvent("coat_set", texts = mapOf("coat" to (coat?.token ?: NO_COAT)))
     is PhotoAttached -> EncodedEvent("photo_attached", texts = mapOf("source" to source.token))
+    LocationSetByHand -> EncodedEvent("location_set_by_hand")
     is PhotosImported -> EncodedEvent(
         "photos_imported",
         counts = mapOf("added" to added.toLong(), "duplicates" to duplicates.toLong(), "failed" to failed.toLong()),

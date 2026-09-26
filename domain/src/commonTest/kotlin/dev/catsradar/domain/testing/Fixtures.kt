@@ -65,9 +65,13 @@ fun Encounter.withPhoto(
             sourceDigest = sourceDigest,
             deviceId = deviceId,
             addedAt = createdAt,
+            shotId = null,
         ),
     ),
 )
+
+fun Encounter.inShotOf(firstPhotoId: String): Encounter =
+    copy(photos = photos.map { it.copy(shotId = firstPhotoId) })
 
 fun areaOf(encounter: Encounter, parent: RegionKey.AreaParent): RegionKey.Area =
     RegionKey.Area(Geohash.prefix(encounter.geohash!!, Tuning.AREA_PRECISION), parent)

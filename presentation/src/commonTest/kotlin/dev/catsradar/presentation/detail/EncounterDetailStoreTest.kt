@@ -604,6 +604,33 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `set on map opens the picker for a cat with no location`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.SetLocationClicked)
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenLocationPicker, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a cat with a location opens no picker`() = runTest(mainDispatcher) {
+        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.EXIF).copy(lat = 41.39, lon = 2.17)
+        repository.insert(located)
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.SetLocationClicked)
+            runCurrent()
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `a cat that is not on the map opens no map`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED).copy(lat = 123.4, lon = 2.17))
         val store = newStore()
