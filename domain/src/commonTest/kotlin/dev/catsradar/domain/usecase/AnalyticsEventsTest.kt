@@ -9,6 +9,7 @@ import dev.catsradar.domain.analytics.AnalyticsEvent.CatsDeleted
 import dev.catsradar.domain.analytics.AnalyticsEvent.CoatSet
 import dev.catsradar.domain.analytics.AnalyticsEvent.DeleteUndone
 import dev.catsradar.domain.analytics.AnalyticsEvent.ImportUndone
+import dev.catsradar.domain.analytics.AnalyticsEvent.LocationSetByHand
 import dev.catsradar.domain.analytics.AnalyticsEvent.PhotoAttached
 import dev.catsradar.domain.analytics.AnalyticsEvent.PhotosImported
 import dev.catsradar.domain.analytics.AnalyticsEvent.TallyUndone
@@ -147,6 +148,18 @@ class AnalyticsEventsTest {
         setCoat("no-such-cat", CatCoat.GREY)
 
         assertLogged(CoatSet(CatCoat.BLACK), CoatSet(null))
+    }
+
+    @Test
+    fun `a location set by hand is logged once, a refused one logs nothing`() = runTest {
+        val cat = storedTally()
+        val setLocation = SetLocationByHand(encounters, placeCells, clock, analytics)
+
+        setLocation(cat.id, 41.39864, 2.17842)
+        setLocation(cat.id, 41.39864, 2.17842)
+        setLocation("no-such-cat", 41.39864, 2.17842)
+
+        assertLogged(LocationSetByHand)
     }
 
     private fun attachPhoto() = AttachPhoto(

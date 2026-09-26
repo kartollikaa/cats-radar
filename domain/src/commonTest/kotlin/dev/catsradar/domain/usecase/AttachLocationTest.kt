@@ -4,6 +4,7 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.location.LocationFix
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.testing.FakeClock
@@ -356,4 +357,38 @@ class AttachLocationTest {
         assertEquals(LocationSource.NONE, updated.locationSource)
         assertNull(updated.lat)
     }
+
+    @Test
+    fun `a fix landing after the cat was placed by hand neither replaces the point nor backfills the outing`() =
+        runTest {
+            val repository = FakeEncounterRepository()
+            repository.insert(encounterFixture(id = "target", occurredAt = Now))
+            repository.insert(encounterFixture(id = "earlier", occurredAt = Now - 5.minutes))
+            val byHand = LocationStamp(
+                lat = 41.39864,
+                lon = 2.17842,
+                accuracyMeters = null,
+                locationSource = LocationSource.MANUAL,
+                locationFixedAt = Now,
+                geohash = "sp3e3qe7",
+                placeCellId = "sp3e3q",
+                updatedAt = Now,
+            )
+            val placedWhileWaiting = object : LocationProvider {
+                override suspend fun getCurrentFix(timeout: Duration): LocationFix? {
+                    repository.attachLocation("target", byHand)
+                    return Fix
+                }
+
+                override suspend fun lastKnown(): LocationFix? = null
+                override fun trackFixes(): Flow<LocationFix> = emptyFlow()
+            }
+
+            AttachLocation(repository, placeCells, placedWhileWaiting, FakeClock(Now))("target")
+
+            val target = encounter(repository, "target")
+            assertEquals(LocationSource.MANUAL, target.locationSource)
+            assertEquals(byHand.lat, target.lat)
+            assertEquals(LocationSource.NONE, encounter(repository, "earlier").locationSource)
+        }
 }

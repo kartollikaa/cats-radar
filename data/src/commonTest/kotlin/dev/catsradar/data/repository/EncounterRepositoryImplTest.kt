@@ -80,6 +80,16 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
+    fun attachLocationReportsWhetherTheDaoChangedTheRow() = runTest {
+        val stamp = distinctLocationStamp()
+
+        assertEquals(true, repository.attachLocation("id-1", stamp))
+
+        dao.attachLocationRows = 0
+        assertEquals(false, repository.attachLocation("id-1", stamp))
+    }
+
+    @Test
     fun addPhotoHandsThePhotoOverStampedWithItsOwnTimeAndReportsWhetherItWasWritten() = runTest {
         val photo = distinctEncounter().cover!!
 
