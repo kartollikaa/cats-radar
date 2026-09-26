@@ -43,6 +43,11 @@ internal fun handleEncounterDetailEffect(
     }
 }
 
+// A shot naming no cat is dropped: a photo on a guessed cat can never be removed.
+internal fun dispatchCameraShot(shot: CameraShot, dispatch: (EncounterDetailIntent) -> Unit) {
+    shot.catId?.let { dispatch(EncounterDetailIntent.PhotoTaken(it, shot.uri)) }
+}
+
 @Composable
 internal fun EncounterDetailDestination(
     key: EncounterDetail,
@@ -57,10 +62,7 @@ internal fun EncounterDetailDestination(
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
     val currentOnOpenMap by rememberUpdatedState(onOpenMap)
-    // A shot with no cat came from a queue that lost it and has nothing to attach to.
-    val cameraLauncher = rememberCameraLauncher { shot ->
-        shot.catId?.let { store.dispatch(EncounterDetailIntent.PhotoTaken(it, shot.uri)) }
-    }
+    val cameraLauncher = rememberCameraLauncher { shot -> dispatchCameraShot(shot, store::dispatch) }
     val photoPicker = rememberCatPhotosPicker { picked ->
         store.dispatch(EncounterDetailIntent.PhotosPicked(picked.catId, picked.uris))
     }

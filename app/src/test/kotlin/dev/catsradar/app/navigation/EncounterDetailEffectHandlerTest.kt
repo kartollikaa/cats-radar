@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import dev.catsradar.presentation.detail.EncounterDetailEffect
+import dev.catsradar.presentation.detail.EncounterDetailIntent
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -49,5 +50,26 @@ class EncounterDetailEffectHandlerTest {
             ),
             calls,
         )
+    }
+}
+
+class CameraShotDispatchTest {
+    private val dispatched = mutableListOf<EncounterDetailIntent>()
+
+    @Test
+    fun `a shot naming a cat dispatches PhotoTaken for it`() {
+        dispatchCameraShot(CameraShot(catId = "cat-1", uri = "content://captures/1"), dispatched::add)
+
+        assertEquals(
+            listOf<EncounterDetailIntent>(EncounterDetailIntent.PhotoTaken("cat-1", "content://captures/1")),
+            dispatched,
+        )
+    }
+
+    @Test
+    fun `a shot naming no cat dispatches nothing`() {
+        dispatchCameraShot(CameraShot(catId = null, uri = "content://captures/1"), dispatched::add)
+
+        assertEquals(emptyList<EncounterDetailIntent>(), dispatched)
     }
 }
