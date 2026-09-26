@@ -50,6 +50,7 @@ class SettingsStoreTest {
         aboutStateMapper = AboutStateMapper(),
         checkForUpdate = CheckForUpdate(updateSource, pixelBuildInfo.app),
         updateStateMapper = UpdateStateMapper(),
+        installed = pixelBuildInfo.app,
     )
 
     @Test
@@ -335,12 +336,22 @@ class SettingsStoreTest {
             }
         }
 
+    private val newerApk = ReleasePackage("https://x/cats-radar-1.5.0-beta.apk", 13_682_980, null)
+    private val newerFeed = UpdateSource {
+        ReleaseFeed.Listed(listOf(PublishedRelease("v1.5.0-beta", newerApk)))
+    }
+    private val downloaded = SettingsIntent.Update.DownloadFinished(
+        "run-1",
+        "1.5.0-beta",
+        "/cache/updates/1.5.0-beta.apk"
+    )
+
     @Test
     fun `before any check the updates section offers one`() = runTest(mainDispatcher) {
         val store = newStore()
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.Idle), store.state.value.update)
+        assertEquals(UpdateState(UpdateStatus.Idle, UpdateAction.Check), store.state.value.update)
     }
 
     @Test
@@ -348,22 +359,26 @@ class SettingsStoreTest {
         val answer = CompletableDeferred<ReleaseFeed>()
         val store = settingsStore(updateSource = UpdateSource { answer.await() })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.Checking), store.state.value.update)
-        assertEquals(false, store.state.value.update.checkEnabled)
+        assertEquals(UpdateState(UpdateStatus.Checking, UpdateAction.Busy), store.state.value.update)
     }
 
     @Test
-    fun `a newer release is reported as available`() = runTest(mainDispatcher) {
-        val newer = PublishedRelease("v1.5.0-beta", ReleasePackage("https://x/a.apk", 1, null))
-        val store = settingsStore(updateSource = UpdateSource { ReleaseFeed.Listed(listOf(newer)) })
+    fun `a newer release starts downloading at once`() = runTest(mainDispatcher) {
+        val store = settingsStore(updateSource = newerFeed)
+        store.effects.test {
+            store.dispatch(SettingsIntent.Update.CheckClicked)
+            runCurrent()
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
-        runCurrent()
-
-        assertEquals(UpdateState(UpdateStatus.Available("1.5.0-beta")), store.state.value.update)
+            assertEquals(SettingsEffect.StartUpdateDownload("1.5.0-beta", newerApk), awaitItem())
+            assertEquals(
+                UpdateState(UpdateStatus.DownloadStarting("1.5.0-beta"), UpdateAction.Busy),
+                store.state.value.update,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -371,21 +386,23 @@ class SettingsStoreTest {
         val same = PublishedRelease("v1.4.1-beta", ReleasePackage("https://x/a.apk", 1, null))
         val store = settingsStore(updateSource = UpdateSource { ReleaseFeed.Listed(listOf(same)) })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.UpToDate), store.state.value.update)
+        assertEquals(UpdateState(UpdateStatus.UpToDate, UpdateAction.Check), store.state.value.update)
     }
 
     @Test
     fun `a failed check says why and offers another`() = runTest(mainDispatcher) {
         val store = settingsStore(updateSource = UpdateSource { ReleaseFeed.Failed(FeedFailure.OFFLINE) })
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
 
-        assertEquals(UpdateState(UpdateStatus.Failed(UpdateFailure.OFFLINE)), store.state.value.update)
-        assertEquals(true, store.state.value.update.checkEnabled)
+        assertEquals(
+            UpdateState(UpdateStatus.Failed(UpdateFailure.OFFLINE), UpdateAction.Check),
+            store.state.value.update,
+        )
     }
 
     @Test
@@ -398,12 +415,164 @@ class SettingsStoreTest {
         }
         val store = settingsStore(updateSource = counting)
 
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
-        store.dispatch(SettingsIntent.UpdateCheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
         runCurrent()
         answer.complete(ReleaseFeed.Listed(emptyList()))
         runCurrent()
 
         assertEquals(1, asked)
+    }
+
+    @Test
+    fun `a tap while a download runs starts no second one`() = runTest(mainDispatcher) {
+        val store = settingsStore(updateSource = newerFeed)
+        store.effects.test {
+            store.dispatch(SettingsIntent.Update.CheckClicked)
+            runCurrent()
+            awaitItem()
+
+            store.dispatch(SettingsIntent.Update.CheckClicked)
+            runCurrent()
+
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `download progress shows as a percentage`() = runTest(mainDispatcher) {
+        val store = newStore()
+
+        store.dispatch(SettingsIntent.Update.DownloadProgressed("1.5.0-beta", 0.45f))
+        runCurrent()
+
+        assertEquals(UpdateStatus.Downloading("1.5.0-beta", percent = 45), store.state.value.update.status)
+    }
+
+    @Test
+    fun `a download this screen started installs as soon as it finishes`() = runTest(mainDispatcher) {
+        val store = settingsStore(updateSource = newerFeed)
+        store.effects.test {
+            store.dispatch(SettingsIntent.Update.CheckClicked)
+            runCurrent()
+            awaitItem()
+
+            store.dispatch(downloaded)
+            runCurrent()
+
+            assertEquals(SettingsEffect.InstallUpdate("/cache/updates/1.5.0-beta.apk"), awaitItem())
+            assertEquals(
+                UpdateState(UpdateStatus.Installing("1.5.0-beta"), UpdateAction.Busy),
+                store.state.value.update,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a download found finished by a newly opened screen waits for a tap`() = runTest(mainDispatcher) {
+        val store = newStore()
+        store.effects.test {
+            store.dispatch(downloaded)
+            runCurrent()
+
+            expectNoEvents()
+            assertEquals(
+                UpdateState(UpdateStatus.ReadyToInstall("1.5.0-beta"), UpdateAction.Install("1.5.0-beta")),
+                store.state.value.update,
+            )
+
+            store.dispatch(SettingsIntent.Update.InstallClicked)
+            runCurrent()
+
+            assertEquals(SettingsEffect.InstallUpdate("/cache/updates/1.5.0-beta.apk"), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a finished download reported again is not installed twice`() = runTest(mainDispatcher) {
+        val store = settingsStore(updateSource = newerFeed)
+        store.effects.test {
+            store.dispatch(SettingsIntent.Update.CheckClicked)
+            runCurrent()
+            awaitItem()
+
+            store.dispatch(downloaded)
+            store.dispatch(downloaded)
+            runCurrent()
+
+            awaitItem()
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a package of the installed version is not offered`() = runTest(mainDispatcher) {
+        val store = newStore()
+
+        store.dispatch(SettingsIntent.Update.DownloadFinished("run-0", "1.4.1-beta", "/cache/updates/1.4.1-beta.apk"))
+        runCurrent()
+
+        assertEquals(UpdateState(UpdateStatus.Idle, UpdateAction.Check), store.state.value.update)
+    }
+
+    @Test
+    fun `a cancelled install goes back to offering it`() = runTest(mainDispatcher) {
+        val store = newStore()
+        store.dispatch(downloaded)
+        store.dispatch(SettingsIntent.Update.InstallClicked)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.Update.InstallFinished(InstallOutcome.CANCELLED))
+        runCurrent()
+
+        assertEquals(
+            UpdateState(UpdateStatus.ReadyToInstall("1.5.0-beta"), UpdateAction.Install("1.5.0-beta")),
+            store.state.value.update,
+        )
+    }
+
+    @Test
+    fun `a failed install says so and offers a new check`() = runTest(mainDispatcher) {
+        val store = newStore()
+        store.dispatch(downloaded)
+        store.dispatch(SettingsIntent.Update.InstallClicked)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.Update.InstallFinished(InstallOutcome.FAILED))
+        runCurrent()
+
+        assertEquals(
+            UpdateState(UpdateStatus.InstallFailed("1.5.0-beta"), UpdateAction.Check),
+            store.state.value.update,
+        )
+    }
+
+    @Test
+    fun `a download that fails while it is shown says so and offers a new check`() = runTest(mainDispatcher) {
+        val store = settingsStore(updateSource = newerFeed)
+        store.dispatch(SettingsIntent.Update.CheckClicked)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.Update.DownloadFailed("run-1"))
+        runCurrent()
+
+        assertEquals(
+            UpdateState(UpdateStatus.Failed(UpdateFailure.DOWNLOAD_FAILED), UpdateAction.Check),
+            store.state.value.update,
+        )
+    }
+
+    @Test
+    fun `an old failed download read back by a newly opened screen shows nothing`() = runTest(mainDispatcher) {
+        val store = newStore()
+
+        store.dispatch(SettingsIntent.Update.DownloadFailed("run-0"))
+        runCurrent()
+
+        assertEquals(UpdateState(UpdateStatus.Idle, UpdateAction.Check), store.state.value.update)
     }
 }

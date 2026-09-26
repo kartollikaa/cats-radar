@@ -5,6 +5,7 @@ import dev.catsradar.domain.platform.UpdateSource
 import dev.catsradar.domain.update.AppVersion
 import dev.catsradar.domain.update.ReleaseFeed
 import dev.catsradar.domain.update.UpdateCheck
+import dev.catsradar.domain.update.isOlderThan
 
 class CheckForUpdate(
     private val updateSource: UpdateSource,
@@ -21,8 +22,7 @@ class CheckForUpdate(
                     UpdateCheck.Available(version, apk)
                 }
                 .maxByOrNull { it.version }
-            val current = AppVersion.parse(installed.versionName)
-            if (newest != null && (current == null || newest.version > current)) newest else UpdateCheck.UpToDate
+            if (newest != null && installed.isOlderThan(newest.version)) newest else UpdateCheck.UpToDate
         }
     }
 }

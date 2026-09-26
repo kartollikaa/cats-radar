@@ -21,4 +21,12 @@ class RequestedPermissionsTest {
 
         assertContains(info.requestedPermissions.orEmpty().toList(), Manifest.permission.ACCESS_MEDIA_LOCATION)
     }
+
+    // Undeclared, Android refuses the update's install session without asking the user.
+    @Test
+    fun theAppMayAskToInstallItsOwnUpdates() {
+        val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+
+        assertContains(info.requestedPermissions.orEmpty().toList(), Manifest.permission.REQUEST_INSTALL_PACKAGES)
+    }
 }
