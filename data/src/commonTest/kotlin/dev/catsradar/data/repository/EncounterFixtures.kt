@@ -30,6 +30,7 @@ internal fun distinctEncounter(): Encounter = Encounter(
             sourceDigest = "digest-1",
             deviceId = "device-1",
             addedAt = Instant.parse("2026-01-01T03:00:00Z"),
+            shotId = "shot-1",
         ),
     ),
     lat = 10.111,
@@ -77,9 +78,13 @@ internal fun Encounter.withPhoto(
             sourceDigest = sourceDigest,
             deviceId = deviceId,
             addedAt = createdAt,
+            shotId = null,
         ),
     ),
 )
+
+internal fun Encounter.inShotOf(firstPhotoId: String): Encounter =
+    copy(photos = photos.map { it.copy(shotId = firstPhotoId) })
 
 /** The cat as its row and photo rows read back together. */
 internal fun Encounter.toRelation(): EncounterWithPhotos = EncounterWithPhotos(toEntity(), photos.map { it.toEntity() })

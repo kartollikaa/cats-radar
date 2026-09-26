@@ -12,6 +12,7 @@ import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.FollowWalkingMode
 import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
+import dev.catsradar.domain.usecase.LocatePhone
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
@@ -34,11 +35,13 @@ import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
+import dev.catsradar.domain.usecase.SetLocationByHand
 import dev.catsradar.domain.usecase.StartWalk
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
+import dev.catsradar.domain.usecase.WhereToLook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
@@ -97,6 +100,9 @@ val domainModule = module {
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
     factory { PurgeDeleted(encounterRepository = get(), photoStorage = get(), clock = get()) }
     factoryOf(::SetCoat)
+    factoryOf(::SetLocationByHand)
+    factoryOf(::WhereToLook)
+    factoryOf(::LocatePhone)
     factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::ResolveGalleryLink)

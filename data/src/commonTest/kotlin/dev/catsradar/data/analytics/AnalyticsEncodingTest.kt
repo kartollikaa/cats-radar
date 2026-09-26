@@ -9,6 +9,7 @@ import dev.catsradar.domain.analytics.AnalyticsEvent.CatsDeleted
 import dev.catsradar.domain.analytics.AnalyticsEvent.CoatSet
 import dev.catsradar.domain.analytics.AnalyticsEvent.DeleteUndone
 import dev.catsradar.domain.analytics.AnalyticsEvent.ImportUndone
+import dev.catsradar.domain.analytics.AnalyticsEvent.LocationSetByHand
 import dev.catsradar.domain.analytics.AnalyticsEvent.PhotoAttached
 import dev.catsradar.domain.analytics.AnalyticsEvent.PhotosImported
 import dev.catsradar.domain.analytics.AnalyticsEvent.ScreenViewed
@@ -31,7 +32,8 @@ private const val MAX_TEXT_VALUE = 100
 
 // A new event type stops compiling here; its new branch is the reminder to add its samples to everyEvent.
 private fun sampled(event: AnalyticsEvent): Unit = when (event) {
-    is ScreenViewed, is CatLogged, TallyUndone, is CoatSet, is PhotoAttached, is PhotosImported, is ImportUndone,
+    is ScreenViewed, is CatLogged, TallyUndone, is CoatSet, is PhotoAttached, LocationSetByHand, is PhotosImported,
+    is ImportUndone,
     is CatsDeleted, is DeleteUndone, BackupExported, is BackupImported, is BackupRejected, WalkStarted, is WalkEnded,
     -> Unit
 }
@@ -46,6 +48,7 @@ private val everyEvent: List<AnalyticsEvent> =
         BackupRejection.entries.map(::BackupRejected) +
         listOf(
             TallyUndone,
+            LocationSetByHand,
             PhotosImported(added = 12, duplicates = 3, failed = 1),
             ImportUndone(12),
             CatsDeleted(4),
@@ -65,6 +68,7 @@ class AnalyticsEncodingTest {
             AnalyticsScreen.ENCOUNTERS to "encounters",
             AnalyticsScreen.ENCOUNTER_DETAIL to "encounter_detail",
             AnalyticsScreen.PHOTO_VIEWER to "photo_viewer",
+            AnalyticsScreen.LOCATION_PICKER to "location_picker",
             AnalyticsScreen.STATISTICS to "statistics",
             AnalyticsScreen.REGIONS to "regions",
             AnalyticsScreen.MAP to "map",
@@ -97,6 +101,7 @@ class AnalyticsEncodingTest {
             ),
             CoatSet(null) to EncodedEvent("coat_set", texts = mapOf("coat" to "none")),
             PhotoAttached(PhotoSource.GALLERY) to EncodedEvent("photo_attached", texts = mapOf("source" to "gallery")),
+            LocationSetByHand to EncodedEvent("location_set_by_hand"),
             PhotosImported(added = 12, duplicates = 3, failed = 1) to EncodedEvent(
                 "photos_imported",
                 counts = mapOf("added" to 12L, "duplicates" to 3L, "failed" to 1L),

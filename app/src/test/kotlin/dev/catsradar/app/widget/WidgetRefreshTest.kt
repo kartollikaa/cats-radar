@@ -100,7 +100,7 @@ private class FakeTodayRepository : EncounterRepository {
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
-    override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean =
         throw NotImplementedError("unused by this test")
 
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =

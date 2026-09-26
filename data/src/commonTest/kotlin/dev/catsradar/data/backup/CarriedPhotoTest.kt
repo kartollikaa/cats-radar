@@ -20,6 +20,7 @@ class CarriedPhotoTest {
                 sourceDigest = "digest-1",
                 deviceId = "device-1",
                 addedAt = CREATED,
+                shotId = null,
             ),
             carried(photoPath = "photos/a.jpg"),
         )
