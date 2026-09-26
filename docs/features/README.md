@@ -47,5 +47,7 @@ a document nobody updates is worse than none.
 - `analytics.md` — crash reports to Crashlytics, screen views and product events to Analytics: the
   event catalogue, what never leaves the phone, no advertising, the failures the app recovers from that are still reported, and why every
   build reports.
+- `build-info.md` — Settings' About section: the version, build, commit and device, and the
+  report its copy button puts on the clipboard.
 - `quality-gates.md` — what `./gradlew check` enforces: detekt, Android Lint, and the Konsist
   architecture tests.

@@ -8,6 +8,7 @@ import androidx.room3.RoomDatabase
 import androidx.room3.RoomDatabaseConstructor
 
 internal const val DATABASE_FILE_NAME = "cats_radar.db"
+const val CATS_DATABASE_VERSION = 5
 
 @Database(
     entities = [
@@ -17,7 +18,7 @@ internal const val DATABASE_FILE_NAME = "cats_radar.db"
         WalkEntity::class,
         TrackPointEntity::class,
     ],
-    version = 5,
+    version = CATS_DATABASE_VERSION,
     autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 // @ColumnTypeConverter(s), not Room 2.x's @TypeConverter(s): the old names compile but fail KSP

@@ -1,15 +1,19 @@
 package dev.catsradar.presentation.settings
 
 import androidx.lifecycle.viewModelScope
+import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.presentation.ReportedRun
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class SettingsStore(
     private val settingsRepository: SettingsRepository,
+    private val buildInfoReader: BuildInfoReader,
+    private val aboutStateMapper: AboutStateMapper,
 ) : Store<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
 
     private val backupRun = ReportedRun(settingsRepository, ReportedJob.BACKUP)
@@ -21,6 +25,10 @@ class SettingsStore(
         settingsRepository.encountersGrid()
             .onEach { enabled -> setState { copy(encountersGrid = enabled) } }
             .launchIn(viewModelScope)
+        viewModelScope.launch {
+            val about = aboutStateMapper.map(buildInfoReader.read())
+            setState { copy(about = about) }
+        }
     }
 
     override suspend fun handle(intent: SettingsIntent) {
@@ -31,6 +39,9 @@ class SettingsStore(
                 settingsRepository.setSaveOriginalsToGallery(intent.enabled)
             is SettingsIntent.EncountersGridToggled -> settingsRepository.setEncountersGrid(intent.enabled)
             is SettingsIntent.Backup -> handleBackup(intent)
+            // Read again rather than kept: the locale or the zone may have changed since the screen opened.
+            SettingsIntent.BuildInfoCopyClicked ->
+                emit(SettingsEffect.CopyBuildInfo(aboutStateMapper.report(buildInfoReader.read())))
         }
     }
 

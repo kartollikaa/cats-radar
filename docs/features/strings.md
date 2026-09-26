@@ -36,6 +36,14 @@ module enables `androidResources` for exactly this — and the formatter takes a
 them. Everything else it formats comes from the platform's own locale data: the calendar date and
 the wall-clock time go through `java.time` with the device locale, which needs no resource.
 
+## The build report
+
+The report the About section copies (see [build-info.md](./build-info.md)) is built in
+`AboutStateMapper` with English keys — `Build type:`, `Commit:` — in every language. It is not UI
+text: a developer reads it, often in a chat or an issue next to reports from other phones, and a key
+translated into the phone's language would make each one read differently. The section's on-screen
+labels are resources like everything else.
+
 ## Counting things
 
 A phrase with a number in it is a `<plurals>`, never a `<string>` with `%d` spliced in. English

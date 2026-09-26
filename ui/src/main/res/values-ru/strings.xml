@@ -262,6 +262,15 @@
     </plurals>
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_about_version">Версия</string>
+    <string name="settings_about_build">Сборка</string>
+    <string name="settings_about_device">Устройство</string>
+    <string name="settings_about_android">Android</string>
+    <string name="settings_about_android_value">%1$s (API %2$d)</string>
+    <string name="settings_about_copy">Скопировать данные о сборке</string>
+    <string name="settings_about_copied">Данные о сборке скопированы</string>
+    <string name="settings_about_clip_label">Данные о сборке Cats Radar</string>
     <string name="counter_walk_start">Начать прогулку</string>
     <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
     <string name="counter_walk_stop">Закончить прогулку</string>
