@@ -39,6 +39,7 @@ import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
 import dev.catsradar.data.settings.createSettingsRepository
+import dev.catsradar.data.update.GitHubReleaseFeed
 import dev.catsradar.domain.about.InstalledApp
 import dev.catsradar.domain.analytics.Analytics
 import dev.catsradar.domain.platform.BackupReader
@@ -58,6 +59,7 @@ import dev.catsradar.domain.platform.LocationProvider
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.ReverseGeocoder
 import dev.catsradar.domain.platform.SourceFileTime
+import dev.catsradar.domain.platform.UpdateSource
 import dev.catsradar.domain.platform.WalkRecordingState
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
@@ -130,6 +132,12 @@ val dataModule = module {
         )
     }
     single<BuildInfoReader> { AndroidBuildInfoReader(androidContext(), get()) }
+    single<UpdateSource> {
+        GitHubReleaseFeed(
+            repository = BuildConfig.UPDATE_REPOSITORY,
+            userAgent = "CatsRadar/${BuildConfig.VERSION_NAME}",
+        )
+    }
 }
 
 // A preferences file's name is where its data lives: renaming one loses everything stored in it.

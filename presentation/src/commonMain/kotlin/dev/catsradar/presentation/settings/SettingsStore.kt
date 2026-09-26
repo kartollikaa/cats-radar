@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.usecase.CheckForUpdate
 import dev.catsradar.presentation.ReportedRun
 import dev.catsradar.presentation.Store
 import kotlinx.coroutines.flow.launchIn
@@ -14,6 +15,8 @@ class SettingsStore(
     private val settingsRepository: SettingsRepository,
     private val buildInfoReader: BuildInfoReader,
     private val aboutStateMapper: AboutStateMapper,
+    private val checkForUpdate: CheckForUpdate,
+    private val updateStateMapper: UpdateStateMapper,
 ) : Store<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
 
     private val backupRun = ReportedRun(settingsRepository, ReportedJob.BACKUP)
@@ -42,7 +45,15 @@ class SettingsStore(
             // Read again rather than kept: the locale or the zone may have changed since the screen opened.
             SettingsIntent.BuildInfoCopyClicked ->
                 emit(SettingsEffect.CopyBuildInfo(aboutStateMapper.report(buildInfoReader.read())))
+            SettingsIntent.UpdateCheckClicked -> checkForUpdates()
         }
+    }
+
+    private suspend fun checkForUpdates() {
+        if (state.value.update.status == UpdateStatus.Checking) return
+        setState { copy(update = updateStateMapper.checking()) }
+        val result = checkForUpdate()
+        setState { copy(update = updateStateMapper.map(result)) }
     }
 
     private suspend fun handleBackup(intent: SettingsIntent.Backup) {
