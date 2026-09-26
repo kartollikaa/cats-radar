@@ -188,9 +188,8 @@ come back as separate cats, and every test that looks only at cats would stay gr
   archive says format 5, so a format 4 reader refuses it
   (`ZipBackupArchiveTest.anArchiveSaysItIsFormatFiveSoAnAppBeforeShotsRefusesIt`).
 - **Merging across phones.** Each of these is a `BackupMerge` test:
-  - a phone holding the first two cats of a shot imports an archive with the third, and the third
-    joins the shot;
-  - a cat added on another phone with **+** joins the shot here;
+  - a phone holding the first two cats of a shot imports an archive with the third, logged on another
+    install as a cat added there with **+** would be, and the third joins the shot;
   - a first cat deleted here after the export stays deleted, and its shot's other cats stay grouped;
   - an archive holding only a later cat of a shot restores it grouped by the missing first row's id.
 - **Files.**

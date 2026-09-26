@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
+import dev.catsradar.data.repository.inShotOf
 import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.backup.BackupContents
 import dev.catsradar.domain.model.CatCoat
@@ -107,7 +108,10 @@ class ZipBackupArchiveTest {
     @Test
     fun everyFieldOfEveryRowSurvivesTheRoundTrip() = runTest {
         val contents = BackupContents(
-            encounters = listOf(encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg"), encounter("b")),
+            encounters = listOf(
+                encounter("a", photoPath = "a.jpg", thumbPath = "a_thumb.jpg").inShotOf("first-of-a-shot"),
+                encounter("b"),
+            ),
             placeCells = listOf(placeCell()),
         )
         val path = target()

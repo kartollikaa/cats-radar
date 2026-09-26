@@ -209,6 +209,10 @@ class BackupMergeTest {
 
         val merged = BackupMerge.merge(local = BackupContents(), imported = BackupContents(encounters = listOf(third)))
 
+        assertEquals(
+            MergeResult(encounters = listOf(third.copy(photos = emptyList())), photos = third.photos, added = 1),
+            merged,
+        )
         assertEquals(listOf("first"), merged.photos.map { it.shotId })
     }
 
