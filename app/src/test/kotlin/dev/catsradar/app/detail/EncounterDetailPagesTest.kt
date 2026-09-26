@@ -3,9 +3,6 @@ package dev.catsradar.app.detail
 import android.content.Context
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -13,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -51,7 +47,7 @@ class EncounterDetailPagesTest {
         compose.setContent {
             CatsRadarTheme {
                 EncounterDetailScreen(
-                    state = secondOnScreen(unlocated),
+                    state = middleOnScreen(unlocated),
                     onPhotoClick = { taps += "photo ${it.catId} ${it.photoId}" },
                     onTakePhotoClick = { taps += "take $it" },
                     onPickPhotoClick = { taps += "pick $it" },
@@ -62,14 +58,13 @@ class EncounterDetailPagesTest {
         }
         compose.onNodeWithText(SECOND_TIME).assertExists()
         compose.onNodeWithText(FIRST_TIME).assertDoesNotExist()
+        compose.onNodeWithText(THIRD_TIME).assertDoesNotExist()
 
         compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description)).performClick()
         compose.onNodeWithText(context.getString(R.string.detail_take_photo)).performClick()
         compose.onNodeWithText(context.getString(R.string.detail_pick_photo)).performClick()
         compose.onNodeWithText(context.getString(R.string.detail_set_location)).performScrollTo().performClick()
-        // The coat cell sits in CoatPicker's own horizontal row: performScrollTo() on it scrolls
-        // that row, not the screen's vertical list, so the list is scrolled directly first.
-        scrollListToEnd()
+        compose.scrollListToEnd()
         compose.onNodeWithText(context.getString(R.string.coat_ginger)).performClick()
 
         assertEquals(
@@ -82,10 +77,10 @@ class EncounterDetailPagesTest {
     fun `a tap on the map of the cat on screen names that cat`() {
         val taps = mutableListOf<String>()
         compose.setContent {
-            // As in EncounterDetailScreenTest's show(): the map cannot start on the JVM.
+            // The map cannot start on the JVM.
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 CatsRadarTheme {
-                    EncounterDetailScreen(state = secondOnScreen(located), onCoordinatesClick = { taps += it })
+                    EncounterDetailScreen(state = middleOnScreen(located), onCoordinatesClick = { taps += it })
                 }
             }
         }
@@ -95,21 +90,16 @@ class EncounterDetailPagesTest {
         assertEquals(listOf("cat-2"), taps)
     }
 
-    private fun scrollListToEnd() {
-        compose.onNode(scrollsVertically).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 10_000f) }
-    }
-
-    private val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
-
-    private fun secondOnScreen(second: CatPage) = EncounterDetailState.Loaded(
-        pages = persistentListOf(first, second),
-        currentId = second.id,
+    private fun middleOnScreen(page: CatPage) = EncounterDetailState.Loaded(
+        pages = persistentListOf(first, page, third),
+        currentId = page.id,
         currentNumber = 2,
     )
 
     private companion object {
         const val FIRST_TIME = "14:32"
         const val SECOND_TIME = "14:25"
+        const val THIRD_TIME = "13:58"
 
         val first = CatPage(
             id = "cat-1",
@@ -129,6 +119,16 @@ class EncounterDetailPagesTest {
             coordinatesLabel = null,
             accuracyMeters = null,
             photos = persistentListOf(DetailPhoto(id = "photo-2", path = "/data/photos/photo-2.jpg")),
+            setsLocation = true,
+        )
+
+        val third = CatPage(
+            id = "cat-3",
+            dayLabel = "Today",
+            timeLabel = THIRD_TIME,
+            location = LocationLabel.NONE,
+            coordinatesLabel = null,
+            accuracyMeters = null,
             setsLocation = true,
         )
 

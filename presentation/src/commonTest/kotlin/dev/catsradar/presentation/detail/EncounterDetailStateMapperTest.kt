@@ -160,16 +160,21 @@ class EncounterDetailStateMapperTest {
 
     @Test
     fun `a window maps to one page per cat, newest first, and names the cat on screen and its position`() {
-        val older = encounterFixture("older", OCCURRED)
-        val newer = encounterFixture("newer", OCCURRED + 5.minutes).withPhoto(photoPath = "newer.jpg")
-        val window = OutingWindow(cats = listOf(newer, older), newer = null, older = null)
+        val oldest = encounterFixture("oldest", OCCURRED)
+        val middle = encounterFixture("middle", OCCURRED + 5.minutes)
+        val newest = encounterFixture("newest", OCCURRED + 10.minutes).withPhoto(photoPath = "newest.jpg")
+        val window = OutingWindow(cats = listOf(newest, middle, oldest), newer = null, older = null)
 
-        val state = mapper.map(window, currentId = "older", today = today)
+        val state = mapper.map(window, currentId = "middle", today = today)
 
         assertEquals(
             EncounterDetailState.Loaded(
-                pages = persistentListOf(mapper.page(newer, today), mapper.page(older, today)),
-                currentId = "older",
+                pages = persistentListOf(
+                    mapper.page(newest, today),
+                    mapper.page(middle, today),
+                    mapper.page(oldest, today),
+                ),
+                currentId = "middle",
                 currentNumber = 2,
             ),
             state,
