@@ -90,8 +90,9 @@ adb -s "$ANDROID_SERIAL" emu avd name
 bash .claude/skills/device-check/scripts/throwaway-avd.sh delete MyCheck 5612
 ```
 
-The helper copies configuration only, rejects a busy serial and verifies the AVD name before it
-kills anything. Always delete the disposable AVD after qemu exits.
+The helper copies configuration only, rejects occupied console/adb ports and a busy serial, and
+returns from `boot` only after the expected AVD reports `sys.boot_completed=1`. It verifies the AVD
+name again before it kills anything. Always delete the disposable AVD after qemu exits.
 
 For database/photo seeding, widget placement, map zoom and Firebase logcat checks, read
 [`references/device-recipes.md`](references/device-recipes.md).
