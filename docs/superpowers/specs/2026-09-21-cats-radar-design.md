@@ -113,9 +113,9 @@ returns to Counter; back from Counter exits.
 | `galleryUri` | String? | MediaStore URI of the original if it was saved to the gallery. Informational; may dangle if the user deletes it. |
 | `sourceDigest` | String? | SHA-256 of the bytes the source hands over — a redacted copy when the app may not see where photos were taken; duplicate imports are skipped on it. |
 | `lat`, `lon` | Double? | WGS84. Both null when no location. |
-| `accuracyMeters` | Float? | From the fix; null for EXIF. |
-| `locationSource` | enum `EXIF` \| `CURRENT_FIX` \| `LAST_KNOWN` \| `BACKFILLED` \| `NONE` | Which rung of §4.3 produced the coordinates. |
-| `locationFixedAt` | Long? | When the fix was actually taken. |
+| `accuracyMeters` | Float? | From the fix; null for EXIF and MANUAL. |
+| `locationSource` | enum `EXIF` \| `CURRENT_FIX` \| `LAST_KNOWN` \| `BACKFILLED` \| `MANUAL` \| `NONE` | Which rung of §4.3 produced the coordinates; `MANUAL` is a point the user set on a cat that had none. |
+| `locationFixedAt` | Long? | When the fix was actually taken; for MANUAL, when the point was saved. |
 | `geohash` | String? | Precision 8 (~38 m × 19 m). Coarser buckets are prefixes. |
 | `placeCellId` | String? | `geohash.take(PLACE_CELL_PRECISION)`; joins to `PlaceCell`. |
 | `deviceId` | String | Installation id, generated once. |

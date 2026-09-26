@@ -15,7 +15,7 @@ import kotlin.time.Instant
  * An archive whose own version is ahead of this one is refused rather than half-read: its rows may
  * carry fields this build would silently drop on the next export.
  */
-internal const val BACKUP_FORMAT_VERSION = 4
+internal const val BACKUP_FORMAT_VERSION = 5
 
 internal const val FIRST_FORMAT_WITH_WALKS = 2
 internal const val FIRST_FORMAT_WITH_PHOTO_LIST = 4
