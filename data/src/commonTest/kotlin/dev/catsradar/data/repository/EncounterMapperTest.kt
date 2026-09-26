@@ -53,17 +53,16 @@ class EncounterMapperTest {
     @Test
     fun thePhotosOfOneShotKeepTheirShotBothWays() {
         val rows = listOf(
-            photoRow(id = "p1", encounterId = "ginger", shotId = null),
+            photoRow(id = "p1", encounterId = "ginger", shotId = "p1"),
             photoRow(id = "p2", encounterId = "ginger-too", shotId = "p1"),
             photoRow(id = "p3", encounterId = "unseen", shotId = "p1"),
         )
 
         assertEquals(rows, rows.map { it.toDomain().toEntity() })
-        assertEquals(listOf(null, "p1", "p1"), rows.map { it.toDomain().shotId })
-        assertEquals(listOf("p1", "p1", "p1"), rows.map { it.toDomain().shot })
+        assertEquals(listOf("p1", "p1", "p1"), rows.map { it.toDomain().shotId })
     }
 
-    private fun photoRow(id: String, encounterId: String, shotId: String?) = EncounterPhotoEntity(
+    private fun photoRow(id: String, encounterId: String, shotId: String) = EncounterPhotoEntity(
         id = id,
         encounterId = encounterId,
         photoPath = "$id.jpg",

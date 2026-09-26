@@ -4,17 +4,14 @@ import android.Manifest
 import android.content.ContentResolver
 import android.net.Uri
 import androidx.activity.compose.LocalActivityResultRegistryOwner
-import androidx.activity.result.ActivityResultRegistry
-import androidx.activity.result.ActivityResultRegistryOwner
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.core.app.ActivityOptionsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.RecordingActivityResultRegistry
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +28,7 @@ class GalleryImportPickerTest {
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
-    private val registry = RecordingRegistry()
+    private val registry = RecordingActivityResultRegistry()
     private lateinit var picker: PhotoPickerLauncher
     private lateinit var resolver: ContentResolver
     private var picked: List<Uri>? = null
@@ -101,27 +98,5 @@ class GalleryImportPickerTest {
         }
 
         assertEquals(listOf(photo), resolver.persistedUriPermissions.map { it.uri })
-    }
-}
-
-private class RecordingRegistry : ActivityResultRegistry(), ActivityResultRegistryOwner {
-
-    class Launch(val requestCode: Int, val contract: ActivityResultContract<*, *>, val input: Any?)
-
-    val launches = mutableListOf<Launch>()
-
-    override val activityResultRegistry: ActivityResultRegistry get() = this
-
-    override fun <I, O> onLaunch(
-        requestCode: Int,
-        contract: ActivityResultContract<I, O>,
-        input: I,
-        options: ActivityOptionsCompat?,
-    ) {
-        launches += Launch(requestCode, contract, input)
-    }
-
-    fun <O> answer(result: O) {
-        dispatchResult(launches.last().requestCode, result)
     }
 }

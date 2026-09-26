@@ -95,7 +95,7 @@ is extracted so both screens build the label with one function.
 ### Intents and effects name their cat
 
 Every per-cat intent and effect carries the cat's id: `CoatPicked(catId, coat)`, `TakePhotoClicked(catId)`,
-`PickPhotoClicked(catId)`, `PhotoTaken(catId, uri)`, `PhotoPicked(catId, uri)`, `PhotoClicked(catId, photoId)`,
+`PickPhotoClicked(catId)`, `PhotoTaken(catId, uri)`, `PhotosPicked(catId, uris)`, `PhotoClicked(catId, photoId)`,
 `CoordinatesClicked(catId)`; `OpenCamera(catId)`, `OpenPhotoPicker(catId)`, `OpenPhoto(catId, photoId)`,
 `OpenMap(catId)`. The nav host opens the viewer and the map on that cat, never on `key.id`.
 

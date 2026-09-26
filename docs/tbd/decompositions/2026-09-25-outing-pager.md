@@ -12,8 +12,8 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | in-review |
-| P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | planned |
+| P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | merged |
+| P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | in-review |
 | P3 | The detail screen pages through its outing | One Store serves the outing; a pager keyed by cat id, the position in the bar, restore by id. | safe | ~800 | P1, P2 | planned |
 | P4 | A delete leaves the pager with an undo bar | The deleted cat leaves the pages, the neighbour shows, and an undo bar replaces the *removed* state except for the last cat. | safe | ~500 | P3 | planned |
 | P5a | Moving to the neighbouring outing | Neighbours in state, `OutingEdgeReleased`, the slide keyed by the jump counter, TalkBack's *Newer/Older outing*. | safe | ~400 | P3 | planned |
@@ -31,7 +31,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice P2 — The detail screen's intents and effects name their cat
-- **In scope:** the cat id on `CoatPicked`, `TakePhotoClicked`, `PickPhotoClicked`, `PhotoTaken`, `PhotoPicked`,
+- **In scope:** the cat id on `CoatPicked`, `TakePhotoClicked`, `PickPhotoClicked`, `PhotoTaken`, `PhotosPicked`,
   `PhotoClicked` (beside its `photoId`), `CoordinatesClicked` and on `OpenCamera`, `OpenPhotoPicker`, `OpenPhoto`
   (beside its `photoId`), `OpenMap`;
   `PendingCaptures` saving each target with its cat id, and restoring the old shape without inventing one; the
@@ -92,3 +92,6 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   #166; each cat page nests the photo pager, and a drag past a cat's last photo moves on to the next cat.
   P2 adds the cat's id beside M7's `photoId`. M8 (several photos at once) and P2 both change what the
   picker hands back; whichever lands second carries the other's change.
+- 2026-09-26: **P1 merged** as #166 (~190 reviewable lines of Kotlin). Its gate caught that cats sharing an
+  `occurredAt` made the window depend on input order; `groupByOuting` now orders them by when they were
+  recorded, then by id (#172), and the window relies on that.

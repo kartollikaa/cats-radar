@@ -95,6 +95,36 @@ class CatsDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun versionFiveBecomesSixNamingEveryPhotosShot() = runTest {
+        val before = helper.createDatabase(5).use { v5 ->
+            versionFiveRows.forEach { v5.execSQL(it) }
+            v5.rows("SELECT $V4_PHOTO_COLUMNS, shotId FROM encounter_photos ORDER BY id")
+        }
+
+        helper.runMigrationsAndValidate(6, listOf(MigrationFrom5To6)).use { v6 ->
+            assertEquals(
+                before.map { row -> row.dropLast(1) + (row.last() ?: row.first()) },
+                v6.rows("SELECT $V4_PHOTO_COLUMNS, shotId FROM encounter_photos ORDER BY id"),
+            )
+            assertEquals(
+                listOf("1"),
+                v6.rows("SELECT \"notnull\" FROM pragma_table_info('encounter_photos') WHERE name = 'shotId'")
+                    .map { it.single() },
+            )
+            assertEquals(
+                listOf(
+                    "index_encounter_photos_encounterId",
+                    "index_encounter_photos_shotId",
+                    "index_encounter_photos_sourceDigest",
+                ),
+                v6.rows("SELECT name FROM pragma_index_list('encounter_photos') WHERE origin = 'c' ORDER BY name")
+                    .map { it.single() },
+            )
+            assertEquals(2L, v6.count("encounters"))
+        }
+    }
+
     private fun SQLiteConnection.count(table: String): Long =
         prepare("SELECT COUNT(*) FROM $table").use { statement ->
             statement.step()
@@ -116,6 +146,21 @@ class CatsDatabaseMigrationTest {
             "lat, lon, accuracyMeters, locationSource, locationFixedAt, geohash, placeCellId, deviceId, createdAt, " +
             "updatedAt, deletedAt) VALUES "
         private const val V4_PHOTO = "INSERT INTO encounter_photos ($V4_PHOTO_COLUMNS) VALUES "
+        private const val V5_PHOTO = "INSERT INTO encounter_photos ($V4_PHOTO_COLUMNS, shotId) VALUES "
+
+        val versionFiveRows = listOf(
+            V4_CAT + "('alone', 1000, 0, 'PHOTO', 'CAMERA', 'GINGER', NULL, NULL, NULL, 'NONE', NULL, NULL, NULL, " +
+                "'this-install', 1001, 1002, NULL)",
+            V5_PHOTO + "('alone', 'alone', 'alone.jpg', 'alone_thumb.jpg', NULL, NULL, 'd-alone', 'this-install', " +
+                "1001, NULL)",
+            V4_CAT + "('with-two', 2000, 0, 'PHOTO', 'GALLERY', NULL, NULL, NULL, NULL, 'NONE', NULL, NULL, NULL, " +
+                "'this-install', 2001, 2002, NULL)",
+            V5_PHOTO + "('with-two', 'with-two', 'first.jpg', NULL, NULL, 'content://media/external/images/media/2', " +
+                "'d-first', 'this-install', 2001, 'with-two')",
+            V5_PHOTO + "('with-two-second', 'with-two', 'second.jpg', 'second_thumb.jpg', NULL, NULL, 'd-second', " +
+                "'other-install', 2500, 'alone')",
+            V5_PHOTO + "('orphan', 'no-such-cat', 'orphan.jpg', NULL, NULL, NULL, NULL, 'this-install', 3001, NULL)",
+        )
 
         val versionFourRows = listOf(
             V4_CAT + "('camera', 1000, 180, 'PHOTO', 'CAMERA', 'GINGER', 55.75, 37.62, 12.5, 'EXIF', 1000, " +

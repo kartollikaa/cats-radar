@@ -26,7 +26,7 @@ internal fun handleCounterEffect(
         is CounterEffect.AttachLocation -> locationAttachScheduler.schedule(effect.encounterId)
         is CounterEffect.CancelLocationAttach -> locationAttachScheduler.cancel(effect.encounterId)
         CounterEffect.RequestLocationPermission -> locationPermissionRequester.request()
-        CounterEffect.OpenCamera -> cameraLauncher.launch()
+        CounterEffect.OpenCamera -> cameraLauncher.launch(catId = null)
         CounterEffect.PhotoNotSaved -> photoFailureReporter.report()
         is CounterEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
         is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)

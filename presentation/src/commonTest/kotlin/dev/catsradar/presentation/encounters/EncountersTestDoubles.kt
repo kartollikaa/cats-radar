@@ -63,7 +63,7 @@ internal fun Encounter.withPhoto(
             sourceDigest = null,
             deviceId = deviceId,
             addedAt = createdAt,
-            shotId = null,
+            shotId = id,
         ),
     ),
 )

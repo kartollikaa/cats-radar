@@ -147,7 +147,7 @@ for it in every process the app runs in.
 - `app/…/widget/WidgetCount.kt` — the number the widget shows: a tap's at once, storage's once it has
   caught up
 - `app/…/photo/TakePhotoShortcut.kt`, `CameraRequest.kt` — how Photo reaches the Counter's camera
-- `app/…/photo/PendingCaptures.kt` — which camera a result belongs to
+- `app/…/photo/PendingCaptures.kt` — which camera a result belongs to, and for which cat
 - `app/…/widget/WidgetRefresh.kt` — redrawing it when the app changes the count
 - `app/…/widget/CatsRadarWidgetReceiver.kt`, `res/xml/cats_radar_widget_info.xml` — how the launcher
   finds it

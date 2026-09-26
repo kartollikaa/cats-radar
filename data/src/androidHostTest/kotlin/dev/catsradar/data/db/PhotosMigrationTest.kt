@@ -110,6 +110,8 @@ class PhotosMigrationTest {
                 cats.mapValues { (_, cat) -> cat.photos.map { it.photoPath } }.toSortedMap(),
             )
             assertEquals(cameraPhoto, cats.getValue("camera").cover)
+            val photos = cats.values.flatMap { it.photos }
+            assertEquals(photos.map { it.id }, photos.map { it.shotId })
 
             assertEquals(1, database.encounterDao().purgeDeletedBefore(Instant.parse("2027-01-01T00:00:00Z")))
 
@@ -125,13 +127,32 @@ class PhotosMigrationTest {
     }
 
     @Test
-    fun theAppsOwnBuilderBringsAPhotographedCatFromVersionsOneAndTwoToFive() = runTest {
+    fun theAppsOwnBuilderOpensAVersionFiveFileWithAPhotoWhoseCatIsGone() = runTest {
+        helper.createDatabase(5).use { v5 -> versionFiveCatAndOrphan.forEach { v5.execSQL(it) } }
+
+        val database = catsDatabaseBuilder(instrumentation.targetContext, file.absolutePath).build()
+        try {
+            val cats = EncounterRepositoryImpl(database.encounterDao()).loadEvery()
+            assertEquals(listOf("cat" to listOf("cat")), cats.map { cat -> cat.id to cat.photos.map { it.shotId } })
+            val photoRows = database.useReaderConnection { connection ->
+                connection.usePrepared("SELECT id, shotId FROM encounter_photos ORDER BY id") { statement ->
+                    buildList { while (statement.step()) add(statement.getText(0) to statement.getText(1)) }
+                }
+            }
+            assertEquals(listOf("cat" to "cat", "orphan" to "orphan"), photoRows)
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun theAppsOwnBuilderBringsAPhotographedCatFromVersionsOneAndTwoToSix() = runTest {
         listOf(1, 2).forEach { version ->
             helper.createDatabase(version).use { it.execSQL(PHOTOGRAPHED_BEFORE_VERSION_THREE) }
             val database = catsDatabaseBuilder(instrumentation.targetContext, file.absolutePath).build()
             try {
                 val cat = EncounterRepositoryImpl(database.encounterDao()).loadEvery().single()
-                assertEquals(listOf("old.jpg" to null), cat.photos.map { it.photoPath to it.shotId }, "from v$version")
+                assertEquals(listOf("old.jpg" to "old"), cat.photos.map { it.photoPath to it.shotId }, "from v$version")
             } finally {
                 database.close()
                 instrumentation.targetContext.deleteDatabase(file.name)
@@ -211,7 +232,16 @@ class PhotosMigrationTest {
             sourceDigest = "d-camera",
             deviceId = "this-install",
             addedAt = Instant.fromEpochMilliseconds(1001),
-            shotId = null,
+            shotId = "camera",
+        )
+
+        val versionFiveCatAndOrphan = listOf(
+            "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, kind, origin, locationSource, deviceId, " +
+                "createdAt, updatedAt) VALUES ('cat', 1, 0, 'PHOTO', 'CAMERA', 'NONE', 'device', 7, 8)",
+            "INSERT INTO encounter_photos (id, encounterId, photoPath, deviceId, addedAt, shotId) " +
+                "VALUES ('cat', 'cat', 'cat.jpg', 'device', 7, NULL)",
+            "INSERT INTO encounter_photos (id, encounterId, photoPath, deviceId, addedAt, shotId) " +
+                "VALUES ('orphan', 'no-such-cat', 'orphan.jpg', 'device', 1, NULL)",
         )
 
         const val PHOTOGRAPHED_BEFORE_VERSION_THREE = "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, " +

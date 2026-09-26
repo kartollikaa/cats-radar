@@ -90,18 +90,23 @@ class ZipBackupPhotoListTest {
 
         assertIs<BackupReadResult.Readable>(read)
         assertEquals(shotCats, read.contents.encounters)
-        assertEquals(listOf(null, "shot-first", "shot-first"), read.contents.encounters.map { it.cover?.shotId })
+        assertEquals(List(3) { "shot-first" }, read.contents.encounters.map { it.cover?.shotId })
     }
 
     @Test
-    fun aPhotoThatStartsItsShotWritesNoShotKeyAndTheOthersNameTheFirst() = runTest {
-        writer.write(path, BackupContents(encounters = shotCats))
+    fun everyPhotoWritesItsShotAndAPhotoOfOneCatNamesItself() = runTest {
+        writer.write(path, BackupContents(encounters = shotCats + onePhotoCat))
 
         val listed = ZipFile(path).use { zip -> Json.parseToJsonElement(zip.text(ENCOUNTER_PHOTOS_ENTRY)).jsonArray }
 
         assertEquals(
-            listOf(null, "\"shot-first\"", "\"shot-first\""),
-            listed.map { (it as JsonObject)["shotId"]?.toString() },
+            listOf(
+                "\"shot-first\"" to "\"shot-first\"",
+                "\"shot-second\"" to "\"shot-first\"",
+                "\"shot-third\"" to "\"shot-first\"",
+                "\"only\"" to "\"only\"",
+            ),
+            listed.map { (it as JsonObject).let { photo -> photo["id"].toString() to photo["shotId"].toString() } },
         )
     }
 
@@ -207,7 +212,7 @@ class ZipBackupPhotoListTest {
             deletedAt = null,
         )
 
-        fun photo(cat: Encounter, id: String, path: String, addedAt: Instant, shotId: String? = null) = EncounterPhoto(
+        fun photo(cat: Encounter, id: String, path: String, addedAt: Instant, shotId: String = id) = EncounterPhoto(
             id = id,
             encounterId = cat.id,
             photoPath = path,

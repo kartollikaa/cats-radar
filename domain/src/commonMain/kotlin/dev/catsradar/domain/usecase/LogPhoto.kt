@@ -84,7 +84,7 @@ class LogPhoto(
                     sourceDigest = digest.sha256(sourceUri),
                     deviceId = deviceIdProvider.deviceId,
                     addedAt = now,
-                    shotId = null,
+                    shotId = id,
                 ),
             ),
             lat = exifPoint?.lat,

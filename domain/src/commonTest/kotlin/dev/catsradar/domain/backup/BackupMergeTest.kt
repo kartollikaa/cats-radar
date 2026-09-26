@@ -186,7 +186,7 @@ class BackupMergeTest {
 
         assertEquals(listOf(loggedElsewhere.copy(photos = emptyList())), merged.encounters)
         assertEquals(loggedElsewhere.photos, merged.photos)
-        assertEquals(listOf("first"), merged.photos.map { it.shot })
+        assertEquals(listOf("first"), merged.photos.map { it.shotId })
     }
 
     @Test

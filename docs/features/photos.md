@@ -61,8 +61,8 @@ attempt, never after the cat*).
 **The same photo twice on one cat is not added.** The photo's digest is taken before any copy is
 written; if one of this cat's photos already carries it, the attempt stops there, with no copy and
 nothing sent to the gallery (*a photo this cat already has is not added again and costs no disk*), and
-the detail screen says the photo is already on this cat (`EncounterDetailStoreTest`, *a picked photo the
-cat already has is not added again, and the screen says so*). A photo whose digest cannot be read is
+the detail screen says the photo is already on this cat (`EncounterDetailStorePhotoTest`, *a picked
+photo the cat already has is not added again, and the screen says so*). A photo whose digest cannot be read is
 never taken for a duplicate.
 
 From the camera the original goes to the gallery under the same setting as a photo taken from the
@@ -91,8 +91,8 @@ photo later is skipped while either cat is live (see `import.md`).
 - **An undecodable image, or a write that fails,** leaves the cat unchanged and the screen says
   "Photo not attached"; a failed write's copies are removed (`AttachPhotoTest`, *an undecodable
   photo leaves the cat as it was and nothing in the gallery*; *a write that fails removes the files
-  it had written*; `EncounterDetailStoreTest`, *an unreadable photo says so and the offer comes
-  back*; *a failed write says the photo was not attached*).
+  it had written*; `EncounterDetailStorePhotoTest`, *an unreadable photo says so and the offer
+  comes back*; *a failed write says the photo was not attached*).
 - **The cat is deleted while the attempt is running** — it is left exactly as it was and the
   attempt's own copies are removed (`AttachPhotoTest`, *a cat deleted while its photo was being copied
   keeps no files from the attempt*; `EncounterDaoAttachPhotoTest`,
