@@ -55,10 +55,12 @@ class EncounterDetailStateMapperTest {
     fun `a cat without coordinates, or with coordinates that are no place on Earth, is not on the map`() {
         val unlocated = encounterFixture("e1", OCCURRED)
         val pastThePole = encounterFixture("e2", OCCURRED).copy(lat = 123.4, lon = 2.17)
+        val pastTheMeridian = encounterFixture("e3", OCCURRED).copy(lat = 41.39, lon = 200.0)
 
         assertEquals(null, mapper.map(unlocated, today).mapPosition)
         assertEquals("123.40000, 2.17000", mapper.map(pastThePole, today).coordinatesLabel)
         assertEquals(null, mapper.map(pastThePole, today).mapPosition)
+        assertEquals(null, mapper.map(pastTheMeridian, today).mapPosition)
     }
 
     @Test
