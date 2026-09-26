@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class FakePlaceCellRepository(initial: List<PlaceCell> = emptyList()) :
@@ -19,6 +20,9 @@ class FakePlaceCellRepository(initial: List<PlaceCell> = emptyList()) :
     }
 
     override fun observeAll(): Flow<List<PlaceCell>> = cells
+
+    override fun observeById(cellId: String): Flow<PlaceCell?> =
+        cells.map { list -> list.firstOrNull { it.cellId == cellId } }
 
     override suspend fun upsert(cell: PlaceCell) {
         upserted += cell

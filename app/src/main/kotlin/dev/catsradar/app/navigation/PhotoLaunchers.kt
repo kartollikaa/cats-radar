@@ -4,16 +4,18 @@ import android.Manifest
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.photo.PendingCaptures
 import dev.catsradar.app.photo.PickGalleryPhotos
+import dev.catsradar.app.photo.PickSeveralPhotos
 import dev.catsradar.app.photo.holdReadAccess
 import dev.catsradar.domain.Tuning
 
@@ -24,6 +26,10 @@ internal fun interface CameraLauncher {
 
 internal fun interface PhotoFailureReporter {
     fun report()
+}
+
+internal fun interface PhotoCountReporter {
+    fun report(count: Int)
 }
 
 internal fun interface CaptureDiscarder {
@@ -55,15 +61,11 @@ internal fun rememberCameraLauncher(onResult: (String?) -> Unit): CameraLauncher
 }
 
 @Composable
-internal fun rememberSinglePhotoPicker(onResult: (String?) -> Unit): PhotoPickerLauncher {
-    val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        onResult(uri?.toString())
+internal fun rememberSeveralPhotosPicker(onResult: (List<String>) -> Unit): PhotoPickerLauncher {
+    val resultLauncher = rememberLauncherForActivityResult(PickSeveralPhotos(Tuning.ATTACH_BATCH_MAX)) { uris ->
+        onResult(uris.map(Uri::toString))
     }
-    return remember(resultLauncher) {
-        PhotoPickerLauncher {
-            resultLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        }
-    }
+    return remember(resultLauncher) { PhotoPickerLauncher { resultLauncher.launch(Unit) } }
 }
 
 @Composable
@@ -71,6 +73,17 @@ internal fun rememberPhotoFailureReporter(@StringRes messageRes: Int): PhotoFail
     val context = LocalContext.current
     return remember(context, messageRes) {
         PhotoFailureReporter { Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show() }
+    }
+}
+
+@Composable
+internal fun rememberPhotoCountReporter(@PluralsRes messageRes: Int): PhotoCountReporter {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    return remember(context, resources, messageRes) {
+        PhotoCountReporter { count ->
+            Toast.makeText(context, resources.getQuantityString(messageRes, count, count), Toast.LENGTH_SHORT).show()
+        }
     }
 }
 

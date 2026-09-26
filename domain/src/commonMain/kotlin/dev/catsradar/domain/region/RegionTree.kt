@@ -138,13 +138,6 @@ object RegionTree {
         }
     }
 
-    /** A cell names a located encounter only once it is RESOLVED and has a country. */
-    private fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
-        placeCellId
-            ?.takeIf { locatedPoint() != null }
-            ?.let(byCell::get)
-            ?.takeIf { it.status == PlaceStatus.RESOLVED && it.countryCode != null }
-
     private fun Encounter.areaHash(): String? =
         locatedPoint()?.let { Geohash.encode(it.lat, it.lon, Tuning.AREA_PRECISION) }
 
@@ -155,5 +148,15 @@ object RegionTree {
         if (count == 0) emptyList() else listOf(RegionNode(key, label, count))
 }
 
+internal fun Encounter.resolvedCell(byCell: Map<String, PlaceCell>): PlaceCell? =
+    placeCellId?.let(byCell::get)?.takeIf { isNamedBy(it) }
+
+/** A cell names a located encounter only once it is RESOLVED and has a country. */
+internal fun Encounter.isNamedBy(cell: PlaceCell): Boolean =
+    cell.cellId == placeCellId &&
+        locatedPoint() != null &&
+        cell.status == PlaceStatus.RESOLVED &&
+        cell.countryCode != null
+
 // adminArea is the fallback because a rural point often has a region but no locality.
-private fun PlaceCell.cityName(): String? = locality ?: adminArea
+internal fun PlaceCell.cityName(): String? = locality ?: adminArea

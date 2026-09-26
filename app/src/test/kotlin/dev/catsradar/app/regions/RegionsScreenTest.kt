@@ -39,8 +39,8 @@ import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.CenterAppBarDefaults
+import dev.catsradar.ui.components.FlagTestTag
 import dev.catsradar.ui.regions.RegionsScreen
-import dev.catsradar.ui.regions.RegionsTestTags
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
@@ -210,7 +210,7 @@ class RegionsScreenTest {
         val header = RegionsHeader(RegionsTitle.AllPlaces, 3)
         show(RegionsState.Places(header, RegionsSection.COUNTRIES, persistentListOf(spain)))
 
-        val flagLeft = compose.onNodeWithTag(RegionsTestTags.FLAG, useUnmergedTree = true)
+        val flagLeft = compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true)
             .getUnclippedBoundsInRoot().left
         val nameLeft = compose.onNodeWithText("Spain", useUnmergedTree = true).getUnclippedBoundsInRoot().left
 
@@ -227,7 +227,7 @@ class RegionsScreenTest {
                 oneCountry,
             ),
         )
-        compose.onNodeWithTag(RegionsTestTags.FLAG, useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true).assertExists()
 
         state = RegionsState.Places(
             RegionsHeader(

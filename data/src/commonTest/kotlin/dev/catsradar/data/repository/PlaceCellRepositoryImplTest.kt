@@ -18,6 +18,14 @@ class PlaceCellRepositoryImplTest {
     }
 
     @Test
+    fun observeByIdDelegatesAndMaps() = runTest {
+        dao.observeByIdResult = distinctPlaceCell().toEntity()
+
+        assertEquals(distinctPlaceCell(), repository.observeById("cell-1").first())
+        assertEquals("cell-1", dao.observeByIdCall)
+    }
+
+    @Test
     fun upsertMapsDomainToEntity() = runTest {
         repository.upsert(distinctPlaceCell())
 

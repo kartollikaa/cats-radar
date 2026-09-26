@@ -5,6 +5,7 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.repository.PlaceCellRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 internal class InMemoryPlaceCells(vararg seed: PlaceCell) : PlaceCellRepository {
@@ -17,6 +18,8 @@ internal class InMemoryPlaceCells(vararg seed: PlaceCell) : PlaceCellRepository 
     fun attemptsOf(cellId: String): Int = rows.value.single { it.cellId == cellId }.attempts
 
     override fun observeAll(): Flow<List<PlaceCell>> = rows
+    override fun observeById(cellId: String): Flow<PlaceCell?> =
+        rows.map { list -> list.firstOrNull { it.cellId == cellId } }
     override suspend fun upsert(cell: PlaceCell) = put(cell)
     override suspend fun loadById(cellId: String): PlaceCell? = rows.value.firstOrNull { it.cellId == cellId }
     override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> =
