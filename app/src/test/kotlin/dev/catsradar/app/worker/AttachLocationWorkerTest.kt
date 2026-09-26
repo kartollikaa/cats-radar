@@ -42,6 +42,7 @@ private val Fix = LocationFix(lat = 55.7558, lon = 37.6173, accuracyMeters = 12f
 
 private class FakePlaceCellRepository : PlaceCellRepository {
     override fun observeAll(): Flow<List<PlaceCell>> = MutableStateFlow(emptyList())
+    override fun observeById(cellId: String): Flow<PlaceCell?> = MutableStateFlow(null)
     override suspend fun upsert(cell: PlaceCell) = Unit
     override suspend fun loadById(cellId: String): PlaceCell? = null
     override suspend fun loadPendingPage(afterCellId: String?, limit: Int): List<PlaceCell> = emptyList()

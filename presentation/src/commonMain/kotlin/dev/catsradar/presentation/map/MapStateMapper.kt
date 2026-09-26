@@ -7,7 +7,6 @@ import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.domain.walk.overlaps
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.encounters.EncountersStateMapper
-import dev.catsradar.presentation.encounters.OutingHeader
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
@@ -61,7 +60,7 @@ class MapStateMapper(
 
     // The same header the Encounters list gives the outing, so the chip and the list never disagree.
     private fun headerLabel(outing: List<Encounter>, today: LocalDate): String =
-        encountersMapper.mapList(outing, today).filterIsInstance<OutingHeader>().first().label
+        encountersMapper.outingLabel(outing, today)
 
     private fun routeOf(
         outing: List<Encounter>,

@@ -86,7 +86,8 @@ globe, past a pole or the 180th meridian.
 "On the map" on an outing's header in the Encounters list switches to the Map tab showing that outing
 alone. Only its cats are on the map, and the view fits around them and their route. A chip names the
 outing above the map; closing it, or pressing back, returns to every cat and fits the view around
-them again. A spot's list offers the same action for its outings.
+them again. A spot's list and the cats at the bottom of Places offer the same action for their
+outings.
 
 The route is the recorded track of every walk that overlaps the outing's time span, drawn whole and
 oldest first — the way to the first cat is part of the walk, not only the stretch between cats. A
@@ -128,25 +129,28 @@ opens on. Every other cat stays on the map around it.
 
 Two chips sit at the map's top edge.
 
-- **Heatmap** draws where cats are seen most, weighing every cat alike, and hides the dots and photos
-  while it is on. Its heat is drawn from the cats themselves, not from their clusters, so ten cats at one
-  spot weigh ten times one. The heat is in the cats' own fur colours: a street of ginger cats glows
-  ginger, one of white cats glows white, one of black cats glows black. A cat gives its heat in the
-  same shares as its dot, so a black-and-white cat is half black heat and half white. Each colour
-  is its own layer, nearly opaque so the spots stay bright, and lighter furs lie over darker ones:
-  where coats mix, the colour with more cats shows most, and at an even split the lighter one covers
-  the darker, which shows only at the spot's edge. The heat is a picture of the mix, not a measure
-  of it.
+- **Heatmap** draws where cats are seen most, weighing every cat alike, and hides the dots and
+  photos while it is on. Its heat is drawn from the cats themselves, not from their clusters, so ten
+  cats at one spot weigh ten times one. The heat is in the cats' own fur colours: a street of ginger
+  cats glows ginger, one of white cats glows white, one of black cats glows black. A cat gives its
+  heat in the same shares as its dot, so a black-and-white cat is half black heat and half white.
+  Each colour is its own layer, nearly opaque so the spots stay bright, and lighter furs lie over
+  darker ones: where coats mix, the colour with more cats shows most, and at an even split the
+  lighter one covers the darker, which shows only at the spot's edge. The heat is a picture of the
+  mix, not a measure of it.
 - **Cats with no coat noted** make smaller spots in the blue of their dots, blue rather than grey
   so they never read as a grey or black coat.
 - **The heat follows the zoom.** Each cat's heat shrinks and fades as the map zooms out, so a whole
   city shows its neighbourhoods as separate spots rather than one glow over all of it, and grows back
   as the map closes in on a street.
-- **Coats** opens the coat grid: choosing coats shows only cats of those coats, and "Not specified"
-  shows the cats with none noted. The choice applies to the dots, the photos, the clusters, the
-  heat, a focused outing and a spot's list alike; a focused outing's route is never thinned by it, whichever
-  kind of line it draws. The view stays where it is when the choice changes, and "Every coat" clears
-  it. A choice that matches no cat says so, rather than showing a map with nothing on it.
+- **Coats** opens the coat grid in a sheet, under a line saying that only cats of the marked coats
+  stay on the map. Choosing coats shows only cats of those coats, and "Not specified" shows the cats
+  with none noted. "Not specified" is the grid's twelfth cell, a paw marked like any coat; that cell
+  is the filter's alone, and the Counter's grid and the detail's picker have none. The choice
+  applies to the dots, the photos, the clusters, the heat, a focused outing and a spot's list alike;
+  a focused outing's route is never thinned by it, whichever kind of line it draws. The view stays
+  where it is when the choice changes. "Every coat" clears it, and is disabled while nothing is
+  chosen. A choice that matches no cat says so, rather than showing a map with nothing on it.
 
 Both last as long as the tab does; leaving the tab clears them, and so does a cat's coordinates
 opening the map (above).
