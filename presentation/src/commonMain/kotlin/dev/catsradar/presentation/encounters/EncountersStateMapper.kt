@@ -8,7 +8,6 @@ import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.map.isOnTheMap
 import dev.catsradar.presentation.time
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.LocalDate
 
@@ -40,18 +39,9 @@ class EncountersStateMapper(
         layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
     ).withSelection(selectedIds)
 
-    fun mapList(encounters: List<Encounter>, today: LocalDate): ImmutableList<EncounterListItem> =
-        outingsNewestFirst(encounters)
-            .flatMap { outing ->
-                listOf(outing.header(today)) + outing.map { encounter ->
-                    EncounterListItem.Row(
-                        id = encounter.id,
-                        timeLabel = encounter.timeLabel(),
-                        location = encounter.locationSource.toLocationLabel(),
-                    )
-                }
-            }
-            .toPersistentList()
+    /** The header label the list gives [outing]. */
+    fun outingLabel(outing: List<Encounter>, today: LocalDate): String =
+        outingsNewestFirst(outing).first().header(today).label
 
     private fun outingsNewestFirst(encounters: List<Encounter>): List<List<Encounter>> =
         SessionSplitter.groupByOuting(encounters).asReversed().map { it.asReversed() }

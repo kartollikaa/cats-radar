@@ -12,7 +12,7 @@ import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakePlaceCellRepository
-import dev.catsradar.presentation.encounters.EncounterListItem
+import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
@@ -53,7 +53,7 @@ class RegionsStoreTest {
 
     private fun newStore(parent: RegionKey?) = RegionsStore(
         parent = parent,
-        observeRegion = ObserveRegion(encounters, cells),
+        observeRegion = ObserveRegion(encounters, cells, computeDispatcher = mainDispatcher),
         stateMapper = RegionsStateMapper(EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())),
         clock = FakeClock(NOW),
         timeZone = TimeZone.UTC,
@@ -83,10 +83,12 @@ class RegionsStoreTest {
         runCurrent()
 
         assertEquals(
-            RegionsState.Loaded(
+            RegionsState.Places(
+                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 3, flag = "🇪🇸"),
+                section = RegionsSection.CITIES,
                 rows = persistentListOf(
-                    RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2"),
-                    RegionRowState(RegionRowKey.City("ES", "Girona"), RegionRowLabel.Named("Girona"), "1"),
+                    cityRow("Barcelona", count = 2, share = 2f / 3),
+                    cityRow("Girona", count = 1, share = 1f / 3),
                 ),
             ),
             store.state.value,
@@ -101,10 +103,10 @@ class RegionsStoreTest {
         store.state.test {
             assertEquals(RegionsState.Loading, awaitItem())
             assertEquals(
-                RegionsState.Loaded(
-                    rows = persistentListOf(
-                        RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "1"),
-                    ),
+                RegionsState.Places(
+                    header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 1, flag = "🇪🇸"),
+                    section = RegionsSection.CITIES,
+                    rows = persistentListOf(cityRow("Barcelona", count = 1, share = 1f)),
                 ),
                 awaitItem(),
             )
@@ -121,10 +123,10 @@ class RegionsStoreTest {
         runCurrent()
 
         assertEquals(
-            RegionsState.Loaded(
-                rows = persistentListOf(
-                    RegionRowState(RegionRowKey.City("ES", "Barcelona"), RegionRowLabel.Named("Barcelona"), "2"),
-                ),
+            RegionsState.Places(
+                header = RegionsHeader(RegionsTitle.Of(RegionRowLabel.Named("ES")), count = 2, flag = "🇪🇸"),
+                section = RegionsSection.CITIES,
+                rows = persistentListOf(cityRow("Barcelona", count = 2, share = 1f)),
             ),
             store.state.value,
         )
@@ -136,7 +138,10 @@ class RegionsStoreTest {
 
         runCurrent()
 
-        assertEquals(RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET), store.state.value)
+        assertEquals(
+            RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR),
+            store.state.value,
+        )
     }
 
     @Test
@@ -145,7 +150,7 @@ class RegionsStoreTest {
             val cat = logCat(41.390, 2.170, "ES", "Barcelona")
             val store = newStore(RegionKey.Country("ES"))
             runCurrent()
-            assertEquals(listOf("1"), assertIs<RegionsState.Loaded>(store.state.value).rows.map { it.countLabel })
+            assertEquals(listOf("1"), assertIs<RegionsState.Places>(store.state.value).rows.map { it.countLabel })
 
             encounters.softDelete(cat.id, NOW)
             runCurrent()
@@ -159,7 +164,7 @@ class RegionsStoreTest {
         val areaHash = Geohash.prefix(cat.geohash!!, Tuning.AREA_PRECISION)
         val store = newStore(RegionKey.Area(areaHash, RegionKey.City("ES", "Barcelona")))
         runCurrent()
-        assertEquals(listOf(cat.id), assertIs<RegionsState.Loaded>(store.state.value).encounterIds())
+        assertEquals(listOf(cat.id), assertIs<RegionsState.Cats>(store.state.value).encounterIds())
 
         encounters.softDelete(cat.id, NOW)
         runCurrent()
@@ -182,8 +187,15 @@ class RegionsStoreTest {
         resolvedAt = NOW,
     )
 
-    private fun RegionsState.Loaded.encounterIds() =
-        encounters.filterIsInstance<EncounterListItem.Row>().map { it.id }
+    private fun RegionsState.Cats.encounterIds() = rows.filterIsInstance<EncountersRow.Single>().map { it.cell.id }
+
+    private fun cityRow(city: String, count: Int, share: Float) = RegionRowState(
+        RegionRowKey.City("ES", city),
+        RegionRowLabel.Named(city),
+        countLabel = count.toString(),
+        share = share,
+        pseudo = false,
+    )
 
     private companion object {
         val NOW = Instant.parse("2026-09-22T10:00:00Z")
