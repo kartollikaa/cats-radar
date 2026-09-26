@@ -39,6 +39,7 @@ the one the Encounters tab shows.
   it; the cat then drops out of the map's photos, and a cluster it led takes its next newest photo,
   or its count circle.
 - Tiles are drawn on the phone from the app's own thumbnails, the first time the map needs each one.
+  Coil requests only the size needed to fill the largest tile at the phone's pixel density.
 
 ## Where the map comes from
 
