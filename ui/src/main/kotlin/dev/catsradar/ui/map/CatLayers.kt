@@ -10,8 +10,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.coat.faceRim
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
+import org.maplibre.compose.expressions.dsl.and
 import org.maplibre.compose.expressions.dsl.asString
 import org.maplibre.compose.expressions.dsl.case
 import org.maplibre.compose.expressions.dsl.const
@@ -39,26 +41,31 @@ import org.maplibre.spatialk.geojson.FeatureCollection
 import org.maplibre.spatialk.geojson.LineString
 import org.maplibre.spatialk.geojson.Point
 
-private const val POINT_COUNT = "point_count"
+internal const val POINT_COUNT = "point_count"
 
 // Past street level clusters stop merging; cats sharing one fix still sit on one spot there.
 private const val CLUSTER_MAX_ZOOM = 17
-private const val CLUSTER_RADIUS = 40
+
+// Cats merge within a largest tile's width, so the photos of two clusters seldom overlap.
+private val ClusterSpread = LargestTile.value.toInt()
 
 // A font the tile server's glyphs include; a label in any other font never draws.
-private const val COUNT_FONT = "Noto Sans Bold"
+internal const val COUNT_FONT = "Noto Sans Bold"
 
 private val DotRadius = 7.dp
 internal val RimWidth = 1.5.dp
 internal val DotSize = (DotRadius + RimWidth) * 2
 private val ClusterRadius = 16.dp
-private val HalfTouchTarget = 24.dp
+internal val HalfTouchTarget = 24.dp
 private val NoRoute = FeatureCollection<LineString, JsonObject>(emptyList())
+
+internal val isCluster = feature.has(POINT_COUNT)
 
 /** Colours read from the theme outside the map, whose layers compose without it. */
 @Immutable
 internal data class CatLayerColors(
     val rim: Color,
+    val tileRim: Color,
     val ground: Color,
     val cluster: Color,
     val clusterCount: Color,
@@ -70,6 +77,8 @@ internal data class ClusterTap(val source: GeoJsonSource, val cluster: Feature<*
 @Composable
 internal fun CatLayers(
     cats: FeatureCollection<Point, JsonObject>,
+    photos: ImmutableList<String>,
+    tileRound: Int,
     route: FeatureCollection<LineString, JsonObject>?,
     heat: Boolean,
     colors: CatLayerColors,
@@ -79,7 +88,7 @@ internal fun CatLayers(
     // Only while on, sparing a second parse of every cat; the dots it would sit under are hidden then.
     if (heat) CatHeat(cats = cats, colors = colors)
     OutingRoute(route = route, colors = colors)
-    CatDots(cats = cats, visible = !heat, colors = colors, onClusterTap = onClusterTap, onCatsTap = onCatsTap)
+    CatDots(cats, photos, tileRound, visible = !heat, colors, onClusterTap, onCatsTap)
 }
 
 /** The theme's colours for the map's layers, read here because the layers compose without the theme. */
@@ -88,6 +97,7 @@ internal fun catLayerColors(): CatLayerColors {
     val scheme = MaterialTheme.colorScheme
     return CatLayerColors(
         rim = scheme.faceRim(),
+        tileRim = scheme.surfaceBright,
         // The map style follows the theme, so its land is about as light or dark as the surface.
         ground = scheme.surface,
         cluster = scheme.primary,
@@ -112,6 +122,8 @@ private fun OutingRoute(route: FeatureCollection<LineString, JsonObject>?, color
 @Composable
 private fun CatDots(
     cats: FeatureCollection<Point, JsonObject>,
+    photos: ImmutableList<String>,
+    tileRound: Int,
     visible: Boolean,
     colors: CatLayerColors,
     onClusterTap: (ClusterTap) -> Unit,
@@ -119,13 +131,18 @@ private fun CatDots(
 ) {
     val source = rememberGeoJsonSource(
         GeoJsonData.Features(cats),
-        GeoJsonOptions(cluster = true, clusterRadius = CLUSTER_RADIUS, clusterMaxZoom = CLUSTER_MAX_ZOOM),
+        GeoJsonOptions(
+            cluster = true,
+            clusterRadius = ClusterSpread,
+            clusterMaxZoom = CLUSTER_MAX_ZOOM,
+            clusterProperties = coverAggregator,
+        ),
     )
-    val isCluster = feature.has(POINT_COUNT)
+    val uncovered = isCluster and !hasCover
     CircleLayer(
         id = "cat-clusters",
         source = source,
-        filter = isCluster,
+        filter = uncovered,
         visible = visible,
         color = const(colors.cluster),
         radius = const(ClusterRadius),
@@ -140,7 +157,7 @@ private fun CatDots(
     SymbolLayer(
         id = "cat-cluster-counts",
         source = source,
-        filter = isCluster,
+        filter = uncovered,
         visible = visible,
         textField = format(span(feature[POINT_COUNT].convertToString())),
         textFont = const(listOf(COUNT_FONT)),
@@ -163,6 +180,7 @@ private fun CatDots(
             ClickResult.Consume
         },
     )
+    CatPhotos(source, photos, tileRound, visible, colors, onClusterTap)
 }
 
 @Composable

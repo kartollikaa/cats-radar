@@ -60,8 +60,9 @@ another language, say.
 ## Its map
 
 A cat the map draws, one whose coordinates lie on the globe, opens its **Where** section with a map of
-the few streets around it, centred on the cat, with the cat's dot on its spot: the same dot the Map tab
-draws, in the cat's coat colours, or blue with no coat noted (`EncounterDetailScreenTest`, *a cat on the
+the few streets around it, centred on the cat, with the cat's dot on its spot: the dot the Map tab draws
+for a cat without a photo, in the cat's coat colours, or blue with no coat noted — a photographed cat
+gets the dot here too, its photos being on the screen already (`EncounterDetailScreenTest`, *a cat on the
 map shows a map with the cat's dot at its centre*). Setting the coat recolours it. It is drawn in the
 Map tab's light or dark style, whichever the theme is, and carries the tiles' attribution
 in its corner, open at first, until its ⓘ folds it away. The attribution is plain text, without the Map

@@ -11,6 +11,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
@@ -27,7 +28,7 @@ import kotlin.time.Instant
 class MapStateMapperTest {
 
     private val encountersMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage())
-    private val mapper = MapStateMapper(encountersMapper)
+    private val mapper = MapStateMapper(encountersMapper, FakePhotoStorage())
 
     private fun map(
         encounters: List<Encounter>,
@@ -68,6 +69,60 @@ class MapStateMapperTest {
         val state = assertIs<MapState.Located>(map(listOf(ginger, deleted, unlocated)))
 
         assertEquals(persistentListOf(MapPoint("ginger", 41.39, 2.17, CoatOption.GINGER)), state.points)
+    }
+
+    @Test
+    fun `a point carries its cat's cover thumbnail, and a cat with none to show carries nothing`() {
+        val photographed = located("photographed", 41.39, 2.17).withPhoto("photographed.jpg", "photographed_thumb.jpg")
+        val twoPhotos = located("two photos", 41.39, 2.17).withPhoto("cover.jpg", "cover_thumb.jpg").let {
+            it.copy(photos = it.photos + it.photos.single().copy(id = "later", thumbPath = "later_thumb.jpg"))
+        }
+        val unthumbed = located("unthumbed", 41.39, 2.17).withPhoto("unthumbed.jpg", thumbPath = null)
+        val tally = located("tally", 41.39, 2.17)
+
+        val state = assertIs<MapState.Located>(map(listOf(photographed, twoPhotos, unthumbed, tally)))
+
+        assertEquals(
+            mapOf(
+                "photographed" to "/data/photos/photographed_thumb.jpg",
+                "two photos" to "/data/photos/cover_thumb.jpg",
+                "unthumbed" to null,
+                "tally" to null,
+            ),
+            state.points.associate { it.id to it.thumbnailPath },
+        )
+    }
+
+    @Test
+    fun `a thumbnail known to be no image is left off its point, and every other photo stays`() {
+        val broken = located("broken", 41.39, 2.17).withPhoto("broken.jpg", "broken_thumb.jpg")
+        val fine = located("fine", 41.39, 2.17).withPhoto("fine.jpg", "fine_thumb.jpg")
+
+        val state = assertIs<MapState.Located>(
+            mapper.map(
+                listOf(broken, fine),
+                TODAY,
+                unreadableThumbnails = setOf("/data/photos/broken_thumb.jpg"),
+            ),
+        )
+
+        assertEquals(
+            mapOf("broken" to null, "fine" to "/data/photos/fine_thumb.jpg"),
+            state.points.associate { it.id to it.thumbnailPath },
+        )
+    }
+
+    @Test
+    fun `points come newest first, whatever order the cats arrive in`() {
+        val cats = listOf(
+            located("morning", 41.39, 2.17),
+            located("evening", 41.39, 2.17).copy(occurredAt = BASE + 8.hours),
+            located("noon", 41.39, 2.17).copy(occurredAt = BASE + 2.hours),
+        )
+
+        val state = assertIs<MapState.Located>(map(cats))
+
+        assertEquals(listOf("evening", "noon", "morning"), state.points.map { it.id })
     }
 
     @Test
@@ -117,7 +172,7 @@ class MapStateMapperTest {
     }
 
     @Test
-    fun `a focused outing shows only its cats, oldest first, around them, under its list header`() {
+    fun `a focused outing shows only its cats, newest first, joined oldest first, around them, under its header`() {
         val first = located("first", 41.37, 2.15)
         val tally = encounterFixture("tally", BASE + 2.minutes)
         val second = located("second", 41.39, 2.17).copy(occurredAt = BASE + 5.minutes)
@@ -129,7 +184,7 @@ class MapStateMapperTest {
         val header = encountersMapper.map(cats, TODAY, grid = true).rows
             .filterIsInstance<OutingHeader>()
             .single { it.mapOutingId == "first" }
-        val points = persistentListOf(MapPoint("first", 41.37, 2.15, null), MapPoint("second", 41.39, 2.17, null))
+        val points = persistentListOf(MapPoint("second", 41.39, 2.17, null), MapPoint("first", 41.37, 2.15, null))
         val lines = persistentListOf(MapLine(persistentListOf(MapPosition(41.37, 2.15), MapPosition(41.39, 2.17))))
         assertEquals(
             MapState.Located(
