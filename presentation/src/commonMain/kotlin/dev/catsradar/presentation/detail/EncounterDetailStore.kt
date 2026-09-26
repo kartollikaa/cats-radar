@@ -89,7 +89,8 @@ class EncounterDetailStore(
                 emitIfOffered(EncounterDetailEffect.OpenPhoto(intent.photoId)) {
                     photos.any { it.id == intent.photoId }
                 }
-            EncounterDetailIntent.CoordinatesClicked -> emitIfOffered(EncounterDetailEffect.OpenMap) { onTheMap }
+            EncounterDetailIntent.CoordinatesClicked ->
+                emitIfOffered(EncounterDetailEffect.OpenMap) { mapPosition != null }
             EncounterDetailIntent.SetLocationClicked ->
                 emitIfOffered(EncounterDetailEffect.OpenLocationPicker) { setsLocation }
             is EncounterDetailIntent.PhotoTaken -> onPhotosChosen(listOfNotNull(intent.uri), PhotoSource.CAMERA)
