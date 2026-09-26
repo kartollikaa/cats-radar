@@ -119,6 +119,11 @@ opens that cat's viewer above it*). When the cat gains a photo, whoever added it
 the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
 pager to it*).
 
+The fullscreen viewer can remove its displayed attachment after confirmation. The detail underneath
+then follows the repository: the cat and its other photos remain, or the no-photo state appears after
+the last attachment goes; another cat attached from the same shot is separate and stays unchanged
+(see [photo-viewer.md](./photo-viewer.md#remove-from-the-cat)).
+
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
 *Choose from gallery* — the system camera, or the system picker for several images — on every live
 cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat that already has a photo
@@ -233,4 +238,4 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-A cat's photos cannot be removed or reordered (see `photos.md`).
+A cat's photos cannot be reordered (see `photos.md`).
