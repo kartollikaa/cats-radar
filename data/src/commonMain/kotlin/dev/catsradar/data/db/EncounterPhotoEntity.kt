@@ -18,7 +18,7 @@ import kotlin.time.Instant
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("encounterId"), Index("sourceDigest")],
+    indices = [Index("encounterId"), Index("sourceDigest"), Index("shotId")],
 )
 data class EncounterPhotoEntity(
     @PrimaryKey val id: String,
@@ -30,6 +30,7 @@ data class EncounterPhotoEntity(
     val sourceDigest: String?,
     val deviceId: String,
     val addedAt: Instant,
+    val shotId: String?,
 )
 
 data class EncounterWithPhotos(

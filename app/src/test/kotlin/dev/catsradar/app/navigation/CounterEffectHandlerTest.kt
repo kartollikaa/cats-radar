@@ -87,7 +87,7 @@ private class RecordingMilestoneAnnouncer : MilestoneAnnouncer {
     }
 }
 
-private class CountingPhotoFailureReporter : PhotoFailureReporter {
+private class CountingMessageReporter : MessageReporter {
     var reportCount = 0
         private set
 
@@ -101,7 +101,7 @@ class CounterEffectHandlerTest {
     private val locationAttachScheduler = FakeLocationAttachScheduler()
     private val locationPermissionRequester = FakeLocationPermissionRequester()
     private val cameraLauncher = CountingCameraLauncher()
-    private val photoFailureReporter = CountingPhotoFailureReporter()
+    private val photoFailureReporter = CountingMessageReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
@@ -158,7 +158,7 @@ class CounterEffectHandlerPhotoTest {
     private val locationAttachScheduler = FakeLocationAttachScheduler()
     private val locationPermissionRequester = FakeLocationPermissionRequester()
     private val cameraLauncher = CountingCameraLauncher()
-    private val photoFailureReporter = CountingPhotoFailureReporter()
+    private val photoFailureReporter = CountingMessageReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()

@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.domain.backup.BackupContents
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterOrigin
@@ -82,6 +83,29 @@ class ZipBackupPhotoListTest {
     }
 
     @Test
+    fun aShotOfThreeCatsSurvivesTheRoundTripAsOneShot() = runTest {
+        writer.write(path, BackupContents(encounters = shotCats))
+
+        val read = reader.read(path)
+
+        assertIs<BackupReadResult.Readable>(read)
+        assertEquals(shotCats, read.contents.encounters)
+        assertEquals(listOf(null, "shot-first", "shot-first"), read.contents.encounters.map { it.cover?.shotId })
+    }
+
+    @Test
+    fun aPhotoThatStartsItsShotWritesNoShotKeyAndTheOthersNameTheFirst() = runTest {
+        writer.write(path, BackupContents(encounters = shotCats))
+
+        val listed = ZipFile(path).use { zip -> Json.parseToJsonElement(zip.text(ENCOUNTER_PHOTOS_ENTRY)).jsonArray }
+
+        assertEquals(
+            listOf(null, "\"shot-first\"", "\"shot-first\""),
+            listed.map { (it as JsonObject)["shotId"]?.toString() },
+        )
+    }
+
+    @Test
     fun aPhotoWhoseCatIsNotInTheArchiveIsLeftOutAndTheRestImports() = runTest {
         File(path).writeArchive(
             currentLists(
@@ -143,6 +167,26 @@ class ZipBackupPhotoListTest {
             "one"
         ).let { cat -> cat.copy(photos = listOf(photo(cat, id = "only", path = "only.jpg", addedAt = ADDED))) }
 
+        val shotCats = listOf(
+            cat("ginger").copy(coat = CatCoat.GINGER).let { cat ->
+                cat.copy(photos = listOf(photo(cat, id = "shot-first", path = "shot-1.jpg", addedAt = ADDED)))
+            },
+            cat("ginger-too").copy(coat = CatCoat.GINGER).let { cat ->
+                cat.copy(
+                    photos = listOf(
+                        photo(cat, id = "shot-second", path = "shot-2.jpg", addedAt = ADDED, shotId = "shot-first"),
+                    ),
+                )
+            },
+            cat("unseen").let { cat ->
+                cat.copy(
+                    photos = listOf(
+                        photo(cat, id = "shot-third", path = "shot-3.jpg", addedAt = ADDED, shotId = "shot-first"),
+                    ),
+                )
+            },
+        )
+
         fun cat(id: String) = Encounter(
             id = id,
             occurredAt = Instant.parse("2026-09-20T08:30:00Z"),
@@ -163,7 +207,7 @@ class ZipBackupPhotoListTest {
             deletedAt = null,
         )
 
-        fun photo(cat: Encounter, id: String, path: String, addedAt: Instant) = EncounterPhoto(
+        fun photo(cat: Encounter, id: String, path: String, addedAt: Instant, shotId: String? = null) = EncounterPhoto(
             id = id,
             encounterId = cat.id,
             photoPath = path,
@@ -173,6 +217,7 @@ class ZipBackupPhotoListTest {
             sourceDigest = "digest-$id",
             deviceId = "install-$id",
             addedAt = addedAt,
+            shotId = shotId,
         )
     }
 }

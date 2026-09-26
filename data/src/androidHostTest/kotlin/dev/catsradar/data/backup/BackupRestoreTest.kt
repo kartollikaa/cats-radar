@@ -11,6 +11,7 @@ import dev.catsradar.data.platform.AndroidPhotoStorage
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
+import dev.catsradar.data.repository.inShotOf
 import dev.catsradar.data.repository.withPhoto
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
@@ -116,7 +117,8 @@ class BackupRestoreTest {
             "photo_thumb.jpg" to Random(2).nextBytes(512),
             "second.jpg" to Random(3).nextBytes(4096),
             "second_thumb.jpg" to Random(4).nextBytes(512),
-        )
+        ) + SHOT.flatMap { id -> listOf("$id.jpg", "${id}_thumb.jpg") }
+            .mapIndexed { index, path -> path to Random(10 + index).nextBytes(1024) }
         photos.forEach { (path, bytes) -> photoStorage.prepare(path).writeBytes(bytes) }
         here.encounters.insert(tally("tally", Morning))
         val photographed = tally("photo", Morning + 5.minutes).copy(
@@ -140,6 +142,7 @@ class BackupRestoreTest {
         )
         here.encounters.insert(photographed.copy(photos = photographed.photos + second))
         here.encounters.insert(located("located", Morning + 12.minutes, lat = 41.39864, lon = 2.17842))
+        shotOfThree().forEach { here.encounters.insert(it) }
         here.encounters.insert(tally("deleted", Morning + 20.minutes))
         here.encounters.softDelete("deleted", Morning + 30.minutes)
         here.placeCells.upsert(resolvedCellFor(lat = 41.39864, lon = 2.17842))
@@ -190,7 +193,10 @@ class BackupRestoreTest {
 
         elsewhere.import(archive)
 
-        assertEquals(listOf("located", "photo", "tally"), elsewhere.encounters.loadEvery().map { it.id }.sorted())
+        assertEquals(
+            listOf("located", "photo") + SHOT + "tally",
+            elsewhere.encounters.loadEvery().map { it.id }.sorted(),
+        )
     }
 
     @Test
@@ -205,6 +211,28 @@ class BackupRestoreTest {
     }
 
     @Test
+    fun aShotOfThreeCatsComesBackAsOneShotWithEveryCoatAndItsOwnFiles() = runTest {
+        val photos = fillHere()
+        assertTrue(here.export(archive))
+        wipe(photos)
+
+        elsewhere.import(archive)
+
+        val shot = elsewhere.encounters.loadEvery().filter { it.id in SHOT }.sortedBy { it.id }
+        assertEquals(
+            listOf(
+                Triple("shot-a-ginger", CatCoat.GINGER, "shot-a-ginger"),
+                Triple("shot-b-ginger", CatCoat.GINGER, "shot-a-ginger"),
+                Triple("shot-c-unseen", null, "shot-a-ginger"),
+            ),
+            shot.map { Triple(it.id, it.coat, it.photos.single().shot) },
+        )
+        shot.flatMap { it.photos }.flatMap { listOfNotNull(it.photoPath, it.thumbPath) }.forEach { path ->
+            assertTrue(photos.getValue(path).contentEquals(photoStorage.fileFor(path).readBytes()), path)
+        }
+    }
+
+    @Test
     fun importingTheSameBackupAgainAddsNothingAndChangesNothing() = runTest {
         fillHere()
         assertTrue(here.export(archive))
@@ -213,9 +241,24 @@ class BackupRestoreTest {
 
         val again = elsewhere.import(archive)
 
-        assertEquals(ImportBackupResult.Merged(added = 0, updated = 0, unchanged = 3), again)
+        assertEquals(ImportBackupResult.Merged(added = 0, updated = 0, unchanged = 6), again)
         assertEquals(restored, elsewhere.snapshot())
     }
+}
+
+private val SHOT = listOf("shot-a-ginger", "shot-b-ginger", "shot-c-unseen")
+
+private fun shotOfThree(): List<Encounter> = SHOT.mapIndexed { index, id ->
+    tally(id, Morning + 25.minutes).copy(
+        kind = EncounterKind.PHOTO,
+        origin = EncounterOrigin.CAMERA,
+        coat = if (id.endsWith("ginger")) CatCoat.GINGER else null,
+    ).withPhoto(
+        photoPath = "$id.jpg",
+        thumbPath = "${id}_thumb.jpg",
+        galleryUri = "content://media/external/images/media/77",
+        sourceDigest = "d-shot",
+    ).let { cat -> if (index == 0) cat else cat.inShotOf(SHOT.first()) }
 }
 
 private fun tally(id: String, at: Instant) = Encounter(

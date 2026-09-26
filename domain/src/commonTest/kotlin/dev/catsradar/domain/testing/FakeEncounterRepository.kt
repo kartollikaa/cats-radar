@@ -3,6 +3,7 @@ package dev.catsradar.domain.testing
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterPhoto
+import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.oldestFirst
@@ -72,13 +73,16 @@ class FakeEncounterRepository :
         }
     }
 
-    // Re-checks deletedAt against the state at write time, not a caller's earlier snapshot -
-    // mirrors the real DAO's WHERE id = :id AND deletedAt IS NULL guard.
-    override suspend fun attachLocation(id: String, stamp: LocationStamp) {
+    // Checked against the state at write time, not a caller's earlier snapshot, as the DAO's guard is.
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean {
         attachLocationCalls += id
+        var written = false
         encounters.update { list ->
+            written = false
             list.map { encounter ->
-                if (encounter.id == id && encounter.deletedAt == null) {
+                val unlocated = encounter.deletedAt == null && encounter.locationSource == LocationSource.NONE
+                if (encounter.id == id && unlocated) {
+                    written = true
                     encounter.copy(
                         lat = stamp.lat,
                         lon = stamp.lon,
@@ -94,6 +98,7 @@ class FakeEncounterRepository :
                 }
             }
         }
+        return written
     }
 
     // Mirrors the DAO's live-cat guard, checked at write time.

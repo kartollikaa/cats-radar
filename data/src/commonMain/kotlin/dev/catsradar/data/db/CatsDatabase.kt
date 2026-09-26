@@ -8,7 +8,7 @@ import androidx.room3.RoomDatabase
 import androidx.room3.RoomDatabaseConstructor
 
 internal const val DATABASE_FILE_NAME = "cats_radar.db"
-const val CATS_DATABASE_VERSION = 4
+const val CATS_DATABASE_VERSION = 5
 
 @Database(
     entities = [
