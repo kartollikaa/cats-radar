@@ -2,11 +2,11 @@ package dev.catsradar.presentation.detail
 
 sealed interface EncounterDetailEffect {
     data object NavigateBack : EncounterDetailEffect
-    data object OpenCamera : EncounterDetailEffect
-    data object OpenPhotoPicker : EncounterDetailEffect
-    data class OpenPhoto(val photoId: String) : EncounterDetailEffect
-    data object OpenMap : EncounterDetailEffect
-    data object OpenLocationPicker : EncounterDetailEffect
+    data class OpenCamera(val catId: String) : EncounterDetailEffect
+    data class OpenPhotoPicker(val catId: String) : EncounterDetailEffect
+    data class OpenPhoto(val catId: String, val photoId: String) : EncounterDetailEffect
+    data class OpenMap(val catId: String) : EncounterDetailEffect
+    data class OpenLocationPicker(val catId: String) : EncounterDetailEffect
     data object PhotoNotAttached : EncounterDetailEffect
 
     /** More than one photo of a pick was not attached. */

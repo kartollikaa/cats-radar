@@ -10,11 +10,11 @@ above the screen it was tapped in. A cat that is on the map has a small map of i
 its **Where** section (see [Its map](#its-map)) and its coordinates drawn in the theme's primary colour
 with a map mark beside them, and a tap anywhere in that section switches to the Map tab with the view
 on that cat (see [map.md](./map.md#a-cats-coordinates)). A cat with no location offers *Set on map*
-there instead, which opens the location picker above the screen, once however often it is tapped
-(`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever way it came
-(`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*). The picker
-itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the coat picker
-together are taller than most phones, and Delete must never end up below the bottom edge.
+there instead, which opens the location picker for that cat above the screen, once however often it
+is tapped (`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever
+way it came (`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
+The picker itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the
+coat picker together are taller than most phones, and Delete must never end up below the bottom edge.
 
 A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
 "removed" state or *Missing* (`EncounterDetailScreenTest`). It leaves the same way system back does,
@@ -106,22 +106,33 @@ A cat's photos lead the screen as a pager of the app's copies, oldest first, swi
 [photos.md](./photos.md#seeing-one)); while there is more than one, a position — "2 / 3" — sits in the
 corner of the photo on screen (`DetailPhotoPagerTest`, *a cat with several photos shows where the pager
 is*; *a cat with one photo shows no position*). A tap on a photo opens the viewer on that photo (see
-[photo-viewer.md](./photo-viewer.md); `EncounterDetailStoreTest`, *a tap on a cat's second photo opens
-the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
+[photo-viewer.md](./photo-viewer.md); `EncounterDetailStorePhotoTest`, *a tap on a cat's second photo
+opens the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
 opens that cat's viewer above it*). When the cat gains a photo, whoever added it, the pager moves to
 the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
 pager to it*).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
-*Choose from gallery* — the system camera, or the system picker for several images — on every live cat,
-one that has photos included (`EncounterDetailStoreTest`, *a cat that already has a photo can still be
-given another*). The new photo goes after the others (*a photo taken of a cat that has one is added
-after it*). A photo the cat already has is not added again, and the screen says so (*a picked photo
-the cat already has is not added again, and the screen says so*). A second tap before the camera or the
-picker answers opens nothing, so a double tap never opens two cameras (*a second tap before the camera
-answers opens nothing*). Once the camera or the picker hands a photo back, the attempt starts: both
-buttons disable and a progress bar shows under them, so a tap in the meantime opens nothing (*taking a
-photo while one is being attached opens nothing*).
+*Choose from gallery* — the system camera, or the system picker for several images — on every live
+cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat that already has a photo
+can still be given another*). The new photo goes after the others (*a photo taken of a cat that has one
+is added after it*). A photo the cat already has is not added again, and the screen says so (*a
+picked photo the cat already has is not added again, and the screen says so*). A second tap before
+the camera or the picker answers opens nothing, so a double tap never opens two cameras (*a second
+tap before the camera answers opens nothing*). The camera and the picker are opened for a named
+cat, and their answer names it back — even when the process died while they were in front, since
+the camera's queue and the picker remember the cat with the rest of the screen's saved state
+(`PhotoLaunchersTest`; `PendingCapturesTest`). A queue saved by an older version, whose shots named
+no cat, restores empty: the capture file waits for the start-up cleanup rather than landing on a
+guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both buttons
+disable and a progress bar shows under them, so a tap in the meantime opens nothing
+(`EncounterDetailStorePhotoTest`, *taking a photo while one is being attached opens nothing*).
+
+A tap on the photo, on the coordinates or on *Set on map* only ever acts on the cat the screen is
+showing, and opens the viewer, the map or the location picker for that cat; a stray result naming a
+different cat opens none of them (`EncounterDetailStorePhotoTest`, *a tap naming a cat the screen does
+not show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat
+the screen does not show opens nothing*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
@@ -149,7 +160,7 @@ none of the rest, and nothing is said, since the screen already shows it gone (*
 mid-pick is given no more photos and nothing is said*).
 
 A cancelled camera or a dismissed picker leaves the screen exactly as it was — no attempt starts
-(`EncounterDetailStoreTest`, *a cancelled camera or picker changes nothing*). A photo the camera
+(`EncounterDetailStorePhotoTest`, *a cancelled camera or picker changes nothing*). A photo the camera
 hands back is a temporary file, and `EncounterDetailStore` asks for it to be discarded once its
 attempt ends, attached or not (*a photo from the camera lands on the cat and its original is
 discarded*; *an unreadable photo says so and the offer comes back*). Leaving the screen mid-attempt
@@ -163,7 +174,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 - **Pressing delete twice soft-deletes once.** The Store flips its own flag before the suspending
   write, so a second tap in flight sees it and no-ops; the DAO's `WHERE deletedAt IS NULL` guard is
-  the second line of defence (*pressing delete twice soft-deletes exactly once*).
+  the second line of defence (`EncounterDetailStoreTest`, *pressing delete twice soft-deletes exactly
+  once*).
 - **Undo after the window closed is a no-op** — the deletion stands and the screen has already
   asked to close (*undo after the window closed is a no-op*).
 - **An id with no live encounter** — never existed, purged, or deleted from somewhere else — shows a
@@ -191,7 +203,7 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   [coat.md](./coat.md#at-the-edges)).
 - **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown
   as numbers, but the map does not draw that cat, so its **Where** section shows no map and opens
-  nothing (`EncounterDetailStoreTest`, *a cat that is not on the map opens no map*). A cat with no
+  nothing (`EncounterDetailStorePhotoTest`, *a cat that is not on the map opens no map*). A cat with no
   coordinates has nothing to open either.
 
 ## Where the code lives
@@ -205,8 +217,9 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
-  `MapFocusRequest` and selects the Map tab, and on *Set on map* pushes `LocationPicker`), `PhotoLaunchers.kt`
-  (the camera and gallery-picker launchers)
+  `MapFocusRequest` and selects the Map tab, and on *Set on map* pushes `LocationPicker` for the cat the
+  tap named), `PhotoLaunchers.kt` (the camera and the cat's photo picker), `app/…/photo/PendingCaptures.kt`
+  (which camera a result belongs to, and for which cat)
 
 ## Not built yet
 

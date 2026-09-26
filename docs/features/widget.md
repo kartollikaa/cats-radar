@@ -123,7 +123,7 @@ for it in every process the app runs in.
   `drawable-ldrtl/`) — the tiles' outlines and their ripples, `res/values/dimens.xml` — their radii
 - `app/…/widget/TallyAction.kt` — what a tap on the count does
 - `app/…/photo/TakePhotoShortcut.kt`, `CameraRequest.kt` — how Photo reaches the Counter's camera
-- `app/…/photo/PendingCaptures.kt` — which camera a result belongs to
+- `app/…/photo/PendingCaptures.kt` — which camera a result belongs to, and for which cat
 - `app/…/widget/WidgetRefresh.kt` — redrawing it when the app changes the count
 - `app/…/widget/CatsRadarWidgetReceiver.kt`, `res/xml/cats_radar_widget_info.xml` — how the launcher
   finds it
