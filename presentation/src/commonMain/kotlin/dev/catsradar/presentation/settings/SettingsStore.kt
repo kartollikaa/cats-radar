@@ -2,6 +2,8 @@ package dev.catsradar.presentation.settings
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.platform.BuildInfoReader
+import dev.catsradar.domain.platform.Feature
+import dev.catsradar.domain.platform.FeatureToggles
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.presentation.ReportedRun
@@ -15,6 +17,7 @@ class SettingsStore(
     private val buildInfoReader: BuildInfoReader,
     private val aboutStateMapper: AboutStateMapper,
     private val updates: SettingsUpdates,
+    featureToggles: FeatureToggles,
 ) : Store<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
 
     private val backupRun = ReportedRun(settingsRepository, ReportedJob.BACKUP)
@@ -33,6 +36,9 @@ class SettingsStore(
             .launchIn(viewModelScope)
         settingsRepository.encountersGrid()
             .onEach { enabled -> setState { copy(encountersGrid = enabled) } }
+            .launchIn(viewModelScope)
+        featureToggles.isOn(Feature.IN_APP_UPDATES)
+            .onEach { on -> setState { copy(updatesShown = on) } }
             .launchIn(viewModelScope)
         viewModelScope.launch {
             val about = aboutStateMapper.map(buildInfoReader.read())

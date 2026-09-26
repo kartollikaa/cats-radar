@@ -9,6 +9,7 @@ data class SettingsState(
     val backupOutcome: BackupOutcome? = null,
     /** Null until the build info has been read. */
     val about: AboutState? = null,
+    val updatesShown: Boolean = false,
     val update: UpdateState = UpdateState(),
 )
 

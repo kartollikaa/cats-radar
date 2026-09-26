@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.settings.AboutState
 import dev.catsradar.presentation.settings.InstallFailure
 import dev.catsradar.presentation.settings.SettingsState
 import dev.catsradar.presentation.settings.UpdateAction
@@ -116,11 +117,32 @@ class UpdatesSectionTest {
         assertEquals(0, installs)
     }
 
+    @Test
+    fun `while its switch is off there is no updates section, and About still shows`() {
+        compose.setContent {
+            CatsRadarTheme {
+                SettingsScreen(state = SettingsState(updatesShown = false, about = sampleAbout))
+            }
+        }
+
+        compose.onNodeWithText(text(R.string.settings_updates_check)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.settings_updates)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.settings_about)).performScrollTo()
+    }
+
+    private val sampleAbout = AboutState(
+        version = "1.4.1-beta (7)",
+        build = "release · 5989a92c1f3e",
+        device = "Google Pixel 7",
+        androidRelease = "16",
+        sdkInt = 36,
+    )
+
     private fun show() {
         compose.setContent {
             CatsRadarTheme {
                 SettingsScreen(
-                    state = SettingsState(update = update),
+                    state = SettingsState(updatesShown = true, update = update),
                     onCheckForUpdatesClick = { checks++ },
                     onInstallUpdateClick = { installs++ },
                     onAllowInstallsClick = { permissionPages++ },
