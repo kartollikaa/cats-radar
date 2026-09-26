@@ -106,16 +106,16 @@ A cat's photos lead the screen as a pager of the app's copies, oldest first, swi
 [photos.md](./photos.md#seeing-one)); while there is more than one, a position — "2 / 3" — sits in the
 corner of the photo on screen (`DetailPhotoPagerTest`, *a cat with several photos shows where the pager
 is*; *a cat with one photo shows no position*). A tap on a photo opens the viewer on that photo (see
-[photo-viewer.md](./photo-viewer.md); `EncounterDetailStoreTest`, *a tap on a cat's second photo opens
-the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
+[photo-viewer.md](./photo-viewer.md); `EncounterDetailStorePhotoTest`, *a tap on a cat's second photo
+opens the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
 opens that cat's viewer above it*). When the cat gains a photo, whoever added it, the pager moves to
 the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
 pager to it*).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
 *Choose from gallery* — the system camera, or the system picker for several images — on every live
-cat, one that has photos included (`EncounterDetailStoreTest`, *a cat that already has a photo can
-still be given another*). The new photo goes after the others (*a photo taken of a cat that has one
+cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat that already has a photo
+can still be given another*). The new photo goes after the others (*a photo taken of a cat that has one
 is added after it*). A photo the cat already has is not added again, and the screen says so (*a
 picked photo the cat already has is not added again, and the screen says so*). A second tap before
 the camera or the picker answers opens nothing, so a double tap never opens two cameras (*a second
@@ -125,14 +125,14 @@ the camera's queue and the picker remember the cat with the rest of the screen's
 (`PhotoLaunchersTest`; `PendingCapturesTest`). A queue saved by an older version, whose shots named
 no cat, restores empty: the capture file waits for the start-up cleanup rather than landing on a
 guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both buttons
-disable and a progress bar shows under them, so a tap in the meantime opens nothing (*taking a
-photo while one is being attached opens nothing*).
+disable and a progress bar shows under them, so a tap in the meantime opens nothing
+(`EncounterDetailStorePhotoTest`, *taking a photo while one is being attached opens nothing*).
 
 A tap on the photo, on the coordinates or on *Set on map* only ever acts on the cat the screen is
 showing, and opens the viewer, the map or the location picker for that cat; a stray result naming a
-different cat opens none of them (`EncounterDetailStoreTest`, *a tap naming a cat the screen does not
-show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat the
-screen does not show opens nothing*).
+different cat opens none of them (`EncounterDetailStorePhotoTest`, *a tap naming a cat the screen does
+not show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat
+the screen does not show opens nothing*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
@@ -160,7 +160,7 @@ none of the rest, and nothing is said, since the screen already shows it gone (*
 mid-pick is given no more photos and nothing is said*).
 
 A cancelled camera or a dismissed picker leaves the screen exactly as it was — no attempt starts
-(`EncounterDetailStoreTest`, *a cancelled camera or picker changes nothing*). A photo the camera
+(`EncounterDetailStorePhotoTest`, *a cancelled camera or picker changes nothing*). A photo the camera
 hands back is a temporary file, and `EncounterDetailStore` asks for it to be discarded once its
 attempt ends, attached or not (*a photo from the camera lands on the cat and its original is
 discarded*; *an unreadable photo says so and the offer comes back*). Leaving the screen mid-attempt
@@ -174,7 +174,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 - **Pressing delete twice soft-deletes once.** The Store flips its own flag before the suspending
   write, so a second tap in flight sees it and no-ops; the DAO's `WHERE deletedAt IS NULL` guard is
-  the second line of defence (*pressing delete twice soft-deletes exactly once*).
+  the second line of defence (`EncounterDetailStoreTest`, *pressing delete twice soft-deletes exactly
+  once*).
 - **Undo after the window closed is a no-op** — the deletion stands and the screen has already
   asked to close (*undo after the window closed is a no-op*).
 - **An id with no live encounter** — never existed, purged, or deleted from somewhere else — shows a
@@ -202,7 +203,7 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   [coat.md](./coat.md#at-the-edges)).
 - **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown
   as numbers, but the map does not draw that cat, so its **Where** section shows no map and opens
-  nothing (`EncounterDetailStoreTest`, *a cat that is not on the map opens no map*). A cat with no
+  nothing (`EncounterDetailStorePhotoTest`, *a cat that is not on the map opens no map*). A cat with no
   coordinates has nothing to open either.
 
 ## Where the code lives
