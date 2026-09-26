@@ -9,7 +9,11 @@ return to the list, never to the Counter root. The same screen opens from a dot 
 above the screen it was tapped in. A cat that is on the map has a small map of its spot at the top of
 its **Where** section (see [Its map](#its-map)) and its coordinates drawn in the theme's primary colour
 with a map mark beside them, and a tap anywhere in that section switches to the Map tab with the view
-on that cat (see [map.md](./map.md#a-cats-coordinates)). The screen scrolls: a photo and the coat picker
+on that cat (see [map.md](./map.md#a-cats-coordinates)). A cat with no location offers *Set on map*
+there instead, which opens the location picker above the screen, once however often it is tapped
+(`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever way it came
+(`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*). The picker
+itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the coat picker
 together are taller than most phones, and Delete must never end up below the bottom edge.
 
 A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
@@ -198,8 +202,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
-  `MapFocusRequest` and selects the Map tab), `PhotoLaunchers.kt` (the camera and gallery-picker
-  launchers)
+  `MapFocusRequest` and selects the Map tab, and on *Set on map* pushes `LocationPicker`), `PhotoLaunchers.kt`
+  (the camera and gallery-picker launchers)
 
 ## Not built yet
 

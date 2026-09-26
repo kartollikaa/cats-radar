@@ -52,6 +52,7 @@ fun EncounterDetailScreen(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
@@ -66,6 +67,7 @@ fun EncounterDetailScreen(
                 onPickPhotoClick = onPickPhotoClick,
                 onPhotoClick = onPhotoClick,
                 onCoordinatesClick = onCoordinatesClick,
+                onSetLocationClick = onSetLocationClick,
             )
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
@@ -90,6 +92,7 @@ private fun LoadedDetail(
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -114,7 +117,7 @@ private fun LoadedDetail(
             )
             Text(text = state.timeLabel, style = MaterialTheme.typography.displayMedium)
         }
-        WhereCard(state, onCoordinatesClick = onCoordinatesClick)
+        WhereCard(state, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             CoatPicker(
                 selected = state.coat,

@@ -24,6 +24,8 @@ sealed interface EncounterDetailState {
         val attachProgress: AttachProgress? = null,
         /** Null when the map does not draw this cat. */
         val mapPosition: MapPosition? = null,
+        /** Whether the cat can be given a location on a map: it has none. */
+        val setsLocation: Boolean = false,
         /** Null while the cat has no named place: no location, or its cell not named yet. */
         val place: DetailPlace? = null,
     ) : EncounterDetailState

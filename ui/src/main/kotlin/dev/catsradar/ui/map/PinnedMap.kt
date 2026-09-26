@@ -93,7 +93,7 @@ internal fun PinnedMap(position: MapPosition, modifier: Modifier = Modifier) {
 @Composable
 private fun BoxScope.TileMap(position: MapPosition) {
     val camera = CameraPosition(target = Position(position.longitude, position.latitude), zoom = StreetZoom)
-    val mapState = rememberMapState(baseStyle = themedMapStyle(), initialCameraPosition = camera)
+    val mapState = rememberMapState(baseStyle = mapStyle(), initialCameraPosition = camera)
     MaplibreMap(
         modifier = Modifier.matchParentSize().clearAndSetSemantics { testTag = PinnedMapTestTag },
         state = mapState,

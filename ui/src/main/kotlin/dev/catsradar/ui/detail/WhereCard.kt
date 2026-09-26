@@ -37,6 +37,7 @@ internal fun WhereCard(
     state: EncounterDetailState.Loaded,
     modifier: Modifier = Modifier,
     onCoordinatesClick: () -> Unit = {},
+    onSetLocationClick: () -> Unit = {},
 ) {
     val opensMap = if (state.mapPosition != null) {
         Modifier.clickable(
@@ -59,13 +60,21 @@ internal fun WhereCard(
                         .clip(MaterialTheme.shapes.medium),
                 )
             }
-            WhereLines(state, modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+            WhereLines(
+                state,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                onSetLocationClick = onSetLocationClick,
+            )
         }
     }
 }
 
 @Composable
-private fun WhereLines(state: EncounterDetailState.Loaded, modifier: Modifier = Modifier) {
+private fun WhereLines(
+    state: EncounterDetailState.Loaded,
+    modifier: Modifier = Modifier,
+    onSetLocationClick: () -> Unit = {},
+) {
     val onTheMap = state.mapPosition != null
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         state.place?.let { PlaceLine(it, Modifier.padding(bottom = 4.dp)) }
@@ -100,6 +109,9 @@ private fun WhereLines(state: EncounterDetailState.Loaded, modifier: Modifier = 
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        if (state.setsLocation) {
+            SetLocationButton(modifier = Modifier.padding(top = 8.dp), onClick = onSetLocationClick)
         }
     }
 }
@@ -153,4 +165,5 @@ private val sampleNotOnTheMap = EncounterDetailState.Loaded(
     location = LocationLabel.NONE,
     coordinatesLabel = null,
     accuracyMeters = null,
+    setsLocation = true,
 )

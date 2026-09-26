@@ -22,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
@@ -122,6 +123,27 @@ class EncounterDetailScreenTest {
         val delete = compose.onNodeWithText(context.getString(R.string.detail_delete)).fetchSemanticsNode()
 
         assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), delete.boundsInRoot.bottom, 1f)
+    }
+
+    @Test
+    fun `a cat with no location offers set on map, and the tap reports`() {
+        var taps = 0
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(state = loaded.copy(setsLocation = true), onSetLocationClick = { taps++ })
+            }
+        }
+
+        setOnMap().performScrollTo().performClick()
+
+        assertEquals(1, taps)
+    }
+
+    @Test
+    fun `a cat with a location offers no set on map`() {
+        show(loaded.copy(location = LocationLabel.CURRENT, coordinatesLabel = "41.39000, 2.17000"))
+
+        setOnMap().assertDoesNotExist()
     }
 
     @Test
@@ -236,6 +258,8 @@ class EncounterDetailScreenTest {
     private val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
     private fun back() = compose.onNodeWithContentDescription(context.getString(R.string.detail_back))
+
+    private fun setOnMap() = compose.onNodeWithText(context.getString(R.string.detail_set_location))
 
     private fun Dp.px(): Float = with(compose.density) { toPx() }
 

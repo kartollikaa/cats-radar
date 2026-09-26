@@ -86,16 +86,23 @@ class EncounterDetailStore(
             EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera)
             EncounterDetailIntent.PickPhotoClicked -> requestPhoto(EncounterDetailEffect.OpenPhotoPicker)
             is EncounterDetailIntent.PhotoClicked ->
-                if ((state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId }) {
-                    emit(EncounterDetailEffect.OpenPhoto(intent.photoId))
+                emitIfOffered(EncounterDetailEffect.OpenPhoto(intent.photoId)) {
+                    photos.any { it.id == intent.photoId }
                 }
             EncounterDetailIntent.CoordinatesClicked ->
-                if ((state.value as? EncounterDetailState.Loaded)?.mapPosition != null) {
-                    emit(EncounterDetailEffect.OpenMap)
-                }
+                emitIfOffered(EncounterDetailEffect.OpenMap) { mapPosition != null }
+            EncounterDetailIntent.SetLocationClicked ->
+                emitIfOffered(EncounterDetailEffect.OpenLocationPicker) { setsLocation }
             is EncounterDetailIntent.PhotoTaken -> onPhotosChosen(listOfNotNull(intent.uri), PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotosPicked -> onPhotosChosen(intent.uris, PhotoSource.GALLERY)
         }
+    }
+
+    private suspend fun emitIfOffered(
+        effect: EncounterDetailEffect,
+        offered: EncounterDetailState.Loaded.() -> Boolean,
+    ) {
+        if ((state.value as? EncounterDetailState.Loaded)?.offered() == true) emit(effect)
     }
 
     private suspend fun requestPhoto(opener: EncounterDetailEffect) {
@@ -139,7 +146,12 @@ class EncounterDetailStore(
         deletedHere = true
         setState { EncounterDetailState.Deleted(undoVisible = true) }
         startUndoWindow()
-        runStorageWrite(onFailure = ::restoreAfterFailedDelete) { deleteEncounter(encounterId) }
+        val restore = {
+            undoTimeoutJob?.cancel()
+            deletedHere = false
+            setState { reduce(lastSeen) }
+        }
+        runStorageWrite(onFailure = restore) { deleteEncounter(encounterId) }
     }
 
     private fun startUndoWindow() {
@@ -165,12 +177,6 @@ class EncounterDetailStore(
             undoDelete(encounterId)
             deletedHere = false
         }
-    }
-
-    private fun restoreAfterFailedDelete() {
-        undoTimeoutJob?.cancel()
-        deletedHere = false
-        setState { reduce(lastSeen) }
     }
 }
 
