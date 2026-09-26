@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.region.EncounterPlace
+import dev.catsradar.domain.session.OutingWindow
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.AttachResult
@@ -67,10 +68,13 @@ class EncounterDetailStore(
     // A null emission after our own delete is the delete taking effect, not the encounter vanishing.
     private fun EncounterDetailState.reduce(encounter: Encounter?): EncounterDetailState = when {
         encounter != null -> stateMapper.map(
-            encounter,
-            clock.today(timeZone),
-            attachProgress.takeIf { attachingPhotos || arrivingPhotoIds.isNotEmpty() },
-            lastPlace,
+            OutingWindow(cats = listOf(encounter), newer = null, older = null),
+            currentId = encounter.id,
+            today = clock.today(timeZone),
+            attaching = attachProgress.takeIf { attachingPhotos || arrivingPhotoIds.isNotEmpty() }
+                ?.let { mapOf(encounter.id to it) }
+                .orEmpty(),
+            places = mapOf(encounter.id to lastPlace),
         )
         deletedHere -> this
         else -> EncounterDetailState.Missing
@@ -109,13 +113,13 @@ class EncounterDetailStore(
     private suspend fun emitIfShownAndOffered(
         catId: String,
         effect: EncounterDetailEffect,
-        offered: EncounterDetailState.Loaded.() -> Boolean,
+        offered: CatPage.() -> Boolean,
     ) {
-        if (catId == encounterId && (state.value as? EncounterDetailState.Loaded)?.offered() == true) emit(effect)
+        if (catId == encounterId && state.value.page(catId)?.offered() == true) emit(effect)
     }
 
     private suspend fun requestPhoto(opener: EncounterDetailEffect) {
-        val offered = (state.value as? EncounterDetailState.Loaded)?.addPhoto == AddPhoto.READY
+        val offered = state.value.page(encounterId)?.addPhoto == AddPhoto.READY
         if (awaitingPhoto || !offered) return
         awaitingPhoto = true
         emit(opener)
@@ -190,6 +194,9 @@ class EncounterDetailStore(
 }
 
 private fun Encounter.photoIds(): Set<String> = photos.mapTo(mutableSetOf()) { it.id }
+
+private fun EncounterDetailState.page(catId: String): CatPage? =
+    (this as? EncounterDetailState.Loaded)?.pages?.firstOrNull { it.id == catId }
 
 // A cat removed mid-pick answers NotAttachable, which says nothing: the screen already shows it gone.
 private fun List<AttachResult?>.message(): EncounterDetailEffect? {

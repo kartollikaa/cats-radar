@@ -109,11 +109,11 @@ internal fun EncounterDetailDestination(
         onBackClick = { store.dispatch(EncounterDetailIntent.BackClicked) },
         onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
-        onCoatClick = { coat -> store.dispatch(EncounterDetailIntent.CoatPicked(key.id, coat)) },
-        onTakePhotoClick = { store.dispatch(EncounterDetailIntent.TakePhotoClicked(key.id)) },
-        onPickPhotoClick = { store.dispatch(EncounterDetailIntent.PickPhotoClicked(key.id)) },
-        onPhotoClick = { photoId -> store.dispatch(EncounterDetailIntent.PhotoClicked(key.id, photoId)) },
-        onCoordinatesClick = { store.dispatch(EncounterDetailIntent.CoordinatesClicked(key.id)) },
-        onSetLocationClick = { store.dispatch(EncounterDetailIntent.SetLocationClicked(key.id)) },
+        onCoatClick = { pick -> store.dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
+        onTakePhotoClick = { catId -> store.dispatch(EncounterDetailIntent.TakePhotoClicked(catId)) },
+        onPickPhotoClick = { catId -> store.dispatch(EncounterDetailIntent.PickPhotoClicked(catId)) },
+        onPhotoClick = { tap -> store.dispatch(EncounterDetailIntent.PhotoClicked(tap.catId, tap.photoId)) },
+        onCoordinatesClick = { catId -> store.dispatch(EncounterDetailIntent.CoordinatesClicked(catId)) },
+        onSetLocationClick = { catId -> store.dispatch(EncounterDetailIntent.SetLocationClicked(catId)) },
     )
 }
