@@ -87,19 +87,17 @@ class EncounterDetailStore(
             is EncounterDetailIntent.PickPhotoClicked ->
                 requestPhoto(EncounterDetailEffect.OpenPhotoPicker(intent.catId))
             is EncounterDetailIntent.PhotoClicked ->
-                if (
-                    intent.catId == encounterId &&
-                    (state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId }
-                ) {
-                    emit(EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId))
-                }
+                ifShown(
+                    intent.catId,
+                    encounterId,
+                    (state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId },
+                ) { emit(EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) }
             is EncounterDetailIntent.CoordinatesClicked ->
-                if (
-                    intent.catId == encounterId &&
-                    (state.value as? EncounterDetailState.Loaded)?.onTheMap == true
-                ) {
-                    emit(EncounterDetailEffect.OpenMap(intent.catId))
-                }
+                ifShown(
+                    intent.catId,
+                    encounterId,
+                    (state.value as? EncounterDetailState.Loaded)?.onTheMap == true,
+                ) { emit(EncounterDetailEffect.OpenMap(intent.catId)) }
             is EncounterDetailIntent.PhotoTaken ->
                 onPhotosChosen(intent.catId, listOfNotNull(intent.uri), PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotosPicked -> onPhotosChosen(intent.catId, intent.uris, PhotoSource.GALLERY)
@@ -183,6 +181,11 @@ class EncounterDetailStore(
 }
 
 private fun Encounter.photoIds(): Set<String> = photos.mapTo(mutableSetOf()) { it.id }
+
+// A tapped photo or coordinates only ever acts on the cat this Store observes.
+private suspend fun ifShown(catId: String, encounterId: String, shownOnScreen: Boolean, action: suspend () -> Unit) {
+    if (catId == encounterId && shownOnScreen) action()
+}
 
 // A cat removed mid-pick answers NotAttachable, which says nothing: the screen already shows it gone.
 private fun List<AttachResult?>.message(): EncounterDetailEffect? {

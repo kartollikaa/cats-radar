@@ -279,6 +279,103 @@ class EncounterDetailStoreTest {
         }
 
     @Test
+    fun `a coat lands on the cat it was picked for`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
+        runCurrent()
+
+        assertEquals(CoatOption.GINGER, repository.observeById(OTHER).value()?.coat?.toOption())
+        assertNull(assertNotNull(repository.observeById(ID).value()).coat)
+    }
+
+    @Test
+    fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
+        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
+            .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q")
+        repository.insert(located)
+        val store = newStore()
+        runCurrent()
+        assertEquals(null, (store.state.value as EncounterDetailState.Loaded).place)
+
+        cells.upsert(namedCell("sp3e3q"))
+        runCurrent()
+
+        assertEquals(
+            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+            (store.state.value as EncounterDetailState.Loaded).place,
+        )
+    }
+
+    private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
+        encounterId = ID,
+        observeEncounter = ObserveEncounter(repository),
+        observeEncounterPlace = ObserveEncounterPlace(cells),
+        deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
+        undoDelete = UndoDelete(repository, analytics = NoAnalytics),
+        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
+        attachPhoto = AttachPhoto(
+            encounterRepository = repository,
+            settingsRepository = FakeSettingsRepository(),
+            imageResizer = resizer,
+            digest = FakeDigest(),
+            gallerySaver = FakeGallerySaver(),
+            galleryItemLocator = LocatesNoGalleryItem,
+            photoStorage = FakePhotoStorage(),
+            idGenerator = FakeIdGenerator(),
+            deviceIdProvider = FakeDeviceIdProvider(),
+            clock = clock,
+            analytics = NoAnalytics,
+        ),
+        stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
+        clock = clock,
+        timeZone = TimeZone.UTC,
+    )
+
+    private fun namedCell(cellId: String) = PlaceCell(
+        cellId = cellId,
+        centerLat = 41.39,
+        centerLon = 2.17,
+        countryCode = "ES",
+        countryName = "Spain",
+        adminArea = null,
+        locality = "Barcelona",
+        subLocality = null,
+        status = PlaceStatus.RESOLVED,
+        attempts = 1,
+        lastAttemptAt = NOW,
+        resolvedAt = NOW,
+    )
+
+    private suspend fun <T> Flow<T>.value(): T = first()
+
+    private companion object {
+        const val ID = "cat-1"
+        const val OTHER = "cat-2"
+        val NOW = Instant.parse("2026-09-22T12:00:00Z")
+        val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class EncounterDetailStorePhotoTest {
+
+    private val mainDispatcher = StandardTestDispatcher()
+    private val repository = FakeEncounterRepository()
+    private val cells = FakePlaceCellRepository()
+    private val clock = FakeClock(NOW)
+    private val resizer = FakeImageResizer()
+
+    @BeforeTest
+    fun setUp() = Dispatchers.setMain(mainDispatcher)
+
+    @AfterTest
+    fun tearDown() = Dispatchers.resetMain()
+
+    @Test
     fun `take a photo opens the camera and choose from gallery opens the picker`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         val store = newStore()
@@ -669,20 +766,6 @@ class EncounterDetailStoreTest {
     }
 
     @Test
-    fun `a coat lands on the cat it was picked for`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        repository.insert(encounterFixture(OTHER, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
-        runCurrent()
-
-        assertEquals(CoatOption.GINGER, repository.observeById(OTHER).value()?.coat?.toOption())
-        assertNull(assertNotNull(repository.observeById(ID).value()).coat)
-    }
-
-    @Test
     fun `the viewer and the map open on the cat that was tapped`() = runTest(mainDispatcher) {
         repository.insert(
             encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
@@ -743,39 +826,6 @@ class EncounterDetailStoreTest {
         stateMapper = EncounterDetailStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
         clock = clock,
         timeZone = TimeZone.UTC,
-    )
-
-    @Test
-    fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
-        val located = encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
-            .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q")
-        repository.insert(located)
-        val store = newStore()
-        runCurrent()
-        assertEquals(null, (store.state.value as EncounterDetailState.Loaded).place)
-
-        cells.upsert(namedCell("sp3e3q"))
-        runCurrent()
-
-        assertEquals(
-            DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
-            (store.state.value as EncounterDetailState.Loaded).place,
-        )
-    }
-
-    private fun namedCell(cellId: String) = PlaceCell(
-        cellId = cellId,
-        centerLat = 41.39,
-        centerLon = 2.17,
-        countryCode = "ES",
-        countryName = "Spain",
-        adminArea = null,
-        locality = "Barcelona",
-        subLocality = null,
-        status = PlaceStatus.RESOLVED,
-        attempts = 1,
-        lastAttemptAt = NOW,
-        resolvedAt = NOW,
     )
 
     private suspend fun <T> Flow<T>.value(): T = first()
