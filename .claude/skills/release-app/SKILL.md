@@ -89,12 +89,10 @@ over the APK — no version bump, no PR, no tag).
    - The release build is minified by R8, which the debug build never is. Install **that same
      signed APK** and walk the by-name paths listed in `docs/reference/releasing.md` (widget tap,
      a tally, backup export + import, a screen surviving a background kill) before tagging — a
-     missing keep rule shows up nowhere else. Use a throwaway AVD (copy
-     `~/.android/avd/Pixel_7.avd/config.ini` into a new `<Name>.avd/` plus a `<Name>.ini` pointing at
-     it, boot it on a free port, delete both afterwards): the shared emulator holds
-     other sessions' debug-signed `com.kartollika.catsradar`, which a release-signed APK cannot
-     update without uninstalling it and their data. An `applicationIdSuffix` build no longer
-     compiles — `app/google-services.json` has a client for `com.kartollika.catsradar` only.
+     missing keep rule shows up nowhere else. **REQUIRED SUB-SKILL: use `device-check`** for its
+     throwaway-AVD lifecycle and guarded inputs. The shared emulator holds other sessions'
+     debug-signed `com.kartollika.catsradar`, which a release-signed APK cannot update without
+     uninstalling it and their data.
      If the walk finds a bug, fix it through a PR and restart from step 4; any local release
      build made just to try something runs with `CI=true`, so it uploads nothing.
    - A debug-only release (no signing file) has no mapping — debug builds are not

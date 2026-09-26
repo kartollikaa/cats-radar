@@ -1,0 +1,17 @@
+def baseApplicationId = "com.kartollika.catsradar"
+
+allprojects { project ->
+    project.pluginManager.withPlugin("com.android.application") {
+        def suffix = project.findProperty("deviceCheckSuffix")
+        if (suffix == null || !(suffix ==~ /[a-z][a-z0-9_]*/)) {
+            throw new GradleException("-PdeviceCheckSuffix must match [a-z][a-z0-9_]*")
+        }
+        project.android.buildTypes.debug.applicationIdSuffix = ".${suffix}"
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.findAll { it.name == "processDebugGoogleServices" }.each { task ->
+        task.applicationId.set(baseApplicationId)
+    }
+}
