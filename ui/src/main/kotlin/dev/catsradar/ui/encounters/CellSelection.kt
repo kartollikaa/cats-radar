@@ -24,19 +24,19 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/** A tap opens the cat, or toggles it while selecting; a long press always toggles it. */
+/** A tap opens the cat, or toggles it while selecting; a long press toggles it where [onLongClick] is given. */
 internal fun Modifier.selectableCell(
     selected: Boolean,
     selecting: Boolean,
     toggleLabel: String,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
 ): Modifier = this
     .then(if (selecting) Modifier.semantics { this.selected = selected } else Modifier)
     .combinedClickable(
         onClickLabel = if (selecting) toggleLabel else null,
         onClick = onClick,
-        onLongClickLabel = toggleLabel,
+        onLongClickLabel = onLongClick?.let { toggleLabel },
         onLongClick = onLongClick,
     )
 

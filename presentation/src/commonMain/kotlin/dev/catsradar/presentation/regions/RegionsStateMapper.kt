@@ -11,22 +11,59 @@ import kotlinx.datetime.LocalDate
 
 class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
 
-    fun map(view: RegionView, today: LocalDate, topLevel: Boolean): RegionsState = when (view) {
+    fun map(view: RegionView, parent: RegionKey?, today: LocalDate): RegionsState = when (view) {
         is RegionView.Places -> when {
-            view.children.isEmpty() && topLevel -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET)
+            view.children.isEmpty() && parent == null ->
+                RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_YET, RegionsEmptyHint.HOW_PLACES_APPEAR)
             view.children.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_PLACES_HERE)
-            else -> RegionsState.Loaded(rows = view.children.map { it.toRow() }.toPersistentList())
+            else -> {
+                val total = view.children.sumOf { it.count }
+                RegionsState.Places(
+                    header = header(parent, view, total),
+                    section = parent.section(),
+                    rows = view.children.map { it.toRow(total) }.toPersistentList(),
+                )
+            }
         }
         is RegionView.Cats -> when {
             view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE)
-            else -> RegionsState.Loaded(encounters = encountersMapper.mapList(view.encounters, today))
+            else -> RegionsState.Cats(
+                header = header(parent, view, view.encounters.size),
+                rows = encountersMapper.map(view.encounters, today, grid = false).rows,
+            )
         }
     }
 
-    private fun RegionNode.toRow() = RegionRowState(
+    private fun header(parent: RegionKey?, view: RegionView, total: Int): RegionsHeader? {
+        val self = view.self
+        return when {
+            parent == null -> RegionsHeader(RegionsTitle.AllPlaces, total)
+            self != null -> RegionsHeader(
+                title = RegionsTitle.Of(self.label.toRowLabel()),
+                count = self.count,
+                flag = self.key.flag(),
+                trail = view.trail.map { RegionsCrumb(it.label.toRowLabel(), it.key.flag()) }.toPersistentList(),
+            )
+            else -> null
+        }
+    }
+
+    private fun RegionKey.flag(): String? = (this as? RegionKey.Country)?.let { countryFlag(it.countryCode) }
+
+    // An area and No location list cats, never places, so their answer is never shown.
+    private fun RegionKey?.section(): RegionsSection = when (this) {
+        null -> RegionsSection.COUNTRIES
+        is RegionKey.Country -> RegionsSection.CITIES
+        is RegionKey.AreaParent, is RegionKey.Area, RegionKey.NoLocation -> RegionsSection.AREAS
+    }
+
+    private fun RegionNode.toRow(total: Int) = RegionRowState(
         key = key.toRowKey(),
         label = label.toRowLabel(),
         countLabel = count.toString(),
+        share = if (total > 0) count.toFloat() / total else 0f,
+        pseudo = key == RegionKey.Unresolved || key is RegionKey.NoCity || key == RegionKey.NoLocation,
+        flag = key.flag(),
     )
 
     private fun RegionKey.toRowKey(): RegionRowKey = when (this) {

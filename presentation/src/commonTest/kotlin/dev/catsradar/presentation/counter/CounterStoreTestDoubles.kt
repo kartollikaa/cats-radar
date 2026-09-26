@@ -237,21 +237,25 @@ internal class FakeImageResizer(
     var result: StoredPhoto? = StoredPhoto(photoPath = "cat.jpg", thumbPath = "cat_thumb.jpg"),
 ) : ImageResizer {
     var storeDelay: Duration = Duration.ZERO
+    var unreadable: Set<String> = emptySet()
 
     override suspend fun store(sourceUri: String, baseName: String): StoredPhoto? {
         delay(storeDelay)
-        return result
+        return result.takeUnless { sourceUri in unreadable }
     }
 }
 
-internal class FakeDigest : Digest {
-    override suspend fun sha256(uri: String): String? = "digest"
+internal class FakeDigest(private val digestOf: (uri: String) -> String? = { "digest" }) : Digest {
+    override suspend fun sha256(uri: String): String? = digestOf(uri)
 }
 
 internal class FakePlaceCellRepository : PlaceCellRepository {
     private val cells = MutableStateFlow<List<PlaceCell>>(emptyList())
 
     override fun observeAll(): Flow<List<PlaceCell>> = cells
+
+    override fun observeById(cellId: String): Flow<PlaceCell?> =
+        cells.map { list -> list.firstOrNull { it.cellId == cellId } }
 
     override suspend fun upsert(cell: PlaceCell) {
         cells.update { list -> list.filterNot { it.cellId == cell.cellId } + cell }

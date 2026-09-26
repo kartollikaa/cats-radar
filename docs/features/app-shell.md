@@ -90,10 +90,12 @@ only in the corners of squarer shapes.
 **Shape and type.** Corners are rounder than Material's defaults at every size, and display and
 headline styles are heavier. The font is the platform's; nothing is bundled.
 
-**Rhythm.** Screens that hold rows — Statistics, Settings, an encounter's detail — group them in
-titled cards (`SectionCard`) on the theme's low surface, with the title in the primary colour; a
-headline number sits in a primary-container card of its own. The Encounters list is the one place
-rows are cards individually, since each outing is one run of them. A value that does not fit beside
+**Rhythm.** Screens that hold rows — Statistics, Settings, an encounter's detail, each level of
+Places — group them in titled cards (`SectionCard`) on the theme's low surface, with the title in
+the primary colour; a headline number sits in a primary-container card of its own, and a Places
+level opens on one that names the place. Cat lists — the Encounters tab, the map's spot sheet, the
+cats at the bottom of Places — are the one place rows are cards individually, since each outing is
+one run of them. A value that does not fit beside
 its label moves under it, end-aligned, rather than squeezing the label; a card's title is a heading
 and each row reads as one item to TalkBack. A setting's whole row toggles it, not only its switch.
 
@@ -103,6 +105,11 @@ indicator pill; only the map and the settings gear also change to their filled f
 other glyphs have no separate filled version. The label is always shown and names the tab, so the
 icons carry no content description of their own. Each label gets a fifth of the bar, which on a
 360dp-wide phone is narrower than «Статистика», so the Russian stats tab says «Итоги».
+
+**Pushed screens.** A screen pushed above a tab has a back arrow in a tonal circle, pinned at its
+top (`BackBar`). A cat's detail and every level of Places are such screens. The bar draws no
+background, so the screen scrolls under it, and the content starts below it (`belowBackBar`). The
+arrow takes back only its own screen, so a quick double tap never pops the one under it.
 
 **Motion.** Screens change the way Material's transition patterns describe, and every change is
 short: `NavTransitionTimingTest` drives the host's own `NavDisplay` on the test clock and fails if a
@@ -145,6 +152,11 @@ drag part of the way down closes it instead of parking it half open (*dragging a
 the way down from its full height closes it rather than stopping half open*). Material's own
 sheets — `ModalBottomSheet`, `BottomSheetScaffold` and their states — stop a tall sheet halfway by
 default, so no other file uses them (`BottomSheetUsageTest`).
+
+**How a sheet looks.** A sheet opens on its header (`SheetHeader`). The header has a title in the
+large title style, which is a heading. When the title alone does not say what the sheet does, a
+line under it says so. The sheet's actions end it, at the end edge (`SheetActions`). The spot list,
+the coat question after a photo and the map's coat filter all follow it.
 
 **Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
 are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
@@ -209,7 +221,6 @@ because building it reaches Play Services, which only a real location call shoul
 
 ## Not handled yet
 
-The theme is the foundation of a design pass that is not finished: coats are drawn as cat faces
-(`coat.md`) and the Counter's count springs and rolls (`counting-cats.md`), but the rhythm of the
-list, detail and statistics screens is still to come. Until then, those screens wear the new colours on
-their old layouts. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
+The two sheets a screen opens itself — the coat choice over the map and the coat question after a
+photo — are not back-stack destinations yet, so *Sheets are destinations* above does not hold for
+them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
