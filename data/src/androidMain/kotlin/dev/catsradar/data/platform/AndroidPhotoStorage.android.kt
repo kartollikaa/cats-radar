@@ -5,45 +5,63 @@ import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.platform.StoredPhoto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val PHOTOS_DIR = "photos"
 
-class AndroidPhotoStorage(
+class AndroidPhotoStorage internal constructor(
     private val context: Context,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher,
+    private val copyFile: (source: File, destination: File) -> Unit,
 ) : PhotoStorage {
+
+    constructor(
+        context: Context,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    ) : this(context, ioDispatcher, { source, destination -> source.copyTo(destination) })
 
     private val root: File get() = File(context.filesDir, PHOTOS_DIR)
 
     override fun resolve(relativePath: String): String = fileFor(relativePath).path
 
-    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = withContext(ioDispatcher) {
+    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto {
         val photoPath = "$baseName.jpg"
         val thumbPath = stored.thumbPath?.let { "${baseName}_thumb.jpg" }
         val photoDestination = fileFor(photoPath)
         val thumbDestination = thumbPath?.let(::fileFor)
-        var photoCopied = false
-        var thumbCopied = false
-        var completed = false
+        var ownsPhotoDestination = false
+        var ownsThumbDestination = false
+        var handedOff = false
 
         try {
-            require(!photoDestination.exists()) { "photo destination already exists: $photoPath" }
-            fileFor(stored.photoPath).copyTo(photoDestination)
-            photoCopied = true
+            val copied = withContext(ioDispatcher) {
+                require(!photoDestination.exists()) { "photo destination already exists: $photoPath" }
+                ownsPhotoDestination = true
+                copyFile(fileFor(stored.photoPath), photoDestination)
 
-            if (thumbDestination != null) {
-                require(!thumbDestination.exists()) { "photo destination already exists: $thumbPath" }
-                fileFor(stored.thumbPath!!).copyTo(thumbDestination)
-                thumbCopied = true
+                if (thumbDestination != null) {
+                    require(!thumbDestination.exists()) { "photo destination already exists: $thumbPath" }
+                    ownsThumbDestination = true
+                    copyFile(fileFor(stored.thumbPath!!), thumbDestination)
+                }
+
+                StoredPhoto(photoPath, thumbPath)
             }
 
-            StoredPhoto(photoPath, thumbPath).also { completed = true }
+            handedOff = true
+            return copied
         } finally {
-            if (!completed) {
-                if (thumbCopied) thumbDestination?.delete()
-                if (photoCopied) photoDestination.delete()
+            if (!handedOff) {
+                withContext(NonCancellable + ioDispatcher) {
+                    if (ownsThumbDestination) {
+                        thumbDestination?.delete()
+                    }
+                    if (ownsPhotoDestination) {
+                        photoDestination.delete()
+                    }
+                }
             }
         }
     }

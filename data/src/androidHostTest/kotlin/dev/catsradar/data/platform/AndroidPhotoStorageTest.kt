@@ -4,10 +4,17 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.domain.platform.StoredPhoto
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
@@ -88,5 +95,47 @@ class AndroidPhotoStorageTest {
         }
 
         assertFalse(photoStorage.fileFor("partial-new-photo.jpg").exists())
+    }
+
+    @Test
+    fun aWriteFailureRemovesThePartiallyWrittenDestination() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val failingStorage = AndroidPhotoStorage(context, dispatcher) { _, destination ->
+            destination.writeText("partial")
+            throw IOException("write failed")
+        }
+        failingStorage.prepare("write-failure-source.jpg").writeText("photo")
+
+        assertFailsWith<IOException> {
+            failingStorage.copy(StoredPhoto("write-failure-source.jpg", null), "write-failure-new-photo")
+        }
+
+        assertFalse(failingStorage.fileFor("write-failure-new-photo.jpg").exists())
+    }
+
+    @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun cancellationWhileReturningFromIoRemovesCompletedCopies() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        lateinit var copyJob: Job
+        val cancellableStorage = AndroidPhotoStorage(context, dispatcher) { source, destination ->
+            source.copyTo(destination)
+            if (destination.name.endsWith("_thumb.jpg")) copyJob.cancel()
+        }
+        cancellableStorage.prepare("cancel-source.jpg").writeText("photo")
+        cancellableStorage.prepare("cancel-source_thumb.jpg").writeText("thumb")
+
+        copyJob = launch {
+            assertFailsWith<CancellationException> {
+                cancellableStorage.copy(
+                    StoredPhoto("cancel-source.jpg", "cancel-source_thumb.jpg"),
+                    "cancel-new-photo",
+                )
+            }
+        }
+        runCurrent()
+
+        assertFalse(cancellableStorage.fileFor("cancel-new-photo.jpg").exists())
+        assertFalse(cancellableStorage.fileFor("cancel-new-photo_thumb.jpg").exists())
     }
 }
