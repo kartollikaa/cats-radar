@@ -168,8 +168,8 @@ opening the map (above).
 - `domain/…/usecase/ObserveOutingTracks.kt` — the tracks of the walks overlapping a focused outing;
   `domain/…/session/SessionSplitter.kt`'s `outingOf` — the outing that holds a cat, for the mapper and
   the tracks alike
-- `ui/…/map/MapScreen.kt` — the map; `MapStyle.kt` — its light and dark style, which a cat's detail
-  map shares; `CatLayers.kt` — the dots, the clusters and
+- `ui/…/map/MapScreen.kt` — the map; `MapShared.kt` — its light and dark style, which the location
+  picker and a cat's detail map share; `CatLayers.kt` — the dots, the clusters and
   their taps; `CatHeat.kt` — the heat; `CoatDotPainter.kt` — a dot painted in its coat's colours;
   `MapFeatures.kt` — cats as map features, and each coat's colour shares; its `routeLines` — a
   focused outing's `MapLine`s as map features; `HeatInk.kt` — the heat's layers, their order and
