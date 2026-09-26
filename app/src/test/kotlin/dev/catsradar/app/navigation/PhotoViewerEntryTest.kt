@@ -190,7 +190,7 @@ class PhotoViewerEntryTest {
             sourceDigest = null,
             deviceId = install,
             addedAt = cat.createdAt,
-            shotId = null,
+            shotId = PHOTO_ID,
         )
         return cat.copy(photos = listOf(photo))
     }

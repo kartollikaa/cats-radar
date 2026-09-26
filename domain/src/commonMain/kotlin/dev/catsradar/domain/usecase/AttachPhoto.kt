@@ -90,7 +90,7 @@ class AttachPhoto(
                 // Gallery ids mean something only here, so the photo names this install whoever logged its cat.
                 deviceId = deviceIdProvider.deviceId,
                 addedAt = clock.now(),
-                shotId = null,
+                shotId = photoId,
             )
             // Once the write lands, these files are the cat's, so the write must not be cancelled.
             withContext(NonCancellable) { attached = encounterRepository.addPhoto(photo) }

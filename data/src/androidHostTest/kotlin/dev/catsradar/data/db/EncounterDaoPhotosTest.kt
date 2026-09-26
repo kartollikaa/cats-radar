@@ -110,7 +110,7 @@ class EncounterDaoPhotosTest {
     @Test
     fun eachWayAPhotoIsWrittenKeepsItsShot() = runTest {
         val repository = EncounterRepositoryImpl(dao)
-        repository.insert(cat("ginger").copy(photos = listOf(photo("ginger", id = "p1", shotId = null))))
+        repository.insert(cat("ginger").copy(photos = listOf(photo("ginger", id = "p1", shotId = "p1"))))
         repository.insert(cat("ginger-too").copy(photos = listOf(photo("ginger-too", id = "p2", shotId = "p1"))))
         repository.insert(cat("unseen").copy(photos = listOf(photo("unseen", id = "p3", shotId = "p1"))))
         repository.insert(cat("added-later"))
@@ -120,12 +120,12 @@ class EncounterDaoPhotosTest {
 
         val shots = repository.loadEvery().flatMap { it.photos }.associate { it.id to it.shotId }
 
-        assertEquals(mapOf("p1" to null, "p2" to "p1", "p3" to "p1", "p4" to "p1", "p5" to "p1"), shots)
+        assertEquals(mapOf("p1" to "p1", "p2" to "p1", "p3" to "p1", "p4" to "p1", "p5" to "p1"), shots)
     }
 
     private fun cat(id: String) = fullEncounterEntity(id = id).toDomain()
 
-    private fun photo(encounterId: String, id: String, shotId: String?) = EncounterPhoto(
+    private fun photo(encounterId: String, id: String, shotId: String) = EncounterPhoto(
         id = id,
         encounterId = encounterId,
         photoPath = "photos/$id.jpg",

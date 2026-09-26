@@ -131,7 +131,7 @@ class PhotosMigrationTest {
             val database = catsDatabaseBuilder(instrumentation.targetContext, file.absolutePath).build()
             try {
                 val cat = EncounterRepositoryImpl(database.encounterDao()).loadEvery().single()
-                assertEquals(listOf("old.jpg" to null), cat.photos.map { it.photoPath to it.shotId }, "from v$version")
+                assertEquals(listOf("old.jpg" to "old"), cat.photos.map { it.photoPath to it.shotId }, "from v$version")
             } finally {
                 database.close()
                 instrumentation.targetContext.deleteDatabase(file.name)
@@ -211,7 +211,7 @@ class PhotosMigrationTest {
             sourceDigest = "d-camera",
             deviceId = "this-install",
             addedAt = Instant.fromEpochMilliseconds(1001),
-            shotId = null,
+            shotId = "camera",
         )
 
         const val PHOTOGRAPHED_BEFORE_VERSION_THREE = "INSERT INTO encounters (id, occurredAt, tzOffsetMinutes, " +
