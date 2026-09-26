@@ -5,6 +5,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.glance.appwidget.updateAll
 import androidx.work.WorkManager
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import dev.catsradar.app.BuildConfig
 import dev.catsradar.app.navigation.ScreenViewTracker
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkRecordingControl
@@ -36,14 +37,12 @@ import dev.catsradar.app.worker.WorkManagerLocationAttachScheduler
 import dev.catsradar.app.worker.WorkManagerUpdateDownloadScheduler
 import dev.catsradar.domain.about.InstalledApp
 import org.koin.android.ext.koin.androidContext
-import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val workerModule = module {
     single { NotificationManagerCompat.from(androidContext()) }
     // getInstance() throws until WorkManager.initialize() has run: nothing may resolve a WorkManager user earlier.
     single { WorkManager.getInstance(androidContext()) }
-    single { FirebaseCrashlytics.getInstance() }
     single<ActivityManager> { androidContext().getSystemService(ActivityManager::class.java) }
     single { ImportNotifier(androidContext(), get()) }
     single { WalkRecordingControl(androidContext()) }
@@ -72,6 +71,12 @@ val workerModule = module {
             readArchive = { path -> readPackageArchive(packageManager, path) },
         )
     }
-    single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class
+    single<NonFatalReporter> {
+        if (BuildConfig.DEBUG) {
+            NonFatalReporter { }
+        } else {
+            CrashlyticsNonFatalReporter(FirebaseCrashlytics.getInstance())
+        }
+    }
     single { ScreenViewTracker(get()) }
 }
