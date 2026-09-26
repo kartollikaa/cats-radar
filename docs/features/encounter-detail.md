@@ -79,20 +79,24 @@ the last one — the newest, unless a backup brought an older photo in (*a photo
 pager to it*).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
-*Choose from gallery* — the system camera, or the system picker for several images — on every live cat,
-one that has photos included (`EncounterDetailStoreTest`, *a cat that already has a photo can still be
-given another*). The new photo goes after the others (*a photo taken of a cat that has one is added
-after it*). A photo the cat already has is not added again, and the screen says so (*a picked photo
-the cat already has is not added again, and the screen says so*). A second tap before the camera or the
-picker answers opens nothing, so a double tap never opens two cameras (*a second tap before the camera
-answers opens nothing*). The camera and the picker are opened for a named cat, and their answer names
-it back — even when the process died while they were in front, since the camera's queue and the
-picker remember the cat with the rest of the screen's saved state (`PhotoLaunchersTest`;
-`PendingCapturesTest`). A queue saved by an older version, whose shots named no cat, restores empty:
-the capture file waits for the start-up cleanup rather than landing on a guessed cat. Once the camera
-or the picker hands its photos back, the attempt starts: both buttons disable and a progress bar shows
-under them, so a tap in the meantime opens nothing (*taking a photo while one is being attached opens
-nothing*).
+*Choose from gallery* — the system camera, or the system picker for several images — on every live
+cat, one that has photos included (`EncounterDetailStoreTest`, *a cat that already has a photo can
+still be given another*). The new photo goes after the others (*a photo taken of a cat that has one
+is added after it*). A photo the cat already has is not added again, and the screen says so (*a
+picked photo the cat already has is not added again, and the screen says so*). A second tap before
+the camera or the picker answers opens nothing, so a double tap never opens two cameras (*a second
+tap before the camera answers opens nothing*). The camera and the picker are opened for a named
+cat, and their answer names it back — even when the process died while they were in front, since
+the camera's queue and the picker remember the cat with the rest of the screen's saved state
+(`PhotoLaunchersTest`; `PendingCapturesTest`). A queue saved by an older version, whose shots named
+no cat, restores empty: the capture file waits for the start-up cleanup rather than landing on a
+guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both buttons
+disable and a progress bar shows under them, so a tap in the meantime opens nothing (*taking a
+photo while one is being attached opens nothing*).
+
+A tap on the photo or on the coordinates only ever opens the viewer or the map for the cat the
+screen is showing; a stray result naming a different cat opens neither (`EncounterDetailStoreTest`,
+*a tap naming a cat the screen does not show opens neither the viewer nor the map*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not

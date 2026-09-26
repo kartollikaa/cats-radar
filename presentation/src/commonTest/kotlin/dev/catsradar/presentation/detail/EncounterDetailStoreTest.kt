@@ -687,20 +687,38 @@ class EncounterDetailStoreTest {
         repository.insert(
             encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
         )
-        repository.insert(encounterFixture(OTHER, OCCURRED))
         val store = newStore()
         runCurrent()
         val photoId = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.first().id
 
         store.effects.test {
-            store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, photoId))
+            store.dispatch(EncounterDetailIntent.PhotoClicked(ID, photoId))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenPhoto(OTHER, photoId), awaitItem())
-            store.dispatch(EncounterDetailIntent.CoordinatesClicked(OTHER))
+            assertEquals(EncounterDetailEffect.OpenPhoto(ID, photoId), awaitItem())
+            store.dispatch(EncounterDetailIntent.CoordinatesClicked(ID))
             runCurrent()
-            assertEquals(EncounterDetailEffect.OpenMap(OTHER), awaitItem())
+            assertEquals(EncounterDetailEffect.OpenMap(ID), awaitItem())
         }
     }
+
+    @Test
+    fun `a tap naming a cat the screen does not show opens neither the viewer nor the map`() =
+        runTest(mainDispatcher) {
+            repository.insert(
+                encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
+            )
+            repository.insert(encounterFixture(OTHER, OCCURRED))
+            val store = newStore()
+            runCurrent()
+            val photoId = assertIs<EncounterDetailState.Loaded>(store.state.value).photos.first().id
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, photoId))
+                store.dispatch(EncounterDetailIntent.CoordinatesClicked(OTHER))
+                runCurrent()
+                expectNoEvents()
+            }
+        }
 
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
         encounterId = ID,

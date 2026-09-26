@@ -87,11 +87,17 @@ class EncounterDetailStore(
             is EncounterDetailIntent.PickPhotoClicked ->
                 requestPhoto(EncounterDetailEffect.OpenPhotoPicker(intent.catId))
             is EncounterDetailIntent.PhotoClicked ->
-                if ((state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId }) {
+                if (
+                    intent.catId == encounterId &&
+                    (state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId }
+                ) {
                     emit(EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId))
                 }
             is EncounterDetailIntent.CoordinatesClicked ->
-                if ((state.value as? EncounterDetailState.Loaded)?.onTheMap == true) {
+                if (
+                    intent.catId == encounterId &&
+                    (state.value as? EncounterDetailState.Loaded)?.onTheMap == true
+                ) {
                     emit(EncounterDetailEffect.OpenMap(intent.catId))
                 }
             is EncounterDetailIntent.PhotoTaken ->
