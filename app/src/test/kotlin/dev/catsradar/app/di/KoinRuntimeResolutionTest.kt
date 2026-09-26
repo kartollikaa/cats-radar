@@ -40,6 +40,7 @@ import dev.catsradar.domain.platform.WalkRecordingState
 import dev.catsradar.domain.region.RegionKey
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.repository.WalkRepository
+import dev.catsradar.domain.usecase.AddCatsToPhoto
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.EndWalk
@@ -161,6 +162,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<Digest>())
         assertNotNull(koin.get<GallerySaver>())
         assertNotNull(koin.get<PhotoStorage>())
+        assertNotNull(koin.get<AddCatsToPhoto>())
         // verify() treats a constructor parameter with a default as satisfied, but factoryOf's
         // reflection still tries to inject it; only actually building the object catches that.
         assertNotNull(koin.get<ObserveStats>())
