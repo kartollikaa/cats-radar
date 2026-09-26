@@ -3,11 +3,15 @@ package dev.catsradar.app.viewer
 import android.content.Context
 import android.graphics.Bitmap
 import android.view.ViewConfiguration
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isHeading
@@ -85,7 +89,7 @@ class PhotoViewerScreenTest {
     @Test
     fun `the back arrow reports the tap`() {
         var backs = 0
-        show(onBackClick = { backs++ })
+        show(callbacks = Callbacks(onBackClick = { backs++ }))
 
         back().performClick()
 
@@ -95,7 +99,10 @@ class PhotoViewerScreenTest {
     @Test
     fun `a photo whose original is in the gallery offers it there, and the tap reports which photo`() {
         val opened = mutableListOf<String>()
-        show(photos = listOf(Photo("cover", opensInGallery = true)), onOpenInGalleryClick = { opened += it })
+        show(
+            photos = listOf(Photo("cover", opensInGallery = true)),
+            callbacks = Callbacks(onOpenInGalleryClick = { opened += it }),
+        )
 
         openInGallery().assertIsDisplayed().performClick()
 
@@ -140,7 +147,7 @@ class PhotoViewerScreenTest {
         val opened = mutableListOf<String>()
         show(
             photos = listOf(Photo("cover", opensInGallery = false), Photo("second", opensInGallery = true)),
-            onOpenInGalleryClick = { opened += it },
+            callbacks = Callbacks(onOpenInGalleryClick = { opened += it }),
         )
         position(1, of = 2).assertIsDisplayed()
         openInGallery().assertDoesNotExist()
@@ -187,21 +194,112 @@ class PhotoViewerScreenTest {
         assertTrue(compose.onAllNodes(isHeading(), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
     }
 
+    @Test
+    fun `the visible chrome offers removal for the photo on screen`() {
+        val requested = mutableListOf<String>()
+        show(
+            photos = listOf(Photo("cover"), Photo("second")),
+            callbacks = Callbacks(onRemovePhotoClick = { requested += it }),
+        )
+        swipeToTheNextPhoto()
+
+        removePhoto().assertIsDisplayed().performClick()
+
+        assertEquals(listOf("second"), requested)
+    }
+
+    @Test
+    fun `remove asks for confirmation and cancel reports no confirmation`() {
+        var cancelled = 0
+        var confirmed = 0
+        show(
+            removal = Removal("cover"),
+            callbacks = Callbacks(
+                onCancelPhotoRemoval = { cancelled++ },
+                onConfirmPhotoRemoval = { confirmed++ },
+            ),
+        )
+
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_photo_title)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_photo_message)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_cancel)).performClick()
+
+        assertEquals(1, cancelled)
+        assertEquals(0, confirmed)
+    }
+
+    @Test
+    fun `confirm reports once`() {
+        var confirmed = 0
+        show(
+            removal = Removal("cover"),
+            callbacks = Callbacks(onConfirmPhotoRemoval = { confirmed++ }),
+        )
+
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_confirm)).performClick()
+
+        assertEquals(1, confirmed)
+    }
+
+    @Test
+    fun `confirm cannot be pressed while removal is running`() {
+        show(removal = Removal("cover", inFlight = true))
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_confirm)).assertIsNotEnabled()
+    }
+
+    @Test
+    fun `when the displayed photo disappears the nearest remaining page stays on screen`() {
+        val cover = Photo("cover", opensInGallery = true)
+        var state by mutableStateOf(showingOf(listOf(cover, Photo("second"))))
+        compose.setContent {
+            CatsRadarTheme {
+                PhotoViewerScreen(
+                    state = state,
+                    onRemovePhotoClick = { photoId -> state = state.copy(removingPhotoId = photoId) },
+                    onConfirmPhotoRemoval = { state = showingOf(listOf(cover)) },
+                )
+            }
+        }
+        awaitThePhoto()
+        swipeToTheNextPhoto()
+        removePhoto().performClick()
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_confirm)).performClick()
+
+        openInGallery().assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.viewer_position, 1, 2)).assertDoesNotExist()
+    }
+
     private data class Photo(val id: String, val opensInGallery: Boolean = false)
+
+    private data class Callbacks(
+        val onBackClick: () -> Unit = {},
+        val onOpenInGalleryClick: (String) -> Unit = {},
+        val onRemovePhotoClick: (String) -> Unit = {},
+        val onCancelPhotoRemoval: () -> Unit = {},
+        val onConfirmPhotoRemoval: () -> Unit = {},
+    )
+
+    private data class Removal(val photoId: String, val inFlight: Boolean = false)
 
     private fun show(
         photos: List<Photo> = listOf(Photo("cover")),
         firstPage: Int = 0,
         day: String = DAY,
-        onBackClick: () -> Unit = {},
-        onOpenInGalleryClick: (String) -> Unit = {},
+        removal: Removal? = null,
+        callbacks: Callbacks = Callbacks(),
     ) {
         compose.setContent {
             CatsRadarTheme {
                 PhotoViewerScreen(
-                    state = showingOf(photos, firstPage, day),
-                    onBackClick = onBackClick,
-                    onOpenInGalleryClick = onOpenInGalleryClick,
+                    state = showingOf(photos, firstPage, day).copy(
+                        removingPhotoId = removal?.photoId,
+                        removalInFlight = removal?.inFlight == true,
+                    ),
+                    onBackClick = callbacks.onBackClick,
+                    onOpenInGalleryClick = callbacks.onOpenInGalleryClick,
+                    onRemovePhotoClick = callbacks.onRemovePhotoClick,
+                    onCancelPhotoRemoval = callbacks.onCancelPhotoRemoval,
+                    onConfirmPhotoRemoval = callbacks.onConfirmPhotoRemoval,
                 )
             }
         }
@@ -253,6 +351,9 @@ class PhotoViewerScreenTest {
 
     private fun openInGallery() =
         compose.onNodeWithContentDescription(context.getString(R.string.viewer_open_in_gallery))
+
+    private fun removePhoto() =
+        compose.onNodeWithContentDescription(context.getString(R.string.viewer_remove_photo))
 
     private val photoOnScreen: SemanticsMatcher
         get() = hasContentDescription(context.getString(R.string.detail_photo_description)) and
