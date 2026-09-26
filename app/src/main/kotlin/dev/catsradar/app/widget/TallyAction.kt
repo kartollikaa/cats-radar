@@ -28,8 +28,11 @@ class TallyAction : ActionCallback, KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         haptics.tick()
-        val encounter = widgetCount.tally { logTally(origin = EncounterOrigin.WIDGET) }
-        locationAttachScheduler.schedule(encounter.id)
+        widgetCount.tally {
+            val encounter = logTally(origin = EncounterOrigin.WIDGET)
+            // Inside the tally, which returns only after reading the count back: the window may close first.
+            locationAttachScheduler.schedule(encounter.id)
+        }
         CatsRadarWidget().updateAll(context)
     }
 }

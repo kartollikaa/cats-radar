@@ -13,6 +13,7 @@ import kotlinx.datetime.TimeZone
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -145,6 +146,60 @@ class WidgetCountTest {
         runCurrent()
 
         assertEquals(listOf(1, 2, 3), shown)
+    }
+
+    @Test
+    fun tapsInFlightTogetherReadTheCountBackOnce() = runTest {
+        encounters.add(id = "a", at = Morning)
+        started()
+        val readsBefore = encounters.newReads
+        val firstWrite = CompletableDeferred<Unit>()
+        launch {
+            count.tally {
+                firstWrite.await()
+                encounters.add(id = "b", at = Morning)
+            }
+        }
+        launch { count.tally { encounters.add(id = "c", at = Morning) } }
+        runCurrent()
+
+        firstWrite.complete(Unit)
+        runCurrent()
+
+        assertEquals(readsBefore + 1, encounters.newReads)
+    }
+
+    @Test
+    fun aReadBackOvertakenByANewTapIsIgnored() = runTest {
+        encounters.add(id = "a", at = Morning)
+        val shown = started()
+        val release = encounters.holdNextRead()
+        backgroundScope.launch { count.tally { encounters.add(id = "b", at = Morning) } }
+        runCurrent()
+        val nextWrite = CompletableDeferred<Unit>()
+        backgroundScope.launch {
+            count.tally {
+                nextWrite.await()
+                encounters.add(id = "c", at = Morning)
+            }
+        }
+        runCurrent()
+
+        release.complete(Unit)
+        runCurrent()
+        nextWrite.complete(Unit)
+        runCurrent()
+
+        assertEquals(listOf(1, 2, 3), shown)
+    }
+
+    @Test
+    fun aTapBeforeTheCountIsKnownIsWrittenAtOnce() = runTest {
+        val tap = backgroundScope.launch { count.tally { encounters.add(id = "a", at = Morning) } }
+        runCurrent()
+
+        assertTrue(tap.isCompleted)
+        assertEquals(listOf(1), started())
     }
 
     @Test

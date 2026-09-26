@@ -25,6 +25,9 @@ internal class FakeTodayRepository : EncounterRepository {
     /** A reader that starts while this is set fails; one already reading carries on. */
     var failNewReads = false
 
+    var newReads = 0
+        private set
+
     fun add(id: String, at: Instant) {
         rows.update { it + tally(id, at) }
     }
@@ -33,6 +36,7 @@ internal class FakeTodayRepository : EncounterRepository {
     fun holdNextRead(): CompletableDeferred<Unit> = CompletableDeferred<Unit>().also { heldRead = it }
 
     override fun observeAll(): Flow<List<Encounter>> = flow {
+        newReads++
         check(!failNewReads) { "storage unavailable" }
         heldRead?.let { release ->
             heldRead = null

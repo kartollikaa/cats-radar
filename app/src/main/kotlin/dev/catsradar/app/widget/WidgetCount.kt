@@ -3,6 +3,7 @@ package dev.catsradar.app.widget
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -11,6 +12,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.withContext
 
 /**
  * Today's count as the widget shows it.
@@ -37,16 +40,23 @@ class WidgetCount(private val observeTodayCount: ObserveTodayCount) {
         state.update { if (it.storedAnswers == readSince) it.copy(stored = today) else it }
     }
 
-    /** Counts a cat at once while [write] stores it; a write that fails takes the cat back off. */
+    /**
+     * Counts a cat at once while [write] stores it; a write that fails takes the cat back off. Returns
+     * only once the count has been read back after the last tap in flight.
+     */
     suspend fun <T> tally(write: suspend () -> T): T {
-        state.first { it.stored != null }
         state.update { it.tapped() }
         try {
             return write()
         } finally {
-            val today = runCatching { observeTodayCount().first() }.getOrNull()
-            state.update { it.settled(today) }
+            val written = state.updateAndGet { it.written() }
+            if (written.tapsWriting == 0) readBack(afterTap = written.tapsStarted)
         }
+    }
+
+    private suspend fun readBack(afterTap: Long) {
+        val today = withContext(NonCancellable) { runCatching { observeTodayCount().first() }.getOrNull() }
+        state.update { if (it.tapsStarted == afterTap) it.readBack(today) else it }
     }
 }
 
@@ -54,6 +64,7 @@ class WidgetCount(private val observeTodayCount: ObserveTodayCount) {
 private data class Counting(
     val stored: Int? = null,
     val storedAnswers: Long = 0,
+    val tapsStarted: Long = 0,
     val tapsWriting: Int = 0,
     val atLeast: Int? = null,
 ) {
@@ -61,12 +72,15 @@ private data class Counting(
 
     fun withStored(count: Int) = copy(stored = count, storedAnswers = storedAnswers + 1).caughtUp()
 
-    fun tapped() = copy(tapsWriting = tapsWriting + 1, atLeast = checkNotNull(shown) + 1)
+    fun tapped() = copy(
+        tapsStarted = tapsStarted + 1,
+        tapsWriting = tapsWriting + 1,
+        atLeast = shown?.plus(1) ?: atLeast,
+    )
 
-    fun settled(today: Int?): Counting {
-        val left = copy(tapsWriting = tapsWriting - 1)
-        return if (left.tapsWriting > 0) left else left.copy(atLeast = today).caughtUp()
-    }
+    fun written() = copy(tapsWriting = tapsWriting - 1)
+
+    fun readBack(today: Int?) = copy(atLeast = today).caughtUp()
 
     private fun caughtUp() = if (stored != null && atLeast != null && stored >= atLeast) copy(atLeast = null) else this
 }
