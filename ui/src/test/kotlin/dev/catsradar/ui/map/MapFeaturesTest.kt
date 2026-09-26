@@ -160,23 +160,6 @@ class MapFeaturesTest {
     }
 
     @Test
-    fun aThumbnailThatWouldNotDrawLeavesItsCatWithoutAPhotoAndEveryOtherCatAsItWas() {
-        val points = persistentListOf(
-            MapPoint("unreadable", 41.39, 2.17, CoatOption.GINGER, thumbnailPath = "/photos/unreadable_thumb.jpg"),
-            MapPoint("readable", 41.39, 2.17, coat = null, thumbnailPath = "/photos/readable_thumb.jpg"),
-            MapPoint("tally", 41.39, 2.17, CoatOption.BLACK),
-        )
-
-        val drawable = points.withoutThumbnails(setOf("/photos/unreadable_thumb.jpg"))
-
-        assertEquals(
-            listOf(points[0].copy(thumbnailPath = null), points[1], points[2]),
-            drawable,
-        )
-        assertEquals(listOf(photoImageId("/photos/readable_thumb.jpg")), photoImages(drawable))
-    }
-
-    @Test
     fun aPhotoImageNamesItsThumbnailAndAnImageTheMapStyleAsksForNamesNone() {
         assertEquals("/photos/a_thumb.jpg", thumbnailOf(photoImageId("/photos/a_thumb.jpg")))
         assertNull(thumbnailOf("bus_stop"))

@@ -79,7 +79,7 @@ internal data class ClusterTap(val source: GeoJsonSource, val cluster: Feature<*
 internal fun CatLayers(
     cats: FeatureCollection<Point, JsonObject>,
     photos: ImmutableList<String>,
-    tilesAdded: Int,
+    tileRound: Int,
     route: FeatureCollection<LineString, JsonObject>?,
     heat: Boolean,
     colors: CatLayerColors,
@@ -89,7 +89,7 @@ internal fun CatLayers(
     // Only while on, sparing a second parse of every cat; the dots it would sit under are hidden then.
     if (heat) CatHeat(cats = cats, colors = colors)
     OutingRoute(route = route, colors = colors)
-    CatDots(cats, photos, tilesAdded, visible = !heat, colors, onClusterTap, onCatsTap)
+    CatDots(cats, photos, tileRound, visible = !heat, colors, onClusterTap, onCatsTap)
 }
 
 /** The theme's colours for the map's layers, read here because the layers compose without the theme. */
@@ -124,7 +124,7 @@ private fun OutingRoute(route: FeatureCollection<LineString, JsonObject>?, color
 private fun CatDots(
     cats: FeatureCollection<Point, JsonObject>,
     photos: ImmutableList<String>,
-    tilesAdded: Int,
+    tileRound: Int,
     visible: Boolean,
     colors: CatLayerColors,
     onClusterTap: (ClusterTap) -> Unit,
@@ -181,7 +181,7 @@ private fun CatDots(
             ClickResult.Consume
         },
     )
-    CatPhotos(source, photos, tilesAdded, visible, colors, onClusterTap, onCatsTap)
+    CatPhotos(source, photos, tileRound, visible, colors, onClusterTap)
 }
 
 @Composable

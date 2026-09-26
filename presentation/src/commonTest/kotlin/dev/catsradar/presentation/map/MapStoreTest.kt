@@ -18,6 +18,7 @@ import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.withPhoto
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -502,6 +503,26 @@ class MapStoreTest {
             runCurrent()
 
             assertNull(assertIs<MapState.Located>(store.state.value).catArea)
+        }
+
+    @Test
+    fun `a thumbnail found to be no image is left off its cat from then on, a requested cat included`() =
+        runTest(mainDispatcher) {
+            repository.insert(located("broken", minute = 0).withPhoto("broken.jpg", "broken_thumb.jpg"))
+            repository.insert(located("fine", minute = 5).withPhoto("fine.jpg", "fine_thumb.jpg"))
+            val store = newStore()
+            runCurrent()
+
+            store.dispatch(MapIntent.ThumbnailUnreadable("/data/photos/broken_thumb.jpg"))
+            runCurrent()
+            val marked = assertIs<MapState.Located>(store.state.value)
+            store.dispatch(MapIntent.CatRequested("fine"))
+            runCurrent()
+            val requested = assertIs<MapState.Located>(store.state.value)
+
+            val expected = mapOf("fine" to "/data/photos/fine_thumb.jpg", "broken" to null)
+            assertEquals(expected, marked.points.associate { it.id to it.thumbnailPath })
+            assertEquals(expected, requested.points.associate { it.id to it.thumbnailPath })
         }
 
     @Test

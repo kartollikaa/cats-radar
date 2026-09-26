@@ -22,20 +22,22 @@ class MapStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    /** A focus in [choices] that matches nothing is ignored. */
+    /** A focus in [choices] that matches nothing is ignored; no point carries a thumbnail in [unreadableThumbnails]. */
     fun map(
         encounters: List<Encounter>,
         today: LocalDate,
         choices: MapChoices = MapChoices(),
         walks: List<WalkTrack> = emptyList(),
+        unreadableThumbnails: Set<String> = emptySet(),
     ): MapState {
         val outing = choices.focus?.let { id -> focusedOuting(encounters, id) }
         val shown = outing ?: encounters
-        val located = shown.mapNotNull { it.toPoint() }
-        if (located.isEmpty()) return MapState.Empty
+        val seen = shown.mapNotNull { cat -> cat.toPoint(unreadableThumbnails)?.let { cat.occurredAt to it } }
+        if (seen.isEmpty()) return MapState.Empty
+        val located = seen.map { (_, point) -> point }
         val filtering = choices.coats.isNotEmpty()
-        val points = shown.sortedByDescending { it.occurredAt }
-            .mapNotNull { it.toPoint() }
+        val points = seen.sortedByDescending { (occurredAt, _) -> occurredAt }
+            .map { (_, point) -> point }
             .filter { choices.coats.shows(it.coat) }
         val locatedPositions = located.map { MapPosition(it.latitude, it.longitude) }
         val focus = outing?.let {
@@ -77,7 +79,7 @@ class MapStateMapper(
         return lines.map { MapLine(it.toImmutableList()) }.toImmutableList()
     }
 
-    private fun Encounter.toPoint(): MapPoint? {
+    private fun Encounter.toPoint(unreadableThumbnails: Set<String>): MapPoint? {
         val latitude = lat
         val longitude = lon
         if (!isOnTheMap() || latitude == null || longitude == null) return null
@@ -86,7 +88,7 @@ class MapStateMapper(
             latitude = latitude,
             longitude = longitude,
             coat = coat?.toOption(),
-            thumbnailPath = cover?.thumbPath?.let(photoStorage::resolve),
+            thumbnailPath = cover?.thumbPath?.let(photoStorage::resolve)?.takeUnless { it in unreadableThumbnails },
         )
     }
 

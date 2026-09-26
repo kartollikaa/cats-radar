@@ -94,6 +94,25 @@ class MapStateMapperTest {
     }
 
     @Test
+    fun `a thumbnail known to be no image is left off its point, and every other photo stays`() {
+        val broken = located("broken", 41.39, 2.17).withPhoto("broken.jpg", "broken_thumb.jpg")
+        val fine = located("fine", 41.39, 2.17).withPhoto("fine.jpg", "fine_thumb.jpg")
+
+        val state = assertIs<MapState.Located>(
+            mapper.map(
+                listOf(broken, fine),
+                TODAY,
+                unreadableThumbnails = setOf("/data/photos/broken_thumb.jpg"),
+            ),
+        )
+
+        assertEquals(
+            mapOf("broken" to null, "fine" to "/data/photos/fine_thumb.jpg"),
+            state.points.associate { it.id to it.thumbnailPath },
+        )
+    }
+
+    @Test
     fun `points come newest first, whatever order the cats arrive in`() {
         val cats = listOf(
             located("morning", 41.39, 2.17),

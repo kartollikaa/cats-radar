@@ -33,18 +33,10 @@ internal fun photoImageId(thumbnailPath: String): String = PHOTO_IMAGE_PREFIX + 
 internal fun thumbnailOf(imageId: String): String? =
     imageId.takeIf { it.startsWith(PHOTO_IMAGE_PREFIX) }?.removePrefix(PHOTO_IMAGE_PREFIX)
 
-/** These points, with every thumbnail in [unreadable] taken off its cat. */
-internal fun ImmutableList<MapPoint>.withoutThumbnails(unreadable: Set<String>): ImmutableList<MapPoint> =
-    if (unreadable.isEmpty()) {
-        this
-    } else {
-        map { point -> if (point.thumbnailPath in unreadable) point.copy(thumbnailPath = null) else point }
-            .toImmutableList()
-    }
-
 /** The photo of every point that has one, in the points' order: a photo's rank is its index here. */
 internal fun photoImages(points: ImmutableList<MapPoint>): ImmutableList<String> =
     points.mapNotNull { point -> point.thumbnailPath?.let(::photoImageId) }.toImmutableList()
+
 internal const val HEAT_PREFIX = "heat"
 internal const val UNNOTED_HEAT = "${HEAT_PREFIX}_unnoted"
 private const val HALF = 0.5
@@ -66,16 +58,16 @@ internal val CoatHeatColours: List<Color> =
 internal fun heatKey(colour: Color): String = HEAT_PREFIX + colour.toHex()
 
 internal fun catFeatures(points: ImmutableList<MapPoint>): FeatureCollection<Point, JsonObject> {
-    var photoRank = 0
+    val photoRanks = photoImages(points).withIndex().associate { (rank, photo) -> photo to rank }
     return FeatureCollection(
         points.map { point ->
             Feature(
                 Point(Position(point.longitude, point.latitude)),
                 buildJsonObject {
                     put(CAT_ID, point.id)
-                    point.thumbnailPath?.let { thumbnail ->
-                        put(CAT_PHOTO, photoImageId(thumbnail))
-                        put(CAT_PHOTO_RANK, photoRank++)
+                    point.thumbnailPath?.let(::photoImageId)?.let { photo ->
+                        put(CAT_PHOTO, photo)
+                        put(CAT_PHOTO_RANK, photoRanks.getValue(photo))
                     }
                     val coat = point.coat
                     if (coat == null) {

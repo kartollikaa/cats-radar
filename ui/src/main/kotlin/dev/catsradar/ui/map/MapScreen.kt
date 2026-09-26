@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -63,6 +64,7 @@ fun MapScreen(
     onCoatToggle: (CoatOption?) -> Unit = {},
     onCoatFilterClear: () -> Unit = {},
     onCatReach: () -> Unit = {},
+    onThumbnailUnreadable: (String) -> Unit = {},
 ) {
     when (state) {
         MapState.Loading -> Box(modifier = modifier.fillMaxSize())
@@ -78,6 +80,7 @@ fun MapScreen(
                 onHeatToggle = onHeatToggle,
                 onCoatsClick = { choosingCoats = true },
                 onCatReach = onCatReach,
+                onThumbnailUnreadable = onThumbnailUnreadable,
             )
             if (choosingCoats) {
                 MapCoatSheet(
@@ -101,12 +104,12 @@ private fun CatsMap(
     onHeatToggle: () -> Unit = {},
     onCoatsClick: () -> Unit = {},
     onCatReach: () -> Unit = {},
+    onThumbnailUnreadable: (String) -> Unit = {},
 ) {
     val colors = catLayerColors()
-    val tiles = remember { PhotoTileProgress() }
-    val drawable = remember(state.points, tiles.unreadable) { state.points.withoutThumbnails(tiles.unreadable) }
-    val cats = remember(drawable) { catFeatures(drawable) }
-    val photos = remember(drawable) { photoImages(drawable) }
+    var tileRound by remember { mutableIntStateOf(0) }
+    val cats = remember(state.points) { catFeatures(state.points) }
+    val photos = remember(state.points) { photoImages(state.points) }
     val route = remember(state.focus) { state.focus?.let { routeLines(it.lines) } }
     // Read from the scheme rather than the system, so the map follows whichever theme wraps it.
     val dark = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
@@ -117,7 +120,7 @@ private fun CatsMap(
         CatLayers(
             cats,
             photos,
-            tiles.added,
+            tileRound,
             route,
             state.heat,
             colors,
@@ -125,7 +128,7 @@ private fun CatsMap(
             onCatsTap = { tapCats(it) },
         )
     }
-    PhotoTiles(mapState, rim = colors.tileRim, progress = tiles)
+    PhotoTiles(mapState, colors.tileRim, onTilesAdd = { tileRound++ }, onThumbnailUnreadable)
     MapCamera(
         mapState,
         area = state.area,
