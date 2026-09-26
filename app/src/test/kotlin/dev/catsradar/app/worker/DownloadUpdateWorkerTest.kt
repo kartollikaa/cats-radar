@@ -46,6 +46,8 @@ class DownloadUpdateWorkerTest {
         override suspend fun download(url: String, fileName: String, onProgress: suspend (Long) -> Unit) =
             written.also { asked = url to fileName }
 
+        override suspend fun kept(): List<String> = emptyList()
+
         override suspend fun discard(path: String) = Unit
     }
 
@@ -66,6 +68,8 @@ class DownloadUpdateWorkerTest {
                 DownloadedPackage("/cache/updates/1.5.0-beta.apk", 1_000, "ab").also {
                     listOf(500L, 505L, 1_000L).forEach { onProgress(it) }
                 }
+
+            override suspend fun kept(): List<String> = emptyList()
 
             override suspend fun discard(path: String) = Unit
         }
@@ -92,6 +96,8 @@ class DownloadUpdateWorkerTest {
         val throwing = object : PackageDownloader {
             override suspend fun download(url: String, fileName: String, onProgress: suspend (Long) -> Unit) =
                 error("disk gone")
+
+            override suspend fun kept(): List<String> = emptyList()
 
             override suspend fun discard(path: String) = Unit
         }

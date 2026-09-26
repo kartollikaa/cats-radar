@@ -12,4 +12,5 @@ sealed interface SettingsEffect {
     data class CopyBuildInfo(val report: String) : SettingsEffect
     data class StartUpdateDownload(val version: String, val apk: ReleasePackage) : SettingsEffect
     data class InstallUpdate(val path: String) : SettingsEffect
+    data object OpenInstallPermission : SettingsEffect
 }

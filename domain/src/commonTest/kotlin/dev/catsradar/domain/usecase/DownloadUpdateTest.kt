@@ -25,6 +25,8 @@ class DownloadUpdateTest {
                 onProgress(it?.sizeBytes ?: 0)
             }
 
+        override suspend fun kept(): List<String> = emptyList()
+
         override suspend fun discard(path: String) {
             discarded += path
         }

@@ -26,12 +26,26 @@ class UpdateStateMapper {
     fun ready(version: String): UpdateState =
         UpdateState(UpdateStatus.ReadyToInstall(version), UpdateAction.Install(version))
 
+    fun needsInstallPermission(version: String): UpdateState =
+        UpdateState(UpdateStatus.NeedsInstallPermission(version), UpdateAction.AllowInstalls)
+
     fun installing(version: String): UpdateState = UpdateState(UpdateStatus.Installing(version), UpdateAction.Busy)
 
     // A new check downloads the package again: offering the same one could fail the same way forever.
-    fun installFailed(version: String): UpdateState = UpdateState(UpdateStatus.InstallFailed(version))
+    fun installFailed(version: String, outcome: InstallOutcome): UpdateState =
+        UpdateState(UpdateStatus.InstallFailed(version, outcome.toFailure()))
 
     fun downloadFailed(): UpdateState = UpdateState(UpdateStatus.Failed(UpdateFailure.DOWNLOAD_FAILED))
+
+    private fun InstallOutcome.toFailure(): InstallFailure = when (this) {
+        InstallOutcome.CONFLICT -> InstallFailure.SIGNED_DIFFERENTLY
+        InstallOutcome.INCOMPATIBLE -> InstallFailure.INCOMPATIBLE
+        InstallOutcome.STORAGE -> InstallFailure.NO_SPACE
+        InstallOutcome.MISSING_PACKAGE -> InstallFailure.PACKAGE_GONE
+        InstallOutcome.NOT_THIS_APP -> InstallFailure.NOT_THIS_APP
+        InstallOutcome.NOT_NEWER -> InstallFailure.NOT_NEWER
+        InstallOutcome.CANCELLED, InstallOutcome.FAILED -> InstallFailure.OTHER
+    }
 
     private fun FeedFailure.toToken(): UpdateFailure = when (this) {
         FeedFailure.OFFLINE -> UpdateFailure.OFFLINE

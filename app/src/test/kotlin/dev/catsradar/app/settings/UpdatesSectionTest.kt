@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.presentation.settings.InstallFailure
 import dev.catsradar.presentation.settings.SettingsState
 import dev.catsradar.presentation.settings.UpdateAction
 import dev.catsradar.presentation.settings.UpdateFailure
@@ -39,6 +40,7 @@ class UpdatesSectionTest {
     private var update: UpdateState by mutableStateOf(UpdateState())
     private var checks = 0
     private var installs = 0
+    private var permissionPages = 0
 
     private fun text(id: Int, vararg args: Any) = context.getString(id, *args)
 
@@ -52,8 +54,21 @@ class UpdatesSectionTest {
             UpdateStatus.DownloadStarting(v) to text(R.string.settings_updates_downloading, v),
             UpdateStatus.Downloading(v, percent = 45) to text(R.string.settings_updates_downloading_percent, v, 45),
             UpdateStatus.ReadyToInstall(v) to text(R.string.settings_updates_ready, v),
+            UpdateStatus.NeedsInstallPermission(v) to text(R.string.settings_updates_needs_permission, v),
             UpdateStatus.Installing(v) to text(R.string.settings_updates_installing, v),
-            UpdateStatus.InstallFailed(v) to text(R.string.settings_updates_install_failed, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.OTHER) to text(R.string.settings_updates_install_failed, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.SIGNED_DIFFERENTLY) to
+                text(R.string.settings_updates_install_conflict, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.INCOMPATIBLE) to
+                text(R.string.settings_updates_install_incompatible, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.NO_SPACE) to
+                text(R.string.settings_updates_install_storage, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.PACKAGE_GONE) to
+                text(R.string.settings_updates_install_package_gone, v),
+            UpdateStatus.InstallFailed(v, InstallFailure.NOT_THIS_APP) to
+                text(R.string.settings_updates_install_not_this_app),
+            UpdateStatus.InstallFailed(v, InstallFailure.NOT_NEWER) to
+                text(R.string.settings_updates_install_not_newer, v),
             UpdateStatus.Failed(UpdateFailure.OFFLINE) to text(R.string.settings_updates_offline),
             UpdateStatus.Failed(UpdateFailure.SOURCE_UNAVAILABLE) to text(R.string.settings_updates_source_unavailable),
             UpdateStatus.Failed(UpdateFailure.UNREADABLE_ANSWER) to text(R.string.settings_updates_unreadable),
@@ -90,6 +105,17 @@ class UpdatesSectionTest {
         assertEquals(0, checks)
     }
 
+    @Test
+    fun `an install waiting for the permission opens its page from its own button`() {
+        show()
+        update = UpdateState(UpdateStatus.NeedsInstallPermission("1.5.0-beta"), UpdateAction.AllowInstalls)
+
+        compose.onNodeWithText(text(R.string.settings_updates_allow_installs)).performScrollTo().performClick()
+
+        assertEquals(1, permissionPages)
+        assertEquals(0, installs)
+    }
+
     private fun show() {
         compose.setContent {
             CatsRadarTheme {
@@ -97,6 +123,7 @@ class UpdatesSectionTest {
                     state = SettingsState(update = update),
                     onCheckForUpdatesClick = { checks++ },
                     onInstallUpdateClick = { installs++ },
+                    onAllowInstallsClick = { permissionPages++ },
                 )
             }
         }
