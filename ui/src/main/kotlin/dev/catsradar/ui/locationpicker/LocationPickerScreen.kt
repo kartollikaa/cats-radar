@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -27,7 +25,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -37,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.locationpicker.LocationPickerState
 import dev.catsradar.presentation.map.MapArea
 import dev.catsradar.ui.R
-import dev.catsradar.ui.components.CenterAppBar
-import dev.catsradar.ui.components.CenterAppBarDefaults
+import dev.catsradar.ui.components.BackBar
+import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.map.FitPadding
 import dev.catsradar.ui.map.MapAttribution
 import dev.catsradar.ui.map.MapUnavailable
@@ -74,12 +71,6 @@ fun LocationPickerScreen(
     onSaveClick: (SaveLocationInteraction) -> Unit = {},
     onMoveReach: () -> Unit = {},
 ) {
-    val layoutDirection = LocalLayoutDirection.current
-    val barPadding = PaddingValues(
-        start = contentPadding.calculateStartPadding(layoutDirection),
-        top = contentPadding.calculateTopPadding(),
-        end = contentPadding.calculateEndPadding(layoutDirection),
-    )
     Box(modifier = modifier.fillMaxSize()) {
         if (state is LocationPickerState.Picking) {
             PickerMap(
@@ -90,16 +81,10 @@ fun LocationPickerScreen(
                 onMoveReach = onMoveReach,
             )
         }
-        CenterAppBar(
-            modifier = Modifier.padding(barPadding),
-            startContent = {
-                FilledTonalIconButton(onClick = onBackClick) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.picker_back),
-                    )
-                }
-            },
+        BackBar(
+            contentDescription = stringResource(R.string.picker_back),
+            contentPadding = contentPadding,
+            onBackClick = onBackClick,
         )
     }
 }
@@ -123,13 +108,7 @@ private fun PickerMap(
         onMoveReach = onMoveReach,
     )
     val mapDescription = stringResource(R.string.picker_map_description)
-    val layoutDirection = LocalLayoutDirection.current
-    val belowBar = PaddingValues(
-        start = contentPadding.calculateStartPadding(layoutDirection),
-        top = contentPadding.calculateTopPadding() + CenterAppBarDefaults.Height,
-        end = contentPadding.calculateEndPadding(layoutDirection),
-        bottom = contentPadding.calculateBottomPadding(),
-    )
+    val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
         MaplibreMap(
             modifier = Modifier.fillMaxSize().semantics { contentDescription = mapDescription },
