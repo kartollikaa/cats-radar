@@ -37,6 +37,13 @@ rather than a `DateTimeFormatter` concern. The day is derived from the encounter
 offset, not the device's, so a cat logged abroad stays on the day it was logged
 (`EncounterDetailStateMapperTest`, *the day comes from the encounter's own offset*).
 
+The state holds each cat as a page — a `CatPage` in `Loaded.pages`, beside the id of the cat on screen and
+its position — and the mapper builds one page for each cat of the outing window it is handed, with each
+page's own place and attempt (`EncounterDetailStateMapperTest`, *a window maps to one page per cat, newest
+first, and names the cat on screen and its position*; *each page takes its own cat's place and attempt*).
+The Store hands it a window of the observed cat alone, so the screen has one page
+(`EncounterDetailStoreTest`, *the observed cat is the one page, and it is on screen*).
+
 ## Where it was found
 
 Under its map, when it has one (see [Its map](#its-map)), the **Where** section names the place the
@@ -132,7 +139,9 @@ A tap on the photo, on the coordinates or on *Set on map* only ever acts on the 
 showing, and opens the viewer, the map or the location picker for that cat; a stray result naming a
 different cat opens none of them (`EncounterDetailStorePhotoTest`, *a tap naming a cat the screen does
 not show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat
-the screen does not show opens nothing*).
+the screen does not show opens nothing*). The screen names that cat in every tap: each button, the photo
+and the map send the id of the page they sit on (`EncounterDetailPagesTest`, *the screen draws the cat on
+screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
 
 The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
@@ -210,8 +219,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 - `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
   `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
-- `presentation/…/detail/` — `EncounterDetailState`, `Intent`, `Effect`, `StateMapper`, `Store`
-- `ui/…/detail/EncounterDetailScreen.kt`, `WhereCard.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`;
+- `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`
+- `ui/…/detail/EncounterDetailScreen.kt`, `WhereCard.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`, `DetailInteractions.kt` (the two-value taps' payloads);
   `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/SpotMap.kt` —
   the **Where** section's map and the cat's dot on it
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
