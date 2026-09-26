@@ -48,28 +48,31 @@ fun EncounterDetailScreen(
     onBackClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
-    onCoatClick: (CoatOption?) -> Unit = {},
-    onTakePhotoClick: () -> Unit = {},
-    onPickPhotoClick: () -> Unit = {},
-    onPhotoClick: (photoId: String) -> Unit = {},
-    onCoordinatesClick: () -> Unit = {},
-    onSetLocationClick: () -> Unit = {},
+    onCoatClick: (CoatInteraction) -> Unit = {},
+    onTakePhotoClick: (catId: String) -> Unit = {},
+    onPickPhotoClick: (catId: String) -> Unit = {},
+    onPhotoClick: (PhotoInteraction) -> Unit = {},
+    onCoordinatesClick: (catId: String) -> Unit = {},
+    onSetLocationClick: (catId: String) -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             EncounterDetailState.Loading -> Unit
-            is EncounterDetailState.Loaded -> CatPageContent(
-                state.pages.first { it.id == state.currentId },
-                contentPadding = belowBar,
-                onDeleteClick = onDeleteClick,
-                onCoatClick = onCoatClick,
-                onTakePhotoClick = onTakePhotoClick,
-                onPickPhotoClick = onPickPhotoClick,
-                onPhotoClick = onPhotoClick,
-                onCoordinatesClick = onCoordinatesClick,
-                onSetLocationClick = onSetLocationClick,
-            )
+            is EncounterDetailState.Loaded -> {
+                val page = state.pages.first { it.id == state.currentId }
+                CatPageContent(
+                    page,
+                    contentPadding = belowBar,
+                    onDeleteClick = onDeleteClick,
+                    onCoatClick = { coat -> onCoatClick(CoatInteraction(page.id, coat)) },
+                    onTakePhotoClick = { onTakePhotoClick(page.id) },
+                    onPickPhotoClick = { onPickPhotoClick(page.id) },
+                    onPhotoClick = { photoId -> onPhotoClick(PhotoInteraction(page.id, photoId)) },
+                    onCoordinatesClick = { onCoordinatesClick(page.id) },
+                    onSetLocationClick = { onSetLocationClick(page.id) },
+                )
+            }
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing, Modifier.padding(belowBar))

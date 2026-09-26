@@ -94,7 +94,9 @@ class DetailPhotoPagerTest {
     }
 
     private fun show(state: EncounterDetailState, onPhotoClick: (String) -> Unit = {}) {
-        compose.setContent { CatsRadarTheme { EncounterDetailScreen(state = state, onPhotoClick = onPhotoClick) } }
+        compose.setContent {
+            CatsRadarTheme { EncounterDetailScreen(state = state, onPhotoClick = { onPhotoClick(it.photoId) }) }
+        }
     }
 
     private fun position(page: Int, of: Int) =

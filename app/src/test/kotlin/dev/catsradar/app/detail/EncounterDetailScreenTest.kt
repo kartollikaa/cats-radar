@@ -248,7 +248,7 @@ class EncounterDetailScreenTest {
                         state = shown,
                         contentPadding = PaddingValues(top = STATUS_BAR, bottom = BOTTOM_BAR),
                         onBackClick = onBackClick,
-                        onCoordinatesClick = onCoordinatesClick,
+                        onCoordinatesClick = { onCoordinatesClick() },
                     )
                 }
             }
