@@ -50,7 +50,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val COVER_RANK = "cover_rank"
 
-// Past any photo's rank, and whole: map expressions compute in floats, exact up to this.
+// Beyond any photo's rank, yet held exactly by map expressions, which compute in floats.
 private const val NO_COVER = 1 shl 24
 
 private const val IMAGE_CHECKS = 50
@@ -74,7 +74,6 @@ internal val coverAggregator = mapOf(
 
 internal val hasCover = feature[COVER_RANK].asNumber(const(NO_COVER)) lt const(NO_COVER)
 
-// A tile is drawn at its largest size and scaled down, so this ramp is the tile's size on screen.
 private val TileScale = interpolate(
     linear(),
     zoom(),
@@ -82,7 +81,6 @@ private val TileScale = interpolate(
     LARGE_TILE_ZOOM to const(1f),
 )
 
-// The badge follows the top-right corner of its tile as the tile grows.
 private val BadgeOffset = interpolate(
     linear(),
     zoom(),
@@ -90,12 +88,7 @@ private val BadgeOffset = interpolate(
     LARGE_TILE_ZOOM to const(DpOffset(LargestTile / 2 - BadgeRadius / 2, -LargestTile / 2 + BadgeRadius / 2)),
 )
 
-/**
- * The photos of cats that have one, over their dots: a single cat's photo gives way to a newer one it
- * would overlap, leaving its dot, and a cluster holding a photographed cat shows the newest one's photo
- * and its count. [photos] is [photoImages] of the points in [source]; [tilesAdded] counts the photo tiles
- * the map has been given so far.
- */
+/** [photos] must be [photoImages] of the points in [source]; [tilesAdded] counts the tiles the map holds. */
 @Composable
 internal fun CatPhotos(
     source: GeoJsonSource,
@@ -163,8 +156,8 @@ internal fun CatPhotos(
     )
 }
 
-// Always true, but each count is a new filter, which lays the tiles out again: one laid out before its photo
-// reached the map leaves the photo out until then. It reads a feature, or the map would fold it away.
+// Always true; each count makes a new filter, which lays out again a tile laid out before its photo arrived.
+// It reads a feature so that the map cannot fold it into a constant.
 private fun layOutAgainAfter(tilesAdded: Int) =
     feature[CAT_PHOTO_RANK].asNumber(const(0)) gte const(-1 - tilesAdded)
 
@@ -214,7 +207,7 @@ internal fun PhotoTiles(mapState: MapState, rim: Color, progress: PhotoTileProgr
                 progress.markUnreadable(thumbnail)
                 return@resolver null
             }
-            // The map adds the tile after this returns.
+            // The map adds the tile only after this returns, and counting it sooner lays tiles out too early.
             scope.launch { if (mapState.awaitImage(id)) progress.countAdded() }
             ResolvedStyleImage(drawn)
         }

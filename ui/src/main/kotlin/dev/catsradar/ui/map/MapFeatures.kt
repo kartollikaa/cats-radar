@@ -33,7 +33,7 @@ internal fun photoImageId(thumbnailPath: String): String = PHOTO_IMAGE_PREFIX + 
 internal fun thumbnailOf(imageId: String): String? =
     imageId.takeIf { it.startsWith(PHOTO_IMAGE_PREFIX) }?.removePrefix(PHOTO_IMAGE_PREFIX)
 
-/** These points with every thumbnail in [unreadable] let go, so its cat draws as a dot. */
+/** These points, with every thumbnail in [unreadable] taken off its cat. */
 internal fun ImmutableList<MapPoint>.withoutThumbnails(unreadable: Set<String>): ImmutableList<MapPoint> =
     if (unreadable.isEmpty()) {
         this

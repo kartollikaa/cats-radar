@@ -35,7 +35,6 @@ private fun PhotoTile.around(photo: ImageBitmap): ImageBitmap {
     val square = middleSquare(photo, size)
     val tile = ImageBitmap(size, size)
     CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, Canvas(tile), Size(side, side)) {
-        // A shader fill rather than a clip: Android draws a clipped path's edge without anti-aliasing.
         drawRoundRect(ShaderBrush(ImageShader(square)), cornerRadius = CornerRadius(corner))
         val inset = rim / 2
         drawRoundRect(
