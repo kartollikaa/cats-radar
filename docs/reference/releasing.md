@@ -68,7 +68,8 @@ proves nothing about a release one.
 - **Code that creates a class from its name breaks only at run time.** R8 cannot see that use, so it
   drops the constructor or the class. Libraries ship rules for what they look up;
   `app/proguard-rules.pro` covers what theirs miss. No test runs the minified code, which is why a
-  release is launched on a device before it is tagged.
+  release is launched on a device before it is tagged, unless the owner skips that for it (step 4
+  below).
 - **Resources are shrunk in strict mode** (`app/src/main/res/raw/keep.xml`): a resource reached only
   through a name built at run time (`Resources.getIdentifier`) is removed. Reference resources
   through `R`.
