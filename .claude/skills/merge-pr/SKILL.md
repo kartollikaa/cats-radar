@@ -21,6 +21,7 @@ Do not wait for GitHub Actions: the local gate is the merge gate for this reposi
 Fetch once, capture the value, and use that SHA throughout conflict resolution:
 
 ```bash
+test -z "$(git status --porcelain)"
 git fetch origin main
 TARGET_MAIN=$(git rev-parse origin/main)
 git merge "$TARGET_MAIN"
@@ -29,11 +30,15 @@ git merge "$TARGET_MAIN"
 Never merge the live name `origin/main`: another session can move the shared ref while the merge is
 in progress. Resolve only conflicts that belong to this slice. A conflict in another epic's spec or
 `docs/tbd/decompositions/` is an owner decision: stop and ask instead of combining the prose.
+After any manual conflict resolution, commit it and rerun `/code-review` plus the acceptance gate
+over the whole final diff. Do not treat the earlier review as covering newly written resolution.
 
 ## Gate the tree that will land
 
 ```bash
+test -z "$(git status --porcelain)"
 CI=true ./gradlew check :app:assembleRelease --console=plain
+test -z "$(git status --porcelain)"
 ```
 
 `CI=true` is required so this verification build cannot upload an R8 mapping to Crashlytics. A
@@ -47,6 +52,7 @@ commits.
 Immediately before merging:
 
 ```bash
+test -z "$(git status --porcelain)"
 git fetch origin main
 BEHIND=$(git rev-list --count HEAD..origin/main)
 test "$BEHIND" = 0
@@ -85,3 +91,4 @@ recomputing; wait for the live API state, but do not wait for Actions.
 | Wait for GitHub Actions | Use the green local gate and merge on owner instruction |
 | Delete the lower stack branch immediately | Retarget and inspect the upper PR first |
 | Resolve another epic's docs conflict | Stop and ask the owner |
+| Gate a dirty tree | Stop; commit the intended slice, then review and gate that exact head |
