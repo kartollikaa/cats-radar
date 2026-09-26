@@ -147,9 +147,22 @@ class FakeSettingsRepository(saveOriginals: Boolean = true, lastMilestone: Int =
 }
 
 class RecordingPhotoStorage : PhotoStorage {
+    val copied = mutableListOf<Pair<StoredPhoto, String>>()
     val deleted = mutableListOf<String>()
+    var copyFailureAt: Int? = null
+    private var copyAttempts = 0
 
     override fun resolve(relativePath: String): String = "/photos/$relativePath"
+
+    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto {
+        copyAttempts++
+        if (copyAttempts == copyFailureAt) error("copy failed at attempt $copyAttempts")
+        copied += stored to baseName
+        return StoredPhoto(
+            photoPath = "$baseName.jpg",
+            thumbPath = stored.thumbPath?.let { "${baseName}_thumb.jpg" },
+        )
+    }
 
     override suspend fun delete(relativePath: String) {
         deleted += relativePath

@@ -2,6 +2,7 @@ package dev.catsradar.data.platform
 
 import android.content.Context
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,6 +18,33 @@ class AndroidPhotoStorage(
     private val root: File get() = File(context.filesDir, PHOTOS_DIR)
 
     override fun resolve(relativePath: String): String = fileFor(relativePath).path
+
+    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = withContext(ioDispatcher) {
+        val photoPath = "$baseName.jpg"
+        val thumbPath = stored.thumbPath?.let { "${baseName}_thumb.jpg" }
+        val photoDestination = fileFor(photoPath)
+        val thumbDestination = thumbPath?.let(::fileFor)
+        var photoCopied = false
+        var thumbCopied = false
+
+        try {
+            require(!photoDestination.exists()) { "photo destination already exists: $photoPath" }
+            fileFor(stored.photoPath).copyTo(photoDestination)
+            photoCopied = true
+
+            if (thumbDestination != null) {
+                require(!thumbDestination.exists()) { "photo destination already exists: $thumbPath" }
+                fileFor(stored.thumbPath!!).copyTo(thumbDestination)
+                thumbCopied = true
+            }
+
+            StoredPhoto(photoPath, thumbPath)
+        } catch (failure: Throwable) {
+            if (thumbCopied) thumbDestination?.delete()
+            if (photoCopied) photoDestination.delete()
+            throw failure
+        }
+    }
 
     override suspend fun delete(relativePath: String) {
         withContext(ioDispatcher) { fileFor(relativePath).delete() }

@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.RecordingPhotoStorage
@@ -62,6 +63,8 @@ class PurgeDeletedTest {
         val rowsAtEachDelete = mutableListOf<Int>()
         val storage = object : PhotoStorage {
             override fun resolve(relativePath: String) = relativePath
+
+            override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
 
             override suspend fun delete(relativePath: String) {
                 rowsAtEachDelete += repository.loadEvery().size
