@@ -6,6 +6,7 @@ sealed interface EncounterDetailEffect {
     data class OpenPhotoPicker(val catId: String) : EncounterDetailEffect
     data class OpenPhoto(val catId: String, val photoId: String) : EncounterDetailEffect
     data class OpenMap(val catId: String) : EncounterDetailEffect
+    data class OpenLocationPicker(val catId: String) : EncounterDetailEffect
     data object PhotoNotAttached : EncounterDetailEffect
 
     /** More than one photo of a pick was not attached. */

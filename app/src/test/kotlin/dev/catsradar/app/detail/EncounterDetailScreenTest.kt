@@ -2,9 +2,11 @@ package dev.catsradar.app.detail
 
 import android.content.Context
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -19,7 +22,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
@@ -31,9 +37,12 @@ import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
+import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.FlagTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
+import dev.catsradar.ui.map.CatDotTestTag
+import dev.catsradar.ui.map.SpotMapTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
@@ -117,6 +126,27 @@ class EncounterDetailScreenTest {
     }
 
     @Test
+    fun `a cat with no location offers set on map, and the tap reports`() {
+        var taps = 0
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(state = loaded.copy(setsLocation = true), onSetLocationClick = { taps++ })
+            }
+        }
+
+        setOnMap().performScrollTo().performClick()
+
+        assertEquals(1, taps)
+    }
+
+    @Test
+    fun `a cat with a location offers no set on map`() {
+        show(loaded.copy(location = LocationLabel.CURRENT, coordinatesLabel = "41.39000, 2.17000"))
+
+        setOnMap().assertDoesNotExist()
+    }
+
+    @Test
     fun `several photos being attached show how many are through out of how many`() {
         show(loaded.copy(addPhoto = AddPhoto.ATTACHING, attachProgress = AttachProgress(done = 2, total = 5)))
 
@@ -155,23 +185,81 @@ class EncounterDetailScreenTest {
         compose.onNodeWithText("Barcelona", useUnmergedTree = true).assertDoesNotExist()
     }
 
-    private fun show(state: EncounterDetailState, onBackClick: () -> Unit = {}) = show(onBackClick) { state }
+    @Test
+    fun `a cat on the map shows a map with the cat's dot at its centre`() {
+        show(onTheMap)
 
-    private fun show(onBackClick: () -> Unit = {}, state: () -> EncounterDetailState) {
+        val map = map().assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val dot = compose.onNodeWithTag(CatDotTestTag, useUnmergedTree = true).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+
+        assertEquals(map.center.x, dot.center.x, 1f)
+        assertEquals(map.center.y, dot.center.y, 1f)
+    }
+
+    @Test
+    fun `a cat not on the map shows no map`() {
+        show(loaded.copy(location = LocationLabel.CURRENT, coordinatesLabel = "123.40000, 2.17000"))
+
+        map().assertDoesNotExist()
+    }
+
+    @Test
+    fun `a tap on the map opens the map`() {
+        var opened = 0
+        show(onTheMap, onCoordinatesClick = { opened++ })
+
+        map().performTouchInput { click() }
+
+        assertEquals(1, opened)
+    }
+
+    @Test
+    fun `a drag across the map scrolls the screen`() {
+        show(onTheMap)
+        val before = map().fetchSemanticsNode().boundsInRoot.top
+
+        map().performTouchInput { swipeUp() }
+
+        assertTrue(map().fetchSemanticsNode().boundsInRoot.top < before, "the screen stayed where it was")
+    }
+
+    private fun show(
+        state: EncounterDetailState,
+        onBackClick: () -> Unit = {},
+        onCoordinatesClick: () -> Unit = {},
+    ) = show(onBackClick, onCoordinatesClick) { state }
+
+    private fun show(
+        onBackClick: () -> Unit = {},
+        onCoordinatesClick: () -> Unit = {},
+        state: () -> EncounterDetailState,
+    ) {
         compose.setContent {
-            CatsRadarTheme {
-                EncounterDetailScreen(
-                    state = state(),
-                    contentPadding = PaddingValues(top = STATUS_BAR, bottom = BOTTOM_BAR),
-                    onBackClick = onBackClick,
-                )
+            val shown = state()
+            // A located cat's map needs MapLibre's native runtime, which the JVM cannot start.
+            CompositionLocalProvider(LocalInspectionMode provides shown.hasMap()) {
+                CatsRadarTheme {
+                    EncounterDetailScreen(
+                        state = shown,
+                        contentPadding = PaddingValues(top = STATUS_BAR, bottom = BOTTOM_BAR),
+                        onBackClick = onBackClick,
+                        onCoordinatesClick = onCoordinatesClick,
+                    )
+                }
             }
         }
     }
 
+    private fun EncounterDetailState.hasMap() = (this as? EncounterDetailState.Loaded)?.mapPosition != null
+
+    private fun map() = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true)
+
     private val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
     private fun back() = compose.onNodeWithContentDescription(context.getString(R.string.detail_back))
+
+    private fun setOnMap() = compose.onNodeWithText(context.getString(R.string.detail_set_location))
 
     private fun Dp.px(): Float = with(compose.density) { toPx() }
 
@@ -189,6 +277,14 @@ class EncounterDetailScreenTest {
             coordinatesLabel = null,
             accuracyMeters = null,
             photos = persistentListOf(DetailPhoto(id = "cat-1", path = "/data/photos/cat-1.jpg")),
+        )
+
+        // No photo, so the map sits on screen as it opens.
+        val onTheMap = loaded.copy(
+            location = LocationLabel.CURRENT,
+            coordinatesLabel = "41.39864, 2.17842",
+            photos = persistentListOf(),
+            mapPosition = MapPosition(latitude = 41.39864, longitude = 2.17842),
         )
     }
 }

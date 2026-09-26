@@ -79,6 +79,7 @@
     <string name="location_current">Current location</string>
     <string name="location_last_known">Last known location</string>
     <string name="location_from_outing">From this outing</string>
+    <string name="location_by_hand">Set by hand</string>
     <string name="location_none">No location yet</string>
 
     <string name="detail_photo_description">Photo of this cat</string>
@@ -185,6 +186,15 @@
     <string name="detail_open_photo">Open full screen</string>
     <string name="detail_back">Back</string>
     <string name="detail_show_on_map">Show on the map</string>
+    <string name="detail_set_location">Set on map</string>
+
+    <string name="picker_back">Back</string>
+    <string name="picker_map_description">Map. The point under the pin at its centre is the one saved</string>
+    <string name="picker_hint">Move the map to put the pin where the cat was</string>
+    <string name="picker_where_am_i">Where am I</string>
+    <string name="picker_save">Save</string>
+    <string name="picker_not_saved">Couldn\'t save the location</string>
+    <string name="picker_position_unknown">Couldn\'t tell where you are</string>
     <string name="viewer_back">Back</string>
     <string name="viewer_open_in_gallery">Open in gallery</string>
     <string name="viewer_gallery_gone">This photo is no longer in the gallery</string>
@@ -222,6 +232,37 @@
     </plurals>
     <string name="settings_encounters_grid">Grid of cats</string>
     <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
+    <string name="settings_updates">Updates</string>
+    <string name="settings_updates_explained">Downloads and installs a newer version from the app\'s GitHub releases</string>
+    <string name="settings_updates_check">Check for updates</string>
+    <string name="settings_updates_up_to_date">You have the latest version</string>
+    <string name="settings_updates_downloading">Downloading %1$s</string>
+    <string name="settings_updates_downloading_percent">Downloading %1$s · %2$d%%</string>
+    <string name="settings_updates_ready">%1$s is downloaded and ready to install</string>
+    <string name="settings_updates_installing">Installing %1$s. Confirm it in the window Android shows</string>
+    <string name="settings_updates_download_failed">The download didn\'t finish or arrived damaged. Try again</string>
+    <string name="settings_updates_install_failed">%1$s wasn\'t installed. Try again</string>
+    <string name="settings_updates_install_conflict">%1$s is signed with another key than this app, so Android refused it. A debug build can\'t update to a release one</string>
+    <string name="settings_updates_install_incompatible">%1$s isn\'t built for this phone\'s processor</string>
+    <string name="settings_updates_install_storage">There isn\'t enough free space to install %1$s</string>
+    <string name="settings_updates_install_package_gone">The downloaded %1$s is gone. Check again to download it</string>
+    <string name="settings_updates_install_not_this_app">The downloaded file isn\'t Cats Radar</string>
+    <string name="settings_updates_install_not_newer">The downloaded %1$s isn\'t newer than this version</string>
+    <string name="settings_updates_install">Install %1$s</string>
+    <string name="settings_updates_needs_permission">To install %1$s, allow Cats Radar to install apps</string>
+    <string name="settings_updates_allow_installs">Open settings</string>
+    <string name="settings_updates_offline">Couldn\'t reach GitHub. Check the connection and try again</string>
+    <string name="settings_updates_source_unavailable">GitHub didn\'t share the releases. Try again later</string>
+    <string name="settings_updates_unreadable">GitHub\'s answer couldn\'t be read. Try again later</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_version">Version</string>
+    <string name="settings_about_build">Build</string>
+    <string name="settings_about_device">Device</string>
+    <string name="settings_about_android">Android</string>
+    <string name="settings_about_android_value">%1$s (API %2$d)</string>
+    <string name="settings_about_copy">Copy build info</string>
+    <string name="settings_about_copied">Build info copied</string>
+    <string name="settings_about_clip_label">Cats Radar build info</string>
     <string name="counter_walk_start">Start a walk</string>
     <string name="counter_walk_start_hint">tap to begin</string>
     <string name="counter_walk_stop">Stop the walk</string>

@@ -13,6 +13,7 @@ class EncounterDetailEffectHandlerTest {
         onNavigateBack = { calls += "back" },
         onOpenPhoto = { viewer -> calls += "photo ${viewer.encounterId} ${viewer.photoId}" },
         onOpenMap = { catId -> calls += "map $catId" },
+        onOpenLocationPicker = { catId -> calls += "location picker $catId" },
         cameraLauncher = { catId -> calls += "camera $catId" },
         photoPickerLauncher = { catId -> calls += "picker $catId" },
         photoFailureReporter = { calls += "failure" },
@@ -34,6 +35,7 @@ class EncounterDetailEffectHandlerTest {
         handle(EncounterDetailEffect.PhotosAlreadyThere)
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
         handle(EncounterDetailEffect.OpenMap("cat-1"))
+        handle(EncounterDetailEffect.OpenLocationPicker("cat-1"))
 
         assertEquals(
             listOf(
@@ -47,6 +49,7 @@ class EncounterDetailEffectHandlerTest {
                 "all already there",
                 "discard content://captures/1",
                 "map cat-1",
+                "location picker cat-1",
             ),
             calls,
         )

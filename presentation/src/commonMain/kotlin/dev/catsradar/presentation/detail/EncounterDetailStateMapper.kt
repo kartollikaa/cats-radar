@@ -1,12 +1,14 @@
 package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.toOption
 import dev.catsradar.presentation.dayHeader
 import dev.catsradar.presentation.encounters.toLocationLabel
+import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.presentation.map.isOnTheMap
 import dev.catsradar.presentation.regions.countryFlag
 import dev.catsradar.presentation.time
@@ -44,7 +46,8 @@ class EncounterDetailStateMapper(
             coat = encounter.coat?.toOption(),
             addPhoto = if (attaching != null) AddPhoto.ATTACHING else AddPhoto.READY,
             attachProgress = attaching?.takeIf { it.total > 1 },
-            onTheMap = encounter.isOnTheMap(),
+            mapPosition = if (lat != null && lon != null && encounter.isOnTheMap()) MapPosition(lat, lon) else null,
+            setsLocation = encounter.locationSource == LocationSource.NONE,
             place = place?.let { found ->
                 // A city-state's locality repeats its country's name.
                 val city = found.city?.takeIf { !it.equals(found.country, ignoreCase = true) }

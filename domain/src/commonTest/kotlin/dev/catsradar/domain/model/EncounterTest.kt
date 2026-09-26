@@ -43,13 +43,14 @@ class EncounterTest {
     }
 
     @Test
-    fun `LocationSource has exactly five entries in spec order`() {
+    fun `LocationSource has exactly six entries in spec order`() {
         assertEquals(
             listOf(
                 LocationSource.EXIF,
                 LocationSource.CURRENT_FIX,
                 LocationSource.LAST_KNOWN,
                 LocationSource.BACKFILLED,
+                LocationSource.MANUAL,
                 LocationSource.NONE,
             ),
             LocationSource.entries,

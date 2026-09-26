@@ -93,6 +93,7 @@
     <string name="location_current">Текущее место</string>
     <string name="location_last_known">Последнее известное место</string>
     <string name="location_from_outing">Из этой вылазки</string>
+    <string name="location_by_hand">Указано вручную</string>
     <string name="location_none">Места пока нет</string>
 
     <string name="detail_photo_description">Фото этого котика</string>
@@ -213,6 +214,15 @@
     <string name="detail_open_photo">Открыть на весь экран</string>
     <string name="detail_back">Назад</string>
     <string name="detail_show_on_map">Показать на карте</string>
+    <string name="detail_set_location">Указать на карте</string>
+
+    <string name="picker_back">Назад</string>
+    <string name="picker_map_description">Карта. Сохранится точка под булавкой в её центре</string>
+    <string name="picker_hint">Сдвиньте карту, чтобы булавка встала там, где был котик</string>
+    <string name="picker_where_am_i">Где я</string>
+    <string name="picker_save">Сохранить</string>
+    <string name="picker_not_saved">Не удалось сохранить место</string>
+    <string name="picker_position_unknown">Не удалось понять, где вы</string>
     <string name="viewer_back">Назад</string>
     <string name="viewer_open_in_gallery">Открыть в галерее</string>
     <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
@@ -252,6 +262,37 @@
     </plurals>
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
+    <string name="settings_updates">Обновления</string>
+    <string name="settings_updates_explained">Скачивает и устанавливает новую версию из релизов приложения на GitHub</string>
+    <string name="settings_updates_check">Проверить обновления</string>
+    <string name="settings_updates_up_to_date">У вас последняя версия</string>
+    <string name="settings_updates_downloading">Скачивается %1$s</string>
+    <string name="settings_updates_downloading_percent">Скачивается %1$s · %2$d%%</string>
+    <string name="settings_updates_ready">Версия %1$s скачана и готова к установке</string>
+    <string name="settings_updates_installing">Устанавливается %1$s. Подтвердите в окне Android</string>
+    <string name="settings_updates_download_failed">Загрузка не завершилась или файл повреждён. Попробуйте ещё раз</string>
+    <string name="settings_updates_install_failed">Версия %1$s не установлена. Попробуйте ещё раз</string>
+    <string name="settings_updates_install_conflict">Версия %1$s подписана другим ключом, и Android её не принял. Отладочную сборку нельзя обновить до релизной</string>
+    <string name="settings_updates_install_incompatible">Версия %1$s не подходит для процессора этого телефона</string>
+    <string name="settings_updates_install_storage">Не хватает свободного места, чтобы установить %1$s</string>
+    <string name="settings_updates_install_package_gone">Скачанная версия %1$s пропала. Проверьте обновления ещё раз, чтобы скачать её</string>
+    <string name="settings_updates_install_not_this_app">Скачанный файл — не Cats Radar</string>
+    <string name="settings_updates_install_not_newer">Скачанная версия %1$s не новее этой</string>
+    <string name="settings_updates_install">Установить %1$s</string>
+    <string name="settings_updates_needs_permission">Чтобы установить %1$s, разрешите Cats Radar устанавливать приложения</string>
+    <string name="settings_updates_allow_installs">Открыть настройки</string>
+    <string name="settings_updates_offline">Не удалось связаться с GitHub. Проверьте подключение и попробуйте ещё раз</string>
+    <string name="settings_updates_source_unavailable">GitHub не отдал список версий. Попробуйте позже</string>
+    <string name="settings_updates_unreadable">Не удалось разобрать ответ GitHub. Попробуйте позже</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_about_version">Версия</string>
+    <string name="settings_about_build">Сборка</string>
+    <string name="settings_about_device">Устройство</string>
+    <string name="settings_about_android">Android</string>
+    <string name="settings_about_android_value">%1$s (API %2$d)</string>
+    <string name="settings_about_copy">Скопировать данные о сборке</string>
+    <string name="settings_about_copied">Данные о сборке скопированы</string>
+    <string name="settings_about_clip_label">Данные о сборке Cats Radar</string>
     <string name="counter_walk_start">Начать прогулку</string>
     <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
     <string name="counter_walk_stop">Закончить прогулку</string>

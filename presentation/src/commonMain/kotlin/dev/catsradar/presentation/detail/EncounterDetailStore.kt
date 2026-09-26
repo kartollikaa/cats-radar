@@ -87,21 +87,26 @@ class EncounterDetailStore(
             is EncounterDetailIntent.PickPhotoClicked ->
                 requestPhoto(EncounterDetailEffect.OpenPhotoPicker(intent.catId))
             is EncounterDetailIntent.PhotoClicked ->
-                ifShown(
-                    intent.catId,
-                    encounterId,
-                    (state.value as? EncounterDetailState.Loaded)?.photos.orEmpty().any { it.id == intent.photoId },
-                ) { emit(EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) }
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) {
+                    photos.any { it.id == intent.photoId }
+                }
             is EncounterDetailIntent.CoordinatesClicked ->
-                ifShown(
-                    intent.catId,
-                    encounterId,
-                    (state.value as? EncounterDetailState.Loaded)?.onTheMap == true,
-                ) { emit(EncounterDetailEffect.OpenMap(intent.catId)) }
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenMap(intent.catId)) { mapPosition != null }
+            is EncounterDetailIntent.SetLocationClicked ->
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenLocationPicker(intent.catId)) { setsLocation }
             is EncounterDetailIntent.PhotoTaken ->
                 onPhotosChosen(intent.catId, listOfNotNull(intent.uri), PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotosPicked -> onPhotosChosen(intent.catId, intent.uris, PhotoSource.GALLERY)
         }
+    }
+
+    // A tap only ever acts on the cat this Store observes.
+    private suspend fun emitIfOffered(
+        catId: String,
+        effect: EncounterDetailEffect,
+        offered: EncounterDetailState.Loaded.() -> Boolean,
+    ) {
+        if (catId == encounterId && (state.value as? EncounterDetailState.Loaded)?.offered() == true) emit(effect)
     }
 
     private suspend fun requestPhoto(opener: EncounterDetailEffect) {
@@ -145,7 +150,12 @@ class EncounterDetailStore(
         deletedHere = true
         setState { EncounterDetailState.Deleted(undoVisible = true) }
         startUndoWindow()
-        runStorageWrite(onFailure = ::restoreAfterFailedDelete) { deleteEncounter(encounterId) }
+        val restore = {
+            undoTimeoutJob?.cancel()
+            deletedHere = false
+            setState { reduce(lastSeen) }
+        }
+        runStorageWrite(onFailure = restore) { deleteEncounter(encounterId) }
     }
 
     private fun startUndoWindow() {
@@ -172,20 +182,9 @@ class EncounterDetailStore(
             deletedHere = false
         }
     }
-
-    private fun restoreAfterFailedDelete() {
-        undoTimeoutJob?.cancel()
-        deletedHere = false
-        setState { reduce(lastSeen) }
-    }
 }
 
 private fun Encounter.photoIds(): Set<String> = photos.mapTo(mutableSetOf()) { it.id }
-
-// A tapped photo or coordinates only ever acts on the cat this Store observes.
-private suspend fun ifShown(catId: String, encounterId: String, shownOnScreen: Boolean, action: suspend () -> Unit) {
-    if (catId == encounterId && shownOnScreen) action()
-}
 
 // A cat removed mid-pick answers NotAttachable, which says nothing: the screen already shows it gone.
 private fun List<AttachResult?>.message(): EncounterDetailEffect? {

@@ -149,7 +149,7 @@ internal class InMemoryEncounters : EncounterRepository {
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by these tests")
     override suspend fun insert(encounter: Encounter) = rows.update { it + encounter }
     override suspend fun update(encounter: Encounter): Unit = throw NotImplementedError("unused by these tests")
-    override suspend fun attachLocation(id: String, stamp: LocationStamp): Unit =
+    override suspend fun attachLocation(id: String, stamp: LocationStamp): Boolean =
         throw NotImplementedError("unused by these tests")
 
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =

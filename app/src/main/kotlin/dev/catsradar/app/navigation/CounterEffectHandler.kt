@@ -15,7 +15,7 @@ internal fun handleCounterEffect(
     locationAttachScheduler: LocationAttachScheduler,
     locationPermissionRequester: LocationPermissionRequester,
     cameraLauncher: CameraLauncher,
-    photoFailureReporter: PhotoFailureReporter,
+    photoFailureReporter: MessageReporter,
     captureDiscarder: CaptureDiscarder,
     milestoneAnnouncer: MilestoneAnnouncer,
     photoPickerLauncher: PhotoPickerLauncher,

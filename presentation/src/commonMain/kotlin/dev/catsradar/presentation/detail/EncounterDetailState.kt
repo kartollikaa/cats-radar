@@ -2,6 +2,7 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.LocationLabel
+import dev.catsradar.presentation.map.MapPosition
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -21,7 +22,10 @@ sealed interface EncounterDetailState {
         val addPhoto: AddPhoto = AddPhoto.READY,
         /** Null unless several photos are being attached. */
         val attachProgress: AttachProgress? = null,
-        val onTheMap: Boolean = false,
+        /** Null when the map does not draw this cat. */
+        val mapPosition: MapPosition? = null,
+        /** Whether the cat can be given a location on a map: it has none. */
+        val setsLocation: Boolean = false,
         /** Null while the cat has no named place: no location, or its cell not named yet. */
         val place: DetailPlace? = null,
     ) : EncounterDetailState

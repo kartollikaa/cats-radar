@@ -7,6 +7,10 @@ data class SettingsState(
     val backupRunning: Boolean = false,
     /** Null until a run finishes, and again once its message is dismissed. */
     val backupOutcome: BackupOutcome? = null,
+    /** Null until the build info has been read. */
+    val about: AboutState? = null,
+    val updatesShown: Boolean = false,
+    val update: UpdateState = UpdateState(),
 )
 
 /** What to tell the user about the run that just ended. The words live in `:ui`. */

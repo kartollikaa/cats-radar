@@ -9,13 +9,18 @@ import dev.catsradar.presentation.detail.EncounterDetailStateMapper
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.locationpicker.LocationPickerStateMapper
+import dev.catsradar.presentation.locationpicker.LocationPickerStore
 import dev.catsradar.presentation.map.MapSpotStateMapper
 import dev.catsradar.presentation.map.MapSpotStore
 import dev.catsradar.presentation.map.MapStateMapper
 import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.regions.RegionsStateMapper
 import dev.catsradar.presentation.regions.RegionsStore
+import dev.catsradar.presentation.settings.AboutStateMapper
 import dev.catsradar.presentation.settings.SettingsStore
+import dev.catsradar.presentation.settings.SettingsUpdates
+import dev.catsradar.presentation.settings.UpdateStateMapper
 import dev.catsradar.presentation.statistics.StatisticsStateMapper
 import dev.catsradar.presentation.statistics.StatisticsStore
 import dev.catsradar.presentation.viewer.PhotoViewerStateMapper
@@ -49,6 +54,9 @@ val presentationModule = module {
     factoryOf(::StatisticsStateMapper)
     viewModelOf(::StatisticsStore)
     factoryOf(::RegionsStateMapper)
+    factoryOf(::AboutStateMapper)
+    factoryOf(::UpdateStateMapper)
+    factoryOf(::SettingsUpdates)
     viewModelOf(::SettingsStore)
     viewModel { (parent: dev.catsradar.domain.region.RegionKey?) ->
         RegionsStore(parent = parent, observeRegion = get(), stateMapper = get(), clock = get(), timeZone = get())
@@ -77,6 +85,17 @@ val presentationModule = module {
             stateMapper = get(),
             clock = get(),
             timeZone = get(),
+        )
+    }
+    factoryOf(::LocationPickerStateMapper)
+    viewModel { (encounterId: String) ->
+        LocationPickerStore(
+            encounterId = encounterId,
+            observeEncounter = get(),
+            whereToLook = get(),
+            locatePhone = get(),
+            setLocationByHand = get(),
+            stateMapper = get(),
         )
     }
 }

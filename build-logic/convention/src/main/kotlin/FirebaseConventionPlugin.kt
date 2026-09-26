@@ -27,6 +27,7 @@ class FirebaseConventionPlugin : Plugin<Project> {
             add("implementation", platform(libs.library("firebase-bom")))
             add("implementation", libs.library("firebase-crashlytics"))
             add("implementation", libs.library("firebase-analytics"))
+            add("implementation", libs.library("firebase-config"))
         }
     }
 }

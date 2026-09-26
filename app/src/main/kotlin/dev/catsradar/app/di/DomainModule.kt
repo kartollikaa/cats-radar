@@ -2,14 +2,17 @@ package dev.catsradar.app.di
 
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.AttachPhoto
+import dev.catsradar.domain.usecase.CheckForUpdate
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.DeleteEncounters
+import dev.catsradar.domain.usecase.DownloadUpdate
 import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.EndWalk
 import dev.catsradar.domain.usecase.ExportBackup
 import dev.catsradar.domain.usecase.FollowWalkingMode
 import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
+import dev.catsradar.domain.usecase.LocatePhone
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveEncounter
@@ -24,6 +27,7 @@ import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
 import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.ObserveWalkStats
 import dev.catsradar.domain.usecase.ObserveWalkTracks
+import dev.catsradar.domain.usecase.PruneInstalledUpdates
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
@@ -31,11 +35,13 @@ import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.domain.usecase.SetCoat
+import dev.catsradar.domain.usecase.SetLocationByHand
 import dev.catsradar.domain.usecase.StartWalk
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.domain.usecase.UndoDeleteEncounters
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
+import dev.catsradar.domain.usecase.WhereToLook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.TimeZone
 import org.koin.core.module.dsl.factoryOf
@@ -94,6 +100,9 @@ val domainModule = module {
     // Constructed by hand: purgeAfter has a default, which factoryOf would try to inject.
     factory { PurgeDeleted(encounterRepository = get(), photoStorage = get(), clock = get()) }
     factoryOf(::SetCoat)
+    factoryOf(::SetLocationByHand)
+    factoryOf(::WhereToLook)
+    factoryOf(::LocatePhone)
     factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::ResolveGalleryLink)
@@ -104,4 +113,7 @@ val domainModule = module {
     factoryOf(::UndoImport)
     factoryOf(::ExportBackup)
     factoryOf(::ImportBackup)
+    factoryOf(::CheckForUpdate)
+    factoryOf(::DownloadUpdate)
+    factoryOf(::PruneInstalledUpdates)
 }

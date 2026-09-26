@@ -37,7 +37,7 @@ internal fun interface CatPhotosPickerLauncher {
 
 internal data class PickedPhotos(val catId: String, val uris: List<String>)
 
-internal fun interface PhotoFailureReporter {
+internal fun interface MessageReporter {
     fun report()
 }
 
@@ -91,10 +91,10 @@ internal fun rememberCatPhotosPicker(onResult: (PickedPhotos) -> Unit): CatPhoto
 }
 
 @Composable
-internal fun rememberPhotoFailureReporter(@StringRes messageRes: Int): PhotoFailureReporter {
+internal fun rememberMessageReporter(@StringRes messageRes: Int): MessageReporter {
     val context = LocalContext.current
     return remember(context, messageRes) {
-        PhotoFailureReporter { Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show() }
+        MessageReporter { Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show() }
     }
 }
 

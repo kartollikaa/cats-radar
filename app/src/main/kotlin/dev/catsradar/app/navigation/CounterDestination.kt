@@ -1,10 +1,7 @@
 package dev.catsradar.app.navigation
 
-import android.Manifest
 import android.net.Uri
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -16,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.catsradar.app.permission.LocationPermissionRequester
+import dev.catsradar.app.permission.rememberLocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
@@ -42,9 +40,9 @@ internal fun CounterDestination(
     val state by store.state.collectAsStateWithLifecycle()
     val haptics = koinInject<Haptics>()
     val locationAttachScheduler = koinInject<LocationAttachScheduler>()
-    val locationPermissionRequester = rememberLocationPermissionRequester(store)
+    val locationPermissionRequester = rememberPermissionRequester(store)
     val cameraLauncher = rememberCameraLauncher { shot -> store.dispatch(CounterIntent.PhotoCaptured(shot.uri)) }
-    val photoFailureReporter = rememberPhotoFailureReporter(R.string.counter_photo_not_saved)
+    val photoFailureReporter = rememberMessageReporter(R.string.counter_photo_not_saved)
     val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val importScheduler = koinInject<ImportScheduler>()
@@ -108,26 +106,6 @@ private fun ObserveImportWork(store: CounterStore, importScheduler: ImportSchedu
 }
 
 @Composable
-private fun rememberLocationPermissionRequester(store: CounterStore): LocationPermissionRequester {
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { results ->
-        val granted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        store.dispatch(CounterIntent.LocationPermissionResult(granted))
-    }
-    // A fresh lambda's identity would change every recomposition (every tap), which would restart
-    // the effect collector and could drop an in-flight effect.
-    return remember(permissionLauncher) {
-        LocationPermissionRequester {
-            permissionLauncher.launch(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            )
-        }
-    }
-}
-
-@Composable
 private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLauncher {
     val notificationPermission = rememberNotificationPermissionRequest()
     return rememberGalleryImportPicker { uris ->
@@ -154,3 +132,7 @@ private fun LocationHintAction.toCounterIntent(): CounterIntent = when (this) {
     LocationHintAction.GRANT -> CounterIntent.GrantLocationClicked
     LocationHintAction.DISMISS -> CounterIntent.LocationPermissionHintDismissed
 }
+
+@Composable
+private fun rememberPermissionRequester(store: CounterStore): LocationPermissionRequester =
+    rememberLocationPermissionRequester { granted -> store.dispatch(CounterIntent.LocationPermissionResult(granted)) }
