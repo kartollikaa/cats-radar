@@ -73,8 +73,7 @@ another service object is the case above.
 A platform object is obtained inline in its user's binding unless something must find it by type:
 it gets its own `single` when several classes take it (`WorkManager`, `NotificationManagerCompat`),
 when it reaches its user through `inject()` or `by inject()` (the Play Services client,
-`ActivityManager`), or when its user is bound by class so that `verify()` can check it
-(`FirebaseCrashlytics`).
+`ActivityManager`), or when its user is bound by class so that `verify()` can check it.
 A `SharedPreferences` file is opened in the binding; its name is where its data lives, so it never
 changes — `KoinRuntimeResolutionTest` reads back through the real bindings what installed versions
 wrote.
@@ -98,12 +97,13 @@ worker takes constructor parameters like any other class.
   class (`single { FusedLocationProvider(…) } bind LocationProvider::class`): nothing opens the lazy
   while the graph is built, so `verify()` is the only check that `T` has a binding.
 - `KoinRuntimeResolutionTest` starts the real modules, with WorkManager running as it is in the app,
-  and resolves every type obtained by hand, so a missing binding fails a JVM test. It runs without
-  `FirebaseApp`, where neither `FirebaseCrashlytics` nor `FirebaseRemoteConfig` can be created:
-  `NonFatalReporter` and `SettingsStore` are proven bound by their resolution reaching Firebase and
-  failing there, and the classes that take those instances are bound by class
-  (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`, likewise
-  `RemoteConfigFeatureToggles`) so that `verify()` checks the Firebase bindings.
+  and resolves every type obtained by hand, so a missing binding fails a JVM test. Unit tests build
+  only the debug variant, whose Firebase ports (`Analytics`, `NonFatalReporter`, `FeatureToggles`)
+  are no-ops, so they and `SettingsStore` resolve fully without `FirebaseApp`. The release branches of
+  those bindings build their Firebase instances inline with `getInstance()` and look nothing up in
+  Koin; only a release build runs them. Each Store is resolved through `getStore()`, which cancels
+  its `viewModelScope` when the test ends, so nothing its `init` launched runs on into a later test
+  in the same Robolectric fork.
 
 No test sees a hand-built instance of a plain class with its own binding (`ImportBatches(context)`
 inside a scheduler); review catches that one.
@@ -115,4 +115,4 @@ inside a scheduler); review catches that one.
 3. Pass `Lazy<T>` only for an instance that is costly to create and may never be needed, and bind
    the class that takes it by its class.
 4. If the class is resolved by hand (`koin.get()`, `by inject()`, `koinInject()`, `inject()`), add it
-   to `KoinRuntimeResolutionTest`.
+   to `KoinRuntimeResolutionTest` — a Store through `getStore()`, never a plain `koin.get()`.
