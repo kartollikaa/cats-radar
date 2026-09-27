@@ -37,8 +37,10 @@ over the whole final diff. Do not treat the earlier review as covering newly wri
 
 ```bash
 test -z "$(git status --porcelain)"
+GATED_SHA=$(git rev-parse HEAD)
 CI=true ./gradlew check :app:assembleRelease --console=plain
 test -z "$(git status --porcelain)"
+test "$(git rev-parse HEAD)" = "$GATED_SHA"
 ```
 
 `CI=true` is required so this verification build cannot upload an R8 mapping to Crashlytics. A
@@ -53,13 +55,13 @@ Immediately before merging:
 
 ```bash
 test -z "$(git status --porcelain)"
+test "$(git rev-parse HEAD)" = "$GATED_SHA"
 git fetch origin main
 BEHIND=$(git rev-list --count HEAD..origin/main)
 test "$BEHIND" = 0
-HEAD_SHA=$(git rev-parse HEAD)
 REMOTE_SHA=$(git ls-remote --heads origin "$(git branch --show-current)" | awk '{print $1}')
-test "$REMOTE_SHA" = "$HEAD_SHA"
-gh pr merge "$PR" --merge --match-head-commit "$HEAD_SHA"
+test "$REMOTE_SHA" = "$GATED_SHA"
+gh pr merge "$PR" --merge --match-head-commit "$GATED_SHA"
 ```
 
 If `BEHIND` is not zero, pin the new main SHA, merge it, rerun the local gate, push and repeat these
