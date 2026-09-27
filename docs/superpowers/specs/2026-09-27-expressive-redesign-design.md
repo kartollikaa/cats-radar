@@ -182,7 +182,7 @@ filter's *Not specified* cell takes no coat's shape. The grid must not grow tall
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
 inner corners. From E14 it shares its row with Walk and takes what Walk leaves.
 
-**The import notice** (slice E15; until it lands, the notice cards of `import.md` stand). The owner
+**The import notice** (slice E15). The owner
 asked to revisit "the block of a successful import" (2026-09-27): a settings row set above the count
 that shrank the cookie, three lines of fine print at one size, an import of photos that showed none,
 and the quietest Undo on the screen. Of *Photo card*, *By Photo* and *On the count* the owner chose
@@ -194,10 +194,11 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
   tag at the ring's top, which is the price of floating. The location hint stays a card in the
   column: what lasts sits in the column, what passes floats.
 - **What it shows.** At its start, a fanned stack of the first three imported photos (40 dp,
-  `medium` corners, each tilted a little); while the run goes the stack fills as photos land. Running:
-  *Importing 7 of 12* in `titleSmall` over an Expressive wavy progress indicator. Finished: *9 cats
-  added* in `titleMedium`, and under it one muted line with only the parts that apply, *2 already here
-  · 1 couldn't be read*; TalkBack reads the words as one item.
+  `medium` corners, each tilted a little), or a check when none has a photo. Running, the gallery icon
+  stands in the stack's place, because progress reports counts and the added cats are known only when
+  the run ends. Running: *Importing 7 of 12* in `titleSmall` over an Expressive wavy progress
+  indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the
+  parts that apply, *2 already here · 1 couldn't be read*; TalkBack reads the words as one item.
 - **Closing it.** Undo is the filled tonal button, and a × icon button after it closes the notice; a
   swipe to either side closes it too. Closing does what OK did: the run is recorded as dealt with and
   the Undo lapses; the cats stay. OK itself goes. The running notice has no controls. A tap on the

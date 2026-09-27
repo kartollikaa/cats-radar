@@ -27,7 +27,7 @@
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | in-review |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | in-review |
-| E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | planned |
+| E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -192,3 +192,5 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   import landing on the count (versions 21 to 23), the owner chose the **Photo card**, asked that the finished notice
   be closable (OK or a swipe) with its tap booked for an imported-photos manager, and that it not shrink the cookie:
   "that island will be like a popup". E15 carries it.
+- 2026-09-28: the owner asked for the walk in orange, yellow and blue; prototyped (version 24), then set aside:
+  "lets do it without recoloring for now". The walk keeps the theme's tertiary colours.
