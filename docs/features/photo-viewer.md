@@ -1,6 +1,8 @@
 # Photo viewer
 
-A tap on a cat's photo on its detail screen opens the photo fullscreen, on black, the way a gallery
+A tap on a cat's photo on its detail screen — on whichever page of its outing it is (see
+[encounter-detail.md](./encounter-detail.md#paging-through-the-outing)) — opens that cat's photo fullscreen, on
+black, the way a gallery
 shows one: pinch to zoom, double-tap to zoom in at the tapped point and again to zoom back out,
 double-tap-and-drag to zoom with one finger, pan a zoomed photo, fling it. A cat with no photo has
 nothing to tap (`EncounterDetailStorePhotoTest`, *a tap on the photo opens the viewer*; *a cat without

@@ -71,7 +71,8 @@ globe, past a pole or the 180th meridian.
 
 ## Tapping the map
 
-- **A dot** opens its cat's detail above the Map tab; back returns to the map as it was left. A tap on
+- **A dot** opens its cat's detail above the Map tab, among the other cats of its outing (see
+  [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)); back returns to the map as it was left. A tap on
   a cat's photo is a tap on the dots beneath it: its own, and any other cat's it covers.
 - **Dots close together** at the current zoom draw as one circle holding their count, or as a photo
   with the count in a badge (see *How a photo shows*). Tapping it, or its badge, zooms in until they
