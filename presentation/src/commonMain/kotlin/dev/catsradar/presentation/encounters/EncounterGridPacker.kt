@@ -10,7 +10,8 @@ internal sealed interface PackedRow<out T> {
 
 /**
  * Keeps the cats' order. Two photos in a row share a pair; the run between pairs is one card row when
- * shorter than [MIN_TILES], else tile rows of [MIN_TILES] to [MAX_TILES], as even as they can be.
+ * shorter than [MIN_TILES], else tile rows of [MIN_TILES] to [MAX_TILES], as even as they can be. A tile row
+ * holding a photo holds [MIN_TILES] cats, so the photo is never drawn at the smallest size.
  */
 internal object EncounterGridPacker {
 
@@ -24,7 +25,7 @@ internal object EncounterGridPacker {
         while (index < cats.size) {
             val next = cats.getOrNull(index + 1)
             if (next != null && hasPhoto(cats[index]) && hasPhoto(next)) {
-                rows += splitRun(run.toList())
+                rows += splitRun(run.toList(), hasPhoto)
                 run.clear()
                 rows += PackedRow.PhotoPair(cats[index], next)
                 index += 2
@@ -33,11 +34,29 @@ internal object EncounterGridPacker {
                 index += 1
             }
         }
-        rows += splitRun(run.toList())
+        rows += splitRun(run.toList(), hasPhoto)
         return rows
     }
 
-    private fun <T> splitRun(run: List<T>): List<PackedRow<T>> = when {
+    /** The fewest rows, then the fewest card rows, that give every photo of [run] a tile row of [MIN_TILES]. */
+    private fun <T> splitRun(run: List<T>, hasPhoto: (T) -> Boolean): List<PackedRow<T>> {
+        val best = HashMap<Int, List<PackedRow<T>>>()
+        fun from(start: Int): List<PackedRow<T>> = best.getOrPut(start) {
+            val rest = run.subList(start, run.size)
+            val photo = rest.indexOfFirst(hasPhoto)
+            if (photo == -1 || rest.size < MIN_TILES) return@getOrPut splitPlainRun(rest)
+            (maxOf(0, photo - MIN_TILES + 1)..minOf(photo, rest.size - MIN_TILES))
+                .map { offset ->
+                    splitPlainRun(rest.subList(0, offset)) +
+                        PackedRow.Tiles(rest.subList(offset, offset + MIN_TILES).toList()) +
+                        from(start + offset + MIN_TILES)
+                }
+                .minWith(compareBy({ it.size }, { rows -> rows.count { it is PackedRow.Cards } }))
+        }
+        return from(0)
+    }
+
+    private fun <T> splitPlainRun(run: List<T>): List<PackedRow<T>> = when {
         run.isEmpty() -> emptyList()
         run.size < MIN_TILES -> listOf(PackedRow.Cards(run))
         else -> balancedTileRows(run)

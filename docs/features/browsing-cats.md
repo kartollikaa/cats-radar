@@ -96,6 +96,11 @@ reordering them and never carrying a row across a header:
   rows first; a tile is a square showing the photo's thumbnail, the coat's face or a paw, with the
   time under it, shrunk to stay on one line. A shorter run is a **card row**: full cards showing
   the time and location, sharing the width.
+- **A lone photo keeps a large tile.** A tile row that holds a photo holds exactly `MIN_TILES` cats, so
+  the photo is never drawn at the smallest, `MAX_TILES`-across size (owner decision, 2026-09-27). The run is split so
+  that every photo lands in such a row with its neighbours, using the fewest rows and then the fewest
+  card rows; the cats left over pack as any run does, so a card row can follow a photo's tile row
+  (`EncounterGridPackerTest`, *a lone photo's tile row holds three cats, so the photo stays large*).
 
 "Has a photo" means its thumbnail exists: a photo whose thumbnail failed to write packs, and leads,
 like a cat without one. What a tile or card leads with is the mapper's choice — the thumbnail, else
