@@ -17,11 +17,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,12 +35,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
@@ -46,7 +53,9 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 
 const val CoatShapeTestTag = "coat-shape"
@@ -75,12 +84,15 @@ fun CoatGrid(
 /**
  * The same grid with any number of coats marked, for choosing several at once. A null in [selected]
  * marks "no coat", which gets a cell of its own after the coats only when [onUnspecifiedClick] is given.
+ * A coat in [counts] shows how many of it were counted; with [enabled] false no cell takes a tap.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CoatGrid(
     selected: ImmutableSet<CoatOption?>,
     modifier: Modifier = Modifier,
+    counts: ImmutableMap<CoatOption?, Int> = persistentMapOf(),
+    enabled: Boolean = true,
     onCoatClick: (CoatOption) -> Unit = {},
     onUnspecifiedClick: (() -> Unit)? = null,
 ) {
@@ -96,6 +108,8 @@ fun CoatGrid(
                 label = stringResource(coat.labelRes()),
                 shape = coatShapeFor(coat),
                 selected = ringed,
+                count = counts[coat],
+                enabled = enabled,
                 onClick = { onCoatClick(coat) },
             ) {
                 val rim = if (ringed) MaterialTheme.colorScheme.ringedFaceRim() else MaterialTheme.colorScheme.faceRim()
@@ -107,6 +121,8 @@ fun CoatGrid(
                 label = stringResource(R.string.coat_not_specified),
                 shape = coatShapeFor(null),
                 selected = null in selected,
+                count = counts[null],
+                enabled = enabled,
                 onClick = onClick,
             ) {
                 Icon(
@@ -161,38 +177,60 @@ private fun CoatTile(
     shape: RoundedPolygon,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    count: Int? = null,
+    enabled: Boolean = true,
     onClick: () -> Unit = {},
     face: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val outline = shape.toShape()
     val interactionSource = remember { MutableInteractionSource() }
+    val counted = count?.let { pluralStringResource(R.plurals.counter_coat_counted, it, it) }
     Column(
         modifier = modifier
             .width(CellWidth)
+            .alpha(if (enabled) 1f else 0.38f)
             .selectable(
                 selected = selected,
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
-            ),
+            )
+            .then(if (counted != null) Modifier.semantics { stateDescription = counted } else Modifier),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .testTag(CoatShapeTestTag)
-                .clip(outline)
-                .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
-                .then(if (selected) Modifier.border(2.dp, colors.primary, outline) else Modifier)
-                .indication(interactionSource, ripple()),
-            contentAlignment = Alignment.Center,
-        ) {
-            face()
+        Box {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .testTag(CoatShapeTestTag)
+                    .clip(outline)
+                    .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
+                    .then(if (selected) Modifier.border(2.dp, colors.primary, outline) else Modifier)
+                    .indication(interactionSource, ripple()),
+                contentAlignment = Alignment.Center,
+            ) {
+                face()
+            }
+            count?.let { CountDot(count = it, modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp)) }
         }
         Text(text = label, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
     }
+}
+
+@Composable
+private fun CountDot(count: Int, modifier: Modifier = Modifier) {
+    Text(
+        text = count.toString(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onPrimary,
+        modifier = modifier
+            .clearAndSetSemantics {}
+            .background(MaterialTheme.colorScheme.primary, CircleShape)
+            .padding(horizontal = 5.dp),
+    )
 }
 
 @Composable

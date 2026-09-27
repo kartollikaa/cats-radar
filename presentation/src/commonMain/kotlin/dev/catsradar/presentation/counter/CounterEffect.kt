@@ -13,6 +13,9 @@ sealed interface CounterEffect {
     data class StartImport(val uris: ImmutableList<String>) : CounterEffect
     data object PhotoNotSaved : CounterEffect
 
+    /** Saving the cats counted on a photo failed after its sheet had closed. */
+    data object CatsNotSaved : CounterEffect
+
     data class MilestoneReached(val value: Int) : CounterEffect
 
     /** The original at [uri] has been copied and is no longer needed. */

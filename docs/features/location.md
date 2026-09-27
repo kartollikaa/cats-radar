@@ -20,7 +20,8 @@ When `AddCatsToPhoto` adds cats to an existing photo, each one copies every curr
 from the source cat. Its result pairs each new id with `needsLocation`: `true` only when that copied
 source is `NONE`. A Counter caller can schedule the ordinary background attach for each such id; a
 detail-screen caller deliberately will not, because the later detail flow adds a cat to a past shot.
-No shipped screen calls this operation yet.
+The Counter's coat sheet is that Counter caller: each cat it adds with `NONE` goes to the attach, so
+none is left without a location because its write landed after the outing's backfill ran.
 
 ## At the edges
 

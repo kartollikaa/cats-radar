@@ -1,8 +1,13 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.Tuning
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableMap
 
 data class CounterState(
     val totalLabel: String,
@@ -32,8 +37,27 @@ data class CounterState(
 /** [fraction] is how far the total has come from the milestone already reached toward [next]. */
 data class CounterMilestoneState(val next: MilestoneState, val fraction: Float)
 
-/** [thumbPath] is absolute; null when no thumbnail could be made from the photo. */
-data class CoatPromptState(val thumbPath: String?)
+/**
+ * The question about [catId]'s photo, [photoId] (null when the cat has none). [thumbPath] is absolute; null when no
+ * thumbnail could be made from the photo. Null [counting] asks for one coat.
+ */
+data class CoatPromptState(
+    val catId: String,
+    val photoId: String?,
+    val thumbPath: String?,
+    val counting: CoatCountState? = null,
+)
+
+/** The cats counted on the photo, in the order their coats were tapped; a null is a cat whose coat nobody saw. */
+data class CoatCountState(val tray: ImmutableList<CoatOption?> = persistentListOf()) {
+    /** How many cats of each coat [tray] holds; a coat it holds none of is absent. */
+    val counts: ImmutableMap<CoatOption?, Int> get() = tray.groupingBy { it }.eachCount().toImmutableMap()
+
+    val canAdd: Boolean get() = tray.size < Tuning.SHOT_MAX_CATS
+
+    /** Null until a cat is counted. */
+    val catCount: Int? get() = tray.size.takeIf { it > 0 }
+}
 
 data class ImportProgressState(val done: Int, val total: Int)
 

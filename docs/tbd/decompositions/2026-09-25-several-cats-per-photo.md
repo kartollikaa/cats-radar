@@ -17,7 +17,7 @@
 | S2b | Every photo names its shot | `shotId` becomes the shot's id on every photo, never null: a photo of one cat names itself. Database v6; archive format unchanged. | safe | ~350 | S2 | merged |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | merged |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | in-review |
-| S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | planned |
+| S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | in-review |
 | S6 | On this photo on the detail screen | The row of a photo's cats, switching between them without stacking screens, and **+** to add a cat. | safe | ~550 | S3, S4 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
@@ -101,6 +101,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-27: **S5 in review**, stacked on S4. `Tuning.SHOT_MAX_CATS` is 10, the photographed cat included; the
+  spec named only the constant. The coat intents became `CounterIntent.CoatPrompt`, a sub-flow like Import, handled
+  by `CoatQuestion` because `CounterStore` was at its function budget. The owner also asked that a photo never
+  land in the grid's smallest tile: a tile row holding a photo keeps to three cats, as its own PR after S4.
 
 - 2026-09-27: **S4 in review**, started from an owner bug report on v1.5.2-beta: "no option in the coat sheet
   to pick several cats". Only S1–S3 had shipped, and S3 has no screen, so nothing on a device could yet count

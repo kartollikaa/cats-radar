@@ -101,6 +101,7 @@ class CounterEffectHandlerTest {
     private val locationPermissionRequester = FakeLocationPermissionRequester()
     private val cameraLauncher = CountingCameraLauncher()
     private val photoFailureReporter = CountingMessageReporter()
+    private val catsFailureReporter = CountingMessageReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
@@ -113,6 +114,7 @@ class CounterEffectHandlerTest {
         locationPermissionRequester,
         cameraLauncher,
         photoFailureReporter,
+        catsFailureReporter,
         captureDiscarder,
         milestoneAnnouncer,
         photoPickerLauncher,
@@ -158,6 +160,7 @@ class CounterEffectHandlerPhotoTest {
     private val locationPermissionRequester = FakeLocationPermissionRequester()
     private val cameraLauncher = CountingCameraLauncher()
     private val photoFailureReporter = CountingMessageReporter()
+    private val catsFailureReporter = CountingMessageReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
@@ -170,6 +173,7 @@ class CounterEffectHandlerPhotoTest {
         locationPermissionRequester,
         cameraLauncher,
         photoFailureReporter,
+        catsFailureReporter,
         captureDiscarder,
         milestoneAnnouncer,
         photoPickerLauncher,
@@ -184,6 +188,13 @@ class CounterEffectHandlerPhotoTest {
         assertEquals(0, photoFailureReporter.reportCount)
         assertEquals(0, haptics.tickCount)
         assertEquals(emptyList<String>(), locationAttachScheduler.scheduledIds)
+    }
+
+    @Test
+    fun `CatsNotSaved reports its own message, not the photo's`() {
+        handle(CounterEffect.CatsNotSaved)
+
+        assertEquals(1 to 0, catsFailureReporter.reportCount to photoFailureReporter.reportCount)
     }
 
     @Test
