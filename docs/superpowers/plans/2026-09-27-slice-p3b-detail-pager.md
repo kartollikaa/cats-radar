@@ -42,8 +42,8 @@ Criteria: `outing-pager-p3b.md` in the acceptance directory (Task 0).
    `rememberSaveable` state (photo position, scroll) while it is off screen.
 4. **The anchor survives the process through the destination**: `rememberSaveable` holds the last `currentId`,
    passed to Koin as `restoredId`; the ViewModel keeps it across configuration changes on its own.
-5. **The position lives in the bar's title slot** (`BackBar` gains `title`), text "2 / 5", read "Cat 2 of 5";
-   shown while there is more than one page.
+5. **The position lives at the bar's centre** (`BackBar` gains `center`, which `CenterAppBar` does not mark as a
+   heading), text "2 / 5", read "Cat 2 of 5"; shown while there is more than one page.
 
 ---
 
@@ -67,7 +67,7 @@ Criteria: `outing-pager-p3b.md` in the acceptance directory (Task 0).
 ### Task 2: The pager and the position
 
 **Files:** `ui/…/detail/EncounterDetailScreen.kt` (the pager, `DetailPagesTestTag`, `onPageSettled`),
-`ui/…/components/BackBar.kt` (`title`), `ui/src/main/res/values{,-ru}/strings.xml` (`detail_position`,
+`ui/…/components/BackBar.kt` (`center`), `ui/src/main/res/values{,-ru}/strings.xml` (`detail_position`,
 `detail_position_description`), `app/…/detail/EncounterDetailPagerTest.kt` (new), `DetailStates.kt` (a
 several-page builder).
 
