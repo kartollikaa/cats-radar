@@ -1,6 +1,7 @@
 # Encounter detail
 
-Tapping a row in the Encounters list opens that one cat: the day it was logged (relative — "Today",
+Tapping a row in the Encounters list opens that cat, among the other cats of its outing (see
+[Paging through the outing](#paging-through-the-outing)): the day it was logged (relative — "Today",
 "Yesterday" — or a calendar date), the time, where its coordinates came from in words, and the
 coordinates themselves when there are any, with the fix's accuracy under them. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
@@ -44,18 +45,38 @@ first, and names the cat on screen and its position*; *each page takes its own c
 The cat on screen is always one of the pages; the mapper refuses any other (*a cat on screen that is not on
 the pages is refused*).
 
+## Paging through the outing
+
 The pages are every live cat of the cat's outing (see [outings.md](./outings.md#the-window-around-a-set-of-cats)),
-newest first, and the screen draws the one on screen. It opens on the cat it was opened for
-(`EncounterDetailStoreTest`, *the pages are the opened cat's outing, newest first, with the opened cat on
-screen*). The Store can also start on a cat handed to it as the one a restored screen was showing, while
-that cat is live, and on the opened one otherwise (*the screen starts on the restored cat while it is live*;
-*a restored cat that is gone starts the screen on the opened one*); the screen does not save that cat yet, so
-after the process died it reopens on the cat it was opened for. A cat logged into the outing while the screen
-is open joins the pages, and the screen stays on its cat (*a cat logged into the outing joins the pages and the
-screen stays on its cat*). A cat leaves the pages only by being deleted, so an outing a delete splits in two
-stays whole on them (`OutingPagesTest`, *an outing a delete splits in two stays whole on the pages*). Each page
-shows its own cat's place (`EncounterDetailStoreTest`, *each page shows its own cat's place*). `OutingPages`
-keeps the pages and the cat on screen; the Store reads every live cat and hands it each change.
+newest first, side by side: a swipe towards the next page shows an older cat, towards the previous one a newer
+cat. It opens on the cat it was opened for (`EncounterDetailStoreTest`, *the pages are the opened cat's outing,
+newest first, with the opened cat on screen*). While there is more than one page, the centre of the bar shows
+where the cat on screen is — "2 / 5", read by TalkBack as "Cat 2 of 5" — and with one page it shows nothing
+(`EncounterDetailPagerTest`, *several pages show the position of the cat on screen, read as Cat n of m*; *a single
+cat shows no position*).
+
+A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and Delete
+removes it (`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
+`EncounterDetailStoreTest`, *settling on another page puts that cat on screen*; *after settling, a delete removes
+the settled cat*). Only the state moves the cat on screen, and the pager follows it — when a cat deleted
+elsewhere hands the screen to its neighbour, say (*the pager follows the cat on screen when the state moves
+it*). A cat logged into the outing while the screen is open joins the pages, and the page on screen stays where
+it is (*a cat logged into the outing joins the pages and the screen stays on its cat*; `EncounterDetailPagerTest`,
+*a cat logged while watching keeps the cat on screen and reports nothing*). A cat leaves the pages only by being
+deleted, so an outing a delete splits in two stays whole on them (`OutingPagesTest`, *an outing a delete splits in
+two stays whole on the pages*). Each page shows its own cat's place (`EncounterDetailStoreTest`, *each page shows
+its own cat's place*).
+
+A cat with several photos keeps its own photo pager inside its page: a drag that starts on a photo moves the
+photos first, and past the cat's last photo the rest of the drag moves on to the next cat (`EncounterDetailPagerTest`,
+*a drag past a cat's last photo moves on to the next cat*). Each page keeps its photo position while the user
+swipes to other cats and back (*a cat swiped away from and back to keeps its photo*).
+
+The cat on screen is saved with the screen, so after the process died it reopens on the cat that was on screen,
+while that cat is live, and on the opened one otherwise (`EncounterDetailPagerEntryTest`, *a restored entry
+reopens the cat that was on screen*; `EncounterDetailStoreTest`, *the screen starts on the restored cat while it
+is live*; *a restored cat that is gone starts the screen on the opened one*). `OutingPages` keeps the pages and
+the cat on screen; the Store reads every live cat and hands it each change.
 
 ## Where it was found
 
@@ -162,7 +183,9 @@ page alone*), and it carries on, count and all, whichever cat is on screen (`Enc
 
 A tap on the photo, on the coordinates or on *Set on map* acts on the cat of the page it was on, and opens
 the viewer, the map or the location picker for that cat (`EncounterDetailStorePhotoTest`, *a tap on another
-page's photo, coordinates or set on map opens it for that cat*); a stray result naming a cat that is not on
+page's photo, coordinates or set on map opens it for that cat*; `EncounterDetailPagerEntryTest`, *after a swipe,
+the viewer opens on the cat swiped to*; *after a swipe, set on map opens the picker for the cat swiped to*; *after a
+swipe, the coordinates open the map on the cat swiped to*); a stray result naming a cat that is not on
 the pages opens none of them (*a tap naming a cat not on the pages opens neither the viewer nor the map*;
 *set on map names the cat it was tapped for, and a cat not on the pages opens nothing*). The coat cell,
 *Take a photo*, *Choose from gallery*, the photo, the coordinates and *Set on map* send the id of the page
@@ -253,11 +276,13 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`;
   `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
-- `ui/…/detail/EncounterDetailScreen.kt`, `WhereCard.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`, `DetailInteractions.kt` (the two-value taps' payloads);
+- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `WhereCard.kt`,
+  `DetailPhotoPager.kt`, `AddPhotoCard.kt`, `DetailInteractions.kt` (the two-value taps' payloads);
   `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/SpotMap.kt` —
   the **Where** section's map and the cat's dot on it
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
-  `EncounterDetailDestination.kt` (the destination composable, wired into `CatsRadarNavHost.kt`, which
+  `EncounterDetailDestination.kt` (the destination composable, which saves the cat on screen with the screen,
+  wired into `CatsRadarNavHost.kt`, which
   pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
   `MapFocusRequest` and selects the Map tab, and on *Set on map* pushes `LocationPicker` for the cat the
   tap named), `PhotoLaunchers.kt` (the camera and the cat's photo picker), `app/…/photo/PendingCaptures.kt`
@@ -267,5 +292,5 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 A cat's photos cannot be reordered (see `photos.md`).
 
-The screen draws the cat on screen alone: swiping between the pages, their position in the bar, keeping the
-cat on screen across the process dying, and moving on to the neighbouring outing are not built yet.
+Moving on from the first or the last page to the neighbouring outing is not built yet: the pages end at the
+outing's newest and oldest cats.

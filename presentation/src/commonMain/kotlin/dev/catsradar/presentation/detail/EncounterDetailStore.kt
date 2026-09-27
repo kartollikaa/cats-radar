@@ -88,6 +88,11 @@ class EncounterDetailStore(
             EncounterDetailIntent.BackClicked -> navigateBack()
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
+            is EncounterDetailIntent.PageSettled -> {
+                pages.settle(intent.catId)
+                shown = shown?.settledOn(intent.catId)
+                refresh()
+            }
             // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
             is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(intent.catId, intent.coat?.toCatCoat()) }
             is EncounterDetailIntent.TakePhotoClicked ->
