@@ -58,7 +58,9 @@ class CounterMilestoneTest {
     private fun counter(milestone: CounterMilestoneState?) =
         CounterState(totalLabel = "62", count = 62, undoVisible = false, milestone = milestone)
 
-    private fun walkButton() = compose.onNodeWithText(context.getString(R.string.counter_walk_start))
+    private fun walkButton() = compose.onNodeWithText(context.getString(R.string.counter_walk))
+
+    private fun coats() = compose.onNodeWithText(context.getString(R.string.coat_ginger))
 
     private fun goalTag() = compose.onNodeWithContentDescription("38 more to reach 100")
 
@@ -71,9 +73,9 @@ class CounterMilestoneTest {
     // The ring's stroke is this share of its diameter; a tag is pinned to the stroke's centre line.
     private val halfStroke = 0.026f / 2
 
-    private fun nodesBetweenCountAndWalkButton(): List<SemanticsNode> {
+    private fun nodesBetweenCountAndCoats(): List<SemanticsNode> {
         val top = with(compose.density) { block().bottom.toPx() }
-        val bottom = with(compose.density) { walkButton().getUnclippedBoundsInRoot().top.toPx() }
+        val bottom = with(compose.density) { coats().getUnclippedBoundsInRoot().top.toPx() }
         fun under(node: SemanticsNode): List<SemanticsNode> = node.children.flatMap(::under) +
             listOfNotNull(node.takeIf { it.boundsInRoot.top >= top && it.boundsInRoot.bottom <= bottom })
         return under(compose.onRoot(useUnmergedTree = true).fetchSemanticsNode())
@@ -103,17 +105,17 @@ class CounterMilestoneTest {
     }
 
     @Test
-    fun `nothing sits between the count and the walk button, with or without an outing`() {
+    fun `nothing sits between the count and the coats, with or without an outing`() {
         var current by mutableStateOf<CurrentOutingState?>(null)
         compose.setContent {
             CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = current)) }
         }
 
-        val walkTop = walkButton().getUnclippedBoundsInRoot().top
-        assertEquals(emptyList(), nodesBetweenCountAndWalkButton())
+        val coatsTop = coats().getUnclippedBoundsInRoot().top
+        assertEquals(emptyList(), nodesBetweenCountAndCoats())
         current = outing
-        assertEquals(emptyList(), nodesBetweenCountAndWalkButton())
-        assertEquals(walkTop, walkButton().getUnclippedBoundsInRoot().top)
+        assertEquals(emptyList(), nodesBetweenCountAndCoats())
+        assertEquals(coatsTop, coats().getUnclippedBoundsInRoot().top)
     }
 
     @Test

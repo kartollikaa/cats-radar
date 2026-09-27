@@ -129,7 +129,7 @@ class CurrentOutingTest {
         compose.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
 
     private fun walkButtonTop(): Float =
-        compose.onNodeWithText(context.getString(R.string.counter_walk_start), useUnmergedTree = true)
+        compose.onNodeWithText(context.getString(R.string.counter_walk), useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot.top
 
     private fun countHeight(): Float =

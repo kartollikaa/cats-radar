@@ -20,10 +20,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.unit.DpRect
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
-import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
@@ -53,38 +50,7 @@ class CounterControlsTest {
     private val requested = mutableListOf<Boolean>()
     private val haptics = mutableListOf<HapticFeedbackType>()
     private var undoVisible by mutableStateOf(false)
-
-    @Test
-    fun `the walk button sits centred under the count, at least half its width`() {
-        show(walking = false)
-
-        val count = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
-        val walk = walkButton(walking = false).getUnclippedBoundsInRoot()
-        val coatGrid = compose.onNodeWithText(string(R.string.coat_ginger)).getUnclippedBoundsInRoot()
-
-        assertTrue(walk.top >= count.bottom, "the walk button's top is ${walk.top}, the count's bottom ${count.bottom}")
-        assertTrue(walk.bottom <= coatGrid.top, "walk bottom ${walk.bottom}, grid top ${coatGrid.top}")
-        assertEquals(centre(count).value, centre(walk).value, absoluteTolerance = 1f)
-        assertTrue(walk.width >= count.width / 2 - 1.dp, "the walk button is ${walk.width}, the count ${count.width}")
-    }
-
-    @Test
-    fun `the walk button is as tall stopping a walk as starting one`() {
-        var walking by mutableStateOf(false)
-        compose.setContent {
-            CatsRadarTheme {
-                CounterScreen(
-                    state = CounterState(totalLabel = "3", count = 3, undoVisible = false, walkingMode = walking),
-                )
-            }
-        }
-        val starting = walkButton(walking = false).getUnclippedBoundsInRoot().height
-
-        walking = true
-        compose.waitForIdle()
-
-        assertEquals(starting, walkButton(walking = true).getUnclippedBoundsInRoot().height)
-    }
+    private var holdsReleased = 0
 
     @Test
     fun `a tap with no walk on starts one`() {
@@ -131,6 +97,7 @@ class CounterControlsTest {
 
         assertEquals(listOf(false), beforeLifting)
         assertEquals(listOf(false), requested)
+        assertEquals(0, holdsReleased)
     }
 
     @Test
@@ -190,22 +157,21 @@ class CounterControlsTest {
     fun `during a walk the button says it has to be held`() {
         show(walking = true)
 
-        compose.onNodeWithText(string(R.string.counter_walk_stop_hint)).assertIsDisplayed()
+        compose.onNodeWithText(string(R.string.counter_walk_hold)).assertIsDisplayed()
     }
 
     @Test
-    fun `during a walk the button shows how long it has lasted, and still that it has to be held`() {
-        show(walking = true, elapsedLabel = "32 min")
+    fun `a press let go before the hold is up says it has to be held`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
 
-        compose.onNodeWithText(context.getString(R.string.counter_walk_stop_hint_timed, "32 min")).assertIsDisplayed()
-    }
+        walkButton(walking = true).performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(HOLD_MS - 200)
+        walkButton(walking = true).performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(HOLD_MS * 2)
 
-    @Config(qualifiers = "+ru")
-    @Test
-    fun `in Russian the walk's time keeps a hint short enough to share the line`() {
-        show(walking = true, elapsedLabel = "32 мин")
-
-        compose.onNodeWithText("32 мин · удерживайте").assertIsDisplayed()
+        assertEquals(1, holdsReleased)
+        assertEquals(emptyList<Boolean>(), requested)
     }
 
     @Test
@@ -215,6 +181,33 @@ class CounterControlsTest {
         walkButton(walking = true).performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(listOf(false), requested)
+    }
+
+    @Test
+    fun `Undo sits in the block's top-start corner and a tap on it takes a cat back, never logs one`() {
+        var undos = 0
+        var tallies = 0
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = CounterState(totalLabel = "3", count = 3, undoVisible = true),
+                    onUndoClick = { undos++ },
+                    onTallyClick = { tallies++ },
+                )
+            }
+        }
+        val block = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
+        val undo = compose.onNodeWithText(string(R.string.counter_undo))
+
+        val bounds = undo.getUnclippedBoundsInRoot()
+        val inside = bounds.left >= block.left && bounds.top >= block.top &&
+            bounds.right <= block.right && bounds.bottom <= block.bottom
+        assertTrue(inside, "Undo $bounds outside the block $block")
+        assertTrue(bounds.right <= (block.left + block.right) / 2, "Undo $bounds not at the block's start")
+        assertTrue(bounds.bottom <= (block.top + block.bottom) / 2, "Undo $bounds not at the block's top")
+        undo.performClick()
+        assertEquals(1, undos)
+        assertEquals(0, tallies)
     }
 
     @Test
@@ -232,7 +225,7 @@ class CounterControlsTest {
         assertEquals(hidden, countHeight())
     }
 
-    private fun show(walking: Boolean, elapsedLabel: String? = null) {
+    private fun show(walking: Boolean) {
         val recorder = object : HapticFeedback {
             override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
                 haptics += hapticFeedbackType
@@ -247,9 +240,9 @@ class CounterControlsTest {
                             count = 3,
                             undoVisible = false,
                             walkingMode = walking,
-                            walkElapsedLabel = elapsedLabel,
                         ),
                         onWalkingModeChange = { requested += it },
+                        onWalkHoldRelease = { holdsReleased++ },
                     )
                 }
             }
@@ -265,13 +258,11 @@ class CounterControlsTest {
     }
 
     private fun walkButton(walking: Boolean): SemanticsNodeInteraction =
-        compose.onNodeWithText(string(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start))
+        compose.onNodeWithText(string(if (walking) R.string.counter_walk_hold else R.string.counter_walk))
 
     private fun countHeight() = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot().height
 
     private fun string(@StringRes id: Int) = context.getString(id)
-
-    private fun centre(bounds: DpRect) = (bounds.left + bounds.right) / 2
 
     private companion object {
         const val HOLD_MS = 1_000L

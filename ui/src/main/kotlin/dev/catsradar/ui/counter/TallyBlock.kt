@@ -89,7 +89,9 @@ internal fun TallyBlock(
     milestone: CounterMilestoneState? = null,
     currentOuting: CurrentOutingState? = null,
     walking: Boolean = false,
+    undoVisible: Boolean = false,
     onClick: () -> Unit = {},
+    onUndoClick: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
@@ -139,6 +141,8 @@ internal fun TallyBlock(
             CookieContent(totalLabel, count, tapBurst, milestone, currentOuting, cookieColors)
         }
         RingTags(milestone = milestone, currentOuting = currentOuting, scale = { scale })
+        // Across from the badge: a tag reaches toward the ring's bottom corners on a narrow phone, never its top ones.
+        UndoButton(visible = undoVisible, onClick = onUndoClick, modifier = Modifier.align(Alignment.TopStart))
     }
 }
 
