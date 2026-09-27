@@ -5,10 +5,10 @@ cat. Import turns picked photos into encounters that sit in the history at the t
 not at the time you imported them.
 
 The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
-at its end** asks for access to where photos were taken, then opens the gallery; holding that icon
-names it. The run happens in a worker, so it survives leaving the screen; the Counter shows how far
-it has got, and at the end, briefly, what was added, skipped and failed, with one undo for the
-whole batch.
+at its end** asks for access to where photos were taken, while the app has none, then opens the
+gallery — unless the answer already picked the photos; holding that icon names it. The run happens
+in a worker, so it survives leaving the screen; the Counter shows how far it has got, and at the
+end, briefly, what was added, skipped and failed, with one undo for the whole batch.
 
 Both show as a card above the count, on the same low surface as the Statistics and Settings rows,
 with a round icon at its start. While the run goes, the card shows the gallery icon, **Importing
@@ -43,9 +43,10 @@ gallery handed over, not from reading the gallery, which the app may have no per
   `MediaStore.getMediaUri` converts; when it cannot, no item (*aFilesAppImageIsTheItemAndroidsOwnConversionNames*,
   *aFilesAppImageAndroidCannotConvertHasNoItem*). A file picked by browsing a storage folder comes from
   another provider and has none (*aFilesAppImageFromAStorageFolderHasNoItem*).
-- **A gallery app that answers with the MediaStore item itself** keeps that item, without any query
-  it came with (*aMediaStoreItemHandedOverAsItselfIsKeptWithoutItsQuery*); any other app's provider,
-  or a file, has no item (*anotherAppsProviderHasNoItem*).
+- **A gallery app that answers with the MediaStore item itself**, and **a photo shared through
+  limited access** (see below), keeps that item, without any query it came with
+  (*aMediaStoreItemHandedOverAsItselfIsKeptWithoutItsQuery*); any other app's provider, or a file,
+  has no item (*anotherAppsProviderHasNoItem*).
 
 A pick with no item is imported all the same, just without the link (`ImportPhotosTest`, *a pick that
 names no item on the phone is imported with no link to one*). Cats imported before the app kept the
@@ -114,18 +115,32 @@ takes them back*).
   Counter reads it back each time it is shown and again after a restart, so a summary whose time
   never ran out — the app was closed or killed first — comes back with a fresh countdown.
 - **A photo keeps its GPS only when the app may see where photos were taken.** Android strips the
-  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION`, so the gallery
-  icon asks for it first — the import starts reading photos the moment they are picked — and opens
-  the gallery whatever the answer. The **date survives** either way, so a photo imported without
-  that access still lands on the day it was taken; it just gets no location. Android stops asking
-  after a second refusal; the switch then lives in the app's system permissions under *Photos and
-  videos*.
+  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION` or, from
+  Android 14, limited access (below), so the gallery icon asks for the permission first — the import
+  starts reading photos the moment they are picked — and opens the gallery whatever the answer,
+  unless that answer shared photos itself. It asks only while the app has no such access:
+  once the permission is granted, or limited access taken, the gallery opens straight away. The
+  **date survives** either way, so a photo imported without that access still lands on the day it
+  was taken; it just gets no location. Android stops asking after a second refusal; the switch then
+  lives in the app's system permissions under *Photos and videos*.
 - **The dialog reads as access to photos and videos** — to photos, media and files before Android
   13 — because Android files this permission under that group. The app declares no permission to
   read the gallery, so *Allow all* grants it the location of the photos it is handed and nothing
-  else. *Allow limited access* first opens a picker of its own for photos to share; the location
-  access that comes with it is one-time, lapses once the app has been in the background a while,
-  and is asked for again at the next import.
+  else.
+- **From Android 14 the dialog also offers *Allow limited access*, and the photos picked there are
+  the import.** That option opens a picker of Android's own, and Android shares the photos picked
+  in it with the app (`READ_MEDIA_VISUAL_USER_SELECTED`, which it adds to every app asking for
+  `ACCESS_MEDIA_LOCATION`). The app reads the latest selection back from MediaStore and imports it,
+  and no gallery follows (`GalleryImportPickerTest`). The selection keeps its first
+  `IMPORT_BATCH_MAX` photos and leaves out any photo the app saved to the gallery itself. Android
+  14 cannot narrow MediaStore to the latest selection, so there every photo shared with the app so
+  far comes back, and one imported before is skipped as usual. MediaProvider counts limited access
+  as access to photo locations, so these photos keep their GPS, and so do the ones picked at later
+  imports, whether the system photo picker hands them over or a gallery app answers with a plain
+  MediaStore item (`PhotoStreamLimitedAccessTest`). The `ACCESS_MEDIA_LOCATION` that comes with
+  limited access is one-time and lapses soon after the app leaves the screen, while limited access
+  stays, so the app counts limited access on its own. Leaving Android's picker with Back shares
+  nothing and opens the gallery, as *Don't allow* does.
 - **The gallery opens with `ACTION_GET_CONTENT`, not the photo picker's own `ACTION_PICK_IMAGES`.**
   MediaProvider strips GPS from a `PICK_IMAGES` photo whatever the app holds. The one way round it
   there, `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`, works only once the picker's own
@@ -134,8 +149,9 @@ takes them back*).
   the system photo picker wherever the phone has one.
 - **Every photo is read as its original where MediaStore allows it.** A gallery app may answer
   `GET_CONTENT` with a plain `content://media/…` URI, whose GPS MediaStore hands over only through
-  `MediaStore.setRequireOriginal`. With the permission held, the digest, the EXIF read and the copy
-  all ask for the original first, and take the bytes as handed over when the provider refuses.
+  `MediaStore.setRequireOriginal`. With access to photo locations — the permission, or limited
+  access from Android 14 — the digest, the EXIF read and the copy all ask for the original first,
+  and take the bytes as handed over when the provider refuses.
 - **The picked photos stay readable for the whole run.** A read grant handed back by
   `GET_CONTENT` belongs to the activity that received it, so finishing the app mid-import would
   otherwise cut the worker off from every photo it had not read yet. Where the source offers it, the
@@ -174,9 +190,14 @@ takes them back*).
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
 - `presentation/…/ReportedRun.kt` — which finished run the summary reports, shared with Backup
 - `app/…/navigation/PhotoLaunchers.kt` (`rememberGalleryImportPicker`) — the permission, then the gallery
+  or the photos its answer shared
+- `app/…/photo/PhotoLocationAccess.kt` — the gallery icon's handle on whether the app may read
+  photo locations, and the photos shared through limited access
 - `app/…/photo/PickGalleryPhotos.kt` — the gallery, opened so that photos can keep their GPS
 - `app/…/photo/PhotoReadAccess.kt` — the picked photos' read grants, held for the run
 - `app/…/worker/ImportBatches.kt` — the picked photos' URIs, stored for the run under its work id
+- `data/…/androidMain/platform/PhotoLocationAccess.android.kt` — whether the app may read photo
+  locations, for the gallery icon and for every photo read
 - `data/…/androidMain/platform/PhotoStream.android.kt` — how every photo is opened, original first
 - `domain/…/platform/GalleryItemLocator.kt`, `data/…/androidMain/platform/MediaStoreItemLocator.android.kt`
   — which gallery item a picked photo is

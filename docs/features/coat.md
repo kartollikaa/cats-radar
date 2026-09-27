@@ -91,7 +91,8 @@ archives hold those names, and renaming what nobody sees would need a migration 
 ## Changing it later
 
 The detail screen shows the coat and lets it be changed, or cleared by tapping the current one
-again. Nothing else needs a "clear" control.
+again; each page of the outing's pages sets the coat of its own cat (see
+[encounter-detail.md](./encounter-detail.md#paging-through-the-outing)). Nothing else needs a "clear" control.
 
 The coats there sit in one row wider than a phone, and the row opens scrolled so the cat's own coat
 is on screen, whole: second from the start with the coat before it showing, or, for the last few

@@ -50,8 +50,16 @@ class SettingsStore(
         when (intent) {
             // The stored value is the source of truth: the switch follows the flow above rather
             // than its own optimistic state, so a failed write cannot leave them disagreeing.
-            is SettingsIntent.SaveOriginalsToggled ->
-                settingsRepository.setSaveOriginalsToGallery(intent.enabled)
+            is SettingsIntent.SaveOriginalsToggled -> if (intent.enabled) {
+                settingsRepository.setSaveOriginalsToGallery(true)
+            } else {
+                setState { copy(confirmingSaveOriginalsOff = true) }
+            }
+            SettingsIntent.SaveOriginalsOffConfirmed -> {
+                setState { copy(confirmingSaveOriginalsOff = false) }
+                settingsRepository.setSaveOriginalsToGallery(false)
+            }
+            SettingsIntent.SaveOriginalsOffCancelled -> setState { copy(confirmingSaveOriginalsOff = false) }
             is SettingsIntent.EncountersGridToggled -> settingsRepository.setEncountersGrid(intent.enabled)
             is SettingsIntent.Backup -> handleBackup(intent)
             // Read again rather than kept: the locale or the zone may have changed since the screen opened.

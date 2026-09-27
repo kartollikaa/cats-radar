@@ -1,6 +1,7 @@
 package dev.catsradar.data.platform
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,6 +17,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowBuild
 import java.util.TimeZone
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 @RunWith(AndroidJUnit4::class)
@@ -73,6 +75,15 @@ class AndroidBuildInfoReaderTest {
     @Test
     fun anInstallAndroidHasNoInstallerForReadsAsNone() = runTest {
         shadowOf(context.packageManager).setInstallSourceInfo(context.packageName, null, null)
+
+        assertNull(AndroidBuildInfoReader(context, app).read().device.installer)
+    }
+
+    @Test
+    fun anInstallAndroidCannotFindReadsAsNone() = runTest {
+        assertFailsWith<PackageManager.NameNotFoundException> {
+            context.packageManager.getInstallSourceInfo(context.packageName)
+        }
 
         assertNull(AndroidBuildInfoReader(context, app).read().device.installer)
     }

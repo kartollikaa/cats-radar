@@ -2,7 +2,7 @@ package dev.catsradar.presentation.viewer
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
-import dev.catsradar.presentation.counter.FakeDeviceIdProvider
+import dev.catsradar.domain.usecase.GalleryTarget
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
@@ -16,11 +16,7 @@ import kotlin.time.Instant
 
 class PhotoViewerStateMapperTest {
 
-    private val mapper = PhotoViewerStateMapper(
-        FakeDateTimeFormatter(),
-        FakePhotoStorage(root = "/data/photos"),
-        FakeDeviceIdProvider(INSTALL),
-    )
+    private val mapper = PhotoViewerStateMapper(FakeDateTimeFormatter(), FakePhotoStorage(root = "/data/photos"))
 
     @Test
     fun `a cat with a photo shows the app's copy by its absolute path, with when it was taken`() {
@@ -31,7 +27,7 @@ class PhotoViewerStateMapperTest {
                 timeLabel = "2026-09-22T10:00:00Z",
                 dayLabel = "2026-09-22",
             ),
-            mapper.map(photographedCat(), TODAY, openedOn = null),
+            map(photographedCat(), openedOn = null),
         )
     }
 
@@ -45,19 +41,19 @@ class PhotoViewerStateMapperTest {
                 ViewerPhoto(id = "second", path = "/data/photos/second.jpg", opensInGallery = true),
                 ViewerPhoto(id = "third", path = "/data/photos/third.jpg"),
             ),
-            mapper.map(cat, TODAY, openedOn = null)?.photos,
+            map(cat, targets = mapOf("second" to GalleryTarget.Open(SAVED)))?.photos,
         )
     }
 
     @Test
     fun `the viewer opens on the photo it was opened for`() {
-        assertEquals(2, mapper.map(threePhotoCat(), TODAY, openedOn = "third")?.firstPage)
+        assertEquals(2, map(threePhotoCat(), openedOn = "third")?.firstPage)
     }
 
     @Test
     fun `opened for no photo, or for one the cat does not have, the viewer opens on the cover`() {
-        assertEquals(0, mapper.map(threePhotoCat(), TODAY, openedOn = null)?.firstPage)
-        assertEquals(0, mapper.map(threePhotoCat(), TODAY, openedOn = "gone")?.firstPage)
+        assertEquals(0, map(threePhotoCat(), openedOn = null)?.firstPage)
+        assertEquals(0, map(threePhotoCat(), openedOn = "gone")?.firstPage)
     }
 
     @Test
@@ -68,50 +64,47 @@ class PhotoViewerStateMapperTest {
             tzOffsetMinutes = 600,
         )
 
-        assertEquals("2026-09-23", mapper.map(loggedAhead, TODAY, openedOn = null)?.dayLabel)
+        assertEquals("2026-09-23", map(loggedAhead, openedOn = null)?.dayLabel)
     }
 
     @Test
     fun `a cat without a photo has nothing to show`() {
-        assertEquals(null, mapper.map(encounterFixture("cat-1", OCCURRED), TODAY, openedOn = null))
+        assertEquals(null, map(encounterFixture("cat-1", OCCURRED), openedOn = null))
     }
 
     @Test
-    fun `an original this install saved to the gallery is offered there`() {
-        assertEquals(true, galleryOffered(photographedCat(galleryUri = SAVED)))
+    fun `a photo is offered in the gallery only when its target opens there`() {
+        val offered = listOf(
+            GalleryTarget.Open(SAVED),
+            GalleryTarget.Gone,
+            GalleryTarget.Unavailable,
+            null,
+        ).map { target -> galleryOffered(target) }
+
+        assertEquals(listOf(true, false, false, false), offered)
     }
 
     @Test
-    fun `a photo this install picked from the gallery is offered there`() {
-        assertEquals(true, galleryOffered(photographedCat(sourceMediaUri = "content://media/external/images/media/17")))
-    }
+    fun `offering the gallery changes only the offer, not a removal being asked about`() {
+        val showing = checkNotNull(map(photographedCat(), openedOn = null))
+            .copy(removingPhotoId = "cat-1")
 
-    @Test
-    fun `an original recorded by another install is not offered here`() {
-        assertEquals(false, galleryOffered(photographedCat(galleryUri = SAVED, deviceId = "another-install")))
-    }
+        val offered = mapper.offerGallery(showing, mapOf("cat-1" to GalleryTarget.Open(SAVED)))
 
-    @Test
-    fun `a photo given here to a cat another install logged is offered here and not on that install`() {
-        val foreign = photographedCat(galleryUri = SAVED, deviceId = "another-install")
-        val attachedHere = foreign.copy(photos = foreign.photos.map { it.copy(deviceId = INSTALL) })
-        val onThatInstall = PhotoViewerStateMapper(
-            FakeDateTimeFormatter(),
-            FakePhotoStorage(root = "/data/photos"),
-            FakeDeviceIdProvider("another-install"),
+        assertEquals(
+            showing.copy(photos = persistentListOf(showing.photos.single().copy(opensInGallery = true))),
+            offered,
         )
-
-        assertEquals(true, galleryOffered(attachedHere))
-        assertEquals(false, onThatInstall.map(attachedHere, TODAY, openedOn = null)?.photos?.single()?.opensInGallery)
     }
 
-    @Test
-    fun `a photo with no original in the gallery offers nothing there`() {
-        assertEquals(false, galleryOffered(photographedCat()))
-    }
+    private fun map(cat: Encounter, openedOn: String? = null, targets: Map<String, GalleryTarget> = emptyMap()) =
+        mapper.map(cat, TODAY, openedOn, targets)
 
-    private fun galleryOffered(cat: Encounter): Boolean? =
-        mapper.map(cat, TODAY, openedOn = null)?.photos?.single()?.opensInGallery
+    private fun galleryOffered(target: GalleryTarget?): Boolean? {
+        val targets = target?.let { mapOf("cat-1" to it) }.orEmpty()
+        return map(photographedCat(galleryUri = SAVED), targets = targets)
+            ?.photos?.single()?.opensInGallery
+    }
 
     private fun photographedCat(
         galleryUri: String? = null,

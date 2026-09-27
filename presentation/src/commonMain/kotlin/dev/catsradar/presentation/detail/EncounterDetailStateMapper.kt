@@ -34,10 +34,12 @@ class EncounterDetailStateMapper(
         places: Map<String, EncounterPlace?> = emptyMap(),
     ): EncounterDetailState.Loaded {
         val pages = window.cats.map { cat -> page(cat, today, attaching[cat.id], places[cat.id]) }
+        val currentNumber = pages.indexOfFirst { it.id == currentId } + 1
+        require(currentNumber > 0) { "The cat on screen, $currentId, is not on the pages" }
         return EncounterDetailState.Loaded(
             pages = pages.toImmutableList(),
             currentId = currentId,
-            currentNumber = pages.indexOfFirst { it.id == currentId } + 1,
+            currentNumber = currentNumber,
         )
     }
 

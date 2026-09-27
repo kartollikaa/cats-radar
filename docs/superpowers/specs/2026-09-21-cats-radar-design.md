@@ -56,6 +56,7 @@ country → city → area, and an encounter rate derived from automatically dete
 | Colour (2026-09-23) | Material You: the wallpaper's colours on Android 12+, in the app and the widget; the icon-teal palette below 12 and in previews. No in-app switch. |
 | Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
 | Application id (2026-09-24) | `com.kartollika.catsradar`, the id the Firebase project is registered for. Kotlin packages stay `dev.catsradar.*`. A build under the new id installs beside one under the old; cats move by backup export and import. |
+| Full-size originals (2026-09-27) | The phone gallery is where a camera photo's full-size original lives, kept on a best-effort basis: the app's own copy stays capped, a backup carries only that copy, and an original the user deletes from the gallery is gone. Settings names the switch for what it saves and asks before turning it off. |
 | Crash reports and analytics (2026-09-24, updated 2026-09-27) | Firebase Crashlytics and Google Analytics for Firebase are always on in release; debug uses no-op bindings and no Firebase config. Nothing that places a cat is sent. Detail in the [Firebase spec](./2026-09-24-firebase-analytics-crashlytics-design.md). |
 
 ## 2. Users and core flows
@@ -255,9 +256,11 @@ never touched by the app.
 
 ### 4.6 Gallery import (F3)
 
-1. Ask for `ACCESS_MEDIA_LOCATION`, then open `ACTION_GET_CONTENT` for `image/*`, multiple, keeping
-   the first `IMPORT_BATCH_MAX`; single pick is the same path with one item. A refusal still opens
-   the gallery.
+1. Ask for `ACCESS_MEDIA_LOCATION` unless the app may already read photo locations (it holds the
+   permission or, from Android 14, limited access), then open `ACTION_GET_CONTENT` for `image/*`,
+   multiple, keeping the first `IMPORT_BATCH_MAX`; single pick is the same path with one item. A
+   refusal still opens the gallery. An answer that shared photos through limited access is the pick
+   itself: those photos are imported and no gallery opens.
 2. Per photo: compute `sourceDigest`; skip if an encounter with that digest exists (counted as
    "skipped" in the summary). Read EXIF; `occurredAt` as in §3.1.
 3. Location: EXIF GPS → `EXIF`. No EXIF GPS and `now − occurredAt ≤ RECENT_PHOTO_WINDOW` (1 h) →

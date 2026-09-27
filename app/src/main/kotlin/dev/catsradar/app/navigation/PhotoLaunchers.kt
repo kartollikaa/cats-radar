@@ -18,9 +18,11 @@ import androidx.compose.ui.platform.LocalResources
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.photo.PendingCapture
 import dev.catsradar.app.photo.PendingCaptures
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.photo.PickSeveralPhotos
 import dev.catsradar.app.photo.holdReadAccess
+import dev.catsradar.app.photo.photosSharedThroughLimitedAccess
 import dev.catsradar.domain.Tuning
 
 /** Opens the camera for [catId] — null when the shot logs a new cat; it owns the file the camera writes to. */
@@ -115,19 +117,33 @@ internal fun rememberCaptureDiscarder(): CaptureDiscarder {
     return remember(context) { CaptureDiscarder { uri -> CaptureTarget.discard(context, uri) } }
 }
 
-/** Asks for the location of photos, then opens the gallery whatever the answer. */
+/**
+ * Opens the gallery, asking first for the location of photos while the app may not read it. An answer that
+ * shared photos through limited access is itself the pick, and no gallery follows it.
+ */
 @Composable
-internal fun rememberGalleryImportPicker(onResult: (List<Uri>) -> Unit): PhotoPickerLauncher {
-    val resolver = LocalContext.current.contentResolver
-    val galleryLauncher = rememberLauncherForActivityResult(PickGalleryPhotos(Tuning.IMPORT_BATCH_MAX)) { uris ->
-        resolver.holdReadAccess(uris)
+internal fun rememberGalleryImportPicker(
+    locationAccess: PhotoLocationAccess,
+    onResult: (List<Uri>) -> Unit,
+): PhotoPickerLauncher {
+    val context = LocalContext.current
+    val onPicked: (List<Uri>) -> Unit = { uris ->
+        context.contentResolver.holdReadAccess(uris)
         onResult(uris)
     }
+    val galleryLauncher = rememberLauncherForActivityResult(PickGalleryPhotos(Tuning.IMPORT_BATCH_MAX), onPicked)
     // Before the gallery, not after the pick: a photo opened while the app lacks it has already lost its GPS.
     val mediaLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        galleryLauncher.launch(Unit)
+        val shared = context.photosSharedThroughLimitedAccess(Tuning.IMPORT_BATCH_MAX)
+        if (shared.isEmpty()) galleryLauncher.launch(Unit) else onPicked(shared)
     }
-    return remember(mediaLocationLauncher) {
-        PhotoPickerLauncher { mediaLocationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION) }
+    return remember(locationAccess, galleryLauncher, mediaLocationLauncher) {
+        PhotoPickerLauncher {
+            if (locationAccess.granted()) {
+                galleryLauncher.launch(Unit)
+            } else {
+                mediaLocationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)
+            }
+        }
     }
 }

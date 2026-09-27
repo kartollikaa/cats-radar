@@ -25,6 +25,8 @@ sealed interface EncounterDetailState {
     data object Missing : EncounterDetailState
 }
 
+enum class OutingDirection { NEWER, OLDER }
+
 data class CatPage(
     val id: String,
     val dayLabel: String,

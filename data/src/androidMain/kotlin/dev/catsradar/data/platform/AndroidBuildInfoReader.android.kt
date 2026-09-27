@@ -1,6 +1,7 @@
 package dev.catsradar.data.platform
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import dev.catsradar.domain.about.BuildInfo
 import dev.catsradar.domain.about.DeviceInfo
@@ -38,7 +39,11 @@ class AndroidBuildInfoReader(
     private fun installer(): String? {
         val packageManager = context.packageManager
         return if (sdkInt >= Build.VERSION_CODES.R) {
-            packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+            try {
+                packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+            } catch (_: PackageManager.NameNotFoundException) {
+                null
+            }
         } else {
             @Suppress("DEPRECATION") // its replacement starts at Android 11
             packageManager.getInstallerPackageName(context.packageName)

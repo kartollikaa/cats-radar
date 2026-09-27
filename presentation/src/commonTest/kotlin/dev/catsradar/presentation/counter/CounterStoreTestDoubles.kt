@@ -65,17 +65,21 @@ internal class FakeEncounterRepository : EncounterRepository {
     val insertDelays = ArrayDeque<Duration>()
     var softDeleteDelay: Duration = Duration.ZERO
 
-    /** Delays every emission of an observeById call but that call's first, so a `.first()` snapshot stays instant. */
+    /** Delays every emission of an observe call but that call's first, so a `.first()` snapshot stays instant. */
     var observeDelay: Duration = Duration.ZERO
 
     fun encounters(): List<Encounter> = encounters.value
 
-    override fun observeAll(): Flow<List<Encounter>> = encounters
-    override fun observeById(id: String): Flow<Encounter?> {
+    // Mirrors the DAO's deletedAt IS NULL filter.
+    override fun observeAll(): Flow<List<Encounter>> =
+        encounters.map { list -> list.filter { it.deletedAt == null } }.delayedAfterFirst()
+
+    override fun observeById(id: String): Flow<Encounter?> =
+        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst()
+
+    private fun <T> Flow<T>.delayedAfterFirst(): Flow<T> {
         var firstEmission = true
-        return encounters
-            .map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
-            .onEach { if (firstEmission) firstEmission = false else delay(observeDelay) }
+        return onEach { if (firstEmission) firstEmission = false else delay(observeDelay) }
     }
 
     override suspend fun insert(encounter: Encounter) {
