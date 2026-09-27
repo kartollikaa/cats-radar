@@ -15,8 +15,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CounterStoreWalkTest {
@@ -136,9 +136,22 @@ class CounterStoreWalkTest {
             store.state.value,
         )
 
-        walks.startAt(CounterNow)
+        walks.startAt(CounterNow - 1.minutes)
         runCurrent()
-        assertEquals(Duration.ZERO.toString(), store.state.value.walkElapsedLabel)
+        assertEquals(1.minutes.toString(), store.state.value.walkElapsedLabel)
+    }
+
+    @Test
+    fun `a walk not yet a minute old shows no time`() = runTest(mainDispatcher) {
+        val settings = FakeSettingsRepository().apply { setWalkingMode(true) }
+        val walks = FakeWalkRepository().apply { startAt(CounterNow - 59.seconds) }
+
+        val (store, _) = newStore(settingsRepository = settings, walkRepository = walks)
+
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true),
+            store.state.value,
+        )
     }
 
     @Test

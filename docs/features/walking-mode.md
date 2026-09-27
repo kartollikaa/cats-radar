@@ -20,6 +20,10 @@ the cat on the button walks.
   удерживайте*: the hint is cut short so the line stays about as long as the plain hint was),
   formatted like every other duration on the Counter. It moves shortly after each minute turns,
   and nothing keeps it ticking while walking mode is off.
+- **The first minute shows no time on the button**, only the plain *press and hold*. A walk started
+  mid-outing would otherwise put *0 min* right under the outing's own "15 min", two times that look
+  as if they should agree. The time appears at *1 min*. The notification's chronometer counts seconds, so
+  its zero is a clock starting and it shows from the start.
 - **In the notification it is a chronometer** counting up from the start, `12:34` then `1:02:03`. The
   system ticks it, so the time moves with no repost and keeps moving while the app's process is
   dead. From API 37 the notification is a `MetricStyle` with two metrics, *Cats* and *Walk*, and
@@ -32,7 +36,8 @@ the cat on the button walks.
   rather than a clock started from a guess. A **Cat!** from the lock screen reads the walk's start
   again as it re-posts, so the time does not drop off the notification with the tap.
 - **A start ahead of the clock counts from now.** A clock set back after the walk began would
-  otherwise count up from below zero; the button reads *0 min* and the notification starts at zero.
+  otherwise count up from below zero; the button shows the plain hint, as in any first minute, and
+  the notification starts at zero.
 - **The walk ending is not news to the notification.** **Done** turns the mode off and ends the
   walk, and the two can arrive in either order; the notification keeps the walk's start until the
   mode goes off and clears it, rather than being put back up, without a time, a moment after it
