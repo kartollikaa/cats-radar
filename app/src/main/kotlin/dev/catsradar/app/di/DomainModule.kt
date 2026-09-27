@@ -1,5 +1,6 @@
 package dev.catsradar.app.di
 
+import dev.catsradar.domain.usecase.AddCatsToPhoto
 import dev.catsradar.domain.usecase.AttachLocation
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.CheckForUpdate
@@ -105,6 +106,7 @@ val domainModule = module {
     factoryOf(::WhereToLook)
     factoryOf(::LocatePhone)
     factoryOf(::AttachPhoto)
+    factoryOf(::AddCatsToPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::ResolveGalleryLink)
     factoryOf(::RemovePhoto)

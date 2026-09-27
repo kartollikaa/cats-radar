@@ -2,10 +2,12 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.RecordingPhotoStorage
 import dev.catsradar.domain.testing.encounterFixture
+import dev.catsradar.domain.testing.inShotOf
 import dev.catsradar.domain.testing.withPhoto
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -58,10 +60,30 @@ class PurgeDeletedTest {
     }
 
     @Test
+    fun purgingOneCatOfAShotKeepsTheOtherCatsFiles() = runTest {
+        val deleted = encounterFixture("deleted", OCCURRED)
+            .copy(deletedAt = NOW - Tuning.PURGE_AFTER - 1.days)
+            .withPhoto("deleted.jpg", "deleted_thumb.jpg")
+            .inShotOf("shared-shot")
+        val live = encounterFixture("live", OCCURRED)
+            .withPhoto("live.jpg", "live_thumb.jpg")
+            .inShotOf("shared-shot")
+        repository.insert(deleted)
+        repository.insert(live)
+
+        purge()()
+
+        assertEquals(listOf("deleted.jpg", "deleted_thumb.jpg"), photos.deleted)
+        assertEquals(listOf(live), repository.loadEvery())
+    }
+
+    @Test
     fun `the files go while the row still points at them`() = runTest {
         val rowsAtEachDelete = mutableListOf<Int>()
         val storage = object : PhotoStorage {
             override fun resolve(relativePath: String) = relativePath
+
+            override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
 
             override suspend fun delete(relativePath: String) {
                 rowsAtEachDelete += repository.loadEvery().size

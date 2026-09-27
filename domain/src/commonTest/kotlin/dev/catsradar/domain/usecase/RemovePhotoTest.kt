@@ -2,6 +2,7 @@ package dev.catsradar.domain.usecase
 
 import dev.catsradar.domain.model.oldestFirst
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.testing.FakeClock
 import dev.catsradar.domain.testing.FakeEncounterRepository
 import dev.catsradar.domain.testing.RecordingPhotoStorage
@@ -58,6 +59,7 @@ class RemovePhotoTest {
         repository.insert(encounterFixture(CAT, OCCURRED).withPhoto())
         val observingStorage = object : PhotoStorage {
             override fun resolve(relativePath: String) = relativePath
+            override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
 
             override suspend fun delete(relativePath: String) {
                 rowWasPresent += repository.observeById(CAT).first()?.photos?.any { it.id == CAT } == true

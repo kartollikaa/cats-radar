@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.EncounterOrigin
 import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.presentation.DateTimeFormatter
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -87,6 +88,8 @@ internal class FakeDateTimeFormatter : DateTimeFormatter {
 // the app's own photo directory.
 internal class FakePhotoStorage(private val root: String = "/data/photos") : PhotoStorage {
     override fun resolve(relativePath: String): String = "$root/$relativePath"
+
+    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
 
     override suspend fun delete(relativePath: String) = Unit
 }

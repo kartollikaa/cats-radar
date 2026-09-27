@@ -31,5 +31,8 @@ interface PhotoStorage {
     /** Absolute path for a [StoredPhoto] path, for the one layer that must open the file itself. */
     fun resolve(relativePath: String): String
 
+    /** Makes an independent app-owned copy named after [baseName]. */
+    suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto
+
     suspend fun delete(relativePath: String)
 }

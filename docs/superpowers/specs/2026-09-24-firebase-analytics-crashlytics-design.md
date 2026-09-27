@@ -94,7 +94,7 @@ Names and parameter keys are `snake_case`; enum values are sent lowercase, boole
 
 | Event | Parameters | Logged by | When |
 |---|---|---|---|
-| `cat_logged` | `kind` (tally, photo), `origin` (app, widget, notification for a tally; camera for a photo), `has_coat` | `LogTally`, `LogPhoto` | the encounter is inserted |
+| `cat_logged` | `kind` (tally, photo), `origin` (app, widget, notification for a tally; camera or gallery for a photo), `has_coat` | `LogTally`, `LogPhoto`, `AddCatsToPhoto` | the encounter is inserted; an added cat logs only after its whole batch commits |
 | `tally_undone` | — | `UndoLastTally` | the tally is removed |
 | `coat_set` | `coat` (a `CatCoat` value, or `none` when cleared) | `SetCoat` | the coat is written |
 | `photo_attached` | `source` (camera, gallery) | `AttachPhoto` | the photo is attached |
@@ -112,9 +112,10 @@ Names and parameter keys are `snake_case`; enum values are sent lowercase, boole
 `screen_view` is Firebase's predefined event. Automatic screen reporting is turned off: the app is one
 activity, so it would only ever report that activity. `regions` carries no level and no place.
 
-Gallery photos are counted by `photos_imported`, not one `cat_logged` each. A failed action logs
-nothing: an unreadable photo or a refused attach leaves the catalogue untouched; a refused backup is
-the one failure with its own event.
+An original gallery import is counted by `photos_imported`, not one `cat_logged` per imported photo.
+A cat added later to an imported photo is a new encounter and emits `cat_logged` with copied origin
+`gallery`. A failed action logs nothing: an unreadable photo, a refused attach or a refused add leaves
+the catalogue untouched; a refused backup is the one failure with its own event.
 
 ## 6. Crashlytics
 

@@ -34,6 +34,7 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -162,6 +163,7 @@ class PhotoViewerEntryTest {
         val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
         val failingStorage = object : PhotoStorage {
             override fun resolve(relativePath: String) = relativePath
+            override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
             override suspend fun delete(relativePath: String): Unit = error("unwritable")
         }
         val backStack = show(keys, cat = { photographed() }, photoStorage = failingStorage)
