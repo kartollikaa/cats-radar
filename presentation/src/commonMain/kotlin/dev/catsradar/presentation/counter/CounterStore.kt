@@ -20,6 +20,7 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.runStorageRead
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -188,7 +189,9 @@ class CounterStore(
                 copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
             }
             is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
-                val thumbPaths = findCatThumbnails(intent.addedIds, limit = IMPORT_THUMBNAILS)
+                val thumbPaths = runStorageRead(fallback = emptyList()) {
+                    findCatThumbnails(intent.addedIds, limit = IMPORT_THUMBNAILS)
+                }
                 // A newer run claimed during the read is the one the user can deal with.
                 if (importRun.reportedId != intent.runId) return
                 importedIds = intent.addedIds

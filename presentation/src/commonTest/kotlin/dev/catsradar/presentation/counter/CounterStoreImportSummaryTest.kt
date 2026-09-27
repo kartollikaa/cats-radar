@@ -93,6 +93,23 @@ class CounterStoreImportSummaryTest {
         }
 
     @Test
+    fun `a finished import whose photos cannot be read still says what it added`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter("a").withPhoto(photoPath = "a.jpg", thumbPath = "a_thumb.jpg"))
+        val unreadable = CompletableDeferred<Unit>().apply { completeExceptionally(IllegalStateException()) }
+        repository.lookupGates["a"] = unreadable
+        runCurrent()
+
+        store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("a"), skipped = 0, failed = 0))
+        runCurrent()
+
+        assertEquals(
+            ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
+            store.state.value.importSummary,
+        )
+    }
+
+    @Test
     fun `closing a summary whose Undo was on offer lets the Undo lapse`() = runTest(mainDispatcher) {
         val (store, repository) = newStore()
         repository.insert(externalEncounter(id = "id-1"))
