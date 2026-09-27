@@ -101,6 +101,9 @@ reordering them and never carrying a row across a header:
   that every photo lands in such a row with its neighbours, using the fewest rows and then the fewest
   card rows; the cats left over pack as any run does, so a card row can follow a photo's tile row
   (`EncounterGridPackerTest`, *a lone photo's tile row holds three cats, so the photo stays large*).
+  A photo never drops into a card row for it: when three-cat rows would push one there, as in a
+  photo, three cats and a photo, the run keeps its old wider tile row (*a photo that three-cat rows
+  would push into a card row keeps a wider tile row instead*).
 
 "Has a photo" means its thumbnail exists: a photo whose thumbnail failed to write packs, and leads,
 like a cat without one. What a tile or card leads with is the mapper's choice — the thumbnail, else
