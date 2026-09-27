@@ -1,11 +1,14 @@
 package dev.catsradar.ui.counter
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,18 +39,52 @@ fun CounterScreen(
     onWalkHoldRelease: () -> Unit = {},
     onCoatPromptAction: (CoatPromptAction) -> Unit = {},
 ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        CounterColumn(
+            state = state,
+            onTallyClick = onTallyClick,
+            onUndoClick = onUndoClick,
+            onLocationHintAction = onLocationHintAction,
+            onCameraClick = onCameraClick,
+            onCoatTallyClick = onCoatTallyClick,
+            onImportClick = onImportClick,
+            onWalkingModeChange = onWalkingModeChange,
+            onWalkHoldRelease = onWalkHoldRelease,
+        )
+        // Over the count rather than above it, so an import never takes the count's room.
+        ImportIsland(
+            progress = state.importProgress,
+            summary = state.importSummary,
+            modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = 12.dp, vertical = 8.dp),
+            onUndoClick = onUndoImportClick,
+            onDismiss = onImportSummaryDismiss,
+        )
+    }
+    state.coatPrompt?.let {
+        CoatPromptSheet(prompt = it, onAction = onCoatPromptAction)
+    }
+}
+
+@Composable
+private fun CounterColumn(
+    state: CounterState,
+    onTallyClick: () -> Unit,
+    onUndoClick: () -> Unit,
+    onLocationHintAction: (LocationHintAction) -> Unit,
+    onCameraClick: () -> Unit,
+    onCoatTallyClick: (CoatOption) -> Unit,
+    onImportClick: () -> Unit,
+    onWalkingModeChange: (Boolean) -> Unit,
+    onWalkHoldRelease: () -> Unit,
+) {
     // A large font or a small phone must never leave the tally button zero pixels tall.
     FillOrScroll(
         minFill = 120.dp,
         gap = 16.dp,
         padding = 24.dp,
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         above = {
             // Above the count, which gives up its room first.
-            state.importProgress?.let { ImportProgress(it) }
-            state.importSummary?.let {
-                ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
-            }
             if (state.locationPermissionHintVisible) {
                 LocationPermissionHint(onAction = onLocationHintAction)
             }
@@ -86,9 +123,6 @@ fun CounterScreen(
             }
         },
     )
-    state.coatPrompt?.let {
-        CoatPromptSheet(prompt = it, onAction = onCoatPromptAction)
-    }
 }
 
 @ThemePreviews
