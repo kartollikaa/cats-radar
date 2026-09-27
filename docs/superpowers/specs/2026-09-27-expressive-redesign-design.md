@@ -157,7 +157,8 @@ cookie**.
   is the fallback.
 - **Undo** floats in the cookie's bottom-end corner, below the "+N" badge, the filled tonal button it
   already is (owner, 2026-09-27: "undo should go bottom right corner of cookie", over the top-start
-  corner first built). It appears and goes without moving anything, and a tap on it takes a cat back
+  corner first built): level with the cookie's bottom at the block's end, so beside a cookie narrower
+  than its block, where the outing's tag keeps its width. It appears and goes without moving anything, and a tap on it takes a cat back
   and never logs one. It gives up the older rule that kept Undo outside the block: while it shows, a tap
   on that corner undoes rather than logs. While it shows, the outing's tag at the ring's bottom narrows
   by Undo's width on both sides, staying centred and clear of it; its give-way rules shorten it. The rule that the controls do not jump stands: nothing under the count moves when

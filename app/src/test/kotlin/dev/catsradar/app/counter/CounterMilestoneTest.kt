@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.isWhole
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
@@ -135,7 +136,10 @@ class CounterMilestoneTest {
 
         val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
         val tag = compose.onNodeWithText("35 min", substring = true).getUnclippedBoundsInRoot()
+        val block = block()
         assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
+        assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
+        assertTrue(compose.isWhole("35 min"), "the outing's time was squeezed out of its tag $tag")
     }
 
     @Test

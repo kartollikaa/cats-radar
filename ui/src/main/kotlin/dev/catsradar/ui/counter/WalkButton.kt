@@ -64,7 +64,7 @@ private val WalkCatSize = 20.dp
 
 /**
  * Starts a walk on a tap, and stops one only when held until the fill crosses it: a stop ends the walk
- * and its route, which a stray touch must not do. [onHoldRelease] hears a press let go before then.
+ * and its route, which a stray touch must not do.
  */
 @Composable
 internal fun WalkButton(

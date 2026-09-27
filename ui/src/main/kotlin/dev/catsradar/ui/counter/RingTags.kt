@@ -54,7 +54,7 @@ private fun ringLine(
 
 /**
  * The goal at the ring's top and the outing at its bottom, over a block whose square holds the ring. The outing
- * narrows on both sides by [undoWidth], in pixels, so it stays centred and clear of Undo in the square's corner.
+ * narrows on both sides by [undoWidth], in pixels, so it stays centred and clear of Undo at the block's end.
  */
 @Composable
 internal fun BoxScope.RingTags(
@@ -128,7 +128,7 @@ private fun Modifier.onRingLine(
     val square = min(constraints.maxWidth, constraints.maxHeight)
     val corner = clearOf()
     val free = constraints.maxWidth + 2 * overhang.roundToPx()
-    val width = if (corner == 0) free else min(free, square - 2 * (corner + UndoClearance.roundToPx()))
+    val width = if (corner == 0) free else min(free, constraints.maxWidth - 2 * (corner + UndoClearance.roundToPx()))
     val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = width.coerceAtLeast(0)))
     val line = (constraints.maxHeight - square) / 2f + ringLine(square.toFloat())
     layout(placeable.width, placeable.height) {

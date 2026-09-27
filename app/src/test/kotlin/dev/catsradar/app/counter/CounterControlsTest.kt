@@ -217,12 +217,11 @@ class CounterControlsTest {
         }
         val block = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
         val side = minOf(block.width, block.height)
-        val cookieRight = (block.left + block.right) / 2 + side / 2
         val cookieBottom = (block.top + block.bottom) / 2 + side / 2
         val undo = compose.onNodeWithText(string(R.string.counter_undo))
 
         val bounds = undo.getUnclippedBoundsInRoot()
-        assertEquals(cookieRight.value, bounds.right.value, 1f)
+        assertEquals(block.right.value, bounds.right.value, 1f)
         assertEquals(cookieBottom.value, bounds.bottom.value, 1f)
         undo.performClick()
         assertEquals(1, undos)

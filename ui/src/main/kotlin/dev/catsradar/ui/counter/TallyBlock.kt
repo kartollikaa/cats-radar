@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -146,7 +147,7 @@ internal fun TallyBlock(
     }
 }
 
-/** The ring's tags, and Undo in the cookie's bottom-end corner, which the outing's tag keeps clear of. */
+/** The ring's tags, and Undo at the cookie's bottom end, which the outing's tag keeps clear of. */
 @Composable
 private fun BoxScope.TagsAndUndo(
     milestone: CounterMilestoneState?,
@@ -162,12 +163,22 @@ private fun BoxScope.TagsAndUndo(
         scale = scale,
         undoWidth = { if (undoVisible) undoWidth else 0 },
     )
-    Box(modifier = Modifier.aspectRatio(1f)) {
+    Box(modifier = Modifier.matchParentSize()) {
         UndoButton(
             visible = undoVisible,
             onClick = onUndoClick,
-            modifier = Modifier.align(Alignment.BottomEnd).onSizeChanged { undoWidth = it.width },
+            modifier = Modifier.atCookieBottomEnd().onSizeChanged { undoWidth = it.width },
         )
+    }
+}
+
+// Beside a cookie narrower than its block, so the outing's tag keeps its width; in its corner when it fills the width.
+private fun Modifier.atCookieBottomEnd(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+    val square = min(constraints.maxWidth, constraints.maxHeight)
+    val bottom = (constraints.maxHeight + square) / 2
+    layout(constraints.maxWidth, constraints.maxHeight) {
+        placeable.placeRelative(constraints.maxWidth - placeable.width, bottom - placeable.height)
     }
 }
 
