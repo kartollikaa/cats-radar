@@ -106,9 +106,11 @@ outing open it shows the Statistics line, "38 more to reach 100"; past the last 
 line in one style either way, so nothing under it moves.
 
 **The walk row.** The walk button is drawn as an extended floating action button in
-`tertiaryContainer`: 56 dp tall with the FAB's corners. The walking cat, the fill that a held press
-drives, the timed hint and the one height stay as they are. Undo becomes a filled tonal button in its
-own place at the end of the row, and the rule that it never moves the walk button stands.
+`tertiaryContainer`: 56 dp tall with Material's own extended-FAB corners, 16 dp as the prototype
+draws them (`extendedFabShape` reads the theme's larger `large` shape, a pill at this height); a
+larger font grows it rather than clipping it. The walking cat, the fill that a held press drives, the
+timed hint and the one height stay as they are. Undo becomes a filled tonal button in its own place at
+the end of the row, and the rule that it never moves the walk button stands.
 
 **The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
 `surfaceContainerHighest`. The shapes go by column: `Circle`, `Square`, `Clover4Leaf`, `Arch`. The
