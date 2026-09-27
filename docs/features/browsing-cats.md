@@ -110,7 +110,8 @@ A photo can show several cats, each its own encounter with its own coat, all sha
 `data-model.md`). The tab shows such a photo **once**: the cats whose cover is a photo of the same shot are one
 entry, in the grid and in the list alike (`EncountersStateMapperTest`, *a shot of three cats is one entry holding
 all three*). The entry shows that photo with a **badge** — a paw and the number of cats — when it holds more
-than one: in the top corner of a pair tile or a tile, and beside the time on a card or a list row. For a screen
+than one: in the top corner of a pair tile, in the bottom corner of a tile, which is too narrow to hold it
+beside the selection check, and beside the time on a card or a list row. For a screen
 reader the entry is a "Photo of 3 cats", with its time and location, which are the same for every cat of a shot.
 
 - **It packs like one photo.** In the grid a shot pairs, runs and tiles as a single photo would (*a shot packs

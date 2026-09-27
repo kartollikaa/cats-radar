@@ -195,7 +195,10 @@ private fun EncounterTile(
                     .aspectRatio(1f)
                     .selectionOutline(cell.selected, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small),
             )
-            cell.badgeCount?.let { ShotBadge(count = it, modifier = Modifier.align(Alignment.TopStart).padding(4.dp)) }
+            // The bottom corner: a tile this narrow has no room for the badge beside the selection check.
+            cell.badgeCount?.let {
+                ShotBadge(count = it, modifier = Modifier.align(Alignment.BottomStart).padding(4.dp))
+            }
             if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd).padding(4.dp))
         }
         val timeStyle = MaterialTheme.typography.labelMedium
