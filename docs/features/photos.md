@@ -91,8 +91,9 @@ gets its own encounter and photo ids and independent app copy and thumbnail, whi
 the source photo's `shotId`, gallery links and digest. The cats are committed together only while the
 source cat is still live; a refused or failed batch keeps none of its rows or files. Purging one cat
 therefore removes only that cat's copies, and undoing the gallery import that supplied the source
-leaves cats added later intact. No shipped screen invokes this capability yet; the **Several** control
-and shot presentation belong to later slices.
+leaves cats added later intact. The coat sheet after a photo calls it when the photo is counted as
+several cats (see [coat.md](./coat.md#several-cats-on-the-photo)); the detail screen will too, to add a
+cat to a past shot.
 
 ### At the edges
 
