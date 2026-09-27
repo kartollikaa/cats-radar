@@ -11,6 +11,8 @@ sealed interface PhotoViewerState {
         val firstPage: Int,
         val timeLabel: String,
         val dayLabel: String,
+        val removingPhotoId: String? = null,
+        val removalInFlight: Boolean = false,
     ) : PhotoViewerState
 }
 

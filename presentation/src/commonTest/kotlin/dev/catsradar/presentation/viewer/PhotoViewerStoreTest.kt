@@ -3,6 +3,7 @@ package dev.catsradar.presentation.viewer
 import app.cash.turbine.test
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.RemovePhoto
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
@@ -25,7 +26,10 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -210,6 +214,84 @@ class PhotoViewerStoreTest {
         assertEquals(emptyList(), galleryItems.asked)
     }
 
+    @Test
+    fun `remove remembers the displayed photo and cancel changes nothing`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat())
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(PhotoViewerIntent.RemovePhotoClicked(ID))
+        runCurrent()
+
+        assertEquals(ID, assertIs<PhotoViewerState.Showing>(store.state.value).removingPhotoId)
+        store.dispatch(PhotoViewerIntent.RemovePhotoCancelled)
+        runCurrent()
+        assertNull(assertIs<PhotoViewerState.Showing>(store.state.value).removingPhotoId)
+        assertTrue(repository.removePhotoCalls.isEmpty())
+    }
+
+    @Test
+    fun `confirm removes the requested displayed photo exactly once`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat())
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.RemovePhotoClicked(ID))
+            store.dispatch(PhotoViewerIntent.RemovePhotoConfirmed)
+            store.dispatch(PhotoViewerIntent.RemovePhotoConfirmed)
+            runCurrent()
+
+            assertEquals(listOf(Triple(ID, ID, OCCURRED)), repository.removePhotoCalls)
+            assertEquals(PhotoViewerEffect.Close, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `removing one of several photos keeps the viewer on the nearest remaining photo`() =
+        runTest(mainDispatcher) {
+            val cat = photographedCat()
+            val second = cat.photos.single().copy(id = SECOND, photoPath = "second.jpg", addedAt = OCCURRED + 1.minutes)
+            repository.insert(cat.copy(photos = cat.photos + second))
+            val store = newStore(openedOn = SECOND)
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(PhotoViewerIntent.RemovePhotoClicked(SECOND))
+                store.dispatch(PhotoViewerIntent.RemovePhotoConfirmed)
+                runCurrent()
+
+                val showing = assertIs<PhotoViewerState.Showing>(store.state.value)
+                assertEquals(listOf(ID), showing.photos.map { it.id })
+                assertEquals(0, showing.firstPage)
+                assertFalse(showing.removalInFlight)
+                assertNull(showing.removingPhotoId)
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `a failed removal keeps the photo open and reports the failure once`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat())
+        repository.removePhotoShouldThrow = IllegalStateException("disk")
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(PhotoViewerIntent.RemovePhotoClicked(ID))
+            store.dispatch(PhotoViewerIntent.RemovePhotoConfirmed)
+            runCurrent()
+
+            assertEquals(PhotoViewerEffect.RemovePhotoFailed, awaitItem())
+            expectNoEvents()
+            val showing = assertIs<PhotoViewerState.Showing>(store.state.value)
+            assertEquals(listOf(ID), showing.photos.map { it.id })
+            assertFalse(showing.removalInFlight)
+            assertNull(showing.removingPhotoId)
+        }
+    }
+
     private fun photographedCat(galleryUri: String? = null) = encounterFixture(ID, OCCURRED)
         .copy(kind = EncounterKind.PHOTO)
         .withPhoto(photoPath = "cat-1.jpg", galleryUri = galleryUri)
@@ -218,6 +300,7 @@ class PhotoViewerStoreTest {
         encounterId = ID,
         openedOn = openedOn,
         observeEncounter = ObserveEncounter(repository),
+        removePhoto = RemovePhoto(repository, FakePhotoStorage(), FakeClock(OCCURRED)),
         resolveGalleryLink = ResolveGalleryLink(galleryItems, FakeDeviceIdProvider(INSTALL)),
         stateMapper = PhotoViewerStateMapper(
             FakeDateTimeFormatter(),
@@ -233,6 +316,7 @@ class PhotoViewerStoreTest {
         const val INSTALL = "device-1"
         const val SAVED = "content://media/external/images/media/42"
         const val SECOND_SAVED = "content://media/external/images/media/43"
+        const val SECOND = "second"
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
 }

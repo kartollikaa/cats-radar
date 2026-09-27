@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -18,20 +20,26 @@ import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -54,6 +62,7 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import dev.catsradar.ui.theme.ViewerColors
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.collectLatest
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 
 @Composable
@@ -62,17 +71,40 @@ fun PhotoViewerScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onOpenInGalleryClick: (photoId: String) -> Unit = {},
+    onRemovePhotoClick: (photoId: String) -> Unit = {},
+    onCancelPhotoRemoval: () -> Unit = {},
+    onConfirmPhotoRemoval: () -> Unit = {},
 ) {
     var chromeVisible by rememberSaveable { mutableStateOf(true) }
     SystemBarsVisibility(visible = chromeVisible)
+    val showing = state as? PhotoViewerState.Showing
+    PhotoViewerStage(
+        showing = showing,
+        chromeVisible = chromeVisible,
+        modifier = modifier,
+        onPhotoClick = { chromeVisible = !chromeVisible },
+        onBackClick = onBackClick,
+        onOpenInGalleryClick = onOpenInGalleryClick,
+        onRemovePhotoClick = onRemovePhotoClick,
+    )
+    if (showing != null) {
+        PhotoRemovalDialog(showing, onCancelPhotoRemoval, onConfirmPhotoRemoval)
+    }
+}
+
+@Composable
+private fun PhotoViewerStage(
+    showing: PhotoViewerState.Showing?,
+    chromeVisible: Boolean,
+    modifier: Modifier = Modifier,
+    onPhotoClick: () -> Unit = {},
+    onBackClick: () -> Unit = {},
+    onOpenInGalleryClick: (String) -> Unit = {},
+    onRemovePhotoClick: (String) -> Unit = {},
+) {
+    val pagerState = showing?.let { rememberViewerPagerState(it) }
+    val onScreen = if (showing != null && pagerState != null) showing.photos.getOrNull(pagerState.currentPage) else null
     Box(modifier = modifier.fillMaxSize().background(ViewerColors.Stage)) {
-        val showing = state as? PhotoViewerState.Showing
-        val pagerState = showing?.let { rememberPagerState(initialPage = it.firstPage) { it.photos.size } }
-        val onScreen = if (showing != null && pagerState != null) {
-            showing.photos.getOrNull(pagerState.currentPage)
-        } else {
-            null
-        }
         if (showing != null && pagerState != null) {
             HorizontalPager(
                 state = pagerState,
@@ -83,7 +115,7 @@ fun PhotoViewerScreen(
                     model = showing.photos[page].path,
                     contentDescription = stringResource(R.string.detail_photo_description),
                     modifier = Modifier.fillMaxSize(),
-                    onClick = { chromeVisible = !chromeVisible },
+                    onClick = { onPhotoClick() },
                 )
             }
         }
@@ -96,8 +128,10 @@ fun PhotoViewerScreen(
             ViewerTopBar(
                 showing = showing,
                 opensInGallery = onScreen?.opensInGallery == true,
+                canRemove = onScreen != null,
                 onBackClick = onBackClick,
                 onOpenInGalleryClick = { onScreen?.let { onOpenInGalleryClick(it.id) } },
+                onRemovePhotoClick = { onScreen?.let { onRemovePhotoClick(it.id) } },
             )
         }
         if (showing != null && pagerState != null && showing.photos.size > 1) {
@@ -111,6 +145,50 @@ fun PhotoViewerScreen(
             }
         }
     }
+}
+
+@Composable
+private fun rememberViewerPagerState(showing: PhotoViewerState.Showing): PagerState {
+    val pagerState = rememberPagerState(initialPage = showing.firstPage) { showing.photos.size }
+    val photoIds = showing.photos.map { it.id }
+    var displayedPhotoId by rememberSaveable { mutableStateOf<String?>(null) }
+    var previousPhotoIds by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(pagerState, photoIds) {
+        val oldIndex = previousPhotoIds.indexOf(displayedPhotoId).takeIf { it >= 0 } ?: pagerState.currentPage
+        val keptIndex = photoIds.indexOf(displayedPhotoId)
+        val targetPage = if (keptIndex >= 0) keptIndex else oldIndex.coerceAtMost(photoIds.lastIndex)
+        pagerState.scrollToPage(targetPage)
+        displayedPhotoId = photoIds[targetPage]
+        previousPhotoIds = photoIds
+        snapshotFlow { pagerState.currentPage }.collectLatest { page ->
+            displayedPhotoId = photoIds.getOrNull(page)
+        }
+    }
+    return pagerState
+}
+
+@Composable
+private fun PhotoRemovalDialog(
+    showing: PhotoViewerState.Showing,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    if (showing.removingPhotoId == null) return
+    AlertDialog(
+        onDismissRequest = { if (!showing.removalInFlight) onCancel() },
+        title = { Text(stringResource(R.string.viewer_remove_photo_title)) },
+        text = { Text(stringResource(R.string.viewer_remove_photo_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !showing.removalInFlight) {
+                Text(stringResource(R.string.viewer_remove_confirm), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel, enabled = !showing.removalInFlight) {
+                Text(stringResource(R.string.viewer_remove_cancel))
+            }
+        },
+    )
 }
 
 @Composable
@@ -134,9 +212,11 @@ private fun PagePosition(page: Int, count: Int, modifier: Modifier = Modifier) {
 private fun ViewerTopBar(
     showing: PhotoViewerState.Showing?,
     opensInGallery: Boolean,
+    canRemove: Boolean,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onOpenInGalleryClick: () -> Unit = {},
+    onRemovePhotoClick: () -> Unit = {},
 ) {
     // safeDrawing drops the status bar's height while it is hidden, so the arrow would slide as the bar returns.
     val insets = WindowInsets.statusBarsIgnoringVisibility.union(WindowInsets.displayCutout)
@@ -152,6 +232,7 @@ private fun ViewerTopBar(
             } else {
                 null
             },
+            titlePadding = PaddingValues(horizontal = if (opensInGallery) 112.dp else 64.dp),
             startContent = {
                 IconButton(onClick = onBackClick) {
                     Icon(
@@ -161,12 +242,22 @@ private fun ViewerTopBar(
                 }
             },
             endContent = {
-                if (opensInGallery) {
-                    IconButton(onClick = onOpenInGalleryClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_photo_library),
-                            contentDescription = stringResource(R.string.viewer_open_in_gallery),
-                        )
+                Row {
+                    if (canRemove) {
+                        IconButton(onClick = onRemovePhotoClick) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_delete),
+                                contentDescription = stringResource(R.string.viewer_remove_photo),
+                            )
+                        }
+                    }
+                    if (opensInGallery) {
+                        IconButton(onClick = onOpenInGalleryClick) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_photo_library),
+                                contentDescription = stringResource(R.string.viewer_open_in_gallery),
+                            )
+                        }
                     }
                 }
             },

@@ -46,12 +46,14 @@ import dev.catsradar.data.update.GitHubReleaseFeed
 import dev.catsradar.data.update.HttpPackageDownloader
 import dev.catsradar.domain.about.InstalledApp
 import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.platform.BackupReader
 import dev.catsradar.domain.platform.BackupWriter
 import dev.catsradar.domain.platform.BuildInfoReader
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.Feature
 import dev.catsradar.domain.platform.FeatureToggles
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.platform.GalleryItems
@@ -73,6 +75,8 @@ import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.repository.TransactionRunner
 import dev.catsradar.domain.repository.WalkRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
 import org.koin.dsl.bind
@@ -83,7 +87,13 @@ val dataModule = module {
     single { createCatsDatabase(androidContext()) }
     single<EncounterDao> { get<CatsDatabase>().encounterDao() }
     single<EncounterRepository> { EncounterRepositoryImpl(get()) }
-    single<Analytics> { FirebaseAnalyticsReporter(FirebaseAnalytics.getInstance(androidContext())) }
+    single<Analytics> {
+        if (BuildConfig.DEBUG) {
+            DisabledAnalytics
+        } else {
+            FirebaseAnalyticsReporter(FirebaseAnalytics.getInstance(androidContext()))
+        }
+    }
     single<PlaceCellDao> { get<CatsDatabase>().placeCellDao() }
     single<PlaceCellRepository> { PlaceCellRepositoryImpl(get()) }
     single<WalkDao> { get<CatsDatabase>().walkDao() }
@@ -150,9 +160,21 @@ val dataModule = module {
     // A cache folder: Android may clear it, which costs only a download.
     single<PackageDownloader> { HttpPackageDownloader(File(androidContext().cacheDir, "updates")) }
     single<InstallPermission> { AndroidInstallPermission(androidContext().packageManager) }
-    single { FirebaseRemoteConfig.getInstance() }
-    // Bound by class, so that verify() checks the Remote Config binding a JVM test cannot build.
-    single { RemoteConfigFeatureToggles(get()) } bind FeatureToggles::class
+    single<FeatureToggles> {
+        if (BuildConfig.DEBUG) {
+            DisabledFeatureToggles
+        } else {
+            RemoteConfigFeatureToggles(FirebaseRemoteConfig.getInstance())
+        }
+    }
+}
+
+private object DisabledAnalytics : Analytics {
+    override fun log(event: AnalyticsEvent) = Unit
+}
+
+private object DisabledFeatureToggles : FeatureToggles {
+    override fun isOn(feature: Feature): Flow<Boolean> = flowOf(false)
 }
 
 // A preferences file's name is where its data lives: renaming one loses everything stored in it.
