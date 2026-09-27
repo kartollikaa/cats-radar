@@ -33,12 +33,12 @@ outings without a new cat.
 square, with the face, the paw or the photo's thumbnail clipped to it. A shot of several cats, and a cat with
 no coat, takes no coat's shape. A pair's times sit on an opaque `inverseSurface` chip — dark in the light
 theme, light in the dark one — so they read on any photo. Every other cat inside the card — a short run's,
-and each row of the list — is a card of its own on the surface colour, the list's 6 dp apart with `medium`
-corners: it leads with the tile's shape, names the coat or "A cat" (a shot: "Photo of 3 cats", with its
-badge), and reads "time · place" under that, "No location yet" in the tertiary container's text colour. A
-screen reader hears the card's name, time and place; its lead stays silent, since the name beside it says
-the same. A chosen cat's ring follows its shape, round a tile and round a card's lead alike, and while
-selecting the bar at the top is `primaryContainer`.
+and each row of the list — is a card of its own on the surface colour with `medium` corners, the list's
+set a little apart. It leads with the tile's shape, names the coat or "A cat" (a shot: "Photo of 3 cats",
+with its badge), and reads "time · place" under that, "No location yet" in the tertiary container's text
+colour. A screen reader hears the card's name, time and place; its lead stays silent, since the name
+beside it says the same. A chosen cat's ring follows its shape, round a tile and round a card's lead alike,
+and while selecting the bar at the top is `primaryContainer`.
 
 The card is drawn row by row: the header's piece carries the card's top corners, the outing's last row its
 bottom ones (the mapper marks it), and the gaps between rows sit inside the card, so the card stays

@@ -105,7 +105,7 @@ internal fun CellLead.coat(): CoatOption? = when (this) {
 
 @Composable
 private fun CellLead.coatName(): String =
-    coat()?.let { stringResource(it.labelRes()) } ?: stringResource(R.string.encounters_paw_description)
+    coat()?.let { stringResource(it.labelRes()) } ?: stringResource(R.string.encounters_card_no_coat)
 
 @ThemePreviews
 @Composable
