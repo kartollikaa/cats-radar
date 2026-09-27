@@ -91,11 +91,7 @@ internal fun TallyBlock(
     val pressed by interactionSource.collectIsPressedAsState()
     val press = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, animationSpec = press, label = "tallyPress")
-    val turn by animateFloatAsState(
-        targetValue = if (pressed) 8f else 0f,
-        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-        label = "tallyTurn",
-    )
+    val turn by rememberCookieTurn(count)
     val tallyLabel = stringResource(R.string.counter_tally)
     val cookie = MaterialShapes.Cookie12Sided.toShape()
     val cookieInBlock = remember(cookie) { CentredSquare(cookie) }

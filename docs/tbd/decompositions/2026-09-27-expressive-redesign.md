@@ -13,10 +13,10 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | in-review |
-| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone; the goal and the outing ride tags on the ring, and nothing sits under the count. | safe | ~450 | E1 | in-review |
-| E3 | The walk row | The walk button as an extended FAB and Undo as a tonal button. | safe | ~250 | E2 | in-review |
-| E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | in-review |
+| E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | merged |
+| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone; the goal and the outing ride tags on the ring, and nothing sits under the count. | safe | ~450 | E1 | merged |
+| E3 | The walk row | The walk button as an extended FAB and Undo as a tonal button. | safe | ~250 | E2 | merged |
+| E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | merged |
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
 | E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in its header and a *No coat* tile, which replaces the inline picker; the coat question after a photo takes the same header. | safe | ~550 | E4, E6 | planned |
@@ -25,6 +25,7 @@
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
+| E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -120,6 +121,13 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** the same rows in the same order doing the same things; the labels are additive.
 - **Cleanup owed:** none.
 
+### Slice E13 — The cookie turns with each cat
+- **In scope:** the cookie's turn from the count (`CookieTurn.kt`), in place of the press's turn that sprang back;
+  `counting-cats.md`, spec § 2 *The count*.
+- **Out of scope:** the squash, the roll, the tags.
+- **Ships safely because:** drawing only; the block, its taps and its label are unchanged.
+- **Cleanup owed:** none.
+
 ## Decision log
 
 - 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
@@ -151,3 +159,6 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   prototype of Encounters. Prototype version 15 drew both; the owner put the alert under the title ("under")
   rather than at the top, and approved the Encounters drawing ("looks ok"). The alert joins E8; Encounters is
   E12.
+- 2026-09-27: before merging, the owner asked that each tally turn the Counter's cookie a step further and keep
+  it there (it sprang back), which is E13; and that every coat have its own shape rather than one per column, then
+  that the spiky shapes be calmer, which E4 carries.
