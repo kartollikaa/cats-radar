@@ -51,7 +51,8 @@ class EncounterDetailStore(
     private var shown: ShownPages? = null
     private var places: Map<String, EncounterPlace?> = emptyMap()
 
-    // While the cat deleted here is gone, an emission without it is that delete taking effect.
+    // Deleted here and not yet undone: the removed state stands, and an emission without this cat is the delete
+    // taking effect.
     private var deletedId: String? = null
     private var undoTimeoutJob: Job? = null
     private var awaitingPhoto = false
@@ -67,7 +68,7 @@ class EncounterDetailStore(
                 shown = next
                 places = found
                 attempts.arrived(next?.window?.cats.orEmpty())
-                setState { pagesState() }
+                setState { if (deletedId == null) pagesState() else this }
             }
             .launchIn(viewModelScope)
     }

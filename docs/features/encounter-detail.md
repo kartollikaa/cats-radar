@@ -47,14 +47,15 @@ the pages is refused*).
 The pages are every live cat of the cat's outing (see [outings.md](./outings.md#the-window-around-a-set-of-cats)),
 newest first, and the screen draws the one on screen. It opens on the cat it was opened for
 (`EncounterDetailStoreTest`, *the pages are the opened cat's outing, newest first, with the opened cat on
-screen*); a screen restored after the process died starts on the cat it was showing, while that cat is live,
-and on the opened one otherwise (*the screen starts on the restored cat while it is live*; *a restored cat that
-is gone starts the screen on the opened one*). A cat logged into the outing while the screen is open joins the
-pages, and the screen stays on its cat (*a cat logged into the outing joins the pages and the screen stays on
-its cat*). A cat leaves the pages only by being deleted, so an outing a delete splits in two stays whole on them
-(`OutingPagesTest`, *an outing a delete splits in two stays whole on the pages*). Each page shows its own cat's
-place (`EncounterDetailStoreTest`, *each page shows its own cat's place*). `OutingPages` keeps the pages and the
-cat on screen; the Store reads every live cat and hands it each change.
+screen*). The Store can also start on a cat handed to it as the one a restored screen was showing, while
+that cat is live, and on the opened one otherwise (*the screen starts on the restored cat while it is live*;
+*a restored cat that is gone starts the screen on the opened one*); the screen does not save that cat yet, so
+after the process died it reopens on the cat it was opened for. A cat logged into the outing while the screen
+is open joins the pages, and the screen stays on its cat (*a cat logged into the outing joins the pages and the
+screen stays on its cat*). A cat leaves the pages only by being deleted, so an outing a delete splits in two
+stays whole on them (`OutingPagesTest`, *an outing a delete splits in two stays whole on the pages*). Each page
+shows its own cat's place (`EncounterDetailStoreTest`, *each page shows its own cat's place*). `OutingPages`
+keeps the pages and the cat on screen; the Store reads every live cat and hands it each change.
 
 ## Where it was found
 
@@ -109,7 +110,9 @@ reach it; that the real map lets them through is checked on a device.
 Delete is a soft delete: the row gets a `deletedAt` and disappears from every list and count, but
 stays in the database until the purge worker removes it. It deletes the cat on screen. The screen then
 shows a "removed" state with an Undo chip for `Tuning.UNDO_VISIBLE`, the same window the Counter's undo
-uses, so the two undo gestures in the app behave alike — even while other cats of its outing remain. When
+uses, so the two undo gestures in the app behave alike — even while other cats of its outing remain, and
+whatever happens to them meanwhile (*the removed state holds while another cat of the outing changes
+mid-delete*). When
 the window closes the chip disappears and the screen navigates back to the list, exactly once. Undo inside
 the window clears `deletedAt`; the encounter is live again and the screen returns to its pages with that
 cat on screen (`EncounterDetailStoreTest`, *delete removes the cat on screen, and undo shows it again*).
@@ -264,5 +267,5 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 A cat's photos cannot be reordered (see `photos.md`).
 
-The screen draws the cat on screen alone: swiping between the pages, their position in the bar, and moving
-on to the neighbouring outing are not built yet.
+The screen draws the cat on screen alone: swiping between the pages, their position in the bar, keeping the
+cat on screen across the process dying, and moving on to the neighbouring outing are not built yet.

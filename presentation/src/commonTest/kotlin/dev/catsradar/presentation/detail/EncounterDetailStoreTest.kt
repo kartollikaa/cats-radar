@@ -194,6 +194,26 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `the removed state holds while another cat of the outing changes mid-delete`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        repository.softDeleteDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
+        runCurrent()
+        assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+        advanceTimeBy(2.seconds)
+        runCurrent()
+        assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+        assertEquals(listOf(ID), repository.softDeletedIds)
+    }
+
+    @Test
     fun `each page shows its own cat's place`() = runTest(mainDispatcher) {
         repository.insert(
             encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
