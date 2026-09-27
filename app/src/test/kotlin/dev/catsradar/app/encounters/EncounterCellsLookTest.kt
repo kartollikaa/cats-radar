@@ -24,6 +24,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -111,6 +112,12 @@ class EncounterCellsLookTest {
 
     private fun PixelMap.at(x: Dp, y: Dp): Color = with(compose.density) { this@at[x.roundToPx(), y.roundToPx()] }
 
+    // Only a medium corner splits these two points: a small one covers the first, a large one misses the second.
+    private fun PixelMap.assertMediumCorner(box: DpRect, outside: Color, inside: Color) {
+        assertEquals(outside, at(box.left + 4.5.dp, box.top + 4.5.dp), "outside a medium corner")
+        assertEquals(inside, at(box.left + 7.dp, box.top + 7.dp), "inside a medium corner")
+    }
+
     private fun SemanticsNodeInteraction.textColor(): Color {
         val layouts = mutableListOf<TextLayoutResult>()
         fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
@@ -158,14 +165,20 @@ class EncounterCellsLookTest {
     }
 
     @Test
-    fun `a pair's time sits on a dark chip`() {
+    fun `a pair keeps medium corners, its time on a dark chip over its bottom-start corner`() {
         show(grid())
 
         val time = compose.onNodeWithText("4:58 PM", useUnmergedTree = true)
         assertEquals(scheme.inverseOnSurface, time.textColor())
         val bounds = time.getUnclippedBoundsInRoot()
         val middle = bounds.top + (bounds.bottom - bounds.top) / 2
-        assertEquals(scheme.inverseSurface, screen().at(bounds.left - 4.dp, middle))
+        val tile = compose.onNodeWithContentDescription("4:58 PM", substring = true).getUnclippedBoundsInRoot()
+        val pixels = screen()
+        assertEquals(scheme.inverseSurface, pixels.at(bounds.left - 4.dp, middle))
+        val overBottomStart = bounds.right < tile.left + (tile.right - tile.left) / 2 &&
+            bounds.top > tile.top + (tile.bottom - tile.top) / 2
+        assertTrue(overBottomStart, "the chip at the pair tile's bottom-start corner: $bounds in $tile")
+        pixels.assertMediumCorner(tile, outside = scheme.surfaceContainerLow, inside = scheme.surfaceContainerHighest)
     }
 
     @Test
@@ -250,9 +263,7 @@ class EncounterCellsLookTest {
         val pixels = screen()
         assertEquals(scheme.surfaceContainerLow, pixels.at(centre, first.bottom - 3.dp), "a gap between two cats")
         assertEquals(scheme.surfaceContainerLow, pixels.at(card.left + 2.dp, card.top + 2.dp), "the card's corner")
-        // Only a medium corner splits these two: a small one covers the first, a large one misses the second.
-        assertEquals(scheme.surfaceContainerLow, pixels.at(card.left + 4.5.dp, card.top + 4.5.dp), "outside the corner")
-        assertEquals(scheme.surface, pixels.at(card.left + 7.dp, card.top + 7.dp), "inside the corner")
+        pixels.assertMediumCorner(card, outside = scheme.surfaceContainerLow, inside = scheme.surface)
         assertEquals(scheme.surface, pixels.at(centre, card.top + 2.dp), "the card itself")
     }
 
