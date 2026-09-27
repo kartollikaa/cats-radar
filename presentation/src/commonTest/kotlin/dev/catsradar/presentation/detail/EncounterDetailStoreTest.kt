@@ -194,6 +194,50 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `settling on another page puts that cat on screen`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(OTHER, state.currentId)
+        assertEquals(1, state.currentNumber)
+    }
+
+    @Test
+    fun `a settled id off the pages is ignored`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))
+        val store = newStore()
+        runCurrent()
+        val before = assertIs<EncounterDetailState.Loaded>(store.state.value)
+
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        store.dispatch(EncounterDetailIntent.PageSettled("elsewhere"))
+        runCurrent()
+
+        assertEquals(before, store.state.value)
+    }
+
+    @Test
+    fun `after settling, a delete removes the settled cat`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+
+        assertEquals(listOf(OTHER), repository.softDeletedIds)
+    }
+
+    @Test
     fun `the removed state holds while another cat of the outing changes mid-delete`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))

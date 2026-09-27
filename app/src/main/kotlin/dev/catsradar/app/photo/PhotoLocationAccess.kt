@@ -9,10 +9,10 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 
-// Taking limited access in ACCESS_MEDIA_LOCATION's dialog grants READ_MEDIA_VISUAL_USER_SELECTED, which
-// MediaProvider then counts as access to photo locations.
-internal fun Context.mayReadPhotoLocations(): Boolean =
-    isGranted(Manifest.permission.ACCESS_MEDIA_LOCATION) || hasLimitedAccess()
+/** Whether the app may read where the photos it is handed were taken; ask afresh each time, as it can lapse. */
+internal fun interface PhotoLocationAccess {
+    fun granted(): Boolean
+}
 
 /** The latest photos the user shared through limited access, up to [maxItems], leaving out the ones this app saved. */
 internal fun Context.photosSharedThroughLimitedAccess(maxItems: Int): List<Uri> {
