@@ -65,7 +65,7 @@ fun `the walk button wears the tertiary container whether or not a walk is on`()
 - [ ] **Step 2:** the height test fails (today's button is about 48 dp); the colour test fails on the idle state (`secondaryContainer`). Read the XML.
 - [ ] **Step 3: Implement.** In `WalkButtonSurface`: `shape = ShapeDefaults.Large` (Material's own extended-FAB corner, 16 dp; `extendedFabShape` reads the theme's 28 dp `large`, a pill at this height), `color = MaterialTheme.colorScheme.tertiaryContainer`, `contentColor = onTertiaryContainer`, and `Modifier.heightIn(min = 56.dp)` on the `Row` (a floor, as the FAB's own, so a large font grows it) with `padding(horizontal = 20.dp)`. In `WalkButton`, `modifier.shadow(elevation = 2.dp, shape = …)` replaces the clip: it draws the shadow and clips the gesture's fill and ripple to the same corners. A third test samples a pixel 6 dp in from the top-left corner: `tertiaryContainer` inside a 16 dp curve, background outside a pill's.
 - [ ] **Step 4:** the two tests pass; `:app:testDebugUnitTest --tests 'dev.catsradar.app.counter.*'` stays green (`CounterControlsTest` in full).
-- [ ] **Step 5: Mutation** (commit first): height 48 dp fails the first test; `secondaryContainer` for the idle state fails the second; `FloatingActionButtonDefaults.extendedFabShape` fails the corner test. Restore.
+- [ ] **Step 5: Mutation** (commit first): height 48 dp fails the first test; `secondaryContainer` for the idle state fails the second; a 28 dp corner, what `extendedFabShape` reads, fails the corner test. Restore.
 - [ ] **Step 6: Commit** `feat: the walk button as an extended FAB`.
 
 ### Task 2: Undo as a filled tonal button

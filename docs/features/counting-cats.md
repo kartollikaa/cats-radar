@@ -4,7 +4,7 @@ One tap on the counter screen logs an encounter. The tally is `LogTally`: it bui
 `Encounter` of `kind = TALLY`, `origin = APP`, `locationSource = NONE`, inserts it, and returns
 immediately — location is attached afterward, out of band. `CounterStore` fires a haptic tick
 before the insert even starts, so the tap never waits on the write, let alone on GPS. The number
-on screen is the total from `ObserveStats`, every non-deleted encounter; after a tap an "Undo" chip
+on screen is the total from `ObserveStats`, every non-deleted encounter; after a tap an "Undo" button
 shows for `Tuning.UNDO_VISIBLE`, and each press of it soft-deletes the newest cat of the run of taps
 it belongs to (below). The very first tally the app ever sees also fires a system location-permission
 request; a later denial surfaces as a dismissible one-line hint on the counter screen with its own
@@ -16,7 +16,7 @@ Each tap raises a **"+N"** badge in the count block's top corner that counts the
 run of taps, the same run Undo walks back (below), and stays up for as long as that run is open.
 Every tap adds one and every Undo takes one off: three taps read "+3", an Undo turns it into "+2",
 and the Undo that takes back the run's last cat takes the badge with it. When the undo window runs
-out, the badge goes with the chip, and the next tap starts again from one. Like the haptic, a tap's
+out, the badge goes with Undo, and the next tap starts again from one. Like the haptic, a tap's
 one lands before the write rather than after it succeeds, so holding the button down still counts up
 smoothly. So a tap whose write is still running is on the badge before it is in the run: it keeps
 its one when the window closing, or an Undo of a newer tap, empties the run around it, and joins or
@@ -62,10 +62,13 @@ outside the count block — inside the block, a follow-up tap on the same spot w
 take a cat away instead of adding one. The walk button sits in the middle of that row, and Undo
 appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
 a longer translation — does the button step aside toward the start, and past that it shortens its
-label: Undo is never squeezed. A tap on the button starts a walk, but stopping one takes a press
-held until a fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)).
-The button keeps one height whether it starts or stops a walk, and the outing line keeps its line,
-so a walk or an outing starting or ending leaves the block the same size. With no outing open the
+label: Undo is never squeezed. The walk button is an extended floating action button in the
+theme's tertiary container whether a walk is on or not, and Undo is a filled tonal button beside it
+(`WalkRowLookTest`). A tap on the button starts a walk, but stopping one takes a press held until a
+fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). The button
+keeps one height whether it starts or stops a walk, growing only for a large font rather than
+clipping its two lines, and the outing line keeps its line, so a walk or an outing starting or
+ending leaves the block the same size. With no outing open the
 line says how many more cats reach the next milestone ("38 more to reach 100", the Statistics
 wording); with no cats yet, and past the last rung, it is empty (`CounterMilestoneTest`). The location hint and the import progress and summary appear above the count, each as the
 same notice card: a round icon, its words, read by TalkBack as one item, and its actions (see
@@ -75,14 +78,14 @@ the Counter scrolls instead.
 
 ## Undoing a run of taps
 
-The undo window belongs to a run of taps, not to one tap. Every tap made while the chip is up joins
+The undo window belongs to a run of taps, not to one tap. Every tap made while Undo is up joins
 the run and restarts the window; every Undo takes back the newest tap of the run, soft-deleting its
 cat and cancelling its location attach — or, for a tap still being written, deleting it the moment
 it lands, before it ever gets one (see *At the edges*) — and restarts the window again. So five
-mistaken taps come back off with five Undos, and the chip stays up until the last of them is gone,
+mistaken taps come back off with five Undos, and Undo stays up until the last of them is gone,
 the "+N" badge counting down with it. A tap after an Undo joins the same run and counts on from what
 the badge has left.
-Once the window runs out with nothing pressed, the run is closed: the chip goes, and nothing brings
+Once the window runs out with nothing pressed, the run is closed: Undo goes, and nothing brings
 it back except a fresh tap. The coat grid's ring follows the run as well — after an Undo it rings the
 coat of the newest cat still in it (`coat.md`). The cases below that concern undo are in
 `CounterStoreUndoTest`.
@@ -129,7 +132,7 @@ different cats, never the same one twice (*two undos dispatched back to back tak
 different cats*); an Undo with nothing left to take back does nothing (*undo walks a run of taps back newest
 first until every cat of it is gone*).
 
-A tap or an Undo while the chip is showing restarts the window rather than stacking a second timer
+A tap or an Undo while the Undo button is showing restarts the window rather than stacking a second timer
 (*a second tap restarts the undo window, which then expires and disables undo*; *each undo restarts
 the window for the cats still left in the run*). The window is shorter than
 `Tuning.LOCATION_TIMEOUT` — a fix can still be resolving after Undo has already faded from the
@@ -146,7 +149,7 @@ after a kill-and-relaunch does not re-open the system dialog (*a fresh Store aft
 does not re-request an already-requested permission*). The explicit "Grant" button on the hint
 bypasses that flag and always re-requests. A failed insert (disk full, for instance) is swallowed:
 the tap still ticks and, on the very first tap, still asks for location permission, but no row is
-written and no undo chip appears (*a failed insert is swallowed instead of crashing the store, but
+written and no Undo appears (*a failed insert is swallowed instead of crashing the store, but
 the tap still ticks*); inside a run, the failed tap's one comes back off the "+N" and the rest of the
 run stays undoable (*a tap whose write fails takes its one back off the burst*). A tap whose write
 is still running when the window closes keeps its one on the badge until it lands and opens a run of
@@ -163,7 +166,7 @@ the window closed does not reopen it*).
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
   press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
   block's floor and the scroll past it), `WalkRow.kt` (the walk button and Undo's place beside it),
-  `CurrentOutingLine.kt` (the outing in progress), `UndoChip.kt`
+  `CurrentOutingLine.kt` (the outing in progress), `UndoButton.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`
 
