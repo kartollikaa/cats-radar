@@ -30,12 +30,14 @@ class CatsRadarThemeTest {
     val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
     @Test
-    fun `the theme moves with the expressive motion scheme`() {
+    fun `the theme moves with the expressive springs`() {
         var motion: MotionScheme? = null
         compose.setContent { CatsRadarTheme { motion = MaterialTheme.motionScheme } }
         compose.waitForIdle()
 
-        assertSame(MotionScheme.expressive(), motion)
+        val expressive = MotionScheme.expressive()
+        assertEquals(expressive.defaultSpatialSpec<Float>(), motion?.defaultSpatialSpec<Float>())
+        assertEquals(expressive.defaultEffectsSpec<Float>(), motion?.defaultEffectsSpec<Float>())
     }
 
     @Test
