@@ -132,15 +132,16 @@ the end of the row, and the rule that it never moves the walk button stands.
 **The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
 `surfaceContainerHighest`, and each coat has a shape of its own (owner, 2026-09-27, over one shape
 per column): Ginger `Circle`, Ginger & white `Square`, White `Clover4Leaf`, Calico mostly white
-`Arch`, Calico little white `Cookie4Sided`, Brown `Slanted`, Brown & white `Gem`, Grey `Oval`, Grey
-& white `Pentagon`, Black `ClamShell`, Black & white `Bun`, and no coat `Ghostish`, all soft,
-rounded forms (owner: the spiky ones were "very angry"). None is the count's twelve-sided cookie.
-The ringed coat's shape fills with `primaryContainer` and takes a 2 dp `primary` outline; its name
-stays under it. When the ring moves, clears and follows Undo does not change. The rule that a row's
-cells share the tallest one's height so their rings match goes: the ring is now on the shape, and
-every shape is the same size. The grid is shared, so the coat question after a photo and the map's
-coat filter get the same shapes, and the filter's *Not specified* cell takes no coat's shape. The
-grid must not grow taller than today's.
+`Arch`, Calico little white `Cookie4Sided`, Brown `Slanted`, Brown & white `Gem`, Grey `Fan`, Grey &
+white `Pentagon`, Black `PuffyDiamond`, Black & white `Bun`, and no coat `Ghostish`: soft, rounded
+forms (owner: the spiky ones were "very angry"), each spanning at least nine tenths of its square
+both ways and stretched onto the whole of it, so every tile's shape is the same size (owner: the
+clam shell sat small). None is the count's twelve-sided cookie. The ringed coat's shape fills with
+`primaryContainer` and takes a 2 dp `primary` outline; its name stays under it. When the ring moves,
+clears and follows Undo does not change. The rule that a row's cells share the tallest one's height
+so their rings match goes: the ring is now on the shape, and every shape is the same size. The grid
+is shared, so the coat question after a photo and the map's coat filter get the same shapes, and the
+filter's *Not specified* cell takes no coat's shape. The grid must not grow taller than today's.
 
 **Photo.** The split button it already is, filled `primary`: *Photo* with the camera, and the
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
