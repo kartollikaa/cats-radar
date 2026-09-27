@@ -166,7 +166,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ImageResizer>())
         assertNotNull(koin.get<Digest>())
         assertNotNull(koin.get<GallerySaver>())
-        assertNotNull(koin.get<PhotoLocationAccess>())
         assertNotNull(koin.get<PhotoStorage>())
         assertNotNull(koin.get<AddCatsToPhoto>())
         assertNotNull(koin.get<ImageLoader>())

@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 
-// Taking limited access in ACCESS_MEDIA_LOCATION's dialog grants READ_MEDIA_VISUAL_USER_SELECTED, which
-// MediaProvider then counts as access to photo locations.
+// Limited access taken in ACCESS_MEDIA_LOCATION's dialog grants that permission one-time only, but
+// READ_MEDIA_VISUAL_USER_SELECTED for good, and MediaProvider counts the latter as access to photo locations.
 fun Context.mayReadPhotoLocations(): Boolean =
     isGranted(Manifest.permission.ACCESS_MEDIA_LOCATION) || hasLimitedAccess()
 
