@@ -22,6 +22,7 @@
 | E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, which replaces the inline picker. | safe | ~500 | E4, E6 | planned |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
+| E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -91,6 +92,13 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** additive; a read-only count.
 - **Cleanup owed:** none.
 
+### Slice E10 — Statistics as a dashboard
+- **In scope:** `Stats.byDay` in `StatsCalculator`; the day series in `StatisticsState`; the chart card with
+  its pill, the tiles, the coat share bars, the outings grid; `statistics.md`.
+- **Out of scope:** Places; the empty state; the Counter.
+- **Ships safely because:** the same numbers on the same tab; the chart is additive.
+- **Cleanup owed:** none.
+
 ## Decision log
 
 - 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
@@ -105,5 +113,8 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   it honestly, with only the room the controls leave. Version 5's stat tiles, separate milestone line and
   62 dp coat shapes left 140 px; the Roomy layout (no tiles, the milestone in the outing line's slot,
   52 dp shapes) leaves about 300. E3 drops the tiles, E2 shares the slot, E4 keeps the grid no taller.
+- 2026-09-27: the owner found the Immersive direction's stats "really convenient for the Stats page" and
+  asked for the Stats tab to be redesigned too; prototype version 12 draws it, and the spec's section 5 and
+  E10 record it.
 - 2026-09-27: the owner said "work in autonomous mode": the spec's open details stand as decided, and each
   slice is planned, built, reviewed and gated in turn.

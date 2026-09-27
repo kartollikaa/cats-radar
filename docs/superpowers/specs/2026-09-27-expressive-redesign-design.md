@@ -43,8 +43,9 @@ Read against renders of the current build and the composables in `ui/…/counter
 
 ## Out of scope
 
-- Encounters, the Map tab, Statistics, Settings, Places, the photo viewer, the widget, notifications
-  and the launcher icon. They change only as far as the theme in section 1 reaches every screen.
+- Encounters, the Map tab, Settings, Places, the photo viewer, the widget, notifications and the
+  launcher icon. They change only as far as the theme in section 1 reaches every screen. Statistics
+  joined the redesign later (section 5).
 - The palette and the colour policy. Dynamic colour on Android 12 and later, the teal palette below
   it and in every preview: unchanged.
 - A bundled font. The prototype's faces were stand-ins for the platform's.
@@ -200,6 +201,46 @@ id. A delete renumbers the cats logged after it, and an imported photo from befo
 that cat. `ObserveEncounterNumber(id)` in `:domain` emits it, null while the cat is not live, from a
 count the DAO answers. The number is its own slice; until it lands, the facts row starts with the day.
 
+## 5. Statistics
+
+Added 2026-09-27 at the owner's request: the stats of the prototype's *Immersive* direction, the bar
+chart, the range pill and the tiles, "are really convenient for the Stats page", so the Stats tab is
+redesigned as well. Prototype version 12 draws it under *Stats*.
+
+**The headline** keeps its primary-container card with the total in `displayLargeEmphasized`, "cats
+seen" under it and the milestone line.
+
+**The chart.** A card headed **Last 7 days** or **Last 30 days**, with a pill at the end of the
+header switching between the two. Under it, one bar per day: the cats logged that day, by the
+encounter's own local date like the existing windows, today's bar in `primary` and the others in
+`surfaceContainerHighest`, the tallest day setting the scale. Under the bars, weekday names for seven
+days and a date every seventh bar for thirty. A tap on a bar names its day and count in a line under
+the chart ("6 cats · Sat 26 Sep"); today's bar is named until one is tapped. The line keeps its height
+while empty, so the tiles under it do not move. A day with no cats draws a stub, so the row of bars
+never has gaps.
+
+**The tiles.** Two rows of three, on `surfaceContainerLow` with `medium` corners, a number in
+`titleLargeEmphasized` over a `bodySmall` label: **Today** (in `primaryContainer`, the one tile
+highlighted), **Last 7 days**, **Last 30 days**; then **With a photo**, **Streak** and **Longest
+streak** with "days" set small beside the number. They are the numbers of today's *When* and
+*Streaks* cards, and each reads to TalkBack as one item ("3, Today").
+
+**By coat.** Each row keeps its face, its name and "38 · 26%", and gains a share bar under the name:
+the row's count over the busiest coat's, in the coat's fur colour, on `surfaceContainerHighest`. The
+*Not specified* row's bar is `outline`. It is the Places drill-down's share bar, drawn in the coat's
+own colour.
+
+**Outings.** The same figures in the same order, as a two-column grid of small stats: the value in
+`titleMediumEmphasized` with its unit set small beside it, the label under it. The best outing's rate
+sits in the best outing's label ("Best outing · 1.3 / min"). The walked rows appear and disappear as
+they do today.
+
+**Places** keeps its card with the chevron. **The empty state** at zero cats is unchanged.
+
+**Underneath.** `Stats` gains `byDay`, the last thirty days' counts oldest first, today last, computed
+in `StatsCalculator` from the same dates as the windows. `StatisticsState` gains the day series with
+its labels, built by the mapper; the composable draws it. Nothing else in the domain changes.
+
 ## Behaviour changes
 
 1. **The detail's coat is set in a sheet**, not in the inline strip. `coat.md` § *Changing it later* is
@@ -208,8 +249,8 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
    is unchanged. `encounter-detail.md` changes.
 3. **The coat ring is drawn on the shape**, not around the whole cell. `coat.md` changes.
 4. **New information**: the milestone arc and the milestone in the status line on the Counter, the
-   cat's number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md`
-   change.
+   cat's number and the accuracy circle on the detail, the per-day chart on Statistics.
+   `counting-cats.md`, `encounter-detail.md` and `statistics.md` change.
 
 ## Decided here
 
@@ -220,6 +261,8 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
   away.
 - The cat's number follows the live log, so a delete or an older import renumbers.
 - The Russian titles use the app's own «котик».
+- Statistics joins the redesign (owner, 2026-09-27) with the Immersive direction's chart, range pill and
+  tiles; the Counter itself keeps no tiles.
 
 ## The outing pager
 
@@ -239,7 +282,8 @@ from a flat one.
   past the last; each coat's title token; the facts row
   with and without a place.
 - **Domain:** `Milestone.reached` on every rung and between them; `ObserveEncounterNumber` counts only
-  live cats, oldest first, breaks ties by id, and renumbers on a delete.
+  live cats, oldest first, breaks ties by id, and renumbers on a delete; `Stats.byDay` holds thirty
+  entries, today last, a cat logged abroad on its own date, and zero for a day with no cats.
 - **Compose, Robolectric in `:app`:**
   - A tap anywhere on the count block logs a cat, the badge counts the run, and no arc is drawn past
     the last rung.
@@ -248,6 +292,8 @@ from a flat one.
   - A tap on the second photo opens the viewer on it; the add items open the camera and the picker
     and disable while attaching.
   - The coat card opens the sheet; a coat sets and closes; the ringed coat clears and closes.
+  - Statistics: the pill switches the chart between seven and thirty bars; a tap on a bar names its day;
+    the tiles show the six numbers; each coat row's bar is the width of its share.
   - The menu's entries and the Remove button reach the same intents as today's.
 - **Kept green:** the Counter's *controls do not jump* and floor tests, `NavTransitionTimingTest`,
   `BottomSheetUsageTest`, `BottomSheetNavigationTest`, `CatsRadarColorsTest` (no palette change).
