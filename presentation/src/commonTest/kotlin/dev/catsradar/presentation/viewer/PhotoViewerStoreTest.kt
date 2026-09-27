@@ -215,6 +215,18 @@ class PhotoViewerStoreTest {
         }
 
     @Test
+    fun `a photo given here to a cat another install logged is offered here`() = runTest(mainDispatcher) {
+        val foreign = photographedCat(galleryUri = SAVED, install = "another-install")
+        repository.insert(foreign.copy(photos = foreign.photos.map { it.copy(deviceId = INSTALL) }))
+        galleryItems.present += SAVED
+        val store = newStore()
+
+        runCurrent()
+
+        assertEquals(listOf(true), offered(store))
+    }
+
+    @Test
     fun `an original deleted after the check says so once at the tap and is offered no more`() =
         runTest(mainDispatcher) {
             repository.insert(photographedCat(galleryUri = SAVED))

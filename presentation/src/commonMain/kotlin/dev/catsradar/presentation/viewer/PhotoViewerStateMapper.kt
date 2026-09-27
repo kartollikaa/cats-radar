@@ -14,10 +14,7 @@ class PhotoViewerStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    /**
-     * Null when the cat has no photo to show; opens on [openedOn], or on the cover when the cat has no such photo.
-     * A photo is offered in the gallery only once [galleryTargets] says it opens there.
-     */
+    /** Null when the cat has no photo to show; opens on [openedOn], or on the cover when the cat has no such photo. */
     fun map(
         encounter: Encounter,
         today: LocalDate,
@@ -25,18 +22,14 @@ class PhotoViewerStateMapper(
         galleryTargets: Map<String, GalleryTarget>,
     ): PhotoViewerState.Showing? {
         if (encounter.photos.isEmpty()) return null
-        return PhotoViewerState.Showing(
-            photos = encounter.photos.map { photo ->
-                ViewerPhoto(
-                    id = photo.id,
-                    path = photoStorage.resolve(photo.photoPath),
-                    opensInGallery = galleryTargets[photo.id] is GalleryTarget.Open,
-                )
-            }.toImmutableList(),
+        val showing = PhotoViewerState.Showing(
+            photos = encounter.photos.map { ViewerPhoto(id = it.id, path = photoStorage.resolve(it.photoPath)) }
+                .toImmutableList(),
             firstPage = encounter.photos.indexOfFirst { it.id == openedOn }.coerceAtLeast(0),
             timeLabel = dateTimeFormatter.time(encounter),
             dayLabel = dateTimeFormatter.dayHeader(encounter, today),
         )
+        return offerGallery(showing, galleryTargets)
     }
 
     fun offerGallery(showing: PhotoViewerState.Showing, galleryTargets: Map<String, GalleryTarget>) = showing.copy(
