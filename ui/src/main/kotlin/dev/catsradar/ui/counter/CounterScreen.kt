@@ -10,6 +10,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -39,7 +42,7 @@ fun CounterScreen(
     onWalkHoldRelease: () -> Unit = {},
     onCoatPromptAction: (CoatPromptAction) -> Unit = {},
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize().semantics { isTraversalGroup = true }) {
         CounterColumn(
             state = state,
             onTallyClick = onTallyClick,
@@ -55,7 +58,10 @@ fun CounterScreen(
         ImportIsland(
             progress = state.importProgress,
             summary = state.importSummary,
-            modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics { traversalIndex = -1f },
             onUndoClick = onUndoImportClick,
             onDismiss = onImportSummaryDismiss,
         )

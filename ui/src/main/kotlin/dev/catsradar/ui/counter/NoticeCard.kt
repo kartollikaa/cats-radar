@@ -29,7 +29,6 @@ import dev.catsradar.ui.theme.ThemePreviews
 internal fun NoticeCard(
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -42,46 +41,37 @@ internal fun NoticeCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            NoticeIcon(iconRes)
             Column(
                 modifier = Modifier.weight(1f).padding(end = 8.dp).semantics(mergeDescendants = true) {},
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 content = content,
             )
-            trailing()
         }
     }
 }
 
 @Composable
-internal fun NoticeDetail(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
+internal fun NoticeIcon(@DrawableRes iconRes: Int, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.size(40.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.size(20.dp),
+        )
+    }
 }
 
 @ThemePreviews
 @Composable
 private fun NoticeCardPreview() {
     CatsRadarTheme {
-        NoticeCard(iconRes = R.drawable.ic_check, modifier = Modifier.padding(16.dp)) {
-            Text(text = "12 cats added", style = MaterialTheme.typography.titleSmall)
-            NoticeDetail(text = "3 already had them")
+        NoticeCard(iconRes = R.drawable.ic_location_on, modifier = Modifier.padding(16.dp)) {
+            Text(text = "Allow location to see where you meet cats", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

@@ -1,6 +1,5 @@
 package dev.catsradar.ui.counter
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -103,7 +101,7 @@ private fun IslandCard(modifier: Modifier = Modifier, content: @Composable RowSc
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RowScope.Running(progress: ImportProgressState) {
-    RoundIcon(R.drawable.ic_photo_library)
+    NoticeIcon(R.drawable.ic_photo_library)
     Column(modifier = Modifier.weight(1f).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = stringResource(R.string.counter_import_running_count, progress.done, progress.total),
@@ -123,7 +121,7 @@ private fun RowScope.Summary(
     onDismiss: () -> Unit,
 ) {
     if (summary.thumbPaths.isEmpty()) {
-        RoundIcon(R.drawable.ic_check, modifier = Modifier.testTag(ImportCheckTestTag))
+        NoticeIcon(R.drawable.ic_check, modifier = Modifier.testTag(ImportCheckTestTag))
     } else {
         PhotoStack(summary.thumbPaths)
     }
@@ -186,21 +184,6 @@ private fun PhotoStack(paths: ImmutableList<String>) {
                     .testTag(ImportThumbTestTag),
             )
         }
-    }
-}
-
-@Composable
-private fun RoundIcon(@DrawableRes iconRes: Int, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.size(40.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.size(20.dp),
-        )
     }
 }
 

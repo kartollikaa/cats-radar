@@ -5,12 +5,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -94,7 +98,7 @@ class ImportIslandTest {
         show()
 
         compose.onNodeWithText(context.getString(R.string.counter_import_running_count, 7, 12)).assertIsDisplayed()
-        compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(7f / 12, 0f..1f))).assertExists()
+        compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(7f / 12, 0f..1f))).assertIsDisplayed()
         compose.onAllNodesWithText(context.getString(R.string.counter_undo)).assertCountEquals(0)
         allDescribedAs(R.string.counter_import_close).assertCountEquals(0)
     }
@@ -106,9 +110,8 @@ class ImportIslandTest {
         state = state.copy(importSummary = mixed)
         show()
 
-        added().assertIsDisplayed()
         val both = context.getString(R.string.counter_import_parts, skipped, failed)
-        compose.onNodeWithText(both, useUnmergedTree = true).assertIsDisplayed()
+        compose.onNode(hasText(plural(R.plurals.counter_import_added, 9)) and hasText(both)).assertIsDisplayed()
         state = state.copy(importSummary = mixed.copy(skipped = null))
         compose.waitForIdle()
         compose.onNodeWithText(failed, useUnmergedTree = true).assertIsDisplayed()
@@ -157,6 +160,17 @@ class ImportIslandTest {
         added().performTouchInput { swipeRight() }
         compose.waitForIdle()
         assertEquals(2, dismissals)
+    }
+
+    @Test
+    fun `TalkBack reaches the card before the count it covers`() {
+        state = state.copy(importSummary = mixed)
+        show()
+
+        compose.onNode(
+            hasAnyDescendant(hasText(plural(R.plurals.counter_import_added, 9))) and
+                SemanticsMatcher.expectValue(SemanticsProperties.TraversalIndex, -1f),
+        ).assertExists()
     }
 
     @Test
