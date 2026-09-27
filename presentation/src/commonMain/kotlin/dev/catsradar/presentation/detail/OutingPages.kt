@@ -5,7 +5,11 @@ import dev.catsradar.domain.session.OutingWindow
 import dev.catsradar.domain.session.outingWindow
 
 /** [currentId] is one of [window]'s cats. */
-internal data class ShownPages(val window: OutingWindow, val currentId: String)
+internal data class ShownPages(val window: OutingWindow, val currentId: String) {
+    /** These pages with [catId] on screen, or unchanged when it is not one of them. */
+    fun settledOn(catId: String): ShownPages =
+        if (window.cats.any { it.id == catId }) copy(currentId = catId) else this
+}
 
 /** The cats a detail screen pages through and the one on screen; a cat leaves the pages only by being deleted. */
 internal class OutingPages(private val openedId: String, private val restoredId: String?) {
@@ -36,11 +40,9 @@ internal class OutingPages(private val openedId: String, private val restoredId:
     }
 
     fun settle(catId: String) {
-        val current = shown
-        if (current != null && catId in pageIds) {
-            anchor = catId
-            shown = current.copy(currentId = catId)
-        }
+        val settled = shown?.settledOn(catId) ?: return
+        anchor = settled.currentId
+        shown = settled
     }
 
     /** The pages moved to the outing next to them, on its cat nearest to them; null when there is none. */
