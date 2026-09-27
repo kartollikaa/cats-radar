@@ -25,7 +25,6 @@ import dev.catsradar.domain.usecase.ObserveRegion
 import dev.catsradar.domain.usecase.ObserveStats
 import dev.catsradar.domain.usecase.ObserveTodayCount
 import dev.catsradar.domain.usecase.ObserveUntriedPlaceCells
-import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.ObserveWalkStats
 import dev.catsradar.domain.usecase.ObserveWalkTracks
 import dev.catsradar.domain.usecase.PruneInstalledUpdates
@@ -89,7 +88,6 @@ val domainModule = module {
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factory { ObserveOpenWalk(walkRepository = get()) }
-    factory { ObserveWalkElapsed(observeOpenWalk = get(), clock = get()) }
     factoryOf(::ObserveWalkTracks)
     factory { ObserveWalkStats(observeWalkTracks = get(), computeDispatcher = Dispatchers.Default) }
     factoryOf(::ObserveOutingTracks)

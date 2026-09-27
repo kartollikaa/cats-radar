@@ -160,6 +160,5 @@ private val sampleCounterStateOutingInProgress = CounterState(
         rate = RateState(value = "6.9", unit = RateUnit.PER_HOUR),
     ),
     walkingMode = true,
-    walkElapsedLabel = "48 min",
     milestone = CounterMilestoneState(MilestoneState(valueLabel = "25", remainingLabel = "13"), fraction = 2f / 15f),
 )
