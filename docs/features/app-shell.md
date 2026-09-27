@@ -158,9 +158,13 @@ large title style, which is a heading. When the title alone does not say what th
 line under it says so. The sheet's actions end it, at the end edge (`SheetActions`). The spot list,
 the coat question after a photo and the map's coat filter all follow it.
 
-**Why not `MaterialExpressiveTheme`.** In the stable material3 the app uses, it and `MotionScheme`
-are internal — public only in the 1.5 alphas. The theme stays on `MaterialTheme`, and a screen that
-wants springy motion gives its own animation a spring spec.
+**Expressive.** The theme is `MaterialExpressiveTheme` with the expressive motion scheme
+(`MotionScheme.expressive()`), over the same colours, shapes and type. Components take their
+Expressive defaults: buttons change shape under a press, and motion inside components is a spring.
+At rest the screens look as they did before the switch. Screen transitions keep the specs above. The
+build pins a material3 alpha, where the expressive theme and its components are public;
+`CatsRadarThemeTest` fails if the theme stops moving with the expressive scheme or drops the scheme,
+shapes or type it is given.
 
 ## At the edges
 

@@ -2,7 +2,8 @@
 
 - **Date:** 2026-09-27
 - **Status:** direction chosen by the owner in chat, 2026-09-27 ("I like expressive from version 5. stick
-  to it"). The details below were decided in this document and wait for the owner's review.
+  to it"). The details below were decided autonomously at the owner's request ("work in autonomous
+  mode"), 2026-09-27.
 - **Decomposition:** [docs/tbd/decompositions/2026-09-27-expressive-redesign.md](../../tbd/decompositions/2026-09-27-expressive-redesign.md)
 - **Builds on:** [app-shell.md § Look](../../features/app-shell.md#look), the
   [design pass of 2026-09-25](./2026-09-25-design-pass-remaining-screens-design.md), and the
@@ -204,7 +205,7 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
 4. **New information**: the milestone arc and line and the stat tiles on the Counter, the cat's
    number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md` change.
 
-## Decided here, open to the owner's review
+## Decided here
 
 - The colour policy stays: Expressive works with the wallpaper's colours as well as with the teal.
 - No bundled font.
@@ -214,12 +215,15 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
 
 ## The outing pager
 
-The outing pager's slices from P3a-2 on are planned, and no branch carries them. The detail slices of
-this redesign change what a page draws; P3a-2 and P3b change the Store and wrap the pages in a pager.
-They touch `EncounterDetailScreen.kt` together, so they land one after the other, never in parallel
-branches. This redesign's detail slices go first. When P3b lands, the carousel sits inside the
-pager the way the photo pager does today: it takes a horizontal drag until its own end, then the pager
-takes it. That is checked on a device, since a JVM test cannot tell a nested fling from a flat one.
+The outing pager's P3a-2 was in progress in another session when this was written, and P3b to P5b
+are planned. The detail slices of this redesign change what a page draws; P3a-2 and P3b change the
+Store and wrap the pages in a pager. Both touch `EncounterDetailScreen.kt` and `encounter-detail.md`,
+so the two epics never have detail branches open at the same time: a detail slice, E5 to E9, starts
+only when no outing pager branch is open, and is cut from the `main` that carries the last one. The
+Counter slices, E1 to E4, do not touch the detail and go first. Once P3b lands, the carousel sits
+inside the pager the way the photo pager does today: it takes a horizontal drag until its own end,
+then the pager takes it. That is checked on a device, since a JVM test cannot tell a nested fling
+from a flat one.
 
 ## Testing
 

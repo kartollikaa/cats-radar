@@ -13,7 +13,7 @@
 
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
-| E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | planned |
+| E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | in-review |
 | E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone and the Statistics line under it. | safe | ~450 | E1 | planned |
 | E3 | Stat tiles and the walk row | Today, Last 7 days and With a photo as tiles under the outing line; the walk button as an extended FAB and Undo as a tonal button. | safe | ~400 | E2 | planned |
 | E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | planned |
@@ -97,6 +97,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   expressive, with Airbnb and Drinkit as references, and a prototype before proposals. Six directions were
   prototyped over the Counter and the detail. The owner kept Listing, Night walk and Expressive, then chose
   Expressive as it stood in version 5 of the prototype.
-- 2026-09-27: the outing pager's P3a-2 to P5b change the same detail screen and are planned with no branch.
-  This map's detail slices, E5 to E9, land before them, one branch at a time, so the two epics never edit
-  `EncounterDetailScreen.kt` in parallel.
+- 2026-09-27: the outing pager's P3a-2 was in progress in another session, and P3b to P5b change the same
+  detail screen. The Counter slices, E1 to E4, go first; a detail slice starts only when no outing pager
+  branch is open, so the two epics never edit `EncounterDetailScreen.kt` or `encounter-detail.md` in
+  parallel.
+- 2026-09-27: the owner said "work in autonomous mode": the spec's open details stand as decided, and each
+  slice is planned, built, reviewed and gated in turn.
