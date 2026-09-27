@@ -79,19 +79,30 @@ class CoatGridLookTest {
         assertEquals(scheme.surfaceContainerHighest, shapeOf(CoatOption.GINGER_WHITE).pixelFromStart(4.dp))
     }
 
-    @Test
-    fun `the grid is no taller than it was`() {
+    private fun gridHeight(): Dp {
         compose.setContent { CatsRadarTheme { CounterScreen(state = counter()) } }
-
         val cells = CoatOption.entries.map {
             compose.onNodeWithText(context.getString(it.labelRes())).getUnclippedBoundsInRoot()
         }
-        val height = cells.maxOf { it.bottom } - cells.minOf { it.top }
+        return cells.maxOf { it.bottom } - cells.minOf { it.top }
+    }
+
+    @Test
+    fun `the grid is no taller than it was`() {
+        val height = gridHeight()
         assertTrue(height <= GridHeightBefore, "the grid is $height tall, it was $GridHeightBefore")
     }
 
+    @Test
+    @Config(fontScale = 1.5f)
+    fun `at a large font the grid is no taller than it was`() {
+        val height = gridHeight()
+        assertTrue(height <= LargeFontGridHeightBefore, "the grid is $height tall, it was $LargeFontGridHeightBefore")
+    }
+
     private companion object {
-        // Measured on the Counter at the branch base, 411 dp wide at the default font.
+        // Measured on the Counter at the branch base, 411 dp wide, at the default font and at 1.5.
         val GridHeightBefore = 282.dp
+        val LargeFontGridHeightBefore = 362.dp
     }
 }

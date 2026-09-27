@@ -56,9 +56,12 @@ private val Stripes = svg(
 
 /** A cat's face in the colours and markings of [coat], centred in whatever space it is given. */
 @Composable
-internal fun CatFace(coat: CoatOption, modifier: Modifier = Modifier) {
+internal fun CatFace(
+    coat: CoatOption,
+    modifier: Modifier = Modifier,
+    rim: Color = MaterialTheme.colorScheme.faceRim()
+) {
     val look = coat.look()
-    val rim = MaterialTheme.colorScheme.faceRim()
     Canvas(modifier) {
         val unit = size.minDimension / FaceUnits
         val side = unit * FaceUnits

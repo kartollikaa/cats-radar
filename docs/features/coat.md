@@ -78,11 +78,12 @@ see the colours.
 
 **Every face is visible on both themes.** A white cat on the light surface and a black one on the
 dark surface have almost no contrast with what is behind them, so each face has a line around it in
-the theme's `outline` colour. Dark-furred cats have amber eyes, and each coat's nose is pink or dark,
-whichever shows against what it sits on. `CoatLookTest` holds all three to the contrast a meaningful
-shape needs: the line against the surface in both themes, the eyes against the fur, and the nose
-against the muzzle or the fur. The rim test fails if the line goes back to `outlineVariant`, which is
-not enough.
+the theme's `outline` colour. Dark-furred cats have amber eyes, and each coat's nose is pink or
+dark, whichever shows against what it sits on. `CoatLookTest` holds all three to the contrast a
+meaningful shape needs: the line against the surface and against the shape a face sits in, in both
+themes (a ringed face's line takes the primary colour, since the outline fades on the primary
+container in the dark theme), the eyes against the fur, and the nose against the muzzle or the fur.
+The rim test fails if the line goes back to `outlineVariant`, which is not enough.
 
 The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
 the picker and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn

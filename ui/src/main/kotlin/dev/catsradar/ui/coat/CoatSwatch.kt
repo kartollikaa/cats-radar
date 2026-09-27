@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -89,13 +92,15 @@ fun CoatGrid(
         maxItemsInEachRow = CoatsPerRow,
     ) {
         CoatOption.entries.forEachIndexed { index, coat ->
+            val ringed = coat in selected
             CoatTile(
                 label = stringResource(coat.labelRes()),
                 column = index % CoatsPerRow,
-                selected = coat in selected,
+                selected = ringed,
                 onClick = { onCoatClick(coat) },
             ) {
-                CatFace(coat = coat, modifier = Modifier.size(TileFaceSize))
+                val rim = if (ringed) MaterialTheme.colorScheme.ringedFaceRim() else MaterialTheme.colorScheme.faceRim()
+                CatFace(coat = coat, modifier = Modifier.size(TileFaceSize), rim = rim)
             }
         }
         onUnspecifiedClick?.let { onClick ->
@@ -162,11 +167,16 @@ private fun CoatTile(
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = coatShapeFor(column).toShape()
+    val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier = modifier
             .width(CellWidth)
-            .clip(MaterialTheme.shapes.small)
-            .selectable(selected = selected, onClick = onClick),
+            .selectable(
+                selected = selected,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -176,7 +186,8 @@ private fun CoatTile(
                 .testTag(CoatShapeTestTag)
                 .clip(shape)
                 .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
-                .then(if (selected) Modifier.border(2.dp, colors.primary, shape) else Modifier),
+                .then(if (selected) Modifier.border(2.dp, colors.primary, shape) else Modifier)
+                .indication(interactionSource, ripple()),
             contentAlignment = Alignment.Center,
         ) {
             face()
