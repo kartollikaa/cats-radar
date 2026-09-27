@@ -11,6 +11,7 @@ import dev.catsradar.presentation.DateTimeFormatter
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 internal fun encounterFixture(
@@ -45,6 +46,18 @@ internal fun photoFixture(
     locationSource: LocationSource = LocationSource.NONE,
 ): Encounter = encounterFixture(id, occurredAt, locationSource = locationSource)
     .withPhoto(photoPath = "$id.jpg", thumbPath = "${id}_thumb.jpg")
+
+/** The cats of one shot, created a second apart in the order of [ids]; each has its own copy of the photo. */
+internal fun shotFixture(vararg ids: String, occurredAt: Instant): List<Encounter> =
+    ids.mapIndexed { index, id ->
+        val cat = photoFixture(id, occurredAt)
+        val createdAt = occurredAt + index.seconds
+        cat.copy(
+            createdAt = createdAt,
+            updatedAt = createdAt,
+            photos = cat.photos.map { it.copy(addedAt = createdAt, shotId = ids.first()) },
+        )
+    }
 
 /** The cat with one photo, which takes the cat's id, install and creation time. */
 internal fun Encounter.withPhoto(

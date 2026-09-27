@@ -16,24 +16,27 @@ class EncountersStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    /** [selectedIds] naming no cat on screen are dropped from the result's selection. */
+    /**
+     * [selectedIds] naming no cat on screen are dropped from the result's selection. With [byShot] the cats whose
+     * covers share a shot are one cell; without it every cat is a cell of its own.
+     */
     fun map(
         encounters: List<Encounter>,
         today: LocalDate,
         grid: Boolean,
         selectedIds: Set<String> = emptySet(),
+        byShot: Boolean = true,
     ): EncountersState = EncountersState(
         rows = outingsNewestFirst(encounters)
             .flatMap { outing ->
-                val cats = if (grid) {
-                    outing.gridRows()
+                val entries = if (byShot) outing.byShot() else outing.map(::listOf)
+                val cells = if (grid) {
+                    entries.gridRows()
                 } else {
-                    outing.mapWithGroupPosition { encounter, position ->
-                        EncountersRow.Single(encounter.toCell(), position)
-                    }
+                    entries.mapWithGroupPosition { entry, position -> EncountersRow.Single(entry.toCell(), position) }
                 }
                 val mapOutingId = outing.last().id.takeIf { outing.any { it.isOnTheMap() } }
-                listOf(outing.header(today, mapOutingId)) + cats
+                listOf(outing.header(today, mapOutingId)) + cells
             }
             .toPersistentList(),
         layout = if (grid) EncountersLayout.GRID else EncountersLayout.LIST,
@@ -57,8 +60,8 @@ class EncountersStateMapper(
         )
     }
 
-    private fun List<Encounter>.gridRows(): List<EncountersRow> =
-        EncounterGridPacker.pack(this, hasPhoto = { it.thumbnail() != null }).map { row ->
+    private fun List<List<Encounter>>.gridRows(): List<EncountersRow> =
+        EncounterGridPacker.pack(this, hasPhoto = { it.first().thumbnail() != null }).map { row ->
             when (row) {
                 is PackedRow.PhotoPair -> EncountersRow.PhotoPair(row.first.toPhotoCell(), row.second.toPhotoCell())
                 is PackedRow.Tiles -> EncountersRow.Tiles(row.cats.map { it.toCell() }.toPersistentList())
@@ -66,21 +69,26 @@ class EncountersStateMapper(
             }
         }
 
-    private fun Encounter.toCell(): EncounterCell = EncounterCell(
-        id = id,
-        timeLabel = timeLabel(),
-        location = locationSource.toLocationLabel(),
-        lead = lead(),
-    )
+    // The cats of an entry share its time, place and photo, so its first cat speaks for all of them.
+    private fun List<Encounter>.toCell(): EncounterCell = with(first()) {
+        EncounterCell(
+            id = id,
+            timeLabel = timeLabel(),
+            location = locationSource.toLocationLabel(),
+            lead = lead(),
+            catIds = this@toCell.map { it.id }.toPersistentList(),
+        )
+    }
 
-    private fun Encounter.toPhotoCell(): PhotoCell {
+    private fun List<Encounter>.toPhotoCell(): PhotoCell = with(first()) {
         val thumbnail = checkNotNull(thumbnail()) { "a pair holds only cats with a photo" }
-        return PhotoCell(
+        PhotoCell(
             id = id,
             timeLabel = timeLabel(),
             location = locationSource.toLocationLabel(),
             photoPath = photoStorage.resolve(photos.first().photoPath),
             thumbnailPath = thumbnail,
+            catIds = this@toPhotoCell.map { it.id }.toPersistentList(),
         )
     }
 
@@ -98,6 +106,12 @@ class EncountersStateMapper(
 
     private fun Encounter.timeLabel(): String = dateTimeFormatter.time(this)
 }
+
+/** The cats of each shot as one entry, oldest first; a cat without a photo is an entry of its own. */
+private fun List<Encounter>.byShot(): List<List<Encounter>> =
+    groupBy { cat -> cat.cover?.let { "shot-${it.shotId}" } ?: "cat-${cat.id}" }
+        .values
+        .map { cats -> cats.sortedWith(compareBy<Encounter> { it.createdAt }.thenBy { it.id }) }
 
 private inline fun <T, R> List<T>.mapWithGroupPosition(transform: (T, GroupPosition) -> R): List<R> =
     mapIndexed { index, item ->
