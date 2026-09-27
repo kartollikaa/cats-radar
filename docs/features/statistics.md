@@ -116,8 +116,8 @@ The tab reads top to bottom as a dashboard.
   before it, since thirty labels cannot fit.
 - **The line under the chart** names one day and its count, "6 cats · Sat, Sep 26": today until a bar is
   tapped, then the tapped day. The pick is kept by date, so a new day starting does not move it to the
-  bar beside it; switching the range keeps it while the range still shows that day and names today once
-  it does not. The line is a single line and keeps its height, so picking a day never moves what is
+  bar beside it; switching the range keeps it while the range still shows that day, and once a range
+  does not, the pick is let go and the line names today, even after switching back. The line is a single line and keeps its height, so picking a day never moves what is
   under it. TalkBack reads each bar as its count and day, and the labels under the bars not at all.
   The range and the pick last while the tab is open; coming back to the tab opens on seven days and
   today.
@@ -125,8 +125,8 @@ The tab reads top to bottom as a dashboard.
   Longest streak, three to a row, each read by TalkBack as one item ("3, Today"). They are not buttons.
 - **By coat**: each coat's face, name and "38 · 26%", with a bar under the name in the coat's fur
   colour. The bar is the row's count over the biggest row's, *Not specified* included, so the busiest
-  row fills it; a fur that could match the track, white on light or black on dark, keeps the faces'
-  rim. *Not specified*'s bar is the outline colour.
+  row fills it. Every coat's bar keeps the faces' rim, so a white bar on the light track and a black one
+  on the dark track still show. *Not specified*'s bar is the outline colour.
 - **Places**, the card that opens the drill-down.
 - **Outings**: the figures two to a row — outings, time out, cats per hour, then walked and cats per km
   when something was walked, then the best outing with its own rate in its label ("Best outing · 1.3 /

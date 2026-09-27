@@ -33,7 +33,13 @@ class StatisticsStore(
             emitAll(observeWalkStats(encounters))
         }
         combine(observeStats(encounters), walks, chart) { stats, walk, choice ->
-            walk?.let { stateMapper.map(stats, it, choice) } ?: stateMapper.map(stats, chart = choice)
+            val mapped = walk?.let { stateMapper.map(stats, it, choice) } ?: stateMapper.map(stats, chart = choice)
+            // A day the range stopped showing is let go, so it cannot come back by itself with a wider range.
+            val pickedDay = choice.pickedDay
+            if (pickedDay != null && mapped.chart.bars.none { it.isPicked && it.epochDay == pickedDay }) {
+                chart.update { if (it.pickedDay == pickedDay) it.copy(pickedDay = null) else it }
+            }
+            mapped
         }
             .onEach { state -> setState { state } }
             .launchIn(viewModelScope)

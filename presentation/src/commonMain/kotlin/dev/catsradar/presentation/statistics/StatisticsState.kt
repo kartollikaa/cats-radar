@@ -45,8 +45,8 @@ data class DayChartState(
 )
 
 /**
- * One day's bar. [epochDay] is the key a tap reports; [height] is the day's cats over the busiest day's,
- * 0 with none; [axisLabel] is null for a bar drawn without one.
+ * One day's bar. [epochDay] is the day as days since 1970-01-01; [height] is the day's cats over the busiest
+ * day's, 0 with none; [axisLabel] is null for a bar drawn without one.
  */
 data class DayBarState(
     val epochDay: Long,

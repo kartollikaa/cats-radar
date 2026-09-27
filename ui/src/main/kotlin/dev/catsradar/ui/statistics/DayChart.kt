@@ -52,7 +52,6 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import kotlin.math.roundToInt
 
 const val DayBarTestTag = "day-bar"
 const val DayBarFillTestTag = "day-bar-fill"
@@ -137,7 +136,7 @@ private fun DayBar(bar: DayBarState, shape: Shape, modifier: Modifier = Modifier
     }
 }
 
-/** Each label centred under its own bar, and kept inside the chart at its two ends. */
+/** Each label centred under its own bar, kept inside the chart, and left out where it would crowd its neighbour. */
 @Composable
 private fun AxisLabels(bars: ImmutableList<DayBarState>, gap: Dp, modifier: Modifier = Modifier) {
     val style = MaterialTheme.typography.labelSmall
@@ -156,12 +155,14 @@ private fun AxisLabels(bars: ImmutableList<DayBarState>, gap: Dp, modifier: Modi
         val column = (width - gapPx * (measurables.size - 1)).toFloat() / measurables.size
         val placeables = measurables.map { it.measure(Constraints(maxWidth = width)) }
         val height = placeables.maxOfOrNull { it.height } ?: 0
+        val starts = axisLabelStarts(
+            centres = List(placeables.size) { index -> index * (column + gapPx) + column / 2 },
+            widths = placeables.map { it.width },
+            width = width,
+            minGap = 4.dp.roundToPx(),
+        )
         layout(width, height) {
-            placeables.forEachIndexed { index, placeable ->
-                val centre = index * (column + gapPx) + column / 2
-                val x = (centre - placeable.width / 2f).roundToInt()
-                placeable.placeRelative(x.coerceIn(0, (width - placeable.width).coerceAtLeast(0)), 0)
-            }
+            placeables.forEachIndexed { index, placeable -> starts[index]?.let { placeable.placeRelative(it, 0) } }
         }
     }
 }
@@ -241,7 +242,7 @@ private val sampleCounts =
     listOf(1, 3, 0, 2, 4, 1, 0, 3, 2, 5, 1, 0, 2, 3, 1, 4, 2, 0, 3, 1, 2, 3, 2, 2, 4, 1, 3, 6, 0, 3)
 private val sampleWeekdays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-internal fun sampleChart(range: ChartRange): DayChartState {
+private fun sampleChart(range: ChartRange): DayChartState {
     val counts = sampleCounts.takeLast(range.days)
     val bars = counts.mapIndexed { index, count ->
         val back = counts.lastIndex - index

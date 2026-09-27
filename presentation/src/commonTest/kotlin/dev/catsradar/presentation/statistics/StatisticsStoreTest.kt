@@ -197,6 +197,22 @@ class StatisticsStoreTest {
         assertEquals("weekdayDayMonth $TODAY", store.state.value.chart.picked?.dayLabel)
     }
 
+    @Test
+    fun `a day seven days stopped showing does not come back with thirty`() = runTest(mainDispatcher) {
+        val store = newStore(StoredWalkRepository())
+        runCurrent()
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.MONTH))
+        store.dispatch(StatisticsIntent.DayPicked(TODAY.minus(DatePeriod(days = 21)).toEpochDays()))
+        runCurrent()
+
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.WEEK))
+        runCurrent()
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.MONTH))
+        runCurrent()
+
+        assertEquals("weekdayDayMonth $TODAY", store.state.value.chart.picked?.dayLabel)
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
         val TODAY = LocalDate(2026, 9, 22)

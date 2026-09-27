@@ -27,9 +27,12 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.BestOutingState
 import dev.catsradar.presentation.statistics.ChartRange
 import dev.catsradar.presentation.statistics.CoatShareState
+import dev.catsradar.presentation.statistics.DayBarState
+import dev.catsradar.presentation.statistics.DayChartState
 import dev.catsradar.presentation.statistics.DistanceState
 import dev.catsradar.presentation.statistics.DistanceUnit
 import dev.catsradar.presentation.statistics.MilestoneState
+import dev.catsradar.presentation.statistics.PickedDayState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.presentation.statistics.StatisticsState
@@ -47,6 +50,7 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 // A coat nobody noted keeps a blank of the same size, so the names still line up.
 private val CoatFaceSize = 28.dp
@@ -192,10 +196,10 @@ private fun StatisticsScreenPreview() {
 
 @ThemePreviews
 @Composable
-private fun StatisticsScreenMonthNoWalksPreview() {
+private fun StatisticsScreenNoWalksPreview() {
     CatsRadarTheme {
         Surface {
-            StatisticsScreen(state = sampleStatistics.copy(chart = sampleChart(ChartRange.MONTH), walked = null))
+            StatisticsScreen(state = sampleStatistics.copy(walked = null))
         }
     }
 }
@@ -208,10 +212,28 @@ private fun StatisticsScreenEmptyPreview() {
     }
 }
 
+private val sampleWeek = DayChartState(
+    range = ChartRange.WEEK,
+    bars = listOf(2, 4, 1, 3, 6, 0, 3).zip(listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
+        .mapIndexed { index, (count, weekday) ->
+            DayBarState(
+                epochDay = 20_717L + index,
+                count = count,
+                height = count / 6f,
+                isToday = index == 6,
+                isPicked = index == 6,
+                axisLabel = weekday,
+                dayLabel = "$weekday, Sep ${21 + index}",
+            )
+        }
+        .toImmutableList(),
+    picked = PickedDayState(count = 3, dayLabel = "Sun, Sep 27"),
+)
+
 private val sampleStatistics = StatisticsState(
     total = 147,
     hasAnyCats = true,
-    chart = sampleChart(ChartRange.WEEK),
+    chart = sampleWeek,
     todayLabel = "3",
     weekLabel = "19",
     monthLabel = "64",

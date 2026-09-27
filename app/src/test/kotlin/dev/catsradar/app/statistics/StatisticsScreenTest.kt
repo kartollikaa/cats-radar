@@ -150,7 +150,7 @@ class StatisticsScreenTest {
 
         state = dashboard(ChartRange.WEEK, pickedBack = 2)
 
-        compose.onNodeWithText("6 cats · Thursday, September 24").assertIsDisplayed()
+        compose.onNodeWithText("6 cats · $LongDayLabel").assertIsDisplayed()
         assertEquals(tilesTop, compose.onAllNodesWithTag(StatTileTestTag)[0].getUnclippedBoundsInRoot().top)
     }
 
@@ -298,7 +298,7 @@ class StatisticsScreenTest {
                 isToday = back == 0,
                 isPicked = back == pickedBack,
                 axisLabel = "d$back",
-                dayLabel = if (back == 0) "Sun, Sep 27" else "Thursday, September 24",
+                dayLabel = if (back == 0) "Sun, Sep 27" else LongDayLabel,
             )
         }
         val picked = bars.single { it.isPicked }
@@ -337,11 +337,13 @@ class StatisticsScreenTest {
     private companion object {
         const val TODAY = 20_723L
 
+        // Wider than the chart at the default font: the line under it must hold one line all the same.
+        const val LongDayLabel = "Thursday, September 24, the evening after the long rain in the old town"
+
         // The week ends 2, 4, 1, 3, 6, 0, 3: a busiest day, a day with none and a one-cat day.
         val MonthCounts =
             listOf(1, 3, 0, 2, 4, 1, 0, 3, 2, 5, 1, 0, 2, 3, 1, 4, 2, 0, 3, 1, 2, 3, 2, 2, 4, 1, 3, 6, 0, 3)
 
-        // Ginger's fur on a coat face.
         val GingerFur = Color(0xFFE8833A)
     }
 }
