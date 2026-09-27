@@ -154,7 +154,9 @@ grow the card and push Delete down.
 
 The **By coat** block counts each coat with its share of the total. Coats nobody has seen are
 absent rather than listed as zero, and the "not specified" row always comes **last**, however many
-cats are in it — it is the absence of an answer, not an answer that happens to be popular.
+cats are in it — it is the absence of an answer, not an answer that happens to be popular. Each row
+has a share bar in the coat's fur colour, the busiest row's full; see
+[statistics.md](./statistics.md#the-screen).
 
 ## At the edges
 

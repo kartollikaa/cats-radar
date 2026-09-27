@@ -17,6 +17,10 @@ screen full of "0" reads like a broken app, not an empty one.
   on the day it was logged. The windows **include today**: "7 days" is today plus the six before it.
 - **With photo** — cats that have a photo of their own, whether it was taken, imported, or given
   later to a cat logged without one.
+- **By day** — each of the last thirty days with its cats, oldest first and today last, by the same
+  own local date as the windows, so the last seven add up to "7 days" and all thirty to "30 days". A
+  day with no cats is there with zero rather than missing, and a cat dated after today is on no day,
+  as it is in no window.
 
 ## Streaks
 
@@ -99,19 +103,55 @@ Only this one figure needs the guard. Every other duration comes from a `Session
 end are the first and last of a list the splitter has already sorted, so its span cannot be
 negative however wrong the clock was.
 
+## The screen
+
+The tab reads top to bottom as a dashboard.
+
+- **The headline**: the total, "cats seen" and the milestone line, in a primary-container card.
+- **The chart**: one bar per day for the last seven days or the last thirty, named by the card's title,
+  with a pill at the end of the header switching between the two. The busiest day in the range fills the
+  chart and today's bar is in the primary colour. A day with no cats keeps a short stub, so the row never
+  has gaps, and any day with a cat rises above the stub, so one cat among fifty never looks like none.
+  Seven bars carry their weekdays; thirty carry a date under today's bar and under every seventh bar
+  before it, since thirty labels cannot fit.
+- **The line under the chart** names one day and its count, "6 cats · Sat, Sep 26": today until a bar is
+  tapped, then the tapped day. The pick is kept by date, so a new day starting does not move it to the
+  bar beside it; switching the range keeps it while the range still shows that day and names today once
+  it does not. The line is a single line and keeps its height, so picking a day never moves what is
+  under it. TalkBack reads each bar as its count and day, and the labels under the bars not at all.
+  The range and the pick last while the tab is open; coming back to the tab opens on seven days and
+  today.
+- **The tiles**: Today (the one highlighted), Last 7 days, Last 30 days, With a photo, Streak and
+  Longest streak, three to a row, each read by TalkBack as one item ("3, Today"). They are not buttons.
+- **By coat**: each coat's face, name and "38 · 26%", with a bar under the name in the coat's fur
+  colour. The bar is the row's count over the biggest row's, *Not specified* included, so the busiest
+  row fills it; a fur that could match the track, white on light or black on dark, keeps the faces'
+  rim. *Not specified*'s bar is the outline colour.
+- **Places**, the card that opens the drill-down.
+- **Outings**: the figures two to a row — outings, time out, cats per hour, then walked and cats per km
+  when something was walked, then the best outing with its own rate in its label ("Best outing · 1.3 /
+  min").
+
+In the tiles and the outings grid the numbers are large and the words around them small: the size
+follows the digits of the already-formatted value ("14 h 20 min"), so a translated unit is styled the
+same way, and a value with no digit ("—") stays whole.
+
 ## Where the code lives
 
 - `domain/…/stats/StatsCalculator.kt` — the calculation
 - `domain/…/stats/Streaks.kt` — runs of consecutive days
-- `domain/…/stats/Stats.kt` — `Stats`, `Rate`, `Milestone`, `RatedOuting`, `CurrentOuting`
+- `domain/…/stats/Stats.kt` — `Stats`, `DayCount`, `Rate`, `Milestone`, `RatedOuting`, `CurrentOuting`
 - `domain/…/stats/WalkStats.kt` — `WalkStats`, `WalkStatsCalculator` — distance and cats per km
 - `domain/…/stats/CatTimes.kt` — the cats a walk's cats-per-km window counts, from its start to its
   end, both included, and with no end for a walk still on
 
 ## Where the screen lives
 
-- `presentation/…/statistics/` — `StatisticsState`, `StatisticsStateMapper`, `StatisticsStore`
-- `ui/…/statistics/StatisticsScreen.kt`
+- `presentation/…/statistics/` — `StatisticsState`, `StatisticsStateMapper`, `StatisticsStore`, which keeps
+  the chart's range and picked day (`ChartChoice`)
+- `ui/…/statistics/` — `StatisticsScreen.kt`, `DayChart.kt` (the bars, their labels, the line and the pill),
+  `StatTiles.kt`, `OutingsGrid.kt`, `SmallUnits.kt` (large numbers, small words)
+- `ui/…/components/ShareBar.kt` — the share bar the coats and the Places drill-down both draw
 - `domain/…/usecase/ObserveStats.kt`, `ObserveWalkStats.kt` — combined by `StatisticsStore`, which
   reads the encounter list once and hands the same list to both
 - `domain/…/usecase/ObserveWalkTracks.kt` — every walk with its route, which `ObserveWalkStats` sums
