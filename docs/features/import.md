@@ -134,9 +134,9 @@ takes them back*).
   `IMPORT_BATCH_MAX` photos and leaves out any photo the app saved to the gallery itself. Android
   14 cannot narrow MediaStore to the latest selection, so there every photo shared with the app so
   far comes back, and one imported before is skipped as usual. MediaProvider counts limited access
-  as access to photo locations, so these photos, and the ones picked in the gallery at later
-  imports, keep their GPS. Leaving Android's picker with Back shares nothing and opens the gallery,
-  as *Don't allow* does.
+  as access to photo locations, so these photos, and the ones picked through the system photo
+  picker at later imports, keep their GPS. Leaving Android's picker with Back shares nothing and
+  opens the gallery, as *Don't allow* does.
 - **The gallery opens with `ACTION_GET_CONTENT`, not the photo picker's own `ACTION_PICK_IMAGES`.**
   MediaProvider strips GPS from a `PICK_IMAGES` photo whatever the app holds. The one way round it
   there, `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`, works only once the picker's own
