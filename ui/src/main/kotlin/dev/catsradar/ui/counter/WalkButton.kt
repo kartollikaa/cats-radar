@@ -115,7 +115,7 @@ internal fun WalkButton(
         walking = walking,
         elapsedLabel = elapsedLabel,
         fill = { fill.value },
-        modifier = modifier.shadow(elevation = 2.dp, shape = WalkButtonShape).then(gesture),
+        modifier = modifier.shadow(elevation = 2.dp, shape = WalkButtonShape, clip = true).then(gesture),
     )
 }
 

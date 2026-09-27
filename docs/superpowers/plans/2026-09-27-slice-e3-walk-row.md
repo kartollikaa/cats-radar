@@ -54,13 +54,13 @@ fun `the walk button wears the tertiary container whether or not a walk is on`()
         }
     }
 
-    assertEquals(expected, walkButton(walking = false).cornerPixel())
+    assertEquals(expected, walkButton(walking = false).pixelNearStart(atTopCorner = false))
     walking = true
-    assertEquals(expected, walkButton(walking = true).cornerPixel())
+    assertEquals(expected, walkButton(walking = true).pixelNearStart(atTopCorner = false))
 }
 ```
 
-`counter(walking)` is `CounterState(totalLabel = "3", count = 3, undoVisible = false, walkingMode = walking)`; `walkButton(walking)` finds the button by its label text as `CounterControlsTest` does; `cornerPixel()` is `captureToImage().toPixelMap()` read 6 dp in from the button's left edge at mid-height, away from the cat and the fill, in px via `LocalDensity`.
+`counter(walking)` is `CounterState(totalLabel = "3", count = 3, undoVisible = false, walkingMode = walking)`; `walkButton(walking)` finds the button by its label text as `CounterControlsTest` does; `pixelNearStart(atTopCorner)` is `captureToImage().toPixelMap()` read 6 dp in from the button's start edge, at mid-height (clear of the cat, the words and the fill) or 6 dp down from the top for the corner test (Task 1 Step 3).
 
 - [ ] **Step 2:** the height test fails (today's button is about 48 dp); the colour test fails on the idle state (`secondaryContainer`). Read the XML.
 - [ ] **Step 3: Implement.** In `WalkButtonSurface`: `shape = ShapeDefaults.Large` (Material's own extended-FAB corner, 16 dp; `extendedFabShape` reads the theme's 28 dp `large`, a pill at this height), `color = MaterialTheme.colorScheme.tertiaryContainer`, `contentColor = onTertiaryContainer`, and `Modifier.heightIn(min = 56.dp)` on the `Row` (a floor, as the FAB's own, so a large font grows it) with `padding(horizontal = 16.dp)`, the small extended FAB's own spacing, which keeps the width the chip-era row had. In `WalkButton`, `modifier.shadow(elevation = 2.dp, shape = …)` replaces the clip: it draws the shadow and clips the gesture's fill and ripple to the same corners. A third test samples a pixel 6 dp in from the top-left corner: `tertiaryContainer` inside a 16 dp curve, background outside a pill's.

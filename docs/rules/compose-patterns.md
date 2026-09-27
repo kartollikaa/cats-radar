@@ -252,7 +252,7 @@ fun CounterScreen(
   ) {
     Text(state.totalLabel, style = MaterialTheme.typography.displayLarge)
     TallyButton(onClick = onTallyClick, modifier = Modifier.fillMaxWidth())
-    if (state.undoVisible) UndoChip(onClick = onUndoClick)
+    if (state.undoVisible) UndoButton(onClick = onUndoClick)
     CameraButton(onClick = onCameraClick)
   }
 }

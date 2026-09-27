@@ -7,18 +7,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.isWhole
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
@@ -47,29 +46,16 @@ class WalkRowLookTest {
     private fun counter(walking: Boolean) =
         CounterState(totalLabel = "3", count = 3, undoVisible = false, walkingMode = walking)
 
-    private fun walkButton(walking: Boolean): SemanticsNodeInteraction =
-        compose.onNodeWithText(context.getString(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start))
-
-    // Inside the button near its start edge, clear of the cat, the words and the fill.
-    private fun SemanticsNodeInteraction.edgePixel(): Color {
-        val pixels = captureToImage().toPixelMap()
-        val inset = with(compose.density) { 6.dp.roundToPx() }
-        return pixels[inset, pixels.height / 2]
+    private fun walkButton(walking: Boolean): SemanticsNodeInteraction {
+        val label = if (walking) R.string.counter_walk_stop else R.string.counter_walk_start
+        return compose.onNodeWithText(context.getString(label))
     }
 
-    // Inside a 16 dp corner's curve, outside a pill's.
-    private fun SemanticsNodeInteraction.cornerPixel(): Color {
+    // Clear of the cat, the words and the fill; at the top corner, inside the FAB's curve and outside a pill's.
+    private fun SemanticsNodeInteraction.pixelNearStart(atTopCorner: Boolean): Color {
         val pixels = captureToImage().toPixelMap()
         val inset = with(compose.density) { 6.dp.roundToPx() }
-        return pixels[inset, inset]
-    }
-
-    private fun isWhole(text: String): Boolean {
-        val layouts = mutableListOf<TextLayoutResult>()
-        compose.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
-            .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
-        val layout = layouts.single()
-        return layout.size.width >= layout.multiParagraph.intrinsics.maxIntrinsicWidth
+        return pixels[inset, if (atTopCorner) inset else pixels.height / 2]
     }
 
     @Test
@@ -93,9 +79,9 @@ class WalkRowLookTest {
             }
         }
 
-        assertEquals(expected, walkButton(walking = false).edgePixel())
+        assertEquals(expected, walkButton(walking = false).pixelNearStart(atTopCorner = false))
         walking = true
-        assertEquals(expected, walkButton(walking = true).edgePixel())
+        assertEquals(expected, walkButton(walking = true).pixelNearStart(atTopCorner = false))
     }
 
     @Test
@@ -108,12 +94,13 @@ class WalkRowLookTest {
             }
         }
 
-        assertEquals(expected, walkButton(walking = false).cornerPixel())
+        assertEquals(expected, walkButton(walking = false).pixelNearStart(atTopCorner = true))
     }
 
     @Test
     fun `Undo stands as tall as a button`() {
-        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(walking = false).copy(undoVisible = true)) } }
+        val state = counter(walking = false).copy(undoVisible = true)
+        compose.setContent { CatsRadarTheme { CounterScreen(state = state) } }
 
         val undo = compose.onNodeWithText(context.getString(R.string.counter_undo))
         assertEquals(40.dp, undo.getUnclippedBoundsInRoot().height)
@@ -125,6 +112,6 @@ class WalkRowLookTest {
         val state = counter(walking = true).copy(undoVisible = true, walkElapsedLabel = "1 h 5 min")
         compose.setContent { CatsRadarTheme { CounterScreen(state = state) } }
 
-        assertTrue(isWhole(context.getString(R.string.counter_walk_stop_hint_timed, "1 h 5 min")))
+        assertTrue(compose.isWhole(context.getString(R.string.counter_walk_stop_hint_timed, "1 h 5 min")))
     }
 }
