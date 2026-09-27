@@ -155,11 +155,12 @@ cookie**.
   again, for as long as the walk lasts; it stands still when no walk is on, and when the system's
   animator scale is zero. If it ever wears on the owner, the same breath on the outing tag's dot alone
   is the fallback.
-- **Undo** floats in the count block's top-start corner, across from the "+N" badge, the filled tonal
-  button it already is; the prototype drew it at the bottom end, where the outing's tag reaches on a
-  narrow phone. It appears and goes without moving anything, and a tap on it takes a cat back and
-  never logs one. It gives up the older rule that kept Undo outside the block: while it shows, a tap
-  on that corner undoes rather than logs. The rule that the controls do not jump stands: nothing under the count moves when
+- **Undo** floats in the cookie's bottom-end corner, below the "+N" badge, the filled tonal button it
+  already is (owner, 2026-09-27: "undo should go bottom right corner of cookie", over the top-start
+  corner first built). It appears and goes without moving anything, and a tap on it takes a cat back
+  and never logs one. It gives up the older rule that kept Undo outside the block: while it shows, a tap
+  on that corner undoes rather than logs. While it shows, the outing's tag at the ring's bottom narrows
+  by Undo's width on both sides, staying centred and clear of it; its give-way rules shorten it. The rule that the controls do not jump stands: nothing under the count moves when
   a walk starts or ends or Undo comes and goes.
 
 **The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on

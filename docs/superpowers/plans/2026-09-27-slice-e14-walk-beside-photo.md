@@ -22,7 +22,7 @@
 ## Deviations from the prototype, decided here
 
 - **The walking cat stays on the button in both states**, walking during a walk as `walking-mode.md` describes, in place of the prototype's stop glyph: a moving cat says "on a walk" better than a static square, and *Hold to end* already says what the press does. `WalkingCatAnimationTest` stays.
-- **Undo sits in the block's top-start corner**, across from the "+N" badge at the top end, not the bottom-end corner the prototype drew: on a narrow phone the outing tag at the ring's bottom can reach the bottom corners, and the top corners are free of tags.
+- ~~**Undo sits in the block's top-start corner**~~ — overruled by the owner: Undo sits in the cookie's bottom-end corner, as the prototype drew it, and the outing tag narrows to clear it.
 
 ---
 

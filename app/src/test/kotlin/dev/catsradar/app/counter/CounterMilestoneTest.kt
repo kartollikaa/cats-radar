@@ -26,6 +26,8 @@ import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.MilestoneState
+import dev.catsradar.presentation.statistics.RateState
+import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CountNumberTestTag
 import dev.catsradar.ui.counter.CounterScreen
@@ -90,6 +92,50 @@ class CounterMilestoneTest {
         val tag = goalTag().getUnclippedBoundsInRoot()
         val ring = ring()
         assertEquals((ring.top + ring.width * halfStroke).value, ((tag.top + tag.bottom) / 2).value, 1f)
+    }
+
+    // The room the Counter gets on a 411 × 891 phone once the status bar and the tab bar take theirs.
+    @Test
+    @Config(qualifiers = "w411dp-h760dp")
+    fun `with Undo showing, a long outing tag keeps clear of it and stays centred`() {
+        val longOuting = CurrentOutingState(
+            count = 14,
+            elapsedLabel = "1 h 35 min",
+            rate = RateState(value = "12.5", unit = RateUnit.PER_HOUR),
+        )
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = counter(sixtyTwoOfHundred).copy(
+                        currentOuting = longOuting,
+                        undoVisible = true,
+                        tapBurst = 1,
+                    ),
+                )
+            }
+        }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+        val tag = compose.onNodeWithText("1 h 35 min", substring = true).getUnclippedBoundsInRoot()
+        val block = block()
+        assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
+        assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h760dp", fontScale = 1.5f)
+    fun `at a large font too, the outing tag keeps clear of Undo`() {
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = counter(sixtyTwoOfHundred).copy(currentOuting = outing, undoVisible = true, tapBurst = 1),
+                )
+            }
+        }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+        val tag = compose.onNodeWithText("35 min", substring = true).getUnclippedBoundsInRoot()
+        assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
     }
 
     @Test

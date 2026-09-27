@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
@@ -202,7 +203,7 @@ class CounterControlsTest {
     }
 
     @Test
-    fun `Undo sits in the block's top-start corner and a tap on it takes a cat back, never logs one`() {
+    fun `Undo sits in the cookie's bottom-end corner and a tap on it takes a cat back, never logs one`() {
         var undos = 0
         var tallies = 0
         compose.setContent {
@@ -215,14 +216,14 @@ class CounterControlsTest {
             }
         }
         val block = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
+        val side = minOf(block.width, block.height)
+        val cookieRight = (block.left + block.right) / 2 + side / 2
+        val cookieBottom = (block.top + block.bottom) / 2 + side / 2
         val undo = compose.onNodeWithText(string(R.string.counter_undo))
 
         val bounds = undo.getUnclippedBoundsInRoot()
-        val inside = bounds.left >= block.left && bounds.top >= block.top &&
-            bounds.right <= block.right && bounds.bottom <= block.bottom
-        assertTrue(inside, "Undo $bounds outside the block $block")
-        assertTrue(bounds.right <= (block.left + block.right) / 2, "Undo $bounds not at the block's start")
-        assertTrue(bounds.bottom <= (block.top + block.bottom) / 2, "Undo $bounds not at the block's top")
+        assertEquals(cookieRight.value, bounds.right.value, 1f)
+        assertEquals(cookieBottom.value, bounds.bottom.value, 1f)
         undo.performClick()
         assertEquals(1, undos)
         assertEquals(0, tallies)

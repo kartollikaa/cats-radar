@@ -75,11 +75,12 @@ too: its fill and its number take the tertiary container's colours, the arc, its
 keep their own while the ring's faint track and the dot's rim follow the cookie, and the shape alone
 breathes, a slow swell and settle that stands still without a walk
 and when the system's animations are off (`CounterWalkLookTest`, `CookieBreathTest`). Undo is a
-filled tonal button in the count block's top-start corner, across from the badge: it appears and
-goes without moving anything, and a tap on it takes a cat back and never logs one
-(`CounterControlsTest`). Being inside the block, it takes that corner from the tally while it
-shows, so a tap there undoes rather than logs; the corner lies outside the cookie, and the top is
-clear of the ring's tags, which on a narrow phone reach toward the bottom corners. The outing rides
+filled tonal button in the cookie's bottom-end corner, below the badge: it appears and goes without
+moving anything, and a tap on it takes a cat back and never logs one (`CounterControlsTest`). Being
+inside the block, it takes that corner from the tally while it shows, so a tap there undoes rather
+than logs. While it shows, the outing's tag narrows by Undo's width on both sides, so it stays
+centred and clear of it, and at a large font its count gives way first as it does when short of room
+(`CounterMilestoneTest`). The outing rides
 a tag on the count's ring rather than a line of its own, so a walk or an outing starting or ending
 leaves the block the same size and nothing sits between the count and the coat grid
 (`CounterMilestoneTest`). The location hint and the import
