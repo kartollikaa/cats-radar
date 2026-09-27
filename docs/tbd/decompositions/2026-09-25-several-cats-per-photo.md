@@ -18,7 +18,7 @@
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | merged |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | in-review |
 | S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | in-review |
-| S6 | On this photo on the detail screen | The row of a photo's cats, switching between them without stacking screens, and **+** to add a cat. | safe | ~550 | S3, S4 | planned |
+| S6 | On this photo on the detail screen | A shot is one page of the outing pager; the row of its cats switches which one the page shows. **+** is left for S6b. | safe | ~550 | S3, S4 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -101,6 +101,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-27: **S6 in review**, stacked on S5. On a device the owner opened a shot of three cats and found three pages
+  of the detail screen's outing pager (shipped meanwhile as the outing-pager epic): "it should be 1 encounter at all
+  with all the cats inside". A shot is one page; the row switches its cat on the same page. **+** and the single-cat
+  **Another cat on this photo** move to a later S6b.
 
 - 2026-09-27: **S5 in review**, stacked on S4. `Tuning.SHOT_MAX_CATS` is 10, the photographed cat included; the
   spec named only the constant. The coat intents became `CounterIntent.CoatPrompt`, a sub-flow like Import, handled
