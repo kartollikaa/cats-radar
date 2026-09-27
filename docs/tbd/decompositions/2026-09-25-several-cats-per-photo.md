@@ -14,8 +14,8 @@
 |---|----------|------------------------|----------|-------------|------------|--------|
 | S1 | Photos know their shot | `EncounterPhoto.shotId`, stored in database v5 by a hand-written migration proven on every kind of photo; nothing sets it yet. | safe | ~600 | — | merged |
 | S2 | Backup format 6 carries shots | Photo records carry `shotId`, the archive says format 6, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | merged |
-| S2b | Every photo names its shot | `shotId` becomes the shot's id on every photo, never null: a photo of one cat names itself. Database v6; archive format unchanged. | safe | ~350 | S2 | in-progress |
-| S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | in-review |
+| S2b | Every photo names its shot | `shotId` becomes the shot's id on every photo, never null: a photo of one cat names itself. Database v6; archive format unchanged. | safe | ~350 | S2 | merged |
+| S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | merged |
 | S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
 | S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | planned |
 | S6 | On this photo on the detail screen | The row of a photo's cats, switching between them without stacking screens, and **+** to add a cat. | safe | ~550 | S3, S4 | planned |
@@ -101,6 +101,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-27: **S3 merged** as #199. Merging main into it found `RemovePhotoTest` (#194) building its own
+  `PhotoStorage` without the new `copy`: the widened interface failed at compile time, not on a device.
+
+- 2026-09-26: **S2b merged** as #186.
 
 - 2026-09-26: **S2 merged** as #176. **S2b added**, asked by the owner: a nullable `shotId` read as "the id of a
   shot" but was null on every photo of one cat and on a shot's first photo, with the real id in a computed
