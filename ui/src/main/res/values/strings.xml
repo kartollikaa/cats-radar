@@ -239,7 +239,7 @@
     <string name="settings_encounters_grid">Grid of cats</string>
     <string name="settings_encounters_grid_explained">Photos side by side in pairs, the other cats as tiles. Off: one row per cat</string>
     <string name="settings_updates">Updates</string>
-    <string name="settings_updates_explained">Downloads and installs a newer version from the app\'s GitHub releases</string>
+    <string name="settings_updates_explained">Install the latest version of the app</string>
     <string name="settings_updates_check">Check for updates</string>
     <string name="settings_updates_up_to_date">You have the latest version</string>
     <string name="settings_updates_downloading">Downloading %1$s</string>
