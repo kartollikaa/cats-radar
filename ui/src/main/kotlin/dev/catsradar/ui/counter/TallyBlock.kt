@@ -1,6 +1,7 @@
 package dev.catsradar.ui.counter
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -33,6 +34,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -85,6 +88,7 @@ internal fun TallyBlock(
     modifier: Modifier = Modifier,
     milestone: CounterMilestoneState? = null,
     currentOuting: CurrentOutingState? = null,
+    walking: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -92,6 +96,8 @@ internal fun TallyBlock(
     val press = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, animationSpec = press, label = "tallyPress")
     val turn by rememberCookieTurn(count)
+    val breath by rememberCookieBreath(breathing = walking)
+    val cookieColors = rememberCookieColors(walking)
     val tallyLabel = stringResource(R.string.counter_tally)
     val cookie = MaterialShapes.Cookie12Sided.toShape()
     val cookieInBlock = remember(cookie) { CentredSquare(cookie) }
@@ -113,12 +119,12 @@ internal fun TallyBlock(
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
+                    scaleX = scale * breath
+                    scaleY = scale * breath
                     rotationZ = turn
                 }
                 .clip(cookieInBlock)
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(cookieColors.fill)
                 .indication(interactionSource, ripple()),
         )
         Box(
@@ -130,10 +136,31 @@ internal fun TallyBlock(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            CookieContent(totalLabel, count, tapBurst, milestone, currentOuting)
+            CookieContent(totalLabel, count, tapBurst, milestone, currentOuting, cookieColors)
         }
         RingTags(milestone = milestone, currentOuting = currentOuting, scale = { scale })
     }
+}
+
+@Immutable
+private data class CookieColors(val fill: Color, val ink: Color)
+
+/** The cookie in `primaryContainer`, or in `tertiaryContainer` while a walk is on, easing between the two. */
+@Composable
+private fun rememberCookieColors(walking: Boolean): CookieColors {
+    val colors = MaterialTheme.colorScheme
+    val spec = MaterialTheme.motionScheme.defaultEffectsSpec<Color>()
+    val fill by animateColorAsState(
+        targetValue = if (walking) colors.tertiaryContainer else colors.primaryContainer,
+        animationSpec = spec,
+        label = "cookieFill",
+    )
+    val ink by animateColorAsState(
+        targetValue = if (walking) colors.onTertiaryContainer else colors.onPrimaryContainer,
+        animationSpec = spec,
+        label = "cookieInk",
+    )
+    return CookieColors(fill = fill, ink = ink)
 }
 
 @Composable
@@ -143,9 +170,12 @@ private fun BoxScope.CookieContent(
     tapBurst: Int?,
     milestone: CounterMilestoneState?,
     currentOuting: CurrentOutingState?,
+    colors: CookieColors,
 ) {
-    milestone?.let { MilestoneArc(fraction = it.fraction, modifier = Modifier.fillMaxSize(RingFraction)) }
-    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+    milestone?.let {
+        MilestoneArc(fraction = it.fraction, colors = colors, modifier = Modifier.fillMaxSize(RingFraction))
+    }
+    CompositionLocalProvider(LocalContentColor provides colors.ink) {
         CountAndCaption(
             totalLabel = totalLabel,
             count = count,
@@ -159,15 +189,15 @@ private fun BoxScope.CookieContent(
 }
 
 @Composable
-private fun MilestoneArc(fraction: Float, modifier: Modifier = Modifier) {
+private fun MilestoneArc(fraction: Float, colors: CookieColors, modifier: Modifier = Modifier) {
     val progress by animateFloatAsState(
         targetValue = fraction,
         animationSpec = MaterialTheme.motionScheme.slowSpatialSpec(),
         label = "milestoneArc",
     )
-    val track = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+    val track = colors.ink.copy(alpha = 0.15f)
     val arc = MaterialTheme.colorScheme.primary
-    val rim = MaterialTheme.colorScheme.primaryContainer
+    val rim = colors.fill
     Canvas(modifier = modifier.testTag(MilestoneArcTestTag)) {
         val stroke = size.minDimension * RingStrokeFraction
         val topLeft = Offset(stroke / 2, stroke / 2)

@@ -56,6 +56,7 @@ fun CounterScreen(
                 tapBurst = state.tapBurst,
                 milestone = state.milestone,
                 currentOuting = state.currentOuting,
+                walking = state.walkingMode,
                 onClick = onTallyClick,
             )
         },
