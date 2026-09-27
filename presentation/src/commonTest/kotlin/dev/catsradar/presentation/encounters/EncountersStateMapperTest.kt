@@ -521,6 +521,20 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `a shot without a thumbnail leads with a paw, not one cat's coat`() {
+        val shot = shotFixture("s1", "s2", occurredAt = BASE).map { cat ->
+            cat.copy(coat = CatCoat.GINGER, photos = cat.photos.map { it.copy(thumbPath = null) })
+        }
+        val lone = encounterFixture("lone", BASE + 1.minutes).copy(coat = CatCoat.BLACK)
+
+        val leads = mapper.map(shot + lone, today, grid = false).rows
+            .filterIsInstance<EncountersRow.Single>()
+            .map { it.cell.id to it.cell.lead }
+
+        assertEquals(listOf("lone" to CellLead.Coat(CoatOption.BLACK), "s1" to CellLead.Paw), leads)
+    }
+
+    @Test
     fun `a selection naming one cat of a shot selects the whole shot`() {
         val encounters = listOf(encounterFixture("other", BASE)) +
             shotFixture("s1", "s2", "s3", occurredAt = BASE + 1.minutes)

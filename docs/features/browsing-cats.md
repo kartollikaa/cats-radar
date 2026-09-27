@@ -112,7 +112,10 @@ entry, in the grid and in the list alike (`EncountersStateMapperTest`, *a shot o
 all three*). The entry shows that photo with a **badge** — a paw and the number of cats — when it holds more
 than one: in the top corner of a pair tile, in the bottom corner of a tile, which is too narrow to hold it
 beside the selection check, and beside the time on a card or a list row. For a screen
-reader the entry is a "Photo of 3 cats", with its time and location, which are the same for every cat of a shot.
+reader the entry is a "Photo of 3 cats", with its time and location; the badge itself is hidden from it. The
+time and location are the first cat's, which every other cat copied when it joined the shot; a place set by hand
+on one of them later shows on that cat's own screen, not here. A shot without a thumbnail leads with a paw, since
+one coat's face would misname cats that may have several.
 
 - **It packs like one photo.** In the grid a shot pairs, runs and tiles as a single photo would (*a shot packs
   as one photo and pairs with the photo beside it*); in the list it is one row, and the outing's rounded corners

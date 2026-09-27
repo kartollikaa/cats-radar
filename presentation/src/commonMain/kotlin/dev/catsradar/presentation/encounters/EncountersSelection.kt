@@ -12,42 +12,34 @@ internal fun EncountersState.withSelection(ids: Set<String>): EncountersState {
     val marked = rows.map { row -> row.marked(ids) }
     return copy(
         rows = marked.toPersistentList(),
-        selectedIds = marked.flatMap { it.selectedCatIds() }.toPersistentSet(),
+        selectedIds = marked.flatMap { it.cells() }.filter { it.selected }.flatMap { it.catIds }.toPersistentSet(),
     )
 }
 
 /** Every cat of the cell that stands for [id]; just [id] when no cell on screen does. */
 internal fun EncountersState.catsOfCell(id: String): Set<String> =
-    rows.asSequence().flatMap { it.cellCats() }.firstOrNull { id in it }?.toSet() ?: setOf(id)
+    rows.asSequence().flatMap { it.cells() }.firstOrNull { id in it.catIds }?.catIds?.toSet() ?: setOf(id)
 
 private fun EncountersRow.marked(ids: Set<String>): EncountersRow = when (this) {
     is OutingHeader -> this
     is EncountersRow.PhotoPair -> copy(
-        first = first.copy(selected = first.catIds.anyIn(ids)),
-        second = second.copy(selected = second.catIds.anyIn(ids)),
+        first = first.copy(selected = first.namesAnyOf(ids)),
+        second = second.copy(selected = second.namesAnyOf(ids)),
     )
     is EncountersRow.Tiles -> copy(cells = cells.marked(ids))
     is EncountersRow.Cards -> copy(cells = cells.marked(ids))
-    is EncountersRow.Single -> copy(cell = cell.copy(selected = cell.catIds.anyIn(ids)))
+    is EncountersRow.Single -> copy(cell = cell.copy(selected = cell.namesAnyOf(ids)))
 }
 
 private fun List<EncounterCell>.marked(ids: Set<String>): ImmutableList<EncounterCell> =
-    map { it.copy(selected = it.catIds.anyIn(ids)) }.toPersistentList()
+    map { it.copy(selected = it.namesAnyOf(ids)) }.toPersistentList()
 
-private fun List<String>.anyIn(ids: Set<String>): Boolean = any { it in ids }
+private fun EntryCell.namesAnyOf(ids: Set<String>): Boolean = catIds.any { it in ids }
 
-private fun EncountersRow.selectedCatIds(): List<String> = when (this) {
+private fun EncountersRow.cells(): List<EntryCell> = when (this) {
     is OutingHeader -> emptyList()
-    is EncountersRow.PhotoPair -> listOf(first, second).filter { it.selected }.flatMap { it.catIds }
-    is EncountersRow.Tiles -> cells.filter { it.selected }.flatMap { it.catIds }
-    is EncountersRow.Cards -> cells.filter { it.selected }.flatMap { it.catIds }
-    is EncountersRow.Single -> listOf(cell).filter { it.selected }.flatMap { it.catIds }
-}
-
-private fun EncountersRow.cellCats(): List<List<String>> = when (this) {
-    is OutingHeader -> emptyList()
-    is EncountersRow.PhotoPair -> listOf(first.catIds, second.catIds)
-    is EncountersRow.Tiles -> cells.map { it.catIds }
-    is EncountersRow.Cards -> cells.map { it.catIds }
-    is EncountersRow.Single -> listOf(cell.catIds)
+    is EncountersRow.PhotoPair -> listOf(first, second)
+    is EncountersRow.Tiles -> cells
+    is EncountersRow.Cards -> cells
+    is EncountersRow.Single -> listOf(cell)
 }

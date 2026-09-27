@@ -15,12 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-/** Has no description of its own: the cell showing it must say how many cats it holds. */
+/** Hidden from screen readers: the cell showing it must say how many cats it holds. */
 @Composable
 internal fun ShotBadge(
     count: Int,
@@ -30,6 +32,8 @@ internal fun ShotBadge(
 ) {
     Row(
         modifier = modifier
+            // Its own merge root, or the card around it would read the bare number out with the rest.
+            .semantics(mergeDescendants = true) { hideFromAccessibility() }
             .background(containerColor, CircleShape)
             .padding(start = 6.dp, end = 8.dp, top = 2.dp, bottom = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),

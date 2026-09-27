@@ -69,13 +69,13 @@ class EncountersStateMapper(
             }
         }
 
-    // The cats of an entry share its time, place and photo, so its first cat speaks for all of them.
+    // The first cat speaks for the entry: the others copied its time, place and photo when they joined it.
     private fun List<Encounter>.toCell(): EncounterCell = with(first()) {
         EncounterCell(
             id = id,
             timeLabel = timeLabel(),
             location = locationSource.toLocationLabel(),
-            lead = lead(),
+            lead = lead(showsCoat = this@toCell.size == 1),
             catIds = this@toCell.map { it.id }.toPersistentList(),
         )
     }
@@ -94,9 +94,10 @@ class EncountersStateMapper(
 
     private fun Encounter.thumbnail(): String? = cover?.thumbPath?.let(photoStorage::resolve)
 
-    private fun Encounter.lead(): CellLead {
+    /** Without [showsCoat] a cell with no picture shows a paw: one coat would misname the cats of a shot. */
+    private fun Encounter.lead(showsCoat: Boolean): CellLead {
         val thumbnail = thumbnail()
-        val coatOption = coat?.toOption()
+        val coatOption = coat?.toOption()?.takeIf { showsCoat }
         return when {
             thumbnail != null -> CellLead.Photo(thumbnail)
             coatOption != null -> CellLead.Coat(coatOption)

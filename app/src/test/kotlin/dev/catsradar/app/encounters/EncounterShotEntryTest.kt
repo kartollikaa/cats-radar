@@ -3,7 +3,12 @@ package dev.catsradar.app.encounters
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -44,16 +49,16 @@ class EncounterShotEntryTest {
             EncountersLayout.GRID,
             EncountersRow.Cards(persistentListOf(cell("s1", "14:32", catIds = 3), cell("lone", "14:10"))),
         )
-        compose.onAllNodesWithText("3").assertCountEquals(1)
-        compose.onAllNodesWithText("1").assertCountEquals(0)
+        compose.onAllNodesWithText("3", useUnmergedTree = true).assertCountEquals(1)
+        compose.onAllNodesWithText("1", useUnmergedTree = true).assertCountEquals(0)
 
         show(
             EncountersLayout.LIST,
             EncountersRow.Single(cell("s1", "14:32", catIds = 3), GroupPosition.FIRST),
             EncountersRow.Single(cell("lone", "14:10"), GroupPosition.LAST),
         )
-        compose.onAllNodesWithText("3").assertCountEquals(1)
-        compose.onAllNodesWithText("1").assertCountEquals(0)
+        compose.onAllNodesWithText("3", useUnmergedTree = true).assertCountEquals(1)
+        compose.onAllNodesWithText("1", useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -72,6 +77,9 @@ class EncounterShotEntryTest {
         compose.onNodeWithContentDescription("Photo of 4 cats").assertExists()
         compose.onNodeWithContentDescription("Photo of this cat, 14:30, Current location").assertExists()
         compose.onAllNodesWithContentDescription("Photo of 1 cat", substring = true).assertCountEquals(0)
+        compose.onNodeWithContentDescription("Photo of 4 cats").assert(!hasText("4"))
+        compose.onAllNodesWithText("4")
+            .assertAll(SemanticsMatcher.keyIsDefined(SemanticsProperties.HideFromAccessibility))
     }
 
     private var shown: EncountersState? by mutableStateOf(null)
