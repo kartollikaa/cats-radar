@@ -65,16 +65,16 @@ another service object is the case above.
   ```
   `Lazy` is not a way around start-up order. `WorkManager` and the Firebase instances exist before
   anything resolves their users — `CatsRadarApplication` initializes WorkManager right after
-  `startKoin()`, and Firebase starts before `Application.onCreate()` — so they are injected as
-  instances, and a test that builds the graph has WorkManager running before it resolves anything.
+  `startKoin()`, and a release build starts Firebase before `Application.onCreate()` — so they are
+  injected as instances, and a test that builds the graph has WorkManager running before it
+  resolves anything.
 - **A supplier `() -> T`** — when every use needs a fresh instance: a `Geocoder` keeps the locale it
   was built with, so `AndroidReverseGeocoder` builds one per lookup.
 
 A platform object is obtained inline in its user's binding unless something must find it by type:
 it gets its own `single` when several classes take it (`WorkManager`, `NotificationManagerCompat`),
 when it reaches its user through `inject()` or `by inject()` (the Play Services client,
-`ActivityManager`), or when its user is bound by class so that `verify()` can check it
-(`FirebaseCrashlytics`).
+`ActivityManager`), or when its user is bound by class so that `verify()` can check it.
 A `SharedPreferences` file is opened in the binding; its name is where its data lives, so it never
 changes — `KoinRuntimeResolutionTest` reads back through the real bindings what installed versions
 wrote.
@@ -98,12 +98,11 @@ worker takes constructor parameters like any other class.
   class (`single { FusedLocationProvider(…) } bind LocationProvider::class`): nothing opens the lazy
   while the graph is built, so `verify()` is the only check that `T` has a binding.
 - `KoinRuntimeResolutionTest` starts the real modules, with WorkManager running as it is in the app,
-  and resolves every type obtained by hand, so a missing binding fails a JVM test. It runs without
-  `FirebaseApp`, where neither `FirebaseCrashlytics` nor `FirebaseRemoteConfig` can be created:
-  `NonFatalReporter` and `SettingsStore` are proven bound by their resolution reaching Firebase and
-  failing there, and the classes that take those instances are bound by class
-  (`single { CrashlyticsNonFatalReporter(get()) } bind NonFatalReporter::class`, likewise
-  `RemoteConfigFeatureToggles`) so that `verify()` checks the Firebase bindings.
+  and resolves every type obtained by hand, so a missing binding fails a JVM test. Unit tests build
+  only the debug variant, whose Firebase ports (`Analytics`, `NonFatalReporter`, `FeatureToggles`)
+  are no-ops, so they and `SettingsStore` resolve fully without `FirebaseApp`; no JVM test runs the
+  release branches, which build the Firebase reporters inline from `getInstance()`. Each Store is
+  resolved through `getStore()`, which cancels its `viewModelScope` when the test ends.
 
 No test sees a hand-built instance of a plain class with its own binding (`ImportBatches(context)`
 inside a scheduler); review catches that one.
@@ -115,4 +114,4 @@ inside a scheduler); review catches that one.
 3. Pass `Lazy<T>` only for an instance that is costly to create and may never be needed, and bind
    the class that takes it by its class.
 4. If the class is resolved by hand (`koin.get()`, `by inject()`, `koinInject()`, `inject()`), add it
-   to `KoinRuntimeResolutionTest`.
+   to `KoinRuntimeResolutionTest` — a Store through `getStore()`, never a plain `koin.get()`.
