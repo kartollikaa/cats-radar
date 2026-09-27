@@ -214,7 +214,7 @@ class EncounterDetailStoreTest {
         repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))
         val store = newStore()
         runCurrent()
-        val before = store.state.value
+        val before = assertIs<EncounterDetailState.Loaded>(store.state.value)
 
         store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
         store.dispatch(EncounterDetailIntent.PageSettled("elsewhere"))

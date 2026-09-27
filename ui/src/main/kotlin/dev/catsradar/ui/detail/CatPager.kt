@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -53,9 +54,10 @@ internal fun CatPager(
     onCoordinatesClick: (catId: String) -> Unit = {},
     onSetLocationClick: (catId: String) -> Unit = {},
 ) {
-    val pagerState = rememberPagerState(initialPage = state.currentNumber - 1) { state.pages.size }
     val currentState by rememberUpdatedState(state)
     val currentOnPageSettle by rememberUpdatedState(onPageSettle)
+    // Not saved: an index restored after the process died can name another cat than the state's.
+    val pagerState = remember { PagerState(currentPage = state.currentNumber - 1) { currentState.pages.size } }
     LaunchedEffect(state.currentId) {
         val onScreen = currentState.currentNumber - 1
         if (onScreen != pagerState.currentPage) pagerState.scrollToPage(onScreen)

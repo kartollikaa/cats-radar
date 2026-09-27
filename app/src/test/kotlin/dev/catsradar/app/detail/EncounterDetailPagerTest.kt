@@ -9,6 +9,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -87,6 +88,23 @@ class EncounterDetailPagerTest {
 
         state = loadedOn(older, logged, newer, older)
         compose.waitForIdle()
+
+        compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
+        assertEquals(emptyList(), settled)
+    }
+
+    @Test
+    fun `a restore after the pages shifted starts on the cat on screen and reports nothing`() {
+        val restoration = StateRestorationTester(compose)
+        val settled = mutableListOf<String>()
+        var restoredState = loadedOn(older, newer, older)
+        restoration.setContent {
+            CatsRadarTheme { EncounterDetailScreen(state = restoredState, onPageSettle = { settled += it }) }
+        }
+        compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
+
+        restoredState = loadedOn(older, logged, newer, older)
+        restoration.emulateSavedInstanceStateRestore()
 
         compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
         assertEquals(emptyList(), settled)
