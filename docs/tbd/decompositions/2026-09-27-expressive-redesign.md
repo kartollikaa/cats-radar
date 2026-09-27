@@ -25,7 +25,7 @@
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
 | E12a | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; the headline totals the tab. | safe | ~550 | E1 | in-review |
-| E12b | The cats inside the outing cards | Tiles take the coat shapes, pair tiles their chip, the short run's and the list's cards their new look, and the selection its ring and bar. | safe | ~450 | E4, E12a | planned |
+| E12b | The cats inside the outing cards | Tiles take the coat shapes, pair tiles their chip, the short run's and the list's cards their new look, and the selection its ring and bar. | safe | ~450 | E4, E12a | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
