@@ -33,6 +33,8 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "w411dp-h891dp")
@@ -44,12 +46,16 @@ class EncounterShotEntryTest {
     val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
     @Test
-    fun `a shot's card and list row show its cat count, and a lone cat shows none`() {
+    fun `a shot shows its cat count on every kind of cell`() {
         show(
             EncountersLayout.GRID,
-            EncountersRow.Cards(persistentListOf(cell("s1", "14:32", catIds = 3), cell("lone", "14:10"))),
+            EncountersRow.PhotoPair(photoCell("pair", catIds = 3), photoCell("lonePhoto")),
+            EncountersRow.Tiles(
+                persistentListOf(cell("tile", "14:20", catIds = 3), cell("t2", "14:19"), cell("t3", "14:18")),
+            ),
+            EncountersRow.Cards(persistentListOf(cell("card", "14:10", catIds = 3), cell("lone", "14:05"))),
         )
-        compose.onAllNodesWithText("3", useUnmergedTree = true).assertCountEquals(1)
+        compose.onAllNodesWithText("3", useUnmergedTree = true).assertCountEquals(3)
         compose.onAllNodesWithText("1", useUnmergedTree = true).assertCountEquals(0)
 
         show(
@@ -59,6 +65,22 @@ class EncounterShotEntryTest {
         )
         compose.onAllNodesWithText("3", useUnmergedTree = true).assertCountEquals(1)
         compose.onAllNodesWithText("1", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `a narrow tile keeps its badge in its bottom half, clear of the selection check`() {
+        val shot = cell("t1", "14:21", catIds = 12).copy(selected = true)
+        show(
+            EncountersLayout.GRID,
+            EncountersRow.Tiles((listOf(shot) + (2..5).map { cell("t$it", "14:2$it") }).toImmutableList()),
+        )
+
+        val tile = compose.onNodeWithContentDescription("Photo of 12 cats, 14:21, Current location")
+            .fetchSemanticsNode().boundsInRoot
+        val badge = compose.onNode(hasText("12"), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+
+        assertTrue(badge.top - tile.top >= tile.width / 2, "badge at ${badge.top - tile.top} of a ${tile.width} tile")
     }
 
     @Test
