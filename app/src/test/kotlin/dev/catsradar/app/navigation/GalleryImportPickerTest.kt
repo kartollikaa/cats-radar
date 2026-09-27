@@ -16,9 +16,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.app.testing.RecordingActivityResultRegistry
+import dev.catsradar.data.platform.mayReadPhotoLocations
 import dev.catsradar.domain.Tuning
 import org.junit.Before
 import org.junit.Rule
@@ -56,7 +58,9 @@ class GalleryImportPickerTest {
         compose.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides registry) {
                 resolver = LocalContext.current.contentResolver
-                picker = rememberGalleryImportPicker { picked = it }
+                picker = rememberGalleryImportPicker(PhotoLocationAccess(application::mayReadPhotoLocations)) {
+                    picked = it
+                }
             }
         }
     }
