@@ -15,7 +15,7 @@
 | P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | merged |
 | P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | merged |
 | P3a-1 | The detail state holds pages | `Loaded` carries `pages` of `CatPage` and the cat on screen; the screen draws that page and every tap names it; the Store still reads one cat. | safe | ~630 | P2 | merged |
-| P3a-2 | One Store serves the outing | The Store reads the outing through `outingWindow` with `OutingPages` (anchor and shown set); per-cat attaching; a cat deleted elsewhere hands over to its neighbour. | safe | ~730 | P3a-1 | in-review |
+| P3a-2 | One Store serves the outing | The Store reads the outing through `outingWindow` with `OutingPages` (anchor and shown set); per-cat attaching; a cat deleted elsewhere hands over to its neighbour. | safe | ~750 | P3a-1 | in-review |
 | P3b | The detail screen pages through its outing | The pager keyed by cat id, following `currentId`; "2 / 5" in the bar; `PageSettled`; restore by id. | safe | ~300 | P3a-2 | planned |
 | P4 | A delete leaves the pager with an undo bar | The deleted cat leaves the pages, the neighbour shows, and an undo bar replaces the *removed* state except for the last cat. | safe | ~500 | P3b | planned |
 | P5a | Moving to the neighbouring outing | Neighbours in state, `OutingEdgeReleased`, the slide keyed by the jump counter, TalkBack's *Newer/Older outing*. | safe | ~400 | P3b | planned |
@@ -123,7 +123,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   the page state); first shipped in v1.5.1-beta, P1 and P2 in v1.5.0-beta. Four intermediate commits of its fix
   wave do not compile `:app` tests — a shared test helper arrived one commit after its users; implementer briefs
   now require compiling tests before each commit.
-- 2026-09-27: **P3a-2 built** (~730 reviewable lines, three fifths tests). `OutingPages` hands out the window and the
+- 2026-09-27: **P3a-2 built** (~750 reviewable lines, three fifths tests). `OutingPages` hands out the window and the
   cat on screen as one `ShownPages`, since `flatMapLatest` can deliver an older window after the pages moved on; the
   mapper now refuses a cat on screen off the pages. `settle` and `release` are unit-tested ahead of `PageSettled` (P3b)
   and `OutingEdgeReleased` (P5a). While the cat deleted here is gone, emissions wait, so the removed state and Undo
