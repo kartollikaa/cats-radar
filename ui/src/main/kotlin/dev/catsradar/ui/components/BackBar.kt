@@ -15,14 +15,16 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
 /**
- * The pinned back arrow of a screen pushed above a tab. It draws no background, so the screen scrolls under
- * it; [contentPadding] is the screen's own, and the content goes below [belowBackBar] of it.
+ * The pinned back arrow of a screen pushed above a tab, with an optional [title] at its centre. It draws no
+ * background, so the screen scrolls under it; [contentPadding] is the screen's own, and the content goes below
+ * [belowBackBar] of it.
  */
 @Composable
 fun BackBar(
     contentDescription: String,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    title: (@Composable () -> Unit)? = null,
     onBackClick: () -> Unit = {},
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -32,6 +34,7 @@ fun BackBar(
             top = contentPadding.calculateTopPadding(),
             end = contentPadding.calculateEndPadding(layoutDirection),
         ),
+        title = title,
         startContent = {
             FilledTonalIconButton(onClick = onBackClick) {
                 Icon(painter = painterResource(R.drawable.ic_arrow_back), contentDescription = contentDescription)
