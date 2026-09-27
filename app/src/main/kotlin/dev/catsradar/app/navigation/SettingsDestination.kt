@@ -83,6 +83,8 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
         modifier = modifier,
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
+        onSaveOriginalsOffConfirm = { store.dispatch(SettingsIntent.SaveOriginalsOffConfirmed) },
+        onSaveOriginalsOffCancel = { store.dispatch(SettingsIntent.SaveOriginalsOffCancelled) },
         onEncountersGridChange = { store.dispatch(SettingsIntent.EncountersGridToggled(it)) },
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },

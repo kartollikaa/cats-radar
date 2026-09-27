@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +45,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onSaveOriginalsChange: (Boolean) -> Unit = {},
+    onSaveOriginalsOffConfirm: () -> Unit = {},
+    onSaveOriginalsOffCancel: () -> Unit = {},
     onEncountersGridChange: (Boolean) -> Unit = {},
     onExportClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
@@ -68,6 +71,9 @@ fun SettingsScreen(
                 checked = state.saveOriginalsToGallery,
                 onCheckedChange = onSaveOriginalsChange,
             )
+        }
+        if (state.confirmingSaveOriginalsOff) {
+            SaveOriginalsOffDialog(onConfirm = onSaveOriginalsOffConfirm, onCancel = onSaveOriginalsOffCancel)
         }
         SectionCard(R.string.tab_encounters) {
             SettingRow(
@@ -97,6 +103,21 @@ fun SettingsScreen(
         }
         state.about?.let { about -> AboutSection(about = about, onCopyClick = onCopyBuildInfoClick) }
     }
+}
+
+@Composable
+private fun SaveOriginalsOffDialog(onConfirm: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(stringResource(R.string.settings_save_originals_off_title)) },
+        text = { Text(stringResource(R.string.settings_save_originals_off_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.settings_save_originals_off_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.settings_save_originals_off_cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -233,6 +254,14 @@ private fun SettingsScreenPreview() {
 private fun SettingsScreenImportFailedPreview() {
     CatsRadarTheme {
         Surface { SettingsScreen(state = SettingsState(backupOutcome = BackupOutcome.IMPORT_FAILED)) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun SettingsScreenSaveOriginalsOffPreview() {
+    CatsRadarTheme {
+        Surface { SettingsScreen(state = SettingsState(confirmingSaveOriginalsOff = true)) }
     }
 }
 
