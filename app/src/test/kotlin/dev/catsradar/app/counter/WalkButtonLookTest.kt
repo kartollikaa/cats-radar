@@ -115,6 +115,26 @@ class WalkButtonLookTest {
         assertNoOldHint()
     }
 
+    private fun assertAWalkStartingMovesNothing() {
+        show()
+        val count = compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot()
+        val camera = photo().getUnclippedBoundsInRoot()
+
+        walking = true
+        compose.waitForIdle()
+
+        assertEquals(count, compose.onNodeWithContentDescription("3").getUnclippedBoundsInRoot())
+        assertEquals(camera, photo().getUnclippedBoundsInRoot())
+    }
+
+    @Test
+    fun `a walk starting leaves Photo and the count where they were`() = assertAWalkStartingMovesNothing()
+
+    @Config(fontScale = 1.5f)
+    @Test
+    fun `at a large font a walk starting still leaves Photo and the count where they were`() =
+        assertAWalkStartingMovesNothing()
+
     @Config(fontScale = 1.5f)
     @Test
     fun `at a large font both labels stay whole`() {
