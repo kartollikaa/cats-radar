@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -28,9 +29,10 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
-@Config(qualifiers = "w411dp-h891dp")
+@Config(qualifiers = "w411dp-h640dp")
 class EncounterDetailShotRowTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
@@ -68,14 +70,20 @@ class EncounterDetailShotRowTest {
             CatsRadarTheme { EncounterDetailScreen(state = state, onPageSettle = { settled += it }) }
         }
         compose.onNodeWithText(SHOT_TIME).assertIsDisplayed()
+        compose.scrollListToEnd()
+        val scrolled = pageScroll()
 
         state = loadedOn(shotPage(onScreen = "s2"), lone, shotPage(onScreen = "s2"))
         compose.waitForIdle()
 
-        compose.onNodeWithText(SHOT_TIME).assertIsDisplayed()
         compose.onNodeWithContentDescription(label(R.string.coat_black)).assertIsSelected()
+        assertTrue(scrolled > 0f, "the page did not scroll")
+        assertEquals(scrolled, pageScroll())
         assertEquals(emptyList(), settled)
     }
+
+    private fun pageScroll(): Float = compose.onNode(scrollsVertically).fetchSemanticsNode()
+        .config[SemanticsProperties.VerticalScrollAxisRange].value()
 
     private fun label(id: Int) = context.getString(id)
 
