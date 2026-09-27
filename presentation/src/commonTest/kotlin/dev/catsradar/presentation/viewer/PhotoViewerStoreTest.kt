@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.viewer
 
 import app.cash.turbine.test
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.RemovePhoto
@@ -241,6 +242,23 @@ class PhotoViewerStoreTest {
                 assertEquals(PhotoViewerEffect.GalleryItemGone, awaitItem())
                 expectNoEvents()
             }
+            assertEquals(listOf(false), offered(store))
+        }
+
+    @Test
+    fun `an original deleted while the viewer is open is offered no more once the cat changes`() =
+        runTest(mainDispatcher) {
+            repository.insert(photographedCat(galleryUri = SAVED))
+            galleryItems.present += SAVED
+            val store = newStore()
+            runCurrent()
+            val beforeTheChange = offered(store)
+            galleryItems.present -= SAVED
+
+            repository.setCoat(ID, CatCoat.GINGER, OCCURRED + 1.minutes)
+            runCurrent()
+
+            assertEquals(listOf(true), beforeTheChange)
             assertEquals(listOf(false), offered(store))
         }
 

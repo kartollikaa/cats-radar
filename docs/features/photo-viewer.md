@@ -106,7 +106,8 @@ failure (`PhotoViewerEntryTest`, *a failed removal keeps the viewer and reports 
 ## Open in gallery
 
 **When it is offered.** The button belongs to the photo on screen and changes as the user swipes: it
-shows for a photo that has a link here and opens that photo's item, never the cover's
+shows for a photo that has a link here — for an original the app saved, once the viewer has found it
+still in the gallery (see *A deleted original* below) — and opens that photo's item, never the cover's
 (`PhotoViewerStoreTest`, *the gallery opens the original of the photo on screen, not the cover's*). A
 photo whose camera original the app saved to `Pictures/Cats Radar` (see
 [photos.md](./photos.md#the-gallery-setting)) shows a gallery button at the other end of the top bar.
@@ -114,7 +115,7 @@ So does a cat whose photo was imported, or chosen from the gallery for it, when 
 in this phone's gallery (see [import.md](./import.md#the-gallery-item-it-came-from)) — the item the
 user picked, not a copy (`GalleryLinkTest`, *a photo this install picked from the gallery is a link to
 the item, one the app does not own*). A cat with both opens the original the app saved (*the original
-the app saved wins over a picked item on the same cat*). A tap hands that item to whatever app the
+the app saved wins over a picked item on the same photo*). A tap hands that item to whatever app the
 phone opens images with — the user's default gallery, or the system's choice — with the app's own read
 access passed on. If Android refuses to pass it on — for a picked item the user gave the app no access
 to, and for a saved one deleted in the moment between the check and the tap reaching the gallery —
@@ -155,13 +156,15 @@ The tap checks again, because the user may have deleted the original in another 
 opened. An item gone by then opens nothing: a message says the photo is no longer in the gallery, and
 its button goes (`PhotoViewerStoreTest`, *an original deleted after the check says so once at the tap
 and is offered no more*; `PhotoViewerEntryTest`, *an original deleted after the viewer checked it is
-named as such at the tap, and offered no more*). Coming back to the viewer from another app does not
-check again by itself; the tap does.
+named as such at the tap, and offered no more*). A change to the cat while the viewer is open checks
+again, and until that check lands the button keeps its last answer (*an original deleted while the
+viewer is open is offered no more once the cat changes*). Coming back to the viewer from another app
+does not check again by itself; the tap does.
 
-A picked item is never checked: without access to the user's photos the app cannot see it, so a check would call a present
-item gone. It is offered without a check, and the gallery is opened all the same; what the gallery
-shows for an item the user has deleted since — its library, or a message of its own — is its behaviour,
-not the app's (`ResolveGalleryLinkTest`, *a picked item opens unchecked, since without photo access the
+A picked item is never checked: without access to the user's photos the app cannot see it, so a
+check would call a present item gone. It is offered without a check, and the gallery is opened all the
+same; what the gallery shows for an item the user has deleted since — its library, or a message of its
+own — is its behaviour, not the app's (`ResolveGalleryLinkTest`, *a picked item opens unchecked, since without photo access the
 app cannot see it*; `PhotoViewerStoreTest`, *a picked item is offered there without asking the gallery*).
 
 **No gallery app.** A phone with nothing that shows images gets a message that no app can show the
