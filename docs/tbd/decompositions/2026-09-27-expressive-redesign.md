@@ -25,9 +25,9 @@
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
-| E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | in-review |
-| E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | in-review |
-| E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | in-review |
+| E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
+| E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
+| E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -194,3 +194,6 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   "that island will be like a popup". E15 carries it.
 - 2026-09-28: the owner asked for the walk in orange, yellow and blue; prototyped (version 24), then set aside:
   "lets do it without recoloring for now". The walk keeps the theme's tertiary colours.
+- 2026-09-28: the owner passed E13's and E14's look checks and said "merge" after E15's renders. **E13, E14 and E15
+  merged** as #222, #224 and #227, bottom first; each upper branch took the pinned main that its lower PR left, a
+  tree identical to its gated head, before it merged. The plans of E1 to E4, E14 and E15 are archived.
