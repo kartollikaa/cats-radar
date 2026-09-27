@@ -18,15 +18,21 @@ internal fun handlePhotoViewerEffect(
     effect: PhotoViewerEffect,
     onClose: () -> Unit,
     galleryOpener: GalleryOpener,
-    galleryGoneReporter: MessageReporter,
-    noGalleryAppReporter: MessageReporter,
+    reporters: PhotoViewerReporters,
 ) {
     when (effect) {
         PhotoViewerEffect.Close -> onClose()
-        is PhotoViewerEffect.OpenInGallery -> if (!galleryOpener.open(effect.uri)) noGalleryAppReporter.report()
-        PhotoViewerEffect.GalleryItemGone -> galleryGoneReporter.report()
+        is PhotoViewerEffect.OpenInGallery -> if (!galleryOpener.open(effect.uri)) reporters.noGalleryApp.report()
+        PhotoViewerEffect.GalleryItemGone -> reporters.galleryGone.report()
+        PhotoViewerEffect.RemovePhotoFailed -> reporters.removePhotoFailed.report()
     }
 }
+
+internal data class PhotoViewerReporters(
+    val galleryGone: MessageReporter,
+    val noGalleryApp: MessageReporter,
+    val removePhotoFailed: MessageReporter,
+)
 
 @Composable
 internal fun PhotoViewerDestination(key: PhotoViewer, onClose: () -> Unit, modifier: Modifier = Modifier) {
@@ -36,14 +42,15 @@ internal fun PhotoViewerDestination(key: PhotoViewer, onClose: () -> Unit, modif
     val galleryOpener = rememberGalleryOpener()
     val galleryGoneReporter = rememberMessageReporter(R.string.viewer_gallery_gone)
     val noGalleryAppReporter = rememberMessageReporter(R.string.viewer_no_gallery_app)
-    LaunchedEffect(store, galleryOpener, galleryGoneReporter, noGalleryAppReporter) {
+    val removePhotoFailedReporter = rememberMessageReporter(R.string.viewer_remove_failed)
+    val reporters = PhotoViewerReporters(galleryGoneReporter, noGalleryAppReporter, removePhotoFailedReporter)
+    LaunchedEffect(store, galleryOpener, galleryGoneReporter, noGalleryAppReporter, removePhotoFailedReporter) {
         store.effects.collect { effect ->
             handlePhotoViewerEffect(
                 effect,
                 onClose = { close() },
                 galleryOpener = galleryOpener,
-                galleryGoneReporter = galleryGoneReporter,
-                noGalleryAppReporter = noGalleryAppReporter,
+                reporters = reporters,
             )
         }
     }
@@ -52,5 +59,8 @@ internal fun PhotoViewerDestination(key: PhotoViewer, onClose: () -> Unit, modif
         modifier = modifier,
         onBackClick = { store.dispatch(PhotoViewerIntent.BackClicked) },
         onOpenInGalleryClick = { photoId -> store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId)) },
+        onRemovePhotoClick = { photoId -> store.dispatch(PhotoViewerIntent.RemovePhotoClicked(photoId)) },
+        onCancelPhotoRemoval = { store.dispatch(PhotoViewerIntent.RemovePhotoCancelled) },
+        onConfirmPhotoRemoval = { store.dispatch(PhotoViewerIntent.RemovePhotoConfirmed) },
     )
 }

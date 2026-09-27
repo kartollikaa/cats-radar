@@ -31,6 +31,7 @@ import dev.catsradar.domain.usecase.PruneInstalledUpdates
 import dev.catsradar.domain.usecase.PurgeDeleted
 import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
+import dev.catsradar.domain.usecase.RemovePhoto
 import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
@@ -106,6 +107,7 @@ val domainModule = module {
     factoryOf(::AttachPhoto)
     factoryOf(::ObserveEncounter)
     factoryOf(::ResolveGalleryLink)
+    factoryOf(::RemovePhoto)
     factoryOf(::DeleteEncounter)
     factoryOf(::UndoDelete)
     factoryOf(::DeleteEncounters)

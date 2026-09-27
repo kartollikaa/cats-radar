@@ -14,8 +14,11 @@ class PhotoViewerEffectHandlerTest {
             calls += "open $uri"
             galleryOpens
         },
-        galleryGoneReporter = { calls += "gone" },
-        noGalleryAppReporter = { calls += "no app" },
+        reporters = PhotoViewerReporters(
+            galleryGone = { calls += "gone" },
+            noGalleryApp = { calls += "no app" },
+            removePhotoFailed = { calls += "remove failed" },
+        ),
     )
 
     @Test
@@ -23,8 +26,9 @@ class PhotoViewerEffectHandlerTest {
         handle(PhotoViewerEffect.Close)
         handle(PhotoViewerEffect.OpenInGallery(SAVED))
         handle(PhotoViewerEffect.GalleryItemGone)
+        handle(PhotoViewerEffect.RemovePhotoFailed)
 
-        assertEquals(listOf("close", "open $SAVED", "gone"), calls)
+        assertEquals(listOf("close", "open $SAVED", "gone", "remove failed"), calls)
     }
 
     @Test

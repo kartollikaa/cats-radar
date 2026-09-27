@@ -225,6 +225,12 @@
     <string name="picker_position_unknown">Не удалось понять, где вы</string>
     <string name="viewer_back">Назад</string>
     <string name="viewer_open_in_gallery">Открыть в галерее</string>
+    <string name="viewer_remove_photo">Удалить фото</string>
+    <string name="viewer_remove_photo_title">Удалить это фото?</string>
+    <string name="viewer_remove_photo_message">Котик и фото в галерее останутся.</string>
+    <string name="viewer_remove_cancel">Отмена</string>
+    <string name="viewer_remove_confirm">Удалить</string>
+    <string name="viewer_remove_failed">Не удалось удалить фото</string>
     <string name="viewer_gallery_gone">Этого фото больше нет в галерее</string>
     <string name="viewer_no_gallery_app">Нет приложения, которое покажет это фото</string>
     <string name="viewer_position">%1$d / %2$d</string>

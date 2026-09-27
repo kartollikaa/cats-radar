@@ -11,7 +11,7 @@ places a cat — or the person counting it — ever leaves the phone.
 
 ### Goals
 
-1. Every uncaught crash, in every build, reaches Crashlytics with the build type attached.
+1. Every uncaught release crash reaches Crashlytics with the build type attached.
 2. Failures the app swallows and retries on its own reach Crashlytics as non-fatals.
 3. A typed event catalogue answers "which features are used, from where": cats logged by origin,
    coats, photos, imports, deletions, backups, walks, and which screens are opened.
@@ -30,9 +30,9 @@ places a cat — or the person counting it — ever leaves the phone.
 | Question | Decision |
 |---|---|
 | Application id | `com.kartollika.catsradar`, replacing the placeholder `dev.catsradar`. Kotlin packages and module namespaces stay `dev.catsradar.*`. |
-| Firebase config | The owner creates the Firebase project and registers the Android app; `app/google-services.json` is committed (private repo; the key in it is restricted to the package). |
+| Firebase config | The owner creates the Firebase project and registers the Android app; `app/src/release/google-services.json` is committed (private repo; the key in it is restricted to the package). |
 | Consent | Always on. No switch in Settings. |
-| Which builds report | Every build, debug and release alike, tagged with `build_type`. |
+| Which builds report | Release only, tagged with `build_type`. Debug binds no-op Firebase ports and has no Firebase config or generated resources. |
 
 ## 2. The application id
 
@@ -74,7 +74,7 @@ the network and never fails a user action.
 |---|---|
 | `:domain` | `AnalyticsEvent` — a sealed catalogue whose parameters are enums, booleans and counts only; `AnalyticsScreen` enum; `Analytics` port (`fun log(event: AnalyticsEvent)`). Use cases call the port after the fact they report has happened. |
 | `:data` | `commonMain`: the pure encoding of an `AnalyticsEvent` into an event name and a parameter map. `androidMain`: `FirebaseAnalyticsReporter` implementing `Analytics` — encode, convert to a `Bundle`, hand to Firebase. |
-| `:app` | Koin binding; the google-services and Crashlytics Gradle plugins; the `build_type` custom key and user property at process start; non-fatal recording at the app's swallow-and-retry sites; screen views from the Navigation 3 back stack. |
+| `:app` | Release Koin bindings; debug no-op bindings; the google-services and Crashlytics Gradle plugins; the `build_type` custom key and user property at release process start; non-fatal recording at the app's swallow-and-retry sites; screen views from the Navigation 3 back stack. |
 
 Why use cases and not Stores: a cat is logged from the Counter, the widget, the walking notification
 and the camera flow; an import finishes in a worker. Only the use case sees every one of them, so each
@@ -119,7 +119,7 @@ the one failure with its own event.
 ## 6. Crashlytics
 
 - Uncaught exceptions: automatic once the SDK is in the app.
-- Custom key `build_type` (`debug` / `release`), set at process start before anything else can fail.
+- Custom key `build_type` (`release`), set at release process start before anything else can fail.
 - Non-fatals: the startup repairs (`RepairPlaceCells`, `RegeneratePhotoCopies`) and every worker's
   catch-all branch record the exception they swallow. A worker that answers with a retry records only
   on its first attempt, so one persistent failure is one event, not one per backoff.
@@ -137,13 +137,13 @@ the one failure with its own event.
   characters, `[a-zA-Z][a-zA-Z0-9_]*`, no `firebase_`/`google_`/`ga_` prefix).
 - `:app` test: the `NavKey → AnalyticsScreen` mapping for every key.
 - Konsist: the `com.google.firebase` import rule, proven by breaking it once.
-- On a device: a debug build's events appear in Firebase DebugView; a forced test crash appears in
-  Crashlytics with `build_type = debug`.
+- On a device: a release build's events appear in Firebase; a forced test crash appears in
+  Crashlytics with `build_type = release`.
 
 ## 8. Documentation
 
 - New `docs/features/analytics.md`: what is sent, what never is, the catalogue, the edges (offline
-  queueing, no switch, every build), where the code lives.
+  queueing, no switch, release only), where the code lives.
 - `docs/features/map.md`: the map is no longer "the one screen that goes online".
 - `docs/features/README.md`: index entry.
 - `docs/reference/releasing.md`: the application id change and the backup round trip; the committed
@@ -155,5 +155,5 @@ the one failure with its own event.
 
 - **Gradle plugins on AGP 9.** Resolved: the google-services and Crashlytics Gradle plugins both work with
   the project's AGP, so the Crashlytics plugin also uploads the release mapping.
-- **Config mismatch.** The google-services plugin fails the build when `google-services.json` has no
+- **Config mismatch.** The google-services plugin fails the release build when `google-services.json` has no
   client for the application id; that is the desired failure, not one to work around.
