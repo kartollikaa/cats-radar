@@ -117,8 +117,9 @@ The tab reads top to bottom as a dashboard.
 - **The line under the chart** names one day and its count, "6 cats · Sat, Sep 26": today until a bar is
   tapped, then the tapped day. The pick is kept by date, so a new day starting does not move it to the
   bar beside it; switching the range keeps it while the range still shows that day, and once a range
-  does not, the pick is let go and the line names today, even after switching back. The line is a single line and keeps its height, so picking a day never moves what is
-  under it. TalkBack reads each bar as its count and day, and the labels under the bars not at all.
+  does not, the pick is let go and the line names today, even after switching back. The line is a
+  single line and keeps its height, so picking a day never moves what is under it. TalkBack reads each
+  bar as its count and day, and the labels under the bars not at all.
   The range and the pick last while the tab is open; coming back to the tab opens on seven days and
   today.
 - **The tiles**: Today (the one highlighted), Last 7 days, Last 30 days, With a photo, Streak and

@@ -185,6 +185,24 @@ class StatisticsStoreTest {
     }
 
     @Test
+    fun `a day both ranges show stays picked through a switch and back`() = runTest(mainDispatcher) {
+        encounterRepository.insert(encounterFixture("cat-1", BASE - 2.days))
+        val store = newStore(StoredWalkRepository())
+        runCurrent()
+        store.dispatch(StatisticsIntent.DayPicked(TWO_DAYS_AGO.toEpochDays()))
+        runCurrent()
+
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.MONTH))
+        runCurrent()
+        val onThirty = store.state.value.chart.picked
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.WEEK))
+        runCurrent()
+
+        val named = PickedDayState(count = 1, dayLabel = "weekdayDayMonth $TWO_DAYS_AGO")
+        assertEquals(named to named, onThirty to store.state.value.chart.picked)
+    }
+
+    @Test
     fun `back on seven days, a day picked three weeks ago gives way to today`() = runTest(mainDispatcher) {
         val store = newStore(StoredWalkRepository())
         runCurrent()

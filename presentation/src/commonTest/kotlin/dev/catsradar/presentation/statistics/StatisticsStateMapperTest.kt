@@ -13,6 +13,7 @@ import dev.catsradar.domain.stats.WalkStats
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -256,18 +257,18 @@ class StatisticsStateMapperTest {
     fun `the month chart has thirty bars, dated under today and every seventh bar before it`() {
         val chart = chartOf(ChartChoice(range = ChartRange.MONTH))
 
-        assertEquals(ChartRange.MONTH, chart.range)
-        assertEquals(30, chart.bars.size)
+        val dated = setOf(0, 7, 14, 21, 28)
         assertEquals(
-            List(30) { index ->
-                val daysBack = 29 - index
-                if (daysBack % 7 == 0) "dayMonth ${SATURDAY.minus(DatePeriod(days = daysBack))}" else null
-            },
-            chart.bars.map { it.axisLabel },
+            DayChartState(
+                range = ChartRange.MONTH,
+                bars = month.mapIndexed { index, day ->
+                    val daysBack = 29 - index
+                    bar(daysBack, day.count, day.count / 6f, "dayMonth ${day.date}".takeIf { daysBack in dated })
+                }.toPersistentList(),
+                picked = PickedDayState(count = 3, dayLabel = "weekdayDayMonth $SATURDAY"),
+            ),
+            chart,
         )
-        assertEquals(month.map { it.count.toFloat() / 6 }, chart.bars.map { it.height })
-        assertEquals(listOf(true), chart.bars.filter { it.isToday }.map { it.isPicked })
-        assertEquals(chart.bars.last(), chart.bars.single { it.isToday })
     }
 
     @Test
