@@ -110,8 +110,9 @@ private fun CatPageContent(
     onSetLocationClick: () -> Unit = {},
 ) {
     Column(
+        // The pager centres a page shorter than itself; filled, a short cat's page still starts under the bar.
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
             .padding(top = 8.dp, bottom = 16.dp),

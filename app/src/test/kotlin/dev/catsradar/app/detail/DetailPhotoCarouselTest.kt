@@ -87,6 +87,17 @@ class DetailPhotoCarouselTest {
     }
 
     @Test
+    fun `the row starts under the bar however short the page is`() {
+        show(catWith("cover"))
+        val alone = compose.onNodeWithTag(DetailCarouselTestTag).bounds().top
+
+        state = catWith("cover", "second", "third")
+        compose.waitForIdle()
+
+        assertEquals(alone, compose.onNodeWithTag(DetailCarouselTestTag).bounds().top, 1f)
+    }
+
+    @Test
     fun `a photo has large corners`() {
         show(catWith("first", "second"))
 
