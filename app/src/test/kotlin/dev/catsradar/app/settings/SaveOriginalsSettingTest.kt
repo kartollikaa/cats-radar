@@ -1,6 +1,8 @@
 package dev.catsradar.app.settings
 
+import androidx.activity.ComponentDialog
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -14,6 +16,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
@@ -70,7 +73,8 @@ class SaveOriginalsSettingTest {
 
         compose.onNodeWithText("Stop saving to the gallery?").assertIsDisplayed()
         compose.onNodeWithText(
-            "New camera photos will keep only the app's smaller copy. Their full-size originals can't be recovered later.",
+            "New camera photos will keep only the app's smaller copy. " +
+                "Their full-size originals can't be recovered later.",
         ).assertIsDisplayed()
     }
 
@@ -93,6 +97,19 @@ class SaveOriginalsSettingTest {
         compose.onNodeWithText("Turn off").performClick()
 
         assertEquals(1 to 0, confirms to cancels)
+    }
+
+    @Test
+    fun `dismissing the confirmation with back cancels`() {
+        show(SettingsState(confirmingSaveOriginalsOff = true))
+
+        compose.onNode(isDialog()).assertExists()
+        compose.runOnUiThread {
+            (ShadowDialog.getLatestDialog() as ComponentDialog).onBackPressedDispatcher.onBackPressed()
+        }
+        compose.waitForIdle()
+
+        assertEquals(0 to 1, confirms to cancels)
     }
 
     @Test
