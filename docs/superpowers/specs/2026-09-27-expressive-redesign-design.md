@@ -148,7 +148,8 @@ cookie**.
   walk's. A larger font puts Photo on a line of its own, in both states alike, rather than clip
   either label.
 - **The cookie wears the walk.** While a walk is on, the cookie's fill is `tertiaryContainer` and the
-  number and "cats" `onTertiaryContainer`; the ring, its dot and the tags keep their colours. The change
+  number and "cats" `onTertiaryContainer`; the arc, its dot and the tags keep their colours, and the
+  ring's faint track and the dot's rim, drawn from the cookie's own colours, follow it. The change
   animates on the theme's colour spec both ways. And the cookie breathes: the shape alone, not the
   ring, the number or the tags, swells two per cent and settles over about three seconds, again and
   again, for as long as the walk lasts; it stands still when no walk is on, and when the system's

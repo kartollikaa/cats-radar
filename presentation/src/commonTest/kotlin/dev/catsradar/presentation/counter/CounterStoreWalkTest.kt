@@ -49,6 +49,7 @@ class CounterStoreWalkTest {
             runCurrent()
 
             assertEquals(CounterEffect.WalkNeedsHold, awaitItem())
+            expectNoEvents()
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -71,8 +71,9 @@ line of its own, in both states alike, rather than clip either label (`WalkButto
 *Walk*; while a walk is on it takes the tertiary container and squarer corners and reads *Hold to
 end*. A tap on it starts a walk, but stopping one takes a press held until a fill crosses the button
 ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). While a walk is on the cookie wears it
-too: its fill and its number take the tertiary container's colours, the ring and its tags keep
-their own, and the shape alone breathes, a slow swell and settle that stands still without a walk
+too: its fill and its number take the tertiary container's colours, the arc, its dot and the tags
+keep their own while the ring's faint track and the dot's rim follow the cookie, and the shape alone
+breathes, a slow swell and settle that stands still without a walk
 and when the system's animations are off (`CounterWalkLookTest`, `CookieBreathTest`). Undo is a
 filled tonal button in the count block's top-start corner, across from the badge: it appears and
 goes without moving anything, and a tap on it takes a cat back and never logs one

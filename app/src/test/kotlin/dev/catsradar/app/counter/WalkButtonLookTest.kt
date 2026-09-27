@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.test.core.app.ApplicationProvider
@@ -73,6 +75,13 @@ class WalkButtonLookTest {
         return pixels[inset, if (atTopCorner) inset else pixels.height / 2]
     }
 
+    private fun lineCount(text: String): Int {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        return layouts.single().lineCount
+    }
+
     private fun assertNoOldHint() {
         compose.onAllNodesWithText("press and hold", substring = true).assertCountEquals(0)
         compose.onAllNodesWithText("tap to begin", substring = true).assertCountEquals(0)
@@ -101,6 +110,7 @@ class WalkButtonLookTest {
 
         assertEquals(colors.secondaryContainer, walkButton().pixelNearStart(atTopCorner = false))
         walkButton().assertIsDisplayed()
+        assertEquals(1, lineCount(context.getString(R.string.counter_walk)))
         assertNoOldHint()
     }
 
