@@ -1,6 +1,10 @@
 package dev.catsradar.ui.counter
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,16 +62,23 @@ internal fun ImportIsland(
     onUndoClick: () -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
-    when {
-        summary != null -> SwipeToDismissBox(
-            state = rememberSwipeToDismissBoxState(),
-            backgroundContent = {},
-            modifier = modifier,
-            onDismiss = { onDismiss() },
-        ) {
-            IslandCard { Summary(summary, onUndoClick = onUndoClick, onDismiss = onDismiss) }
+    AnimatedVisibility(
+        visible = progress != null || summary != null,
+        modifier = modifier,
+        enter = slideInVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) { -it } +
+            fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()),
+        exit = ExitTransition.None,
+    ) {
+        when {
+            summary != null -> SwipeToDismissBox(
+                state = rememberSwipeToDismissBoxState(),
+                backgroundContent = {},
+                onDismiss = { onDismiss() },
+            ) {
+                IslandCard { Summary(summary, onUndoClick = onUndoClick, onDismiss = onDismiss) }
+            }
+            progress != null -> IslandCard { Running(progress) }
         }
-        progress != null -> IslandCard(modifier) { Running(progress) }
     }
 }
 
