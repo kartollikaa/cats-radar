@@ -53,7 +53,6 @@ import kotlinx.collections.immutable.toPersistentList
 
 private val RowInset = 16.dp
 
-// A card's own inset comes on top of this, so its cats keep the width they had without the card.
 private val CardInset = 12.dp
 private val CardTextInset = 12.dp
 
