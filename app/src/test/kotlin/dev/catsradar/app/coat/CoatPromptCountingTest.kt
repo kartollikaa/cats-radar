@@ -146,16 +146,20 @@ class CoatPromptCountingTest {
     @Test
     fun `Not now closes asking and counting alike, and Several is the group's alone`() {
         var prompt by mutableStateOf(asking)
-        show({ prompt })
+        var skips = 0
+        compose.setContent {
+            CatsRadarTheme { CoatPrompt(prompt = prompt, onSkipClick = { skips++ }) }
+        }
         val skip = context.getString(R.string.counter_coat_prompt_skip)
-        compose.onNodeWithText(skip).assertExists()
+        compose.onNodeWithText(skip).performClick()
         compose.onAllNodesWithText(several).assertCountEquals(1).assertAll(radio)
 
         prompt = asking.copy(counting = CoatCountState())
         compose.waitForIdle()
+        compose.onNodeWithText(skip).performClick()
 
-        compose.onNodeWithText(skip).assertExists()
         compose.onAllNodesWithText(several).assertCountEquals(1).assertAll(radio)
+        assertEquals(2, skips)
     }
 
     @Test

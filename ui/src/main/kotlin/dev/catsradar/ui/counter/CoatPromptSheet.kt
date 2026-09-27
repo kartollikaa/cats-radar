@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -227,10 +228,18 @@ private fun ModeButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
+    val scheme = MaterialTheme.colorScheme
     ToggleButton(
         checked = checked,
         onCheckedChange = { if (!checked) onClick() },
         shapes = shapes,
+        // Tonal when chosen, so Save stays the sheet's one filled button.
+        colors = ToggleButtonDefaults.colors(
+            containerColor = scheme.surfaceContainerHighest,
+            contentColor = scheme.onSurface,
+            checkedContainerColor = scheme.secondaryContainer,
+            checkedContentColor = scheme.onSecondaryContainer,
+        ),
         modifier = modifier.semantics { role = Role.RadioButton },
     ) {
         if (checked) {
