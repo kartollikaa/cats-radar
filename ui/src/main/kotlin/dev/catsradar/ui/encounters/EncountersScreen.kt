@@ -51,6 +51,9 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 
 private val RowInset = 16.dp
+
+// A card's own inset comes on top of this, so its cats keep the width they had without the card.
+private val CardInset = 12.dp
 private val CardTextInset = 12.dp
 
 private const val LEADING_ITEM_KEY = "leading"
@@ -98,6 +101,10 @@ fun EncountersScreen(
             if (state.isEmpty) {
                 EmptyEncounters(modifier = Modifier.fillMaxSize().padding(listPadding))
             } else {
+                val headline = rememberHeadline(
+                    totals = state.totals,
+                    modifier = Modifier.padding(start = CardInset, top = 16.dp, end = CardInset),
+                )
                 EncounterRows(
                     rows = state.rows,
                     layout = state.layout,
@@ -105,9 +112,11 @@ fun EncountersScreen(
                     listState = listState,
                     contentPadding = listPadding,
                     selecting = state.isSelecting,
+                    outingCards = true,
                     onEncounterClick = onEncounterClick,
                     onEncounterLongClick = onEncounterLongClick,
                     onOutingMapClick = onOutingMapClick,
+                    leadingItem = headline,
                 )
             }
             state.removedCount?.let { count ->
@@ -128,7 +137,10 @@ fun EncountersScreen(
 private fun LazyListState.isRestingAtTop(): Boolean =
     firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0 && !isScrollInProgress
 
-/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any. */
+/**
+ * Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any; with
+ * [outingCards] each outing is one card.
+ */
 @Composable
 internal fun EncounterRows(
     rows: ImmutableList<EncountersRow>,
@@ -137,34 +149,61 @@ internal fun EncounterRows(
     listState: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(),
     selecting: Boolean = false,
+    outingCards: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
     onEncounterLongClick: ((String) -> Unit)? = null,
     onOutingMapClick: (String) -> Unit = {},
     leadingItem: (@Composable () -> Unit)? = null,
 ) {
     val list = layout == EncountersLayout.LIST
+    val rowGap = if (list) ListRowGap else CellGap
     LazyColumn(
         modifier = modifier,
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(if (list) ListRowGap else CellGap),
+        // In a card the gaps are the card's own, drawn inside its pieces so it stays unbroken.
+        verticalArrangement = if (outingCards) Arrangement.Top else Arrangement.spacedBy(rowGap),
     ) {
         leadingItem?.let { item(key = LEADING_ITEM_KEY, contentType = LEADING_ITEM_KEY) { it() } }
         items(items = rows, key = { it.key }, contentType = { it::class }) { row ->
             val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
-            when (row) {
-                is OutingHeader -> OutingHeaderRow(
-                    header = row,
-                    alignWithCardText = list,
-                    modifier = rowModifier,
-                    onMapClick = onOutingMapClick,
+            if (outingCards) {
+                OutingCardRow(
+                    row = row,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = CardInset),
+                    rowGap = rowGap,
+                    selecting = selecting,
+                    onEncounterClick = onEncounterClick,
+                    onEncounterLongClick = onEncounterLongClick,
+                    onOutingMapClick = onOutingMapClick,
                 )
-                is EncountersRow.PhotoPair ->
-                    PhotoPairRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
-                is EncountersRow.Tiles -> TileRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
-                is EncountersRow.Cards -> CardRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
-                is EncountersRow.Single ->
-                    SingleRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
+            } else {
+                when (row) {
+                    is OutingHeader -> OutingHeaderRow(
+                        header = row,
+                        alignWithCardText = list,
+                        modifier = rowModifier,
+                        onMapClick = onOutingMapClick,
+                    )
+                    is EncountersRow.PhotoPair ->
+                        PhotoPairRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
+                    is EncountersRow.Tiles ->
+                        TileRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
+                    is EncountersRow.Cards -> CardRow(
+                        row = row,
+                        modifier = rowModifier,
+                        selecting = selecting,
+                        onEncounterClick = onEncounterClick,
+                        onEncounterLongClick = onEncounterLongClick,
+                    )
+                    is EncountersRow.Single -> SingleRow(
+                        row = row,
+                        modifier = rowModifier,
+                        selecting = selecting,
+                        onEncounterClick = onEncounterClick,
+                        onEncounterLongClick = onEncounterLongClick,
+                    )
+                }
             }
         }
     }

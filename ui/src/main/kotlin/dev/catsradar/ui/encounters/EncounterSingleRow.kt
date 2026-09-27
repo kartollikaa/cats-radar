@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.CellLead
@@ -29,6 +31,7 @@ internal fun SingleRow(
     row: EncountersRow.Single,
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
+    cardColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     onEncounterClick: (String) -> Unit = {},
     onEncounterLongClick: ((String) -> Unit)? = null,
 ) {
@@ -36,6 +39,7 @@ internal fun SingleRow(
         cell = row.cell,
         modifier = modifier,
         shape = row.position.shape(),
+        color = cardColor,
         selecting = selecting,
         onClick = { onEncounterClick(row.cell.id) },
         onLongClick = onEncounterLongClick?.let { longClick -> { longClick(row.cell.id) } },

@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -105,6 +106,7 @@ internal fun CardRow(
     row: EncountersRow.Cards,
     modifier: Modifier = Modifier,
     selecting: Boolean = false,
+    cardColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     onEncounterClick: (String) -> Unit = {},
     onEncounterLongClick: ((String) -> Unit)? = null,
 ) {
@@ -117,6 +119,7 @@ internal fun CardRow(
                 EncounterCard(
                     cell = cell,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
+                    color = cardColor,
                     selecting = selecting,
                     onClick = { onEncounterClick(cell.id) },
                     onLongClick = onEncounterLongClick?.let { longClick -> { longClick(cell.id) } },
@@ -219,15 +222,12 @@ internal fun EncounterCard(
     cell: EncounterCell,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.medium,
+    color: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     selecting: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
 ) {
-    val background = if (cell.selected) {
-        MaterialTheme.colorScheme.secondaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerLow
-    }
+    val background = if (cell.selected) MaterialTheme.colorScheme.secondaryContainer else color
     Row(
         modifier = modifier
             .clip(shape)

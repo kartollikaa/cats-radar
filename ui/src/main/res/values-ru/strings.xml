@@ -91,6 +91,8 @@
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_outing_on_map">На карте</string>
+    <string name="encounters_on_a_walk">На прогулке</string>
+    <string name="encounters_totals">%1$s · %2$s</string>
     <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_paw_description">Котик</string>
@@ -192,6 +194,30 @@
         <item quantity="few">%1$d котика за %2$s</item>
         <item quantity="many">%1$d котиков за %2$s</item>
         <item quantity="other">%1$d котика за %2$s</item>
+    </plurals>
+    <plurals name="encounters_total_cats">
+        <item quantity="one">%1$d котик</item>
+        <item quantity="few">%1$d котика</item>
+        <item quantity="many">%1$d котиков</item>
+        <item quantity="other">%1$d котика</item>
+    </plurals>
+    <plurals name="encounters_total_outings">
+        <item quantity="one">%1$d вылазка</item>
+        <item quantity="few">%1$d вылазки</item>
+        <item quantity="many">%1$d вылазок</item>
+        <item quantity="other">%1$d вылазки</item>
+    </plurals>
+    <plurals name="encounters_outing_summary">
+        <item quantity="one">%1$s · %2$d котик · %3$s</item>
+        <item quantity="few">%1$s · %2$d котика · %3$s</item>
+        <item quantity="many">%1$s · %2$d котиков · %3$s</item>
+        <item quantity="other">%1$s · %2$d котика · %3$s</item>
+    </plurals>
+    <plurals name="encounters_outing_summary_short">
+        <item quantity="one">%1$s · %2$d котик</item>
+        <item quantity="few">%1$s · %2$d котика</item>
+        <item quantity="many">%1$s · %2$d котиков</item>
+        <item quantity="other">%1$s · %2$d котика</item>
     </plurals>
     <plurals name="counter_count_caption" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик</item>
