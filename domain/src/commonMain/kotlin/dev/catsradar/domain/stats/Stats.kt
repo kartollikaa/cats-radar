@@ -26,8 +26,11 @@ data class Stats(
 /** [coat] of null is the "not specified" row. */
 data class CoatCount(val coat: CatCoat?, val count: Int, val shareOfTotal: Double)
 
-/** [remaining] is how many more cats reach [value]; never zero, because a reached milestone is past. */
-data class Milestone(val value: Int, val remaining: Int)
+/**
+ * [remaining] is how many more cats reach [value]; never zero, because a reached milestone is past.
+ * [reached] is the rung the total has already passed, or 0 below the first.
+ */
+data class Milestone(val value: Int, val remaining: Int, val reached: Int)
 
 /**
  * A speed of encounters, kept as cats per hour because that is the unit that stays readable at the

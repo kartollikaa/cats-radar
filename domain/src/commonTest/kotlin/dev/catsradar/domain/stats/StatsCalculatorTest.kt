@@ -227,8 +227,22 @@ class StatsCalculatorTest {
 
     @Test
     fun `the next milestone is the first one above the total, with the distance to it`() {
-        assertEquals(Milestone(1, 1), stats(emptyList()).nextMilestone)
-        assertEquals(Milestone(10, 9), stats(listOf(at(NOON))).nextMilestone)
+        assertEquals(Milestone(value = 1, remaining = 1, reached = 0), stats(emptyList()).nextMilestone)
+        assertEquals(Milestone(value = 10, remaining = 9, reached = 1), stats(listOf(at(NOON))).nextMilestone)
+    }
+
+    @Test
+    fun `the milestone knows the rung the total has already passed`() {
+        val sixtyTwo = (1..62).map { at(NOON - (it * 2).hours, id = "e$it") }
+
+        assertEquals(Milestone(value = 100, remaining = 38, reached = 50), stats(sixtyTwo).nextMilestone)
+    }
+
+    @Test
+    fun `a total sitting on a rung has passed that rung`() {
+        val ten = (1..10).map { at(NOON - (it * 2).hours, id = "e$it") }
+
+        assertEquals(Milestone(value = 25, remaining = 15, reached = 10), stats(ten).nextMilestone)
     }
 
     @Test
