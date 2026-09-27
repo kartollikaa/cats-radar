@@ -22,8 +22,8 @@ the cat on the button walks.
   and nothing keeps it ticking while walking mode is off.
 - **The first minute shows no time on the button**, only the plain *press and hold*. A walk started
   mid-outing would otherwise put *0 min* right under the outing's own "15 min", two times that look
-  as if they should agree. The time appears at *1 min*. The notification's chronometer counts seconds, so
-  its zero is a clock starting and it shows from the start.
+  as if they should agree. The time appears at *1 min*. The notification's chronometer counts
+  seconds, so its zero is a clock starting and it shows from the start.
 - **In the notification it is a chronometer** counting up from the start, `12:34` then `1:02:03`. The
   system ticks it, so the time moves with no repost and keeps moving while the app's process is
   dead. From API 37 the notification is a `MetricStyle` with two metrics, *Cats* and *Walk*, and
