@@ -114,6 +114,7 @@ class CounterStore(
             // Only the flag is written; the notification follows it from outside the screen.
             is CounterIntent.WalkingModeToggled ->
                 runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
+            CounterIntent.WalkHoldReleased -> emit(CounterEffect.WalkNeedsHold)
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.CoatPrompt ->

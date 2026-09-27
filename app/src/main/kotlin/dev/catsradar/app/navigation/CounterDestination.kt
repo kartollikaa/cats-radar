@@ -40,22 +40,43 @@ internal fun CounterDestination(
 ) {
     val store = koinViewModel<CounterStore>()
     val state by store.state.collectAsStateWithLifecycle()
+    val importScheduler = koinInject<ImportScheduler>()
+    val onWalkingModeChange = rememberWalkingModeRequest { enabled ->
+        store.dispatch(CounterIntent.WalkingModeToggled(enabled))
+    }
+    ObserveImportWork(store, importScheduler)
+    ConsumeCameraRequest(store, cameraRequest)
+    CarryOutCounterEffects(store, importScheduler)
+    CounterScreen(
+        state = state,
+        modifier = modifier.padding(contentPadding),
+        onTallyClick = { store.dispatch(CounterIntent.TallyClicked) },
+        onUndoClick = { store.dispatch(CounterIntent.UndoClicked) },
+        onLocationHintAction = { action -> store.dispatch(action.toCounterIntent()) },
+        onCameraClick = { store.dispatch(CounterIntent.CameraClicked) },
+        onCoatTallyClick = { coat -> store.dispatch(CounterIntent.CoatTallyClicked(coat)) },
+        onImportClick = { store.dispatch(CounterIntent.Import.Requested) },
+        onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
+        onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
+        onWalkingModeChange = onWalkingModeChange,
+        onWalkHoldRelease = { store.dispatch(CounterIntent.WalkHoldReleased) },
+        onCoatPromptAction = { action -> store.dispatch(action.toCounterIntent()) },
+    )
+}
+
+@Composable
+private fun CarryOutCounterEffects(store: CounterStore, importScheduler: ImportScheduler) {
     val haptics = koinInject<Haptics>()
     val locationAttachScheduler = koinInject<LocationAttachScheduler>()
     val locationPermissionRequester = rememberPermissionRequester(store)
     val cameraLauncher = rememberCameraLauncher { shot -> store.dispatch(CounterIntent.PhotoCaptured(shot.uri)) }
     val photoFailureReporter = rememberMessageReporter(R.string.counter_photo_not_saved)
     val catsFailureReporter = rememberMessageReporter(R.string.counter_cats_not_saved)
+    val walkHoldHint = rememberMessageReporter(R.string.counter_walk_hold_hint)
     val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
-    val importScheduler = koinInject<ImportScheduler>()
     val photoLocationAccess = koinInject<PhotoLocationAccess>()
     val photoPickerLauncher = rememberPhotoPickerLauncher(store, photoLocationAccess)
-    val onWalkingModeChange = rememberWalkingModeRequest { enabled ->
-        store.dispatch(CounterIntent.WalkingModeToggled(enabled))
-    }
-    ObserveImportWork(store, importScheduler)
-    ConsumeCameraRequest(store, cameraRequest)
     LaunchedEffect(
         store,
         haptics,
@@ -77,23 +98,10 @@ internal fun CounterDestination(
                 milestoneAnnouncer,
                 photoPickerLauncher,
                 importScheduler,
+                walkHoldHint,
             )
         }
     }
-    CounterScreen(
-        state = state,
-        modifier = modifier.padding(contentPadding),
-        onTallyClick = { store.dispatch(CounterIntent.TallyClicked) },
-        onUndoClick = { store.dispatch(CounterIntent.UndoClicked) },
-        onLocationHintAction = { action -> store.dispatch(action.toCounterIntent()) },
-        onCameraClick = { store.dispatch(CounterIntent.CameraClicked) },
-        onCoatTallyClick = { coat -> store.dispatch(CounterIntent.CoatTallyClicked(coat)) },
-        onImportClick = { store.dispatch(CounterIntent.Import.Requested) },
-        onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
-        onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
-        onWalkingModeChange = onWalkingModeChange,
-        onCoatPromptAction = { action -> store.dispatch(action.toCounterIntent()) },
-    )
 }
 
 @Composable

@@ -12,6 +12,9 @@ sealed interface CounterIntent {
     data object UndoClicked : CounterIntent
     data class WalkingModeToggled(val enabled: Boolean) : CounterIntent
 
+    /** A press on the walk's stop let go before the hold was up. */
+    data object WalkHoldReleased : CounterIntent
+
     /** Importing from the gallery: a sub-flow of the Counter, not a screen of its own. */
     sealed interface Import : CounterIntent {
         data object Requested : Import

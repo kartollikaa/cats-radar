@@ -305,6 +305,7 @@
     <string name="settings_about_clip_label">Cats Radar build info</string>
     <string name="counter_walk">Walk</string>
     <string name="counter_walk_hold">Hold to end</string>
+    <string name="counter_walk_hold_hint">Hold to end the walk</string>
     <string name="counter_walk_start">Start a walk</string>
     <string name="counter_walk_stop">Stop the walk</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

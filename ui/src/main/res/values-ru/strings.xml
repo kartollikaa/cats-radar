@@ -345,6 +345,7 @@
     <string name="settings_about_clip_label">Данные о сборке Cats Radar</string>
     <string name="counter_walk">Прогулка</string>
     <string name="counter_walk_hold">Удерживайте</string>
+    <string name="counter_walk_hold_hint">Удерживайте, чтобы закончить прогулку</string>
     <string name="counter_walk_start">Начать прогулку</string>
     <string name="counter_walk_stop">Закончить прогулку</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->

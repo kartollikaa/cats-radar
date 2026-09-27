@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import app.cash.turbine.test
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +44,19 @@ class CounterStoreWalkTest {
             settingsRepository = settingsRepository,
             walkRepository = walkRepository,
         ) to encounters
+    }
+
+    @Test
+    fun `a press let go before the hold is up raises the hint`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.WalkHoldReleased)
+            runCurrent()
+
+            assertEquals(CounterEffect.WalkNeedsHold, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

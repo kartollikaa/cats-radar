@@ -21,6 +21,7 @@ internal fun handleCounterEffect(
     milestoneAnnouncer: MilestoneAnnouncer,
     photoPickerLauncher: PhotoPickerLauncher,
     importScheduler: ImportScheduler,
+    walkHoldHint: MessageReporter,
 ) {
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
@@ -34,6 +35,7 @@ internal fun handleCounterEffect(
         is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)
         CounterEffect.PickPhotos -> photoPickerLauncher.launch()
         is CounterEffect.StartImport -> importScheduler.start(effect.uris)
+        CounterEffect.WalkNeedsHold -> walkHoldHint.report()
     }
 }
 
