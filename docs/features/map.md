@@ -154,7 +154,7 @@ Two chips sit at the map's top edge.
   as the map closes in on a street.
 - **Coats** opens the coat grid in a sheet, under a line saying that only cats of the marked coats
   stay on the map. Choosing coats shows only cats of those coats, and "Not specified" shows the cats
-  with none noted. "Not specified" is the grid's twelfth cell, a paw in the next shape in turn,
+  with none noted. "Not specified" is the grid's twelfth cell, a paw in no coat's own shape,
   marked like any coat; that cell is the filter's alone, and the Counter's grid and the detail's
   picker have none. The choice applies to the dots, the photos, the clusters, the heat, a focused
   outing and a spot's list alike; a focused outing's route is never thinned by it, whichever kind of

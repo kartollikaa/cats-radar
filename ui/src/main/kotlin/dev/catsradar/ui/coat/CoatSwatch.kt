@@ -91,11 +91,11 @@ fun CoatGrid(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         maxItemsInEachRow = CoatsPerRow,
     ) {
-        CoatOption.entries.forEachIndexed { index, coat ->
+        CoatOption.entries.forEach { coat ->
             val ringed = coat in selected
             CoatTile(
                 label = stringResource(coat.labelRes()),
-                column = index % CoatsPerRow,
+                shape = coatShapeFor(coat),
                 selected = ringed,
                 onClick = { onCoatClick(coat) },
             ) {
@@ -106,7 +106,7 @@ fun CoatGrid(
         onUnspecifiedClick?.let { onClick ->
             CoatTile(
                 label = stringResource(R.string.coat_not_specified),
-                column = CoatOption.entries.size % CoatsPerRow,
+                shape = coatShapeFor(null),
                 selected = null in selected,
                 onClick = onClick,
             ) {
@@ -159,14 +159,14 @@ fun CoatPicker(
 @Composable
 private fun CoatTile(
     label: String,
-    column: Int,
+    shape: RoundedPolygon,
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     face: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    val shape = coatShapeFor(column).toShape()
+    val outline = shape.toShape()
     val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier = modifier
@@ -184,9 +184,9 @@ private fun CoatTile(
             modifier = Modifier
                 .size(52.dp)
                 .testTag(CoatShapeTestTag)
-                .clip(shape)
+                .clip(outline)
                 .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
-                .then(if (selected) Modifier.border(2.dp, colors.primary, shape) else Modifier)
+                .then(if (selected) Modifier.border(2.dp, colors.primary, outline) else Modifier)
                 .indication(interactionSource, ripple()),
             contentAlignment = Alignment.Center,
         ) {
@@ -225,11 +225,22 @@ private fun CoatCell(
     }
 }
 
+/** Each coat's own shape, and one for "no coat" ([coat] null), so a coat is known by its shape as well as its face. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val ColumnShapes =
-    listOf(MaterialShapes.Circle, MaterialShapes.Square, MaterialShapes.Clover4Leaf, MaterialShapes.Arch)
-
-internal fun coatShapeFor(column: Int): RoundedPolygon = ColumnShapes[column % ColumnShapes.size]
+internal fun coatShapeFor(coat: CoatOption?): RoundedPolygon = when (coat) {
+    CoatOption.GINGER -> MaterialShapes.Circle
+    CoatOption.GINGER_WHITE -> MaterialShapes.Square
+    CoatOption.WHITE -> MaterialShapes.Clover4Leaf
+    CoatOption.TRICOLOR_MOSTLY_WHITE -> MaterialShapes.Arch
+    CoatOption.TRICOLOR_LITTLE_WHITE -> MaterialShapes.Cookie4Sided
+    CoatOption.BROWN -> MaterialShapes.Sunny
+    CoatOption.BROWN_WHITE -> MaterialShapes.Gem
+    CoatOption.GREY -> MaterialShapes.Cookie6Sided
+    CoatOption.GREY_WHITE -> MaterialShapes.Pentagon
+    CoatOption.BLACK -> MaterialShapes.Flower
+    CoatOption.BLACK_WHITE -> MaterialShapes.Puffy
+    null -> MaterialShapes.Ghostish
+}
 
 @StringRes
 fun CoatOption.labelRes(): Int = when (this) {

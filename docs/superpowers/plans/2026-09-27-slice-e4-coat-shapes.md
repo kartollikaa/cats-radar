@@ -47,3 +47,7 @@
 ### Task 4: Renders, review and the gate
 
 Counter harness before and after (light, dark, font 1.5), the coat question and the map filter's sheet via their public composables; `/code-review`; the gate in a scratch worktree; the PR stacked on #210; the acceptance gate.
+
+### Task 5: Each coat its own shape (owner, 2026-09-27, before merging)
+
+"Each cat should have its own background shape. Now they have equal all in the same column." `coatShapeFor(coat: CoatOption?)` replaces `coatShapeFor(column)`: eleven shapes for the coats and `Ghostish` for no coat, none of them the count's `Cookie12Sided` (spec § 2 names them). `CoatShapesTest` asserts twelve distinct shapes, no cookie, and the two shapes the pixel samples sit on; the mutation is every coat a circle. `coat.md` and `map.md` follow.
