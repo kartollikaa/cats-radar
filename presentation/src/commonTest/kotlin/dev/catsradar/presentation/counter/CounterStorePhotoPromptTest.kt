@@ -48,7 +48,10 @@ class CounterStorePhotoPromptTest {
         store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
         runCurrent()
 
-        assertEquals(CoatPromptState(thumbPath = "/data/photos/cat_thumb.jpg"), store.state.value.coatPrompt)
+        assertEquals(
+            CoatPromptState("id-1", "id-1", thumbPath = "/data/photos/cat_thumb.jpg"),
+            store.state.value.coatPrompt,
+        )
     }
 
     @Test
@@ -148,7 +151,10 @@ class CounterStorePhotoPromptTest {
         imageResizer.result = StoredPhoto(photoPath = "second.jpg", thumbPath = "second_thumb.jpg")
         store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
         runCurrent()
-        assertEquals(CoatPromptState(thumbPath = "/data/photos/second_thumb.jpg"), store.state.value.coatPrompt)
+        assertEquals(
+            CoatPromptState("id-2", "id-2", thumbPath = "/data/photos/second_thumb.jpg"),
+            store.state.value.coatPrompt,
+        )
 
         store.dispatch(CounterIntent.CoatPrompt.Picked(CoatOption.GINGER))
         runCurrent()
@@ -165,7 +171,7 @@ class CounterStorePhotoPromptTest {
         val store = newCounterStore(encounterRepository = repository)
         store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
         runCurrent()
-        val prompt = CoatPromptState(thumbPath = "/data/photos/cat_thumb.jpg")
+        val prompt = CoatPromptState("id-1", "id-1", thumbPath = "/data/photos/cat_thumb.jpg")
 
         store.dispatch(CounterIntent.TallyClicked)
         runCurrent()
@@ -214,7 +220,7 @@ class CounterStorePhotoPromptTest {
         val store = countingStore(repository)
 
         assertEquals(
-            CoatPromptState(thumbPath = "/data/photos/cat_thumb.jpg", counting = CoatCountState()),
+            CoatPromptState("id-1", "id-1", thumbPath = "/data/photos/cat_thumb.jpg", counting = CoatCountState()),
             store.state.value.coatPrompt,
         )
         assertEquals(listOf(null), repository.encounters().map { it.coat })
@@ -249,10 +255,39 @@ class CounterStorePhotoPromptTest {
         val store = countingStore()
         count(store, CoatOption.GINGER, CoatOption.BLACK, CoatOption.WHITE)
 
-        store.dispatch(CounterIntent.CoatPrompt.TrayCatClicked(index = 1))
+        store.dispatch(CounterIntent.CoatPrompt.TrayCatClicked(index = 1, coat = CoatOption.BLACK))
         runCurrent()
 
         assertEquals(tray(CoatOption.GINGER, CoatOption.WHITE), store.state.value.coatPrompt?.counting)
+    }
+
+    @Test
+    fun `a tap on a tray cat that has already moved takes out no other cat`() = runTest(mainDispatcher) {
+        val store = countingStore()
+        count(store, CoatOption.GINGER, CoatOption.BLACK, CoatOption.WHITE)
+
+        store.dispatch(CounterIntent.CoatPrompt.TrayCatClicked(index = 1, coat = CoatOption.BLACK))
+        store.dispatch(CounterIntent.CoatPrompt.TrayCatClicked(index = 1, coat = CoatOption.BLACK))
+        runCurrent()
+
+        assertEquals(tray(CoatOption.GINGER, CoatOption.WHITE), store.state.value.coatPrompt?.counting)
+    }
+
+    @Test
+    fun `the count's own taps do nothing while the sheet asks for one coat`() = runTest(mainDispatcher) {
+        val repository = FakeEncounterRepository()
+        val store = newCounterStore(encounterRepository = repository)
+        store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
+        runCurrent()
+        val asked = store.state.value.coatPrompt
+
+        store.dispatch(CounterIntent.CoatPrompt.UnseenPicked)
+        store.dispatch(CounterIntent.CoatPrompt.TrayCatClicked(index = 0, coat = null))
+        store.dispatch(CounterIntent.CoatPrompt.SaveClicked)
+        runCurrent()
+
+        assertEquals(asked, store.state.value.coatPrompt)
+        assertEquals(listOf(null), repository.encounters().map { it.coat })
     }
 
     @Test
@@ -369,7 +404,10 @@ class CounterStorePhotoPromptTest {
         store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
         runCurrent()
 
-        assertEquals(CoatPromptState(thumbPath = "/data/photos/second_thumb.jpg"), store.state.value.coatPrompt)
+        assertEquals(
+            CoatPromptState("id-2", "id-2", thumbPath = "/data/photos/second_thumb.jpg"),
+            store.state.value.coatPrompt,
+        )
         assertEquals(listOf(null, null), repository.encounters().map { it.coat })
     }
 

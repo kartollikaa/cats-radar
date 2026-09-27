@@ -44,13 +44,16 @@ import kotlinx.collections.immutable.toImmutableSet
 
 private val TrayFaceSize = 40.dp
 
+/** The tray cat at [index], of [coat]. */
+data class TrayCatInteraction(val index: Int, val coat: CoatOption?)
+
 /** How the coat question after a photo was answered. */
 sealed interface CoatPromptAction {
     data class CoatPicked(val coat: CoatOption) : CoatPromptAction
 
     data object UnseenPicked : CoatPromptAction
 
-    data class TrayCatClicked(val index: Int) : CoatPromptAction
+    data class TrayCatClicked(val tap: TrayCatInteraction) : CoatPromptAction
 
     data object SeveralClicked : CoatPromptAction
 
@@ -84,7 +87,7 @@ fun CoatPrompt(
     modifier: Modifier = Modifier,
     onCoatClick: (CoatOption) -> Unit = {},
     onUnseenClick: () -> Unit = {},
-    onTrayCatClick: (Int) -> Unit = {},
+    onTrayCatClick: (TrayCatInteraction) -> Unit = {},
     onSeveralClick: () -> Unit = {},
     onSaveClick: () -> Unit = {},
     onSkipClick: () -> Unit = {},
@@ -106,15 +109,18 @@ fun CoatPrompt(
                 TextButton(onClick = onSkipClick) { Text(stringResource(R.string.counter_coat_prompt_skip)) }
             }
         } else {
+            val counts = counting.counts
             SheetHeader(
                 title = counting.catCount?.let { pluralStringResource(R.plurals.counter_coat_count_title, it, it) }
                     ?: stringResource(R.string.counter_coat_count_title_empty),
-                supporting = stringResource(R.string.counter_coat_count_hint),
+                supporting = stringResource(
+                    if (counting.canAdd) R.string.counter_coat_count_hint else R.string.counter_coat_count_full,
+                ),
             )
             CountTray(thumbPath = prompt.thumbPath, counting = counting, onCatClick = onTrayCatClick)
             CoatGrid(
-                selected = counting.counts.keys.toImmutableSet(),
-                counts = counting.counts,
+                selected = counts.keys.toImmutableSet(),
+                counts = counts,
                 enabled = counting.canAdd,
                 onCoatClick = onCoatClick,
                 onUnspecifiedClick = onUnseenClick,
@@ -137,7 +143,7 @@ private fun CountTray(
     thumbPath: String?,
     counting: CoatCountState,
     modifier: Modifier = Modifier,
-    onCatClick: (Int) -> Unit = {},
+    onCatClick: (TrayCatInteraction) -> Unit = {},
 ) {
     val remove = stringResource(R.string.counter_coat_count_remove)
     FlowRow(
@@ -153,7 +159,7 @@ private fun CountTray(
                 modifier = Modifier
                     .size(TrayFaceSize)
                     .clip(CircleShape)
-                    .clickable(onClickLabel = remove) { onCatClick(index) }
+                    .clickable(onClickLabel = remove) { onCatClick(TrayCatInteraction(index, coat)) }
                     .semantics { contentDescription = label },
                 contentAlignment = Alignment.Center,
             ) {
@@ -185,7 +191,7 @@ private fun PromptPhoto(path: String, modifier: Modifier = Modifier) {
 @ThemePreviews
 @Composable
 private fun CoatPromptPreview() {
-    CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(thumbPath = null)) }
+    CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(catId = "cat", photoId = "cat", thumbPath = null)) }
 }
 
 @ThemePreviews
@@ -197,10 +203,12 @@ private fun CoatPromptCountingPreview() {
 @ThemePreviews
 @Composable
 private fun CoatPromptCountingEmptyPreview() {
-    CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(thumbPath = null, counting = CoatCountState())) }
+    CatsRadarTheme { CoatPrompt(prompt = CoatPromptState("cat", "cat", thumbPath = null, counting = CoatCountState())) }
 }
 
 private val sampleCounting = CoatPromptState(
+    catId = "cat",
+    photoId = "cat",
     thumbPath = null,
     counting = CoatCountState(
         tray = persistentListOf(CoatOption.GINGER, CoatOption.BLACK_WHITE, null, CoatOption.GINGER),

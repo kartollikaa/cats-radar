@@ -140,7 +140,7 @@ private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
 private fun CoatPromptAction.toCounterIntent(): CounterIntent = when (this) {
     is CoatPromptAction.CoatPicked -> CounterIntent.CoatPrompt.Picked(coat)
     CoatPromptAction.UnseenPicked -> CounterIntent.CoatPrompt.UnseenPicked
-    is CoatPromptAction.TrayCatClicked -> CounterIntent.CoatPrompt.TrayCatClicked(index)
+    is CoatPromptAction.TrayCatClicked -> CounterIntent.CoatPrompt.TrayCatClicked(tap.index, tap.coat)
     CoatPromptAction.SeveralClicked -> CounterIntent.CoatPrompt.SeveralClicked
     CoatPromptAction.SaveClicked -> CounterIntent.CoatPrompt.SaveClicked
     CoatPromptAction.Dismissed -> CounterIntent.CoatPrompt.Dismissed

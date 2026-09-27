@@ -100,7 +100,7 @@ class CoatSheetsTest {
         compose.setContent {
             CatsRadarTheme {
                 CoatPrompt(
-                    prompt = CoatPromptState(thumbPath = null),
+                    prompt = CoatPromptState("cat", "cat", thumbPath = null),
                     onCoatClick = { coatsTapped += it },
                     onSkipClick = { skips++ },
                 )
@@ -119,7 +119,9 @@ class CoatSheetsTest {
     @Test
     fun `the coat prompt shows the photo when it has one`() {
         compose.setContent {
-            CatsRadarTheme { CoatPrompt(prompt = CoatPromptState(thumbPath = "/photos/just-taken_thumb.jpg")) }
+            CatsRadarTheme {
+                CoatPrompt(prompt = CoatPromptState("cat", "cat", thumbPath = "/photos/just-taken_thumb.jpg"))
+            }
         }
 
         compose.onNodeWithContentDescription(context.getString(R.string.counter_coat_prompt_photo)).assertExists()

@@ -31,8 +31,16 @@ data class CounterState(
     val coatPrompt: CoatPromptState? = null,
 )
 
-/** [thumbPath] is absolute; null when no thumbnail could be made from the photo. Null [counting] asks for one coat. */
-data class CoatPromptState(val thumbPath: String?, val counting: CoatCountState? = null)
+/**
+ * The question about [catId]'s photo, [photoId] (null when the cat has none). [thumbPath] is absolute; null when no
+ * thumbnail could be made from the photo. Null [counting] asks for one coat.
+ */
+data class CoatPromptState(
+    val catId: String,
+    val photoId: String?,
+    val thumbPath: String?,
+    val counting: CoatCountState? = null,
+)
 
 /** The cats counted on the photo, in the order their coats were tapped; a null is a cat whose coat nobody saw. */
 data class CoatCountState(val tray: ImmutableList<CoatOption?> = persistentListOf()) {
