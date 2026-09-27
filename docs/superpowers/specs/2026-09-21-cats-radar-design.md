@@ -255,9 +255,11 @@ never touched by the app.
 
 ### 4.6 Gallery import (F3)
 
-1. Ask for `ACCESS_MEDIA_LOCATION`, then open `ACTION_GET_CONTENT` for `image/*`, multiple, keeping
-   the first `IMPORT_BATCH_MAX`; single pick is the same path with one item. A refusal still opens
-   the gallery.
+1. Ask for `ACCESS_MEDIA_LOCATION` unless the app may already read photo locations (it holds the
+   permission or, from Android 14, limited access), then open `ACTION_GET_CONTENT` for `image/*`,
+   multiple, keeping the first `IMPORT_BATCH_MAX`; single pick is the same path with one item. A
+   refusal still opens the gallery. An answer that shared photos through limited access is the pick
+   itself: those photos are imported and no gallery opens.
 2. Per photo: compute `sourceDigest`; skip if an encounter with that digest exists (counted as
    "skipped" in the summary). Read EXIF; `occurredAt` as in §3.1.
 3. Location: EXIF GPS → `EXIF`. No EXIF GPS and `now − occurredAt ≤ RECENT_PHOTO_WINDOW` (1 h) →

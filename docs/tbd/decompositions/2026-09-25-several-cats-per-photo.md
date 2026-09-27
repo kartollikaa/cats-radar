@@ -104,6 +104,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 - 2026-09-27: **S3 merged** as #199. Merging main into it found `RemovePhotoTest` (#194) building its own
   `PhotoStorage` without the new `copy`: the widened interface failed at compile time, not on a device.
+  First shipped in v1.5.2-beta; S1, S2 and S2b first shipped in v1.5.0-beta.
 
 - 2026-09-26: **S2b merged** as #186.
 

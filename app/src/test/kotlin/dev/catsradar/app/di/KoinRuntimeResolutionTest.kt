@@ -3,6 +3,7 @@ package dev.catsradar.app.di
 import android.app.ActivityManager
 import android.content.Context
 import androidx.core.content.edit
+import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -63,11 +64,13 @@ import dev.catsradar.domain.usecase.RecordTrackPoint
 import dev.catsradar.domain.usecase.RecordWalk
 import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
+import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.locationpicker.LocationPickerStore
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.viewer.PhotoViewerStore
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -75,8 +78,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.parameter.parametersOf
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -93,11 +98,19 @@ class KoinRuntimeResolutionTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(ApplicationProvider.getApplicationContext())
     }
 
+    private val resolvedStores = mutableListOf<Store<*, *, *>>()
+
     @After
     fun tearDown() {
+        resolvedStores.forEach { it.viewModelScope.cancel() }
         stopKoin()
         WorkManagerTestInitHelper.closeWorkDatabase()
     }
+
+    // Built outside a ViewModelStore, a Store is never cleared, so its init coroutines would outlive the test.
+    private inline fun <reified T : Store<*, *, *>> Koin.getStore(
+        noinline parameters: ParametersDefinition? = null,
+    ): T = get<T>(parameters = parameters).also { resolvedStores += it }
 
     // verify() (KoinModulesTest) proves the graph is *declarable* by walking constructor
     // parameters; it cannot see a type obtained by hand with get()/koinInject() inside a lambda
@@ -115,7 +128,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<UpdateInstaller>())
         assertNotNull(koin.get<InstallResults>())
         assertNotNull(koin.get<PruneInstalledUpdates>())
-        assertNotNull(koin.get<SettingsStore>())
+        assertNotNull(koin.getStore<SettingsStore>())
     }
 
     @Test
@@ -194,14 +207,14 @@ class KoinRuntimeResolutionTest {
             modules(domainModule, dataModule, presentationModule, workerModule)
         }.koin
 
-        assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id", null) })
-        assertNotNull(koin.get<EncounterDetailStore> { parametersOf("any-id", "restored-id") })
-        assertNotNull(koin.get<LocationPickerStore> { parametersOf("any-id") })
-        assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id", null) })
-        assertNotNull(koin.get<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
+        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", "restored-id") })
+        assertNotNull(koin.getStore<LocationPickerStore> { parametersOf("any-id") })
+        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
         // Both the root (null parent) and a drilled-in level, because they take different paths.
-        assertNotNull(koin.get<RegionsStore> { parametersOf(null) })
-        assertNotNull(koin.get<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
+        assertNotNull(koin.getStore<RegionsStore> { parametersOf(null) })
+        assertNotNull(koin.getStore<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
     }
 
     @Test
