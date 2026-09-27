@@ -1,6 +1,6 @@
 ---
 name: release-app
-description: Use when asked to cut, ship, or publish a new Cats Radar release, tag a version, build a release/debug APK for GitHub, or get a release's R8 mapping into Crashlytics so release crash reports are readable.
+description: Use when asked to cut, ship, or publish a new Cats Radar release, tag a version, build the release APK for GitHub, or get a release's R8 mapping into Crashlytics so release crash reports are readable.
 ---
 
 # Release Cats Radar
@@ -9,13 +9,14 @@ description: Use when asked to cut, ship, or publish a new Cats Radar release, t
 
 Turns `docs/reference/releasing.md` into a runnable checklist. A release is a GitHub
 pre-release tagged `v<versionName>`, cut from a merged `tech/release-<version>` PR, with the
-APK and its zipped R8 mapping attached, and the same mapping uploaded to Crashlytics. Read that doc for the *why*; this skill is the *how*, including the gotchas that
+signed release APK and its zipped R8 mapping attached, and the same mapping uploaded to Crashlytics.
+A release carries no debug APK. Read that doc for the *why*; this skill is the *how*, including the gotchas that
 doc doesn't cover because they're about the tooling, not the product.
 
 ## When to use
 
 Triggers: "publish a release", "cut a release", "ship a new version", "tag a release", "build
-the release/debug APK for GitHub", or any request naming a version bump plus a GitHub release.
+the release APK for GitHub", or any request naming a version bump plus a GitHub release.
 
 Not for: an internal test build with no tag/release (`./gradlew :app:assembleDebug` and hand
 over the APK — no version bump, no PR, no tag).
@@ -58,10 +59,9 @@ over the APK — no version bump, no PR, no tag).
    SHA off `git log --oneline -1 origin/main` — don't assume it's what you pushed; something
    else may have merged in the gap. Build from that exact SHA (`git checkout --detach <sha>`
    in a clean worktree, or check out `main` after a fast-forward pull).
-5. **Build the APK(s).**
-   - Debug: `./gradlew :app:assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`.
-   - Release (only when `~/.gradle/gradle.properties` has `kartollika.signingFile` and the
-     file it names exists — see `releasing.md` "The signing key"), **one invocation that builds the APK and uploads its
+5. **Build the release APK.** No debug build: a release carries the signed APK alone.
+   - It needs `kartollika.signingFile` in `~/.gradle/gradle.properties` and the file that line
+     names (see `releasing.md` "The signing key"). Build it with **one invocation that builds the APK and uploads its
      mapping to Crashlytics**, with `CI` unset (the upload is off whenever `CI` is set) and the
      network up:
      ```
@@ -84,8 +84,8 @@ over the APK — no version bump, no PR, no tag).
      `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` — it must
      show the release key's certificate, not `Android Debug`. Without the signing file,
      `assembleRelease` still succeeds but produces `app-release-unsigned.apk`, which no phone
-     will install — don't attach that; ship debug-only and say so in the release body, the way
-     past pre-releases have ("The signed release build will be added to this release").
+     will install. Don't attach that, and don't publish without a signed APK: set up the signing
+     file first.
    - The release build is minified by R8, which the debug build never is. Install **that same
      signed APK** and walk the by-name paths listed in `docs/reference/releasing.md` (widget tap,
      a tally, backup export + import, a screen surviving a background kill) before tagging — a
@@ -97,27 +97,28 @@ over the APK — no version bump, no PR, no tag).
      compiles — `app/google-services.json` has a client for `com.kartollika.catsradar` only.
      If the walk finds a bug, fix it through a PR and restart from step 4; any local release
      build made just to try something runs with `CI=true`, so it uploads nothing.
-   - A debug-only release (no signing file) has no mapping — debug builds are not
-     minified — so there is nothing to upload to Crashlytics or zip; say so in the release body.
    - Rename into `build/` (gitignored; a `.zip` in the repo root is not) before attaching:
-     `cats-radar-<versionName>.apk` (release) / `cats-radar-<versionName>-debug.apk` (debug), and
-     zip the release build's
+     `cats-radar-<versionName>.apk`, and zip the release build's
      `app/build/outputs/mapping/release/mapping.txt` into `cats-radar-<versionName>-mapping.zip`
      (plain, it is bigger than the APK). The mapping from any other build does not fit this
      APK's stack traces.
    - The release APK installs only on 64-bit ARM (`arm64-v8a`); say so in the release body's
      `## Install` section. The emulator on an Apple-Silicon Mac is arm64 too.
-6. **Tag and publish.**
+6. **Tag and publish** as a draft first, then attach, then publish:
    ```
-   gh release create v<versionName> --prerelease --target <merge-commit-sha> \
-     --title "v<versionName> — <one-line theme>" \
-     --notes-file <release-notes.md> \
-     <renamed-apk-path...> <renamed-mapping-path>
+   gh release create v<versionName> --draft --prerelease --target <full-merge-commit-sha> \
+     --title "v<versionName> — <one-line theme>" --notes-file <release-notes.md>
+   gh release upload v<versionName> <renamed-apk-path> <renamed-mapping-path>
+   gh release view v<versionName> --json assets --jq '.assets[] | "\(.name) \(.state)"'
+   gh api repos/kartollikaa/cats-radar/releases --jq '.[] | select(.tag_name=="v<versionName>") | .id'
+   gh api -X PATCH repos/kartollikaa/cats-radar/releases/<that-id> -F draft=false
    ```
    `--target` matters: the tag doesn't exist yet, and without it the release would tag
-   whatever `HEAD` happens to be in the *local* repo, not the merge commit on `main`. The
-   upload can exceed the default tool timeout — expect it to run in the background and
-   don't retry mid-upload.
+   whatever `HEAD` happens to be in the *local* repo, not the merge commit on `main`. Pass the
+   full SHA, since GitHub rejects a short one as an invalid `target_commitish`. Publish only once
+   every asset reads `uploaded`. An upload can crawl for long stretches with nothing on screen,
+   and a one-shot `gh release create … <files>` can stall with no way to see it. Run it in the
+   background and don't retry mid-upload.
 
 ## Release notes shape
 
@@ -136,7 +137,7 @@ degrades to. Keep the voice consistent: describing user-visible behaviour, not i
 - **Squash-merging the release PR.** Breaks the per-PR merge-commit history convention; use
   `gh pr merge --merge`.
 - **Attaching `app-release-unsigned.apk`.** It installs on nothing. Verify the signer before
-  attaching, or don't attach a release build at all.
+  attaching.
 - **Writing release notes from the full commit log.** Pulls in every `fix: review` / `test:
   gate` micro-commit from every PR's internal history; use `--first-parent`.
 - **Forgetting `--target` on `gh release create`.** Tags whatever commit is checked out
