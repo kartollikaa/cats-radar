@@ -138,7 +138,7 @@ private fun WalkButtonSurface(
             modifier = Modifier
                 .heightIn(min = 56.dp)
                 .drawBehind { drawFill(fill(), fillColor) }
-                .padding(horizontal = 20.dp, vertical = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {

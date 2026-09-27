@@ -7,11 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.test.core.app.ApplicationProvider
@@ -28,6 +30,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp")
@@ -59,6 +62,14 @@ class WalkRowLookTest {
         val pixels = captureToImage().toPixelMap()
         val inset = with(compose.density) { 6.dp.roundToPx() }
         return pixels[inset, inset]
+    }
+
+    private fun isWhole(text: String): Boolean {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        val layout = layouts.single()
+        return layout.size.width >= layout.multiParagraph.intrinsics.maxIntrinsicWidth
     }
 
     @Test
@@ -106,5 +117,14 @@ class WalkRowLookTest {
 
         val undo = compose.onNodeWithText(context.getString(R.string.counter_undo))
         assertEquals(40.dp, undo.getUnclippedBoundsInRoot().height)
+    }
+
+    @Config(fontScale = 1.5f)
+    @Test
+    fun `at a large font a walk's time and hint still fit beside Undo`() {
+        val state = counter(walking = true).copy(undoVisible = true, walkElapsedLabel = "1 h 5 min")
+        compose.setContent { CatsRadarTheme { CounterScreen(state = state) } }
+
+        assertTrue(isWhole(context.getString(R.string.counter_walk_stop_hint_timed, "1 h 5 min")))
     }
 }

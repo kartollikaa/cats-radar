@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +25,9 @@ internal fun UndoButton(visible: Boolean, modifier: Modifier = Modifier, onClick
         exit = fadeOut() + scaleOut(targetScale = 0.8f),
         modifier = modifier,
     ) {
-        FilledTonalButton(onClick = onClick) { Text(text = stringResource(R.string.counter_undo), maxLines = 1) }
+        FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.SmallContentPadding) {
+            Text(text = stringResource(R.string.counter_undo), maxLines = 1)
+        }
     }
 }
 
