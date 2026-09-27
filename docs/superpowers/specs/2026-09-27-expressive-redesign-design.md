@@ -65,7 +65,7 @@ the wavy progress indicators and the `*Emphasized` type styles are public, some 
 opt-in (checked against the library's sources). `app-shell.md`'s *Why not `MaterialExpressiveTheme`*
 paragraph says otherwise and is replaced.
 
-- **Type.** The count, the stat values, the cat's title and the place line use the `*Emphasized`
+- **Type.** The count, the cat's title and the place line use the `*Emphasized`
   variants of the styles they use today. Everything else keeps its style. The font is the
   platform's.
 - **Shapes.** The theme's scale is unchanged. The new surfaces use `large` (28 dp) for cards and
@@ -79,9 +79,13 @@ that version hides any of these APIs again, this section is revisited before the
 
 ## 2. The Counter
 
-The order on screen is unchanged apart from the tiles: the notices, the count, the milestone line,
-the walk row, the outing line, the stat tiles, the coat grid, Photo. `FillOrScroll` still gives the
-count whatever room is left and scrolls the screen once the count reaches its floor.
+The order on screen is unchanged: the notices, the count, the status line, the walk row, the coat
+grid, Photo. `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
+the count reaches its floor. Everything under the count therefore costs the count its size, and the
+Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
+larger coat shapes, left the cookie less than half the room this layout leaves it, once the prototype
+drew it with only the height the controls leave (owner feedback, 2026-09-27: "the actual cookie in
+prototype is very small").
 
 **The count.** The number sits in a twelve-sided cookie (`MaterialShapes.Cookie12Sided`) in
 `primaryContainer`, the largest that fits the block's room, centred. The number is `onPrimaryContainer`
@@ -96,27 +100,23 @@ on `Tuning.MILESTONES`: at 62 cats, 50 is reached and 100 is next, so the arc st
 track is `onPrimaryContainer` at a low alpha, the arc `primary`. The arc moves with the roll. Before
 the total is read and past the last rung there is no arc.
 
-**The milestone line.** Under the block, the Statistics line: "38 more to reach 100". It keeps its
-line while empty, before the total is read and past the last rung, so nothing under it moves.
+**The status line.** The outing line's slot. During an outing it shows the outing, as today; with no
+outing open it shows the Statistics line, "38 more to reach 100"; past the last rung it is empty. One
+line in one style either way, so nothing under it moves.
 
 **The walk row.** The walk button is drawn as an extended floating action button in
 `tertiaryContainer`: 56 dp tall with the FAB's corners. The walking cat, the fill that a held press
 drives, the timed hint and the one height stay as they are. Undo becomes a filled tonal button in its
 own place at the end of the row, and the rule that it never moves the walk button stands.
 
-**The stat tiles.** Three tiles in a row under the outing line: **Today**, **Last 7 days** and **With
-a photo**, the Statistics definitions, from the same `Stats` the count reads. Each tile is the number
-in `titleLargeEmphasized` over its label in `bodySmall`, on `surfaceContainerLow` with `medium`
-corners. They are not buttons. Each reads to TalkBack as one item ("5, Today"). Until the stats are
-read, the tiles show their labels without numbers, so the layout never shifts.
-
-**The coat grid.** Four across, as today. Each face sits in a 62 dp Material shape on
+**The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
 `surfaceContainerHighest`. The shapes go by column: `Circle`, `Square`, `Clover4Leaf`, `Arch`. The
 ringed coat's shape fills with `primaryContainer` and takes a 2 dp `primary` outline; its name stays
 under it. When the ring moves, clears and follows Undo does not change. The rule that a row's cells
 share the tallest one's height so their rings match goes: the ring is now on the shape, and every
 shape is the same size. The grid is shared, so the coat question after a photo and the map's coat
-filter get the same tiles, and the filter's *Not specified* cell takes the next shape in turn.
+filter get the same shapes, and the filter's *Not specified* cell takes the next shape in turn. The
+grid must not grow taller than today's.
 
 **Photo.** The split button it already is, filled `primary`: *Photo* with the camera, and the
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
@@ -125,9 +125,10 @@ inner corners.
 **Unchanged:** the notice cards above the count and the coat question after a photo.
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
-Counter's state gains the milestone (reached, next, remaining) and the three tile counts; the mapper
-computes the arc's fraction, and the composable only draws it. The milestone line renders the way
-Statistics renders it.
+Counter's state gains the milestone (reached, next, remaining); the mapper computes the arc's
+fraction, and the composable only draws it. The status line renders the milestone the way Statistics
+renders it. The theme defines the `*Emphasized` styles a weight above its own (Material's defaults are
+a step above Material's regular weights, which the theme already exceeds).
 
 ## 3. A cat's detail
 
@@ -152,8 +153,8 @@ the cat's face at 170 dp, or the paw when no coat is noted, "No photo yet", and 
 progress indicator runs under it.
 
 **The title.** Named by the coat: "Ginger & white cat", or "A cat" with no coat noted, in
-`headlineMediumEmphasized`. Each coat has its own title resource, so the Russian can use the generic
-«кошка» the way Russian names an unknown cat.
+`headlineMediumEmphasized`. Each coat has its own title resource, so the Russian can name the cat
+the way the app's Russian already does, with «котик».
 
 **The facts row.** Under the title, outlined labels with `extraSmall` corners, 32 dp tall: the cat's
 number (section 4), the day, the time, and the place with its flag, or "No location yet" with a pin.
@@ -205,16 +206,19 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
 2. **Delete moves** into the More menu and to the end of the page as **Remove this cat**. What it does
    is unchanged. `encounter-detail.md` changes.
 3. **The coat ring is drawn on the shape**, not around the whole cell. `coat.md` changes.
-4. **New information**: the milestone arc and line and the stat tiles on the Counter, the cat's
-   number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md` change.
+4. **New information**: the milestone arc and the milestone in the status line on the Counter, the
+   cat's number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md`
+   change.
 
 ## Decided here
 
 - The colour policy stays: Expressive works with the wallpaper's colours as well as with the teal.
 - No bundled font.
-- The stat tiles are not buttons. Statistics is one tab away.
+- No stat tiles on the Counter. Version 5 of the prototype had Today, Last 7 days and With a photo
+  under the walk row; they cost the count more than half its room, and Statistics shows them one tab
+  away.
 - The cat's number follows the live log, so a delete or an older import renumbers.
-- The Russian titles name the cat with the generic «кошка».
+- The Russian titles use the app's own «котик».
 
 ## The outing pager
 
@@ -231,14 +235,14 @@ from a flat one.
 ## Testing
 
 - **Mappers**, whole-state `assertEquals`: the milestone at a rung, between rungs, below the first and
-  past the last; the tiles before and after the stats are read; each coat's title token; the facts row
+  past the last; each coat's title token; the facts row
   with and without a place.
 - **Domain:** `Milestone.reached` on every rung and between them; `ObserveEncounterNumber` counts only
   live cats, oldest first, breaks ties by id, and renumbers on a delete.
 - **Compose, Robolectric in `:app`:**
   - A tap anywhere on the count block logs a cat, the badge counts the run, and no arc is drawn past
     the last rung.
-  - The tiles show the three counts.
+  - The status line shows the outing during an outing and the milestone otherwise.
   - The ringed coat's shape is the one outlined.
   - A tap on the second photo opens the viewer on it; the add items open the camera and the picker
     and disable while attaching.

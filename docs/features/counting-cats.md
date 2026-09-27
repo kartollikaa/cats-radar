@@ -26,7 +26,12 @@ does not move either. It is a badge rather than bare text because a wide number 
 reaches that corner; TalkBack reads the total as the block's own label, and before the total is
 known the block is named by what it does.
 
-The count sits in a large block that **is** the button. It squashes under a press and springs back,
+The count sits in a large block that **is** the button. The block draws a twelve-sided cookie, as
+large as its room allows, with the number inside it and "cats" under the number; the whole block
+answers a tap, the corners outside the cookie included (`CounterMilestoneTest`). Inside the cookie a
+ring fills from the milestone already reached toward the next one on `Tuning.MILESTONES`: at 62 cats
+it stands a quarter of the way from 50 to 100. Before the total is read, and past the last rung,
+there is no ring. It squashes under a press, turns a few degrees as it does, and springs back,
 and the number **rolls up** when a cat is added and **down** when one is undone — the screen
 compares the number it had with the one it now has, so an undo, or an import finishing while the
 Counter is showing, rolls the right way. It rolls like an odometer, one digit at a time: only the
@@ -60,8 +65,9 @@ a longer translation — does the button step aside toward the start, and past t
 label: Undo is never squeezed. A tap on the button starts a walk, but stopping one takes a press
 held until a fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)).
 The button keeps one height whether it starts or stops a walk, and the outing line keeps its line,
-empty when no outing is open, so a walk or an outing starting or ending leaves the block the same
-size. The location hint and the import progress and summary appear above the count, each as the
+so a walk or an outing starting or ending leaves the block the same size. With no outing open the
+line says how many more cats reach the next milestone ("38 more to reach 100", the Statistics
+wording); past the last rung it is empty (`CounterMilestoneTest`). The location hint and the import progress and summary appear above the count, each as the
 same notice card: a round icon, its words, read by TalkBack as one item, and its actions (see
 `import.md`). They take their room from the count, so the number shrinks and the walk button, the
 coat grid and the Photo button stay where they are, unless the block is already at its floor, when

@@ -277,7 +277,7 @@ Theme, in `CatsRadarTypography`:
 3. at `fillMaxSize(NumberFraction)` (0.58), with `LocalContentColor` = `onPrimaryContainer`, a centred `Column`: `RollingCount` with `Modifier.weight(1f, fill = false)` and, once `count != null`, `pluralStringResource(R.plurals.counter_count_caption, count)` in `titleMedium`; both `clearAndSetSemantics {}`;
 4. `TapBurst`, aligned `TopEnd`.
 
-`CounterScreen`: `TallyBlock(…, milestone = state.milestone)`, and first in `below`, a centred full-width `Text` in `bodyMedium` on `onSurfaceVariant` showing `stringResource(R.string.statistics_next_milestone, next.remainingLabel, next.valueLabel)`, or `""` (one line tall) when `milestone` is null. The screen's previews gain the milestone.
+`CounterScreen`: `TallyBlock(…, milestone = state.milestone)` and `CurrentOutingLine(state.currentOuting, milestone = state.milestone)`. **Amended during the slice (owner: the cookie is very small):** the milestone takes the outing line's slot instead of a line of its own. With no outing open, `CurrentOutingLine` shows `stringResource(R.string.statistics_next_milestone, next.remainingLabel, next.valueLabel)` in the same `bodyMedium` style, on `onSurfaceVariant`, one line; with neither an outing nor a milestone it keeps its empty line. A test adds: `during an outing its line takes the milestone's place`.
 
 Strings: EN `counter_count_caption` one "cat", other "cats" (`tools:ignore="ImpliedQuantity"`); RU one «котик», few «котика», many «котиков», other «котика».
 

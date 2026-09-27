@@ -14,8 +14,8 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | in-review |
-| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone and the Statistics line under it. | safe | ~450 | E1 | planned |
-| E3 | Stat tiles and the walk row | Today, Last 7 days and With a photo as tiles under the outing line; the walk button as an extended FAB and Undo as a tonal button. | safe | ~400 | E2 | planned |
+| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone, and the outing line's slot names the milestone when no outing is open. | safe | ~450 | E1 | in-review |
+| E3 | The walk row | The walk button as an extended FAB and Undo as a tonal button. | safe | ~250 | E2 | planned |
 | E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | planned |
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
@@ -42,11 +42,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** the block stays the button, with the same roll, badge and label.
 - **Cleanup owed:** none.
 
-### Slice E3 — Stat tiles and the walk row
-- **In scope:** the three tile counts in the Counter state; the tiles; the walk button's look; Undo as a
-  tonal button; `counting-cats.md`, `walking-mode.md` where it describes the button's look.
-- **Out of scope:** what the walk button does, and where Undo sits.
-- **Ships safely because:** additive tiles; the walk row keeps its behaviour and its no-jump rules.
+### Slice E3 — The walk row
+- **In scope:** the walk button's look; Undo as a tonal button; `counting-cats.md`, `walking-mode.md` where
+  it describes the button's look.
+- **Out of scope:** what the walk button does, and where Undo sits; stat tiles (dropped, see the log).
+- **Ships safely because:** the walk row keeps its behaviour and its no-jump rules.
 - **Cleanup owed:** none.
 
 ### Slice E4 — Coat faces in Material shapes
@@ -101,5 +101,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   detail screen. The Counter slices, E1 to E4, go first; a detail slice starts only when no outing pager
   branch is open, so the two epics never edit `EncounterDetailScreen.kt` or `encounter-detail.md` in
   parallel.
+- 2026-09-27: the owner found the Counter's cookie "very small" in the prototype once the prototype drew
+  it honestly, with only the room the controls leave. Version 5's stat tiles, separate milestone line and
+  62 dp coat shapes left 140 px; the Roomy layout (no tiles, the milestone in the outing line's slot,
+  52 dp shapes) leaves about 300. E3 drops the tiles, E2 shares the slot, E4 keeps the grid no taller.
 - 2026-09-27: the owner said "work in autonomous mode": the spec's open details stand as decided, and each
   slice is planned, built, reviewed and gated in turn.
