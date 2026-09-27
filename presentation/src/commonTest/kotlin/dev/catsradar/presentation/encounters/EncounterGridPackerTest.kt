@@ -36,9 +36,19 @@ class EncounterGridPackerTest {
     }
 
     @Test
-    fun `a lone photo stays in its run as a tile`() {
-        assertEquals("tiles:PFFF", layout("PFFF"))
+    fun `a lone photo's tile row holds three cats, so the photo stays large`() {
         assertEquals("tiles:PFF", layout("PFF"))
+        assertEquals("tiles:PFF cards:F", layout("PFFF"))
+        assertEquals("cards:FF tiles:FFP", layout("FFFFP"))
+        assertEquals("tiles:PFF tiles:FFFF", layout("PFFFFFF"))
+        assertEquals("tiles:FFFF tiles:FFP", layout("FFFFFFP"))
+        assertEquals("tiles:PFF tiles:FPF", layout("PFFFPF"))
+    }
+
+    @Test
+    fun `a photo that three-cat rows would push into a card row keeps a wider tile row instead`() {
+        assertEquals("tiles:PFFFP", layout("PFFFP"))
+        assertEquals("tiles:PFF cards:FF tiles:FFP", layout("PFFFFFFP"))
     }
 
     @Test
@@ -78,7 +88,13 @@ class EncounterGridPackerTest {
             val runs = rows.filterNot { it is PackedRow.PhotoPair }
                 .map { run -> run.cats().joinToString("") { "${sequence[it]}" } }
             assertTrue(runs.none { "PP" in it }, "two photos left unpaired in $sequence")
-            runsBetweenPairs(rows).forEach { run ->
+            runsBetweenPairs(rows).filter { run -> run.sumOf { it.cats().size } >= 3 }.forEach { run ->
+                val carded = run.filterIsInstance<PackedRow.Cards<Int>>().flatMap { it.cats }
+                assertTrue(carded.none { sequence[it] == 'P' }, "a photo in a card row of $sequence")
+            }
+            val photoFreeRuns = runsBetweenPairs(rows)
+                .filter { run -> run.none { row -> row.cats().any { sequence[it] == 'P' } } }
+            photoFreeRuns.forEach { run ->
                 val sizes = run.map { it.cats().size }
                 if (run.any { it is PackedRow.Cards }) {
                     assertEquals(1, run.size, "a card row shares its run in $sequence")
