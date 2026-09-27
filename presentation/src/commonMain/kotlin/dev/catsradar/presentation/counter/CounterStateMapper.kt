@@ -43,7 +43,8 @@ class CounterStateMapper(
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
-        milestone = milestone?.toState(),
+        // The first cat is not a milestone to reach: a fresh Counter shows no ring and no line.
+        milestone = milestone?.takeIf { count > 0 }?.toState(),
     )
 
     fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =

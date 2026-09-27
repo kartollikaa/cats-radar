@@ -91,14 +91,14 @@ prototype is very small").
 `primaryContainer`, the largest that fits the block's room, centred. The number is `onPrimaryContainer`
 in `displayLargeEmphasized` and still shrinks to fit rather than wrap. Under it, "cats" (a plural) in
 `titleMedium`. The whole block stays the button. It still squashes under a press and springs back; the
-cookie also turns a few degrees as it squashes and turns back with the motion scheme's spring. The
+cookie also turns a few degrees as it squashes and turns back on the motion scheme's default spring. The
 "+N" badge keeps its corner of the block, in `primary` and `onPrimary`. The roll, the badge's counting
 and the TalkBack label do not change.
 
 **The milestone arc.** A ring inside the cookie fills from the rung already reached to the next one
 on `Tuning.MILESTONES`: at 62 cats, 50 is reached and 100 is next, so the arc stands at 24 %. The
 track is `onPrimaryContainer` at a low alpha, the arc `primary`. The arc moves with the roll. Before
-the total is read and past the last rung there is no arc.
+the total is read, with no cats yet, and past the last rung there is no arc.
 
 **The status line.** The outing line's slot. During an outing it shows the outing, as today; with no
 outing open it shows the Statistics line, "38 more to reach 100"; past the last rung it is empty. One
@@ -125,8 +125,9 @@ inner corners.
 **Unchanged:** the notice cards above the count and the coat question after a photo.
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
-Counter's state gains the milestone (reached, next, remaining); the mapper computes the arc's
-fraction, and the composable only draws it. The status line renders the milestone the way Statistics
+Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper
+computes from the rung passed; the composable only draws it. With no cats yet there is no milestone:
+a fresh Counter shows no ring and no line rather than "1 more to reach 1". The status line renders the milestone the way Statistics
 renders it. The theme defines the `*Emphasized` styles a weight above its own (Material's defaults are
 a step above Material's regular weights, which the theme already exceeds).
 

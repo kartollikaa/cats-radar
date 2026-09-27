@@ -5,6 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -99,6 +101,15 @@ class CounterMilestoneTest {
         compose.onNodeWithContentDescription("62").performTouchInput { click(Offset(8f, 8f)) }
 
         assertEquals(1, taps)
+    }
+
+    @Test
+    fun `the block still reads to TalkBack as the total alone`() {
+        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
+
+        val block = compose.onNodeWithContentDescription("62").fetchSemanticsNode().config
+        assertEquals(listOf("62"), block.getOrNull(SemanticsProperties.ContentDescription))
+        assertEquals(emptyList(), block.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text })
     }
 
     @Test

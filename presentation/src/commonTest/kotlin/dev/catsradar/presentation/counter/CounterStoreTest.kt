@@ -184,7 +184,7 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
             store.state.value,
         )
     }
@@ -429,7 +429,7 @@ class CounterStoreTest {
             runCurrent()
 
             assertEquals(
-                CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+                CounterState(totalLabel = "0", count = 0, undoVisible = false),
                 store.state.value,
             )
             store.effects.test {

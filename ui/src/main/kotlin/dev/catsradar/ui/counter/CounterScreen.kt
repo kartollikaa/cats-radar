@@ -8,8 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.coat.CoatGrid
@@ -129,7 +131,13 @@ private fun CounterScreenLocationHintVisiblePreview() {
 
 private val sampleCounterStateUnread = CounterState(totalLabel = "", count = null, undoVisible = false)
 private val sampleCounterStateEmpty = CounterState(totalLabel = "0", count = 0, undoVisible = false)
-private val sampleCounterStateUndoVisible = CounterState(totalLabel = "3", count = 3, undoVisible = true, tapBurst = 2)
+private val sampleCounterStateUndoVisible = CounterState(
+    totalLabel = "3",
+    count = 3,
+    undoVisible = true,
+    tapBurst = 2,
+    milestone = CounterMilestoneState(MilestoneState(valueLabel = "10", remainingLabel = "7"), fraction = 2f / 9f),
+)
 private val sampleCounterStateLocationHintVisible =
     CounterState(totalLabel = "3", count = 3, undoVisible = false, locationPermissionHintVisible = true)
 private val sampleCounterStateOutingInProgress = CounterState(
@@ -143,4 +151,5 @@ private val sampleCounterStateOutingInProgress = CounterState(
     ),
     walkingMode = true,
     walkElapsedLabel = "48 min",
+    milestone = CounterMilestoneState(MilestoneState(valueLabel = "25", remainingLabel = "13"), fraction = 2f / 15f),
 )

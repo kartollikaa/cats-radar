@@ -107,7 +107,6 @@ class CounterStoreWalkTest {
                 totalLabel = "0",
                 count = 0,
                 undoVisible = false,
-                milestone = NoCatsMilestone,
                 walkingMode = true,
                 walkElapsedLabel = FakeDateTimeFormatter().duration(32.minutes),
             ),
@@ -122,7 +121,7 @@ class CounterStoreWalkTest {
         val (store, _) = newStore(walkRepository = walks)
 
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
             store.state.value,
         )
     }
@@ -140,7 +139,6 @@ class CounterStoreWalkTest {
                 totalLabel = "0",
                 count = 0,
                 undoVisible = false,
-                milestone = NoCatsMilestone,
                 walkingMode = true,
             ),
             store.state.value,

@@ -52,7 +52,6 @@ class CounterStoreImportTimeoutTest {
                 totalLabel = "0",
                 count = 0,
                 undoVisible = false,
-                milestone = NoCatsMilestone,
                 importSummary = ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
             ),
             store.state.value,
@@ -61,7 +60,7 @@ class CounterStoreImportTimeoutTest {
         advanceTimeBy(1.milliseconds)
         runCurrent()
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
             store.state.value,
         )
     }
@@ -76,7 +75,7 @@ class CounterStoreImportTimeoutTest {
         runCurrent()
 
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
             store.state.value,
         )
     }
@@ -94,7 +93,7 @@ class CounterStoreImportTimeoutTest {
         runCurrent()
 
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
             store.state.value,
         )
     }
@@ -114,7 +113,7 @@ class CounterStoreImportTimeoutTest {
         runCurrent()
 
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
             second.state.value,
         )
     }
@@ -186,7 +185,6 @@ class CounterStoreImportTimeoutTest {
                     totalLabel = "0",
                     count = 0,
                     undoVisible = false,
-                    milestone = NoCatsMilestone,
                     importSummary = ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
                 ),
                 store.state.value,

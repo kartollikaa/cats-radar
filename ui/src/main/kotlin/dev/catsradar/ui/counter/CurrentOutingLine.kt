@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.R
@@ -42,11 +42,7 @@ internal fun CurrentOutingLine(
         when {
             state != null -> CurrentOuting(state)
             milestone != null -> Text(
-                text = stringResource(
-                    R.string.statistics_next_milestone,
-                    milestone.next.remainingLabel,
-                    milestone.next.valueLabel,
-                ),
+                text = milestone.next.label(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -120,6 +116,7 @@ private fun CurrentOutingPreview() {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
             CurrentOuting(sampleOutingWithRate)
             CurrentOuting(sampleOutingWithRate.copy(count = 1, elapsedLabel = "2 min", rate = null))
+            CurrentOutingLine(state = null, milestone = sampleMilestone)
         }
     }
 }
@@ -129,3 +126,6 @@ private val sampleOutingWithRate = CurrentOutingState(
     elapsedLabel = "35 min",
     rate = RateState(value = "6.9", unit = RateUnit.PER_HOUR),
 )
+
+private val sampleMilestone =
+    CounterMilestoneState(MilestoneState(valueLabel = "100", remainingLabel = "38"), fraction = 12f / 50f)

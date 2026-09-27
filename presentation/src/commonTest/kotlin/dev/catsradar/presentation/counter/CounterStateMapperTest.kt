@@ -89,10 +89,17 @@ class CounterStateMapperTest {
     }
 
     @Test
-    fun `below the first rung the arc starts from nothing`() {
+    fun `with no cats yet there is no milestone to reach`() {
+        val first = Milestone(value = 1, remaining = 1, reached = 0)
+
+        assertNull(mapper.map(count = 0, undoVisible = false, milestone = first).milestone)
+    }
+
+    @Test
+    fun `at the first cat the arc starts from nothing`() {
         assertEquals(
             0f,
-            mapper.map(count = 0, undoVisible = false, milestone = Milestone(value = 1, remaining = 1, reached = 0))
+            mapper.map(count = 1, undoVisible = false, milestone = Milestone(value = 10, remaining = 9, reached = 1))
                 .milestone?.fraction,
         )
     }

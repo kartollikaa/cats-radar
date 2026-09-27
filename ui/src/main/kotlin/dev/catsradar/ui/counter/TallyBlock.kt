@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -40,7 +41,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
@@ -51,12 +56,15 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlin.math.min
 
 const val MilestoneArcTestTag = "milestone-arc"
 
@@ -75,9 +83,14 @@ internal fun TallyBlock(
     val pressed by interactionSource.collectIsPressedAsState()
     val press = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, animationSpec = press, label = "tallyPress")
-    val turn by animateFloatAsState(if (pressed) 8f else 0f, animationSpec = press, label = "tallyTurn")
+    val turn by animateFloatAsState(
+        targetValue = if (pressed) 8f else 0f,
+        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+        label = "tallyTurn",
+    )
     val tallyLabel = stringResource(R.string.counter_tally)
     val cookie = MaterialShapes.Cookie12Sided.toShape()
+    val cookieInBlock = remember(cookie) { CentredSquare(cookie) }
     // Clickable outside the scale: squashing the block must not shrink what a held press can land on.
     Box(
         modifier = modifier
@@ -91,6 +104,19 @@ internal fun TallyBlock(
             .semantics { contentDescription = totalLabel.ifEmpty { tallyLabel } },
         contentAlignment = Alignment.Center,
     ) {
+        // The block's own size, so the ripple starts where the finger is.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    rotationZ = turn
+                }
+                .clip(cookieInBlock)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .indication(interactionSource, ripple()),
+        )
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
@@ -100,19 +126,11 @@ internal fun TallyBlock(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .graphicsLayer { rotationZ = turn }
-                    .clip(cookie)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .indication(interactionSource, ripple()),
-            )
             milestone?.let { MilestoneArc(fraction = it.fraction, modifier = Modifier.fillMaxSize(0.76f)) }
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                 CountAndCaption(totalLabel = totalLabel, count = count, modifier = Modifier.fillMaxSize(0.58f))
             }
-            TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd))
+            TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
         }
     }
 }
@@ -168,9 +186,22 @@ private fun CountAndCaption(totalLabel: String, count: Int?, modifier: Modifier 
             Text(
                 text = pluralStringResource(R.plurals.counter_count_caption, count),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { hideFromAccessibility() },
+                // Its own node, so its words stay out of the block's label.
+                modifier = Modifier.semantics(mergeDescendants = true) { hideFromAccessibility() },
             )
         }
+    }
+}
+
+/** [shape] in the largest square that fits, centred, where the block's `aspectRatio(1f)` child sits. */
+internal class CentredSquare(private val shape: Shape) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val side = min(size.width, size.height)
+        val path = Path().apply {
+            addOutline(shape.createOutline(Size(side, side), layoutDirection, density))
+            translate(Offset((size.width - side) / 2, (size.height - side) / 2))
+        }
+        return Outline.Generic(path)
     }
 }
 
