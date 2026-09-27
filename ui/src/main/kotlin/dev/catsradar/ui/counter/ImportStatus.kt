@@ -87,7 +87,7 @@ private fun IslandCard(modifier: Modifier = Modifier, content: @Composable RowSc
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shadowElevation = 6.dp,
     ) {
         Row(
@@ -181,7 +181,7 @@ private fun PhotoStack(paths: ImmutableList<String>) {
                     .offset(x = 11.dp * index, y = 2.dp)
                     .size(40.dp)
                     .rotate(ThumbTilts[index])
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .testTag(ImportThumbTestTag),
             )

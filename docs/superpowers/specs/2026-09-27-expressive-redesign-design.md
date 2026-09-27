@@ -188,13 +188,13 @@ that shrank the cookie, three lines of fine print at one size, an import of phot
 and the quietest Undo on the screen. Of *Photo card*, *By Photo* and *On the count* the owner chose
 the **Photo card**, then asked that it not shrink the cookie, "so that island will be like a popup".
 
-- **It floats.** A card on `surface` at the elevated card's level, `large` corners, 12 dp in from
-  the sides, just under the status bar, over the top of the count rather than in the column, dropping
-  in on the motion scheme; the cookie keeps its size. For the notice's ten seconds it covers the goal
+- **It floats.** A card on `surfaceContainerHigh`, as the map's floating cards are, with a shadow and
+  `large` corners, 12 dp in from the sides, just under the status bar, over the top of the count rather
+  than in the column, dropping in on the motion scheme; the cookie keeps its size. For the notice's ten seconds it covers the goal
   tag at the ring's top, which is the price of floating. The location hint stays a card in the
   column: what lasts sits in the column, what passes floats.
 - **What it shows.** At its start, a fanned stack of the first three imported photos (40 dp,
-  `medium` corners, each tilted a little), or a check when none has a photo. Running, the gallery icon
+  `small` corners, each tilted a little), or a check when none has a photo. Running, the gallery icon
   stands in the stack's place, because progress reports counts and the added cats are known only when
   the run ends. Running: *Importing 7 of 12* in `titleSmall` over an Expressive wavy progress
   indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the

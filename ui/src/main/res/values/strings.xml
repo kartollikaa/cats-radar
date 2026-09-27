@@ -44,8 +44,8 @@
         <item quantity="other">%1$d already here</item>
     </plurals>
     <plurals name="counter_import_failed">
-        <item quantity="one">%1$d could not be read</item>
-        <item quantity="other">%1$d could not be read</item>
+        <item quantity="one">%1$d couldn\'t be read</item>
+        <item quantity="other">%1$d couldn\'t be read</item>
     </plurals>
     <string name="counter_photo_not_saved">Photo not saved</string>
     <string name="counter_location_hint">Location permission needed for cat spots</string>
