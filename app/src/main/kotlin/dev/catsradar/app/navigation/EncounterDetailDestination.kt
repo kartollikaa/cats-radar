@@ -4,11 +4,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.catsradar.presentation.detail.EncounterDetailEffect
 import dev.catsradar.presentation.detail.EncounterDetailIntent
+import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.ui.R
 import dev.catsradar.ui.detail.EncounterDetailScreen
@@ -50,6 +54,17 @@ internal fun dispatchCameraShot(shot: CameraShot, dispatch: (EncounterDetailInte
     shot.catId?.let { dispatch(EncounterDetailIntent.PhotoTaken(it, shot.uri)) }
 }
 
+/** [key]'s Store; rebuilt after the process died, it starts on the cat on screen, saved with the screen. */
+@Composable
+private fun rememberEncounterDetailStore(key: EncounterDetail): EncounterDetailStore {
+    var shownId by rememberSaveable { mutableStateOf<String?>(null) }
+    val store = koinViewModel<EncounterDetailStore> { parametersOf(key.id, shownId) }
+    LaunchedEffect(store) {
+        store.state.collect { state -> (state as? EncounterDetailState.Loaded)?.let { shownId = it.currentId } }
+    }
+    return store
+}
+
 @Composable
 internal fun EncounterDetailDestination(
     key: EncounterDetail,
@@ -60,7 +75,7 @@ internal fun EncounterDetailDestination(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
 ) {
-    val store = koinViewModel<EncounterDetailStore> { parametersOf(key.id, null) }
+    val store = rememberEncounterDetailStore(key)
     val state by store.state.collectAsStateWithLifecycle()
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
@@ -107,6 +122,7 @@ internal fun EncounterDetailDestination(
         modifier = modifier,
         contentPadding = contentPadding,
         onBackClick = { store.dispatch(EncounterDetailIntent.BackClicked) },
+        onPageSettle = { catId -> store.dispatch(EncounterDetailIntent.PageSettled(catId)) },
         onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
         onCoatClick = { pick -> store.dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
