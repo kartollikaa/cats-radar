@@ -74,8 +74,8 @@ fun StatisticsScreen(
         }
         ByCoatSection(state.byCoat)
         SectionCard(R.string.statistics_streaks) {
-            StatRow(R.string.statistics_current_streak, state.currentStreakLabel)
-            StatRow(R.string.statistics_longest_streak, state.longestStreakLabel)
+            StatRow(R.string.statistics_current_streak, state.currentStreak.toString())
+            StatRow(R.string.statistics_longest_streak, state.longestStreak.toString())
         }
         PlacesCard(onClick = onPlacesClick)
         SectionCard(R.string.statistics_outings) {
@@ -212,8 +212,8 @@ private val sampleStatistics = StatisticsState(
     weekLabel = "19",
     monthLabel = "64",
     withPhotoLabel = "41",
-    currentStreakLabel = "6",
-    longestStreakLabel = "23",
+    currentStreak = 6,
+    longestStreak = 23,
     nextMilestone = MilestoneState(valueLabel = "250", remainingLabel = "103"),
     outingsLabel = "38",
     activeTimeLabel = "14 h 20 min",

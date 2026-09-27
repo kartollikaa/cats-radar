@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Session
 import dev.catsradar.domain.stats.CoatCount
 import dev.catsradar.domain.stats.CurrentOuting
+import dev.catsradar.domain.stats.DayCount
 import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.domain.stats.Rate
 import dev.catsradar.domain.stats.RatedOuting
@@ -12,6 +13,9 @@ import dev.catsradar.domain.stats.WalkStats
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -37,6 +41,7 @@ class StatisticsStateMapperTest {
         bestOuting: RatedOuting? = null,
         nextMilestone: Milestone? = null,
         activeTime: Duration = Duration.ZERO,
+        byDay: List<DayCount> = emptyList(),
     ) = Stats(
         total = total,
         today = 0,
@@ -46,7 +51,7 @@ class StatisticsStateMapperTest {
         byCoat = emptyList(),
         currentStreak = 0,
         longestStreak = 0,
-        byDay = emptyList(),
+        byDay = byDay,
         nextMilestone = nextMilestone,
         outings = 0,
         activeTime = activeTime,
@@ -183,11 +188,11 @@ class StatisticsStateMapperTest {
                 monthLabel = "13",
                 withPhotoLabel = "7",
                 byCoat = persistentListOf(
-                    CoatShareState(CoatOption.GINGER, countLabel = "12", sharePercentLabel = "57"),
-                    CoatShareState(coat = null, countLabel = "9", sharePercentLabel = "43"),
+                    CoatShareState(CoatOption.GINGER, countLabel = "12", sharePercentLabel = "57", share = 1f),
+                    CoatShareState(coat = null, countLabel = "9", sharePercentLabel = "43", share = 0.75f),
                 ),
-                currentStreakLabel = "3",
-                longestStreakLabel = "8",
+                currentStreak = 3,
+                longestStreak = 8,
                 nextMilestone = MilestoneState(valueLabel = "25", remainingLabel = "4"),
                 outingsLabel = "6",
                 activeTimeLabel = 150.minutes.toString(),
@@ -200,6 +205,117 @@ class StatisticsStateMapperTest {
             ),
             mapper.map(stats),
         )
+    }
+
+    // Thirty days ending on Saturday 26 September, the counts oldest first.
+    private fun days(vararg counts: Int): List<DayCount> =
+        counts.toList().reversed().mapIndexed { back, count -> DayCount(SATURDAY.minus(DatePeriod(days = back)), count) }
+            .reversed()
+
+    private fun bar(daysBack: Int, count: Int, height: Float, axisLabel: String?, picked: Boolean = daysBack == 0): DayBarState {
+        val date = SATURDAY.minus(DatePeriod(days = daysBack))
+        return DayBarState(
+            epochDay = date.toEpochDays(),
+            count = count,
+            height = height,
+            isToday = daysBack == 0,
+            isPicked = picked,
+            axisLabel = axisLabel,
+            dayLabel = "weekdayDayMonth $date",
+        )
+    }
+
+    private val month = days(1, 3, 0, 2, 4, 1, 0, 3, 2, 5, 1, 0, 2, 3, 1, 4, 2, 0, 3, 1, 2, 3, 2, 2, 4, 1, 3, 6, 0, 3)
+
+    @Test
+    fun `the week chart has a bar for each of the last seven days, named by its weekday, today last and named`() {
+        val chart = mapper.map(stats(total = 99, byDay = month)).chart
+
+        assertEquals(
+            DayChartState(
+                range = ChartRange.WEEK,
+                bars = persistentListOf(
+                    bar(6, 2, 2f / 6, "weekday 2026-09-20"),
+                    bar(5, 4, 4f / 6, "weekday 2026-09-21"),
+                    bar(4, 1, 1f / 6, "weekday 2026-09-22"),
+                    bar(3, 3, 3f / 6, "weekday 2026-09-23"),
+                    bar(2, 6, 1f, "weekday 2026-09-24"),
+                    bar(1, 0, 0f, "weekday 2026-09-25"),
+                    bar(0, 3, 3f / 6, "weekday 2026-09-26"),
+                ),
+                picked = PickedDayState(count = 3, dayLabel = "weekdayDayMonth 2026-09-26"),
+            ),
+            chart,
+        )
+    }
+
+    @Test
+    fun `the month chart has thirty bars, dated under today and every seventh bar before it`() {
+        val chart = mapper.map(stats(total = 99, byDay = month), chart = ChartChoice(range = ChartRange.MONTH)).chart
+
+        assertEquals(ChartRange.MONTH, chart.range)
+        assertEquals(30, chart.bars.size)
+        assertEquals(
+            List(30) { index ->
+                val daysBack = 29 - index
+                if (daysBack % 7 == 0) "dayMonth ${SATURDAY.minus(DatePeriod(days = daysBack))}" else null
+            },
+            chart.bars.map { it.axisLabel },
+        )
+        assertEquals(month.map { it.count.toFloat() / 6 }, chart.bars.map { it.height })
+        assertEquals(listOf(true), chart.bars.filter { it.isToday }.map { it.isPicked })
+        assertEquals(chart.bars.last(), chart.bars.single { it.isToday })
+    }
+
+    @Test
+    fun `with no cats in the range every bar has no height`() {
+        val chart = mapper.map(stats(total = 5, byDay = days(*IntArray(30)))).chart
+
+        assertEquals(List(7) { 0f }, chart.bars.map { it.height })
+    }
+
+    @Test
+    fun `a picked day in the range is named under the chart`() {
+        val thursday = SATURDAY.minus(DatePeriod(days = 2))
+
+        val chart = mapper.map(stats(total = 99, byDay = month), chart = ChartChoice(pickedDay = thursday.toEpochDays())).chart
+
+        assertEquals(PickedDayState(count = 6, dayLabel = "weekdayDayMonth $thursday"), chart.picked)
+        assertEquals(listOf(thursday.toEpochDays()), chart.bars.filter { it.isPicked }.map { it.epochDay })
+    }
+
+    @Test
+    fun `a picked day the range no longer shows gives way to today`() {
+        val weeksAgo = SATURDAY.minus(DatePeriod(days = 20)).toEpochDays()
+
+        val week = mapper.map(stats(total = 99, byDay = month), chart = ChartChoice(pickedDay = weeksAgo)).chart
+        val month = mapper.map(
+            stats(total = 99, byDay = month),
+            chart = ChartChoice(range = ChartRange.MONTH, pickedDay = weeksAgo),
+        ).chart
+
+        assertEquals(PickedDayState(count = 3, dayLabel = "weekdayDayMonth $SATURDAY"), week.picked)
+        assertEquals(PickedDayState(count = 5, dayLabel = "weekdayDayMonth ${SATURDAY.minus(DatePeriod(days = 20))}"), month.picked)
+    }
+
+    @Test
+    fun `a coat's bar is its count over the busiest row's, the unnoted row included`() {
+        val rows = listOf(
+            CoatCount(CatCoat.GINGER, 6, 0.3),
+            CoatCount(CatCoat.BLACK, 3, 0.15),
+            CoatCount(null, 12, 0.6),
+        )
+
+        val shares = mapper.map(stats(total = 20).copy(byCoat = rows)).byCoat.map { it.share }
+
+        assertEquals(listOf(0.5f, 0.25f, 1f), shares)
+    }
+
+    @Test
+    fun `the streaks reach the screen as counts, for the plural of their days`() {
+        val state = mapper.map(stats(total = 4).copy(currentStreak = 1, longestStreak = 12))
+
+        assertEquals(1 to 12, state.currentStreak to state.longestStreak)
     }
 
     private fun walked(meters: Double, catsPerKm: Double? = null) =
@@ -238,5 +354,9 @@ class StatisticsStateMapperTest {
     fun `cats per km reads to one decimal, and stays unmeasured without a long enough walk`() {
         assertEquals("3.3", mapper.map(stats(total = 1), walked(4_000.0, catsPerKm = 3.26)).walked?.catsPerKm)
         assertNull(mapper.map(stats(total = 1), walked(300.0, catsPerKm = null)).walked?.catsPerKm)
+    }
+
+    private companion object {
+        val SATURDAY = LocalDate(2026, 9, 26)
     }
 }

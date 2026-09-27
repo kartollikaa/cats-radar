@@ -24,13 +24,17 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -148,7 +152,51 @@ class StatisticsStoreTest {
         assertEquals(1, encounters.everyCollection)
     }
 
+    @Test
+    fun `picking thirty days draws a bar for each of them, and seven days draws seven`() = runTest(mainDispatcher) {
+        encounterRepository.insert(encounterFixture("cat-1", BASE + 10.minutes))
+        val store = newStore(StoredWalkRepository())
+        runCurrent()
+        assertEquals(ChartRange.WEEK to 7, store.state.value.chart.let { it.range to it.bars.size })
+
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.MONTH))
+        runCurrent()
+        assertEquals(ChartRange.MONTH to 30, store.state.value.chart.let { it.range to it.bars.size })
+
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.WEEK))
+        runCurrent()
+        assertEquals(ChartRange.WEEK to 7, store.state.value.chart.let { it.range to it.bars.size })
+    }
+
+    @Test
+    fun `the line under the chart names today until a day is picked, then that day`() = runTest(mainDispatcher) {
+        encounterRepository.insert(encounterFixture("cat-1", BASE - 2.days))
+        val store = newStore(StoredWalkRepository())
+        runCurrent()
+        assertEquals(PickedDayState(count = 0, dayLabel = "weekdayDayMonth $TODAY"), store.state.value.chart.picked)
+
+        store.dispatch(StatisticsIntent.DayPicked(TWO_DAYS_AGO.toEpochDays()))
+        runCurrent()
+
+        assertEquals(PickedDayState(count = 1, dayLabel = "weekdayDayMonth $TWO_DAYS_AGO"), store.state.value.chart.picked)
+    }
+
+    @Test
+    fun `back on seven days, a day picked three weeks ago gives way to today`() = runTest(mainDispatcher) {
+        val store = newStore(StoredWalkRepository())
+        runCurrent()
+
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.MONTH))
+        store.dispatch(StatisticsIntent.DayPicked(TODAY.minus(DatePeriod(days = 21)).toEpochDays()))
+        store.dispatch(StatisticsIntent.RangePicked(ChartRange.WEEK))
+        runCurrent()
+
+        assertEquals("weekdayDayMonth $TODAY", store.state.value.chart.picked?.dayLabel)
+    }
+
     private companion object {
         val BASE = Instant.parse("2026-09-22T10:00:00Z")
+        val TODAY = LocalDate(2026, 9, 22)
+        val TWO_DAYS_AGO = LocalDate(2026, 9, 20)
     }
 }
