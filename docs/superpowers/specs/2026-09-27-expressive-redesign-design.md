@@ -109,8 +109,10 @@ and the rung's number in `primary`, and a dot at the arc's head, `primary` with 
 rim, travelling toward it. TalkBack reads the pill as the Statistics line, "38 more to reach 100".
 During an outing a second pill at the ring's bottom carries the outing line, count · time · rate with
 the line's own give-way rules and its one spoken item; the goal stays. The pills take no room in the
-column, so an outing starting or ending moves nothing under the count. Past the last rung, and with
-no cats yet, there is no pill and no dot.
+column, so an outing starting or ending moves nothing under the count. Both pills sit on the stroke's
+centre line and squash with the cookie. In a small cookie the number keeps clear of them: its box
+loses what the pills reach into, the number shrinks, and "cats" under it gives way first. Past the
+last rung, and with no cats yet, there is no pill and no dot.
 
 **Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
 the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
@@ -226,7 +228,7 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
 2. **Delete moves** into the More menu and to the end of the page as **Remove this cat**. What it does
    is unchanged. `encounter-detail.md` changes.
 3. **The coat ring is drawn on the shape**, not around the whole cell. `coat.md` changes.
-4. **New information**: the milestone arc and the milestone in the status line on the Counter, the
+4. **New information**: the milestone arc and the goal on the ring on the Counter, the
    cat's number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md`
    change.
 
@@ -262,7 +264,8 @@ from a flat one.
 - **Compose, Robolectric in `:app`:**
   - A tap anywhere on the count block logs a cat, the badge counts the run, and no arc is drawn past
     the last rung.
-  - The status line shows the outing during an outing and the milestone otherwise.
+  - The goal tag sits on the ring's top and the outing's on its bottom; nothing sits between the count
+    and the walk button; a cramped block keeps the number clear of both.
   - The ringed coat's shape is the one outlined.
   - A tap on the second photo opens the viewer on it; the add items open the camera and the picker
     and disable while attaching.

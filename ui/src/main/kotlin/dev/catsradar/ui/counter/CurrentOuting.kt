@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,25 +26,9 @@ import dev.catsradar.ui.statistics.label
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-// The pill's sides; the caller lets the pill overhang the block by them, so the line keeps the block's width.
-internal val OutingTagPadding = 12.dp
-
-/** The outing in progress on a pill, pinned by the caller to the count's ring. */
+/** The outing in progress on one line: its count, how long it has run and, once measurable, its rate. */
 @Composable
-internal fun OutingTag(state: CurrentOutingState, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = 1.dp,
-    ) {
-        CurrentOuting(state, modifier = Modifier.padding(horizontal = OutingTagPadding, vertical = 4.dp))
-    }
-}
-
-@Composable
-private fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifier) {
+internal fun CurrentOuting(state: CurrentOutingState, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.semantics(mergeDescendants = true) {},
         horizontalArrangement = Arrangement.spacedBy(OutingGap, Alignment.CenterHorizontally),
@@ -101,8 +84,8 @@ private fun OutingSeparator(modifier: Modifier = Modifier) {
 private fun CurrentOutingPreview() {
     CatsRadarTheme {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
-            OutingTag(sampleOutingWithRate)
-            OutingTag(sampleOutingWithRate.copy(count = 1, elapsedLabel = "2 min", rate = null))
+            CurrentOuting(sampleOutingWithRate)
+            CurrentOuting(sampleOutingWithRate.copy(count = 1, elapsedLabel = "2 min", rate = null))
         }
     }
 }

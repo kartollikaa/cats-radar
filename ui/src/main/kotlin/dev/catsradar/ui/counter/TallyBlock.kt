@@ -13,11 +13,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -52,9 +48,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -62,9 +57,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
@@ -77,13 +70,10 @@ import dev.catsradar.ui.theme.ThemePreviews
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.math.sin
 
 const val MilestoneArcTestTag = "milestone-arc"
-
-// The ring's share of the square; the tags sit on the ring's edges, so they take the same fraction.
-private const val RingFraction = 0.76f
+const val CountNumberTestTag = "count-number"
 
 /** The count, as a button: squashes under a press, and rolls up on a tally and down on an undo. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -144,72 +134,32 @@ internal fun TallyBlock(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            milestone?.let { MilestoneArc(fraction = it.fraction, modifier = Modifier.fillMaxSize(RingFraction)) }
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
-                CountAndCaption(totalLabel = totalLabel, count = count, modifier = Modifier.fillMaxSize(0.58f))
-            }
-            TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
+            CookieContent(totalLabel, count, tapBurst, milestone, currentOuting)
         }
-        RingTags(milestone = milestone, currentOuting = currentOuting)
+        RingTags(milestone = milestone, currentOuting = currentOuting, scale = { scale })
     }
 }
 
-// The tags get the block's width, not the square's, so a long outing line still has the room it had.
 @Composable
-private fun BoxScope.RingTags(milestone: CounterMilestoneState?, currentOuting: CurrentOutingState?) {
-    milestone?.let {
-        GoalTag(next = it.next, modifier = Modifier.align(Alignment.TopCenter).onRingEdge(top = true))
-    }
-    currentOuting?.let {
-        OutingTag(
-            state = it,
-            modifier = Modifier.align(Alignment.BottomCenter).onRingEdge(top = false, overhang = OutingTagPadding),
+private fun BoxScope.CookieContent(
+    totalLabel: String,
+    count: Int?,
+    tapBurst: Int?,
+    milestone: CounterMilestoneState?,
+    currentOuting: CurrentOutingState?,
+) {
+    milestone?.let { MilestoneArc(fraction = it.fraction, modifier = Modifier.fillMaxSize(RingFraction)) }
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+        CountAndCaption(
+            totalLabel = totalLabel,
+            count = count,
+            modifier = Modifier.clearOfRingTags(
+                top = rememberGoalTagHeight(milestone),
+                bottom = rememberOutingTagHeight(currentOuting),
+            ),
         )
     }
-}
-
-// Centred on the ring's edge; the ring's square is the largest that fits the block, centred in it.
-private fun Modifier.onRingEdge(top: Boolean, overhang: Dp = 0.dp): Modifier = layout { measurable, constraints ->
-    val width = constraints.maxWidth + 2 * overhang.roundToPx()
-    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = width))
-    val square = min(constraints.maxWidth, constraints.maxHeight)
-    val edge = (constraints.maxHeight - square) / 2f + (1 - RingFraction) / 2 * square
-    layout(placeable.width, placeable.height) {
-        val shift = (edge - placeable.height / 2).roundToInt()
-        placeable.place(0, if (top) shift else -shift)
-    }
-}
-
-@Composable
-private fun GoalTag(next: MilestoneState, modifier: Modifier = Modifier) {
-    val label = next.label()
-    Surface(
-        // Its own node, read as the Statistics line, so the number stays out of the block's label.
-        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = label },
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.primary,
-        shadowElevation = 1.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_flag),
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-            )
-            Text(
-                text = next.valueLabel,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                modifier = Modifier.clearAndSetSemantics {},
-            )
-        }
-    }
+    TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
 }
 
 @Composable
@@ -223,7 +173,7 @@ private fun MilestoneArc(fraction: Float, modifier: Modifier = Modifier) {
     val arc = MaterialTheme.colorScheme.primary
     val rim = MaterialTheme.colorScheme.primaryContainer
     Canvas(modifier = modifier.testTag(MilestoneArcTestTag)) {
-        val stroke = size.minDimension * 0.026f
+        val stroke = size.minDimension * RingStrokeFraction
         val topLeft = Offset(stroke / 2, stroke / 2)
         val ring = Size(size.width - stroke, size.height - stroke)
         drawArc(
@@ -256,26 +206,41 @@ private fun MilestoneArc(fraction: Float, modifier: Modifier = Modifier) {
     }
 }
 
+// The caption gives way first: it is dropped when keeping it would push the number below its smallest size.
 @Composable
 private fun CountAndCaption(totalLabel: String, count: Int?, modifier: Modifier = Modifier) {
-    Column(
+    Layout(
+        contents = listOf(
+            {
+                // Mid-roll the old and the new number are both drawn; the block's own label is the total.
+                RollingCount(
+                    label = totalLabel,
+                    count = count,
+                    modifier = Modifier.testTag(CountNumberTestTag).clearAndSetSemantics {},
+                )
+            },
+            {
+                if (count != null) {
+                    Text(
+                        text = pluralStringResource(R.plurals.counter_count_caption, count),
+                        style = MaterialTheme.typography.titleMedium,
+                        // Its own node, so its words stay out of the block's label.
+                        modifier = Modifier.semantics(mergeDescendants = true) { hideFromAccessibility() },
+                    )
+                }
+            },
+        ),
         modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // Mid-roll the old and the new number are both drawn; the block's own label is the total.
-        RollingCount(
-            label = totalLabel,
-            count = count,
-            modifier = Modifier.weight(1f, fill = false).clearAndSetSemantics {},
-        )
-        if (count != null) {
-            Text(
-                text = pluralStringResource(R.plurals.counter_count_caption, count),
-                style = MaterialTheme.typography.titleMedium,
-                // Its own node, so its words stay out of the block's label.
-                modifier = Modifier.semantics(mergeDescendants = true) { hideFromAccessibility() },
-            )
+    ) { (numberItems, captionItems), constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val caption = captionItems.firstOrNull()?.measure(loose)
+            ?.takeIf { it.height + MinCountSize.roundToPx() <= constraints.maxHeight }
+        val numberRoom = constraints.maxHeight - (caption?.height ?: 0)
+        val number = numberItems.single().measure(loose.copy(maxHeight = numberRoom))
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            val top = (constraints.maxHeight - number.height - (caption?.height ?: 0)) / 2
+            number.place((constraints.maxWidth - number.width) / 2, top)
+            caption?.place((constraints.maxWidth - caption.width) / 2, top + number.height)
         }
     }
 }

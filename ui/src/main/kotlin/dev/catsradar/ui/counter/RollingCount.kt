@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 private val MaxCountSize = 112.sp
+internal val MinCountSize = 32.sp
 private const val RollMillis = 450
 
 @Immutable
@@ -79,7 +80,7 @@ internal fun RollingCount(label: String, count: Int?, modifier: Modifier = Modif
         // Tabular figures: every digit is one width, so a rolling digit never shoves its neighbours.
         fontFeatureSettings = "tnum",
     )
-    ShrinkToFit(minScale = 32.sp.value / MaxCountSize.value, modifier = modifier) {
+    ShrinkToFit(minScale = MinCountSize.value / MaxCountSize.value, modifier = modifier) {
         // A number reads left to right in every locale; under RTL a Row would put the units first.
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row {
