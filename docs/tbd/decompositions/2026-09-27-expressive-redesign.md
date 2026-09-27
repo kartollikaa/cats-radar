@@ -1,0 +1,102 @@
+# Expressive redesign of the Counter and a cat's detail — PR Decomposition Map
+
+- **Created:** 2026-09-27
+- **Epic reference:** [docs/superpowers/specs/2026-09-27-expressive-redesign-design.md](../../superpowers/specs/2026-09-27-expressive-redesign-design.md)
+- **Trunk:** `main`
+- **Size budgets:** target ≤600 reviewable lines, cap 1000 (see tbd:sizing-pull-requests). Excluded from the
+  count: `*.md`, string resources.
+- **Integration strategy:** every slice is **naturally safe**. Each changes one surface in place and ships
+  whole; the two behaviour changes, E6's Remove and E7's coat sheet, are complete inside their slices. E1
+  goes first because every other slice draws on its theme.
+
+## Slices
+
+| # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
+|---|----------|------------------------|----------|-------------|------------|--------|
+| E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | planned |
+| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone and the Statistics line under it. | safe | ~450 | E1 | planned |
+| E3 | Stat tiles and the walk row | Today, Last 7 days and With a photo as tiles under the outing line; the walk button as an extended FAB and Undo as a tonal button. | safe | ~400 | E2 | planned |
+| E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | planned |
+| E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
+| E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
+| E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, which replaces the inline picker. | safe | ~500 | E4, E6 | planned |
+| E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot. | safe | ~450 | E6 | planned |
+| E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
+
+Status values: `planned · in-progress · in-review · merged · dropped`
+
+## Slice details
+
+### Slice E1 — The Expressive theme
+- **In scope:** `CatsRadarTheme` on `MaterialExpressiveTheme` with `MotionScheme.expressive()`; the opt-in;
+  `app-shell.md` § Look.
+- **Out of scope:** any screen's layout.
+- **Ships safely because:** same colours, shapes and type; components only take their Expressive defaults.
+  Renders of every tab, light and dark, before and after, go in the PR.
+- **Cleanup owed:** none.
+
+### Slice E2 — The count in a cookie
+- **In scope:** `Milestone.reached`; the Counter state's milestone; the cookie, the arc and the milestone
+  line; `*Emphasized` for the number; `counting-cats.md`, and `statistics.md` for `reached`.
+- **Out of scope:** the tiles and the walk row (E3).
+- **Ships safely because:** the block stays the button, with the same roll, badge and label.
+- **Cleanup owed:** none.
+
+### Slice E3 — Stat tiles and the walk row
+- **In scope:** the three tile counts in the Counter state; the tiles; the walk button's look; Undo as a
+  tonal button; `counting-cats.md`, `walking-mode.md` where it describes the button's look.
+- **Out of scope:** what the walk button does, and where Undo sits.
+- **Ships safely because:** additive tiles; the walk row keeps its behaviour and its no-jump rules.
+- **Cleanup owed:** none.
+
+### Slice E4 — Coat faces in Material shapes
+- **In scope:** the coat grid's tiles and ring, shared by the Counter, the coat question and the map's
+  filter; the filled split button; `coat.md`, `map.md` where it describes the filter's cells.
+- **Out of scope:** the detail's picker (E7 replaces it).
+- **Ships safely because:** the same taps reach the same intents; only the ring's outline moves.
+- **Cleanup owed:** none.
+
+### Slice E5 — The detail's photos as a carousel
+- **In scope:** the carousel, its add items, the position label, the progress indicator, the no-photo
+  block with its button group; `encounter-detail.md`, `photos.md`.
+- **Out of scope:** the viewer; the outing pager around the page.
+- **Ships safely because:** the same taps open the same viewer, camera and picker, for the same cat.
+- **Cleanup owed:** `AddPhotoCard` and `DetailPhotoPager` go if nothing else uses them.
+
+### Slice E6 — The detail names its cat
+- **In scope:** a title token per coat; the facts row; More and its menu in the bar; the Remove button;
+  EN and RU strings; `encounter-detail.md`.
+- **Out of scope:** the cat's number (E9); the coat card (E7); the Where card (E8).
+- **Ships safely because:** Remove sends the Delete intent; the removed state and its Undo are unchanged.
+- **Cleanup owed:** none.
+
+### Slice E7 — The coat card and the coat sheet
+- **In scope:** the coat card; a coat-sheet key with `bottomSheet()` metadata; set, clear and dismiss;
+  `coat.md` § Changing it later; retiring `EncounterDetailCoatPickerTest`.
+- **Out of scope:** the coat question after a photo and the map's filter (E4 styled them).
+- **Ships safely because:** the same `SetCoat` intent, reached from a sheet instead of a strip.
+- **Cleanup owed:** `CoatPicker` goes if nothing else uses it.
+
+### Slice E8 — Where you met
+- **In scope:** the Where card; the accuracy circle on the spot map; `encounter-detail.md` § Its map and §
+  Where it was found; a device check of the circle.
+- **Out of scope:** the Map tab.
+- **Ships safely because:** the card still opens the Map tab or the location picker as it does today.
+- **Cleanup owed:** none.
+
+### Slice E9 — The cat's number
+- **In scope:** `ObserveEncounterNumber` and its DAO count; the number in the page's state; the label;
+  EN and RU strings; `encounter-detail.md`.
+- **Out of scope:** numbers anywhere but the detail.
+- **Ships safely because:** additive; a read-only count.
+- **Cleanup owed:** none.
+
+## Decision log
+
+- 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
+  expressive, with Airbnb and Drinkit as references, and a prototype before proposals. Six directions were
+  prototyped over the Counter and the detail. The owner kept Listing, Night walk and Expressive, then chose
+  Expressive as it stood in version 5 of the prototype.
+- 2026-09-27: the outing pager's P3a-2 to P5b change the same detail screen and are planned with no branch.
+  This map's detail slices, E5 to E9, land before them, one branch at a time, so the two epics never edit
+  `EncounterDetailScreen.kt` in parallel.
