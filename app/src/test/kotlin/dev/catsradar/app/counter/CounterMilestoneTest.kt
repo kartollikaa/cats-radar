@@ -5,16 +5,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
@@ -23,6 +27,7 @@ import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.counter.CountNumberTestTag
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.MilestoneArcTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -31,9 +36,12 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Config(qualifiers = "w411dp-h891dp")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
 class CounterMilestoneTest {
 
@@ -52,22 +60,77 @@ class CounterMilestoneTest {
 
     private fun walkButton() = compose.onNodeWithText(context.getString(R.string.counter_walk_start))
 
-    @Test
-    fun `the count says how many more reach the next milestone`() {
-        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
+    private fun goalTag() = compose.onNodeWithContentDescription("38 more to reach 100")
 
-        compose.onNodeWithText("38 more to reach 100").assertIsDisplayed()
+    private fun ring() = compose.onNodeWithTag(MilestoneArcTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+
+    private fun block() = compose.onNodeWithContentDescription("62").getUnclippedBoundsInRoot()
+
+    private val outing = CurrentOutingState(count = 4, elapsedLabel = "35 min", rate = null)
+
+    // The ring's stroke is this share of its diameter; a tag is pinned to the stroke's centre line.
+    private val halfStroke = 0.026f / 2
+
+    private fun nodesBetweenCountAndWalkButton(): List<SemanticsNode> {
+        val top = with(compose.density) { block().bottom.toPx() }
+        val bottom = with(compose.density) { walkButton().getUnclippedBoundsInRoot().top.toPx() }
+        fun under(node: SemanticsNode): List<SemanticsNode> = node.children.flatMap(::under) +
+            listOfNotNull(node.takeIf { it.boundsInRoot.top >= top && it.boundsInRoot.bottom <= bottom })
+        return under(compose.onRoot(useUnmergedTree = true).fetchSemanticsNode())
     }
 
     @Test
-    fun `during an outing its line takes the milestone's place`() {
-        val outing = CurrentOutingState(count = 4, elapsedLabel = "35 min", rate = null)
+    fun `the goal is pinned where the ring closes, and TalkBack says how many more reach it`() {
+        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
+
+        goalTag().assertIsDisplayed()
+        val tag = goalTag().getUnclippedBoundsInRoot()
+        val ring = ring()
+        assertEquals((ring.top + ring.width * halfStroke).value, ((tag.top + tag.bottom) / 2).value, 1f)
+    }
+
+    @Test
+    fun `during an outing its tag sits at the ring's bottom, and the goal stays`() {
         compose.setContent {
             CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = outing)) }
         }
 
-        compose.onNodeWithText("38 more to reach 100").assertDoesNotExist()
-        compose.onNodeWithText("35 min").assertIsDisplayed()
+        goalTag().assertIsDisplayed()
+        val tag = compose.onNodeWithText("35 min").getUnclippedBoundsInRoot()
+        val ring = ring()
+        assertEquals((ring.bottom - ring.width * halfStroke).value, ((tag.top + tag.bottom) / 2).value, 1f)
+    }
+
+    @Test
+    fun `nothing sits between the count and the walk button, with or without an outing`() {
+        var current by mutableStateOf<CurrentOutingState?>(null)
+        compose.setContent {
+            CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = current)) }
+        }
+
+        val walkTop = walkButton().getUnclippedBoundsInRoot().top
+        assertEquals(emptyList(), nodesBetweenCountAndWalkButton())
+        current = outing
+        assertEquals(emptyList(), nodesBetweenCountAndWalkButton())
+        assertEquals(walkTop, walkButton().getUnclippedBoundsInRoot().top)
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp", fontScale = 1.5f)
+    fun `in a cramped block the number keeps clear of the tags on the ring, and the caption gives way`() {
+        compose.setContent {
+            CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = outing)) }
+        }
+
+        val number = compose.onNodeWithTag(CountNumberTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val goal = goalTag().getUnclippedBoundsInRoot()
+        val outingTag = compose.onNodeWithText("35 min").getUnclippedBoundsInRoot()
+        assertTrue(goal.bottom <= number.top, "the goal tag ends at ${goal.bottom}, the number starts at ${number.top}")
+        assertTrue(
+            number.bottom <= outingTag.top,
+            "the number ends at ${number.bottom}, the outing starts at ${outingTag.top}"
+        )
+        compose.onNodeWithText("cats", useUnmergedTree = true).assertIsNotDisplayed()
     }
 
     @Test

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone and "38 more to reach 100" under the block; the block stays the button with the same roll, badge and label.
+**Goal:** The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone; the goal and the outing ride tags on the ring (Task 7, the owner's amendment); the block stays the button with the same roll, badge and label.
 
 **Architecture:** `:domain`'s `Milestone` gains `reached`, the rung the total has passed. `:presentation`'s `CounterState` gains `milestone: CounterMilestoneState?` (the Statistics labels plus the arc's fraction), built by `CounterStateMapper` from `Stats.nextMilestone`, which the Store already observes. In `:ui`, `TallyBlock` keeps its full-size clickable box and draws inside it a square holding the cookie, the arc, the number with a caption, and the "+N" badge; `CounterScreen` puts the milestone line first under the block. The theme gains the `*Emphasized` styles one weight step above its own.
 
@@ -300,3 +300,22 @@ The harness (scratchpad `harness/DesignShots.kt`) draws the Counter at 62 with a
 ### Task 6: The gate
 
 `CI=true ./gradlew check :app:assembleRelease` detached, as in E1, with the sha in the log; per-commit compile; PR stacked on #202 (`base: feature/expressive-theme`).
+
+### Task 7: The tags on the ring (amendment, 2026-09-27)
+
+The owner found the line under the cookie foreign and its slot empty, and chose the Ring treatment of prototype version 13. Spec § 2 *The tags on the ring*. Tasks 5 and 6 run again after it.
+
+**Files:**
+- Modify: `ui/src/main/kotlin/dev/catsradar/ui/counter/TallyBlock.kt` (`currentOuting` parameter; `GoalTag`, the outing tag and the arc's head; the tags anchored on the ring's edges)
+- Rename: `ui/src/main/kotlin/dev/catsradar/ui/counter/CurrentOutingLine.kt` → `CurrentOuting.kt` (`CurrentOutingLine` goes; `CurrentOuting(state)` is the line); create `RingTags.kt`
+- Modify: `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt` (no line in `below`; `currentOuting` passed to the block)
+- Create: `ui/src/main/res/drawable/ic_flag.xml`
+- Test: `app/src/test/kotlin/dev/catsradar/app/counter/CounterMilestoneTest.kt`; rename `CurrentOutingLineTest.kt` → `CurrentOutingTest.kt`
+- Docs: `counting-cats.md` (the block, *The controls do not jump*, *The outing in progress*, the file list)
+
+- [ ] **Step 1: Failing tests** in `CounterMilestoneTest`: `the goal is pinned where the ring closes, and TalkBack says how many more reach it` (the node described "38 more to reach 100" is displayed and its centre sits on the arc's top edge within 1 dp); `during an outing its tag sits at the ring's bottom, and the goal stays` (the goal stays displayed; the merged outing node's centre sits on the arc's bottom edge); `nothing sits between the count and the walk button, with or without an outing` (the walk button's top is one column gap, 16 dp, under the block's bottom, before and after an outing opens). `CurrentOutingTest` keeps its cases, renamed; `in a cramped block the number keeps clear of the tags on the ring, and the caption gives way` (w320dp-h640dp, font 1.5, an outing).
+- [ ] **Step 2:** red — the line is still under the block; no node carries the description.
+- [ ] **Step 3: Implement** (as landed after review). `RingTags.kt` holds the ring's fractions (`RingFraction`, `RingStrokeFraction`, shared with the arc); `RingTags`, a block-sized box that squashes with the cookie, holding `GoalTag` on the ring's top and the outing's `RingPill` on its bottom, both centred on the stroke's centre line by `onRingLine` (the outing's pill may overhang the block by its sides, so the line keeps the block's width); and `clearOfRingTags`, which gives `CountAndCaption` the square's inner 58 % less what the pills reach into, their heights measured with a `TextMeasurer`. `CountAndCaption` drops the caption when keeping it would push the number below `MinCountSize`. `GoalTag` is `semantics(mergeDescendants = true) { contentDescription = next.label() }` with the number cleared: `clearAndSetSemantics` on the pill would merge its label into the block's. `MilestoneArc` draws a dot at the arc's head (`primary`, a `primaryContainer` rim) when `progress > 0`. `CurrentOuting.kt` keeps the outing's line; `CounterScreen` passes `currentOuting` to the block. `CounterMilestoneTest` runs on native graphics, since text geometry is fake otherwise.
+- [ ] **Step 4:** green; `CounterControlsTest`, `CurrentOutingTest` (adjust the give-way font scales only if the tag's narrower room moves the stage a rule kicks in at; the order stays) and `CounterMilestoneTest` pass.
+- [ ] **Step 5: Mutations** (commit first): no goal tag → AC-6; the outing tag anchored at the top → AC-6b; a line restored under the block → AC-17; the number's box ignoring the tags → AC-18.
+- [ ] **Step 6: Docs and commit** `feat: the goal and the outing ride tags on the ring`.

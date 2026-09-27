@@ -56,11 +56,11 @@ fun CounterScreen(
                 count = state.count,
                 tapBurst = state.tapBurst,
                 milestone = state.milestone,
+                currentOuting = state.currentOuting,
                 onClick = onTallyClick,
             )
         },
         below = {
-            CurrentOutingLine(state.currentOuting, milestone = state.milestone)
             WalkRow(
                 walkingMode = state.walkingMode,
                 walkElapsedLabel = state.walkElapsedLabel,

@@ -35,7 +35,7 @@ import kotlin.test.assertTrue
 @Config(qualifiers = "w411dp-h891dp")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
-class CurrentOutingLineTest {
+class CurrentOutingTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val compose = createComposeRule()
