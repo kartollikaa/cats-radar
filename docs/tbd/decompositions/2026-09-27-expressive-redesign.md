@@ -26,6 +26,8 @@
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | in-review |
+| E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | in-progress |
+| E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -128,6 +130,25 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** drawing only; the block, its taps and its label are unchanged.
 - **Cleanup owed:** none.
 
+### Slice E14 — The walk beside Photo
+- **In scope:** the Walk button beside Photo with its hold and its hint; the cookie's warm fill and breath
+  during a walk; Undo in the count block's corner; the walk row and the walk's own time on the Counter go;
+  `counting-cats.md`, `walking-mode.md`, spec § 2 *The walk*.
+- **Out of scope:** the notification and its chronometer, the outing tag, the coat grid, Photo's halves.
+- **Ships safely because:** the walk's start and hold reach the same intents; the outing tag already carries the
+  outing; a walk started on the old build shows on the new button.
+- **Cleanup owed:** `WalkRow.kt` and its width rules go with the row; `counter_walk_start_hint`,
+  `counter_walk_stop_hint` and `counter_walk_stop_hint_timed` go with the two-line button.
+
+### Slice E15 — The import notice floats
+- **In scope:** the floating import card with the photo stack, the wavy progress, the one-line summary, Undo, ×
+  and the swipe; OK goes; the run is recorded as dealt with on close; `import.md`, `counting-cats.md`, spec § 2
+  *The import notice*.
+- **Out of scope:** the location hint card, what an import writes, the imported-photos manager the tap is
+  reserved for.
+- **Ships safely because:** the same run, summary and undo behind a new surface; the timeout is unchanged.
+- **Cleanup owed:** `ImportStatus.kt`'s two cards; `counter_import_ok` if nothing else uses it.
+
 ## Decision log
 
 - 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
@@ -162,3 +183,12 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - 2026-09-27: before merging, the owner asked that each tally turn the Counter's cookie a step further and keep
   it there (it sprang back), which is E13; and that every coat have its own shape rather than one per column, then
   that the spiky shapes be calmer, which E4 carries.
+- 2026-09-27: the owner found the walk button "a mess and very awkward". Three takes were prototyped (versions 17
+  to 20): a pill row, Walk beside Photo and the walk on the ring's tag; then, reading the walk as a mode, a toggle at
+  the top, an icon toggle and a session bar; then the warm cookie as a control of its own. The owner liked the ring,
+  Walk beside Photo and the pill, and the warm cookie "maybe pulsating"; the ring was set aside for misses, and the
+  owner took **With Photo** with the **warm, breathing cookie**. E14 carries it.
+- 2026-09-27: the owner asked to revisit the successful import's block. Of the Photo card, a dock by Photo and the
+  import landing on the count (versions 21 to 23), the owner chose the **Photo card**, asked that the finished notice
+  be closable (OK or a swipe) with its tap booked for an imported-photos manager, and that it not shrink the cookie:
+  "that island will be like a popup". E15 carries it.
