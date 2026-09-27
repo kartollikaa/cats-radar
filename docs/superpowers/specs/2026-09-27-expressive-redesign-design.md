@@ -128,13 +128,18 @@ timed hint and the one height stay as they are. Undo becomes a filled tonal butt
 the end of the row, and the rule that it never moves the walk button stands.
 
 **The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
-`surfaceContainerHighest`. The shapes go by column: `Circle`, `Square`, `Clover4Leaf`, `Arch`. The
-ringed coat's shape fills with `primaryContainer` and takes a 2 dp `primary` outline; its name stays
-under it. When the ring moves, clears and follows Undo does not change. The rule that a row's cells
-share the tallest one's height so their rings match goes: the ring is now on the shape, and every
-shape is the same size. The grid is shared, so the coat question after a photo and the map's coat
-filter get the same shapes, and the filter's *Not specified* cell takes the next shape in turn. The
-grid must not grow taller than today's.
+`surfaceContainerHighest`, and each coat has a shape of its own (owner, 2026-09-27, over one shape
+per column): Ginger `Circle`, Ginger & white `Square`, White `Clover4Leaf`, Calico mostly white
+`Arch`, Calico little white `Cookie4Sided`, Brown `Slanted`, Brown & white `Gem`, Grey `Fan`, Grey &
+white `Pentagon`, Black `PuffyDiamond`, Black & white `Bun`, and no coat `Ghostish`: soft, rounded
+forms (owner: the spiky ones were "very angry"), each spanning at least nine tenths of its square
+both ways and stretched onto the whole of it, so every tile's shape is the same size (owner: the
+clam shell sat small). None is the count's twelve-sided cookie. The ringed coat's shape fills with
+`primaryContainer` and takes a 2 dp `primary` outline; its name stays under it. When the ring moves,
+clears and follows Undo does not change. The rule that a row's cells share the tallest one's height
+so their rings match goes: the ring is now on the shape, and every shape is the same size. The grid
+is shared, so the coat question after a photo and the map's coat filter get the same shapes, and the
+filter's *Not specified* cell takes no coat's shape. The grid must not grow taller than today's.
 
 **Photo.** The split button it already is, filled `primary`: *Photo* with the camera, and the
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
@@ -180,14 +185,14 @@ number (section 4), the day, the time, and the place with its flag; a cat with n
 place label, and the alert under the row says so.
 They are not buttons, wrap onto a second line when they must, and read to TalkBack as one item.
 
-**The coat card.** On `surfaceContainerLow` with `large` corners: the face in a 72 dp `Clover4Leaf`,
-or the paw with no coat; the coat's name in `titleMediumEmphasized` with "Coat" under it; a tonal
-**Change** pill at the end, **Add** with no coat. The whole card is one button, which opens the coat
-sheet.
+**The coat card.** On `surfaceContainerLow` with `large` corners: the face in a 72 dp shape, the
+coat's own, or the paw in no coat's shape; the coat's name in `titleMediumEmphasized` with "Coat"
+under it; a tonal **Change** pill at the end, **Add** with no coat. The whole card is one button,
+which opens the coat sheet.
 
 **The coat sheet** (a behaviour change). A bottom-sheet destination above the detail, like every
-other sheet. Its header is the cat's own face in a 64 dp `Clover4Leaf` on `primaryContainer`, or the
-paw on `surfaceContainerHighest` with no coat noted, beside "What coat was it?" in
+other sheet. Its header is the cat's own face in a 64 dp shape, its coat's, on `primaryContainer`, or the
+paw in no coat's shape on `surfaceContainerHighest` with no coat noted, beside "What coat was it?" in
 `headlineSmallEmphasized` and one supporting line; then the coat grid of section 2 with the cat's coat
 ringed and a twelfth *No coat* tile, the paw, ringed when no coat is noted (owner, 2026-09-27, over
 "tap the current coat again", which nothing on screen explained). A tap on a coat sets it and closes
@@ -287,9 +292,9 @@ walk** chip in `tertiaryContainer` with the walking cat. **On the map** becomes 
 map icon at the header's end, on the same rule as today.
 
 **The grid.** The packing stays. A pair is two photo squares with `medium` corners and the time on a
-dark chip over the photo's corner. A run's tiles take the coat grid's shapes of section 2 by column,
-with the face, the paw when no coat is noted, or the photo's thumbnail clipped to the shape, and the
-time under each; a short run's cards sit on `surface` inside the outing's card.
+dark chip over the photo's corner. A run's tiles take each coat's own shape of section 2, with the
+face, the paw when no coat is noted, or the photo's thumbnail clipped to the shape, and the time
+under each; a short run's cards sit on `surface` inside the outing's card.
 
 **The list.** Each cat is a card on `surface` inside its outing's card, with the tile's shape, the
 coat's name or "A cat", and the time and place; "No location yet" takes `onTertiaryContainer`.

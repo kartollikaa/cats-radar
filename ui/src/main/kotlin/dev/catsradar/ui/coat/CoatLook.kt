@@ -35,6 +35,9 @@ internal data class CoatLook(
 /** The line around every face, so a white cat on a light surface or a black one on a dark surface still has an edge. */
 internal fun ColorScheme.faceRim(): Color = outline
 
+// On a ringed coat's primary container the outline loses contrast in the dark theme; the ring's own colour keeps it.
+internal fun ColorScheme.ringedFaceRim(): Color = primary
+
 internal fun CoatOption.look(): CoatLook = when (this) {
     CoatOption.GINGER -> CoatLook(fur = Ginger, eyes = DarkEyes, nose = DarkNose)
     CoatOption.GINGER_WHITE -> CoatLook(fur = Ginger, eyes = DarkEyes, nose = DarkNose, muzzle = White)
