@@ -49,7 +49,7 @@ class CounterStateMapper(
         addedCount: Int,
         skipped: Int,
         failed: Int,
-        thumbPaths: List<String> = emptyList(),
+        thumbPaths: List<String>,
     ): ImportSummaryState = ImportSummaryState(
         added = addedCount,
         skipped = skipped.takeIf { it > 0 },

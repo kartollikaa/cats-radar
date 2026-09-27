@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-// The finished import's card shows this many of the added cats' photos.
 private const val IMPORT_THUMBNAILS = 3
 
 @Suppress("LongParameterList") // one parameter per collaborator
@@ -189,8 +188,10 @@ class CounterStore(
                 copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
             }
             is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
-                importedIds = intent.addedIds
                 val thumbPaths = findCatThumbnails(intent.addedIds, limit = IMPORT_THUMBNAILS)
+                // A newer run claimed during the read is the one the user can deal with.
+                if (importRun.reportedId != intent.runId) return
+                importedIds = intent.addedIds
                 setState {
                     copy(
                         importProgress = null,
@@ -212,6 +213,8 @@ class CounterStore(
             }
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
             CounterIntent.Import.SummaryDismissed -> {
+                importSummaryTimeoutJob?.cancel()
+                importedIds = emptyList()
                 setState { copy(importSummary = null) }
                 importRun.acknowledge()
             }

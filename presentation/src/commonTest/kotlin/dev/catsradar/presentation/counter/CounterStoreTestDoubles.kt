@@ -56,6 +56,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     val attachLocationCalls = mutableListOf<Pair<String, LocationStamp>>()
     var attachLocationShouldThrow: Throwable? = null
     var attachLocationGate: CompletableDeferred<Unit>? = null
+    val lookupGates = mutableMapOf<String, CompletableDeferred<Unit>>()
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -70,8 +71,10 @@ internal class FakeEncounterRepository : EncounterRepository {
     override fun observeAll(): Flow<List<Encounter>> =
         encounters.map { list -> list.filter { it.deletedAt == null } }.delayedAfterFirst()
 
-    override fun observeById(id: String): Flow<Encounter?> =
-        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst()
+    override fun observeById(id: String): Flow<Encounter?> = flow {
+        lookupGates[id]?.await()
+        emitAll(encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst())
+    }
 
     private fun <T> Flow<T>.delayedAfterFirst(): Flow<T> {
         var firstEmission = true
@@ -224,24 +227,6 @@ internal class FakeEncounterRepository : EncounterRepository {
 
 // A tally logged by something other than this Store — e.g. the widget (F4) writing to the same
 // repository — to prove the total is read back from the repository, not kept locally.
-/** The cat with one photo whose thumbnail is [thumbPath]. */
-internal fun Encounter.withThumb(thumbPath: String): Encounter = copy(
-    photos = listOf(
-        EncounterPhoto(
-            id = "$id-photo",
-            encounterId = id,
-            photoPath = "$id.jpg",
-            thumbPath = thumbPath,
-            galleryUri = null,
-            sourceMediaUri = null,
-            sourceDigest = null,
-            deviceId = deviceId,
-            addedAt = createdAt,
-            shotId = "$id-photo",
-        ),
-    ),
-)
-
 internal fun externalEncounter(id: String, occurredAt: Instant = Instant.parse("2026-01-01T00:00:00Z")): Encounter =
     Encounter(
         id = id,
