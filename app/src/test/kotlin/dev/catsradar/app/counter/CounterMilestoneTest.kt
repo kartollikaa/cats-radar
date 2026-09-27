@@ -84,6 +84,7 @@ class CounterMilestoneTest {
         compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
 
         goalTag().assertIsDisplayed()
+        compose.onNodeWithText("100", useUnmergedTree = true).assertIsDisplayed()
         val tag = goalTag().getUnclippedBoundsInRoot()
         val ring = ring()
         assertEquals((ring.top + ring.width * halfStroke).value, ((tag.top + tag.bottom) / 2).value, 1f)

@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -139,7 +139,8 @@ private fun GoalTag(next: MilestoneState, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            modifier = Modifier.clearAndSetSemantics {},
+            // Its own node, hidden, so the pill reads only as the Statistics line.
+            modifier = Modifier.semantics(mergeDescendants = true) { hideFromAccessibility() },
         )
     }
 }
