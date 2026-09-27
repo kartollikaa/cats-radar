@@ -19,8 +19,14 @@ class CoatShapesTest {
     }
 
     @Test
-    fun noCoatTakesTheCountsCookie() {
-        assertFalse(everyCell.any { coatShapeFor(it) === MaterialShapes.Cookie12Sided })
+    fun noCoatTakesTheCountsCookieOrASpikyShape() {
+        val refused = listOf(
+            MaterialShapes.Cookie12Sided, MaterialShapes.Sunny, MaterialShapes.VerySunny, MaterialShapes.Flower,
+            MaterialShapes.Burst, MaterialShapes.SoftBurst, MaterialShapes.Boom, MaterialShapes.SoftBoom,
+            MaterialShapes.Puffy, MaterialShapes.Cookie6Sided, MaterialShapes.Cookie7Sided, MaterialShapes.Cookie9Sided,
+            MaterialShapes.Clover8Leaf, MaterialShapes.Triangle, MaterialShapes.Arrow, MaterialShapes.Diamond,
+        )
+        assertFalse(everyCell.any { cell -> refused.any { it === coatShapeFor(cell) } })
     }
 
     @Test

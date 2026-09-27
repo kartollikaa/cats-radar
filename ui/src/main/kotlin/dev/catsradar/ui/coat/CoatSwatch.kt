@@ -233,12 +233,12 @@ internal fun coatShapeFor(coat: CoatOption?): RoundedPolygon = when (coat) {
     CoatOption.WHITE -> MaterialShapes.Clover4Leaf
     CoatOption.TRICOLOR_MOSTLY_WHITE -> MaterialShapes.Arch
     CoatOption.TRICOLOR_LITTLE_WHITE -> MaterialShapes.Cookie4Sided
-    CoatOption.BROWN -> MaterialShapes.Sunny
+    CoatOption.BROWN -> MaterialShapes.Slanted
     CoatOption.BROWN_WHITE -> MaterialShapes.Gem
-    CoatOption.GREY -> MaterialShapes.Cookie6Sided
+    CoatOption.GREY -> MaterialShapes.Oval
     CoatOption.GREY_WHITE -> MaterialShapes.Pentagon
-    CoatOption.BLACK -> MaterialShapes.Flower
-    CoatOption.BLACK_WHITE -> MaterialShapes.Puffy
+    CoatOption.BLACK -> MaterialShapes.Heart
+    CoatOption.BLACK_WHITE -> MaterialShapes.Bun
     null -> MaterialShapes.Ghostish
 }
 
