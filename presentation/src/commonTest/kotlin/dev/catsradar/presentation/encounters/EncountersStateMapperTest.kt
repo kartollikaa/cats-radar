@@ -7,6 +7,7 @@ import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.datetime.LocalDate
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -401,6 +402,150 @@ class EncountersStateMapperTest {
             .single()
 
         assertEquals(null, header.mapOutingId)
+    }
+
+    @Test
+    fun `a shot of three cats is one entry holding all three`() {
+        val shot = shotFixture("first", "second", "third", occurredAt = BASE)
+
+        val rows = mapper.map(shot, today, grid = true).rows
+
+        assertEquals(
+            persistentListOf(
+                OutingHeader(key = "header-first", label = "2026-09-22, $BASE"),
+                EncountersRow.Cards(
+                    persistentListOf(
+                        cell("first", BASE, CellLead.Photo("/data/photos/first_thumb.jpg"))
+                            .copy(catIds = persistentListOf("first", "second", "third")),
+                    ),
+                ),
+            ),
+            rows,
+        )
+    }
+
+    @Test
+    fun `a shot's entry opens its oldest cat`() {
+        val shot = shotFixture("m", "z", "a", occurredAt = BASE)
+
+        val entry = mapper.map(shot.shuffled(Random(7)), today, grid = false).rows
+            .filterIsInstance<EncountersRow.Single>()
+            .single()
+            .cell
+
+        assertEquals("m", entry.id)
+        assertEquals(persistentListOf("m", "z", "a"), entry.catIds)
+    }
+
+    @Test
+    fun `a shot packs as one photo and pairs with the photo beside it`() {
+        val older = photoFixture("older", BASE)
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = BASE + 1.minutes)
+        val newer = photoFixture("newer", BASE + 2.minutes)
+
+        val rows = mapper.map(listOf(older, newer) + shot, today, grid = true).rows
+
+        assertEquals(
+            persistentListOf(
+                OutingHeader(key = "header-older", label = "2026-09-22, $BASE"),
+                EncountersRow.PhotoPair(
+                    first = photoCell("newer", BASE + 2.minutes, "/data/photos/newer.jpg"),
+                    second = photoCell("s1", BASE + 1.minutes, "/data/photos/s1.jpg")
+                        .copy(catIds = persistentListOf("s1", "s2", "s3")),
+                ),
+                EncountersRow.Cards(
+                    persistentListOf(cell("older", BASE, CellLead.Photo("/data/photos/older_thumb.jpg"))),
+                ),
+            ),
+            rows,
+        )
+    }
+
+    @Test
+    fun `with the grid off a shot is one row of its outing`() {
+        val earlier = encounterFixture("earlier", BASE)
+        val shot = shotFixture("s1", "s2", occurredAt = BASE + 1.minutes)
+        val later = encounterFixture("later", BASE + 2.minutes)
+
+        val rows = mapper.map(listOf(earlier, later) + shot, today, grid = false).rows
+
+        assertEquals(
+            persistentListOf(
+                OutingHeader(key = "header-earlier", label = "2026-09-22, $BASE"),
+                EncountersRow.Single(cell("later", BASE + 2.minutes), GroupPosition.FIRST),
+                EncountersRow.Single(
+                    cell("s1", BASE + 1.minutes, CellLead.Photo("/data/photos/s1_thumb.jpg"))
+                        .copy(catIds = persistentListOf("s1", "s2")),
+                    GroupPosition.MIDDLE,
+                ),
+                EncountersRow.Single(cell("earlier", BASE), GroupPosition.LAST),
+            ),
+            rows,
+        )
+    }
+
+    @Test
+    fun `a shot's entry badges its cat count and a lone cat has no badge`() {
+        val lone = photoFixture("lone", BASE)
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = BASE + 1.minutes)
+        val encounters = listOf(lone) + shot
+
+        val grid = mapper.map(encounters, today, grid = true)
+        val list = mapper.map(encounters, today, grid = false)
+
+        val pair = grid.rows.filterIsInstance<EncountersRow.PhotoPair>().single()
+        assertEquals(listOf(3, null), listOf(pair.first.badgeCount, pair.second.badgeCount))
+        assertEquals(
+            listOf(3, null),
+            list.rows.filterIsInstance<EncountersRow.Single>().map { it.cell.badgeCount },
+        )
+    }
+
+    @Test
+    fun `a cat whose cover is another photo keeps its own entry`() {
+        val shot = shotFixture("s1", "s2", occurredAt = BASE)
+        val ownCover = photoFixture("own", BASE)
+        val alsoInTheShot = ownCover.copy(
+            photos = ownCover.photos + shot.first().photos.single().copy(
+                id = "own-copy",
+                encounterId = "own",
+                addedAt = BASE + 1.hours,
+            ),
+        )
+
+        val entries = mapper.map(shot + alsoInTheShot, today, grid = false).rows
+            .filterIsInstance<EncountersRow.Single>()
+            .map { it.cell.catIds }
+
+        assertEquals(listOf(persistentListOf("own"), persistentListOf("s1", "s2")), entries.sortedBy { it.size })
+    }
+
+    @Test
+    fun `a shot without a thumbnail leads with a paw, not one cat's coat`() {
+        val shot = shotFixture("s1", "s2", occurredAt = BASE).map { cat ->
+            cat.copy(coat = CatCoat.GINGER, photos = cat.photos.map { it.copy(thumbPath = null) })
+        }
+        val lone = encounterFixture("lone", BASE + 1.minutes).copy(coat = CatCoat.BLACK)
+
+        val leads = mapper.map(shot + lone, today, grid = false).rows
+            .filterIsInstance<EncountersRow.Single>()
+            .map { it.cell.id to it.cell.lead }
+
+        assertEquals(listOf("lone" to CellLead.Coat(CoatOption.BLACK), "s1" to CellLead.Paw), leads)
+    }
+
+    @Test
+    fun `a selection naming one cat of a shot selects the whole shot`() {
+        val encounters = listOf(encounterFixture("other", BASE)) +
+            shotFixture("s1", "s2", "s3", occurredAt = BASE + 1.minutes)
+
+        val state = mapper.map(encounters, today, grid = true, selectedIds = setOf("s2"))
+
+        assertEquals(persistentSetOf("s1", "s2", "s3"), state.selectedIds)
+        assertEquals(
+            listOf("s1" to true, "other" to false),
+            state.rows.filterIsInstance<EncountersRow.Cards>().flatMap { it.cells }.map { it.id to it.selected },
+        )
     }
 
     private fun EncountersState.cells(): List<CellView> = rows.flatMap { row ->

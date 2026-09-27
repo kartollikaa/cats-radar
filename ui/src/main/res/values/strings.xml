@@ -60,6 +60,10 @@
     <string name="encounters_outing_on_map_description">Show the outing of %1$s on the map</string>
     <string name="encounters_photo_description">Photo of this cat</string>
     <string name="encounters_paw_description">A cat</string>
+    <plurals name="encounters_shot_description">
+        <item quantity="one">Photo of %1$d cat</item>
+        <item quantity="other">Photo of %1$d cats</item>
+    </plurals>
     <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
     <string name="encounters_select">Select</string>
     <string name="encounters_deselect">Deselect</string>
