@@ -113,20 +113,19 @@
 
     <string name="statistics_empty">Log a cat and the numbers will appear</string>
     <string name="statistics_next_milestone">%1$s more to reach %2$s</string>
-    <string name="statistics_when">When</string>
     <string name="statistics_today">Today</string>
     <string name="statistics_week">Last 7 days</string>
     <string name="statistics_month">Last 30 days</string>
     <string name="statistics_with_photo">With a photo</string>
-    <string name="statistics_streaks">Streaks</string>
-    <string name="statistics_current_streak">Current</string>
-    <string name="statistics_longest_streak">Longest</string>
+    <string name="statistics_current_streak">Streak</string>
+    <string name="statistics_longest_streak">Longest streak</string>
+    <string name="statistics_range_week">7 days</string>
+    <string name="statistics_range_month">30 days</string>
     <string name="statistics_outings">Outings</string>
     <string name="statistics_outing_count">Outings</string>
     <string name="statistics_active_time">Time out</string>
     <string name="statistics_overall_rate">Cats per hour</string>
-    <string name="statistics_best_outing">Best outing</string>
-    <string name="statistics_best_outing_rate">Its rate</string>
+    <string name="statistics_best_outing_with_rate">Best outing · %1$s</string>
     <string name="statistics_rate_per_hour">%1$s / h</string>
     <string name="statistics_rate_per_minute">%1$s / min</string>
     <string name="statistics_rate_unavailable">—</string>
@@ -164,6 +163,18 @@
     <plurals name="statistics_best_outing_value">
         <item quantity="one">%1$d cat in %2$s</item>
         <item quantity="other">%1$d cats in %2$s</item>
+    </plurals>
+    <plurals name="statistics_streak_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="statistics_picked_day">
+        <item quantity="one">%1$d cat · %2$s</item>
+        <item quantity="other">%1$d cats · %2$s</item>
+    </plurals>
+    <plurals name="statistics_day_bar">
+        <item quantity="one">%1$d cat, %2$s</item>
+        <item quantity="other">%1$d cats, %2$s</item>
     </plurals>
     <plurals name="counter_count_caption" tools:ignore="ImpliedQuantity">
         <item quantity="one">cat</item>

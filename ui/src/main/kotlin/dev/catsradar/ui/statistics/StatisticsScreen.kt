@@ -1,6 +1,5 @@
 package dev.catsradar.ui.statistics
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,8 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.BestOutingState
+import dev.catsradar.presentation.statistics.ChartRange
 import dev.catsradar.presentation.statistics.CoatShareState
 import dev.catsradar.presentation.statistics.DistanceState
 import dev.catsradar.presentation.statistics.DistanceUnit
@@ -34,14 +36,17 @@ import dev.catsradar.presentation.statistics.StatisticsState
 import dev.catsradar.presentation.statistics.WalkedState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CatFace
+import dev.catsradar.ui.coat.faceRim
 import dev.catsradar.ui.coat.labelRes
+import dev.catsradar.ui.coat.look
 import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.components.HeadlineCard
 import dev.catsradar.ui.components.SectionCard
-import dev.catsradar.ui.components.ValueRow
+import dev.catsradar.ui.components.ShareBar
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 // A coat nobody noted keeps a blank of the same size, so the names still line up.
 private val CoatFaceSize = 28.dp
@@ -51,6 +56,8 @@ fun StatisticsScreen(
     state: StatisticsState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onRangeClick: (ChartRange) -> Unit = {},
+    onDayClick: (Long) -> Unit = {},
     onPlacesClick: () -> Unit = {},
 ) {
     if (!state.hasAnyCats) {
@@ -66,67 +73,11 @@ fun StatisticsScreen(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Headline(state)
-        SectionCard(R.string.statistics_when) {
-            StatRow(R.string.statistics_today, state.todayLabel)
-            StatRow(R.string.statistics_week, state.weekLabel)
-            StatRow(R.string.statistics_month, state.monthLabel)
-            StatRow(R.string.statistics_with_photo, state.withPhotoLabel)
-        }
+        DayChart(chart = state.chart, onRangeClick = onRangeClick, onDayClick = onDayClick)
+        StatTiles(state)
         ByCoatSection(state.byCoat)
-        SectionCard(R.string.statistics_streaks) {
-            StatRow(R.string.statistics_current_streak, state.currentStreak.toString())
-            StatRow(R.string.statistics_longest_streak, state.longestStreak.toString())
-        }
         PlacesCard(onClick = onPlacesClick)
-        SectionCard(R.string.statistics_outings) {
-            StatRow(R.string.statistics_outing_count, state.outingsLabel)
-            StatRow(R.string.statistics_active_time, state.activeTimeLabel)
-            StatRow(R.string.statistics_overall_rate, state.overallRate.label())
-            state.walked?.let { walked ->
-                val distance = walked.distance
-                val distanceLabel = when (distance.unit) {
-                    DistanceUnit.METERS -> stringResource(R.string.statistics_distance_meters, distance.value)
-                    DistanceUnit.KILOMETERS -> stringResource(R.string.statistics_distance_kilometers, distance.value)
-                }
-                val catsPerKmLabel = walked.catsPerKm?.let { stringResource(R.string.statistics_rate_per_km, it) }
-                    ?: stringResource(R.string.statistics_rate_unavailable)
-                StatRow(R.string.statistics_walked, distanceLabel)
-                StatRow(R.string.statistics_cats_per_km, catsPerKmLabel)
-            }
-            state.bestOuting?.let { best ->
-                StatRow(
-                    R.string.statistics_best_outing,
-                    pluralStringResource(
-                        R.plurals.statistics_best_outing_value,
-                        best.count,
-                        best.count,
-                        best.durationLabel,
-                    ),
-                )
-                StatRow(R.string.statistics_best_outing_rate, best.rate.label())
-            }
-        }
-    }
-}
-
-@Composable
-private fun ByCoatSection(shares: ImmutableList<CoatShareState>, modifier: Modifier = Modifier) {
-    if (shares.isEmpty()) return
-    SectionCard(R.string.statistics_by_coat, modifier = modifier) {
-        shares.forEach { share ->
-            ValueRow(
-                label = stringResource(share.coat?.labelRes() ?: R.string.coat_not_specified),
-                value = stringResource(R.string.statistics_coat_share, share.countLabel, share.sharePercentLabel),
-                leading = {
-                    val coat = share.coat
-                    if (coat != null) {
-                        CatFace(coat = coat, modifier = Modifier.size(CoatFaceSize))
-                    } else {
-                        Box(modifier = Modifier.size(CoatFaceSize))
-                    }
-                },
-            )
-        }
+        OutingsGrid(state)
     }
 }
 
@@ -137,7 +88,7 @@ private fun Headline(state: StatisticsState, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = state.total.toString(), style = MaterialTheme.typography.displayLarge)
+            Text(text = state.total.toString(), style = MaterialTheme.typography.displayLargeEmphasized)
             Text(
                 text = pluralStringResource(R.plurals.statistics_total, state.total),
                 style = MaterialTheme.typography.titleMedium,
@@ -154,6 +105,53 @@ private fun MilestoneLine(milestone: MilestoneState, modifier: Modifier = Modifi
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier,
     )
+}
+
+@Composable
+private fun ByCoatSection(shares: ImmutableList<CoatShareState>, modifier: Modifier = Modifier) {
+    if (shares.isEmpty()) return
+    SectionCard(R.string.statistics_by_coat, modifier = modifier) {
+        shares.forEach { share -> CoatShareRow(share) }
+    }
+}
+
+@Composable
+private fun CoatShareRow(share: CoatShareState, modifier: Modifier = Modifier) {
+    val coat = share.coat
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {}
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (coat != null) {
+            CatFace(coat = coat, modifier = Modifier.size(CoatFaceSize))
+        } else {
+            Box(modifier = Modifier.size(CoatFaceSize))
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(coat?.labelRes() ?: R.string.coat_not_specified),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.statistics_coat_share, share.countLabel, share.sharePercentLabel),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+            // A white coat on the light track and a black one on the dark track need the faces' own rim to show.
+            ShareBar(
+                share = share.share,
+                color = coat?.look()?.fur ?: colors.outline,
+                rim = coat?.let { colors.faceRim() },
+            )
+        }
+    }
 }
 
 @Composable
@@ -176,11 +174,6 @@ private fun PlacesCard(modifier: Modifier = Modifier, onClick: () -> Unit = {}) 
 }
 
 @Composable
-private fun StatRow(@StringRes labelRes: Int, value: String, modifier: Modifier = Modifier) {
-    ValueRow(label = stringResource(labelRes), value = value, modifier = modifier)
-}
-
-@Composable
 private fun EmptyStatistics(modifier: Modifier = Modifier) {
     EmptyState(
         iconRes = R.drawable.ic_nav_bar_chart,
@@ -199,6 +192,16 @@ private fun StatisticsScreenPreview() {
 
 @ThemePreviews
 @Composable
+private fun StatisticsScreenMonthNoWalksPreview() {
+    CatsRadarTheme {
+        Surface {
+            StatisticsScreen(state = sampleStatistics.copy(chart = sampleChart(ChartRange.MONTH), walked = null))
+        }
+    }
+}
+
+@ThemePreviews
+@Composable
 private fun StatisticsScreenEmptyPreview() {
     CatsRadarTheme {
         Surface { StatisticsScreen(state = StatisticsState()) }
@@ -208,10 +211,17 @@ private fun StatisticsScreenEmptyPreview() {
 private val sampleStatistics = StatisticsState(
     total = 147,
     hasAnyCats = true,
+    chart = sampleChart(ChartRange.WEEK),
     todayLabel = "3",
     weekLabel = "19",
     monthLabel = "64",
     withPhotoLabel = "41",
+    byCoat = persistentListOf(
+        CoatShareState(CoatOption.GINGER_WHITE, countLabel = "38", sharePercentLabel = "26", share = 1f),
+        CoatShareState(CoatOption.BLACK, countLabel = "29", sharePercentLabel = "20", share = 0.76f),
+        CoatShareState(CoatOption.WHITE, countLabel = "22", sharePercentLabel = "15", share = 0.58f),
+        CoatShareState(coat = null, countLabel = "31", sharePercentLabel = "21", share = 0.82f),
+    ),
     currentStreak = 6,
     longestStreak = 23,
     nextMilestone = MilestoneState(valueLabel = "250", remainingLabel = "103"),

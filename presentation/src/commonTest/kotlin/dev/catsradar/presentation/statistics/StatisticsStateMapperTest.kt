@@ -41,7 +41,6 @@ class StatisticsStateMapperTest {
         bestOuting: RatedOuting? = null,
         nextMilestone: Milestone? = null,
         activeTime: Duration = Duration.ZERO,
-        byDay: List<DayCount> = emptyList(),
     ) = Stats(
         total = total,
         today = 0,
@@ -51,7 +50,7 @@ class StatisticsStateMapperTest {
         byCoat = emptyList(),
         currentStreak = 0,
         longestStreak = 0,
-        byDay = byDay,
+        byDay = emptyList(),
         nextMilestone = nextMilestone,
         outings = 0,
         activeTime = activeTime,
@@ -209,27 +208,31 @@ class StatisticsStateMapperTest {
 
     // Thirty days ending on Saturday 26 September, the counts oldest first.
     private fun days(vararg counts: Int): List<DayCount> =
-        counts.toList().reversed().mapIndexed { back, count -> DayCount(SATURDAY.minus(DatePeriod(days = back)), count) }
+        counts.toList().reversed()
+            .mapIndexed { back, count -> DayCount(SATURDAY.minus(DatePeriod(days = back)), count) }
             .reversed()
 
-    private fun bar(daysBack: Int, count: Int, height: Float, axisLabel: String?, picked: Boolean = daysBack == 0): DayBarState {
+    private fun bar(daysBack: Int, count: Int, height: Float, axisLabel: String?): DayBarState {
         val date = SATURDAY.minus(DatePeriod(days = daysBack))
         return DayBarState(
             epochDay = date.toEpochDays(),
             count = count,
             height = height,
             isToday = daysBack == 0,
-            isPicked = picked,
+            isPicked = daysBack == 0,
             axisLabel = axisLabel,
             dayLabel = "weekdayDayMonth $date",
         )
     }
 
+    private fun chartOf(choice: ChartChoice = ChartChoice()) =
+        mapper.map(stats(total = 99).copy(byDay = month), chart = choice).chart
+
     private val month = days(1, 3, 0, 2, 4, 1, 0, 3, 2, 5, 1, 0, 2, 3, 1, 4, 2, 0, 3, 1, 2, 3, 2, 2, 4, 1, 3, 6, 0, 3)
 
     @Test
     fun `the week chart has a bar for each of the last seven days, named by its weekday, today last and named`() {
-        val chart = mapper.map(stats(total = 99, byDay = month)).chart
+        val chart = chartOf()
 
         assertEquals(
             DayChartState(
@@ -251,7 +254,7 @@ class StatisticsStateMapperTest {
 
     @Test
     fun `the month chart has thirty bars, dated under today and every seventh bar before it`() {
-        val chart = mapper.map(stats(total = 99, byDay = month), chart = ChartChoice(range = ChartRange.MONTH)).chart
+        val chart = chartOf(ChartChoice(range = ChartRange.MONTH))
 
         assertEquals(ChartRange.MONTH, chart.range)
         assertEquals(30, chart.bars.size)
@@ -269,7 +272,7 @@ class StatisticsStateMapperTest {
 
     @Test
     fun `with no cats in the range every bar has no height`() {
-        val chart = mapper.map(stats(total = 5, byDay = days(*IntArray(30)))).chart
+        val chart = mapper.map(stats(total = 5).copy(byDay = days(*IntArray(30)))).chart
 
         assertEquals(List(7) { 0f }, chart.bars.map { it.height })
     }
@@ -278,7 +281,7 @@ class StatisticsStateMapperTest {
     fun `a picked day in the range is named under the chart`() {
         val thursday = SATURDAY.minus(DatePeriod(days = 2))
 
-        val chart = mapper.map(stats(total = 99, byDay = month), chart = ChartChoice(pickedDay = thursday.toEpochDays())).chart
+        val chart = chartOf(ChartChoice(pickedDay = thursday.toEpochDays()))
 
         assertEquals(PickedDayState(count = 6, dayLabel = "weekdayDayMonth $thursday"), chart.picked)
         assertEquals(listOf(thursday.toEpochDays()), chart.bars.filter { it.isPicked }.map { it.epochDay })
@@ -288,14 +291,14 @@ class StatisticsStateMapperTest {
     fun `a picked day the range no longer shows gives way to today`() {
         val weeksAgo = SATURDAY.minus(DatePeriod(days = 20)).toEpochDays()
 
-        val week = mapper.map(stats(total = 99, byDay = month), chart = ChartChoice(pickedDay = weeksAgo)).chart
-        val month = mapper.map(
-            stats(total = 99, byDay = month),
-            chart = ChartChoice(range = ChartRange.MONTH, pickedDay = weeksAgo),
-        ).chart
+        val sevenDays = chartOf(ChartChoice(pickedDay = weeksAgo))
+        val thirtyDays = chartOf(ChartChoice(range = ChartRange.MONTH, pickedDay = weeksAgo))
 
-        assertEquals(PickedDayState(count = 3, dayLabel = "weekdayDayMonth $SATURDAY"), week.picked)
-        assertEquals(PickedDayState(count = 5, dayLabel = "weekdayDayMonth ${SATURDAY.minus(DatePeriod(days = 20))}"), month.picked)
+        assertEquals(PickedDayState(count = 3, dayLabel = "weekdayDayMonth $SATURDAY"), sevenDays.picked)
+        assertEquals(
+            PickedDayState(count = 5, dayLabel = "weekdayDayMonth ${SATURDAY.minus(DatePeriod(days = 20))}"),
+            thirtyDays.picked,
+        )
     }
 
     @Test

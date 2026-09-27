@@ -178,7 +178,10 @@ class StatisticsStoreTest {
         store.dispatch(StatisticsIntent.DayPicked(TWO_DAYS_AGO.toEpochDays()))
         runCurrent()
 
-        assertEquals(PickedDayState(count = 1, dayLabel = "weekdayDayMonth $TWO_DAYS_AGO"), store.state.value.chart.picked)
+        assertEquals(
+            PickedDayState(count = 1, dayLabel = "weekdayDayMonth $TWO_DAYS_AGO"),
+            store.state.value.chart.picked,
+        )
     }
 
     @Test
