@@ -64,23 +64,31 @@ it keeps a height at which the number still reads, and the Counter scrolls inste
 switched on only then, because an enabled scroll delays every press and turns a tap that drifts a
 few pixels into a drag: on a screen with room to spare, a tap is only ever a tap.
 
-**The controls do not jump.** Undo has a place of its own at the far end of the walk button's row,
-outside the count block — inside the block, a follow-up tap on the same spot would land on Undo and
-take a cat away instead of adding one. The walk button sits in the middle of that row, and Undo
-appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
-a longer translation — does the button step aside toward the start, and past that it shortens its
-label: Undo is never squeezed. The walk button is an extended floating action button in the theme's
-tertiary container whether a walk is on or not, and Undo is a filled tonal button beside it
-(`WalkRowLookTest`). A tap on the button starts a walk, but stopping one takes a press held until a
-fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). The button
-keeps one height whether it starts or stops a walk, growing only for a large font rather than
-clipping its two lines, and the outing rides a tag on the count's ring rather than a line of its
-own, so a walk or an outing starting or ending leaves the block the same size and nothing sits
-between the count and the walk button (`CounterMilestoneTest`). The location hint and the import
+**The controls do not jump.** The walk button and Photo share the row under the coat grid: Walk at
+its start, as tall as the split button and as wide as its longer label whether a walk is on or not,
+and Photo taking the rest, so a walk starting or ending moves nothing; a large font puts Photo on a
+line of its own, in both states alike, rather than clip either label (`WalkButtonLookTest`). Walk is a tonal button that reads
+*Walk*; while a walk is on it takes the tertiary container and squarer corners and reads *Hold to
+end*. A tap on it starts a walk, but stopping one takes a press held until a fill crosses the button
+([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). While a walk is on the cookie wears it
+too: its fill and its number take the tertiary container's colours, the arc, its dot and the tags
+keep their own while the ring's faint track and the dot's rim follow the cookie, and the shape alone
+breathes, a slow swell and settle that stands still without a walk
+and when the system's animations are off (`CounterWalkLookTest`, `CookieBreathTest`). Undo is a
+filled tonal button level with the bottom of the cookie at the block's end: in the cookie's corner
+when the cookie fills the block's width, beside it when the block is wider. It appears and goes
+without moving anything, and a tap on it takes a cat back and never logs one (`CounterControlsTest`).
+Being inside the block, it takes that spot from the tally while it shows, so a tap there undoes rather
+than logs. While it shows, the outing's tag narrows by Undo's width on both sides, so it stays
+centred and clear of it, and gives way as it does when short of room: the count first, then the
+time, the rate staying whole (`CounterMilestoneTest`). The outing rides
+a tag on the count's ring rather than a line of its own, so a walk or an outing starting or ending
+leaves the block the same size and nothing sits between the count and the coat grid
+(`CounterMilestoneTest`). The location hint and the import
 progress and summary appear above the count, each as the same notice card: a round icon, its words,
 read by TalkBack as one item, and its actions (see `import.md`). They take their room from the
-count, so the number shrinks and the walk button, the coat grid and the Photo button stay where they
-are, unless the block is already at its floor, when the Counter scrolls instead.
+count, so the number shrinks and the coat grid and the row of Walk and Photo stay where they are,
+unless the block is already at its floor, when the Counter scrolls instead.
 
 ## Undoing a run of taps
 
@@ -170,7 +178,8 @@ the window closed does not reopen it*).
   `CounterIntent`, `CounterEffect`, `CounterStore`, `CounterStateMapper`
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
   press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
-  block's floor and the scroll past it), `WalkRow.kt` (the walk button and Undo's place beside it),
+  block's floor and the scroll past it), `WalkButton.kt` (Walk beside Photo, and its hold),
+  `CookieBreath.kt` (the cookie's breath during a walk),
   `RingTags.kt` (the goal and the outing on the ring), `CurrentOuting.kt` (the outing's line), `UndoButton.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`

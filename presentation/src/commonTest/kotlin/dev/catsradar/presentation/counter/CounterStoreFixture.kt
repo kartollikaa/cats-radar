@@ -4,9 +4,7 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.AddCatsToPhoto
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
-import dev.catsradar.domain.usecase.ObserveOpenWalk
 import dev.catsradar.domain.usecase.ObserveStats
-import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoImport
 import dev.catsradar.domain.usecase.UndoLastTally
@@ -37,7 +35,6 @@ internal fun TestScope.newCounterStore(
     exifReader: FakeExifReader = FakeExifReader(),
     imageResizer: FakeImageResizer = FakeImageResizer(),
     ticks: Flow<Unit> = flowOf(Unit),
-    walkRepository: FakeWalkRepository = FakeWalkRepository(),
     photoStorage: FakePhotoStorage = FakePhotoStorage(),
 ): CounterStore {
     val clock = FakeClock(CounterNow)
@@ -77,7 +74,6 @@ internal fun TestScope.newCounterStore(
             analytics = NoAnalytics,
         ),
         observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
-        observeWalkElapsed = ObserveWalkElapsed(ObserveOpenWalk(walkRepository), clock, ticks = ticks),
         settingsRepository = settingsRepository,
         stateMapper = CounterStateMapper(FakeDateTimeFormatter(), photoStorage),
         locationPermissionRequestState = locationPermissionRequestState,

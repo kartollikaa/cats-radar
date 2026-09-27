@@ -1,20 +1,25 @@
 package dev.catsradar.ui.counter
 
+import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,21 +30,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.R
@@ -52,8 +59,8 @@ import kotlin.time.Duration.Companion.seconds
 private val HoldToStop = 1.seconds
 private const val TicksPerHold = 20
 
-// Material's own extended-FAB corner; the theme's larger `large` shape would round the button into a pill.
-private val WalkButtonShape = ShapeDefaults.Large
+private val WalkButtonHeight = 56.dp
+private val WalkCatSize = 20.dp
 
 /**
  * Starts a walk on a tap, and stops one only when held until the fill crosses it: a stop ends the walk
@@ -62,15 +69,23 @@ private val WalkButtonShape = ShapeDefaults.Large
 @Composable
 internal fun WalkButton(
     walking: Boolean,
-    elapsedLabel: String?,
     modifier: Modifier = Modifier,
     onWalkingChange: (Boolean) -> Unit = {},
+    onHoldRelease: () -> Unit = {},
 ) {
     val fill = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     val currentOnWalkingChange by rememberUpdatedState(onWalkingChange)
+    val currentOnHoldRelease by rememberUpdatedState(onHoldRelease)
+    val startLabel = stringResource(R.string.counter_walk_start)
     val stopLabel = stringResource(R.string.counter_walk_stop)
+    val corner by animateDpAsState(
+        targetValue = if (walking) 16.dp else WalkButtonHeight / 2,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "walkCorner",
+    )
+    val shape = RoundedCornerShape(corner)
     LaunchedEffect(walking) { fill.snapTo(0f) }
     val gesture = if (walking) {
         Modifier
@@ -93,10 +108,12 @@ internal fun WalkButton(
                         haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                         currentOnWalkingChange(false)
                     }
-                    waitForUpOrCancellation()
+                    val up = waitForUpOrCancellation()
                     if (hold.isActive) {
                         hold.cancel()
                         scope.launch { fill.animateTo(0f, tween(durationMillis = 250)) }
+                        // Null when a scroll took the pointer or it left the button: nobody let go early.
+                        if (up != null) currentOnHoldRelease()
                     }
                 }
             }
@@ -109,59 +126,64 @@ internal fun WalkButton(
                 }
             }
     } else {
-        Modifier.clickable(role = Role.Button) { onWalkingChange(true) }
+        Modifier.clickable(role = Role.Button, onClickLabel = startLabel) { onWalkingChange(true) }
     }
     WalkButtonSurface(
         walking = walking,
-        elapsedLabel = elapsedLabel,
+        shape = shape,
         fill = { fill.value },
-        modifier = modifier.shadow(elevation = 2.dp, shape = WalkButtonShape, clip = true).then(gesture),
+        modifier = modifier.clip(shape).then(gesture),
     )
 }
 
 @Composable
 private fun WalkButtonSurface(
     walking: Boolean,
-    elapsedLabel: String?,
+    shape: Shape,
     fill: () -> Float,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val spec = MaterialTheme.motionScheme.defaultEffectsSpec<Color>()
+    val container by animateColorAsState(
+        targetValue = if (walking) colors.tertiaryContainer else colors.secondaryContainer,
+        animationSpec = spec,
+        label = "walkContainer",
+    )
+    val content by animateColorAsState(
+        targetValue = if (walking) colors.onTertiaryContainer else colors.onSecondaryContainer,
+        animationSpec = spec,
+        label = "walkContent",
+    )
     val fillColor = colors.tertiary.copy(alpha = 0.4f)
-    Surface(
-        modifier = modifier,
-        shape = WalkButtonShape,
-        color = colors.tertiaryContainer,
-        contentColor = colors.onTertiaryContainer,
-    ) {
-        Row(
+    Surface(modifier = modifier, shape = shape, color = container, contentColor = content) {
+        Box(
             modifier = Modifier
-                .heightIn(min = 56.dp)
+                .heightIn(min = WalkButtonHeight)
                 .drawBehind { drawFill(fill(), fillColor) }
                 .padding(horizontal = 16.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
+            contentAlignment = Alignment.Center,
         ) {
-            WalkingCat(walking = walking, modifier = Modifier.size(20.dp))
-            Column(modifier = Modifier.weight(1f, fill = false)) {
-                Text(
-                    text = stringResource(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start),
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = when {
-                        !walking -> stringResource(R.string.counter_walk_start_hint)
-                        elapsedLabel == null -> stringResource(R.string.counter_walk_stop_hint)
-                        else -> stringResource(R.string.counter_walk_stop_hint_timed, elapsedLabel)
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            // As wide as its longer label in both states, so a walk starting or ending moves nothing beside it.
+            WalkLabel(label = if (walking) R.string.counter_walk else R.string.counter_walk_hold, shown = false) {
+                Spacer(Modifier.size(WalkCatSize))
+            }
+            WalkLabel(label = if (walking) R.string.counter_walk_hold else R.string.counter_walk, shown = true) {
+                WalkingCat(walking = walking, modifier = Modifier.size(WalkCatSize))
             }
         }
+    }
+}
+
+@Composable
+private fun WalkLabel(@StringRes label: Int, shown: Boolean, cat: @Composable () -> Unit) {
+    Row(
+        modifier = if (shown) Modifier else Modifier.alpha(0f).clearAndSetSemantics {},
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        cat()
+        Text(text = stringResource(label), style = MaterialTheme.typography.labelLarge, maxLines = 1)
     }
 }
 
@@ -178,10 +200,9 @@ private fun DrawScope.drawFill(filled: Float, color: Color) {
 private fun WalkButtonPreview() {
     CatsRadarTheme {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
-            WalkButton(walking = false, elapsedLabel = null)
-            WalkButton(walking = true, elapsedLabel = null)
-            WalkButton(walking = true, elapsedLabel = "32 min")
-            WalkButtonSurface(walking = true, elapsedLabel = "1 h 5 min", fill = { 0.4f })
+            WalkButton(walking = false)
+            WalkButton(walking = true)
+            WalkButtonSurface(walking = true, shape = RoundedCornerShape(16.dp), fill = { 0.4f })
         }
     }
 }

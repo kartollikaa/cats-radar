@@ -1,5 +1,7 @@
 package dev.catsradar.ui.counter
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Surface
@@ -31,6 +33,7 @@ fun CounterScreen(
     onUndoImportClick: () -> Unit = {},
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
+    onWalkHoldRelease: () -> Unit = {},
     onCoatPromptAction: (CoatPromptAction) -> Unit = {},
 ) {
     // A large font or a small phone must never leave the tally button zero pixels tall.
@@ -56,23 +59,31 @@ fun CounterScreen(
                 tapBurst = state.tapBurst,
                 milestone = state.milestone,
                 currentOuting = state.currentOuting,
+                walking = state.walkingMode,
+                undoVisible = state.undoVisible,
                 onClick = onTallyClick,
+                onUndoClick = onUndoClick,
             )
         },
         below = {
-            WalkRow(
-                walkingMode = state.walkingMode,
-                walkElapsedLabel = state.walkElapsedLabel,
-                undoVisible = state.undoVisible,
-                onWalkingModeChange = onWalkingModeChange,
-                onUndoClick = onUndoClick,
-            )
             CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-            PhotoButton(
-                onCameraClick = onCameraClick,
-                onImportClick = onImportClick,
+            // One row while both fit; a large font puts Photo on a line of its own rather than clip either.
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                WalkButton(
+                    walking = state.walkingMode,
+                    onWalkingChange = onWalkingModeChange,
+                    onHoldRelease = onWalkHoldRelease,
+                )
+                PhotoButton(
+                    onCameraClick = onCameraClick,
+                    onImportClick = onImportClick,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         },
     )
     state.coatPrompt?.let {
@@ -149,6 +160,5 @@ private val sampleCounterStateOutingInProgress = CounterState(
         rate = RateState(value = "6.9", unit = RateUnit.PER_HOUR),
     ),
     walkingMode = true,
-    walkElapsedLabel = "48 min",
     milestone = CounterMilestoneState(MilestoneState(valueLabel = "25", remainingLabel = "13"), fraction = 2f / 15f),
 )

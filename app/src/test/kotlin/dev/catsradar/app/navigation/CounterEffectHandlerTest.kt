@@ -106,6 +106,7 @@ class CounterEffectHandlerTest {
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
     private val importScheduler = RecordingImportScheduler()
+    private val walkHoldHint = CountingMessageReporter()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -119,6 +120,7 @@ class CounterEffectHandlerTest {
         milestoneAnnouncer,
         photoPickerLauncher,
         importScheduler,
+        walkHoldHint,
     )
 
     @Test
@@ -165,6 +167,7 @@ class CounterEffectHandlerPhotoTest {
     private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
     private val importScheduler = RecordingImportScheduler()
+    private val walkHoldHint = CountingMessageReporter()
 
     private fun handle(effect: CounterEffect) = handleCounterEffect(
         effect,
@@ -178,6 +181,7 @@ class CounterEffectHandlerPhotoTest {
         milestoneAnnouncer,
         photoPickerLauncher,
         importScheduler,
+        walkHoldHint,
     )
 
     @Test
@@ -203,6 +207,14 @@ class CounterEffectHandlerPhotoTest {
 
         assertEquals(1, photoFailureReporter.reportCount)
         assertEquals(emptyList<String?>(), cameraLauncher.launchedCatIds)
+    }
+
+    @Test
+    fun `WalkNeedsHold raises the hold hint and reports no failure`() {
+        handle(CounterEffect.WalkNeedsHold)
+
+        assertEquals(1, walkHoldHint.reportCount)
+        assertEquals(0 to 0, photoFailureReporter.reportCount to catsFailureReporter.reportCount)
     }
 
     @Test

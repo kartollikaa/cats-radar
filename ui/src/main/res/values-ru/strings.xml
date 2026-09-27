@@ -343,11 +343,11 @@
     <string name="settings_about_copy">Скопировать данные о сборке</string>
     <string name="settings_about_copied">Данные о сборке скопированы</string>
     <string name="settings_about_clip_label">Данные о сборке Cats Radar</string>
+    <string name="counter_walk">Прогулка</string>
+    <string name="counter_walk_hold">Держите — стоп</string>
+    <string name="counter_walk_hold_hint">Удерживайте, чтобы закончить прогулку</string>
     <string name="counter_walk_start">Начать прогулку</string>
-    <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
     <string name="counter_walk_stop">Закончить прогулку</string>
-    <string name="counter_walk_stop_hint">нажмите и удерживайте</string>
-    <string name="counter_walk_stop_hint_timed">%1$s · удерживайте</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик сегодня</item>

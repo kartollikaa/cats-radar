@@ -10,7 +10,6 @@ import dev.catsradar.domain.usecase.AddCatsToPhoto
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
-import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoImport
@@ -24,12 +23,9 @@ import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList") // one parameter per collaborator
@@ -41,7 +37,6 @@ class CounterStore(
     setCoat: SetCoat,
     addCatsToPhoto: AddCatsToPhoto,
     observeStats: ObserveStats,
-    observeWalkElapsed: ObserveWalkElapsed,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
@@ -74,7 +69,6 @@ class CounterStore(
                         tapBurst = tapBurst,
                         lastCoat = lastCoat,
                         walkingMode = walkingMode,
-                        walkElapsedLabel = walkElapsedLabel,
                         importProgress = importProgress,
                         importSummary = importSummary,
                         coatPrompt = coatPrompt,
@@ -85,14 +79,7 @@ class CounterStore(
             }
             .launchIn(viewModelScope)
         settingsRepository.walkingMode()
-            // Nothing ticks the walk's clock while walking mode is off.
-            .flatMapLatest { enabled ->
-                val elapsed = if (enabled) observeWalkElapsed().onStart { emit(null) } else flowOf(null)
-                elapsed.map { enabled to stateMapper.walkElapsedLabel(enabled, it) }
-            }
-            .onEach { (enabled, elapsedLabel) ->
-                setState { copy(walkingMode = enabled, walkElapsedLabel = elapsedLabel) }
-            }
+            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
             .launchIn(viewModelScope)
     }
 
@@ -114,6 +101,7 @@ class CounterStore(
             // Only the flag is written; the notification follows it from outside the screen.
             is CounterIntent.WalkingModeToggled ->
                 runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
+            CounterIntent.WalkHoldReleased -> emit(CounterEffect.WalkNeedsHold)
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.CoatPrompt ->

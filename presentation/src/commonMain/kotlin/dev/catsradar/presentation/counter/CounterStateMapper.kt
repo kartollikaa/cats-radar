@@ -8,8 +8,6 @@ import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.toRateState
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class CounterStateMapper(
     private val dateTimeFormatter: DateTimeFormatter,
@@ -26,7 +24,6 @@ class CounterStateMapper(
         tapBurst: Int? = null,
         lastCoat: CoatOption? = null,
         walkingMode: Boolean = false,
-        walkElapsedLabel: String? = null,
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
@@ -40,16 +37,12 @@ class CounterStateMapper(
         tapBurst = tapBurst,
         lastCoat = lastCoat,
         walkingMode = walkingMode,
-        walkElapsedLabel = walkElapsedLabel,
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
         // With no cats the first rung is not a milestone to reach, so the state carries none.
         milestone = milestone?.takeIf { count > 0 }?.toState(),
     )
-
-    fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =
-        elapsed?.takeIf { walking && it >= 1.minutes }?.let(dateTimeFormatter::duration)
 
     fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
         added = addedCount,

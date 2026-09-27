@@ -18,6 +18,9 @@ sealed interface CounterEffect {
 
     data class MilestoneReached(val value: Int) : CounterEffect
 
+    /** Ending a walk takes a held press, and the last one was let go too soon. */
+    data object WalkNeedsHold : CounterEffect
+
     /** The original at [uri] has been copied and is no longer needed. */
     data class DiscardCapture(val uri: String) : CounterEffect
 }

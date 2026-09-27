@@ -45,18 +45,23 @@ private const val NumberFraction = 0.58f
 private val PillPadding = 4.dp
 private val GoalSides = 10.dp
 private val OutingSides = 12.dp
+private val UndoClearance = 4.dp
 
 /** Where the ring's stroke runs, measured from the top of the square it is drawn in. */
 private fun ringLine(
     square: Float
 ): Float = (1 - RingFraction) / 2 * square + RingFraction * square * RingStrokeFraction / 2
 
-/** The goal at the ring's top and the outing at its bottom, over a block whose square holds the ring. */
+/**
+ * The goal at the ring's top and the outing at its bottom, over a block whose square holds the ring. The outing
+ * narrows on both sides by [undoWidth], in pixels, so it stays centred and clear of Undo at the block's end.
+ */
 @Composable
 internal fun BoxScope.RingTags(
     milestone: CounterMilestoneState?,
     currentOuting: CurrentOutingState?,
     scale: () -> Float,
+    undoWidth: () -> Int = { 0 },
 ) {
     Box(
         modifier = Modifier
@@ -74,7 +79,9 @@ internal fun BoxScope.RingTags(
             RingPill(
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 sides = OutingSides,
-                modifier = Modifier.align(Alignment.BottomCenter).onRingLine(top = false, overhang = OutingSides),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .onRingLine(top = false, overhang = OutingSides, clearOf = undoWidth),
             ) {
                 CurrentOuting(it)
             }
@@ -113,10 +120,16 @@ private fun rememberPillHeight(style: TextStyle, shown: Boolean): Dp {
 }
 
 // Centred on the ring's line; the ring's square is the largest that fits the block, centred in it.
-private fun Modifier.onRingLine(top: Boolean, overhang: Dp = 0.dp): Modifier = layout { measurable, constraints ->
-    val width = constraints.maxWidth + 2 * overhang.roundToPx()
-    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = width))
+private fun Modifier.onRingLine(
+    top: Boolean,
+    overhang: Dp = 0.dp,
+    clearOf: () -> Int = { 0 },
+): Modifier = layout { measurable, constraints ->
     val square = min(constraints.maxWidth, constraints.maxHeight)
+    val corner = clearOf()
+    val free = constraints.maxWidth + 2 * overhang.roundToPx()
+    val width = if (corner == 0) free else min(free, constraints.maxWidth - 2 * (corner + UndoClearance.roundToPx()))
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = width.coerceAtLeast(0)))
     val line = (constraints.maxHeight - square) / 2f + ringLine(square.toFloat())
     layout(placeable.width, placeable.height) {
         val shift = (line - placeable.height / 2f).roundToInt()
