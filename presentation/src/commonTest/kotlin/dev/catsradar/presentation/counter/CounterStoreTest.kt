@@ -6,6 +6,7 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.ExifData
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.statistics.MilestoneState
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -182,7 +183,10 @@ class CounterStoreTest {
         val (store, _) = newStore()
         runCurrent()
 
-        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
+            store.state.value,
+        )
     }
 
     @Test
@@ -424,7 +428,10 @@ class CounterStoreTest {
             store.dispatch(CounterIntent.TallyClicked)
             runCurrent()
 
-            assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+            assertEquals(
+                CounterState(totalLabel = "0", count = 0, undoVisible = false),
+                store.state.value,
+            )
             store.effects.test {
                 assertEquals(CounterEffect.HapticTick, awaitItem())
                 assertEquals(CounterEffect.RequestLocationPermission, awaitItem())
@@ -693,5 +700,20 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(ImportProgressState(done = 1, total = 2), store.state.value.importProgress)
+    }
+
+    @Test
+    fun `the Counter carries the milestone its stats compute`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        runCurrent()
+        repeat(3) {
+            store.dispatch(CounterIntent.TallyClicked)
+            runCurrent()
+        }
+
+        assertEquals(
+            CounterMilestoneState(MilestoneState(valueLabel = "10", remainingLabel = "7"), fraction = 2f / 9f),
+            store.state.value.milestone,
+        )
     }
 }

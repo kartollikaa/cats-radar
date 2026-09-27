@@ -39,6 +39,19 @@ class CoatLookTest {
     }
 
     @Test
+    fun theLineAroundEveryFaceShowsOnTheShapesItSitsOnInBothThemes() {
+        listOf("light" to CatsRadarLightColors, "dark" to CatsRadarDarkColors).forEach { (name, scheme) ->
+            listOf(
+                Triple("unringed", scheme.faceRim(), scheme.surfaceContainerHighest),
+                Triple("ringed", scheme.ringedFaceRim(), scheme.primaryContainer),
+            ).forEach { (tile, rim, fill) ->
+                val ratio = contrast(rim, fill)
+                assertTrue("$name rim is $ratio:1 on a $tile shape", ratio >= MIN_SHAPE_CONTRAST)
+            }
+        }
+    }
+
+    @Test
     fun bothCalicoCoatsShowGingerBlackAndWhite() {
         listOf(CoatOption.TRICOLOR_MOSTLY_WHITE, CoatOption.TRICOLOR_LITTLE_WHITE).forEach { coat ->
             assertEquals("$coat", setOf(Ginger, Black, White), coat.look().colours)

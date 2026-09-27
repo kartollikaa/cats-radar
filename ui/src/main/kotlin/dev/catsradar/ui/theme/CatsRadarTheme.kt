@@ -3,7 +3,8 @@ package dev.catsradar.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
@@ -20,6 +21,10 @@ private val CatsRadarTypography = BaseTypography.copy(
     headlineMedium = BaseTypography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
     headlineSmall = BaseTypography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
     titleLarge = BaseTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+    displayLargeEmphasized = BaseTypography.displayLargeEmphasized.copy(fontWeight = FontWeight.ExtraBold),
+    headlineMediumEmphasized = BaseTypography.headlineMediumEmphasized.copy(fontWeight = FontWeight.Bold),
+    titleLargeEmphasized = BaseTypography.titleLargeEmphasized.copy(fontWeight = FontWeight.Bold),
+    titleMediumEmphasized = BaseTypography.titleMediumEmphasized.copy(fontWeight = FontWeight.Bold),
 )
 
 private val CatsRadarShapes = Shapes(
@@ -35,8 +40,9 @@ fun CatsRadarTheme(
     colorScheme: ColorScheme = catsRadarColorScheme(isSystemInDarkTheme()),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
         shapes = CatsRadarShapes,
         typography = CatsRadarTypography,
         content = content,

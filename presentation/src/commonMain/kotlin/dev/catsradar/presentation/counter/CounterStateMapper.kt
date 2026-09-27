@@ -3,8 +3,10 @@ package dev.catsradar.presentation.counter
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.stats.CurrentOuting
+import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.toRateState
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -28,6 +30,7 @@ class CounterStateMapper(
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
+        milestone: Milestone? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         count = count,
@@ -41,6 +44,8 @@ class CounterStateMapper(
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
+        // With no cats the first rung is not a milestone to reach, so the state carries none.
+        milestone = milestone?.takeIf { count > 0 }?.toState(),
     )
 
     fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =
@@ -59,6 +64,11 @@ class CounterStateMapper(
             photoId = encounter.cover?.id,
             thumbPath = encounter.cover?.thumbPath?.let(photoStorage::resolve),
         )
+
+    private fun Milestone.toState(): CounterMilestoneState = CounterMilestoneState(
+        next = MilestoneState(valueLabel = value.toString(), remainingLabel = remaining.toString()),
+        fraction = (value - remaining - reached).toFloat() / (value - reached),
+    )
 
     private fun CurrentOuting.toState(): CurrentOutingState = CurrentOutingState(
         count = count,
