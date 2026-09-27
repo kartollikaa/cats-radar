@@ -52,22 +52,44 @@ class CounterMilestoneTest {
 
     private fun walkButton() = compose.onNodeWithText(context.getString(R.string.counter_walk_start))
 
+    private fun goalTag() = compose.onNodeWithContentDescription("38 more to reach 100")
+
+    private fun ring() = compose.onNodeWithTag(MilestoneArcTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+
+    private fun block() = compose.onNodeWithContentDescription("62").getUnclippedBoundsInRoot()
+
+    private val outing = CurrentOutingState(count = 4, elapsedLabel = "35 min", rate = null)
+
     @Test
-    fun `the count says how many more reach the next milestone`() {
+    fun `the goal is pinned where the ring closes, and TalkBack says how many more reach it`() {
         compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
 
-        compose.onNodeWithText("38 more to reach 100").assertIsDisplayed()
+        goalTag().assertIsDisplayed()
+        val tag = goalTag().getUnclippedBoundsInRoot()
+        assertEquals(ring().top.value, ((tag.top + tag.bottom) / 2).value, 1f)
     }
 
     @Test
-    fun `during an outing its line takes the milestone's place`() {
-        val outing = CurrentOutingState(count = 4, elapsedLabel = "35 min", rate = null)
+    fun `during an outing its tag sits at the ring's bottom, and the goal stays`() {
         compose.setContent {
             CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = outing)) }
         }
 
-        compose.onNodeWithText("38 more to reach 100").assertDoesNotExist()
-        compose.onNodeWithText("35 min").assertIsDisplayed()
+        goalTag().assertIsDisplayed()
+        val tag = compose.onNodeWithText("35 min").getUnclippedBoundsInRoot()
+        assertEquals(ring().bottom.value, ((tag.top + tag.bottom) / 2).value, 1f)
+    }
+
+    @Test
+    fun `nothing sits between the count and the walk button, with or without an outing`() {
+        var current by mutableStateOf<CurrentOutingState?>(null)
+        compose.setContent {
+            CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = current)) }
+        }
+
+        assertEquals(16f, (walkButton().getUnclippedBoundsInRoot().top - block().bottom).value, 0.5f)
+        current = outing
+        assertEquals(16f, (walkButton().getUnclippedBoundsInRoot().top - block().bottom).value, 0.5f)
     }
 
     @Test

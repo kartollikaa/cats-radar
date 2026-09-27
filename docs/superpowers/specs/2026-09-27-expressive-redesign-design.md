@@ -81,8 +81,8 @@ APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
 
-The order on screen is unchanged: the notices, the count, the status line, the walk row, the coat
-grid, Photo. `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
+The order on screen: the notices, the count, the walk row, the coat grid, Photo. The status line
+under the count is gone (see *The tags on the ring*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
 the count reaches its floor. Everything under the count therefore costs the count its size, and the
 Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
 larger coat shapes, left the cookie less than half the room this layout leaves it, once the prototype
@@ -102,9 +102,20 @@ on `Tuning.MILESTONES`: at 62 cats, 50 is reached and 100 is next, so the arc st
 track is `onPrimaryContainer` at a low alpha, the arc `primary`. The arc moves with the roll. Before
 the total is read, with no cats yet, and past the last rung there is no arc.
 
-**The status line.** The outing line's slot. During an outing it shows the outing, as today; with no
-outing open it shows the Statistics line, "38 more to reach 100"; past the last rung it is empty. One
-line in one style either way, so nothing under it moves.
+**The tags on the ring.** Nothing sits under the count: the owner found the Statistics line under the
+cookie foreign and the room it kept empty (2026-09-27), and with it gone the cookie takes that room.
+The next milestone is pinned where the ring closes: a small pill on `surface` at the ring's top, a flag
+and the rung's number in `primary`, and a dot at the arc's head, `primary` with a `primaryContainer`
+rim, travelling toward it. TalkBack reads the pill as the Statistics line, "38 more to reach 100".
+During an outing a second pill at the ring's bottom carries the outing line, count · time · rate with
+the line's own give-way rules and its one spoken item; the goal stays. The pills take no room in the
+column, so an outing starting or ending moves nothing under the count. Past the last rung, and with
+no cats yet, there is no pill and no dot.
+
+**Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
+the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
+`primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
+Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
 
 **The walk row.** The walk button is drawn as an extended floating action button in
 `tertiaryContainer`: 56 dp tall with the FAB's corners. The walking cat, the fill that a held press
@@ -124,13 +135,14 @@ grid must not grow taller than today's.
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
 inner corners.
 
-**Unchanged:** the notice cards above the count and the coat question after a photo.
+**Unchanged:** the notice cards above the count. The coat question after a photo takes the coat
+sheet's header (section 3).
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
 Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper
 computes from the rung passed; the composable only draws it. With no cats yet there is no milestone:
-a fresh Counter shows no ring and no line rather than "1 more to reach 1". The status line renders
-the milestone the way Statistics renders it.
+a fresh Counter shows no ring and no tag rather than "1 more to reach 1". The goal tag's spoken
+label is the Statistics line.
 
 ## 3. A cat's detail
 
@@ -168,10 +180,16 @@ or the paw with no coat; the coat's name in `titleMediumEmphasized` with "Coat" 
 sheet.
 
 **The coat sheet** (a behaviour change). A bottom-sheet destination above the detail, like every
-other sheet: `SheetHeader` with "What coat was it?" and the line "Tap the current coat again to clear
-it", then the coat grid with the cat's coat ringed. A tap on a coat sets it and closes the sheet; a
-tap on the ringed coat clears it and closes the sheet; dismissing changes nothing. It replaces the
-inline picker. Setting the coat while a photo attaches still keeps both.
+other sheet. Its header is the cat's own face in a 64 dp `Clover4Leaf` on `primaryContainer`, or the
+paw on `surfaceContainerHighest` with no coat noted, beside "What coat was it?" in
+`headlineSmallEmphasized` and one supporting line; then the coat grid of section 2 with the cat's coat
+ringed and a twelfth *No coat* tile, the paw, ringed when no coat is noted (owner, 2026-09-27, over
+"tap the current coat again", which nothing on screen explained). A tap on a coat sets it and closes
+the sheet; a tap on *No coat* clears it and closes; dismissing changes nothing. It replaces the inline
+picker. The coat question after a photo takes the same header with the photo just taken in a `medium`
+square in place of the face, "Tap a coat to note it" and **Not now**; the map's filter keeps its own
+*Not specified* cell. Prototype version 14 draws both. Setting the coat while a photo attaches still
+keeps both.
 
 **The Where card.** On `surfaceContainerLow` with `large` corners, headed **Where you met**. The spot
 map at 16:10 with `medium` corners; the place with its flag, city and country in
