@@ -110,6 +110,8 @@ class EncounterCellsLookTest {
 
         assertEquals(scheme.primary, leads()[0].pixelAtFraction(0.01f, 0.5f), "the ring on the circle's edge")
         assertEquals(scheme.surfaceContainerLow, leads()[0].pixelAtFraction(0.12f, 0.12f), "no ring off the circle")
+        // At a quarter height the circle's edge is well in from the side, where a square's ring would run.
+        assertEquals(scheme.surfaceContainerLow, leads()[0].pixelAtFraction(0.01f, 0.25f), "no square ring")
     }
 
     @Test
