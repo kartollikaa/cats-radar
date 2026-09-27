@@ -72,7 +72,7 @@ While counting:
 - Each face in the grid adds a cat of that coat and shows how many of it the tray holds, ringed like a chosen
   coat. A **paw** after the eleven coats adds a cat whose coat nobody saw.
 - The tray holds at most `Tuning.SHOT_MAX_CATS` cats, the photographed one included; past that the faces and the
-  paw take no tap (`CounterStorePhotoPromptTest`, *past the most cats a photo can hold, faces stop adding*).
+  paw dim and take no tap (`CounterStorePhotoPromptTest`, *past the most cats a photo can hold, faces stop adding*).
 - **Save N cats** appears with the first cat counted. It closes the sheet, then sets the first counted coat on the
   cat the camera saved and adds the others to its shot, each a cat of its own with its own copy of the photo (see
   [photos.md](./photos.md)). An added cat still waiting for a location goes to the background attach, as the

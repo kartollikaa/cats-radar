@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -172,6 +173,7 @@ private fun CoatCell(
     Column(
         modifier = modifier
             .width(CellWidth)
+            .alpha(if (enabled) 1f else 0.38f)
             // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
             .clip(MaterialTheme.shapes.small)
             .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small)
