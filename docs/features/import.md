@@ -136,10 +136,10 @@ takes them back*).
   far comes back, and one imported before is skipped as usual. MediaProvider counts limited access
   as access to photo locations, so these photos keep their GPS, and so do the ones picked at later
   imports, whether the system photo picker hands them over or a gallery app answers with a plain
-  MediaStore item (`PhotoStreamTest`). The `ACCESS_MEDIA_LOCATION` that comes with limited access
-  is one-time and lapses soon after the app leaves the screen, while limited access stays, so the
-  app counts limited access on its own. Leaving Android's picker with Back shares nothing and opens
-  the gallery, as *Don't allow* does.
+  MediaStore item (`PhotoStreamLimitedAccessTest`). The `ACCESS_MEDIA_LOCATION` that comes with
+  limited access is one-time and lapses soon after the app leaves the screen, while limited access
+  stays, so the app counts limited access on its own. Leaving Android's picker with Back shares
+  nothing and opens the gallery, as *Don't allow* does.
 - **The gallery opens with `ACTION_GET_CONTENT`, not the photo picker's own `ACTION_PICK_IMAGES`.**
   MediaProvider strips GPS from a `PICK_IMAGES` photo whatever the app holds. The one way round it
   there, `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`, works only once the picker's own
