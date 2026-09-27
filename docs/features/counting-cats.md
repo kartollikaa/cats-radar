@@ -62,20 +62,19 @@ outside the count block — inside the block, a follow-up tap on the same spot w
 take a cat away instead of adding one. The walk button sits in the middle of that row, and Undo
 appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
 a longer translation — does the button step aside toward the start, and past that it shortens its
-label: Undo is never squeezed. The walk button is an extended floating action button in the
-theme's tertiary container whether a walk is on or not, and Undo is a filled tonal button beside it
+label: Undo is never squeezed. The walk button is an extended floating action button in the theme's
+tertiary container whether a walk is on or not, and Undo is a filled tonal button beside it
 (`WalkRowLookTest`). A tap on the button starts a walk, but stopping one takes a press held until a
 fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). The button
 keeps one height whether it starts or stops a walk, growing only for a large font rather than
 clipping its two lines, and the outing line keeps its line, so a walk or an outing starting or
-ending leaves the block the same size. With no outing open the
-line says how many more cats reach the next milestone ("38 more to reach 100", the Statistics
-wording); with no cats yet, and past the last rung, it is empty (`CounterMilestoneTest`). The
-location hint and the import progress and summary appear above the count, each as the same notice
-card: a round icon, its words, read by TalkBack as one item, and its actions (see
-`import.md`). They take their room from the count, so the number shrinks and the walk button, the
-coat grid and the Photo button stay where they are, unless the block is already at its floor, when
-the Counter scrolls instead.
+ending leaves the block the same size. With no outing open the line says how many more cats reach
+the next milestone ("38 more to reach 100", the Statistics wording); with no cats yet, and past the
+last rung, it is empty (`CounterMilestoneTest`). The location hint and the import progress and
+summary appear above the count, each as the same notice card: a round icon, its words, read by
+TalkBack as one item, and its actions (see `import.md`). They take their room from the count, so the
+number shrinks and the walk button, the coat grid and the Photo button stay where they are, unless
+the block is already at its floor, when the Counter scrolls instead.
 
 ## Undoing a run of taps
 
@@ -133,13 +132,13 @@ different cats, never the same one twice (*two undos dispatched back to back tak
 different cats*); an Undo with nothing left to take back does nothing (*undo walks a run of taps back newest
 first until every cat of it is gone*).
 
-A tap or an Undo while the Undo button is showing restarts the window rather than stacking a second timer
-(*a second tap restarts the undo window, which then expires and disables undo*; *each undo restarts
-the window for the cats still left in the run*). The window is shorter than
+A tap or an Undo while the Undo button is showing restarts the window rather than stacking a second
+timer (*a second tap restarts the undo window, which then expires and disables undo*; *each undo
+restarts the window for the cats still left in the run*). The window is shorter than
 `Tuning.LOCATION_TIMEOUT` — a fix can still be resolving after Undo has already faded from the
-screen. The store itself does nothing special for that overlap; the correctness
-guarantee that a late fix can't resurrect an undone row lives one layer down, in how
-`AttachLocation` and the DB write are shaped (see `location.md`).
+screen. The store itself does nothing special for that overlap; the correctness guarantee that a
+late fix can't resurrect an undone row lives one layer down, in how `AttachLocation` and the DB
+write are shaped (see `location.md`).
 
 The total is counted from the live list of encounters the repository emits, not kept by the
 store — an encounter written by anything else (the widget, the walking notification, an import)
