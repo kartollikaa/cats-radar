@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.time.Instant
 
@@ -33,6 +34,9 @@ class PhotoStreamTest {
     private fun grantMediaLocation() =
         shadowOf(context as Application).grantPermissions(Manifest.permission.ACCESS_MEDIA_LOCATION)
 
+    private fun grantLimitedAccess() =
+        shadowOf(context as Application).grantPermissions(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
     private fun serve(uri: Uri, redacted: String, original: String) {
         resolver.registerInputStream(uri, redacted.byteInputStream())
         resolver.registerInputStream(MediaStore.setRequireOriginal(uri), original.byteInputStream())
@@ -46,6 +50,23 @@ class PhotoStreamTest {
         serve(galleryPhoto, redacted = "redacted", original = "original")
 
         assertEquals("original", read(galleryPhoto))
+    }
+
+    @Test
+    fun withLimitedAccessFromAndroid14AMediaStorePhotoIsReadAsItsOriginal() {
+        grantLimitedAccess()
+        serve(galleryPhoto, redacted = "redacted", original = "original")
+
+        assertEquals("original", read(galleryPhoto))
+    }
+
+    @Test
+    @Config(sdk = [33])
+    fun beforeAndroid14LimitedAccessDoesNotAskForTheOriginal() {
+        grantLimitedAccess()
+        serve(galleryPhoto, redacted = "redacted", original = "original")
+
+        assertEquals("redacted", read(galleryPhoto))
     }
 
     @Test

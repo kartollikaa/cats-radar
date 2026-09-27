@@ -1,6 +1,8 @@
 package dev.catsradar.app.di
 
+import android.Manifest
 import android.app.ActivityManager
+import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
 import androidx.test.core.app.ApplicationProvider
@@ -11,6 +13,7 @@ import dev.catsradar.app.navigation.ScreenViewTracker
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.update.InstallResults
 import dev.catsradar.app.update.UpdateInstaller
@@ -78,6 +81,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.parameter.parametersOf
+import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -162,6 +166,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ImageResizer>())
         assertNotNull(koin.get<Digest>())
         assertNotNull(koin.get<GallerySaver>())
+        assertNotNull(koin.get<PhotoLocationAccess>())
         assertNotNull(koin.get<PhotoStorage>())
         assertNotNull(koin.get<AddCatsToPhoto>())
         assertNotNull(koin.get<ImageLoader>())
@@ -192,6 +197,21 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<AttachLocation>())
         assertNotNull(koin.get<ResolvePendingPlaces>())
         assertNotNull(koin.get<PurgeDeleted>())
+    }
+
+    @Test
+    fun `photo location access follows what the app is granted at the moment it asks`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+        val access = koin.get<PhotoLocationAccess>()
+        assertFalse(access.granted())
+
+        shadowOf(ApplicationProvider.getApplicationContext<Application>())
+            .grantPermissions(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
+        assertTrue(access.granted())
     }
 
     @Test
