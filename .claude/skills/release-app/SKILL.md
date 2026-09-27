@@ -95,14 +95,12 @@ the APK — no version bump, no PR, no tag).
    never is. Install **that same signed APK** and walk the by-name paths listed in
    `docs/reference/releasing.md` (widget tap, a tally, backup export + import, a screen surviving a
    background kill) — a missing keep rule shows up nowhere else. The owner may waive the walk for
-   one release; ask, and never carry a past waiver over. Use a throwaway AVD (copy
-   `~/.android/avd/Pixel_7.avd/config.ini` into a new `<Name>.avd/` plus a `<Name>.ini` pointing at
-   it, boot it on a free port, delete both afterwards): the shared emulator holds other sessions'
-   debug-signed `com.kartollika.catsradar`, which a release-signed APK cannot update without
-   uninstalling it and their data. The AVDs here run `arm64-v8a` system images, so the
-   `arm64-v8a`-only release APK installs on them. If the walk finds a bug, fix it through a PR and restart from
-   step 3; any local release build made just to try something runs with `CI=true`, so it uploads
-   nothing.
+   one release; ask, and never carry a past waiver over. Use the required `device-check` skill for
+   the throwaway-AVD lifecycle: the shared emulator holds other sessions' debug-signed
+   `com.kartollika.catsradar`, which a release-signed APK cannot update without uninstalling it and
+   their data. The AVDs here run `arm64-v8a` system images, so the `arm64-v8a`-only release APK
+   installs on them. If the walk finds a bug, fix it through a PR and restart from step 3; any local
+   release build made just to try something runs with `CI=true`, so it uploads nothing.
 6. **Publish. REQUIRED NEXT SKILL: `publish-release`**, handing it the pinned merge SHA and this
    run's APK and `mapping.txt`, plus whether the walk ran or was waived.
 
@@ -114,7 +112,7 @@ the APK — no version bump, no PR, no tag).
   `gh pr merge --merge`.
 - **Shipping without the signing file.** `app-release-unsigned.apk` installs on nothing, and a
   debug APK in its place is not a release. Stop and tell the owner.
-- **Rebuilding after the upload.** The new APK can carry a mapping id that Crashlytics never
+- **Rebuilding after the upload.** The new APK can carry a new mapping id that Crashlytics never
   received, so its crash reports stay obfuscated. One `assembleRelease` run supplies the APK, the
   zip and the upload.
 - **Building the release with `CI` set** (or from a CI job). The upload is skipped and the APK's
