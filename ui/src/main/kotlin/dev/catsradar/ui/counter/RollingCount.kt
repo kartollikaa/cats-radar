@@ -73,7 +73,7 @@ private class ShownCount(var value: Int? = null)
 internal fun RollingCount(label: String, count: Int?, modifier: Modifier = Modifier) {
     // Against the number last shown: an interrupted roll's transition still starts from the one before.
     val roll = rollBetween(rememberShownCount(count), count)
-    val style = MaterialTheme.typography.displayLarge.copy(
+    val style = MaterialTheme.typography.displayLargeEmphasized.copy(
         fontSize = MaxCountSize,
         lineHeight = 1.em,
         // Tabular figures: every digit is one width, so a rolling digit never shoves its neighbours.

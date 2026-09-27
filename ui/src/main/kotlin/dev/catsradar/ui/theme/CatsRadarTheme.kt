@@ -21,6 +21,10 @@ private val CatsRadarTypography = BaseTypography.copy(
     headlineMedium = BaseTypography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
     headlineSmall = BaseTypography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
     titleLarge = BaseTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+    displayLargeEmphasized = BaseTypography.displayLargeEmphasized.copy(fontWeight = FontWeight.ExtraBold),
+    headlineMediumEmphasized = BaseTypography.headlineMediumEmphasized.copy(fontWeight = FontWeight.Bold),
+    titleLargeEmphasized = BaseTypography.titleLargeEmphasized.copy(fontWeight = FontWeight.Bold),
+    titleMediumEmphasized = BaseTypography.titleMediumEmphasized.copy(fontWeight = FontWeight.Bold),
 )
 
 private val CatsRadarShapes = Shapes(

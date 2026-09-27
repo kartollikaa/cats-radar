@@ -143,6 +143,10 @@
         <item quantity="one">%1$d cat in %2$s</item>
         <item quantity="other">%1$d cats in %2$s</item>
     </plurals>
+    <plurals name="counter_count_caption" tools:ignore="ImpliedQuantity">
+        <item quantity="one">cat</item>
+        <item quantity="other">cats</item>
+    </plurals>
     <plurals name="counter_outing_cats">
         <item quantity="one">%1$d cat</item>
         <item quantity="other">%1$d cats</item>

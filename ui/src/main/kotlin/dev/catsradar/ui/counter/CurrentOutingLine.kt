@@ -15,11 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
@@ -28,15 +30,33 @@ import dev.catsradar.ui.statistics.label
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
-// An empty line of the same style holds its place, so an outing starting or ending leaves the count
-// above it the same size at any font scale.
+// With no outing open the next milestone, or an empty line of the same style, holds the outing's place,
+// so an outing starting or ending leaves the count above it the same size at any font scale.
 @Composable
-internal fun CurrentOutingLine(state: CurrentOutingState?, modifier: Modifier = Modifier) {
+internal fun CurrentOutingLine(
+    state: CurrentOutingState?,
+    modifier: Modifier = Modifier,
+    milestone: CounterMilestoneState? = null,
+) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        if (state == null) {
-            Text(text = "", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.clearAndSetSemantics {})
-        } else {
-            CurrentOuting(state)
+        when {
+            state != null -> CurrentOuting(state)
+            milestone != null -> Text(
+                text = stringResource(
+                    R.string.statistics_next_milestone,
+                    milestone.next.remainingLabel,
+                    milestone.next.valueLabel,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            else -> Text(
+                text = "",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
         }
     }
 }
