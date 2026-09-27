@@ -7,8 +7,15 @@ sealed interface EncounterDetailIntent {
     data object DeleteClicked : EncounterDetailIntent
     data object UndoClicked : EncounterDetailIntent
 
+    /** Which cat the pages show: where a swipe came to rest, or a cat tapped on the photo on screen. */
+    sealed interface ShowCat : EncounterDetailIntent {
+        val catId: String
+    }
+
     /** The pages came to rest on [catId]'s page. */
-    data class PageSettled(val catId: String) : EncounterDetailIntent
+    data class PageSettled(override val catId: String) : ShowCat
+
+    data class PhotoCatClicked(override val catId: String) : ShowCat
 
     /** [coat] of null clears it. */
     data class CoatPicked(val catId: String, val coat: CoatOption?) : EncounterDetailIntent

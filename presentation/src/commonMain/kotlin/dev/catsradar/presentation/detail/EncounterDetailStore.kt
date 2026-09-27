@@ -88,7 +88,7 @@ class EncounterDetailStore(
             EncounterDetailIntent.BackClicked -> navigateBack()
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
-            is EncounterDetailIntent.PageSettled -> {
+            is EncounterDetailIntent.ShowCat -> {
                 pages.settle(intent.catId)
                 shown = shown?.settledOn(intent.catId)
                 refresh()
