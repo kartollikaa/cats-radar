@@ -91,12 +91,14 @@ drew it with only the height the controls leave (owner feedback, 2026-09-27: "th
 prototype is very small").
 
 **The count.** The number sits in a twelve-sided cookie (`MaterialShapes.Cookie12Sided`) in
-`primaryContainer`, the largest that fits the block's room, centred. The number is `onPrimaryContainer`
-in `displayLargeEmphasized` and still shrinks to fit rather than wrap. Under it, "cats" (a plural) in
-`titleMedium`. The whole block stays the button. It still squashes under a press and springs back; the
-cookie also turns a few degrees as it squashes and turns back on the motion scheme's default spring. The
-"+N" badge keeps its corner of the block, in `primary` and `onPrimary`. The roll, the badge's counting
-and the TalkBack label do not change.
+`primaryContainer`, the largest that fits the block's room, centred. The number is
+`onPrimaryContainer` in `displayLargeEmphasized` and still shrinks to fit rather than wrap. Under
+it, "cats" (a plural) in `titleMedium`. The whole block stays the button. It still squashes under a
+press and springs back. The cookie turns a step further with each cat and stays there, an undo
+turning it back a step (owner, 2026-09-27: it used to spring back after each press); the turn moves
+on the motion scheme's default spring, and a first count or an import finishing sets it in place
+rather than spinning it round. The "+N" badge keeps its corner of the block, in `primary` and
+`onPrimary`. The roll, the badge's counting and the TalkBack label do not change.
 
 **The milestone arc.** A ring inside the cookie fills from the rung already reached to the next one
 on `Tuning.MILESTONES`: at 62 cats, 50 is reached and 100 is next, so the arc stands at 24 %. The
