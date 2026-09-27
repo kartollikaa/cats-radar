@@ -49,10 +49,7 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
         store.dispatch(SettingsIntent.Backup.ImportSourceChosen(uri?.toString()))
     }
     val permissionLauncher = rememberInstallPermissionLauncher(store)
-    // The worker outlives this screen, so its state is read back rather than remembered.
-    LaunchedEffect(store, backupScheduler) {
-        backupScheduler.observe().collect { info -> info?.toSettingsIntent()?.let(store::dispatch) }
-    }
+    FollowBackup(store, backupScheduler)
     FollowUpdate(store, updateScheduler, installResults)
     LaunchedEffect(
         store,
@@ -83,6 +80,8 @@ internal fun SettingsDestination(contentPadding: PaddingValues, modifier: Modifi
         modifier = modifier,
         contentPadding = contentPadding,
         onSaveOriginalsChange = { store.dispatch(SettingsIntent.SaveOriginalsToggled(it)) },
+        onSaveOriginalsOffConfirm = { store.dispatch(SettingsIntent.SaveOriginalsOffConfirmed) },
+        onSaveOriginalsOffCancel = { store.dispatch(SettingsIntent.SaveOriginalsOffCancelled) },
         onEncountersGridChange = { store.dispatch(SettingsIntent.EncountersGridToggled(it)) },
         onExportClick = { store.dispatch(SettingsIntent.Backup.ExportRequested) },
         onImportClick = { store.dispatch(SettingsIntent.Backup.ImportRequested) },
@@ -103,6 +102,14 @@ private fun rememberInstallPermissionLauncher(store: SettingsStore) =
 private suspend fun install(installer: UpdateInstaller, path: String, store: SettingsStore) {
     val refused = installer.install(path) as? InstallStart.Refused ?: return
     store.dispatch(SettingsIntent.Update.InstallFinished(refused.outcome))
+}
+
+// The worker outlives this screen, so its state is read back rather than remembered.
+@Composable
+private fun FollowBackup(store: SettingsStore, scheduler: BackupScheduler) {
+    LaunchedEffect(store, scheduler) {
+        scheduler.observe().collect { info -> info?.toSettingsIntent()?.let(store::dispatch) }
+    }
 }
 
 // The download worker and the install session both outlive this screen, so both are read back.

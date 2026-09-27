@@ -71,14 +71,16 @@ globe, past a pole or the 180th meridian.
 
 ## Tapping the map
 
-- **A dot** opens its cat's detail above the Map tab; back returns to the map as it was left. A tap on
+- **A dot** opens its cat's detail above the Map tab, among the other cats of its outing (see
+  [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)); back returns to the map as it was left. A tap on
   a cat's photo is a tap on the dots beneath it: its own, and any other cat's it covers.
 - **Dots close together** at the current zoom draw as one circle holding their count, or as a photo
   with the count in a badge (see *How a photo shows*). Tapping it, or its badge, zooms in until they
   come apart.
 - **Cats that never come apart** open as a list of that spot, grouped by outing as the Encounters
   tab groups them and drawn in its list layout, whichever layout the tab is set to. The outing
-  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, back
+  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, paging through
+  the cat's outing rather than the spot (see [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)); back
   returns to the list, and a second back closes it. A tap that lands on several dots at once opens
   the same list. A list whose cats are all deleted closes, and restoring one of them does not reopen
   it.

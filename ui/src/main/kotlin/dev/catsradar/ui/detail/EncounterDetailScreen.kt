@@ -1,29 +1,24 @@
 package dev.catsradar.ui.detail
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.AddPhoto
 import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.DetailPhoto
@@ -32,9 +27,7 @@ import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.R
-import dev.catsradar.ui.coat.CoatPicker
 import dev.catsradar.ui.components.BackBar
-import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.components.belowBackBar
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -46,6 +39,8 @@ fun EncounterDetailScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onBackClick: () -> Unit = {},
+    onPageSettle: (catId: String) -> Unit = {},
+    onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
     onCoatClick: (CoatInteraction) -> Unit = {},
@@ -56,24 +51,23 @@ fun EncounterDetailScreen(
     onSetLocationClick: (catId: String) -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
+    val several = (state as? EncounterDetailState.Loaded)?.takeIf { it.pages.size > 1 }
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             EncounterDetailState.Loading -> Unit
-            is EncounterDetailState.Loaded -> {
-                val page = state.pages.first { it.id == state.currentId }
-                val catId = page.id
-                CatPageContent(
-                    page,
-                    contentPadding = belowBar,
-                    onDeleteClick = onDeleteClick,
-                    onCoatClick = { coat -> onCoatClick(CoatInteraction(catId, coat)) },
-                    onTakePhotoClick = { onTakePhotoClick(catId) },
-                    onPickPhotoClick = { onPickPhotoClick(catId) },
-                    onPhotoClick = { photoId -> onPhotoClick(PhotoInteraction(catId, photoId)) },
-                    onCoordinatesClick = { onCoordinatesClick(catId) },
-                    onSetLocationClick = { onSetLocationClick(catId) },
-                )
-            }
+            is EncounterDetailState.Loaded -> CatPager(
+                state,
+                contentPadding = belowBar,
+                onPageSettle = onPageSettle,
+                onPhotoCatClick = onPhotoCatClick,
+                onDeleteClick = onDeleteClick,
+                onCoatClick = onCoatClick,
+                onTakePhotoClick = onTakePhotoClick,
+                onPickPhotoClick = onPickPhotoClick,
+                onPhotoClick = onPhotoClick,
+                onCoordinatesClick = onCoordinatesClick,
+                onSetLocationClick = onSetLocationClick,
+            )
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing, Modifier.padding(belowBar))
@@ -81,65 +75,19 @@ fun EncounterDetailScreen(
         BackBar(
             contentDescription = stringResource(R.string.detail_back),
             contentPadding = contentPadding,
+            center = several?.let { loaded -> { PagePosition(loaded.currentNumber, loaded.pages.size) } },
             onBackClick = onBackClick,
         )
     }
 }
 
 @Composable
-private fun CatPageContent(
-    page: CatPage,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(),
-    onDeleteClick: () -> Unit = {},
-    onCoatClick: (CoatOption?) -> Unit = {},
-    onTakePhotoClick: () -> Unit = {},
-    onPickPhotoClick: () -> Unit = {},
-    onPhotoClick: (photoId: String) -> Unit = {},
-    onCoordinatesClick: () -> Unit = {},
-    onSetLocationClick: () -> Unit = {},
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(contentPadding)
-            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        if (page.photos.isNotEmpty()) DetailPhotoPager(page.photos, onPhotoClick = onPhotoClick)
-        AddPhotoCard(
-            page.addPhoto,
-            progress = page.attachProgress,
-            onTakePhotoClick = onTakePhotoClick,
-            onPickPhotoClick = onPickPhotoClick,
-        )
-        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-            Text(
-                text = page.dayLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(text = page.timeLabel, style = MaterialTheme.typography.displayMedium)
-        }
-        WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
-        SectionCard(R.string.detail_coat) {
-            CoatPicker(
-                selected = page.coat,
-                modifier = Modifier.padding(vertical = 8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                onCoatClick = onCoatClick,
-            )
-        }
-        OutlinedButton(
-            onClick = onDeleteClick,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-        ) {
-            Text(text = stringResource(R.string.detail_delete))
-        }
-    }
+private fun PagePosition(number: Int, count: Int) {
+    val description = stringResource(R.string.detail_position_description, number, count)
+    Text(
+        text = stringResource(R.string.detail_position, number, count),
+        modifier = Modifier.semantics { contentDescription = description },
+    )
 }
 
 @Composable
@@ -176,6 +124,20 @@ private fun CenteredMessage(@StringRes textRes: Int, modifier: Modifier = Modifi
 private fun EncounterDetailScreenLoadedPreview() {
     CatsRadarTheme {
         Surface { EncounterDetailScreen(state = sampleLoaded) }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun EncounterDetailScreenSeveralPreview() {
+    CatsRadarTheme {
+        Surface {
+            EncounterDetailScreen(
+                state = sampleLoaded.copy(
+                    pages = persistentListOf(sampleLoaded.pages.single(), sampleNoLocation.pages.single()),
+                ),
+            )
+        }
     }
 }
 

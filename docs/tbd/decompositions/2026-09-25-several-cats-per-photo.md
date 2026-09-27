@@ -16,9 +16,10 @@
 | S2 | Backup format 6 carries shots | Photo records carry `shotId`, the archive says format 6, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | merged |
 | S2b | Every photo names its shot | `shotId` becomes the shot's id on every photo, never null: a photo of one cat names itself. Database v6; archive format unchanged. | safe | ~350 | S2 | merged |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | merged |
-| S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
-| S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | planned |
-| S6 | On this photo on the detail screen | The row of a photo's cats, switching between them without stacking screens, and **+** to add a cat. | safe | ~550 | S3, S4 | planned |
+| S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | merged |
+| S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | merged |
+| S6 | On this photo on the detail screen | A shot is one page of the outing pager; the row of its cats switches which one the page shows. **+** is left for S6b. | safe | ~550 | S3, S4 | merged |
+| S6b | Add a cat to a photo from its detail page | **+** on the **On this photo** row and **Another cat on this photo** on a page of one cat add an uncoated cat through `AddCatsToPhoto` and show it on the same page. | safe | ~400 | S6 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -102,8 +103,27 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 ## Decision log
 
+- 2026-09-27: **S4 merged** as #216, **S5** as #218, **S6** as #219, stacked and merged bottom-up; the owner's
+  rows-of-three rule for a lone photo's tile row merged beside them as #220. S6b (**+** on the detail page) is
+  what is left of the epic.
+
+- 2026-09-27: **S6 in review**, stacked on S5. On a device the owner opened a shot of three cats and found three pages
+  of the detail screen's outing pager (shipped meanwhile as the outing-pager epic): "it should be 1 encounter at all
+  with all the cats inside". A shot is one page; the row switches its cat on the same page. **+** and the single-cat
+  **Another cat on this photo** move to a later S6b.
+
+- 2026-09-27: **S5 in review**, stacked on S4. `Tuning.SHOT_MAX_CATS` is 10, the photographed cat included; the
+  spec named only the constant. The coat intents became `CounterIntent.CoatPrompt`, a sub-flow like Import, handled
+  by `CoatQuestion` because `CounterStore` was at its function budget. The owner also asked that a photo never
+  land in the grid's smallest tile: a tile row holding a photo keeps to three cats, as its own PR after S4.
+
+- 2026-09-27: **S4 in review**, started from an owner bug report on v1.5.2-beta: "no option in the coat sheet
+  to pick several cats". Only S1–S3 had shipped, and S3 has no screen, so nothing on a device could yet count
+  several cats; S4 and then S5 are the fix. A selection holding only some cats of a shot selects the whole entry.
+
 - 2026-09-27: **S3 merged** as #199. Merging main into it found `RemovePhotoTest` (#194) building its own
   `PhotoStorage` without the new `copy`: the widened interface failed at compile time, not on a device.
+  First shipped in v1.5.2-beta; S1, S2 and S2b first shipped in v1.5.0-beta.
 
 - 2026-09-26: **S2b merged** as #186.
 

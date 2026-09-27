@@ -59,23 +59,46 @@ data class OutingHeader(
     val mapOutingId: String? = null,
 ) : EncountersRow
 
+/** One cell of the list: [id] is the cat a tap opens; [catIds] are every cat the cell stands for, [id] first. */
+sealed interface EntryCell {
+    val id: String
+    val catIds: ImmutableList<String>
+    val selected: Boolean
+
+    /** Null for a cell of one cat. */
+    val badgeCount: Int? get() = catIds.size.takeIf { it > 1 }
+}
+
 data class EncounterCell(
-    val id: String,
+    override val id: String,
     val timeLabel: String,
     val location: LocationLabel,
     val lead: CellLead = CellLead.Paw,
-    val selected: Boolean = false,
-)
+    override val selected: Boolean = false,
+    override val catIds: ImmutableList<String> = persistentListOf(id),
+) : EntryCell {
+    init {
+        requireOpensFirstCat()
+    }
+}
 
 /** Both paths are absolute; [thumbnailPath] stands in for [photoPath] when that one cannot be read. */
 data class PhotoCell(
-    val id: String,
+    override val id: String,
     val timeLabel: String,
     val location: LocationLabel,
     val photoPath: String,
     val thumbnailPath: String,
-    val selected: Boolean = false,
-)
+    override val selected: Boolean = false,
+    override val catIds: ImmutableList<String> = persistentListOf(id),
+) : EntryCell {
+    init {
+        requireOpensFirstCat()
+    }
+}
+
+private fun EntryCell.requireOpensFirstCat() =
+    require(catIds.firstOrNull() == id) { "a cell opens the first of its cats" }
 
 /** What a cell shows first: the most telling thing known about that cat. */
 sealed interface CellLead {

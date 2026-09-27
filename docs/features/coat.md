@@ -63,6 +63,43 @@ logs a cat (*no prompt without a logged camera photo*).
 - **A photo given to a logged cat on its detail screen asks nothing** — that screen shows the coat
   picker already.
 
+### Several cats on the photo
+
+A photo can show several cats, and the sheet counts them all at once. Beside **Not now** it offers **Several**,
+which turns the same sheet into a count; a face tapped without it still sets that coat and closes the sheet, so
+one cat stays one tap.
+
+While counting:
+
+- The title is the number of cats counted on the photo ("3 cats on this photo"), or asks how many there are
+  before the first. Under it a **tray** shows the photo's thumbnail and one face per cat, in the order they were
+  tapped; a tapped tray cat is taken out.
+- Each face in the grid adds a cat of that coat and shows how many of it the tray holds, ringed like a chosen
+  coat. A **paw** after the eleven coats adds a cat whose coat nobody saw.
+- The tray holds at most `Tuning.SHOT_MAX_CATS` cats, the photographed one included; past that the faces and the
+  paw dim and take no tap, and the line under the title says the photo holds no more (`CounterStorePhotoPromptTest`,
+  *past the most cats a photo can hold, faces stop adding*). A tray cat is taken out only while it is still the one
+  tapped, so a second tap landing after the tray moved takes out no other cat.
+- **Save N cats** appears with the first cat counted. It closes the sheet, then sets the first counted coat on the
+  cat the camera saved and adds the others to its shot, each a cat of its own with its own copy of the photo (see
+  [photos.md](./photos.md)). An added cat still waiting for a location goes to the background attach, as the
+  photographed cat did (*every added cat still without a location is sent to the location attach*). Encounters
+  shows the shot as one entry with a badge of its count (see [browsing-cats.md](./browsing-cats.md)).
+- Leaving the count any other way — **Not now**, a swipe down, a tap outside, back — is **Not now**: the
+  photographed cat stays with no coat and no other cat is added (*leaving the count without saving keeps the
+  photographed cat alone and uncoated*). Counting has no way back to one tap except leaving the sheet.
+
+The edges above hold while counting too: a newer photo takes the sheet over and the tray goes with the old photo
+(*a newer photo takes the sheet over and drops the tray*); the sheet closes before anything is written (*saving
+closes the prompt before anything is written*); the count changing underneath keeps the sheet and its tray (*the
+tray stays while the counter updates*). The tray is the Store's state, so a rotation keeps it; a process death
+loses it with the question. A save that fails shows one message, "Cats not saved", and adds no cat; the
+photographed cat keeps the first coat when that write went through (*a failed coat write after saving shows one
+message and adds no cat*; *a failed add after saving shows one message and keeps the first coat*).
+
+A screen reader hears a tray cat as its coat with a Remove action, and a grid face as its coat with how many the
+tray holds (`CoatPromptCountingTest`).
+
 ## Telling them apart
 
 Every coat is drawn as a **cat's face in that coat's real markings**, with its name beneath it:
@@ -97,7 +134,8 @@ archives hold those names, and renaming what nobody sees would need a migration 
 ## Changing it later
 
 The detail screen shows the coat and lets it be changed, or cleared by tapping the current one
-again. Nothing else needs a "clear" control.
+again; each page of the outing's pages sets the coat of its own cat (see
+[encounter-detail.md](./encounter-detail.md#paging-through-the-outing)). Nothing else needs a "clear" control.
 
 The coats there sit in one row wider than a phone, and the row opens scrolled so the cat's own coat
 is on screen, whole: second from the start with the coat before it showing, or, for the last few
@@ -132,9 +170,10 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 - `domain/…/model/CatCoat.kt`, `domain/…/usecase/SetCoat.kt`, `LogTally` (takes a coat)
 - `domain/…/stats/StatsCalculator.kt` — the by-coat counts
 - `presentation/…/coat/CoatOption.kt` — the presentation token, because `:ui` cannot see `:domain`
-- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, ask after a photo, filter the map) with its shaped
-  tiles and `coatShapeFor`, and `CoatPicker` (amend)
-- `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo; `CounterStore` opens and closes it
+- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, ask after a photo and count its cats, filter the map) with its
+  shaped tiles and `coatShapeFor`, and `CoatPicker` (amend)
+- `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo, its count and tray; `CounterStore` opens and
+  closes it, `presentation/…/counter/CoatCounting.kt` moves it between prompts and `CoatQuestion.kt` makes its writes
 - `ui/…/coat/CoatShapes.kt` — each coat's shape, stretched onto its square
 - `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, and the line around every face
 - `ui/…/coat/CatFace.kt` — the face itself

@@ -2,6 +2,7 @@ package dev.catsradar.presentation.detail
 
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.groupedByShot
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.domain.session.OutingWindow
@@ -33,19 +34,26 @@ class EncounterDetailStateMapper(
         attaching: Map<String, AttachProgress> = emptyMap(),
         places: Map<String, EncounterPlace?> = emptyMap(),
     ): EncounterDetailState.Loaded {
-        val pages = window.cats.map { cat -> page(cat, today, attaching[cat.id], places[cat.id]) }
+        val pages = window.cats.groupedByShot().map { cats ->
+            val shown = cats.firstOrNull { it.id == currentId } ?: cats.first()
+            page(shown, today, attaching[shown.id], places[shown.id], onThisPhoto = cats)
+        }
+        val currentNumber = pages.indexOfFirst { it.id == currentId } + 1
+        require(currentNumber > 0) { "The cat on screen, $currentId, is not on the pages" }
         return EncounterDetailState.Loaded(
             pages = pages.toImmutableList(),
             currentId = currentId,
-            currentNumber = pages.indexOfFirst { it.id == currentId } + 1,
+            currentNumber = currentNumber,
         )
     }
 
+    /** [onThisPhoto] are the cats of [encounter]'s photo, [encounter] among them, oldest first. */
     internal fun page(
         encounter: Encounter,
         today: LocalDate,
         attaching: AttachProgress? = null,
         place: EncounterPlace? = null,
+        onThisPhoto: List<Encounter> = listOf(encounter),
     ): CatPage {
         val lat = encounter.lat
         val lon = encounter.lon
@@ -75,6 +83,10 @@ class EncounterDetailStateMapper(
                     flag = countryFlag(found.countryCode),
                 )
             },
+            onThisPhoto = onThisPhoto.takeIf { it.size > 1 }.orEmpty()
+                .map { ShotCat(it.id, it.coat?.toOption(), onScreen = it.id == encounter.id) }
+                .toImmutableList(),
+            pageKey = onThisPhoto.first().id,
         )
     }
 }

@@ -59,8 +59,8 @@ its feature switches from Firebase Remote Config. Debug builds do not initialize
   A gallery import still emits one `photos_imported` event for the original batch, never one
   `cat_logged` per imported photo. A cat added later to one of those photos is a separate saved fact:
   after the whole add operation commits, it emits `cat_logged` with the copied `gallery` origin and
-  its own coat presence. A refused or failed add emits nothing. No shipped screen invokes the add
-  operation yet.
+  its own coat presence. A refused or failed add emits nothing. The coat sheet's **Several** count adds
+  cats the same way from the Counter; each of those logs `cat_logged` with the camera photo's `camera` origin.
 - **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
   updates, the phone's model and Android version, and the country and city the phone's network address
   places it in.

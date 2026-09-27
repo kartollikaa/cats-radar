@@ -10,7 +10,9 @@ import dev.catsradar.presentation.statistics.MilestoneState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class CounterStateMapperTest {
@@ -54,6 +56,13 @@ class CounterStateMapperTest {
     }
 
     @Test
+    fun `a walk shows no time until its first whole minute`() {
+        assertNull(mapper.walkElapsedLabel(walking = true, elapsed = Duration.ZERO))
+        assertNull(mapper.walkElapsedLabel(walking = true, elapsed = 59.seconds))
+        assertEquals(1.minutes.toString(), mapper.walkElapsedLabel(walking = true, elapsed = 1.minutes))
+    }
+
+    @Test
     fun `the walk time is carried through a rebuild of the whole state`() {
         assertEquals(
             CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true, walkElapsedLabel = "5m"),
@@ -65,7 +74,10 @@ class CounterStateMapperTest {
     fun `the coat prompt shows the photo's thumbnail from the photo directory`() {
         val photo = photoFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
 
-        assertEquals(CoatPromptState(thumbPath = "/data/photos/cat-7_thumb.jpg"), mapper.coatPrompt(photo))
+        assertEquals(
+            CoatPromptState("cat-7", "cat-7", thumbPath = "/data/photos/cat-7_thumb.jpg"),
+            mapper.coatPrompt(photo),
+        )
     }
 
     @Test
@@ -73,7 +85,7 @@ class CounterStateMapperTest {
         val photo = encounterFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
             .withPhoto(photoPath = "cat-7.jpg", thumbPath = null)
 
-        assertEquals(CoatPromptState(thumbPath = null), mapper.coatPrompt(photo))
+        assertEquals(CoatPromptState("cat-7", "cat-7", thumbPath = null), mapper.coatPrompt(photo))
     }
 
     @Test

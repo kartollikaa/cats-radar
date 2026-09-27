@@ -96,6 +96,14 @@ reordering them and never carrying a row across a header:
   rows first; a tile is a square showing the photo's thumbnail, the coat's face or a paw, with the
   time under it, shrunk to stay on one line. A shorter run is a **card row**: full cards showing
   the time and location, sharing the width.
+- **A lone photo keeps a large tile.** A tile row that holds a photo holds exactly `MIN_TILES` cats, so
+  the photo is never drawn at the smallest, `MAX_TILES`-across size (owner decision, 2026-09-27). The run is split so
+  that every photo lands in such a row with its neighbours, using the fewest rows and then the fewest
+  card rows; the cats left over pack as any run does, so a card row can follow a photo's tile row
+  (`EncounterGridPackerTest`, *a lone photo's tile row holds three cats, so the photo stays large*).
+  A photo never drops into a card row for it: when three-cat rows would push one there, as in a
+  photo, three cats and a photo, the run keeps its old wider tile row (*a photo that three-cat rows
+  would push into a card row keeps a wider tile row instead*).
 
 "Has a photo" means its thumbnail exists: a photo whose thumbnail failed to write packs, and leads,
 like a cat without one. What a tile or card leads with is the mapper's choice — the thumbnail, else
@@ -103,6 +111,34 @@ the coat's face, else a paw. Tiles and pair tiles have no room for the location,
 itself to accessibility services as its subject (the photo, the coat's name, or "a cat"), time and
 location; a card's own text says the same. With nothing logged, the tab says so and points at the
 Counter.
+
+## A photo of several cats
+
+A photo can show several cats, each its own encounter with its own coat, all sharing one shot (see
+`data-model.md`). The tab shows such a photo **once**: the cats whose cover is a photo of the same shot are one
+entry, in the grid and in the list alike (`EncountersStateMapperTest`, *a shot of three cats is one entry holding
+all three*). The entry shows that photo with a **badge** — a paw and the number of cats — when it holds more
+than one: in the top corner of a pair tile, in the bottom corner of a tile, which is too narrow to hold it
+beside the selection check, and beside the time on a card or a list row. For a screen
+reader the entry is a "Photo of 3 cats", with its time and location; the badge itself is hidden from it. The
+time and location are the first cat's, which every other cat copied when it joined the shot; a place set by hand
+on one of them later shows on that cat's own screen, not here. A shot without a thumbnail leads with a paw, since
+one coat's face would misname cats that may have several.
+
+- **It packs like one photo.** In the grid a shot pairs, runs and tiles as a single photo would (*a shot packs
+  as one photo and pairs with the photo beside it*); in the list it is one row, and the outing's rounded corners
+  count it once.
+- **A tap opens the shot's first cat** — the oldest by `createdAt`, the one the camera or the import saved
+  (*a shot's entry opens its oldest cat*).
+- **Selection is by shot.** A long press or a selecting tap adds or removes every cat of the entry, and the bar
+  counts cats, not entries. Delete soft-deletes them all as one batch with one undo (`EncountersStoreTest`,
+  *deleting a selected shot removes its cats as one batch and one undo restores them*). A selection holding only
+  some cats of a shot — a cat added to a shot that is already selected — selects the whole entry.
+- **A cat whose cover is another photo keeps its own entry**, even when it also has the shot's photo; the shot's
+  entry holds only the cats it shows.
+- **Only this tab groups them.** The Places area list and the map's spot list, which use the same rows, keep one
+  row per cat, and a shot's cats are separate dots on the map (`MapSpotStateMapperTest`,
+  `RegionsStateMapperTest`, *the cats of a shot stay separate rows*).
 
 ## Grid or list
 
@@ -123,7 +159,8 @@ badge and an outline; cards and list rows also turn to a tinted background. Dese
 cat, the ✕ and system back all end the selection; back ends it without leaving the tab. Whether a
 tap opens or selects is the Store's call, not the screen's: every tap reaches `EncountersStore` as
 `EncounterClicked`, and only outside a selection does it answer with `OpenEncounter` (*a tap outside
-selection opens the encounter and selects nothing*). A selection survives switching between the
+selection opens the encounter and selects nothing*). The cat opens among the other cats of its outing, and a
+swipe there moves between them (see [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)). A selection survives switching between the
 grid and the list (*a selection survives turning the grid off*).
 
 Delete is a soft delete with an undo, like the detail screen's, and asks nothing first. The selected

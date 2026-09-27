@@ -60,7 +60,10 @@ class EncountersStore(
     }
 
     private fun toggle(id: String) {
-        setState { withSelection(if (id in selectedIds) selectedIds - id else selectedIds + id) }
+        setState {
+            val cats = catsOfCell(id)
+            withSelection(if (id in selectedIds) selectedIds - cats else selectedIds + cats)
+        }
     }
 
     private suspend fun onDeleteSelectedClicked() {

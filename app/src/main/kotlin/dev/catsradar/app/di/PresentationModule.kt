@@ -77,10 +77,11 @@ val presentationModule = module {
             timeZone = get(),
         )
     }
-    viewModel { (encounterId: String) ->
+    viewModel { (openedId: String, restoredId: String?) ->
         EncounterDetailStore(
-            encounterId = encounterId,
-            observeEncounter = get(),
+            openedId = openedId,
+            restoredId = restoredId,
+            observeEncounters = get(),
             observeEncounterPlace = get(),
             deleteEncounter = get(),
             undoDelete = get(),

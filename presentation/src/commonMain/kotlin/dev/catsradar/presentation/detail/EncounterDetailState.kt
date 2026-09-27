@@ -25,6 +25,8 @@ sealed interface EncounterDetailState {
     data object Missing : EncounterDetailState
 }
 
+enum class OutingDirection { NEWER, OLDER }
+
 data class CatPage(
     val id: String,
     val dayLabel: String,
@@ -44,7 +46,14 @@ data class CatPage(
     val setsLocation: Boolean = false,
     /** Null while the cat has no named place: no location, or its cell not named yet. */
     val place: DetailPlace? = null,
+    /** The cats on this page's photo, oldest first; empty when the photo shows only this cat. */
+    val onThisPhoto: ImmutableList<ShotCat> = persistentListOf(),
+    /** The same whichever cat of the photo is on the page. */
+    val pageKey: String = id,
 )
+
+/** One cat on a photo of several; [onScreen] marks the one its page shows. */
+data class ShotCat(val id: String, val coat: CoatOption?, val onScreen: Boolean)
 
 /** [path] is the absolute path of the app's full copy. */
 data class DetailPhoto(val id: String, val path: String)

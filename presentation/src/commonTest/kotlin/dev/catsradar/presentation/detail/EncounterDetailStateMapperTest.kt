@@ -1,18 +1,22 @@
 package dev.catsradar.presentation.detail
 
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.domain.session.OutingWindow
+import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.shotFixture
 import dev.catsradar.presentation.encounters.withPhoto
 import dev.catsradar.presentation.map.MapPosition
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -203,6 +207,13 @@ class EncounterDetailStateMapperTest {
     }
 
     @Test
+    fun `a cat on screen that is not on the pages is refused`() {
+        val window = OutingWindow(cats = listOf(encounterFixture("e1", OCCURRED)), newer = null, older = null)
+
+        assertFailsWith<IllegalArgumentException> { mapper.map(window, currentId = "elsewhere", today = today) }
+    }
+
+    @Test
     fun `coordinates keep a fixed five decimals with a decimal point, negatives included`() {
         assertEquals("2.10000", formatCoordinate(2.1))
         assertEquals("-0.50000", formatCoordinate(-0.5))
@@ -244,6 +255,63 @@ class EncounterDetailStateMapperTest {
     @Test
     fun `a cat with no named place shows none`() {
         assertEquals(null, mapper.page(encounterFixture("e1", OCCURRED), today).place)
+    }
+
+    @Test
+    fun `a shot of three cats is one page`() {
+        val later = encounterFixture("later", OCCURRED + 5.minutes)
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = OCCURRED)
+        val window = OutingWindow(cats = listOf(later) + shot.asReversed(), newer = null, older = null)
+
+        val state = mapper.map(window, currentId = "s1", today = today)
+
+        assertEquals(listOf("later", "s1"), state.pages.map { it.id })
+        assertEquals(2, state.currentNumber)
+    }
+
+    @Test
+    fun `a shot's page shows the cat on screen and lists all its cats`() {
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = OCCURRED)
+            .mapIndexed { index, cat -> if (index == 1) cat.copy(coat = CatCoat.BLACK) else cat }
+        val window = OutingWindow(cats = shot.asReversed(), newer = null, older = null)
+
+        val onSecond = mapper.map(window, currentId = "s2", today = today).pages.single()
+
+        assertEquals("s2", onSecond.id)
+        assertEquals(CoatOption.BLACK, onSecond.coat)
+        assertEquals(
+            persistentListOf(
+                ShotCat("s1", coat = null, onScreen = false),
+                ShotCat("s2", coat = CoatOption.BLACK, onScreen = true),
+                ShotCat("s3", coat = null, onScreen = false),
+            ),
+            onSecond.onThisPhoto,
+        )
+    }
+
+    @Test
+    fun `a lone cat's page lists no cats of its photo`() {
+        val window = OutingWindow(cats = listOf(encounterFixture("e1", OCCURRED).withPhoto("e1.jpg")), null, null)
+
+        assertEquals(persistentListOf(), mapper.map(window, currentId = "e1", today = today).pages.single().onThisPhoto)
+    }
+
+    @Test
+    fun `a shot's page keeps its key whichever cat is on screen`() {
+        val later = encounterFixture("later", OCCURRED + 5.minutes)
+        val window = OutingWindow(
+            cats = listOf(later) + shotFixture("s1", "s2", occurredAt = OCCURRED).asReversed(),
+            newer = null,
+            older = null,
+        )
+
+        val onFirst = mapper.map(window, currentId = "s1", today = today).pages.map { it.pageKey }
+        val onSecond = mapper.map(window, currentId = "s2", today = today).pages.map { it.pageKey }
+        val onOther = mapper.map(window, currentId = "later", today = today).pages.map { it.pageKey }
+
+        assertEquals(listOf("later", "s1"), onFirst)
+        assertEquals(onFirst, onSecond)
+        assertEquals(onFirst, onOther)
     }
 
     private companion object {

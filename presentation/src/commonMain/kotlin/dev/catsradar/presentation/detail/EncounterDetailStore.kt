@@ -2,15 +2,14 @@ package dev.catsradar.presentation.detail
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.domain.session.OutingWindow
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.AttachResult
 import dev.catsradar.domain.usecase.DeleteEncounter
-import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
+import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.PhotoSource
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
@@ -19,7 +18,12 @@ import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -29,8 +33,9 @@ import kotlin.time.Clock
 
 @Suppress("LongParameterList") // one parameter per collaborator; a holder type would exist only to lower the count
 class EncounterDetailStore(
-    private val encounterId: String,
-    observeEncounter: ObserveEncounter,
+    openedId: String,
+    restoredId: String?,
+    observeEncounters: ObserveEncounters,
     observeEncounterPlace: ObserveEncounterPlace,
     private val deleteEncounter: DeleteEncounter,
     private val undoDelete: UndoDelete,
@@ -41,85 +46,79 @@ class EncounterDetailStore(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<EncounterDetailState, EncounterDetailIntent, EncounterDetailEffect>(EncounterDetailState.Loading) {
 
-    private var lastSeen: Encounter? = null
-    private var lastPlace: EncounterPlace? = null
-    private var deletedHere = false
-    private var undoTimeoutJob: Job? = null
-    private var attachingPhotos = false
-    private var attachProgress = AttachProgress(done = 0, total = 0)
+    private val pages = OutingPages(openedId, restoredId)
+    private val attempts = PhotoAttempts()
+    private var shown: ShownPages? = null
+    private var places: Map<String, EncounterPlace?> = emptyMap()
 
-    // Attached but not emitted yet: until they arrive the section keeps showing the attempt, not a bare offer.
-    private val arrivingPhotoIds = mutableSetOf<String>()
+    // Deleted here and not yet undone: the removed state stands, and an emission without this cat is the delete
+    // taking effect.
+    private var deletedId: String? = null
+    private var undoTimeoutJob: Job? = null
     private var awaitingPhoto = false
     private var leaving = false
 
     init {
-        observeEncounter(encounterId)
-            .flatMapLatest { encounter -> observeEncounterPlace(encounter).map { place -> encounter to place } }
-            .onEach { (encounter, place) ->
-                lastSeen = encounter
-                lastPlace = place
-                if (encounter == null) arrivingPhotoIds.clear() else arrivingPhotoIds -= encounter.photoIds()
-                setState { reduce(encounter) }
+        observeEncounters()
+            .filter { live -> deletedId.let { it == null || live.holdsLive(it) } }
+            .map { live -> pages.update(live) }
+            .distinctUntilChanged()
+            .flatMapLatest { next -> observeEncounterPlace.placesOn(next?.window).map { found -> next to found } }
+            .onEach { (next, found) ->
+                shown = next
+                places = found
+                attempts.arrived(next?.window?.cats.orEmpty())
+                setState { if (deletedId == null) pagesState() else this }
             }
             .launchIn(viewModelScope)
     }
 
-    // A null emission after our own delete is the delete taking effect, not the encounter vanishing.
-    private fun EncounterDetailState.reduce(encounter: Encounter?): EncounterDetailState = when {
-        encounter != null -> stateMapper.map(
-            OutingWindow(cats = listOf(encounter), newer = null, older = null),
-            currentId = encounter.id,
+    private fun pagesState(): EncounterDetailState = shown?.let { onScreen ->
+        stateMapper.map(
+            onScreen.window,
+            currentId = onScreen.currentId,
             today = clock.today(timeZone),
-            attaching = attachProgress.takeIf { attachingPhotos || arrivingPhotoIds.isNotEmpty() }
-                ?.let { mapOf(encounter.id to it) }
-                .orEmpty(),
-            places = mapOf(encounter.id to lastPlace),
+            attaching = attempts.progress,
+            places = places,
         )
-        deletedHere -> this
-        else -> EncounterDetailState.Missing
-    }
+    } ?: EncounterDetailState.Missing
 
     override suspend fun handle(intent: EncounterDetailIntent) {
         when (intent) {
             EncounterDetailIntent.BackClicked -> navigateBack()
             EncounterDetailIntent.DeleteClicked -> onDeleteClicked()
             EncounterDetailIntent.UndoClicked -> onUndoClicked()
+            is EncounterDetailIntent.ShowCat -> {
+                pages.settle(intent.catId)
+                shown = shown?.settledOn(intent.catId)
+                refresh()
+            }
             // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
             is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(intent.catId, intent.coat?.toCatCoat()) }
-            is EncounterDetailIntent.TakePhotoClicked -> requestPhoto(EncounterDetailEffect.OpenCamera(intent.catId))
+            is EncounterDetailIntent.TakePhotoClicked ->
+                requestPhoto(intent.catId, EncounterDetailEffect.OpenCamera(intent.catId))
             is EncounterDetailIntent.PickPhotoClicked ->
-                requestPhoto(EncounterDetailEffect.OpenPhotoPicker(intent.catId))
+                requestPhoto(intent.catId, EncounterDetailEffect.OpenPhotoPicker(intent.catId))
             is EncounterDetailIntent.PhotoClicked ->
-                emitIfShownAndOffered(intent.catId, EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) {
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenPhoto(intent.catId, intent.photoId)) {
                     photos.any { it.id == intent.photoId }
                 }
             is EncounterDetailIntent.CoordinatesClicked ->
-                emitIfShownAndOffered(
-                    intent.catId,
-                    EncounterDetailEffect.OpenMap(intent.catId),
-                ) { mapPosition != null }
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenMap(intent.catId)) { mapPosition != null }
             is EncounterDetailIntent.SetLocationClicked ->
-                emitIfShownAndOffered(
-                    intent.catId,
-                    EncounterDetailEffect.OpenLocationPicker(intent.catId),
-                ) { setsLocation }
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenLocationPicker(intent.catId)) { setsLocation }
             is EncounterDetailIntent.PhotoTaken ->
                 onPhotosChosen(intent.catId, listOfNotNull(intent.uri), PhotoSource.CAMERA)
             is EncounterDetailIntent.PhotosPicked -> onPhotosChosen(intent.catId, intent.uris, PhotoSource.GALLERY)
         }
     }
 
-    private suspend fun emitIfShownAndOffered(
-        catId: String,
-        effect: EncounterDetailEffect,
-        offered: CatPage.() -> Boolean,
-    ) {
-        if (catId == encounterId && state.value.page(catId)?.offered() == true) emit(effect)
+    private suspend fun emitIfOffered(catId: String, effect: EncounterDetailEffect, offered: CatPage.() -> Boolean) {
+        if (state.value.page(catId)?.offered() == true) emit(effect)
     }
 
-    private suspend fun requestPhoto(opener: EncounterDetailEffect) {
-        val offered = state.value.page(encounterId)?.addPhoto == AddPhoto.READY
+    private suspend fun requestPhoto(catId: String, opener: EncounterDetailEffect) {
+        val offered = state.value.page(catId)?.addPhoto == AddPhoto.READY
         if (awaitingPhoto || !offered) return
         awaitingPhoto = true
         emit(opener)
@@ -128,43 +127,39 @@ class EncounterDetailStore(
     private suspend fun onPhotosChosen(catId: String, uris: List<String>, source: PhotoSource) {
         awaitingPhoto = false
         if (uris.isEmpty()) return
-        attachingPhotos = true
         // Null for an attempt whose storage write failed.
         val outcomes = mutableListOf<AttachResult?>()
         for (uri in uris) {
-            attachProgress = AttachProgress(done = outcomes.size, total = uris.size)
+            attempts.running(catId, AttachProgress(done = outcomes.size, total = uris.size))
             refresh()
             var result: AttachResult? = null
             runStorageWrite { result = attachPhoto(catId, uri, source) }
-            val attached = result as? AttachResult.Attached
-            if (attached != null && attached.photoId !in lastSeen?.photoIds().orEmpty()) {
-                arrivingPhotoIds += attached.photoId
-            }
+            (result as? AttachResult.Attached)?.let { attempts.attached(catId, it.photoId) }
             outcomes += result
         }
-        attachProgress = AttachProgress(done = outcomes.size, total = uris.size)
-        attachingPhotos = false
+        attempts.finished(catId, AttachProgress(done = outcomes.size, total = uris.size))
         refresh()
         outcomes.message()?.let { emit(it) }
         if (source == PhotoSource.CAMERA) uris.forEach { emit(EncounterDetailEffect.DiscardCapture(it)) }
     }
 
     private fun refresh() {
-        setState { if (this is EncounterDetailState.Loaded) reduce(lastSeen) else this }
+        setState { if (this is EncounterDetailState.Loaded) pagesState() else this }
     }
 
     private suspend fun onDeleteClicked() {
-        // Set before the suspending call: a second tap in flight must see the flag and no-op.
-        if (deletedHere || state.value !is EncounterDetailState.Loaded) return
-        deletedHere = true
+        val onScreen = (state.value as? EncounterDetailState.Loaded)?.currentId
+        // Set before the suspending call: a second tap in flight must see it and no-op.
+        if (deletedId != null || onScreen == null) return
+        deletedId = onScreen
         setState { EncounterDetailState.Deleted(undoVisible = true) }
         startUndoWindow()
         val restore = {
             undoTimeoutJob?.cancel()
-            deletedHere = false
-            setState { reduce(lastSeen) }
+            deletedId = null
+            setState { pagesState() }
         }
-        runStorageWrite(onFailure = restore) { deleteEncounter(encounterId) }
+        runStorageWrite(onFailure = restore) { deleteEncounter(onScreen) }
     }
 
     private fun startUndoWindow() {
@@ -184,19 +179,25 @@ class EncounterDetailStore(
 
     private suspend fun onUndoClicked() {
         val current = state.value
-        if (current !is EncounterDetailState.Deleted || !current.undoVisible) return
+        val deleted = deletedId
+        if (current !is EncounterDetailState.Deleted || !current.undoVisible || deleted == null) return
         undoTimeoutJob?.cancel()
         runStorageWrite(onFailure = { startUndoWindow() }) {
-            undoDelete(encounterId)
-            deletedHere = false
+            undoDelete(deleted)
+            deletedId = null
+            setState { pagesState() }
         }
     }
 }
 
-private fun Encounter.photoIds(): Set<String> = photos.mapTo(mutableSetOf()) { it.id }
-
 private fun EncounterDetailState.page(catId: String): CatPage? =
     (this as? EncounterDetailState.Loaded)?.pages?.firstOrNull { it.id == catId }
+
+private fun ObserveEncounterPlace.placesOn(window: OutingWindow?): Flow<Map<String, EncounterPlace?>> {
+    val cats = window?.cats.orEmpty()
+    if (cats.isEmpty()) return flowOf(emptyMap())
+    return combine(cats.map { cat -> invoke(cat).map { place -> cat.id to place } }) { it.toMap() }
+}
 
 // A cat removed mid-pick answers NotAttachable, which says nothing: the screen already shows it gone.
 private fun List<AttachResult?>.message(): EncounterDetailEffect? {

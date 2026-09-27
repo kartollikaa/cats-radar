@@ -146,6 +146,11 @@ the tray holds.
 
 ## The detail screen
 
+(Decided 2026-09-27, after the outing pager shipped: the detail screen pages through its outing, and the owner, trying
+a shot of three cats, found it three pages of one photo. A shot is now **one page** of the pager, holding all its
+cats; the **On this photo** row switches which of them the page shows, in place of replacing the screen. The rest of
+this section stands.)
+
 - Under the photo pager, the photo on screen has an **On this photo** row. When the shot has more than
   one live cat, the row shows each cat's face (a paw for no coat), with the cat on screen ringed, and
   ends with **+**. On a photo of one cat the row is a single **Another cat on this photo** button. A

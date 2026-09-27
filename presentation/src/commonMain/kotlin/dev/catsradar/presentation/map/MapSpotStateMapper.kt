@@ -17,6 +17,9 @@ class MapSpotStateMapper(private val encountersMapper: EncountersStateMapper) {
     ): MapSpotState.Listed? {
         val cats = encounters.filter { it.id in catIds && it.isOnTheMap() && coats.shows(it.coat?.toOption()) }
         if (cats.isEmpty()) return null
-        return MapSpotState.Listed(catCount = cats.size, rows = encountersMapper.map(cats, today, grid = false).rows)
+        return MapSpotState.Listed(
+            catCount = cats.size,
+            rows = encountersMapper.map(cats, today, grid = false, byShot = false).rows,
+        )
     }
 }

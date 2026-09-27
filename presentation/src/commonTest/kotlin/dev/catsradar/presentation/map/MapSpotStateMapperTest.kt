@@ -3,13 +3,16 @@ package dev.catsradar.presentation.map
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
+import dev.catsradar.presentation.encounters.shotFixture
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -58,6 +61,18 @@ class MapSpotStateMapperTest {
         val spot = mapper.map(listOf(ginger, black, unnoted), ids, setOf(CoatOption.GINGER, null), TODAY)
 
         assertEquals(listed(ginger, unnoted), spot)
+    }
+
+    @Test
+    fun `the cats of a shot stay separate rows`() {
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = BASE).map { it.copy(lat = 41.39, lon = 2.17) }
+
+        val spot = assertNotNull(mapper.map(shot, setOf("s1", "s2", "s3"), coats = emptySet(), TODAY))
+
+        assertEquals(
+            listOf(listOf("s3"), listOf("s2"), listOf("s1")),
+            spot.rows.filterIsInstance<EncountersRow.Single>().map { it.cell.catIds },
+        )
     }
 
     private companion object {
