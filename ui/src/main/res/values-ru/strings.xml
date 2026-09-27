@@ -269,7 +269,7 @@
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
     <string name="settings_updates">Обновления</string>
-    <string name="settings_updates_explained">Скачивает и устанавливает новую версию из релизов приложения на GitHub</string>
+    <string name="settings_updates_explained">Установите последнюю версию приложения</string>
     <string name="settings_updates_check">Проверить обновления</string>
     <string name="settings_updates_up_to_date">У вас последняя версия</string>
     <string name="settings_updates_downloading">Скачивается %1$s</string>
