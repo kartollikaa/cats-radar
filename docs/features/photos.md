@@ -121,9 +121,25 @@ and shot presentation belong to later slices.
 ## The gallery setting
 
 `saveOriginalsToGallery` lives in DataStore and is **on unless turned off**, so a fresh install keeps
-the user's photos where they expect them. The **Settings** tab has the switch. DataStore stays
+the user's photos where they expect them. The **Settings** tab has the switch, *Save camera photos to
+gallery*, and its note says what each copy is: the full-size original goes to the gallery's Cats Radar
+album, and the app keeps a smaller copy either way (`SaveOriginalsSettingTest`). DataStore stays
 inside `:data` behind `createSettingsRepository` — `:app` never names the type, which also keeps the
 dependency off `:app`'s classpath.
+
+**The gallery is where full-size originals live, on a best-effort basis.** The app's own copy is
+capped in size (see *The app's own copies*) and is the only one a backup carries (see
+[backup.md](./backup.md#photos)). The app does not watch the gallery and never puts an original
+back: once the user deletes one there, the cat keeps only the smaller copy. A camera photo taken with
+the switch off has no full-size original anywhere once it is saved. The switch applies to the photos
+taken after it changes; photos already saved stay as they are.
+
+**Turning it off asks first.** A dialog warns that new camera photos will keep only the app's smaller
+copy and that their originals cannot be recovered later. Only *Turn off* stores the change; *Cancel*,
+or dismissing the dialog, leaves the switch on (`SettingsStoreTest`, *turning the gallery switch off
+asks first and stores nothing yet*; *confirming stores the gallery switch off, and the switch follows
+the stored value*; *cancelling keeps the gallery switch on*). Turning it on stores it at once
+(*turning the gallery switch on stores it without asking*).
 
 The switch renders what is *stored*, not what was last tapped: it follows the settings flow rather
 than keeping its own optimistic state, so a failed write cannot leave the two disagreeing.
