@@ -134,7 +134,7 @@ private fun PhotoTile(
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
 ) {
-    val subject = stringResource(R.string.encounters_photo_description)
+    val subject = cell.badgeCount?.let { shotDescription(it) } ?: stringResource(R.string.encounters_photo_description)
     val description = cellDescription(subject, cell.timeLabel, cell.location)
     var fullCopyUnreadable by remember(cell.photoPath) { mutableStateOf(false) }
     val shape = MaterialTheme.shapes.medium
@@ -164,6 +164,7 @@ private fun PhotoTile(
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         )
+        cell.badgeCount?.let { ShotBadge(count = it, modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) }
         if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
     }
 }
@@ -176,7 +177,8 @@ private fun EncounterTile(
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
 ) {
-    val description = cellDescription(cell.lead.description(), cell.timeLabel, cell.location)
+    val subject = cell.badgeCount?.let { shotDescription(it) } ?: cell.lead.description()
+    val description = cellDescription(subject, cell.timeLabel, cell.location)
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.small)
@@ -193,6 +195,7 @@ private fun EncounterTile(
                     .aspectRatio(1f)
                     .selectionOutline(cell.selected, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small),
             )
+            cell.badgeCount?.let { ShotBadge(count = it, modifier = Modifier.align(Alignment.TopStart).padding(4.dp)) }
             if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd).padding(4.dp))
         }
         val timeStyle = MaterialTheme.typography.labelMedium
@@ -232,11 +235,20 @@ internal fun EncounterCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box {
-            EncounterLead(lead = cell.lead, modifier = Modifier.size(48.dp))
+            EncounterLead(lead = cell.lead, modifier = Modifier.size(48.dp), badgeCount = cell.badgeCount)
             if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd))
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = cell.timeLabel, style = MaterialTheme.typography.bodyLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = cell.timeLabel, style = MaterialTheme.typography.bodyLarge)
+                cell.badgeCount?.let {
+                    ShotBadge(
+                        count = it,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
             Text(
                 text = stringResource(cell.location.labelRes()),
                 style = MaterialTheme.typography.bodySmall,
@@ -249,22 +261,26 @@ internal fun EncounterCard(
 }
 
 @Composable
-private fun EncounterLead(lead: CellLead, modifier: Modifier = Modifier) {
+private fun EncounterLead(lead: CellLead, modifier: Modifier = Modifier, badgeCount: Int? = null) {
     val tile = modifier.clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+    val shot = badgeCount?.let { shotDescription(it) }
     when (lead) {
         is CellLead.Photo -> AsyncImage(
             model = lead.thumbnailPath,
-            contentDescription = stringResource(R.string.encounters_photo_description),
+            contentDescription = shot ?: stringResource(R.string.encounters_photo_description),
             modifier = tile,
             contentScale = ContentScale.Crop,
         )
         is CellLead.Coat -> {
-            val coatLabel = stringResource(lead.coat.labelRes())
+            val coatLabel = shot ?: stringResource(lead.coat.labelRes())
             Box(modifier = tile.semantics { contentDescription = coatLabel }, contentAlignment = Alignment.Center) {
                 CatFace(coat = lead.coat, modifier = Modifier.fillMaxSize(0.75f))
             }
         }
-        CellLead.Paw -> Box(modifier = tile, contentAlignment = Alignment.Center) {
+        CellLead.Paw -> Box(
+            modifier = shot?.let { tile.semantics { contentDescription = it } } ?: tile,
+            contentAlignment = Alignment.Center,
+        ) {
             Icon(
                 painter = painterResource(R.drawable.ic_nav_pets),
                 contentDescription = null,
@@ -305,7 +321,14 @@ private fun EncountersRowsPreview() {
 
 private val samplePhotoPair = EncountersRow.PhotoPair(
     first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, "/photos/1.jpg", "/photos/1_thumb.jpg"),
-    second = PhotoCell("2", "14:30", LocationLabel.CURRENT, "/photos/2.jpg", "/photos/2_thumb.jpg"),
+    second = PhotoCell(
+        "2",
+        "14:30",
+        LocationLabel.CURRENT,
+        "/photos/2.jpg",
+        "/photos/2_thumb.jpg",
+        catIds = persistentListOf("2", "2b", "2c"),
+    ),
 )
 
 private val sampleTilesOfFive = EncountersRow.Tiles(
@@ -320,7 +343,13 @@ private val sampleTilesOfFive = EncountersRow.Tiles(
 
 private val sampleTilesOfThree = EncountersRow.Tiles(
     persistentListOf(
-        EncounterCell("8", "14:13", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.GREY)),
+        EncounterCell(
+            "8",
+            "14:13",
+            LocationLabel.FROM_OUTING,
+            CellLead.Photo("/photos/8_thumb.jpg"),
+            catIds = persistentListOf("8", "8b"),
+        ),
         EncounterCell("9", "14:12", LocationLabel.FROM_OUTING),
         EncounterCell("10", "14:10", LocationLabel.LAST_KNOWN, CellLead.Coat(CoatOption.GINGER)),
     ),
@@ -328,7 +357,13 @@ private val sampleTilesOfThree = EncountersRow.Tiles(
 
 private val sampleCardsOfTwo = EncountersRow.Cards(
     persistentListOf(
-        EncounterCell("11", "09:20", LocationLabel.LAST_KNOWN, CellLead.Coat(CoatOption.BLACK)),
+        EncounterCell(
+            "11",
+            "09:20",
+            LocationLabel.LAST_KNOWN,
+            CellLead.Photo("/photos/11_thumb.jpg"),
+            catIds = persistentListOf("11", "11b", "11c", "11d"),
+        ),
         EncounterCell("12", "09:05", LocationLabel.NONE),
     ),
 )

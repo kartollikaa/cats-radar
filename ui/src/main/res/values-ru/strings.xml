@@ -70,6 +70,12 @@
     <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_paw_description">Котик</string>
+    <plurals name="encounters_shot_description">
+        <item quantity="one">Фото: %1$d котик</item>
+        <item quantity="few">Фото: %1$d котика</item>
+        <item quantity="many">Фото: %1$d котиков</item>
+        <item quantity="other">Фото: %1$d котика</item>
+    </plurals>
     <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
     <string name="encounters_select">Выбрать</string>
     <string name="encounters_deselect">Снять выбор</string>
