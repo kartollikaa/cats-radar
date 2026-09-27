@@ -59,7 +59,11 @@ class CounterStateMapper(
     )
 
     fun coatPrompt(encounter: Encounter): CoatPromptState =
-        CoatPromptState(thumbPath = encounter.cover?.thumbPath?.let(photoStorage::resolve))
+        CoatPromptState(
+            catId = encounter.id,
+            photoId = encounter.cover?.id,
+            thumbPath = encounter.cover?.thumbPath?.let(photoStorage::resolve),
+        )
 
     private fun Milestone.toState(): CounterMilestoneState = CounterMilestoneState(
         next = MilestoneState(valueLabel = value.toString(), remainingLabel = remaining.toString()),

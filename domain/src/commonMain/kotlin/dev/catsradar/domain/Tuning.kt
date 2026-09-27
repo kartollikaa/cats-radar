@@ -28,6 +28,9 @@ object Tuning {
     const val IMPORT_BATCH_MAX: Int = 100
     const val ATTACH_BATCH_MAX: Int = 20
 
+    /** The most cats one photo can be counted as, the photographed cat included. */
+    const val SHOT_MAX_CATS: Int = 10
+
     /** A fix less precise than this is left out of a walk's route rather than bending it. */
     const val TRACK_MAX_ACCURACY_METERS: Float = 50f
 

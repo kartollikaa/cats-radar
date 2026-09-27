@@ -10,6 +10,7 @@ import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.OutingHeader
 import dev.catsradar.presentation.encounters.photoFixture
+import dev.catsradar.presentation.encounters.shotFixture
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
@@ -201,6 +202,20 @@ class RegionsStateMapperTest {
         assertEquals(
             listOf("newer", "older"),
             state.rows.filterNot { it is OutingHeader }.map { assertIs<EncountersRow.Single>(it).cell.id },
+        )
+    }
+
+    @Test
+    fun `the cats of a shot stay separate rows`() {
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
+        val area = RegionKey.Area("sp3e3", barcelona)
+        val view = RegionView.Cats(shot, self = RegionNode(area, RegionLabel.Named("Gràcia"), 3))
+
+        val state = assertIs<RegionsState.Cats>(mapper.map(view, parent = area, TODAY))
+
+        assertEquals(
+            listOf(listOf("s3"), listOf("s2"), listOf("s1")),
+            state.rows.filterNot { it is OutingHeader }.map { assertIs<EncountersRow.Single>(it).cell.catIds },
         )
     }
 

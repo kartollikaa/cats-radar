@@ -31,8 +31,7 @@ fun CounterScreen(
     onUndoImportClick: () -> Unit = {},
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
-    onCoatPromptPick: (CoatOption) -> Unit = {},
-    onCoatPromptDismiss: () -> Unit = {},
+    onCoatPromptAction: (CoatPromptAction) -> Unit = {},
 ) {
     // A large font or a small phone must never leave the tally button zero pixels tall.
     FillOrScroll(
@@ -77,7 +76,7 @@ fun CounterScreen(
         },
     )
     state.coatPrompt?.let {
-        CoatPromptSheet(prompt = it, onCoatClick = onCoatPromptPick, onDismiss = onCoatPromptDismiss)
+        CoatPromptSheet(prompt = it, onAction = onCoatPromptAction)
     }
 }
 

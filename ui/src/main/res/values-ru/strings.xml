@@ -63,6 +63,30 @@
     <string name="counter_coat_prompt_hint">Нажмите на окрас, чтобы отметить его</string>
     <string name="counter_coat_prompt_skip">Не сейчас</string>
     <string name="counter_coat_prompt_photo">Только что снятое фото</string>
+    <string name="counter_coat_prompt_several">Несколько</string>
+    <string name="counter_coat_count_title_empty">Сколько котиков на фото?</string>
+    <string name="counter_coat_count_hint">Нажмите на окрас каждого котика. Нажмите на котика выше, чтобы убрать его</string>
+    <string name="counter_coat_count_full">Больше котиков на одно фото не поместится. Нажмите на котика выше, чтобы убрать его</string>
+    <string name="counter_coat_count_remove">Убрать</string>
+    <plurals name="counter_coat_count_title">
+        <item quantity="one">%1$d котик на этом фото</item>
+        <item quantity="few">%1$d котика на этом фото</item>
+        <item quantity="many">%1$d котиков на этом фото</item>
+        <item quantity="other">%1$d котика на этом фото</item>
+    </plurals>
+    <plurals name="counter_coat_count_save">
+        <item quantity="one">Сохранить: %1$d котик</item>
+        <item quantity="few">Сохранить: %1$d котика</item>
+        <item quantity="many">Сохранить: %1$d котиков</item>
+        <item quantity="other">Сохранить: %1$d котика</item>
+    </plurals>
+    <plurals name="counter_coat_counted">
+        <item quantity="one">%1$d на фото</item>
+        <item quantity="few">%1$d на фото</item>
+        <item quantity="many">%1$d на фото</item>
+        <item quantity="other">%1$d на фото</item>
+    </plurals>
+    <string name="counter_cats_not_saved">Котики не сохранились</string>
 
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
@@ -70,6 +94,12 @@
     <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_paw_description">Котик</string>
+    <plurals name="encounters_shot_description">
+        <item quantity="one">Фото: %1$d котик</item>
+        <item quantity="few">Фото: %1$d котика</item>
+        <item quantity="many">Фото: %1$d котиков</item>
+        <item quantity="other">Фото: %1$d котика</item>
+    </plurals>
     <string name="encounters_cell_description">%1$s, %2$s, %3$s</string>
     <string name="encounters_select">Выбрать</string>
     <string name="encounters_deselect">Снять выбор</string>
@@ -198,6 +228,8 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
+    <string name="detail_on_this_photo">На этом фото</string>
+    <string name="detail_on_this_photo_cat">%1$s, котик %2$d из %3$d</string>
     <string name="detail_photo">Добавить фото</string>
     <string name="detail_take_photo">Сфотографировать</string>
     <string name="detail_pick_photo">Выбрать из галереи</string>

@@ -117,19 +117,30 @@ internal fun EncounterDetailDestination(
             )
         }
     }
+    DispatchingDetailScreen(state, store::dispatch, contentPadding, modifier)
+}
+
+@Composable
+private fun DispatchingDetailScreen(
+    state: EncounterDetailState,
+    dispatch: (EncounterDetailIntent) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
     EncounterDetailScreen(
         state = state,
         modifier = modifier,
         contentPadding = contentPadding,
-        onBackClick = { store.dispatch(EncounterDetailIntent.BackClicked) },
-        onPageSettle = { catId -> store.dispatch(EncounterDetailIntent.PageSettled(catId)) },
-        onDeleteClick = { store.dispatch(EncounterDetailIntent.DeleteClicked) },
-        onUndoClick = { store.dispatch(EncounterDetailIntent.UndoClicked) },
-        onCoatClick = { pick -> store.dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
-        onTakePhotoClick = { catId -> store.dispatch(EncounterDetailIntent.TakePhotoClicked(catId)) },
-        onPickPhotoClick = { catId -> store.dispatch(EncounterDetailIntent.PickPhotoClicked(catId)) },
-        onPhotoClick = { tap -> store.dispatch(EncounterDetailIntent.PhotoClicked(tap.catId, tap.photoId)) },
-        onCoordinatesClick = { catId -> store.dispatch(EncounterDetailIntent.CoordinatesClicked(catId)) },
-        onSetLocationClick = { catId -> store.dispatch(EncounterDetailIntent.SetLocationClicked(catId)) },
+        onBackClick = { dispatch(EncounterDetailIntent.BackClicked) },
+        onPageSettle = { catId -> dispatch(EncounterDetailIntent.PageSettled(catId)) },
+        onPhotoCatClick = { catId -> dispatch(EncounterDetailIntent.PhotoCatClicked(catId)) },
+        onDeleteClick = { dispatch(EncounterDetailIntent.DeleteClicked) },
+        onUndoClick = { dispatch(EncounterDetailIntent.UndoClicked) },
+        onCoatClick = { pick -> dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
+        onTakePhotoClick = { catId -> dispatch(EncounterDetailIntent.TakePhotoClicked(catId)) },
+        onPickPhotoClick = { catId -> dispatch(EncounterDetailIntent.PickPhotoClicked(catId)) },
+        onPhotoClick = { tap -> dispatch(EncounterDetailIntent.PhotoClicked(tap.catId, tap.photoId)) },
+        onCoordinatesClick = { catId -> dispatch(EncounterDetailIntent.CoordinatesClicked(catId)) },
+        onSetLocationClick = { catId -> dispatch(EncounterDetailIntent.SetLocationClicked(catId)) },
     )
 }

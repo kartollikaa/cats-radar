@@ -16,6 +16,7 @@ import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.persistentListOf
 
 // Tight enough that one outing's rows read as a single card.
 internal val ListRowGap = 2.dp
@@ -68,6 +69,16 @@ private val sampleOuting = listOf(
     ),
     EncountersRow.Single(
         EncounterCell("2", "14:20", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.BLACK)),
+        GroupPosition.MIDDLE,
+    ),
+    EncountersRow.Single(
+        EncounterCell(
+            "2b",
+            "14:15",
+            LocationLabel.FROM_OUTING,
+            CellLead.Photo("/photos/2b_thumb.jpg"),
+            catIds = persistentListOf("2b", "2c", "2d"),
+        ),
         GroupPosition.MIDDLE,
     ),
     EncountersRow.Single(EncounterCell("3", "14:10", LocationLabel.FROM_OUTING), GroupPosition.LAST),

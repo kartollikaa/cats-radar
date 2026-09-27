@@ -362,6 +362,65 @@ class EncountersStoreTest {
         assertEquals(setOf("b", "c"), store.rowIds())
     }
 
+    @Test
+    fun `a tap on a shot opens its first cat`() = runTest(mainDispatcher) {
+        val store = storeWithShot()
+
+        store.effects.test {
+            store.dispatch(EncountersIntent.EncounterClicked(store.shotEntryId()))
+            runCurrent()
+
+            assertEquals(EncountersEffect.OpenEncounter("s1"), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a long press on a shot selects every cat of it`() = runTest(mainDispatcher) {
+        val store = storeWithShot()
+
+        store.dispatch(EncountersIntent.EncounterLongPressed(store.shotEntryId()))
+        runCurrent()
+
+        assertEquals(persistentSetOf("s1", "s2", "s3"), store.state.value.selectedIds)
+        assertEquals(3, store.state.value.selectedCount)
+    }
+
+    @Test
+    fun `a tap while selecting adds or removes a whole shot`() = runTest(mainDispatcher) {
+        val store = storeWithShot()
+        store.dispatch(EncountersIntent.EncounterLongPressed("other"))
+        runCurrent()
+
+        store.dispatch(EncountersIntent.EncounterClicked(store.shotEntryId()))
+        runCurrent()
+        assertEquals(persistentSetOf("other", "s1", "s2", "s3"), store.state.value.selectedIds)
+
+        store.dispatch(EncountersIntent.EncounterClicked(store.shotEntryId()))
+        runCurrent()
+        assertEquals(persistentSetOf("other"), store.state.value.selectedIds)
+    }
+
+    @Test
+    fun `deleting a selected shot removes its cats as one batch and one undo restores them`() =
+        runTest(mainDispatcher) {
+            val store = storeWithShot()
+            store.dispatch(EncountersIntent.EncounterLongPressed(store.shotEntryId()))
+            runCurrent()
+
+            store.dispatch(EncountersIntent.DeleteSelectedClicked)
+            runCurrent()
+
+            assertEquals(listOf(setOf("s1", "s2", "s3")), repository.softDeleteAllCalls.map { it.toSet() })
+            assertEquals(setOf("other"), store.rowIds())
+            assertEquals(3, store.state.value.removedCount)
+
+            store.dispatch(EncountersIntent.UndoClicked)
+            runCurrent()
+
+            assertEquals(setOf("other", "s1"), store.rowIds())
+            assertEquals(listOf("s1", "s2", "s3"), store.shotEntry().catIds)
+        }
+
     private fun newStore(): EncountersStore = EncountersStore(
         observeEncounters = ObserveEncounters(repository),
         settingsRepository = settings,
@@ -378,6 +437,21 @@ class EncountersStoreTest {
         runCurrent()
         return store
     }
+
+    private suspend fun TestScope.storeWithShot(): EncountersStore {
+        repository.insert(encounterFixture("other", BASE))
+        shotFixture("s1", "s2", "s3", occurredAt = BASE + 5.minutes).asReversed().forEach { repository.insert(it) }
+        val store = newStore()
+        runCurrent()
+        return store
+    }
+
+    private fun EncountersStore.shotEntry(): EncounterCell = state.value.rows
+        .filterIsInstance<EncountersRow.Cards>()
+        .flatMap { it.cells }
+        .single { it.catIds.size > 1 }
+
+    private fun EncountersStore.shotEntryId(): String = shotEntry().id
 
     private fun TestScope.select(store: EncountersStore, vararg ids: String) {
         ids.forEach { id ->
