@@ -55,8 +55,8 @@ where the cat on screen is — "2 / 5", read by TalkBack as "Cat 2 of 5" — and
 (`EncounterDetailPagerTest`, *several pages show the position of the cat on screen, read as Cat n of m*; *a single
 cat shows no position*).
 
-A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and Delete, Undo
-and Back act on it (`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
+A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and Delete
+removes it (`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
 `EncounterDetailStoreTest`, *settling on another page puts that cat on screen*; *after settling, a delete removes
 the settled cat*). Only the state moves the cat on screen, and the pager follows it — when a cat deleted
 elsewhere hands the screen to its neighbour, say (*the pager follows the cat on screen when the state moves
@@ -69,8 +69,8 @@ its own cat's place*).
 
 A cat with several photos keeps its own photo pager inside its page: a drag that starts on a photo moves the
 photos first, and past the cat's last photo the rest of the drag moves on to the next cat (`EncounterDetailPagerTest`,
-*a drag past a cat's last photo moves on to the next cat*). Each page keeps its photo and its scroll position while
-the user swipes to other cats and back.
+*a drag past a cat's last photo moves on to the next cat*). Each page keeps its photo position while the user
+swipes to other cats and back (*a cat swiped away from and back to keeps its photo*).
 
 The cat on screen is saved with the screen, so after the process died it reopens on the cat that was on screen,
 while that cat is live, and on the opened one otherwise (`EncounterDetailPagerEntryTest`, *a restored entry

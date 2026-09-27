@@ -79,7 +79,8 @@ globe, past a pole or the 180th meridian.
   come apart.
 - **Cats that never come apart** open as a list of that spot, grouped by outing as the Encounters
   tab groups them and drawn in its list layout, whichever layout the tab is set to. The outing
-  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, back
+  backfill gives every cat of a walk the same fix, so this is common. A row opens its cat, paging through
+  the cat's outing rather than the spot (see [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)); back
   returns to the list, and a second back closes it. A tap that lands on several dots at once opens
   the same list. A list whose cats are all deleted closes, and restoring one of them does not reopen
   it.

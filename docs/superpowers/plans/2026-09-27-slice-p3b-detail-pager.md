@@ -107,5 +107,6 @@ on the PR; the acceptance gate.
 
 ## Size
 
-~300 by the map: pager and bar ~90, Store ~15, destination ~10, strings 4; tests ~300 (screen ~170, entry ~120,
-Store ~40). About 450 with tests; under the 600 target.
+Estimated ~450 (pager and bar ~90, Store ~15, destination ~10, strings 4; tests ~300). Measured ~740 reviewable
+lines: the screen file reached detekt's function limit, so the page content moved into `CatPager.kt` (~130 lines of
+move), and the tests came to ~400. Over the 600 target, under the 1,000 cap; recorded in the map's decision log.
