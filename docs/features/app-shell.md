@@ -165,8 +165,8 @@ indicator, a switch, a menu, a sheet opening, a snackbar, the ripple) move on it
 frame at rest is as it was. A button that changes shape under a press takes the Expressive
 components' own shape arguments; the theme does not give it that. Screen transitions keep the specs
 above. The build pins a material3 alpha, where the expressive theme and its components are public;
-`CatsRadarThemeTest` fails if the theme stops moving with the expressive springs or drops the scheme,
-shapes or type it is given.
+`CatsRadarThemeTest` fails if the theme stops moving on the expressive springs, ignores the colour
+scheme it is given, or loses its own corners or heavier display, headline and title weights.
 
 ## At the edges
 

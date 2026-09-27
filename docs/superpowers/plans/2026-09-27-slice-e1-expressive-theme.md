@@ -83,9 +83,11 @@ class CatsRadarThemeTest {
         compose.setContent { CatsRadarTheme { motion = MaterialTheme.motionScheme } }
         compose.waitForIdle()
 
+        // Only the spatial springs differ from the standard scheme's; the effects springs are the same.
         val expressive = MotionScheme.expressive()
         assertEquals(expressive.defaultSpatialSpec<Float>(), motion?.defaultSpatialSpec<Float>())
-        assertEquals(expressive.defaultEffectsSpec<Float>(), motion?.defaultEffectsSpec<Float>())
+        assertEquals(expressive.fastSpatialSpec<Float>(), motion?.fastSpatialSpec<Float>())
+        assertEquals(expressive.slowSpatialSpec<Float>(), motion?.slowSpatialSpec<Float>())
     }
 
     @Test
@@ -110,8 +112,13 @@ class CatsRadarThemeTest {
         }
         compose.waitForIdle()
 
-        assertEquals(RoundedCornerShape(28.dp), shapes?.large)
-        assertEquals(FontWeight.Bold, typography?.displayLarge?.fontWeight)
+        val corners = shapes?.run { listOf(extraSmall, small, medium, large, extraLarge) }
+        assertEquals(listOf(8, 12, 20, 28, 36).map { RoundedCornerShape(it.dp) }, corners)
+        val weights = typography?.run {
+            listOf(displayLarge, displayMedium, displaySmall, headlineLarge, headlineMedium, headlineSmall, titleLarge)
+                .map { it.fontWeight }
+        }
+        assertEquals(List(3) { FontWeight.Bold } + List(4) { FontWeight.SemiBold }, weights)
     }
 }
 ```
