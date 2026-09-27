@@ -131,7 +131,7 @@ class EncountersStateMapper(
         val thumbnail = thumbnail()
         val coatOption = coat?.toOption()?.takeIf { showsCoat }
         return when {
-            thumbnail != null -> CellLead.Photo(thumbnail)
+            thumbnail != null -> CellLead.Photo(thumbnail, coatOption)
             coatOption != null -> CellLead.Coat(coatOption)
             else -> CellLead.Paw
         }

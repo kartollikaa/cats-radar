@@ -109,6 +109,24 @@ class EncountersStateMapperTest {
     }
 
     @Test
+    fun `a one-cat cell leading with its photo still carries its coat for its shape, and a shot carries none`() {
+        val photo = photoFixture("photo", BASE).copy(coat = CatCoat.BLACK)
+        val shot = shotFixture("s1", "s2", occurredAt = BASE + 8.hours).map { it.copy(coat = CatCoat.GINGER) }
+
+        val leads = mapper.map(listOf(photo) + shot, today, grid = false).rows
+            .filterIsInstance<EncountersRow.Single>()
+            .map { it.cell.lead }
+
+        assertEquals(
+            listOf(
+                CellLead.Photo("/data/photos/s1_thumb.jpg", coat = null),
+                CellLead.Photo("/data/photos/photo_thumb.jpg", coat = CoatOption.BLACK),
+            ),
+            leads,
+        )
+    }
+
+    @Test
     fun `an outing packs into a pair of full-size photos, then a tile row of the rest, under its header`() {
         val outing = listOf(
             encounterFixture("e1", BASE),
@@ -283,7 +301,7 @@ class EncountersStateMapperTest {
             mapOf(
                 "neither" to CellLead.Paw,
                 "coatOnly" to CellLead.Coat(CoatOption.GINGER),
-                "both" to CellLead.Photo("/data/photos/both_thumb.jpg"),
+                "both" to CellLead.Photo("/data/photos/both_thumb.jpg", coat = CoatOption.GINGER),
             ),
             leads,
         )
