@@ -85,6 +85,9 @@ internal class FakeTodayRepository : EncounterRepository {
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean =
         throw NotImplementedError("unused by this test")
 
+    override suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean =
+        throw NotImplementedError("unused by this test")
+
     override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit =
         throw NotImplementedError("unused by this test")
 

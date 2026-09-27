@@ -25,7 +25,9 @@ class FakeEncounterRepository :
     val attachLocationCalls = mutableListOf<String>()
     val setPlaceCellsCalls = mutableListOf<List<PlaceCellAssignment>>()
     val purgeCalls = mutableListOf<Instant>()
+    val removePhotoCalls = mutableListOf<Triple<String, String, Instant>>()
     var addPhotoShouldThrow: Throwable? = null
+    var removePhotoShouldThrow: Throwable? = null
 
     /** Runs after a successful write, before the result returns. */
     var afterAddPhoto: suspend () -> Unit = {}
@@ -118,6 +120,27 @@ class FakeEncounterRepository :
         }
         if (added) afterAddPhoto()
         return added
+    }
+
+    override suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean {
+        removePhotoShouldThrow?.let { throw it }
+        removePhotoCalls += Triple(encounterId, photoId, updatedAt)
+        var removed = false
+        encounters.update { list ->
+            removed = false
+            list.map { encounter ->
+                val ownsPhoto = encounter.id == encounterId &&
+                    encounter.deletedAt == null &&
+                    encounter.photos.any { it.id == photoId }
+                if (ownsPhoto) {
+                    removed = true
+                    encounter.copy(photos = encounter.photos.filterNot { it.id == photoId }, updatedAt = updatedAt)
+                } else {
+                    encounter
+                }
+            }
+        }
+        return removed
     }
 
     // Mirrors the DAO's WHERE deletedAt IS NULL guard, checked at write time.

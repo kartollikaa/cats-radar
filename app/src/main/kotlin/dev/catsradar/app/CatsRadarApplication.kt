@@ -40,7 +40,9 @@ import org.koin.core.context.startKoin
 class CatsRadarApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        tagReports(FirebaseCrashlytics.getInstance(), FirebaseAnalytics.getInstance(this), BuildConfig.BUILD_TYPE)
+        if (!BuildConfig.DEBUG) {
+            tagReports(FirebaseCrashlytics.getInstance(), FirebaseAnalytics.getInstance(this), BuildConfig.BUILD_TYPE)
+        }
         val koin = startKoin {
             androidLogger()
             androidContext(this@CatsRadarApplication)

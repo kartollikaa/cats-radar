@@ -25,6 +25,8 @@ internal data class AttachLocationCall(
 
 internal data class AddPhotoCall(val photo: EncounterPhotoEntity, val updatedAt: Instant)
 
+internal data class RemovePhotoCall(val encounterId: String, val photoId: String, val updatedAt: Instant)
+
 internal data class SetCoatCall(val id: String, val coat: CatCoat?, val updatedAt: Instant)
 
 internal class FakeEncounterDao : EncounterDao {
@@ -47,6 +49,8 @@ internal class FakeEncounterDao : EncounterDao {
     var attachLocationRows = 1
     var addPhotoResult: Boolean = true
     var addPhotoCall: AddPhotoCall? = null
+    var removePhotoResult: Boolean = true
+    var removePhotoCall: RemovePhotoCall? = null
     var setCoatCall: SetCoatCall? = null
     val setPlaceCellCalls = mutableListOf<PlaceCellAssignment>()
     var findBySourceDigestCall: String? = null
@@ -79,6 +83,14 @@ internal class FakeEncounterDao : EncounterDao {
     override suspend fun addPhoto(photo: EncounterPhotoEntity, updatedAt: Instant): Boolean {
         addPhotoCall = AddPhotoCall(photo, updatedAt)
         return addPhotoResult
+    }
+
+    override suspend fun deletePhotoFromLiveEncounter(encounterId: String, photoId: String): Int =
+        error("removePhoto is recorded whole")
+
+    override suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean {
+        removePhotoCall = RemovePhotoCall(encounterId, photoId, updatedAt)
+        return removePhotoResult
     }
 
     override suspend fun addPhotos(photos: List<EncounterPhotoEntity>) {

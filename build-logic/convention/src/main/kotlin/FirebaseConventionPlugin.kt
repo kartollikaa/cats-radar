@@ -6,13 +6,20 @@ import dev.catsradar.buildlogic.pluginId
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.tasks.Delete
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.register
 
 class FirebaseConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply(libs.pluginId("google-services"))
         pluginManager.apply(libs.pluginId("firebase-crashlytics"))
+
+        tasks.matching { it.name == "processDebugGoogleServices" }.configureEach {
+            enabled = false
+        }
+        registerDebugGoogleServicesCleanup()
 
         extensions.configure<ApplicationExtension> {
             buildTypes.getByName("release") {
@@ -29,5 +36,14 @@ class FirebaseConventionPlugin : Plugin<Project> {
             add("implementation", libs.library("firebase-analytics"))
             add("implementation", libs.library("firebase-config"))
         }
+    }
+}
+
+internal fun Project.registerDebugGoogleServicesCleanup() {
+    val clearDebugGoogleServices = tasks.register<Delete>("clearDebugGoogleServices") {
+        delete(layout.buildDirectory.dir("generated/res/processDebugGoogleServices"))
+    }
+    tasks.matching { it.name == "mergeDebugResources" }.configureEach {
+        dependsOn(clearDebugGoogleServices)
     }
 }

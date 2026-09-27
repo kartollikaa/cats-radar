@@ -1,10 +1,9 @@
 # Crash reports and analytics
 
-The app reports its crashes to Firebase Crashlytics, so a failure on a phone is seen without anyone
+The release app reports its crashes to Firebase Crashlytics, so a failure on a phone is seen without anyone
 having to describe it, and counts which screens are opened and what is done on them in Google Analytics for Firebase, so
-it is clear which parts of the app are used and from where. Every build reports, debug and release alike, and each report
-says which one it came from. There is no switch to turn it off. The app also reads its feature switches from
-Firebase Remote Config.
+it is clear which parts of the app are used and from where. A release has no switch to turn reporting off and also reads
+its feature switches from Firebase Remote Config. Debug builds do not initialize Firebase.
 
 ## What is sent
 
@@ -74,7 +73,7 @@ Firebase Remote Config.
 
 - **A Firebase installation id**, random and made on the phone at install time; it ties one
   install's reports together and is not tied to a person or an account.
-- **`build_type`** — `debug` or `release` — as a custom key on every crash report and a user property
+- **`build_type`** — `release` — as a custom key on every crash report and a user property
   on every analytics event.
 
 ## What is never sent
@@ -98,8 +97,8 @@ ad personalisation, ad storage and ad user data are off by default.
 - **Offline.** Reports and events wait on the phone and go when the network allows; nothing the user
   does waits for them.
 - **No Play Services.** Neither service needs them; reports and events still go.
-- **A debug build installed from a computer** reports like any other, tagged `debug`.
-- **The Firebase config** is `app/google-services.json`, registered for the application id
+- **A debug build** uses disabled analytics and non-fatal reporting implementations; Remote Config switches read false.
+- **The Firebase config** is `app/src/release/google-services.json`, registered for the application id
   `com.kartollika.catsradar`. A build under any other id fails at the google-services step rather
   than reporting into the wrong app.
 - **Release builds are shrunk and renamed by R8.** A release built on this machine uploads its
@@ -112,9 +111,10 @@ ad personalisation, ad storage and ad user data are off by default.
 ## Where the code lives
 
 - `build-logic/convention/src/main/kotlin/FirebaseConventionPlugin.kt` — `catsradar.firebase`:
-  the google-services and Crashlytics Gradle plugins and the Firebase libraries. Only `:app`
-  applies it; `:data` adds the Analytics library to its `androidMain` itself.
-- `app/google-services.json` — the Firebase project's config for this application id.
+  the google-services and Crashlytics Gradle plugins and the Firebase libraries; its debug
+  google-services task is disabled and its old generated resources are cleared before debug resources merge. Only
+  `:app` applies it; `:data` adds the Analytics library to its `androidMain` itself.
+- `app/src/release/google-services.json` — the Firebase project's config for this application id.
 - `app/src/main/AndroidManifest.xml` — the advertising switches, the removed `AD_ID` permission, and
   automatic screen reporting turned off (one activity hosts every screen, so it would only ever name
   that activity).
@@ -139,4 +139,4 @@ ad personalisation, ad storage and ad user data are off by default.
 
 ## Not handled yet
 
-- A setting to turn reporting off (the owner chose always on).
+- A setting to turn reporting off in a release (the owner chose always on there).
