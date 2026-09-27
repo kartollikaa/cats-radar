@@ -65,8 +65,9 @@ another service object is the case above.
   ```
   `Lazy` is not a way around start-up order. `WorkManager` and the Firebase instances exist before
   anything resolves their users — `CatsRadarApplication` initializes WorkManager right after
-  `startKoin()`, and Firebase starts before `Application.onCreate()` — so they are injected as
-  instances, and a test that builds the graph has WorkManager running before it resolves anything.
+  `startKoin()`, and a release build starts Firebase before `Application.onCreate()` — so they are
+  injected as instances, and a test that builds the graph has WorkManager running before it
+  resolves anything.
 - **A supplier `() -> T`** — when every use needs a fresh instance: a `Geocoder` keeps the locale it
   was built with, so `AndroidReverseGeocoder` builds one per lookup.
 
@@ -99,11 +100,9 @@ worker takes constructor parameters like any other class.
 - `KoinRuntimeResolutionTest` starts the real modules, with WorkManager running as it is in the app,
   and resolves every type obtained by hand, so a missing binding fails a JVM test. Unit tests build
   only the debug variant, whose Firebase ports (`Analytics`, `NonFatalReporter`, `FeatureToggles`)
-  are no-ops, so they and `SettingsStore` resolve fully without `FirebaseApp`. The release branches of
-  those bindings build their Firebase instances inline with `getInstance()` and look nothing up in
-  Koin; only a release build runs them. Each Store is resolved through `getStore()`, which cancels
-  its `viewModelScope` when the test ends, so nothing its `init` launched runs on into a later test
-  in the same Robolectric fork.
+  are no-ops, so they and `SettingsStore` resolve fully without `FirebaseApp`; no JVM test runs the
+  release branches, which build the Firebase reporters inline from `getInstance()`. Each Store is
+  resolved through `getStore()`, which cancels its `viewModelScope` when the test ends.
 
 No test sees a hand-built instance of a plain class with its own binding (`ImportBatches(context)`
 inside a scheduler); review catches that one.
