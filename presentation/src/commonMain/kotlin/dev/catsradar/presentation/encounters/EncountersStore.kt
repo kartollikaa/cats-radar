@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.DeletedBatch
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.repository.WalkRepository
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.DeleteEncounters
 import dev.catsradar.domain.usecase.ObserveEncounters
@@ -23,6 +24,7 @@ import kotlin.time.Clock
 class EncountersStore(
     observeEncounters: ObserveEncounters,
     settingsRepository: SettingsRepository,
+    walkRepository: WalkRepository,
     private val deleteEncounters: DeleteEncounters,
     private val undoDeleteEncounters: UndoDeleteEncounters,
     private val stateMapper: EncountersStateMapper,
@@ -35,10 +37,14 @@ class EncountersStore(
     private var undoTimeoutJob: Job? = null
 
     init {
-        combine(observeEncounters(), settingsRepository.encountersGrid()) { encounters, grid -> encounters to grid }
-            .onEach { (encounters, grid) ->
+        combine(
+            observeEncounters(),
+            settingsRepository.encountersGrid(),
+            walkRepository.observeAll(),
+        ) { encounters, grid, walks -> Triple(encounters, grid, walks) }
+            .onEach { (encounters, grid, walks) ->
                 setState {
-                    stateMapper.map(encounters, clock.today(timeZone), grid, selectedIds)
+                    stateMapper.map(encounters, clock.today(timeZone), grid, selectedIds, walks = walks)
                         .copy(removedCount = removedCount)
                 }
             }

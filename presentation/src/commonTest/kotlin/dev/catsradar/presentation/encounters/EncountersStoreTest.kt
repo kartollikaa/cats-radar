@@ -9,6 +9,7 @@ import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeEncounterRepository
 import dev.catsradar.presentation.counter.FakeSettingsRepository
+import dev.catsradar.presentation.counter.FakeWalkRepository
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,7 @@ class EncountersStoreTest {
     private val repository = FakeEncounterRepository()
     private val settings = FakeSettingsRepository()
     private val clock = FakeClock(NOW)
+    private val walks = FakeWalkRepository()
 
     @BeforeTest
     fun setUp() {
@@ -67,6 +69,17 @@ class EncountersStoreTest {
         runCurrent()
 
         assertEquals(setOf("1"), store.rowIds())
+    }
+
+    @Test
+    fun `a walk starting over an outing puts it on a walk, with no new encounter`() = runTest(mainDispatcher) {
+        val store = storeWith("1")
+        val before = store.state.value.rows.filterIsInstance<OutingHeader>().single().onWalk
+
+        walks.startAt(BASE - 5.minutes)
+        runCurrent()
+
+        assertEquals(false to true, before to store.state.value.rows.filterIsInstance<OutingHeader>().single().onWalk)
     }
 
     @Test
@@ -424,6 +437,7 @@ class EncountersStoreTest {
     private fun newStore(): EncountersStore = EncountersStore(
         observeEncounters = ObserveEncounters(repository),
         settingsRepository = settings,
+        walkRepository = walks,
         deleteEncounters = DeleteEncounters(repository, clock, analytics = NoAnalytics),
         undoDeleteEncounters = UndoDeleteEncounters(repository, analytics = NoAnalytics),
         stateMapper = EncountersStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
