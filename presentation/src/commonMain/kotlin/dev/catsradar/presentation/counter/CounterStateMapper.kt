@@ -8,6 +8,7 @@ import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.toRateState
+import kotlinx.collections.immutable.toImmutableList
 
 class CounterStateMapper(
     private val dateTimeFormatter: DateTimeFormatter,
@@ -44,11 +45,17 @@ class CounterStateMapper(
         milestone = milestone?.takeIf { count > 0 }?.toState(),
     )
 
-    fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
+    fun importSummary(
+        addedCount: Int,
+        skipped: Int,
+        failed: Int,
+        thumbPaths: List<String> = emptyList(),
+    ): ImportSummaryState = ImportSummaryState(
         added = addedCount,
         skipped = skipped.takeIf { it > 0 },
         failed = failed.takeIf { it > 0 },
         undoable = addedCount > 0,
+        thumbPaths = thumbPaths.map(photoStorage::resolve).toImmutableList(),
     )
 
     fun coatPrompt(encounter: Encounter): CoatPromptState =

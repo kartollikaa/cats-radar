@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.AddCatsToPhoto
+import dev.catsradar.domain.usecase.FindCatThumbnails
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
@@ -74,6 +75,7 @@ internal fun TestScope.newCounterStore(
             analytics = NoAnalytics,
         ),
         observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
+        findCatThumbnails = FindCatThumbnails(encounterRepository),
         settingsRepository = settingsRepository,
         stateMapper = CounterStateMapper(FakeDateTimeFormatter(), photoStorage),
         locationPermissionRequestState = locationPermissionRequestState,

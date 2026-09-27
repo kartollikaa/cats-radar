@@ -224,6 +224,24 @@ internal class FakeEncounterRepository : EncounterRepository {
 
 // A tally logged by something other than this Store — e.g. the widget (F4) writing to the same
 // repository — to prove the total is read back from the repository, not kept locally.
+/** The cat with one photo whose thumbnail is [thumbPath]. */
+internal fun Encounter.withThumb(thumbPath: String): Encounter = copy(
+    photos = listOf(
+        EncounterPhoto(
+            id = "$id-photo",
+            encounterId = id,
+            photoPath = "$id.jpg",
+            thumbPath = thumbPath,
+            galleryUri = null,
+            sourceMediaUri = null,
+            sourceDigest = null,
+            deviceId = deviceId,
+            addedAt = createdAt,
+            shotId = "$id-photo",
+        ),
+    ),
+)
+
 internal fun externalEncounter(id: String, occurredAt: Instant = Instant.parse("2026-01-01T00:00:00Z")): Encounter =
     Encounter(
         id = id,

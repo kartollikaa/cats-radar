@@ -485,6 +485,29 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `a finished import shows the first three added cats' photos`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        repository.insert(externalEncounter("plain"))
+        listOf("b", "c", "d", "e").forEach { repository.insert(externalEncounter(it).withThumb("${it}_thumb.jpg")) }
+        runCurrent()
+
+        store.dispatch(
+            CounterIntent.Import.Finished(
+                "run-1",
+                persistentListOf("plain", "b", "c", "d", "e"),
+                skipped = 0,
+                failed = 0
+            ),
+        )
+        runCurrent()
+
+        assertEquals(
+            persistentListOf("/data/photos/b_thumb.jpg", "/data/photos/c_thumb.jpg", "/data/photos/d_thumb.jpg"),
+            store.state.value.importSummary?.thumbPaths,
+        )
+    }
+
+    @Test
     fun `a run where nothing went wrong says so by omission, not with zeroes`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
         store.dispatch(CounterIntent.Import.Finished("run-1", persistentListOf("id-1"), skipped = 0, failed = 0))

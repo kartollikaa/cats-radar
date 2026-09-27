@@ -7,6 +7,7 @@ import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.AddCatsToPhoto
+import dev.catsradar.domain.usecase.FindCatThumbnails
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
@@ -28,6 +29,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+// The finished import's card shows this many of the added cats' photos.
+private const val IMPORT_THUMBNAILS = 3
+
 @Suppress("LongParameterList") // one parameter per collaborator
 class CounterStore(
     private val logTally: LogTally,
@@ -37,6 +41,7 @@ class CounterStore(
     setCoat: SetCoat,
     addCatsToPhoto: AddCatsToPhoto,
     observeStats: ObserveStats,
+    private val findCatThumbnails: FindCatThumbnails,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
@@ -185,6 +190,7 @@ class CounterStore(
             }
             is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
                 importedIds = intent.addedIds
+                val thumbPaths = findCatThumbnails(intent.addedIds, limit = IMPORT_THUMBNAILS)
                 setState {
                     copy(
                         importProgress = null,
@@ -192,6 +198,7 @@ class CounterStore(
                             addedCount = intent.addedIds.size,
                             skipped = intent.skipped,
                             failed = intent.failed,
+                            thumbPaths = thumbPaths,
                         ),
                     )
                 }
