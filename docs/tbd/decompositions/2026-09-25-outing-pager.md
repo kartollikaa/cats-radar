@@ -15,8 +15,8 @@
 | P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | merged |
 | P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | merged |
 | P3a-1 | The detail state holds pages | `Loaded` carries `pages` of `CatPage` and the cat on screen; the screen draws that page and every tap names it; the Store still reads one cat. | safe | ~630 | P2 | merged |
-| P3a-2 | One Store serves the outing | The Store reads the outing through `outingWindow` with `OutingPages` (anchor and shown set); per-cat attaching; a cat deleted elsewhere hands over to its neighbour. | safe | ~700 | P3a-1 | planned |
-| P3b | The detail screen pages through its outing | The pager keyed by cat id, following `currentId`; "2 / 5" in the bar; `PageSettled`; restore by id. | safe | ~300 | P3a-2 | planned |
+| P3a-2 | One Store serves the outing | The Store reads the outing through `outingWindow` with `OutingPages` (anchor and shown set); per-cat attaching; a cat deleted elsewhere hands over to its neighbour. | safe | ~750 | P3a-1 | merged |
+| P3b | The detail screen pages through its outing | The pager keyed by cat id, following `currentId`; "2 / 5" in the bar; `PageSettled`; restore by id. | safe | ~740 | P3a-2 | in-review |
 | P4 | A delete leaves the pager with an undo bar | The deleted cat leaves the pages, the neighbour shows, and an undo bar replaces the *removed* state except for the last cat. | safe | ~500 | P3b | planned |
 | P5a | Moving to the neighbouring outing | Neighbours in state, `OutingEdgeReleased`, the slide keyed by the jump counter, TalkBack's *Newer/Older outing*. | safe | ~400 | P3b | planned |
 | P5b | Stretching past the edge opens the next outing | The pull on the pager's nested scroll: the give, the label, the threshold haptic, cancel, RTL. | safe | ~550 | P5a | planned |
@@ -119,4 +119,18 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   the cat into what landed meanwhile — M8's several-photos picker and L2's *Set on map*. Taps act only on the cat the
   screen shows until P3a-2 widens that to the pages. The plan review for P3 measured it at ~1,230 lines, so it splits
   into P3a-1, P3a-2 and P3b.
-- 2026-09-27: **P3a-1 merged** as #188. First shipped in v1.5.1-beta; P1 and P2 first shipped in v1.5.0-beta.
+- 2026-09-26: **P3a-1 merged** as #188 (~670 reviewable lines, two thirds the forced migration of main's tests to
+  the page state); first shipped in v1.5.1-beta, P1 and P2 in v1.5.0-beta. Four intermediate commits of its fix
+  wave do not compile `:app` tests — a shared test helper arrived one commit after its users; implementer briefs
+  now require compiling tests before each commit.
+- 2026-09-27: **P3a-2 built** (~750 reviewable lines, three fifths tests). `OutingPages` hands out the window and the
+  cat on screen as one `ShownPages`, since `flatMapLatest` can deliver an older window after the pages moved on; the
+  mapper now refuses a cat on screen off the pages. `settle` and `release` are unit-tested ahead of `PageSettled` (P3b)
+  and `OutingEdgeReleased` (P5a). While the cat deleted here is gone, emissions wait, so the removed state and Undo
+  behave as before P4. The presentation fake's `observeAll` now drops deleted rows, as the DAO does.
+- 2026-09-27: **P3b built**, stacked on P3a-2 (#204): ~740 reviewable lines, of which ~130 move the page content
+  into `CatPager.kt` (the screen file had reached detekt's function limit) and ~400 are tests. The nested photo pager
+  hands a drag past its last photo to the cats pager with Compose's default nested scrolling; the destination
+  saves the cat on screen with `rememberSaveable`, proven by a restore with a fresh `ViewModelStore`.
+- 2026-09-27: **P3a-2 merged** as #204, with main merged in twice; the second merge resolved `KoinRuntimeResolutionTest`
+  against main's `getStore()` helper. P3b stacked on it and retargeted to main once it landed.

@@ -148,7 +148,8 @@ badge and an outline; cards and list rows also turn to a tinted background. Dese
 cat, the ✕ and system back all end the selection; back ends it without leaving the tab. Whether a
 tap opens or selects is the Store's call, not the screen's: every tap reaches `EncountersStore` as
 `EncounterClicked`, and only outside a selection does it answer with `OpenEncounter` (*a tap outside
-selection opens the encounter and selects nothing*). A selection survives switching between the
+selection opens the encounter and selects nothing*). The cat opens among the other cats of its outing, and a
+swipe there moves between them (see [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)). A selection survives switching between the
 grid and the list (*a selection survives turning the grid off*).
 
 Delete is a soft delete with an undo, like the detail screen's, and asks nothing first. The selected

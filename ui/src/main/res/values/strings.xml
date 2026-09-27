@@ -189,6 +189,8 @@
     <string name="detail_photo_attaching">Attaching the photo</string>
     <string name="detail_open_photo">Open full screen</string>
     <string name="detail_back">Back</string>
+    <string name="detail_position">%1$d / %2$d</string>
+    <string name="detail_position_description">Cat %1$d of %2$d</string>
     <string name="detail_show_on_map">Show on the map</string>
     <string name="detail_set_location">Set on map</string>
 
@@ -213,8 +215,12 @@
     <string name="viewer_position_description">Photo %1$d of %2$d</string>
 
     <string name="tab_settings">Settings</string>
-    <string name="settings_save_originals">Keep photos in the gallery</string>
-    <string name="settings_save_originals_explained">The app always keeps its own copy</string>
+    <string name="settings_save_originals">Save camera photos to gallery</string>
+    <string name="settings_save_originals_explained">Full-size originals, in the Cats Radar album. The app always keeps a smaller copy</string>
+    <string name="settings_save_originals_off_title">Stop saving to the gallery?</string>
+    <string name="settings_save_originals_off_message">New camera photos will keep only the app\'s smaller copy. Their full-size originals can\'t be recovered later.</string>
+    <string name="settings_save_originals_off_confirm">Turn off</string>
+    <string name="settings_save_originals_off_cancel">Cancel</string>
     <string name="settings_section_logging">Photos</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_explained">A single file with every cat, its photos and its places</string>

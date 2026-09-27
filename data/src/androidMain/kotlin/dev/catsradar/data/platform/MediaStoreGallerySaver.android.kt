@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+// Settings names this album in settings_save_originals_explained; rename both together.
 private const val GALLERY_SUBDIRECTORY = "Cats Radar"
 
 class MediaStoreGallerySaver(
