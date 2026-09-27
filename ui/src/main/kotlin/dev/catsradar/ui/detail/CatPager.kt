@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -131,12 +132,15 @@ private fun CatPageContent(
         }
         WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
-            CoatPicker(
-                selected = page.coat,
-                modifier = Modifier.padding(vertical = 8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                onCoatClick = onCoatClick,
-            )
+            // Keyed by the cat: another cat of the same photo opens the row on its own coat.
+            key(page.id) {
+                CoatPicker(
+                    selected = page.coat,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    onCoatClick = onCoatClick,
+                )
+            }
         }
         OutlinedButton(
             onClick = onDeleteClick,

@@ -77,6 +77,7 @@ class EncounterDetailShotRowTest {
         compose.waitForIdle()
 
         compose.onNodeWithContentDescription(label(R.string.coat_black)).assertIsSelected()
+        compose.onNodeWithText(label(R.string.coat_black)).assertIsDisplayed()
         assertTrue(scrolled > 0f, "the page did not scroll")
         assertEquals(scrolled, pageScroll())
         assertEquals(emptyList(), settled)
@@ -94,6 +95,7 @@ class EncounterDetailShotRowTest {
         location = LocationLabel.NONE,
         coordinatesLabel = null,
         accuracyMeters = null,
+        coat = if (onScreen == "s2") CoatOption.BLACK else CoatOption.GINGER,
         onThisPhoto = persistentListOf(
             ShotCat("s1", CoatOption.GINGER, onScreen = onScreen == "s1"),
             ShotCat("s2", CoatOption.BLACK, onScreen = onScreen == "s2"),

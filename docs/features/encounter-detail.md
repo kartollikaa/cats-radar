@@ -87,8 +87,8 @@ the one the screen was opened on or last moved to, else the shot's first cat, th
 
 Under its photos the page has an **On this photo** row: every cat of the shot, oldest first, as its coat's face
 or a paw for a coat nobody noted, the cat on screen ringed and read as selected. A tap on another face shows that
-cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, its place
-and Delete are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
+cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, opened on
+that cat's coat, its place and Delete are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
 coat and delete act on the cat of the photo on screen*; `EncounterDetailShotRowTest`, *switching the cat of the
 photo keeps the pager where it is*). Deleting one of them takes only that cat off the photo; the others stay on the
 page. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers
