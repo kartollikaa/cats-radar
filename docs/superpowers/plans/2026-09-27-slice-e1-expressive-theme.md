@@ -4,7 +4,7 @@
 
 **Goal:** `CatsRadarTheme` draws with `MaterialExpressiveTheme` and `MotionScheme.expressive()`, keeping its colour scheme, shapes and typography, and `app-shell.md` stops saying the expressive theme is out of reach.
 
-**Architecture:** One call changes in `:ui`: `MaterialTheme(...)` becomes `MaterialExpressiveTheme(colorScheme, MotionScheme.expressive(), shapes, typography, content)`. `MaterialExpressiveTheme` provides the internal `LocalUsingExpressiveTheme = true`, which is what switches components to their Expressive defaults; the public, testable effect is `MaterialTheme.motionScheme`. A Robolectric Compose test in `:app` pins the motion scheme and that the scheme, shapes and typography passed in still reach the content.
+**Architecture:** One call changes in `:ui`: `MaterialTheme(...)` becomes `MaterialExpressiveTheme(colorScheme, MotionScheme.expressive(), shapes, typography, content)`. `MaterialExpressiveTheme` provides the internal `LocalUsingExpressiveTheme = true`, which in the pinned version only `MaterialTheme` itself reads; the theme's one effect on components is the motion scheme, and that is the public, testable effect (`MaterialTheme.motionScheme`). A Robolectric Compose test in `:app` pins the motion scheme and that the scheme, shapes and typography passed in still reach the content.
 
 **Tech Stack:** Compose Material 3 `1.5.0-alpha27` (pinned in `gradle/libs.versions.toml`), Robolectric, `createComposeRule` (`androidx.compose.ui.test.junit4.v2`).
 
@@ -78,12 +78,14 @@ class CatsRadarThemeTest {
     val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
     @Test
-    fun `the theme moves with the expressive motion scheme`() {
+    fun `the theme moves with the expressive springs`() {
         var motion: MotionScheme? = null
         compose.setContent { CatsRadarTheme { motion = MaterialTheme.motionScheme } }
         compose.waitForIdle()
 
-        assertSame(MotionScheme.expressive(), motion)
+        val expressive = MotionScheme.expressive()
+        assertEquals(expressive.defaultSpatialSpec<Float>(), motion?.defaultSpatialSpec<Float>())
+        assertEquals(expressive.defaultEffectsSpec<Float>(), motion?.defaultEffectsSpec<Float>())
     }
 
     @Test
@@ -117,7 +119,7 @@ class CatsRadarThemeTest {
 - [ ] **Step 2: Run it and watch the motion test fail**
 
 Run (ctx_execute): `./gradlew :app:testDebugUnitTest --tests 'dev.catsradar.app.theme.CatsRadarThemeTest' --console=plain | tail -30`
-Expected: FAIL. In `app/build/test-results/testDebugUnitTest/TEST-dev.catsradar.app.theme.CatsRadarThemeTest.xml`, `the theme moves with the expressive motion scheme` fails with an `AssertionError` (the standard scheme); the other two pass, since today's theme already passes them through.
+Expected: FAIL. In `app/build/test-results/testDebugUnitTest/TEST-dev.catsradar.app.theme.CatsRadarThemeTest.xml`, `the theme moves with the expressive springs` fails with an `AssertionError` (the standard scheme's springs); the other two pass, since today's theme already passes them through.
 
 - [ ] **Step 3: Write the implementation**
 

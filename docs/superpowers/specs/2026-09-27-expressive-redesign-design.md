@@ -55,13 +55,15 @@ Read against renders of the current build and the composables in `ui/…/counter
 ## 1. The theme
 
 `CatsRadarTheme` draws with `MaterialExpressiveTheme` and `MotionScheme.expressive()` in place of
-`MaterialTheme`, with the same colour scheme, shapes and typography. Components take their Expressive
-defaults: buttons that change shape under a press, spring motion. The build already pins material3
-`1.5.0-alpha27` for `SplitButtonLayout`, and in that version `MaterialExpressiveTheme`, `MotionScheme`,
-`MaterialShapes`, `ButtonGroup`, the carousels, the wavy progress indicators and the `*Emphasized`
-type styles are public behind the Expressive opt-in (checked against the library's classes,
-2026-09-27). `app-shell.md`'s *Why not `MaterialExpressiveTheme`* paragraph says otherwise and is
-replaced.
+`MaterialTheme`, with the same colour scheme, shapes and typography. In the material3 the build pins,
+the motion scheme is the one thing this changes: components that animate through it move on its
+springs, and no frame at rest changes. No component reads the Expressive flag, so a button that
+changes shape under a press needs the Expressive components' own shape arguments, and the slices
+that restyle a control use them. The build already pins a material3 alpha for `SplitButtonLayout`,
+and in it `MaterialExpressiveTheme`, `MotionScheme`, `MaterialShapes`, `ButtonGroup`, the carousels,
+the wavy progress indicators and the `*Emphasized` type styles are public, some behind the Expressive
+opt-in (checked against the library's sources). `app-shell.md`'s *Why not `MaterialExpressiveTheme`*
+paragraph says otherwise and is replaced.
 
 - **Type.** The count, the stat values, the cat's title and the place line use the `*Emphasized`
   variants of the styles they use today. Everything else keeps its style. The font is the
@@ -70,8 +72,9 @@ replaced.
   photos and `medium` (20 dp) for tiles and the map.
 - **Screen transitions** keep their own specs; `NavTransitionTimingTest` does not change.
 
-The theme reaches every screen, so the slice that changes it renders every tab, light and dark,
-before and after. The alpha pin is meant to go once the BOM's material3 has `SplitButtonLayout`; if
+The theme reaches every screen, so the slice that changes it renders the screens it can draw, light
+and dark, before and after, as a check that no frame at rest moves. The Map tab and the bottom bar
+are not drawn by that harness; a change to motion alone cannot alter them at rest. The alpha pin is meant to go once the BOM's material3 has `SplitButtonLayout`; if
 that version hides any of these APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
