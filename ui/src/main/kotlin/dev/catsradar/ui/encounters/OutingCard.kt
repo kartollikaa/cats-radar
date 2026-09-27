@@ -40,6 +40,7 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 const val OutingCardTestTag = "outing-card"
 const val WalkChipTestTag = "walk-chip"
+const val MapPillIconTestTag = "map-pill-icon"
 
 private val CardPadding = 8.dp
 private val HeaderStart = 4.dp
@@ -172,7 +173,7 @@ private fun OnTheMapPill(outingLabel: String, modifier: Modifier = Modifier, onC
         Icon(
             painter = painterResource(R.drawable.ic_nav_map),
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(18.dp).testTag(MapPillIconTestTag),
         )
         Text(text = stringResource(R.string.encounters_outing_on_map), modifier = Modifier.padding(start = 8.dp))
     }

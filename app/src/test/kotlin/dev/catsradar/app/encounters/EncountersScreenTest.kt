@@ -40,11 +40,14 @@ import dev.catsradar.presentation.encounters.EncountersTotals
 import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
+import dev.catsradar.presentation.map.MapSpotState
 import dev.catsradar.presentation.regions.RegionsState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.encounters.EncountersScreen
+import dev.catsradar.ui.encounters.MapPillIconTestTag
 import dev.catsradar.ui.encounters.OutingCardTestTag
 import dev.catsradar.ui.encounters.WalkChipTestTag
+import dev.catsradar.ui.map.MapSpotScreen
 import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -123,8 +126,11 @@ class EncountersScreenTest {
 
         val day = compose.onNodeWithText("Today")
         day.assertIsDisplayed()
-        compose.onNodeWithText("4:12 PM · 6 cats · 48 min").assertIsDisplayed()
+        val summary = compose.onNodeWithText("4:12 PM · 6 cats · 48 min")
+        summary.assertIsDisplayed()
         compose.onNodeWithText("2:32 PM · 3 cats").assertIsDisplayed()
+        val underDay = summary.getUnclippedBoundsInRoot().top >= day.getUnclippedBoundsInRoot().bottom
+        assertTrue(underDay, "summary under the day")
         assertEquals(
             typography.titleLargeEmphasized.fontSize to typography.titleLargeEmphasized.fontWeight,
             day.style().let { it.fontSize to it.fontWeight },
@@ -140,6 +146,10 @@ class EncountersScreenTest {
         val chip = compose.onAllNodesWithTag(WalkChipTestTag, useUnmergedTree = true)
         chip.assertCountEquals(1)
         assertEquals(scheme.tertiaryContainer, chip[0].startPixel())
+        val walkedHeader = cardPieces().first()
+        val chipBounds = chip[0].getUnclippedBoundsInRoot()
+        val inWalkedHeader = chipBounds.top >= walkedHeader.top && chipBounds.bottom <= walkedHeader.bottom
+        assertTrue(inWalkedHeader, "in the walked header")
     }
 
     @Test
@@ -150,6 +160,14 @@ class EncountersScreenTest {
         val pills = compose.onAllNodesWithText(context.getString(R.string.encounters_outing_on_map))
         pills.assertCountEquals(1)
         assertEquals(scheme.secondaryContainer, pills[0].startPixel())
+        val pill = pills[0].getUnclippedBoundsInRoot()
+        val icon = compose.onAllNodesWithTag(MapPillIconTestTag, useUnmergedTree = true)[0].getUnclippedBoundsInRoot()
+        assertEquals(18.dp, icon.right - icon.left, "the map icon")
+        assertTrue(icon.left >= pill.left && icon.right <= pill.right, "the icon inside the pill")
+        val day = compose.onNodeWithText("Today").getUnclippedBoundsInRoot()
+        val header = cardPieces().first()
+        assertTrue(pill.top < day.bottom && pill.bottom > day.top, "the pill on the day's line")
+        assertTrue(header.right - pill.right <= 12.dp, "the pill at the header's end")
         pills[0].performClick()
         assertEquals(listOf("a6"), reported)
     }
@@ -174,6 +192,12 @@ class EncountersScreenTest {
             val closing = pieces[first - 1]
             val centre = closing.left + (closing.right - closing.left) / 2
             assertEquals(scheme.surfaceContainerLow, pixelAt(centre, pieces[0].bottom - 2.dp), "${shown.layout} header")
+            val rowGap = if (shown.layout == EncountersLayout.LIST) 2.dp else 8.dp
+            assertEquals(
+                scheme.surfaceContainerLow,
+                pixelAt(centre, pieces[1].bottom - rowGap / 2),
+                "${shown.layout} between two rows",
+            )
             assertEquals(scheme.surfaceContainerLow, pixelAt(centre, closing.bottom - 2.dp), "${shown.layout} closing")
             val nextTop = pieces[first].top
             assertTrue(nextTop > closing.bottom, "${shown.layout} gap")
@@ -183,13 +207,36 @@ class EncountersScreenTest {
     }
 
     @Test
-    fun `the Places list draws its outings without cards`() {
+    fun `the Places list draws its outings as before, without cards`() {
         compose.setContent {
-            CatsRadarTheme { RegionsScreen(state = RegionsState.Cats(header = null, rows = list.rows)) }
+            CatsRadarTheme {
+                scheme = MaterialTheme.colorScheme
+                Surface { RegionsScreen(state = RegionsState.Cats(header = null, rows = list.rows)) }
+            }
         }
 
+        assertDrawnWithoutCards()
+    }
+
+    @Test
+    fun `the map's spot sheet draws its outings as before, without cards`() {
+        compose.setContent {
+            CatsRadarTheme {
+                scheme = MaterialTheme.colorScheme
+                Surface { MapSpotScreen(state = MapSpotState.Listed(catCount = 3, rows = list.rows)) }
+            }
+        }
+
+        assertDrawnWithoutCards()
+    }
+
+    // The old header: its one-line label, and the screen's own background under it rather than a card's.
+    private fun assertDrawnWithoutCards() {
         cards().assertCountEquals(0)
         compose.onAllNodesWithText(context.getString(R.string.encounters_on_a_walk)).assertCountEquals(0)
+        val label = compose.onNodeWithText("Today, 4:12 PM").getUnclippedBoundsInRoot()
+        val underLabel = pixelAt(label.left + 2.dp, label.bottom + 2.dp)
+        assertEquals(scheme.surface, underLabel)
     }
 
     // The number of card pieces each outing is drawn in: its header and each of its rows.
