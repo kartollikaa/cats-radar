@@ -115,14 +115,14 @@ takes them back*).
   Counter reads it back each time it is shown and again after a restart, so a summary whose time
   never ran out — the app was closed or killed first — comes back with a fresh countdown.
 - **A photo keeps its GPS only when the app may see where photos were taken.** Android strips the
-  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION`, so the gallery
-  icon asks for it first — the import starts reading photos the moment they are picked — and opens
-  the gallery whatever the answer, unless that answer shared photos itself (below). It asks only
-  while the app has no such access: once the permission is granted, or limited access taken, the
-  gallery opens straight away. The **date survives** either way, so a photo imported without that
-  access still lands on the day it was taken; it just gets no location. Android stops asking after
-  a second refusal; the switch then lives in the app's system permissions under *Photos and
-  videos*.
+  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION` or, from
+  Android 14, limited access (below), so the gallery icon asks for the permission first — the import
+  starts reading photos the moment they are picked — and opens the gallery whatever the answer,
+  unless that answer shared photos itself. It asks only while the app has no such access:
+  once the permission is granted, or limited access taken, the gallery opens straight away. The
+  **date survives** either way, so a photo imported without that access still lands on the day it
+  was taken; it just gets no location. Android stops asking after a second refusal; the switch then
+  lives in the app's system permissions under *Photos and videos*.
 - **The dialog reads as access to photos and videos** — to photos, media and files before Android
   13 — because Android files this permission under that group. The app declares no permission to
   read the gallery, so *Allow all* grants it the location of the photos it is handed and nothing
