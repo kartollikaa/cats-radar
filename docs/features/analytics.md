@@ -100,16 +100,19 @@ ad personalisation, ad storage and ad user data are off by default.
 
 ## Reading the data
 
-- **Parameters in the Analytics reports.** A report shows an event's parameter only once it is
-  registered as a custom definition: the words as event-scoped dimensions, the counts as metrics,
-  `build_type` as a user-scoped dimension. A registration covers events logged after it, never earlier
-  ones, so a parameter added to the catalogue needs its own registration when it ships. Realtime and
-  DebugView show every parameter without one.
-- **Raw events in BigQuery.** Analytics exports every event once a day, with all its parameters and
-  user properties, to the `analytics_<property id>` dataset of the Firebase project — one
-  `events_YYYYMMDD` table per day, starting from the day the export was linked. It runs in the no-cost
-  BigQuery sandbox, whose tables expire and whose storage is capped, and it carries no advertising
-  identifiers. It adds no data to what Analytics already holds.
+- **Parameters in the Analytics reports.** Apart from `screen_name`, which Analytics reads on its
+  own, a report shows an event's parameter only once it is registered as a custom definition: the words
+  as event-scoped dimensions, the counts as metrics, `build_type` as a user-scoped dimension. A
+  registration covers events logged after it, never earlier ones, so a parameter added to the catalogue
+  needs its own registration when it ships. Realtime shows every parameter without one, and so does
+  DebugView for a release build put in debug mode.
+- **Screens.** The Pages and screens report groups by screen class, which is always `MainActivity`;
+  switching its dimension to the screen name shows the `screen_name` values.
+- **Raw events in BigQuery.** Analytics exports every event daily, with all its parameters and user
+  properties, to the `analytics_<property id>` dataset of the Firebase project — one `events_YYYYMMDD`
+  table per day, from the export's linking onward. It runs in the no-cost BigQuery sandbox: its tables
+  expire, its storage cap is for the project's lifetime, and once the cap is reached the export stops.
+  It carries no advertising identifiers and adds no data to what Analytics already holds.
 
 ## At the edges
 

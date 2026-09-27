@@ -6,8 +6,9 @@ Parent spec: [2026-09-21-cats-radar-design.md](./2026-09-21-cats-radar-design.md
 ## 1. Summary
 
 The app reports its crashes to Firebase Crashlytics and a fixed catalogue of product events to Google
-Analytics for Firebase, so the owner can see what breaks and which features are used. Nothing that
-places a cat — or the person counting it — ever leaves the phone.
+Analytics for Firebase, so the owner can see what breaks and which features are used. Nothing the app
+knows that places a cat — or the person counting it — ever leaves the phone; Analytics places a phone
+only by its network address, to a country and city.
 
 ### Goals
 
