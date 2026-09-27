@@ -11,6 +11,8 @@ import android.net.Uri
 import android.os.Looper
 import android.provider.MediaStore
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.SemanticsNodeInteractionCollection
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -51,7 +53,9 @@ import org.koin.dsl.module
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowContentResolver
 import org.robolectric.shadows.ShadowToast
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
@@ -126,12 +130,30 @@ class PhotoViewerEntryTest {
     }
 
     @Test
-    fun `an original deleted from the gallery is named as such by the nav host's own viewer entry`() {
-        tapOpenInGallery(galleryHolds = "content://media/external/images/media/7")
+    fun `an original deleted from the gallery is not offered by the nav host's own viewer entry`() {
+        val gallery = GalleryHolding("content://media/external/images/media/7")
+        showSavedOriginal(gallery)
 
+        awaitTheDatabase { gallery.askedAbout(SAVED) && compose.onAllNodes(removePhoto()).isNotEmpty() }
+
+        assertFailsWith<ComposeTimeoutException> {
+            awaitTheDatabase(NEVER_OFFERED_MS) { compose.onAllNodes(openInGallery()).isNotEmpty() }
+        }
+    }
+
+    @Test
+    fun `an original deleted after the viewer checked it is named as such at the tap, and offered no more`() {
+        val gallery = GalleryHolding(SAVED)
+        showSavedOriginal(gallery)
+        awaitTheDatabase { compose.onAllNodes(openInGallery()).fetchSemanticsNodes().isNotEmpty() }
+        gallery.item = "content://media/external/images/media/7"
+
+        compose.onNode(openInGallery()).performClick()
         awaitTheDatabase { ShadowToast.getTextOfLatestToast() != null }
+
         assertEquals(context.getString(R.string.viewer_gallery_gone), ShadowToast.getTextOfLatestToast())
         assertNull(started)
+        compose.onNode(openInGallery()).assertDoesNotExist()
     }
 
     @Test
@@ -179,22 +201,32 @@ class PhotoViewerEntryTest {
     }
 
     private fun tapOpenInGallery(galleryHolds: String) {
-        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, GalleryHolding(galleryHolds))
+        showSavedOriginal(GalleryHolding(galleryHolds))
+        awaitTheDatabase { compose.onAllNodes(openInGallery()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(openInGallery()).performClick()
+    }
+
+    private fun showSavedOriginal(gallery: GalleryHolding) {
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, gallery)
         val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
         show(keys, cat = { install -> photographed(install, galleryUri = SAVED) })
-        val openInGallery = hasContentDescription(context.getString(R.string.viewer_open_in_gallery))
-        awaitTheDatabase { compose.onAllNodes(openInGallery).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNode(openInGallery).performClick()
     }
+
+    private fun openInGallery() = hasContentDescription(context.getString(R.string.viewer_open_in_gallery))
+
+    private fun removePhoto() = hasContentDescription(context.getString(R.string.viewer_remove_photo))
+
+    private fun SemanticsNodeInteractionCollection.isNotEmpty() = fetchSemanticsNodes().isNotEmpty()
 
     private var started: Intent? = null
         get() = field ?: shadowOf(context as Application).nextStartedActivity?.also { field = it }
 
     // Robolectric's paused main looper delivers the database's answer only when idled; a still screen never idles it.
-    private fun awaitTheDatabase(condition: () -> Boolean) = compose.waitUntil(timeoutMillis = LOAD_TIMEOUT_MS) {
-        shadowOf(Looper.getMainLooper()).idle()
-        condition()
-    }
+    private fun awaitTheDatabase(timeoutMillis: Long = LOAD_TIMEOUT_MS, condition: () -> Boolean) =
+        compose.waitUntil(timeoutMillis = timeoutMillis) {
+            shadowOf(Looper.getMainLooper()).idle()
+            condition()
+        }
 
     private fun show(
         keys: List<NavKey>,
@@ -241,7 +273,11 @@ class PhotoViewerEntryTest {
     private fun photo() = compose.onAllNodes(photoMatcher())
 
     /** A MediaStore that holds exactly [item]. */
-    private class GalleryHolding(private val item: String) : ContentProvider() {
+    private class GalleryHolding(@Volatile var item: String) : ContentProvider() {
+        private val asked = CopyOnWriteArrayList<String>()
+
+        fun askedAbout(uri: String) = uri in asked
+
         override fun onCreate(): Boolean = true
 
         override fun query(
@@ -251,6 +287,7 @@ class PhotoViewerEntryTest {
             selectionArgs: Array<out String>?,
             sortOrder: String?,
         ): Cursor = MatrixCursor(arrayOf(MediaStore.MediaColumns._ID)).apply {
+            asked += uri.toString()
             if (uri.toString() == item) addRow(arrayOf<Any>(uri.lastPathSegment.orEmpty()))
         }
 
@@ -265,6 +302,7 @@ class PhotoViewerEntryTest {
         const val PHOTO_ID = "photo-of-cat-1"
         const val SAVED = "content://media/external/images/media/42"
         const val LOAD_TIMEOUT_MS = 5_000L
+        const val NEVER_OFFERED_MS = 1_000L
         val OCCURRED = Instant.parse("2026-09-21T10:00:00Z")
     }
 }
