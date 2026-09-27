@@ -35,8 +35,8 @@ behind it.
 // component — no background
 @ThemePreviews
 @Composable
-private fun UndoChipPreview() {
-  CatsRadarTheme { UndoChip(modifier = Modifier.padding(16.dp)) }
+private fun UndoButtonPreview() {
+  CatsRadarTheme { UndoButton(modifier = Modifier.padding(16.dp)) }
 }
 
 // screen — opt-in background

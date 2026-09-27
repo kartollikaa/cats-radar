@@ -32,7 +32,7 @@ internal fun WalkRow(
                     onWalkingChange = onWalkingModeChange,
                 )
             },
-            { UndoChip(visible = undoVisible, onClick = onUndoClick) },
+            { UndoButton(visible = undoVisible, onClick = onUndoClick) },
         ),
         modifier = modifier.fillMaxWidth(),
     ) { (walkItems, undoItems), constraints ->

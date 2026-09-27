@@ -5,17 +5,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.isWhole
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.RateState
@@ -85,9 +84,9 @@ class CurrentOutingTest {
     fun `short of room the count gives way first, and the time and the rate stay whole`() {
         show(longOuting)
 
-        assertFalse(isWhole(CATS), "the count is cut short")
-        assertTrue(isWhole(LONG_ELAPSED), "the time is whole")
-        assertTrue(isWhole(FAST_RATE), "the rate is whole")
+        assertFalse(compose.isWhole(CATS), "the count is cut short")
+        assertTrue(compose.isWhole(LONG_ELAPSED), "the time is whole")
+        assertTrue(compose.isWhole(FAST_RATE), "the rate is whole")
     }
 
     @Test
@@ -95,8 +94,8 @@ class CurrentOutingTest {
     fun `shorter still the time gives way too, and the rate stays whole`() {
         show(longOuting)
 
-        assertFalse(isWhole(LONG_ELAPSED), "the time is cut short")
-        assertTrue(isWhole(FAST_RATE), "the rate is whole")
+        assertFalse(compose.isWhole(LONG_ELAPSED), "the time is cut short")
+        assertTrue(compose.isWhole(FAST_RATE), "the rate is whole")
     }
 
     @Test
@@ -128,15 +127,6 @@ class CurrentOutingTest {
 
     private fun part(text: String): Rect =
         compose.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-
-    // didOverflowWidth misreads a text that does not wrap, so the text's own width is compared instead.
-    private fun isWhole(text: String): Boolean {
-        val layouts = mutableListOf<TextLayoutResult>()
-        compose.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
-            .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
-        val layout = layouts.single()
-        return layout.size.width >= layout.multiParagraph.intrinsics.maxIntrinsicWidth
-    }
 
     private fun walkButtonTop(): Float =
         compose.onNodeWithText(context.getString(R.string.counter_walk_start), useUnmergedTree = true)
