@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -140,6 +141,35 @@ class CounterMilestoneTest {
         assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
         assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
         assertTrue(compose.isWhole("35 min"), "the outing's time was squeezed out of its tag $tag")
+    }
+
+    // Tall enough that the cookie fills the block's width, so Undo sits in its very corner.
+    @Test
+    @Config(qualifiers = "w320dp-h900dp", fontScale = 1.3f)
+    fun `where the cookie fills the width, the outing tag narrows to clear Undo in its corner`() {
+        val longOuting = CurrentOutingState(
+            count = 14,
+            elapsedLabel = "1 h 35 min",
+            rate = RateState(value = "12.5", unit = RateUnit.PER_HOUR),
+        )
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = counter(sixtyTwoOfHundred).copy(
+                        currentOuting = longOuting,
+                        undoVisible = true,
+                        tapBurst = 1,
+                    ),
+                )
+            }
+        }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+        val tag = compose.onNodeWithText("1 h 35 min", substring = true).getUnclippedBoundsInRoot()
+        val block = block()
+        assertTrue(block.width <= block.height, "the cookie does not fill the block's width: $block")
+        assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
+        assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
     }
 
     @Test
