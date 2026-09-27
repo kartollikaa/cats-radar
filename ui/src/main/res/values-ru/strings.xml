@@ -242,8 +242,8 @@
     <string name="settings_section_logging">Фото</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_backup_explained">Один файл со всеми котиками, фото и местами</string>
-    <string name="settings_export">Сохранить</string>
-    <string name="settings_import">Загрузить</string>
+    <string name="settings_export">Экспорт</string>
+    <string name="settings_import">Импорт</string>
     <string name="settings_backup_ok">Понятно</string>
     <string name="settings_backup_exported">Копия сохранена</string>
     <string name="settings_backup_export_failed">Копию сохранить не удалось</string>
