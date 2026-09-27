@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,37 +24,34 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import dev.catsradar.presentation.viewer.PhotoViewerState
 import dev.catsradar.presentation.viewer.ViewerPhoto
 import dev.catsradar.ui.R
@@ -76,7 +74,6 @@ fun PhotoViewerScreen(
     onConfirmPhotoRemoval: () -> Unit = {},
 ) {
     var chromeVisible by rememberSaveable { mutableStateOf(true) }
-    SystemBarsVisibility(visible = chromeVisible)
     val showing = state as? PhotoViewerState.Showing
     PhotoViewerStage(
         showing = showing,
@@ -102,47 +99,112 @@ private fun PhotoViewerStage(
     onOpenInGalleryClick: (String) -> Unit = {},
     onRemovePhotoClick: (String) -> Unit = {},
 ) {
-    val pagerState = showing?.let { rememberViewerPagerState(it) }
-    val onScreen = if (showing != null && pagerState != null) showing.photos.getOrNull(pagerState.currentPage) else null
-    Box(modifier = modifier.fillMaxSize().background(ViewerColors.Stage)) {
+    val dismissState = remember { ViewerDismissState() }
+    val dismissScope = rememberCoroutineScope()
+    val currentOnBackClick by rememberUpdatedState(onBackClick)
+    var heightPx by remember { mutableFloatStateOf(0f) }
+    val dismissTransform = viewerDismissTransform(dismissState.offsetY, heightPx)
+    val effectiveChromeVisible = chromeVisible && dismissState.offsetY == 0f
+    SystemBarsVisibility(visible = effectiveChromeVisible)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onSizeChanged { heightPx = it.height.toFloat() }
+            .background(ViewerColors.Stage.copy(alpha = dismissTransform.stageAlpha)),
+    ) {
+        val pagerState = showing?.let { rememberViewerPagerState(it) }
         if (showing != null && pagerState != null) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                key = { showing.photos[it].id },
-            ) { page ->
-                ZoomableAsyncImage(
-                    model = showing.photos[page].path,
-                    contentDescription = stringResource(R.string.detail_photo_description),
-                    modifier = Modifier.fillMaxSize(),
-                    onClick = { onPhotoClick() },
-                )
-            }
+            PhotoPager(
+                showing = showing,
+                pagerState = pagerState,
+                onPhotoClick = onPhotoClick,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        translationY = dismissState.offsetY
+                        scaleX = dismissTransform.scale
+                        scaleY = dismissTransform.scale
+                    },
+                photoModifier = Modifier
+                    .fillMaxSize()
+                    .dragToDismiss(
+                        state = dismissState,
+                        scope = dismissScope,
+                        heightPx = heightPx,
+                        onDismiss = { currentOnBackClick() },
+                    ),
+            )
         }
+        ViewerChrome(
+            state = ViewerChromeState(showing = showing, currentPage = pagerState?.currentPage),
+            visible = effectiveChromeVisible,
+            onBackClick = onBackClick,
+            onOpenInGalleryClick = onOpenInGalleryClick,
+            onRemovePhotoClick = onRemovePhotoClick,
+        )
+    }
+}
+
+@Composable
+private fun PhotoPager(
+    showing: PhotoViewerState.Showing,
+    pagerState: PagerState,
+    onPhotoClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    photoModifier: Modifier = Modifier,
+) {
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier,
+        key = { showing.photos[it].id },
+    ) { page ->
+        ZoomableAsyncImage(
+            model = showing.photos[page].path,
+            contentDescription = stringResource(R.string.detail_photo_description),
+            modifier = photoModifier,
+            onClick = { onPhotoClick() },
+        )
+    }
+}
+
+private data class ViewerChromeState(
+    val showing: PhotoViewerState.Showing?,
+    val currentPage: Int?,
+)
+
+@Composable
+private fun BoxScope.ViewerChrome(
+    state: ViewerChromeState,
+    visible: Boolean,
+    onBackClick: () -> Unit = {},
+    onOpenInGalleryClick: (String) -> Unit = {},
+    onRemovePhotoClick: (String) -> Unit = {},
+) {
+    val showing = state.showing
+    val onScreen = state.currentPage?.let { showing?.photos?.getOrNull(it) }
+    AnimatedVisibility(
+        visible = visible,
+        modifier = Modifier.align(Alignment.TopStart),
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        ViewerTopBar(
+            showing = showing,
+            opensInGallery = onScreen?.opensInGallery == true,
+            canRemove = onScreen != null,
+            onBackClick = onBackClick,
+            onOpenInGalleryClick = { onScreen?.let { onOpenInGalleryClick(it.id) } },
+            onRemovePhotoClick = { onScreen?.let { onRemovePhotoClick(it.id) } },
+        )
+    }
+    if (showing != null && state.currentPage != null && showing.photos.size > 1) {
         AnimatedVisibility(
-            visible = chromeVisible,
-            modifier = Modifier.align(Alignment.TopStart),
+            visible = visible,
+            modifier = Modifier.align(Alignment.BottomCenter),
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            ViewerTopBar(
-                showing = showing,
-                opensInGallery = onScreen?.opensInGallery == true,
-                canRemove = onScreen != null,
-                onBackClick = onBackClick,
-                onOpenInGalleryClick = { onScreen?.let { onOpenInGalleryClick(it.id) } },
-                onRemovePhotoClick = { onScreen?.let { onRemovePhotoClick(it.id) } },
-            )
-        }
-        if (showing != null && pagerState != null && showing.photos.size > 1) {
-            AnimatedVisibility(
-                visible = chromeVisible,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                PagePosition(page = pagerState.currentPage, count = showing.photos.size)
-            }
+            PagePosition(page = state.currentPage, count = showing.photos.size)
         }
     }
 }
@@ -165,30 +227,6 @@ private fun rememberViewerPagerState(showing: PhotoViewerState.Showing): PagerSt
         }
     }
     return pagerState
-}
-
-@Composable
-private fun PhotoRemovalDialog(
-    showing: PhotoViewerState.Showing,
-    onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    if (showing.removingPhotoId == null) return
-    AlertDialog(
-        onDismissRequest = { if (!showing.removalInFlight) onCancel() },
-        title = { Text(stringResource(R.string.viewer_remove_photo_title)) },
-        text = { Text(stringResource(R.string.viewer_remove_photo_message)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = !showing.removalInFlight) {
-                Text(stringResource(R.string.viewer_remove_confirm), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel, enabled = !showing.removalInFlight) {
-                Text(stringResource(R.string.viewer_remove_cancel))
-            }
-        },
-    )
 }
 
 @Composable
@@ -276,24 +314,6 @@ private fun TakenAt(state: PhotoViewerState.Showing, modifier: Modifier = Modifi
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-    }
-}
-
-@Composable
-private fun SystemBarsVisibility(visible: Boolean) {
-    val view = LocalView.current
-    // Outside a dialog, in a preview or a test, the viewer has no window of its own to change.
-    val window = (view.parent as? DialogWindowProvider)?.window ?: return
-    SideEffect {
-        val controller = WindowCompat.getInsetsController(window, view)
-        controller.isAppearanceLightStatusBars = false
-        controller.isAppearanceLightNavigationBars = false
-        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        if (visible) {
-            controller.show(WindowInsetsCompat.Type.systemBars())
-        } else {
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-        }
     }
 }
 
