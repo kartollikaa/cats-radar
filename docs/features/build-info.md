@@ -40,7 +40,8 @@ Database: 4
   application convention plugin into `BuildConfig.GIT_COMMIT`; outside a git checkout it is
   `unknown`. It is what maps a crash or a report to the code.
 - **Installed by** is the package Android records as the installer — a browser, a file manager,
-  `adb` shows as none. **Locale** is the app's own, **Time zone** the phone's. The report is read
+  `adb` shows as none, and from Android 11 so does an install whose source Android cannot look up:
+  the rest of the report is still read. **Locale** is the app's own, **Time zone** the phone's. The report is read
   afresh on every tap, so it names the language and zone the phone has at that moment, even when
   they changed while Settings stayed open.
 - **Database** is the Room schema version (`CATS_DATABASE_VERSION`), the first thing a backup or
