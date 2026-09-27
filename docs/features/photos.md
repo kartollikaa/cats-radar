@@ -138,8 +138,9 @@ taken after it changes; photos already saved stay as they are.
 copy and that their originals cannot be recovered later. Only *Turn off* stores the change; *Cancel*,
 or dismissing the dialog, leaves the switch on (`SettingsStoreTest`, *turning the gallery switch off
 asks first and stores nothing yet*; *confirming stores the gallery switch off, and the switch follows
-the stored value*; *cancelling keeps the gallery switch on*). Turning it on stores it at once
-(*turning the gallery switch on stores it without asking*).
+the stored value*; *cancelling keeps the gallery switch on*; `SaveOriginalsSettingTest`, *dismissing
+the confirmation with back cancels*). Turning it on stores it at once (`SettingsStoreTest`, *turning
+the gallery switch on stores it without asking*).
 
 The switch renders what is *stored*, not what was last tapped: it follows the settings flow rather
 than keeping its own optimistic state, so a failed write cannot leave the two disagreeing.
