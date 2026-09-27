@@ -6,8 +6,9 @@ Parent spec: [2026-09-21-cats-radar-design.md](./2026-09-21-cats-radar-design.md
 ## 1. Summary
 
 The app reports its crashes to Firebase Crashlytics and a fixed catalogue of product events to Google
-Analytics for Firebase, so the owner can see what breaks and which features are used. Nothing that
-places a cat — or the person counting it — ever leaves the phone.
+Analytics for Firebase, so the owner can see what breaks and which features are used. Nothing the app
+knows that places a cat — or the person counting it — ever leaves the phone; Analytics places a phone
+only by its network address, to a country and city.
 
 ### Goals
 
@@ -20,7 +21,7 @@ places a cat — or the person counting it — ever leaves the phone.
 ### Non-goals
 
 - A consent switch or an opt-in screen (owner: always on).
-- Remote Config, Performance Monitoring, Cloud Messaging, A/B testing, BigQuery export.
+- Remote Config, Performance Monitoring, Cloud Messaging, A/B testing.
 - Funnels or dashboards in the Firebase console — that is console work, not code.
 - iOS; the Firebase implementation is Android-only, behind a port a later iOS target can implement.
 - Renaming the Kotlin packages away from `dev.catsradar.*`.
@@ -33,6 +34,7 @@ places a cat — or the person counting it — ever leaves the phone.
 | Firebase config | The owner creates the Firebase project and registers the Android app; `app/src/release/google-services.json` is committed (private repo; the key in it is restricted to the package). |
 | Consent | Always on. No switch in Settings. |
 | Which builds report | Release only, tagged with `build_type`. Debug binds no-op Firebase ports and has no Firebase config or generated resources. |
+| Raw events (2026-09-27) | Analytics exports every event daily to BigQuery in the no-cost sandbox, without advertising identifiers. Console configuration only; the app is unchanged. |
 
 ## 2. The application id
 
@@ -52,7 +54,7 @@ and stay.
 **Sent.** Crash and ANR stack traces, device/OS model, app sessions and a Firebase installation id
 (Crashlytics' own); the events and parameters in §5;
 the user property `build_type`; what Firebase Analytics collects on its own — an app-instance id,
-sessions, first open, app and OS updates, device model, OS version, country derived from the IP.
+sessions, first open, app and OS updates, device model, OS version, country and city derived from the IP.
 
 **Never sent.** Latitude, longitude, accuracy, geohash, place-cell ids, country/city/area names, photos
 or any part of them, encounter/walk ids, stored encounter times (an event's own timestamp is the
