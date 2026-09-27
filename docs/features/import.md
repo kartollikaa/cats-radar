@@ -6,9 +6,9 @@ not at the time you imported them.
 
 The Counter's Photo button is a split button: its main part opens the camera, and **the gallery icon
 at its end** asks for access to where photos were taken, while the app has none, then opens the
-gallery; holding that icon names it. The run happens in a worker, so it survives leaving the screen; the Counter shows how far
-it has got, and at the end, briefly, what was added, skipped and failed, with one undo for the
-whole batch.
+gallery — unless the answer already picked the photos; holding that icon names it. The run happens
+in a worker, so it survives leaving the screen; the Counter shows how far it has got, and at the
+end, briefly, what was added, skipped and failed, with one undo for the whole batch.
 
 Both show as a card above the count, on the same low surface as the Statistics and Settings rows,
 with a round icon at its start. While the run goes, the card shows the gallery icon, **Importing
@@ -117,11 +117,12 @@ takes them back*).
 - **A photo keeps its GPS only when the app may see where photos were taken.** Android strips the
   GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION`, so the gallery
   icon asks for it first — the import starts reading photos the moment they are picked — and opens
-  the gallery whatever the answer. It asks only while the app has no such access: once the
-  permission is granted, or limited access taken (below), the gallery opens straight away. The
-  **date survives** either way, so a photo imported without that access still lands on the day it
-  was taken; it just gets no location. Android stops asking after a second refusal; the switch then
-  lives in the app's system permissions under *Photos and videos*.
+  the gallery whatever the answer, unless that answer shared photos itself (below). It asks only
+  while the app has no such access: once the permission is granted, or limited access taken, the
+  gallery opens straight away. The **date survives** either way, so a photo imported without that
+  access still lands on the day it was taken; it just gets no location. Android stops asking after
+  a second refusal; the switch then lives in the app's system permissions under *Photos and
+  videos*.
 - **The dialog reads as access to photos and videos** — to photos, media and files before Android
   13 — because Android files this permission under that group. The app declares no permission to
   read the gallery, so *Allow all* grants it the location of the photos it is handed and nothing
@@ -189,6 +190,7 @@ takes them back*).
 - `domain/…/platform/SourceFileTime.kt`, `data/…/androidMain/platform/MediaStoreSourceFileTime.android.kt`
 - `presentation/…/ReportedRun.kt` — which finished run the summary reports, shared with Backup
 - `app/…/navigation/PhotoLaunchers.kt` (`rememberGalleryImportPicker`) — the permission, then the gallery
+  or the photos its answer shared
 - `app/…/photo/PhotoLocationAccess.kt` — the gallery icon's handle on whether the app may read
   photo locations, and the photos shared through limited access
 - `app/…/photo/PickGalleryPhotos.kt` — the gallery, opened so that photos can keep their GPS
