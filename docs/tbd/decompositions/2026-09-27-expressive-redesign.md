@@ -24,7 +24,8 @@
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
-| E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
+| E12a | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; the headline totals the tab. | safe | ~550 | E1 | in-review |
+| E12b | The cats inside the outing cards | Tiles take the coat shapes, pair tiles their chip, the short run's and the list's cards their new look, and the selection its ring and bar. | safe | ~450 | E4, E12a | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -111,13 +112,22 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   count moves.
 - **Cleanup owed:** none.
 
-### Slice E12 — Encounters in outing cards
+### Slice E12a — Encounters in outing cards
 - **In scope:** the headline and its totals; each outing as a card with its header (the day, the count and
-  span labels, the walk chip, On the map as a pill); the grid's tiles in the coat shapes and the pair tiles'
-  corners; the list's cards; the selection's ring, check and bar; the mapper's new labels and the walk
-  overlap; `browsing-cats.md`.
-- **Out of scope:** the packing rules, the selection's behaviour, delete and its undo, the Places list.
+  span labels, the walk chip, On the map as a pill); the mapper's new labels, the closing row and the walk
+  overlap; cards inside the card on `surface`; `browsing-cats.md`.
+- **Out of scope:** the cats inside the card (E12b); the packing rules, the selection's behaviour, delete and
+  its undo; the Places list and the spot sheet, which keep their rows.
 - **Ships safely because:** the same rows in the same order doing the same things; the labels are additive.
+- **Cleanup owed:** none.
+
+### Slice E12b — The cats inside the outing cards
+- **In scope:** the grid's tiles in the coat shapes with the face, the paw or the photo clipped to the shape;
+  the pair tiles' corners and dark time chip; the short run's and the list's cards (the tile's shape, the
+  coat's name or "A cat", time and place, "No location yet" in `onTertiaryContainer`); the selection's ring,
+  check and `primaryContainer` bar; `browsing-cats.md`.
+- **Out of scope:** the card and its header (E12a); what selecting and deleting do.
+- **Ships safely because:** the same cells doing the same things; only their drawing changes.
 - **Cleanup owed:** none.
 
 ## Decision log
@@ -151,3 +161,6 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   prototype of Encounters. Prototype version 15 drew both; the owner put the alert under the title ("under")
   rather than at the top, and approved the Encounters drawing ("looks ok"). The alert joins E8; Encounters is
   E12.
+- 2026-09-27: E12 is split into E12a (the outing card, its header and the headline) and E12b (the cats inside the
+  card). The Places list and the map's spot sheet share the rows and keep today's look, so the rows carry two drawing
+  paths, which one slice would have carried past the size cap.
