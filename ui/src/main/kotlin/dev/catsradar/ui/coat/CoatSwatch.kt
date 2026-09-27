@@ -1,9 +1,11 @@
 package dev.catsradar.ui.coat
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,10 +20,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,10 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.RoundedPolygon
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -40,8 +47,11 @@ import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 
+const val CoatShapeTestTag = "coat-shape"
+
 private val CellWidth = 70.dp
 private val FaceSize = 34.dp
+private val TileFaceSize = 38.dp
 private val PickerGap = 12.dp
 private const val CoatsPerRow = 4
 
@@ -78,28 +88,28 @@ fun CoatGrid(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         maxItemsInEachRow = CoatsPerRow,
     ) {
-        CoatOption.entries.forEach { coat ->
-            CoatCell(
+        CoatOption.entries.forEachIndexed { index, coat ->
+            CoatTile(
                 label = stringResource(coat.labelRes()),
+                column = index % CoatsPerRow,
                 selected = coat in selected,
-                modifier = Modifier.fillMaxRowHeight(),
                 onClick = { onCoatClick(coat) },
             ) {
-                CatFace(coat = coat, modifier = Modifier.size(FaceSize))
+                CatFace(coat = coat, modifier = Modifier.size(TileFaceSize))
             }
         }
         onUnspecifiedClick?.let { onClick ->
-            CoatCell(
+            CoatTile(
                 label = stringResource(R.string.coat_not_specified),
+                column = CoatOption.entries.size % CoatsPerRow,
                 selected = null in selected,
-                modifier = Modifier.fillMaxRowHeight(),
                 onClick = onClick,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_nav_pets),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(FaceSize).padding(4.dp),
+                    modifier = Modifier.size(TileFaceSize).padding(6.dp),
                 )
             }
         }
@@ -140,6 +150,41 @@ fun CoatPicker(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun CoatTile(
+    label: String,
+    column: Int,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    face: @Composable () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val shape = coatShapeFor(column).toShape()
+    Column(
+        modifier = modifier
+            .width(CellWidth)
+            .clip(MaterialTheme.shapes.small)
+            .selectable(selected = selected, onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .testTag(CoatShapeTestTag)
+                .clip(shape)
+                .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
+                .then(if (selected) Modifier.border(2.dp, colors.primary, shape) else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            face()
+        }
+        Text(text = label, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+    }
+}
+
 @Composable
 private fun CoatCell(
     label: String,
@@ -168,6 +213,12 @@ private fun CoatCell(
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private val ColumnShapes =
+    listOf(MaterialShapes.Circle, MaterialShapes.Square, MaterialShapes.Clover4Leaf, MaterialShapes.Arch)
+
+internal fun coatShapeFor(column: Int): RoundedPolygon = ColumnShapes[column % ColumnShapes.size]
 
 @StringRes
 fun CoatOption.labelRes(): Int = when (this) {
