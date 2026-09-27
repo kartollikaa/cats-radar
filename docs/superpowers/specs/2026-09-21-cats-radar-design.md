@@ -56,7 +56,7 @@ country → city → area, and an encounter rate derived from automatically dete
 | Colour (2026-09-23) | Material You: the wallpaper's colours on Android 12+, in the app and the widget; the icon-teal palette below 12 and in previews. No in-app switch. |
 | Map epic (2026-09-22) | Right after v1, on MapLibre + OpenStreetMap tiles: encounter markers coloured by coat, outing route as a polyline through encounter points first, real GPS track via an explicit "walk" later, personal heatmap by frequency with a coat filter, cats per km once distance exists. |
 | Application id (2026-09-24) | `com.kartollika.catsradar`, the id the Firebase project is registered for. Kotlin packages stay `dev.catsradar.*`. A build under the new id installs beside one under the old; cats move by backup export and import. |
-| Crash reports and analytics (2026-09-24) | Firebase Crashlytics and Google Analytics for Firebase, always on, every build tagged by build type; nothing that places a cat is sent. Detail in the [Firebase spec](./2026-09-24-firebase-analytics-crashlytics-design.md). |
+| Crash reports and analytics (2026-09-24, updated 2026-09-27) | Firebase Crashlytics and Google Analytics for Firebase are always on in release; debug uses no-op bindings and no Firebase config. Nothing that places a cat is sent. Detail in the [Firebase spec](./2026-09-24-firebase-analytics-crashlytics-design.md). |
 
 ## 2. Users and core flows
 

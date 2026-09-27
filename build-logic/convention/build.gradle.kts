@@ -23,6 +23,9 @@ dependencies {
     compileOnly(libs.compose.compiler.gradlePlugin)
     compileOnly(libs.detekt.gradlePlugin)
     compileOnly(libs.firebase.crashlytics.gradlePlugin)
+
+    testImplementation(gradleTestKit())
+    testImplementation(libs.junit)
 }
 
 gradlePlugin {

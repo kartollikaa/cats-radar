@@ -197,6 +197,12 @@
     <string name="picker_position_unknown">Couldn\'t tell where you are</string>
     <string name="viewer_back">Back</string>
     <string name="viewer_open_in_gallery">Open in gallery</string>
+    <string name="viewer_remove_photo">Remove photo</string>
+    <string name="viewer_remove_photo_title">Remove this photo?</string>
+    <string name="viewer_remove_photo_message">The cat and photos in your gallery will stay.</string>
+    <string name="viewer_remove_cancel">Cancel</string>
+    <string name="viewer_remove_confirm">Remove</string>
+    <string name="viewer_remove_failed">Couldn\'t remove the photo</string>
     <string name="viewer_gallery_gone">This photo is no longer in the gallery</string>
     <string name="viewer_no_gallery_app">No app can show this photo</string>
     <string name="viewer_position">%1$d / %2$d</string>

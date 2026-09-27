@@ -5,8 +5,10 @@ import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.GalleryTarget
 import dev.catsradar.domain.usecase.ObserveEncounter
+import dev.catsradar.domain.usecase.RemovePhoto
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.TimeZone
@@ -14,9 +16,10 @@ import kotlin.time.Clock
 
 @Suppress("LongParameterList") // one parameter per collaborator, plus the key's two ids
 class PhotoViewerStore(
-    encounterId: String,
+    private val encounterId: String,
     openedOn: String?,
     observeEncounter: ObserveEncounter,
+    private val removePhoto: RemovePhoto,
     private val resolveGalleryLink: ResolveGalleryLink,
     private val stateMapper: PhotoViewerStateMapper,
     private val clock: Clock,
@@ -26,6 +29,7 @@ class PhotoViewerStore(
     private var shown: List<EncounterPhoto> = emptyList()
     private var closing = false
     private var resolvingGallery = false
+    private var removing = false
 
     init {
         observeEncounter(encounterId)
@@ -41,7 +45,43 @@ class PhotoViewerStore(
         when (intent) {
             PhotoViewerIntent.BackClicked -> close()
             is PhotoViewerIntent.OpenInGalleryClicked -> openInGallery(intent.photoId)
+            is PhotoViewerIntent.RemovePhotoClicked -> requestRemoval(intent.photoId)
+            PhotoViewerIntent.RemovePhotoCancelled -> cancelRemoval()
+            PhotoViewerIntent.RemovePhotoConfirmed -> confirmRemoval()
         }
+    }
+
+    private fun requestRemoval(photoId: String) {
+        if (removing || shown.none { it.id == photoId }) return
+        setState { (this as? PhotoViewerState.Showing)?.copy(removingPhotoId = photoId) ?: this }
+    }
+
+    private fun cancelRemoval() {
+        if (removing) return
+        setState { (this as? PhotoViewerState.Showing)?.copy(removingPhotoId = null) ?: this }
+    }
+
+    private suspend fun confirmRemoval() {
+        val photoId = (state.value as? PhotoViewerState.Showing)?.removingPhotoId ?: return
+        if (removing) return
+        removing = true
+        setState { (this as? PhotoViewerState.Showing)?.copy(removalInFlight = true) ?: this }
+        var failed = false
+        var removed = false
+        try {
+            runStorageWrite(onFailure = { failed = true }) {
+                removed = removePhoto(encounterId, photoId)
+            }
+        } finally {
+            removing = false
+            setState {
+                (this as? PhotoViewerState.Showing)?.copy(
+                    removingPhotoId = null,
+                    removalInFlight = false,
+                ) ?: this
+            }
+        }
+        if (failed || !removed) emit(PhotoViewerEffect.RemovePhotoFailed)
     }
 
     private suspend fun openInGallery(photoId: String) {

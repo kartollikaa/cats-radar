@@ -100,6 +100,22 @@ interface EncounterDao {
         return true
     }
 
+    @Query(
+        """
+        DELETE FROM encounter_photos
+        WHERE id = :photoId AND encounterId = :encounterId
+          AND EXISTS (SELECT 1 FROM encounters WHERE id = :encounterId AND deletedAt IS NULL)
+        """
+    )
+    suspend fun deletePhotoFromLiveEncounter(encounterId: String, photoId: String): Int
+
+    @Transaction
+    suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean {
+        if (deletePhotoFromLiveEncounter(encounterId, photoId) == 0) return false
+        stampUpdatedAt(encounterId, updatedAt)
+        return true
+    }
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addPhotos(photos: List<EncounterPhotoEntity>)
 
