@@ -25,10 +25,10 @@ enum class EncountersLayout { GRID, LIST }
 /** Counts, not labels: only the platform knows their plural forms. [cats] counts a shot's cats each. */
 data class EncountersTotals(val cats: Int, val outings: Int)
 
+/** A row of the list. A pair, tile or card row whose `closesOuting` is set is the last row of its outing. */
 sealed interface EncountersRow {
     val key: String
 
-    /** [closesOuting] marks the last row of its outing; so do the tile and card rows'. */
     data class PhotoPair(
         val first: PhotoCell,
         val second: PhotoCell,

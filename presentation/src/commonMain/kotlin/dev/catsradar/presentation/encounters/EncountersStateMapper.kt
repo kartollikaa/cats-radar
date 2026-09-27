@@ -138,7 +138,7 @@ class EncountersStateMapper(
     }
 }
 
-// duration() counts whole minutes, so a shorter span would read "0 min".
+// A span is told in whole minutes, so a shorter one would read "0 min".
 private val shortestSpanShown = 1.minutes
 
 private fun outingsNewestFirst(encounters: List<Encounter>): List<List<Encounter>> =
