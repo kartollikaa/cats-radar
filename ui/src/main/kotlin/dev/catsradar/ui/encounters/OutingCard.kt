@@ -189,7 +189,6 @@ internal fun OutingCardRow(
     onEncounterLongClick: ((String) -> Unit)? = null,
     onOutingMapClick: (String) -> Unit = {},
 ) {
-    val insideCard = MaterialTheme.colorScheme.surface
     when (row) {
         is OutingHeader -> OutingCardPiece(modifier = modifier.padding(top = 12.dp), opens = true) {
             OutingCardHeader(header = row, onMapClick = onOutingMapClick)
@@ -201,14 +200,19 @@ internal fun OutingCardRow(
             TileRow(row, Modifier, selecting, onEncounterClick, onEncounterLongClick)
         }
         is EncountersRow.Cards -> OutingCardPiece(modifier = modifier, closes = row.closesOuting, gap = rowGap) {
-            CardRow(row, Modifier, selecting, insideCard, onEncounterClick, onEncounterLongClick)
+            CardRow(row, Modifier, selecting, onEncounterClick, onEncounterLongClick)
         }
         is EncountersRow.Single -> OutingCardPiece(
             modifier = modifier,
             closes = row.position == GroupPosition.LAST || row.position == GroupPosition.ONLY,
             gap = rowGap,
         ) {
-            SingleRow(row, Modifier, selecting, insideCard, onEncounterClick, onEncounterLongClick)
+            OutingCatCard(
+                cell = row.cell,
+                selecting = selecting,
+                onClick = { onEncounterClick(row.cell.id) },
+                onLongClick = onEncounterLongClick?.let { longClick -> { longClick(row.cell.id) } },
+            )
         }
     }
 }
