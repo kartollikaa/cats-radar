@@ -90,8 +90,8 @@ or a paw for a coat nobody noted, the cat on screen ringed and read as selected.
 cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, opened on
 that cat's coat, its place and Delete are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
 coat and delete act on the cat of the photo on screen*; `EncounterDetailShotRowTest`, *switching the cat of the
-photo keeps the pager where it is*). Deleting one of them takes only that cat off the photo; the others stay on the
-page. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers
+photo keeps the pager where it is*). Delete removes only the cat on screen, with the usual removed state and undo;
+the photo's other cats stay, and Encounters shows the shot with one cat fewer. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers
 which of its cats was on screen.
 
 The window stays a list of cats, so handing over after a delete, the neighbouring outings and restoring by id work

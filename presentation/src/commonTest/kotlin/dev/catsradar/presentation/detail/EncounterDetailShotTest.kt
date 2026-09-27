@@ -92,12 +92,21 @@ class EncounterDetailShotTest {
         assertEquals(listOf(SECOND), cats.values.filter { it.deletedAt != null }.map { it.id })
     }
 
-    private suspend fun TestScope.storeOnShot(): EncounterDetailStore {
+    @Test
+    fun `reopening on a cat of the photo shows that cat on the shot's page`() = runTest(mainDispatcher) {
+        val store = storeOnShot(restoredId = THIRD)
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(LATER, THIRD), state.pages.map { it.id })
+        assertEquals(THIRD to 2, state.currentId to state.currentNumber)
+    }
+
+    private suspend fun TestScope.storeOnShot(restoredId: String? = null): EncounterDetailStore {
         repository.insert(encounterFixture(LATER, OCCURRED + 5.minutes))
         shotFixture(FIRST, SECOND, THIRD, occurredAt = OCCURRED).forEach { repository.insert(it) }
         val store = EncounterDetailStore(
             openedId = FIRST,
-            restoredId = null,
+            restoredId = restoredId,
             observeEncounters = ObserveEncounters(repository),
             observeEncounterPlace = ObserveEncounterPlace(FakePlaceCellRepository()),
             deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),

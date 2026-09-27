@@ -223,6 +223,7 @@
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
     <string name="detail_on_this_photo">На этом фото</string>
+    <string name="detail_on_this_photo_cat">%1$s, котик %2$d из %3$d</string>
     <string name="detail_photo">Добавить фото</string>
     <string name="detail_take_photo">Сфотографировать</string>
     <string name="detail_pick_photo">Выбрать из галереи</string>

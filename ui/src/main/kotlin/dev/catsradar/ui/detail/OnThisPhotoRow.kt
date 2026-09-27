@@ -47,8 +47,9 @@ internal fun OnThisPhotoRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            cats.forEach { cat ->
-                val label = stringResource(cat.coat?.labelRes() ?: R.string.coat_not_specified)
+            cats.forEachIndexed { index, cat ->
+                val coat = stringResource(cat.coat?.labelRes() ?: R.string.coat_not_specified)
+                val label = stringResource(R.string.detail_on_this_photo_cat, coat, index + 1, cats.size)
                 val ringColor = MaterialTheme.colorScheme.primary
                 val ring = if (cat.onScreen) Modifier.border(3.dp, ringColor, CircleShape) else Modifier
                 Box(
@@ -61,9 +62,9 @@ internal fun OnThisPhotoRow(
                         .padding(4.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val coat = cat.coat
-                    if (coat != null) {
-                        CatFace(coat = coat, modifier = Modifier.fillMaxSize())
+                    val face = cat.coat
+                    if (face != null) {
+                        CatFace(coat = face, modifier = Modifier.fillMaxSize())
                     } else {
                         Icon(
                             painter = painterResource(R.drawable.ic_nav_pets),

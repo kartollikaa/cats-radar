@@ -52,9 +52,9 @@ class EncounterDetailShotRowTest {
         }
 
         compose.onNodeWithText(onThisPhoto).assertIsDisplayed()
-        compose.onNodeWithContentDescription(label(R.string.coat_ginger)).assertIsSelected()
-        compose.onNodeWithContentDescription(label(R.string.coat_not_specified)).assertIsNotSelected()
-        compose.onNodeWithContentDescription(label(R.string.coat_black)).assertIsNotSelected().performClick()
+        compose.onNodeWithContentDescription(face(R.string.coat_ginger, 1)).assertIsSelected()
+        compose.onNodeWithContentDescription(face(R.string.coat_not_specified, 3)).assertIsNotSelected()
+        compose.onNodeWithContentDescription(face(R.string.coat_black, 2)).assertIsNotSelected().performClick()
         assertEquals(listOf("s2"), tapped)
 
         state = loadedWith(lone)
@@ -76,7 +76,7 @@ class EncounterDetailShotRowTest {
         state = loadedOn(shotPage(onScreen = "s2"), lone, shotPage(onScreen = "s2"))
         compose.waitForIdle()
 
-        compose.onNodeWithContentDescription(label(R.string.coat_black)).assertIsSelected()
+        compose.onNodeWithContentDescription(face(R.string.coat_black, 2)).assertIsSelected()
         compose.onNodeWithText(label(R.string.coat_black)).assertIsDisplayed()
         assertTrue(scrolled > 0f, "the page did not scroll")
         assertEquals(scrolled, pageScroll())
@@ -87,6 +87,9 @@ class EncounterDetailShotRowTest {
         .config[SemanticsProperties.VerticalScrollAxisRange].value()
 
     private fun label(id: Int) = context.getString(id)
+
+    private fun face(coat: Int, number: Int) =
+        context.getString(R.string.detail_on_this_photo_cat, label(coat), number, 3)
 
     private fun shotPage(onScreen: String) = CatPage(
         id = onScreen,
