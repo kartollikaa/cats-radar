@@ -25,6 +25,12 @@ internal data class AttachLocationCall(
 
 internal data class AddPhotoCall(val photo: EncounterPhotoEntity, val updatedAt: Instant)
 
+internal data class InsertAllIfSourceLiveCall(
+    val sourceEncounterId: String,
+    val encounters: List<EncounterEntity>,
+    val photos: List<EncounterPhotoEntity>,
+)
+
 internal data class RemovePhotoCall(val encounterId: String, val photoId: String, val updatedAt: Instant)
 
 internal data class SetCoatCall(val id: String, val coat: CatCoat?, val updatedAt: Instant)
@@ -49,6 +55,8 @@ internal class FakeEncounterDao : EncounterDao {
     var attachLocationRows = 1
     var addPhotoResult: Boolean = true
     var addPhotoCall: AddPhotoCall? = null
+    var insertAllIfSourceLiveResult = true
+    var insertAllIfSourceLiveCall: InsertAllIfSourceLiveCall? = null
     var removePhotoResult: Boolean = true
     var removePhotoCall: RemovePhotoCall? = null
     var setCoatCall: SetCoatCall? = null
@@ -66,6 +74,15 @@ internal class FakeEncounterDao : EncounterDao {
 
     override suspend fun insert(encounter: EncounterEntity) {
         inserted += encounter
+    }
+
+    override suspend fun insertAllIfSourceLive(
+        sourceEncounterId: String,
+        encounters: List<EncounterEntity>,
+        photos: List<EncounterPhotoEntity>,
+    ): Boolean {
+        insertAllIfSourceLiveCall = InsertAllIfSourceLiveCall(sourceEncounterId, encounters, photos)
+        return insertAllIfSourceLiveResult
     }
 
     override suspend fun update(encounter: EncounterEntity) {

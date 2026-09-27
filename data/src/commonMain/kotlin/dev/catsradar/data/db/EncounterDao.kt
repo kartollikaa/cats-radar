@@ -35,6 +35,18 @@ interface EncounterDao {
         insertPhotos(photos)
     }
 
+    @Transaction
+    suspend fun insertAllIfSourceLive(
+        sourceEncounterId: String,
+        encounters: List<EncounterEntity>,
+        photos: List<EncounterPhotoEntity>,
+    ): Boolean {
+        if (countLive(sourceEncounterId) == 0) return false
+        encounters.forEach { insert(it) }
+        insertPhotos(photos)
+        return true
+    }
+
     @Update
     suspend fun update(encounter: EncounterEntity)
 

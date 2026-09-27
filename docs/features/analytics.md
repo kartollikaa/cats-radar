@@ -38,7 +38,7 @@ its feature switches from Firebase Remote Config. Debug builds do not initialize
 
   | Event | Parameters | When |
   |---|---|---|
-  | `cat_logged` | `kind` (`tally`, `photo`), `origin` (`app`, `widget`, `notification` for a tally; `camera` for a photo), `has_coat` (`true`/`false`) | a cat is saved |
+  | `cat_logged` | `kind` (`tally`, `photo`), `origin` (`app`, `widget`, `notification` for a tally; `camera` or `gallery` for a photo), `has_coat` (`true`/`false`) | a cat is saved, including each cat added later to an existing photo |
   | `tally_undone` | — | the Undo chip removes a tally |
   | `coat_set` | `coat` (one of the eleven, or `none` when cleared) | a coat is written; setting the same coat again logs nothing |
   | `photo_attached` | `source` (`camera`, `gallery`) | a logged cat gets a photo |
@@ -55,9 +55,15 @@ its feature switches from Firebase Remote Config. Debug builds do not initialize
 
   Every parameter is a word from a fixed list or a count. A Konsist rule fails `check` if an event
   type ever gains a text, fraction or time field.
+
+  A gallery import still emits one `photos_imported` event for the original batch, never one
+  `cat_logged` per imported photo. A cat added later to one of those photos is a separate saved fact:
+  after the whole add operation commits, it emits `cat_logged` with the copied `gallery` origin and
+  its own coat presence. A refused or failed add emits nothing. No shipped screen invokes the add
+  operation yet.
 - **What Analytics collects on its own:** first open, sessions and time in the app, app and Android
-  updates, the phone's model and Android version, and the country the phone's network address places
-  it in.
+  updates, the phone's model and Android version, and the country and city the phone's network address
+  places it in.
 
 ### To Remote Config
 
@@ -91,6 +97,22 @@ platform names the path or URI it failed on, which is the app's own storage or a
 **No advertising.** The Advertising ID is not collected; the permissions the Analytics SDK brings in
 to read an ad id (Google's or Android's Privacy Sandbox one) and to report ad attribution are removed;
 ad personalisation, ad storage and ad user data are off by default.
+
+## Reading the data
+
+- **Parameters in the Analytics reports.** Apart from `screen_name`, which Analytics reads on its
+  own, a report shows an event's parameter only once it is registered as a custom definition: the words
+  as event-scoped dimensions, the counts as metrics, `build_type` as a user-scoped dimension. A
+  registration covers events logged after it, never earlier ones, so a parameter added to the catalogue
+  needs its own registration when it ships. Realtime shows every parameter without one, and so does
+  DebugView for a release build put in debug mode.
+- **Screens.** The Pages and screens report groups by screen class, which is always `MainActivity`;
+  switching its dimension to the screen name shows the `screen_name` values.
+- **Raw events in BigQuery.** Analytics exports every event daily, with all its parameters and user
+  properties, to the `analytics_<property id>` dataset of the Firebase project — one `events_YYYYMMDD`
+  table per day, from the export's linking onward. It runs in the no-cost BigQuery sandbox: its tables
+  expire, its storage cap is for the project's lifetime, and once the cap is reached the export stops.
+  It carries no advertising identifiers and adds no data to what Analytics already holds.
 
 ## At the edges
 
