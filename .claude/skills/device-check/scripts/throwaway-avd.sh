@@ -48,6 +48,10 @@ case $action in
         [[ -f "$target_dir/config.ini" && -f "$target_ini" ]]
         grep -q 'android-37\.1' "$target_dir/config.ini"
         ! "$adb_bin" devices | awk 'NR > 1 {print $1}' | grep -qx "$serial"
+        boot_attempts=${DEVICE_CHECK_BOOT_ATTEMPTS:-180}
+        boot_sleep_seconds=${DEVICE_CHECK_BOOT_SLEEP_SECONDS:-1}
+        [[ $boot_attempts =~ ^[0-9]+$ && $boot_sleep_seconds =~ ^[0-9]+$ ]]
+        (( boot_attempts > 0 ))
         command -v lsof >/dev/null
         port_is_free "$emulator_port"
         port_is_free "$((emulator_port + 1))"
@@ -56,7 +60,7 @@ case $action in
             -dns-server 8.8.8.8,1.1.1.1 > "$target_log" 2>&1 &
         emulator_pid=$!
         ready=false
-        for _ in $(seq 1 180); do
+        for _ in $(seq 1 "$boot_attempts"); do
             kill -0 "$emulator_pid" 2>/dev/null || exit 1
             if "$adb_bin" devices | awk 'NR > 1 && $2 == "device" {print $1}' | grep -qx "$serial"; then
                 "$adb_bin" -s "$serial" wait-for-device
@@ -67,9 +71,13 @@ case $action in
                     break
                 fi
             fi
-            sleep 1
+            sleep "$boot_sleep_seconds"
         done
-        [[ $ready == true ]]
+        if [[ $ready != true ]]; then
+            kill "$emulator_pid" 2>/dev/null || true
+            wait "$emulator_pid" 2>/dev/null || true
+            exit 1
+        fi
         printf 'ready %s as %s\n' "$avd_name" "$serial"
         ;;
     delete)
