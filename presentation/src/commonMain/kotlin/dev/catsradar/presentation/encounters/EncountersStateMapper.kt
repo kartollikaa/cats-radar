@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.model.Encounter
+import dev.catsradar.domain.model.groupedByShot
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.session.SessionSplitter
 import dev.catsradar.presentation.DateTimeFormatter
@@ -29,7 +30,7 @@ class EncountersStateMapper(
     ): EncountersState = EncountersState(
         rows = outingsNewestFirst(encounters)
             .flatMap { outing ->
-                val entries = if (byShot) outing.byShot() else outing.map(::listOf)
+                val entries = if (byShot) outing.groupedByShot() else outing.map(::listOf)
                 val cells = if (grid) {
                     entries.gridRows()
                 } else {
@@ -107,12 +108,6 @@ class EncountersStateMapper(
 
     private fun Encounter.timeLabel(): String = dateTimeFormatter.time(this)
 }
-
-/** The cats of each shot as one entry, oldest first; a cat without a photo is an entry of its own. */
-private fun List<Encounter>.byShot(): List<List<Encounter>> =
-    groupBy { cat -> cat.cover?.let { "shot-${it.shotId}" } ?: "cat-${cat.id}" }
-        .values
-        .map { cats -> cats.sortedWith(compareBy<Encounter> { it.createdAt }.thenBy { it.id }) }
 
 private inline fun <T, R> List<T>.mapWithGroupPosition(transform: (T, GroupPosition) -> R): List<R> =
     mapIndexed { index, item ->

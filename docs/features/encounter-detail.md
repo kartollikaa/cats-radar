@@ -78,6 +78,26 @@ reopens the cat that was on screen*; `EncounterDetailStoreTest`, *the screen sta
 is live*; *a restored cat that is gone starts the screen on the opened one*). `OutingPages` keeps the pages and
 the cat on screen; the Store reads every live cat and hands it each change.
 
+### A photo of several cats
+
+A photo of several cats is **one page**, however many cats it holds, as it is one entry in Encounters (see
+[browsing-cats.md](./browsing-cats.md#a-photo-of-several-cats)); "2 / 5" counts pages, so a shot counts once
+(`EncounterDetailStateMapperTest`, *a shot of three cats is one page*). The page shows one of its cats at a time:
+the one the screen was opened on or last moved to, else the shot's first cat, the oldest by `createdAt`.
+
+Under its photos the page has an **On this photo** row: every cat of the shot, oldest first, as its coat's face
+or a paw for a coat nobody noted, the cat on screen ringed and read as selected. A tap on another face shows that
+cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, opened on
+that cat's coat, its place and Delete are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
+coat and delete act on the cat of the photo on screen*; `EncounterDetailShotRowTest`, *switching the cat of the
+photo keeps the pager where it is*). Delete removes only the cat on screen, with the usual removed state and undo;
+the photo's other cats stay, and Encounters shows the shot with one cat fewer. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers
+which of its cats was on screen.
+
+The window stays a list of cats, so handing over after a delete, the neighbouring outings and restoring by id work
+as above; only the page list groups a shot, by `groupedByShot`, the same grouping Encounters uses. Every cat of a
+shot keeps one page key, which is why switching between them keeps the page.
+
 ## Where it was found
 
 Under its map, when it has one (see [Its map](#its-map)), the **Where** section names the place the
@@ -289,6 +309,9 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   (which camera a result belongs to, and for which cat)
 
 ## Not built yet
+
+**+** on the **On this photo** row, and **Another cat on this photo** on a page of one cat — adding a cat to a
+photo from here — are not built; a photo gains cats only when it is counted in the coat sheet after the shutter.
 
 A cat's photos cannot be reordered (see `photos.md`).
 

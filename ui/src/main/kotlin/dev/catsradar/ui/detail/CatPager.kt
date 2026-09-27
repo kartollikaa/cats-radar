@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -46,6 +47,7 @@ internal fun CatPager(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onPageSettle: (catId: String) -> Unit = {},
+    onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onCoatClick: (CoatInteraction) -> Unit = {},
     onTakePhotoClick: (catId: String) -> Unit = {},
@@ -72,12 +74,13 @@ internal fun CatPager(
         state = pagerState,
         modifier = modifier.fillMaxSize().testTag(DetailPagesTestTag),
         overscrollEffect = null,
-        key = { index -> state.pages[index].id },
+        key = { index -> state.pages[index].pageKey },
     ) { index ->
         val page = state.pages[index]
         CatPageContent(
             page,
             contentPadding = contentPadding,
+            onPhotoCatClick = onPhotoCatClick,
             onDeleteClick = onDeleteClick,
             onCoatClick = { coat -> onCoatClick(CoatInteraction(page.id, coat)) },
             onTakePhotoClick = { onTakePhotoClick(page.id) },
@@ -94,6 +97,7 @@ private fun CatPageContent(
     page: CatPage,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onCoatClick: (CoatOption?) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
@@ -111,6 +115,7 @@ private fun CatPageContent(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (page.photos.isNotEmpty()) DetailPhotoPager(page.photos, onPhotoClick = onPhotoClick)
+        if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
         AddPhotoCard(
             page.addPhoto,
             progress = page.attachProgress,
@@ -127,12 +132,15 @@ private fun CatPageContent(
         }
         WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
-            CoatPicker(
-                selected = page.coat,
-                modifier = Modifier.padding(vertical = 8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                onCoatClick = onCoatClick,
-            )
+            // Keyed by the cat: another cat of the same photo opens the row on its own coat.
+            key(page.id) {
+                CoatPicker(
+                    selected = page.coat,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    onCoatClick = onCoatClick,
+                )
+            }
         }
         OutlinedButton(
             onClick = onDeleteClick,
