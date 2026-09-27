@@ -251,6 +251,39 @@ class CounterStorePhotoPromptTest {
     }
 
     @Test
+    fun `one cat after several empties the tray, and a coat then sets it and closes the prompt`() =
+        runTest(mainDispatcher) {
+            val repository = FakeEncounterRepository()
+            val store = countingStore(repository)
+            count(store, CoatOption.GINGER, CoatOption.BLACK)
+
+            store.dispatch(CounterIntent.CoatPrompt.OneCatClicked)
+            runCurrent()
+            val asking = store.state.value.coatPrompt
+            store.dispatch(CounterIntent.CoatPrompt.Picked(CoatOption.WHITE))
+            runCurrent()
+
+            assertEquals(CoatPromptState("id-1", "id-1", thumbPath = "/data/photos/cat_thumb.jpg"), asking)
+            assertNull(store.state.value.coatPrompt)
+            assertEquals(listOf(CatCoat.WHITE), repository.encounters().map { it.coat })
+        }
+
+    @Test
+    fun `one cat while asking changes nothing`() = runTest(mainDispatcher) {
+        val repository = FakeEncounterRepository()
+        val store = newCounterStore(encounterRepository = repository)
+        store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
+        runCurrent()
+        val asked = store.state.value.coatPrompt
+
+        store.dispatch(CounterIntent.CoatPrompt.OneCatClicked)
+        runCurrent()
+
+        assertEquals(asked, store.state.value.coatPrompt)
+        assertEquals(listOf(null), repository.encounters().map { it.coat })
+    }
+
+    @Test
     fun `tapping a cat in the tray takes out that one`() = runTest(mainDispatcher) {
         val store = countingStore()
         count(store, CoatOption.GINGER, CoatOption.BLACK, CoatOption.WHITE)
