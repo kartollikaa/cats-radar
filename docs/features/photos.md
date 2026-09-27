@@ -262,6 +262,9 @@ the detail screen opens it fullscreen (see [encounter-detail.md](./encounter-det
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens
 to hold. A pair tile with no full copy falls back to its thumbnail. On the Map tab the cover's
 thumbnail is drawn as a small tile in place of the cat's dot (see [map.md](./map.md#how-a-photo-shows)).
+The fullscreen viewer can remove the attachment on screen after confirmation. That leaves the cat,
+its other attachments, the gallery original, and another cat attached from the same shot unchanged
+(see [photo-viewer.md](./photo-viewer.md#remove-from-the-cat)).
 
 A cat with no thumbnail leads with its coat, or a paw when no coat was noted, in a tile the same
 size — covering both a tally with no photo yet and a photo whose thumbnail failed to write while
@@ -269,7 +272,7 @@ the copy succeeded. Such a photo never joins a pair: the grid packs it like any 
 
 ## Not built yet
 
-A cat's photos cannot be removed or reordered, and its cover is always the oldest — there is no control
-for any of it.
+A cat's photos cannot be reordered, and its cover is always the oldest — there is no control for
+either.
 `PhotoStorage` is named that, not `PhotoStore` as the design spec had it, because the
 `*Store` suffix belongs to MVI stores in `:presentation` and a Konsist test enforces it.

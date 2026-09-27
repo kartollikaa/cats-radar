@@ -67,6 +67,7 @@ val presentationModule = module {
             encounterId = encounterId,
             openedOn = openedOn,
             observeEncounter = get(),
+            removePhoto = get(),
             resolveGalleryLink = get(),
             stateMapper = get(),
             clock = get(),

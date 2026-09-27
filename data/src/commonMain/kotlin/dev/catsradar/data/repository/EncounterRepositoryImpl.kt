@@ -44,6 +44,9 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override suspend fun addPhoto(photo: EncounterPhoto): Boolean = dao.addPhoto(photo.toEntity(), photo.addedAt)
 
+    override suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean =
+        dao.removePhoto(encounterId, photoId, updatedAt)
+
     override suspend fun addPhotos(photos: List<EncounterPhoto>) = dao.addPhotos(photos.map { it.toEntity() })
 
     override suspend fun setCoat(id: String, coat: CatCoat?, updatedAt: Instant) {

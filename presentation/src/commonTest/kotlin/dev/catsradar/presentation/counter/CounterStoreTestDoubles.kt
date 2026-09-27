@@ -53,6 +53,8 @@ internal class FakeEncounterRepository : EncounterRepository {
     var undoDeleteAllShouldThrow: Throwable? = null
     var undoDeleteAllGate: CompletableDeferred<Unit>? = null
     var addPhotoShouldThrow: Throwable? = null
+    val removePhotoCalls = mutableListOf<Triple<String, String, Instant>>()
+    var removePhotoShouldThrow: Throwable? = null
     var setCoatShouldThrow: Throwable? = null
     var setCoatGate: CompletableDeferred<Unit>? = null
     val attachLocationCalls = mutableListOf<Pair<String, LocationStamp>>()
@@ -137,6 +139,27 @@ internal class FakeEncounterRepository : EncounterRepository {
             }
         }
         return added
+    }
+
+    override suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean {
+        removePhotoShouldThrow?.let { throw it }
+        removePhotoCalls += Triple(encounterId, photoId, updatedAt)
+        var removed = false
+        encounters.update { list ->
+            removed = false
+            list.map { encounter ->
+                val ownsPhoto = encounter.id == encounterId &&
+                    encounter.deletedAt == null &&
+                    encounter.photos.any { it.id == photoId }
+                if (ownsPhoto) {
+                    removed = true
+                    encounter.copy(photos = encounter.photos.filterNot { it.id == photoId }, updatedAt = updatedAt)
+                } else {
+                    encounter
+                }
+            }
+        }
+        return removed
     }
 
     override suspend fun addPhotos(photos: List<EncounterPhoto>): Unit = throw NotImplementedError(

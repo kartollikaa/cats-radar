@@ -33,9 +33,9 @@ recreated*). The time and day in the bar are the cat's, the same on every page.
 
 ## Chrome
 
-A bar sits at the top over a dark scrim: the back arrow at the start, the gallery button at the end
-when there is one (see *Open in gallery* below), and centred on the screen between them when the cat
-was logged — the time, with the day under it. The buttons stand as far from the screen's edges as the
+A bar sits at the top over a dark scrim: the back arrow at the start, **Remove photo** and then the
+gallery button at the end when there is one (see *Open in gallery* below), and centred on the screen
+between them when the cat was logged — the time, with the day under it. The buttons stand as far from the screen's edges as the
 other screens' content does (`PhotoViewerScreenTest`, *the bar's buttons keep the screens' content
 inset from the edges*), and a day too long for the bar is cut short well before it reaches them (*a
 day too long for the bar is given no more room than keeps it clear of the buttons*). The time and the
@@ -60,6 +60,14 @@ cat*). The detail screen stays drawn underneath.
 
 ## Closing
 
+- **Swipe down** — while the photo is fully zoomed out, a downward drag moves and gently shrinks the
+  photo, hides the chrome, and fades the black stage to uncover the detail screen below. Releasing
+  before one quarter of the screen or losing the gesture returns the viewer to rest; releasing at
+  or beyond one quarter closes it once. A zoomed photo keeps the same drag for panning instead
+  (`PhotoViewerScreenTest`, *a downward drag moves and shrinks the photo, fades the stage, and hides
+  the chrome*; *a short downward drag restores the viewer without closing it*; *a downward drag
+  beyond one quarter of the screen closes the viewer once*; *a zoomed photo keeps a downward drag
+  for panning instead of closing*).
 - **Back** — the system gesture, or the arrow — pops the viewer and nothing else, leaving the back
   stack exactly as it was before it opened (`PhotoViewerNavigationTest`, *back from the viewer
   uncovers the cat as it was*; `PhotoViewerEntryTest`, *the back arrow in the nav host's own viewer
@@ -77,6 +85,23 @@ The key holds only the cat's id and the photo it was opened for, so after the pr
 restored viewer loads the cat again. A key saved before cats had several photos carries no photo and
 opens on the cover (`PhotoViewerSavedStateTest`, *a viewer key saved before
 photo ids comes back opening on the cover*).
+
+## Remove from the cat
+
+**Remove photo** belongs to the photo on screen. A tap asks for confirmation; Cancel, Back, or a tap
+outside the dialog changes nothing. Confirming detaches only that photo from this cat and removes the
+attachment's app-owned full copy and thumbnail. The cat, its other photos, the original in the
+gallery, and another cat attached from the same shot stay unchanged (`PhotoViewerScreenTest`, *remove
+targets the photo on screen*; `EncounterDaoRemovePhotoTest`, *removing one photo leaves another cat's
+attachment from the same shot intact*).
+
+The files are removed while the row still names them, then a guarded transaction removes that exact
+row from the live cat and stamps the cat's update time. If photos remain, the nearest remaining page
+stays on screen; removing the last one closes only the viewer and uncovers the unchanged detail
+screen. A second confirmation while removal is running does nothing (`PhotoViewerStoreTest`, *remove
+confirmation runs once*; `PhotoViewerEntryTest`, *removing the last photo closes only the viewer*).
+If removal fails, the viewer and attachment stay in place and a localized message reports the
+failure (`PhotoViewerEntryTest`, *a failed removal keeps the viewer and reports the failure*).
 
 ## Open in gallery
 
@@ -135,11 +160,12 @@ second tap while the first is being checked opens the gallery once*).
 - `app/…/navigation/PhotoViewer.kt` (the key and its dialog metadata), `PhotoViewerDestination.kt`,
   wired into `CatsRadarNavHost.kt` next to `EncounterDetail`; `GalleryOpener.kt` — `ACTION_VIEW`
 - `domain/…/model/GalleryLink.kt` — whether a photo has a link here; `domain/…/usecase/ResolveGalleryLink.kt`;
+  `domain/…/usecase/RemovePhoto.kt` — removing one attachment and its app-owned copies;
   `domain/…/platform/GalleryItems.kt`, answered by `data/…/androidMain/platform/MediaStoreGalleryItems.android.kt`
 - `data/…/androidMain/platform/MediaStoreItemLocator.android.kt` — which gallery item a picked photo is
   (see [import.md](./import.md#the-gallery-item-it-came-from))
 
 ## Not built yet
 
-A link for cats imported before the app kept the picked item. Swiping down to close, swiping to the
-next cat, sharing, and opening the viewer from an Encounters tile or the Map.
+A link for cats imported before the app kept the picked item. Swiping to the next cat, sharing, and
+opening the viewer from an Encounters tile or the Map.

@@ -118,6 +118,17 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
+    fun removePhotoHandsTheExactAttachmentAndTimestampToTheDao() = runTest {
+        val updatedAt = Instant.parse("2026-09-26T17:00:00Z")
+
+        assertEquals(true, repository.removePhoto("cat", "photo", updatedAt))
+        assertEquals(RemovePhotoCall("cat", "photo", updatedAt), dao.removePhotoCall)
+
+        dao.removePhotoResult = false
+        assertEquals(false, repository.removePhoto("cat", "missing", updatedAt))
+    }
+
+    @Test
     fun setCoatForwardsToTheDao() = runTest {
         val updatedAt = Instant.parse("2026-02-01T00:00:00Z")
 

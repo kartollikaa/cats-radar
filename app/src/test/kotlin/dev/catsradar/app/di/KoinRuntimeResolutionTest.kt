@@ -26,9 +26,12 @@ import dev.catsradar.app.worker.UpdateDownloadScheduler
 import dev.catsradar.data.db.CatsDatabase
 import dev.catsradar.data.db.EncounterDao
 import dev.catsradar.domain.analytics.Analytics
+import dev.catsradar.domain.analytics.AnalyticsEvent
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
 import dev.catsradar.domain.platform.ExifReader
+import dev.catsradar.domain.platform.Feature
+import dev.catsradar.domain.platform.FeatureToggles
 import dev.catsradar.domain.platform.GallerySaver
 import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.domain.platform.ImageResizer
@@ -64,6 +67,8 @@ import dev.catsradar.presentation.locationpicker.LocationPickerStore
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.viewer.PhotoViewerStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -71,12 +76,9 @@ import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
-import org.koin.core.error.InstanceCreationException
 import org.koin.core.parameter.parametersOf
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertIs
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -112,8 +114,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<UpdateInstaller>())
         assertNotNull(koin.get<InstallResults>())
         assertNotNull(koin.get<PruneInstalledUpdates>())
-        // Settings follows a Remote Config switch, which a JVM test without FirebaseApp cannot create.
-        assertStopsAtFirebase { koin.get<SettingsStore>() }
+        assertNotNull(koin.get<SettingsStore>())
     }
 
     @Test
@@ -149,8 +150,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ImportNotifier>())
         assertNotNull(koin.get<WalkingNotifier>())
         assertNotNull(koin.get<ActivityManager>())
-        // A JVM test has no FirebaseApp: the reporter's binding is proven by reaching Crashlytics, which then refuses.
-        assertStopsAtFirebase { koin.get<NonFatalReporter>() }
+        assertNotNull(koin.get<NonFatalReporter>())
         assertNotNull(koin.get<Analytics>())
         assertNotNull(koin.get<ReverseGeocoder>())
         assertNotNull(koin.get<DeviceIdProvider>())
@@ -192,6 +192,18 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<PurgeDeleted>())
     }
 
+    @Test
+    fun `debug Firebase services are disabled`() = runTest {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+
+        koin.get<Analytics>().log(AnalyticsEvent.TallyUndone)
+        koin.get<NonFatalReporter>().record(IllegalStateException("ignored"))
+        assertFalse(koin.get<FeatureToggles>().isOn(Feature.IN_APP_UPDATES).first())
+    }
+
     // A preference file's name and keys are where installed versions keep their data.
     @Test
     fun `preferences are read back from the files installed versions wrote`() {
@@ -219,12 +231,5 @@ class KoinRuntimeResolutionTest {
         }.koin
 
         assertSame(koin.get<RecordTrackPoint>(), koin.get<RecordTrackPoint>())
-    }
-
-    private fun assertStopsAtFirebase(resolve: () -> Any) {
-        val failure = assertFailsWith<InstanceCreationException> { resolve() }
-        val root = generateSequence<Throwable>(failure) { it.cause }.last()
-        assertIs<IllegalStateException>(root)
-        assertContains(root.message.orEmpty(), "FirebaseApp")
     }
 }

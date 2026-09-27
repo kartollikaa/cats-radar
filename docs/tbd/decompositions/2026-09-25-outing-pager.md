@@ -14,7 +14,7 @@
 |---|----------|------------------------|----------|-------------|------------|--------|
 | P1 | The outing window in the domain | `outingWindow(encounters, shown)` returns the pages and both neighbouring outings; nothing calls it yet. | safe | ~250 | — | merged |
 | P2 | The detail screen's intents and effects name their cat | Every per-cat intent and effect carries the cat's id, and camera and picker results keep theirs across process death. | safe | ~350 | — | merged |
-| P3a-1 | The detail state holds pages | `Loaded` carries `pages` of `CatPage` and the cat on screen; the screen draws that page and every tap names it; the Store still reads one cat. | safe | ~630 | P2 | in-review |
+| P3a-1 | The detail state holds pages | `Loaded` carries `pages` of `CatPage` and the cat on screen; the screen draws that page and every tap names it; the Store still reads one cat. | safe | ~630 | P2 | merged |
 | P3a-2 | One Store serves the outing | The Store reads the outing through `outingWindow` with `OutingPages` (anchor and shown set); per-cat attaching; a cat deleted elsewhere hands over to its neighbour. | safe | ~700 | P3a-1 | planned |
 | P3b | The detail screen pages through its outing | The pager keyed by cat id, following `currentId`; "2 / 5" in the bar; `PageSettled`; restore by id. | safe | ~300 | P3a-2 | planned |
 | P4 | A delete leaves the pager with an undo bar | The deleted cat leaves the pages, the neighbour shows, and an undo bar replaces the *removed* state except for the last cat. | safe | ~500 | P3b | planned |
@@ -119,3 +119,4 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   the cat into what landed meanwhile — M8's several-photos picker and L2's *Set on map*. Taps act only on the cat the
   screen shows until P3a-2 widens that to the pages. The plan review for P3 measured it at ~1,230 lines, so it splits
   into P3a-1, P3a-2 and P3b.
+- 2026-09-27: **P3a-1 merged** as #188. First shipped in v1.5.1-beta; P1 and P2 first shipped in v1.5.0-beta.

@@ -72,10 +72,10 @@ for a cat without a photo, in the cat's coat colours, or blue with no coat noted
 gets the dot here too, its photos being on the screen already (`EncounterDetailScreenTest`, *a cat on the
 map shows a map with the cat's dot at its centre*). Setting the coat recolours it. It is drawn in the
 Map tab's light or dark style, whichever the theme is, and carries the tiles' attribution
-in its corner, open at first, until its ⓘ folds it away. The attribution is plain text, without the Map
-tab's links, and TalkBack skips it, since the section would otherwise read it before the place. A cat
-with no coordinates, or with coordinates off the globe, shows no map (*a cat not on the map shows no
-map*).
+in its corner, open at first, until its ⓘ folds it away. The text and ⓘ sit directly over the tiles,
+without a white container. The attribution is plain text, without the Map tab's links, and TalkBack
+skips it, since the section would otherwise read it before the place. A cat with no coordinates, or
+with coordinates off the globe, shows no map (*a cat not on the map shows no map*).
 
 The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
 screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a
@@ -118,6 +118,11 @@ opens the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in 
 opens that cat's viewer above it*). When the cat gains a photo, whoever added it, the pager moves to
 the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
 pager to it*).
+
+The fullscreen viewer can remove its displayed attachment after confirmation. The detail underneath
+then follows the repository: the cat and its other photos remain, or the no-photo state appears after
+the last attachment goes; another cat attached from the same shot is separate and stays unchanged
+(see [photo-viewer.md](./photo-viewer.md#remove-from-the-cat)).
 
 **Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
 *Choose from gallery* — the system camera, or the system picker for several images — on every live
@@ -233,4 +238,4 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Not built yet
 
-A cat's photos cannot be removed or reordered (see `photos.md`).
+A cat's photos cannot be reordered (see `photos.md`).

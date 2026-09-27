@@ -31,6 +31,9 @@ interface EncounterRepository {
      */
     suspend fun addPhoto(photo: EncounterPhoto): Boolean
 
+    /** Removes exactly [photoId] from its live [encounterId] and stamps that cat; false when it is no longer there. */
+    suspend fun removePhoto(encounterId: String, photoId: String, updatedAt: Instant): Boolean
+
     /** Gives each of [photos] to its cat unless it is already here; the cats' `updatedAt` stays as it was. */
     suspend fun addPhotos(photos: List<EncounterPhoto>)
 

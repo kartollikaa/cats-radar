@@ -16,6 +16,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -32,6 +33,8 @@ import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.platform.DeviceIdProvider
+import dev.catsradar.domain.platform.PhotoStorage
+import dev.catsradar.domain.platform.StoredPhoto
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -44,6 +47,7 @@ import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowContentResolver
 import org.robolectric.shadows.ShadowToast
@@ -140,6 +144,40 @@ class PhotoViewerEntryTest {
         assertEquals(context.getString(R.string.viewer_no_gallery_app), ShadowToast.getTextOfLatestToast())
     }
 
+    @Test
+    fun `confirming removal in the nav host removes the photo and closes only the viewer`() {
+        val levels = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID))
+        val backStack = show(levels + PhotoViewer(ID), cat = { photographed() })
+        val remove = hasContentDescription(context.getString(R.string.viewer_remove_photo))
+        awaitTheDatabase { compose.onAllNodes(remove).fetchSemanticsNodes().isNotEmpty() }
+
+        compose.onNode(remove).performClick()
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_confirm)).performClick()
+        awaitTheDatabase { backStack.toList() == levels }
+
+        assertEquals(levels, backStack.toList())
+    }
+
+    @Test
+    fun `a failed removal in the nav host keeps the viewer and names the failure`() {
+        val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
+        val failingStorage = object : PhotoStorage {
+            override fun resolve(relativePath: String) = relativePath
+            override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
+            override suspend fun delete(relativePath: String): Unit = error("unwritable")
+        }
+        val backStack = show(keys, cat = { photographed() }, photoStorage = failingStorage)
+        val remove = hasContentDescription(context.getString(R.string.viewer_remove_photo))
+        awaitTheDatabase { compose.onAllNodes(remove).fetchSemanticsNodes().isNotEmpty() }
+
+        compose.onNode(remove).performClick()
+        compose.onNodeWithText(context.getString(R.string.viewer_remove_confirm)).performClick()
+        awaitTheDatabase { ShadowToast.getTextOfLatestToast() != null }
+
+        assertEquals(context.getString(R.string.viewer_remove_failed), ShadowToast.getTextOfLatestToast())
+        assertEquals(keys, backStack.toList())
+    }
+
     private fun tapOpenInGallery(galleryHolds: String) {
         ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, GalleryHolding(galleryHolds))
         val keys = listOf<NavKey>(Counter, Encounters, EncounterDetail(ID), PhotoViewer(ID))
@@ -162,10 +200,13 @@ class PhotoViewerEntryTest {
         keys: List<NavKey>,
         cat: (install: String) -> Encounter,
         throughNavDisplay: Boolean = false,
+        photoStorage: PhotoStorage? = null,
     ): BottomNavBackStack {
+        val testOverrides = photoStorage?.let { storage -> module { single<PhotoStorage> { storage } } }
         val koin = startKoin {
             androidContext(context)
             modules(domainModule, dataModule, presentationModule, workerModule)
+            if (testOverrides != null) modules(testOverrides)
         }.koin
         runBlocking { koin.get<EncounterRepository>().insert(cat(koin.get<DeviceIdProvider>().deviceId)) }
         val backStack = BottomNavBackStack(NavBackStack(*keys.toTypedArray()))
