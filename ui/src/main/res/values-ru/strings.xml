@@ -232,9 +232,10 @@
     <string name="detail_coat">Окрас</string>
     <string name="detail_on_this_photo">На этом фото</string>
     <string name="detail_on_this_photo_cat">%1$s, котик %2$d из %3$d</string>
-    <string name="detail_photo">Добавить фото</string>
     <string name="detail_take_photo">Сфотографировать</string>
-    <string name="detail_pick_photo">Выбрать из галереи</string>
+    <string name="detail_from_gallery">Из галереи</string>
+    <string name="detail_gallery">Галерея</string>
+    <string name="detail_no_photo">Фото пока нет</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_already_there">Это фото уже есть у котика</string>
     <string name="detail_photos_already_there">Эти фото уже есть у котика</string>

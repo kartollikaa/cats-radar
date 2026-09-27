@@ -74,6 +74,7 @@ class EncounterDetailCoatPickerTest {
     }
 
     private fun assertWholeCellOnScreen(@StringRes name: Int) {
+        compose.scrollListToEnd()
         val cell = compose.onNodeWithText(context.getString(name)).assertIsDisplayed().fetchSemanticsNode()
 
         assertEquals(cell.size.width.toFloat(), cell.boundsInWindow.width, 1f)

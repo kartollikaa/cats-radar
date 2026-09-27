@@ -40,6 +40,9 @@ import kotlinx.collections.immutable.persistentListOf
 
 const val DetailPagesTestTag = "detail-pages"
 
+// In line with the back arrow's edge, as everything on the page is.
+internal val PageInset = 16.dp
+
 /** [onPageSettle] names the cat a swipe comes to rest on, only when it is not already [state]'s cat on screen. */
 @Composable
 internal fun CatPager(
@@ -111,17 +114,53 @@ private fun CatPageContent(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
-            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
+            .padding(top = 8.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        if (page.photos.isNotEmpty()) DetailPhotoPager(page.photos, onPhotoClick = onPhotoClick)
-        if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
-        AddPhotoCard(
-            page.addPhoto,
-            progress = page.attachProgress,
-            onTakePhotoClick = onTakePhotoClick,
-            onPickPhotoClick = onPickPhotoClick,
+        if (page.photos.isEmpty()) {
+            NoPhotoBlock(
+                coat = page.coat,
+                addPhoto = page.addPhoto,
+                modifier = Modifier.padding(horizontal = PageInset),
+                progress = page.attachProgress,
+                onTakePhotoClick = onTakePhotoClick,
+                onPickPhotoClick = onPickPhotoClick,
+            )
+        } else {
+            DetailPhotoCarousel(
+                photos = page.photos,
+                addPhoto = page.addPhoto,
+                progress = page.attachProgress,
+                onPhotoClick = onPhotoClick,
+                onTakePhotoClick = onTakePhotoClick,
+                onPickPhotoClick = onPickPhotoClick,
+            )
+        }
+        CatFacts(
+            page,
+            onPhotoCatClick = onPhotoCatClick,
+            onDeleteClick = onDeleteClick,
+            onCoatClick = onCoatClick,
+            onCoordinatesClick = onCoordinatesClick,
+            onSetLocationClick = onSetLocationClick,
         )
+    }
+}
+
+@Composable
+private fun CatFacts(
+    page: CatPage,
+    onPhotoCatClick: (catId: String) -> Unit,
+    onDeleteClick: () -> Unit,
+    onCoatClick: (CoatOption?) -> Unit,
+    onCoordinatesClick: () -> Unit,
+    onSetLocationClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = PageInset),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
             Text(
                 text = page.dayLabel,

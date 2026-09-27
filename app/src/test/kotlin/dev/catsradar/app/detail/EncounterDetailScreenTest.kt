@@ -154,8 +154,9 @@ class EncounterDetailScreenTest {
         val bar = compose.onNodeWithContentDescription("Attached 2 of 5 photos")
         bar.assertExists()
         assertEquals(0.4f, bar.fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current)
+        compose.scrollCarouselToEnd(photos = 1)
         compose.onNodeWithText(context.getString(R.string.detail_take_photo)).assertIsNotEnabled()
-        compose.onNodeWithText(context.getString(R.string.detail_pick_photo)).assertIsNotEnabled()
+        compose.onNodeWithText(context.getString(R.string.detail_from_gallery)).assertIsNotEnabled()
     }
 
     @Test
@@ -190,7 +191,7 @@ class EncounterDetailScreenTest {
     fun `a cat on the map shows a map with the cat's dot at its centre`() {
         show(loadedWith(onTheMap))
 
-        val map = map().assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val map = map().performScrollTo().assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val dot = compose.onNodeWithTag(CatDotTestTag, useUnmergedTree = true).assertIsDisplayed()
             .fetchSemanticsNode().boundsInRoot
 
@@ -210,7 +211,7 @@ class EncounterDetailScreenTest {
         var opened = 0
         show(loadedWith(onTheMap), onCoordinatesClick = { opened++ })
 
-        map().performTouchInput { click() }
+        map().performScrollTo().performTouchInput { click() }
 
         assertEquals(1, opened)
     }
@@ -218,6 +219,7 @@ class EncounterDetailScreenTest {
     @Test
     fun `a drag across the map scrolls the screen`() {
         show(loadedWith(onTheMap))
+        map().performScrollTo()
         val before = map().fetchSemanticsNode().boundsInRoot.top
 
         map().performTouchInput { swipeUp() }

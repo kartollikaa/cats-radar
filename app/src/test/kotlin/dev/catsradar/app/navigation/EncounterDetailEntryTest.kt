@@ -118,10 +118,10 @@ class EncounterDetailEntryTest {
     }
 
     @Test
-    fun `Choose from gallery launches the picker contract for the cat on screen`() {
+    fun `Gallery launches the picker contract for the cat on screen`() {
         val registry = RecordingActivityResultRegistry()
         show(listOf(Counter, Encounters, EncounterDetail(ID)), registry)
-        val pickPhoto = hasText(context.getString(R.string.detail_pick_photo))
+        val pickPhoto = hasText(context.getString(R.string.detail_gallery))
         awaitTheDatabase { compose.onAllNodes(pickPhoto).fetchSemanticsNodes().isNotEmpty() }
 
         compose.onNode(pickPhoto).performClick()
