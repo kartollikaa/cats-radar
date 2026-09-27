@@ -99,4 +99,12 @@ class WalkRowLookTest {
 
         assertEquals(expected, walkButton(walking = false).cornerPixel())
     }
+
+    @Test
+    fun `Undo stands as tall as a button`() {
+        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(walking = false).copy(undoVisible = true)) } }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo))
+        assertEquals(40.dp, undo.getUnclippedBoundsInRoot().height)
+    }
 }
