@@ -10,14 +10,15 @@ immediately**: one tap, not tap-then-choose. The big button above it logs a cat 
 noted. Both paths are the same tally — same undo, same location attach, same burst.
 
 Each face sits in a Material shape on the theme's highest container, and every coat has a shape of
-its own — ginger a circle, black a clam shell, grey and white a pentagon, all of them soft, rounded
-forms — so a coat is known by its shape as well as its face; "no coat" has one too
-(`CoatShapesTest`). After a tap the grid rings the coat just used — its shape fills with the primary
-container inside a line in the primary colour, its name under it — so a run of the same cat down the
-same street reads back at a glance (`CoatGridLookTest`). An Undo moves the ring back to the coat of
-the newest cat still undoable, and it clears when the undo window closes or the last of those cats
-is undone. Every shape is the same size, so rings side by side — several coats chosen on the map —
-match, and the grid is no taller than it was when the faces sat in plain cells.
+its own — ginger a circle, black a puffy diamond, grey and white a pentagon, all of them soft,
+rounded forms, each stretched onto the whole of its square so that every shape is the same size — so
+a coat is known by its shape as well as its face; "no coat" has one too (`CoatShapesTest`). After a
+tap the grid rings the coat just used — its shape fills with the primary container inside a line in
+the primary colour, its name under it — so a run of the same cat down the same street reads back at
+a glance (`CoatGridLookTest`). An Undo moves the ring back to the coat of the newest cat still
+undoable, and it clears when the undo window closes or the last of those cats is undone. Every shape
+is the same size, so rings side by side — several coats chosen on the map — match, and the grid is
+no taller than it was when the faces sat in plain cells.
 
 This replaced an earlier design where a coat strip appeared *after* a tap. A tap on the grid has
 already chosen the coat, so a strip asking again was one control too many, and changing a coat
@@ -134,6 +135,7 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 - `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, ask after a photo, filter the map) with its shaped
   tiles and `coatShapeFor`, and `CoatPicker` (amend)
 - `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo; `CounterStore` opens and closes it
+- `ui/…/coat/CoatShapes.kt` — each coat's shape, stretched onto its square
 - `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, and the line around every face
 - `ui/…/coat/CatFace.kt` — the face itself
 

@@ -24,7 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -223,23 +222,6 @@ private fun CoatCell(
             textAlign = TextAlign.Center,
         )
     }
-}
-
-/** Each coat's own shape, and one for "no coat" ([coat] null), so a coat is known by its shape as well as its face. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-internal fun coatShapeFor(coat: CoatOption?): RoundedPolygon = when (coat) {
-    CoatOption.GINGER -> MaterialShapes.Circle
-    CoatOption.GINGER_WHITE -> MaterialShapes.Square
-    CoatOption.WHITE -> MaterialShapes.Clover4Leaf
-    CoatOption.TRICOLOR_MOSTLY_WHITE -> MaterialShapes.Arch
-    CoatOption.TRICOLOR_LITTLE_WHITE -> MaterialShapes.Cookie4Sided
-    CoatOption.BROWN -> MaterialShapes.Slanted
-    CoatOption.BROWN_WHITE -> MaterialShapes.Gem
-    CoatOption.GREY -> MaterialShapes.Oval
-    CoatOption.GREY_WHITE -> MaterialShapes.Pentagon
-    CoatOption.BLACK -> MaterialShapes.ClamShell
-    CoatOption.BLACK_WHITE -> MaterialShapes.Bun
-    null -> MaterialShapes.Ghostish
 }
 
 @StringRes
