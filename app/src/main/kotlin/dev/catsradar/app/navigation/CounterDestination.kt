@@ -72,7 +72,7 @@ private fun CarryOutCounterEffects(store: CounterStore, importScheduler: ImportS
     val cameraLauncher = rememberCameraLauncher { shot -> store.dispatch(CounterIntent.PhotoCaptured(shot.uri)) }
     val photoFailureReporter = rememberMessageReporter(R.string.counter_photo_not_saved)
     val catsFailureReporter = rememberMessageReporter(R.string.counter_cats_not_saved)
-    val walkHoldHint = rememberMessageReporter(R.string.counter_walk_hold_hint)
+    val walkHoldHint = rememberReplacingMessageReporter(R.string.counter_walk_hold_hint)
     val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val photoLocationAccess = koinInject<PhotoLocationAccess>()

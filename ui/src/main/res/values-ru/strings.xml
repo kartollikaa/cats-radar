@@ -344,7 +344,7 @@
     <string name="settings_about_copied">Данные о сборке скопированы</string>
     <string name="settings_about_clip_label">Данные о сборке Cats Radar</string>
     <string name="counter_walk">Прогулка</string>
-    <string name="counter_walk_hold">Удерживайте</string>
+    <string name="counter_walk_hold">Держите — стоп</string>
     <string name="counter_walk_hold_hint">Удерживайте, чтобы закончить прогулку</string>
     <string name="counter_walk_start">Начать прогулку</string>
     <string name="counter_walk_stop">Закончить прогулку</string>

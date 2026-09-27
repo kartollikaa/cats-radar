@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -171,6 +172,23 @@ class CounterControlsTest {
         compose.mainClock.advanceTimeBy(HOLD_MS * 2)
 
         assertEquals(1, holdsReleased)
+        assertEquals(emptyList<Boolean>(), requested)
+    }
+
+    @Test
+    fun `a press that drifts off the button stops nothing and raises no hint`() {
+        show(walking = true)
+        compose.mainClock.autoAdvance = false
+
+        walkButton(walking = true).performTouchInput {
+            down(center)
+            moveBy(Offset(0f, -height * 4f))
+        }
+        compose.mainClock.advanceTimeBy(HOLD_MS - 200)
+        walkButton(walking = true).performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(HOLD_MS * 2)
+
+        assertEquals(0, holdsReleased)
         assertEquals(emptyList<Boolean>(), requested)
     }
 

@@ -108,11 +108,12 @@ internal fun WalkButton(
                         haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                         currentOnWalkingChange(false)
                     }
-                    waitForUpOrCancellation()
+                    val up = waitForUpOrCancellation()
                     if (hold.isActive) {
                         hold.cancel()
                         scope.launch { fill.animateTo(0f, tween(durationMillis = 250)) }
-                        currentOnHoldRelease()
+                        // Null when a scroll took the pointer or it left the button: nobody let go early.
+                        if (up != null) currentOnHoldRelease()
                     }
                 }
             }

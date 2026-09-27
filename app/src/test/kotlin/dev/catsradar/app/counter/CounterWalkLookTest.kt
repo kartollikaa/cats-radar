@@ -94,6 +94,26 @@ class CounterWalkLookTest {
         assertFalse(warmNumber.holds(colors.onPrimaryContainer))
     }
 
+    // Where the warm fill starts and ends along the block's middle row: the cookie's outer edge on each side.
+    private fun fillSpan(): Int {
+        val pixels = compose.onNodeWithContentDescription("62").captureToImage().toPixelMap()
+        val row = (0 until pixels.width).filter { pixels[it, pixels.height / 2] == colors.tertiaryContainer }
+        return row.last() - row.first()
+    }
+
+    @Test
+    fun `during a walk the block draws the cookie breathing`() {
+        walking = true
+        compose.mainClock.autoAdvance = false
+        show()
+        compose.mainClock.advanceTimeByFrame()
+        val still = fillSpan()
+
+        compose.mainClock.advanceTimeBy(1_400)
+
+        assertTrue(fillSpan() >= still + 4, "the cookie did not swell: $still → ${fillSpan()}")
+    }
+
     @Test
     fun `the ring keeps its colour on the warm cookie`() {
         show()

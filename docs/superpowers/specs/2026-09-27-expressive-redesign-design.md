@@ -135,15 +135,18 @@ cookie**.
 
 - **The button** sits at the start of the bottom row, beside Photo: a Medium tonal button, 56 dp
   like the split button, `secondaryContainer` and `onSecondaryContainer`, the walking cat and
-  *Walk*. Photo takes the rest of the row. A tap starts a walk. While a walk is on it takes
+  *Walk*, as wide as its longer label in both states so a walk starting or ending moves nothing
+  beside it. Photo takes the rest of the row. A tap starts a walk. While a walk is on it takes
   `tertiaryContainer` and `onTertiaryContainer`, the toggle's checked corners (squarer than the pill)
   and *Hold to end*, with the walking cat still at its start, walking, where the prototype drew a stop
   glyph: a moving cat says "on a walk" better than a square, and the words already say what the press
   does; the held press with its fill and haptic ticks moves here from the
   old button unchanged (`walking-mode.md` § *Stopping takes a hold*), and a press let go early raises
-  the hint the way the milestones raise their toast: *Hold to end the walk*. The button carries no
+  a short message, *Hold to end the walk*, which a second early release replaces rather than queues
+  behind; a press that drifts off the button or is taken by a scroll raises none. The button carries no
   time: the outing's tag on the ring has the outing's, and the notification's chronometer has the
-  walk's. A larger font grows the row rather than clipping either label.
+  walk's. A larger font puts Photo on a line of its own, in both states alike, rather than clip
+  either label.
 - **The cookie wears the walk.** While a walk is on, the cookie's fill is `tertiaryContainer` and the
   number and "cats" `onTertiaryContainer`; the ring, its dot and the tags keep their colours. The change
   animates on the theme's colour spec both ways. And the cookie breathes: the shape alone, not the

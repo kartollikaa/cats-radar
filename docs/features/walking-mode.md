@@ -48,7 +48,9 @@ the finger lifts. On the way the fill is cut into `TicksPerHold` even steps, and
 as each one fills, so the hold can be felt working without looking at it; the last step gives the
 stop's haptic instead of a tick. A press that picks the fill up mid-drain ticks on from where it is
 rather than from the start. Let go earlier, or drift off the button, and the ticks stop, the fill
-drains back and nothing changes, and a short message says *Hold to end the walk*. The button reads
+drains back and nothing changes, and a short message says *Hold to end the walk*; a second early
+release replaces it rather than queueing behind it, and a press that drifts off the button or is taken
+by a scroll raises none. The button reads
 *Hold to end* for as long as a walk is on: a gesture nothing hints at is one nobody finds.
 
 Starting stays one tap, because a walk started by mistake loses nothing.

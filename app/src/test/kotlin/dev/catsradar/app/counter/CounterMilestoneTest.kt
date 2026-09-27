@@ -170,8 +170,10 @@ class CounterMilestoneTest {
     }
 
     @Test
-    fun `the block still reads to TalkBack as the total alone`() {
-        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
+    fun `the block still reads to TalkBack as the total alone, with Undo showing in it too`() {
+        compose.setContent {
+            CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(undoVisible = true, tapBurst = 1)) }
+        }
 
         val block = compose.onNodeWithContentDescription("62").fetchSemanticsNode().config
         assertEquals(listOf("62"), block.getOrNull(SemanticsProperties.ContentDescription))

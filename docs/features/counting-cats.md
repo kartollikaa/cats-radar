@@ -65,8 +65,9 @@ switched on only then, because an enabled scroll delays every press and turns a 
 few pixels into a drag: on a screen with room to spare, a tap is only ever a tap.
 
 **The controls do not jump.** The walk button and Photo share the row under the coat grid: Walk at
-its start, as tall as the split button, and Photo taking the rest; a large font puts Photo on a line
-of its own rather than clip either label (`WalkButtonLookTest`). Walk is a tonal button that reads
+its start, as tall as the split button and as wide as its longer label whether a walk is on or not,
+and Photo taking the rest, so a walk starting or ending moves nothing; a large font puts Photo on a
+line of its own, in both states alike, rather than clip either label (`WalkButtonLookTest`). Walk is a tonal button that reads
 *Walk*; while a walk is on it takes the tertiary container and squarer corners and reads *Hold to
 end*. A tap on it starts a walk, but stopping one takes a press held until a fill crosses the button
 ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). While a walk is on the cookie wears it
