@@ -167,7 +167,7 @@ private fun rememberDrawInfo(index: Int, listState: LazyListState): MultiAspectC
 private fun LazyListState.photoInFront(lastPhoto: Int): Int =
     (layoutInfo.visibleItemsInfo.minByOrNull { abs(it.offset) }?.index ?: 0).coerceAtMost(lastPhoto)
 
-// One item per fling, as Material's carousels move, so a throw never runs past the end into the outing's pager.
+// One item per fling, as Material's carousels move, however hard the throw.
 @Composable
 private fun rememberSingleAdvanceFling(listState: LazyListState): FlingBehavior {
     val snapping = remember(listState) {

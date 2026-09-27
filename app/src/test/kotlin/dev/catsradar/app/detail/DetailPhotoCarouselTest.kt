@@ -8,6 +8,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PixelMap
@@ -29,6 +30,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -166,6 +168,18 @@ class DetailPhotoCarouselTest {
     }
 
     @Test
+    fun `a flick moves the row one photo on`() {
+        show(catWith("cover", "second", "third"))
+
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput {
+            swipe(center, center - Offset(FLICK.px(), 0f), durationMillis = 30)
+        }
+        compose.waitForIdle()
+
+        position(2, of = 3).assertIsDisplayed()
+    }
+
+    @Test
     fun `a tap on the second photo opens the viewer on it`() {
         show(catWith("cover", "second"))
         compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput { swipeLeft() }
@@ -261,4 +275,9 @@ class DetailPhotoCarouselTest {
 
     private fun EncounterDetailState.Loaded.withAttempt(progress: AttachProgress? = null) =
         copy(pages = pages.map { it.copy(addPhoto = AddPhoto.ATTACHING, attachProgress = progress) }.toImmutableList())
+
+    private companion object {
+        // Short and fast: a free fling would carry it past the next photo.
+        val FLICK = 150.dp
+    }
 }
