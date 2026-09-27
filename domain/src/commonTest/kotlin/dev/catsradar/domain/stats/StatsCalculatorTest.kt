@@ -218,6 +218,50 @@ class StatsCalculatorTest {
     }
 
     @Test
+    fun `by day holds the last thirty days, oldest first, today last`() {
+        val byDay = stats(listOf(at(NOON))).byDay
+
+        assertEquals(30, byDay.size)
+        assertEquals(LocalDate(2026, 8, 24), byDay.first().date)
+        assertEquals(TODAY, byDay.last().date)
+        assertEquals(byDay.map { it.date }, byDay.map { it.date }.sorted().distinct())
+    }
+
+    @Test
+    fun `a cat counts on the day it was logged, where it was logged`() {
+        // 22:00 on the 21st in New York is already the 22nd in UTC.
+        val byDay = stats(listOf(loggedAt("2026-09-21T22:00", NEW_YORK))).byDay
+
+        assertEquals(DayCount(LocalDate(2026, 9, 21), 1), byDay[28])
+        assertEquals(DayCount(TODAY, 0), byDay[29])
+    }
+
+    @Test
+    fun `a day with no cats is zero, and deleted or future-dated cats are on no day`() {
+        val encounters = listOf(
+            at(NOON, "today"),
+            at(NOON - 2.days, "two days ago"),
+            at(NOON - 1.days, "deleted").copy(deletedAt = NOW),
+            at(NOON + 1.days, "tomorrow"),
+        )
+
+        val byDay = stats(encounters).byDay
+
+        assertEquals(listOf(1, 0, 1), byDay.takeLast(3).map { it.count })
+        assertEquals(2, byDay.sumOf { it.count })
+    }
+
+    @Test
+    fun `the by-day counts add up to the seven and thirty day windows`() {
+        val encounters = listOf(at(NOON), at(NOON - 1.days), at(NOON - 6.days), at(NOON - 7.days), at(NOON - 29.days))
+
+        val stats = stats(encounters)
+
+        assertEquals(stats.lastSevenDays, stats.byDay.takeLast(7).sumOf { it.count })
+        assertEquals(stats.lastThirtyDays, stats.byDay.sumOf { it.count })
+    }
+
+    @Test
     fun `several cats on one day do not lengthen a streak`() {
         val stats = stats(listOf(at(NOON), at(NOON - 1.hours), at(NOON - 2.hours)))
 
