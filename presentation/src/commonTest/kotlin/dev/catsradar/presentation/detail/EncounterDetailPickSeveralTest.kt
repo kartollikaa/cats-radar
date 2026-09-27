@@ -7,8 +7,8 @@ import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
-import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
+import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
@@ -38,6 +38,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -263,7 +264,7 @@ class EncounterDetailPickSeveralTest {
     }
 
     @Test
-    fun `a pick lands every photo on the cat it names, not on the one the screen observes`() = runTest(mainDispatcher) {
+    fun `a pick lands every photo on the cat it names, not on the cat on screen`() = runTest(mainDispatcher) {
         repository.insert(catWithPhotosOf())
         repository.insert(encounterFixture(OTHER, OCCURRED))
         val store = newStore()
@@ -274,6 +275,28 @@ class EncounterDetailPickSeveralTest {
 
         assertEquals(listOf(FIRST, SECOND), photoSources(OTHER))
         assertEquals(emptyList(), photoSources(ID))
+    }
+
+    @Test
+    fun `a pick carries on with its count when its cat comes on screen`() = runTest(mainDispatcher) {
+        repository.insert(catWithPhotosOf())
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotosPicked(OTHER, listOf(FIRST, SECOND)))
+        runCurrent()
+        repository.softDelete(ID, NOW)
+        runCurrent()
+        val page = store.shownPage()
+        assertEquals(OTHER, page.id)
+        assertEquals(AttachProgress(done = 0, total = 2), page.attachProgress)
+
+        advanceTimeBy(5.seconds)
+        runCurrent()
+        assertEquals(listOf(FIRST, SECOND), photoSources(OTHER))
+        assertEquals(AddPhoto.READY, store.shownPage().addPhoto)
     }
 
     private fun photoSources(catId: String = ID): List<String?> =
@@ -297,8 +320,9 @@ class EncounterDetailPickSeveralTest {
     )
 
     private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
-        encounterId = ID,
-        observeEncounter = ObserveEncounter(repository),
+        openedId = ID,
+        restoredId = null,
+        observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(FakePlaceCellRepository()),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),

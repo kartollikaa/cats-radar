@@ -9,11 +9,14 @@ import dev.catsradar.domain.usecase.RemovePhoto
 import dev.catsradar.domain.usecase.ResolveGalleryLink
 import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.runStorageWrite
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("LongParameterList") // one parameter per collaborator, plus the key's two ids
 class PhotoViewerStore(
     private val encounterId: String,
@@ -27,6 +30,7 @@ class PhotoViewerStore(
 ) : Store<PhotoViewerState, PhotoViewerIntent, PhotoViewerEffect>(PhotoViewerState.Loading) {
 
     private var shown: List<EncounterPhoto> = emptyList()
+    private var galleryTargets: Map<String, GalleryTarget> = emptyMap()
     private var closing = false
     private var resolvingGallery = false
     private var removing = false
@@ -34,10 +38,12 @@ class PhotoViewerStore(
     init {
         observeEncounter(encounterId)
             .onEach { encounter ->
-                val showing = encounter?.let { stateMapper.map(it, clock.today(timeZone), openedOn) }
+                val showing = encounter?.let { stateMapper.map(it, clock.today(timeZone), openedOn, galleryTargets) }
                 shown = encounter?.photos.orEmpty()
                 if (showing != null) setState { showing } else close()
             }
+            .mapLatest { encounter -> encounter?.photos.orEmpty().associate { it.id to resolveGalleryLink(it) } }
+            .onEach(::offerGallery)
             .launchIn(viewModelScope)
     }
 
@@ -91,12 +97,20 @@ class PhotoViewerStore(
         try {
             when (val target = resolveGalleryLink(photo)) {
                 is GalleryTarget.Open -> emit(PhotoViewerEffect.OpenInGallery(target.uri))
-                GalleryTarget.Gone -> emit(PhotoViewerEffect.GalleryItemGone)
+                GalleryTarget.Gone -> {
+                    offerGallery(galleryTargets + (photoId to GalleryTarget.Gone))
+                    emit(PhotoViewerEffect.GalleryItemGone)
+                }
                 GalleryTarget.Unavailable -> Unit
             }
         } finally {
             resolvingGallery = false
         }
+    }
+
+    private fun offerGallery(targets: Map<String, GalleryTarget>) {
+        galleryTargets = targets
+        setState { (this as? PhotoViewerState.Showing)?.let { stateMapper.offerGallery(it, targets) } ?: this }
     }
 
     private suspend fun close() {

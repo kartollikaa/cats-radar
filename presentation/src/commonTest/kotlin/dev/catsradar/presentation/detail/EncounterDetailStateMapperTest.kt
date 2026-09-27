@@ -13,6 +13,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -200,6 +201,13 @@ class EncounterDetailStateMapperTest {
         assertEquals(listOf("Lisbon", "Barcelona"), state.pages.map { it.place?.title })
         assertEquals(listOf(AttachProgress(done = 1, total = 3), null), state.pages.map { it.attachProgress })
         assertEquals(listOf(AddPhoto.ATTACHING, AddPhoto.READY), state.pages.map { it.addPhoto })
+    }
+
+    @Test
+    fun `a cat on screen that is not on the pages is refused`() {
+        val window = OutingWindow(cats = listOf(encounterFixture("e1", OCCURRED)), newer = null, older = null)
+
+        assertFailsWith<IllegalArgumentException> { mapper.map(window, currentId = "elsewhere", today = today) }
     }
 
     @Test

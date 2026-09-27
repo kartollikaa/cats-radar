@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.viewer
 
 import app.cash.turbine.test
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.RemovePhoto
@@ -150,6 +151,136 @@ class PhotoViewerStoreTest {
     }
 
     @Test
+    fun `an original still in the gallery is offered there once the viewer has checked it`() =
+        runTest(mainDispatcher) {
+            repository.insert(photographedCat(galleryUri = SAVED))
+            galleryItems.present += SAVED
+            val store = newStore()
+
+            runCurrent()
+
+            assertEquals(listOf(true), offered(store))
+            assertEquals(listOf(SAVED), galleryItems.asked)
+        }
+
+    @Test
+    fun `an original deleted from the gallery is not offered there when the viewer opens`() =
+        runTest(mainDispatcher) {
+            repository.insert(photographedCat(galleryUri = SAVED))
+            val store = newStore()
+
+            runCurrent()
+
+            assertEquals(listOf(false), offered(store))
+            assertEquals(listOf(SAVED), galleryItems.asked)
+        }
+
+    @Test
+    fun `an original is not offered while the viewer is still checking it`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(galleryUri = SAVED))
+        galleryItems.present += SAVED
+        galleryItems.gate = CompletableDeferred()
+        val store = newStore()
+
+        runCurrent()
+        val whileChecking = offered(store)
+        galleryItems.gate?.complete(Unit)
+        runCurrent()
+
+        assertEquals(listOf(false), whileChecking)
+        assertEquals(listOf(true), offered(store))
+    }
+
+    @Test
+    fun `a picked item is offered there without asking the gallery`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(sourceMediaUri = PICKED))
+        val store = newStore()
+
+        runCurrent()
+
+        assertEquals(listOf(true), offered(store))
+        assertEquals(emptyList(), galleryItems.asked)
+    }
+
+    @Test
+    fun `an original recorded by another install is not offered here, and the gallery is never asked`() =
+        runTest(mainDispatcher) {
+            repository.insert(photographedCat(galleryUri = SAVED, install = "another-install"))
+            galleryItems.present += SAVED
+            val store = newStore()
+
+            runCurrent()
+
+            assertEquals(listOf(false), offered(store))
+            assertEquals(emptyList(), galleryItems.asked)
+        }
+
+    @Test
+    fun `a photo given here to a cat another install logged is offered here`() = runTest(mainDispatcher) {
+        val foreign = photographedCat(galleryUri = SAVED, install = "another-install")
+        repository.insert(foreign.copy(photos = foreign.photos.map { it.copy(deviceId = INSTALL) }))
+        galleryItems.present += SAVED
+        val store = newStore()
+
+        runCurrent()
+
+        assertEquals(listOf(true), offered(store))
+    }
+
+    @Test
+    fun `an original deleted after the check says so once at the tap and is offered no more`() =
+        runTest(mainDispatcher) {
+            repository.insert(photographedCat(galleryUri = SAVED))
+            galleryItems.present += SAVED
+            val store = newStore()
+            runCurrent()
+            galleryItems.present -= SAVED
+
+            store.effects.test {
+                store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = ID))
+                runCurrent()
+                assertEquals(PhotoViewerEffect.GalleryItemGone, awaitItem())
+                expectNoEvents()
+            }
+            assertEquals(listOf(false), offered(store))
+        }
+
+    @Test
+    fun `an original deleted while the viewer is open is offered no more once the cat changes`() =
+        runTest(mainDispatcher) {
+            repository.insert(photographedCat(galleryUri = SAVED))
+            galleryItems.present += SAVED
+            val store = newStore()
+            runCurrent()
+            val beforeTheChange = offered(store)
+            galleryItems.present -= SAVED
+
+            repository.setCoat(ID, CatCoat.GINGER, OCCURRED + 1.minutes)
+            runCurrent()
+
+            assertEquals(listOf(true), beforeTheChange)
+            assertEquals(listOf(false), offered(store))
+        }
+
+    @Test
+    fun `the check finishing keeps a removal the user is being asked about`() = runTest(mainDispatcher) {
+        repository.insert(photographedCat(galleryUri = SAVED))
+        galleryItems.present += SAVED
+        galleryItems.gate = CompletableDeferred()
+        val store = newStore()
+        runCurrent()
+        store.dispatch(PhotoViewerIntent.RemovePhotoClicked(ID))
+        runCurrent()
+
+        galleryItems.gate?.complete(Unit)
+        runCurrent()
+
+        val showing = assertIs<PhotoViewerState.Showing>(store.state.value)
+        assertEquals(ID, showing.removingPhotoId)
+        assertEquals(listOf(true), showing.photos.map { it.opensInGallery })
+    }
+
+    @Test
     fun `a second tap while the first is being checked opens the gallery once`() = runTest(mainDispatcher) {
         repository.insert(photographedCat(galleryUri = SAVED))
         galleryItems.present += SAVED
@@ -191,6 +322,7 @@ class PhotoViewerStoreTest {
         galleryItems.present += SAVED
         val store = newStore()
         runCurrent()
+        galleryItems.asked.clear()
 
         store.effects.test {
             store.dispatch(PhotoViewerIntent.OpenInGalleryClicked(photoId = "gone"))
@@ -292,9 +424,13 @@ class PhotoViewerStoreTest {
         }
     }
 
-    private fun photographedCat(galleryUri: String? = null) = encounterFixture(ID, OCCURRED)
-        .copy(kind = EncounterKind.PHOTO)
-        .withPhoto(photoPath = "cat-1.jpg", galleryUri = galleryUri)
+    private fun photographedCat(galleryUri: String? = null, sourceMediaUri: String? = null, install: String = INSTALL) =
+        encounterFixture(ID, OCCURRED)
+            .copy(kind = EncounterKind.PHOTO, deviceId = install)
+            .withPhoto(photoPath = "cat-1.jpg", galleryUri = galleryUri, sourceMediaUri = sourceMediaUri)
+
+    private fun offered(store: PhotoViewerStore): List<Boolean> =
+        assertIs<PhotoViewerState.Showing>(store.state.value).photos.map { it.opensInGallery }
 
     private fun newStore(openedOn: String? = null) = PhotoViewerStore(
         encounterId = ID,
@@ -302,11 +438,7 @@ class PhotoViewerStoreTest {
         observeEncounter = ObserveEncounter(repository),
         removePhoto = RemovePhoto(repository, FakePhotoStorage(), FakeClock(OCCURRED)),
         resolveGalleryLink = ResolveGalleryLink(galleryItems, FakeDeviceIdProvider(INSTALL)),
-        stateMapper = PhotoViewerStateMapper(
-            FakeDateTimeFormatter(),
-            FakePhotoStorage(root = "/data/photos"),
-            FakeDeviceIdProvider(INSTALL),
-        ),
+        stateMapper = PhotoViewerStateMapper(FakeDateTimeFormatter(), FakePhotoStorage(root = "/data/photos")),
         clock = FakeClock(OCCURRED),
         timeZone = TimeZone.UTC,
     )
@@ -316,6 +448,7 @@ class PhotoViewerStoreTest {
         const val INSTALL = "device-1"
         const val SAVED = "content://media/external/images/media/42"
         const val SECOND_SAVED = "content://media/external/images/media/43"
+        const val PICKED = "content://media/external/images/media/17"
         const val SECOND = "second"
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
