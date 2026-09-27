@@ -1,6 +1,8 @@
 package dev.catsradar.app.di
 
+import android.Manifest
 import android.app.ActivityManager
+import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
@@ -12,6 +14,7 @@ import dev.catsradar.app.navigation.ScreenViewTracker
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
 import dev.catsradar.app.notification.WalkingNotifier
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.app.reporting.NonFatalReporter
 import dev.catsradar.app.update.InstallResults
 import dev.catsradar.app.update.UpdateInstaller
@@ -83,6 +86,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.parameter.parametersOf
+import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -183,13 +187,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ObserveStats>())
         assertNotNull(koin.get<ObserveWalkStats>())
         assertNotNull(koin.get<LogPhoto>())
-        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id") })
-        assertNotNull(koin.getStore<LocationPickerStore> { parametersOf("any-id") })
-        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", null) })
-        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
-        // Both the root (null parent) and a drilled-in level, because they take different paths.
-        assertNotNull(koin.getStore<RegionsStore> { parametersOf(null) })
-        assertNotNull(koin.getStore<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
         assertNotNull(koin.get<ScreenViewTracker>())
         assertNotNull(koin.get<WalkingNotificationSync>())
         assertNotNull(koin.get<WalkRecordingState>())
@@ -205,6 +202,38 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<AttachLocation>())
         assertNotNull(koin.get<ResolvePendingPlaces>())
         assertNotNull(koin.get<PurgeDeleted>())
+    }
+
+    @Test
+    fun `the Stores built from a destination's arguments are bound`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+
+        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", "restored-id") })
+        assertNotNull(koin.getStore<LocationPickerStore> { parametersOf("any-id") })
+        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
+        // Both the root (null parent) and a drilled-in level, because they take different paths.
+        assertNotNull(koin.getStore<RegionsStore> { parametersOf(null) })
+        assertNotNull(koin.getStore<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
+    }
+
+    @Test
+    fun `photo location access follows what the app is granted at the moment it asks`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+        val access = koin.get<PhotoLocationAccess>()
+        assertFalse(access.granted())
+
+        shadowOf(ApplicationProvider.getApplicationContext<Application>())
+            .grantPermissions(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
+        assertTrue(access.granted())
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dev.catsradar.app.BuildConfig
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.data.analytics.FirebaseAnalyticsReporter
 import dev.catsradar.data.backup.ZipBackupReader
 import dev.catsradar.data.backup.ZipBackupWriter
@@ -37,6 +38,7 @@ import dev.catsradar.data.platform.SharedPreferencesDeviceIdProvider
 import dev.catsradar.data.platform.SharedPreferencesLocationPermissionRequestState
 import dev.catsradar.data.platform.SharedPreferencesWalkRecordingState
 import dev.catsradar.data.platform.VibratorHaptics
+import dev.catsradar.data.platform.mayReadPhotoLocations
 import dev.catsradar.data.repository.EncounterRepositoryImpl
 import dev.catsradar.data.repository.PlaceCellRepositoryImpl
 import dev.catsradar.data.repository.WalkRepositoryImpl
@@ -121,6 +123,7 @@ val dataModule = module {
     single<ImageResizer> { AndroidImageResizer(androidContext(), get()) }
     single<Digest> { Sha256Digest(androidContext()) }
     single<GallerySaver> { MediaStoreGallerySaver(androidContext()) }
+    single { PhotoLocationAccess { androidContext().mayReadPhotoLocations() } }
     single<GalleryItems> { MediaStoreGalleryItems(androidContext()) }
     single<GalleryItemLocator> { MediaStoreItemLocator(androidContext()) }
     single<SourceFileTime> { MediaStoreSourceFileTime(androidContext()) }

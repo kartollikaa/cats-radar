@@ -7,6 +7,9 @@ sealed interface EncounterDetailIntent {
     data object DeleteClicked : EncounterDetailIntent
     data object UndoClicked : EncounterDetailIntent
 
+    /** The pages came to rest on [catId]'s page. */
+    data class PageSettled(val catId: String) : EncounterDetailIntent
+
     /** [coat] of null clears it. */
     data class CoatPicked(val catId: String, val coat: CoatOption?) : EncounterDetailIntent
 

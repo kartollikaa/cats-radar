@@ -18,10 +18,10 @@ import androidx.compose.ui.platform.LocalResources
 import dev.catsradar.app.photo.CaptureTarget
 import dev.catsradar.app.photo.PendingCapture
 import dev.catsradar.app.photo.PendingCaptures
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.app.photo.PickGalleryPhotos
 import dev.catsradar.app.photo.PickSeveralPhotos
 import dev.catsradar.app.photo.holdReadAccess
-import dev.catsradar.app.photo.mayReadPhotoLocations
 import dev.catsradar.app.photo.photosSharedThroughLimitedAccess
 import dev.catsradar.domain.Tuning
 
@@ -122,7 +122,10 @@ internal fun rememberCaptureDiscarder(): CaptureDiscarder {
  * shared photos through limited access is itself the pick, and no gallery follows it.
  */
 @Composable
-internal fun rememberGalleryImportPicker(onResult: (List<Uri>) -> Unit): PhotoPickerLauncher {
+internal fun rememberGalleryImportPicker(
+    locationAccess: PhotoLocationAccess,
+    onResult: (List<Uri>) -> Unit,
+): PhotoPickerLauncher {
     val context = LocalContext.current
     val onPicked: (List<Uri>) -> Unit = { uris ->
         context.contentResolver.holdReadAccess(uris)
@@ -134,9 +137,9 @@ internal fun rememberGalleryImportPicker(onResult: (List<Uri>) -> Unit): PhotoPi
         val shared = context.photosSharedThroughLimitedAccess(Tuning.IMPORT_BATCH_MAX)
         if (shared.isEmpty()) galleryLauncher.launch(Unit) else onPicked(shared)
     }
-    return remember(context, galleryLauncher, mediaLocationLauncher) {
+    return remember(locationAccess, galleryLauncher, mediaLocationLauncher) {
         PhotoPickerLauncher {
-            if (context.mayReadPhotoLocations()) {
+            if (locationAccess.granted()) {
                 galleryLauncher.launch(Unit)
             } else {
                 mediaLocationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)

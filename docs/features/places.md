@@ -105,7 +105,8 @@ geohash and needs no network — keeps working. Only country and city names are 
 **Statistics → Places** opens the drill-down: countries, then cities, then areas, then the cats
 themselves. Every level is sorted busiest first, and every place row opens the level below it:
 tapping an area lists its cats. Tapping a cat opens that cat, the same screen as from Encounters (see
-[encounter-detail.md](./encounter-detail.md)), pushed above the list it was tapped in: the bottom bar
+[encounter-detail.md](./encounter-detail.md)), paging through the cat's outing rather than the area, pushed above
+the list it was tapped in: the bottom bar
 still shows Stats, and back returns to that list, not to the top of the drill-down. The Stats tab,
 like from any level of the drill-down, goes back to Stats itself.
 

@@ -115,14 +115,14 @@ takes them back*).
   Counter reads it back each time it is shown and again after a restart, so a summary whose time
   never ran out — the app was closed or killed first — comes back with a fresh countdown.
 - **A photo keeps its GPS only when the app may see where photos were taken.** Android strips the
-  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION`, so the gallery
-  icon asks for it first — the import starts reading photos the moment they are picked — and opens
-  the gallery whatever the answer, unless that answer shared photos itself (below). It asks only
-  while the app has no such access: once the permission is granted, or limited access taken, the
-  gallery opens straight away. The **date survives** either way, so a photo imported without that
-  access still lands on the day it was taken; it just gets no location. Android stops asking after
-  a second refusal; the switch then lives in the app's system permissions under *Photos and
-  videos*.
+  GPS tags from the bytes it hands over unless the app holds `ACCESS_MEDIA_LOCATION` or, from
+  Android 14, limited access (below), so the gallery icon asks for the permission first — the import
+  starts reading photos the moment they are picked — and opens the gallery whatever the answer,
+  unless that answer shared photos itself. It asks only while the app has no such access:
+  once the permission is granted, or limited access taken, the gallery opens straight away. The
+  **date survives** either way, so a photo imported without that access still lands on the day it
+  was taken; it just gets no location. Android stops asking after a second refusal; the switch then
+  lives in the app's system permissions under *Photos and videos*.
 - **The dialog reads as access to photos and videos** — to photos, media and files before Android
   13 — because Android files this permission under that group. The app declares no permission to
   read the gallery, so *Allow all* grants it the location of the photos it is handed and nothing
@@ -135,9 +135,12 @@ takes them back*).
   `IMPORT_BATCH_MAX` photos and leaves out any photo the app saved to the gallery itself. Android
   14 cannot narrow MediaStore to the latest selection, so there every photo shared with the app so
   far comes back, and one imported before is skipped as usual. MediaProvider counts limited access
-  as access to photo locations, so these photos, and the ones picked through the system photo
-  picker at later imports, keep their GPS. Leaving Android's picker with Back shares nothing and
-  opens the gallery, as *Don't allow* does.
+  as access to photo locations, so these photos keep their GPS, and so do the ones picked at later
+  imports, whether the system photo picker hands them over or a gallery app answers with a plain
+  MediaStore item (`PhotoStreamLimitedAccessTest`). The `ACCESS_MEDIA_LOCATION` that comes with
+  limited access is one-time and lapses soon after the app leaves the screen, while limited access
+  stays, so the app counts limited access on its own. Leaving Android's picker with Back shares
+  nothing and opens the gallery, as *Don't allow* does.
 - **The gallery opens with `ACTION_GET_CONTENT`, not the photo picker's own `ACTION_PICK_IMAGES`.**
   MediaProvider strips GPS from a `PICK_IMAGES` photo whatever the app holds. The one way round it
   there, `MediaStore.EXTRA_REQUEST_LOCATION_METADATA_ACCESS`, works only once the picker's own
@@ -146,8 +149,9 @@ takes them back*).
   the system photo picker wherever the phone has one.
 - **Every photo is read as its original where MediaStore allows it.** A gallery app may answer
   `GET_CONTENT` with a plain `content://media/…` URI, whose GPS MediaStore hands over only through
-  `MediaStore.setRequireOriginal`. With the permission held, the digest, the EXIF read and the copy
-  all ask for the original first, and take the bytes as handed over when the provider refuses.
+  `MediaStore.setRequireOriginal`. With access to photo locations — the permission, or limited
+  access from Android 14 — the digest, the EXIF read and the copy all ask for the original first,
+  and take the bytes as handed over when the provider refuses.
 - **The picked photos stay readable for the whole run.** A read grant handed back by
   `GET_CONTENT` belongs to the activity that received it, so finishing the app mid-import would
   otherwise cut the worker off from every photo it had not read yet. Where the source offers it, the
@@ -187,11 +191,13 @@ takes them back*).
 - `presentation/…/ReportedRun.kt` — which finished run the summary reports, shared with Backup
 - `app/…/navigation/PhotoLaunchers.kt` (`rememberGalleryImportPicker`) — the permission, then the gallery
   or the photos its answer shared
-- `app/…/photo/PhotoLocationAccess.kt` — whether the app may read photo locations, and the photos
-  shared through limited access
+- `app/…/photo/PhotoLocationAccess.kt` — the gallery icon's handle on whether the app may read
+  photo locations, and the photos shared through limited access
 - `app/…/photo/PickGalleryPhotos.kt` — the gallery, opened so that photos can keep their GPS
 - `app/…/photo/PhotoReadAccess.kt` — the picked photos' read grants, held for the run
 - `app/…/worker/ImportBatches.kt` — the picked photos' URIs, stored for the run under its work id
+- `data/…/androidMain/platform/PhotoLocationAccess.android.kt` — whether the app may read photo
+  locations, for the gallery icon and for every photo read
 - `data/…/androidMain/platform/PhotoStream.android.kt` — how every photo is opened, original first
 - `domain/…/platform/GalleryItemLocator.kt`, `data/…/androidMain/platform/MediaStoreItemLocator.android.kt`
   — which gallery item a picked photo is

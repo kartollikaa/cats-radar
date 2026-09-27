@@ -12,6 +12,13 @@ import kotlinx.collections.immutable.persistentListOf
 internal fun loadedWith(page: CatPage): EncounterDetailState.Loaded =
     EncounterDetailState.Loaded(pages = persistentListOf(page), currentId = page.id, currentNumber = 1)
 
+internal fun loadedOn(onScreen: CatPage, vararg pages: CatPage): EncounterDetailState.Loaded =
+    EncounterDetailState.Loaded(
+        pages = persistentListOf(*pages),
+        currentId = onScreen.id,
+        currentNumber = pages.indexOf(onScreen) + 1,
+    )
+
 internal val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
 // performScrollTo() scrolls only the nearest scrollable, the coat row, not the screen's list.
