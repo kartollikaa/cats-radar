@@ -76,6 +76,7 @@ class CounterStore(
                         importProgress = importProgress,
                         importSummary = importSummary,
                         coatPrompt = coatPrompt,
+                        milestone = stats.nextMilestone,
                     )
                 }
                 announceMilestone(stats.total)

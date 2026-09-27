@@ -52,6 +52,7 @@ class CounterStoreImportTimeoutTest {
                 totalLabel = "0",
                 count = 0,
                 undoVisible = false,
+                milestone = NoCatsMilestone,
                 importSummary = ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
             ),
             store.state.value,
@@ -59,7 +60,10 @@ class CounterStoreImportTimeoutTest {
 
         advanceTimeBy(1.milliseconds)
         runCurrent()
-        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            store.state.value,
+        )
     }
 
     @Test
@@ -71,7 +75,10 @@ class CounterStoreImportTimeoutTest {
         advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE)
         runCurrent()
 
-        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            store.state.value,
+        )
     }
 
     @Test
@@ -86,7 +93,10 @@ class CounterStoreImportTimeoutTest {
         advanceTimeBy(Tuning.IMPORT_SUMMARY_VISIBLE)
         runCurrent()
 
-        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            store.state.value,
+        )
     }
 
     @Test
@@ -103,7 +113,10 @@ class CounterStoreImportTimeoutTest {
         second.dispatch(finished)
         runCurrent()
 
-        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), second.state.value)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false, milestone = NoCatsMilestone),
+            second.state.value,
+        )
     }
 
     @Test
@@ -119,7 +132,10 @@ class CounterStoreImportTimeoutTest {
         runCurrent()
 
         assertEquals(emptyList(), repository.softDeleteAllCalls)
-        assertEquals(CounterState(totalLabel = "1", count = 1, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "1", count = 1, undoVisible = false, milestone = OneCatMilestone),
+            store.state.value,
+        )
     }
 
     @Test
@@ -145,7 +161,10 @@ class CounterStoreImportTimeoutTest {
         runCurrent()
 
         assertEquals(listOf(listOf("id-1")), repository.softDeleteAllCalls)
-        assertEquals(CounterState(totalLabel = "1", count = 1, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "1", count = 1, undoVisible = false, milestone = OneCatMilestone),
+            store.state.value,
+        )
     }
 
     @Test
@@ -167,6 +186,7 @@ class CounterStoreImportTimeoutTest {
                     totalLabel = "0",
                     count = 0,
                     undoVisible = false,
+                    milestone = NoCatsMilestone,
                     importSummary = ImportSummaryState(added = 1, skipped = null, failed = null, undoable = true),
                 ),
                 store.state.value,

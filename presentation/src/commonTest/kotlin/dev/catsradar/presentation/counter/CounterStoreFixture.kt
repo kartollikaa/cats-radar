@@ -12,6 +12,7 @@ import dev.catsradar.domain.usecase.UndoLastTally
 import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
+import dev.catsradar.presentation.statistics.MilestoneState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -74,3 +75,11 @@ internal fun TestScope.newCounterStore(
     runCurrent()
     return store
 }
+
+/** What the Counter shows toward the first milestone with no cats logged. */
+internal val NoCatsMilestone =
+    CounterMilestoneState(MilestoneState(valueLabel = "1", remainingLabel = "1"), fraction = 0f)
+
+/** What it shows with one cat: the first rung passed, ten next. */
+internal val OneCatMilestone =
+    CounterMilestoneState(MilestoneState(valueLabel = "10", remainingLabel = "9"), fraction = 0f)

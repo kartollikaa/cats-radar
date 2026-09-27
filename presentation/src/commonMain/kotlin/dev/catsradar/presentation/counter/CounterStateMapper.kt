@@ -3,8 +3,10 @@ package dev.catsradar.presentation.counter
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.stats.CurrentOuting
+import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.toRateState
 import kotlin.time.Duration
 
@@ -27,6 +29,7 @@ class CounterStateMapper(
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
+        milestone: Milestone? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         count = count,
@@ -40,6 +43,7 @@ class CounterStateMapper(
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
+        milestone = milestone?.toState(),
     )
 
     fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =
@@ -54,6 +58,11 @@ class CounterStateMapper(
 
     fun coatPrompt(encounter: Encounter): CoatPromptState =
         CoatPromptState(thumbPath = encounter.cover?.thumbPath?.let(photoStorage::resolve))
+
+    private fun Milestone.toState(): CounterMilestoneState = CounterMilestoneState(
+        next = MilestoneState(valueLabel = value.toString(), remainingLabel = remaining.toString()),
+        fraction = (value - remaining - reached).toFloat() / (value - reached),
+    )
 
     private fun CurrentOuting.toState(): CurrentOutingState = CurrentOutingState(
         count = count,
