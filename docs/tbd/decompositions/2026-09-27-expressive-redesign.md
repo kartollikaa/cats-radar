@@ -20,10 +20,11 @@
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
 | E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in its header and a *No coat* tile, which replaces the inline picker; the coat question after a photo takes the same header. | safe | ~550 | E4, E6 | planned |
-| E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot. | safe | ~450 | E6 | planned |
+| E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
+| E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -81,8 +82,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** `CoatPicker` goes if nothing else uses it.
 
 ### Slice E8 — Where you met
-- **In scope:** the Where card; the accuracy circle on the spot map; `encounter-detail.md` § Its map and §
-  Where it was found; a device check of the circle.
+- **In scope:** the Where card; the accuracy circle on the spot map; the no-location alert under the facts,
+  with the notice card moved to `ui/components`; `encounter-detail.md` § Its map and § Where it was found; a
+  device check of the circle.
 - **Out of scope:** the Map tab.
 - **Ships safely because:** the card still opens the Map tab or the location picker as it does today.
 - **Cleanup owed:** none.
@@ -107,6 +109,15 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Out of scope:** the tags at rest (E2) and the walk row (E3).
 - **Ships safely because:** it adds motion and a tag on a state the Counter already carries; nothing under the
   count moves.
+- **Cleanup owed:** none.
+
+### Slice E12 — Encounters in outing cards
+- **In scope:** the headline and its totals; each outing as a card with its header (the day, the count and
+  span labels, the walk chip, On the map as a pill); the grid's tiles in the coat shapes and the pair tiles'
+  corners; the list's cards; the selection's ring, check and bar; the mapper's new labels and the walk
+  overlap; `browsing-cats.md`.
+- **Out of scope:** the packing rules, the selection's behaviour, delete and its undo, the Places list.
+- **Ships safely because:** the same rows in the same order doing the same things; the labels are additive.
 - **Cleanup owed:** none.
 
 ## Decision log
@@ -136,3 +147,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - 2026-09-27: the owner asked for the coat sheet (from the coat card's Change, and after a photo) to be restyled
   and reviewed; prototype version 14 draws it with the cat's face in the header and E4's shaped tiles. Between
   "tap the current coat again" and a *No coat* tile, the owner chose the tile. E7 carries it.
+- 2026-09-27: the owner asked for a no-location alert on a cat's page like the Counter's import notice, and a
+  prototype of Encounters. Prototype version 15 drew both; the owner put the alert under the title ("under")
+  rather than at the top, and approved the Encounters drawing ("looks ok"). The alert joins E8; Encounters is
+  E12.

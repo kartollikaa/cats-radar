@@ -43,9 +43,9 @@ Read against renders of the current build and the composables in `ui/…/counter
 
 ## Out of scope
 
-- Encounters, the Map tab, Settings, Places, the photo viewer, the widget, notifications and the
-  launcher icon. They change only as far as the theme in section 1 reaches every screen. Statistics
-  joined the redesign later (section 5).
+- The Map tab, Settings, Places, the photo viewer, the widget, notifications and the launcher icon.
+  They change only as far as the theme in section 1 reaches every screen. Statistics (section 5) and
+  Encounters (section 6) joined the redesign later.
 - The palette and the colour policy. Dynamic colour on Android 12 and later, the teal palette below
   it and in every preview: unchanged.
 - A bundled font. The prototype's faces were stand-ins for the platform's.
@@ -176,7 +176,8 @@ progress indicator runs under it.
 the way the app's Russian already does, with «котик».
 
 **The facts row.** Under the title, outlined labels with `extraSmall` corners, 32 dp tall: the cat's
-number (section 4), the day, the time, and the place with its flag, or "No location yet" with a pin.
+number (section 4), the day, the time, and the place with its flag; a cat with no location has no
+place label, and the alert under the row says so.
 They are not buttons, wrap onto a second line when they must, and read to TalkBack as one item.
 
 **The coat card.** On `surfaceContainerLow` with `large` corners: the face in a 72 dp `Clover4Leaf`,
@@ -196,15 +197,21 @@ square in place of the face, "Tap a coat to note it" and **Not now**; the map's 
 *Not specified* cell. Prototype version 14 draws both. Setting the coat while a photo attaches still
 keeps both.
 
-**The Where card.** On `surfaceContainerLow` with `large` corners, headed **Where you met**. The spot
-map at 16:10 with `medium` corners; the place with its flag, city and country in
+**The no-location alert.** A cat with no location shows the Counter's notice card under the facts
+row (owner, 2026-09-27, over the top of the page): the pin in a round `tertiaryContainer` icon, **No
+location for this cat** and "It was logged without a fix, so it is not on the map or in Places.",
+read by TalkBack as one item, and a tonal **Set on map** at its end, which opens the location picker
+for that cat. It goes as soon as the cat has a location, whichever way it came. The notice card moves
+to `ui/components` and takes its icon's tone as a parameter. Prototype version 15 draws it.
+
+**The Where card.** On `surfaceContainerLow` with `large` corners, headed **Where you met**. The
+spot map at 16:10 with `medium` corners; the place with its flag, city and country in
 `titleMediumEmphasized`; "Current location · ±12 m" in `bodyMedium` on `onSurfaceVariant`; the
-coordinates under it in `bodySmall` on `onSurfaceVariant`, no longer in the primary colour; and a filled
-**Show on the map** pill. The card stays one tap target that opens the Map tab on the cat, as today,
-and the pill is its visible cue rather than a second control. A cat with no location shows an inner
-block on `surfaceContainerHighest` with the pin, "No location yet" and a filled **Set on map** button,
-the one control in the card. A cat whose coordinates lie off the globe shows no map and no pill and
-opens nothing, as today.
+coordinates under it in `bodySmall` on `onSurfaceVariant`, no longer in the primary colour; and a
+filled **Show on the map** pill. The card stays one tap target that opens the Map tab on the cat, as
+today, and the pill is its visible cue rather than a second control. A cat with no location has no
+Where card: the alert under the facts row takes its place. A cat whose coordinates lie off the globe
+shows no map and no pill and opens nothing, as today.
 
 **The accuracy circle.** The spot map draws the fix's accuracy to scale around the cat's dot: a
 `primary` disc at a low alpha with a `primary` outline. It is drawn only when the accuracy is known
@@ -264,6 +271,36 @@ they do today.
 in `StatsCalculator` from the same dates as the windows. `StatisticsState` gains the day series with
 its labels, built by the mapper; the composable draws it. Nothing else in the domain changes.
 
+## 6. Encounters
+
+Added 2026-09-27 at the owner's request ("also prototype the redesign for encounters page"); the owner
+approved prototype version 15's drawing. What the tab does is unchanged: outings newest first, the grid
+or the list, the packing, On the map, a long press to select, delete with an undo.
+
+**The headline.** "Encounters" in `headlineMediumEmphasized`, and under it "147 cats · 38 outings" in
+`bodyMedium` on `onSurfaceVariant`.
+
+**An outing.** One card on `surfaceContainerLow` with `extraLarge` corners holds the outing. Its header
+names the day in `titleLargeEmphasized` ("Today", "Yesterday", "Sep 24"), then the start, the count and
+the span on one line ("4:12 PM · 6 cats · 48 min"). An outing that overlapped a walk adds an **On a
+walk** chip in `tertiaryContainer` with the walking cat. **On the map** becomes a tonal pill with the
+map icon at the header's end, on the same rule as today.
+
+**The grid.** The packing stays. A pair is two photo squares with `medium` corners and the time on a
+dark chip over the photo's corner. A run's tiles take the coat grid's shapes of section 2 by column,
+with the face, the paw when no coat is noted, or the photo's thumbnail clipped to the shape, and the
+time under each; a short run's cards sit on `surface` inside the outing's card.
+
+**The list.** Each cat is a card on `surface` inside its outing's card, with the tile's shape, the
+coat's name or "A cat", and the time and place; "No location yet" takes `onTertiaryContainer`.
+
+**Selecting.** A chosen cat takes a `primary` ring and a check; the bar at the top turns
+`primaryContainer` with the close button, the count and Delete. The undo bar is unchanged.
+
+**Underneath.** The outing header's state gains the count and the span labels, built by the mapper from
+the outing's cats, and whether a walk overlapped it, from the stored walks. The headline's totals come
+from the same grouping. Nothing else in the domain changes.
+
 ## Behaviour changes
 
 1. **The detail's coat is set in a sheet**, not in the inline strip. `coat.md` § *Changing it later* is
@@ -272,8 +309,11 @@ its labels, built by the mapper; the composable draws it. Nothing else in the do
    is unchanged. `encounter-detail.md` changes.
 3. **The coat ring is drawn on the shape**, not around the whole cell. `coat.md` changes.
 4. **New information**: the milestone arc and the goal on the ring on the Counter, the
-   cat's number and the accuracy circle on the detail, the per-day chart on Statistics.
-   `counting-cats.md`, `encounter-detail.md` and `statistics.md` change.
+   cat's number and the accuracy circle on the detail, the per-day chart on Statistics, and each
+   outing's count, span and walk on Encounters. `counting-cats.md`, `encounter-detail.md`,
+   `statistics.md` and `browsing-cats.md` change.
+5. **A cat with no location says so** in an alert under its facts, with Set on map; its Where card
+   appears once it has a location. `encounter-detail.md` changes.
 
 ## Decided here
 
@@ -286,6 +326,9 @@ its labels, built by the mapper; the composable draws it. Nothing else in the do
 - The Russian titles use the app's own «котик».
 - Statistics joins the redesign (owner, 2026-09-27) with the Immersive direction's chart, range pill and
   tiles; the Counter itself keeps no tiles.
+- A cat with no location gets the notice-card alert under its facts rather than at the top of the page
+  (owner, 2026-09-27).
+- Encounters joins the redesign (owner, 2026-09-27) as prototype version 15 draws it.
 
 ## The outing pager
 
@@ -319,6 +362,10 @@ from a flat one.
   - Statistics: the pill switches the chart between seven and thirty bars; a tap on a bar names its day;
     the tiles show the six numbers; each coat row's bar is the width of its share.
   - The menu's entries and the Remove button reach the same intents as today's.
+  - A cat with no location shows the alert and no Where card; Set on map opens the picker; the alert
+    goes once the cat has a location.
+  - Encounters: an outing's header carries its count, span and walk chip; the tiles take the coat
+    shapes; a long press still selects and Delete still offers Undo.
 - **Kept green:** the Counter's *controls do not jump* and floor tests, `NavTransitionTimingTest`,
   `BottomSheetUsageTest`, `BottomSheetNavigationTest`, `CatsRadarColorsTest` (no palette change).
 - **Renders:** before and after, light and dark, of every changed surface, from the Robolectric render
