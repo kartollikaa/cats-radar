@@ -25,6 +25,7 @@ import dev.catsradar.domain.platform.Haptics
 import dev.catsradar.presentation.counter.CounterIntent
 import dev.catsradar.presentation.counter.CounterStore
 import dev.catsradar.ui.R
+import dev.catsradar.ui.counter.CoatPromptAction
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.LocationHintAction
 import kotlinx.collections.immutable.toImmutableList
@@ -44,6 +45,7 @@ internal fun CounterDestination(
     val locationPermissionRequester = rememberPermissionRequester(store)
     val cameraLauncher = rememberCameraLauncher { shot -> store.dispatch(CounterIntent.PhotoCaptured(shot.uri)) }
     val photoFailureReporter = rememberMessageReporter(R.string.counter_photo_not_saved)
+    val catsFailureReporter = rememberMessageReporter(R.string.counter_cats_not_saved)
     val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val importScheduler = koinInject<ImportScheduler>()
@@ -53,9 +55,7 @@ internal fun CounterDestination(
         store.dispatch(CounterIntent.WalkingModeToggled(enabled))
     }
     ObserveImportWork(store, importScheduler)
-    LaunchedEffect(store, cameraRequest.isPending) {
-        if (cameraRequest.consume()) store.dispatch(CounterIntent.CameraClicked)
-    }
+    ConsumeCameraRequest(store, cameraRequest)
     LaunchedEffect(
         store,
         haptics,
@@ -72,6 +72,7 @@ internal fun CounterDestination(
                 locationPermissionRequester,
                 cameraLauncher,
                 photoFailureReporter,
+                catsFailureReporter,
                 captureDiscarder,
                 milestoneAnnouncer,
                 photoPickerLauncher,
@@ -91,9 +92,15 @@ internal fun CounterDestination(
         onUndoImportClick = { store.dispatch(CounterIntent.Import.UndoClicked) },
         onImportSummaryDismiss = { store.dispatch(CounterIntent.Import.SummaryDismissed) },
         onWalkingModeChange = onWalkingModeChange,
-        onCoatPromptPick = { coat -> store.dispatch(CounterIntent.CoatPromptPicked(coat)) },
-        onCoatPromptDismiss = { store.dispatch(CounterIntent.CoatPromptDismissed) },
+        onCoatPromptAction = { action -> store.dispatch(action.toCounterIntent()) },
     )
+}
+
+@Composable
+private fun ConsumeCameraRequest(store: CounterStore, cameraRequest: CameraRequest) {
+    LaunchedEffect(store, cameraRequest.isPending) {
+        if (cameraRequest.consume()) store.dispatch(CounterIntent.CameraClicked)
+    }
 }
 
 // The worker outlives this screen, so its state is read back rather than remembered: coming
@@ -128,6 +135,15 @@ private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
             Toast.makeText(context, text, Toast.LENGTH_LONG).show()
         }
     }
+}
+
+private fun CoatPromptAction.toCounterIntent(): CounterIntent = when (this) {
+    is CoatPromptAction.CoatPicked -> CounterIntent.CoatPrompt.Picked(coat)
+    CoatPromptAction.UnseenPicked -> CounterIntent.CoatPrompt.UnseenPicked
+    is CoatPromptAction.TrayCatClicked -> CounterIntent.CoatPrompt.TrayCatClicked(index)
+    CoatPromptAction.SeveralClicked -> CounterIntent.CoatPrompt.SeveralClicked
+    CoatPromptAction.SaveClicked -> CounterIntent.CoatPrompt.SaveClicked
+    CoatPromptAction.Dismissed -> CounterIntent.CoatPrompt.Dismissed
 }
 
 private fun LocationHintAction.toCounterIntent(): CounterIntent = when (this) {

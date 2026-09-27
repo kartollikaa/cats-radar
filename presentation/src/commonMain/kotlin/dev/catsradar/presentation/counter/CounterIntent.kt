@@ -33,8 +33,19 @@ sealed interface CounterIntent {
 
     /** Logs a cat of this coat straight away — the fast path for a coat you can see. */
     data class CoatTallyClicked(val coat: CoatOption) : CounterIntent
-    data class CoatPromptPicked(val coat: CoatOption) : CounterIntent
-    data object CoatPromptDismissed : CounterIntent
+
+    /** Answering the coat question after a photo: a sub-flow of the Counter, like an import. */
+    sealed interface CoatPrompt : CounterIntent {
+        data class Picked(val coat: CoatOption) : CoatPrompt
+
+        /** The paw: a cat on the photo whose coat nobody saw. */
+        data object UnseenPicked : CoatPrompt
+        data object SeveralClicked : CoatPrompt
+        data class TrayCatClicked(val index: Int) : CoatPrompt
+        data object SaveClicked : CoatPrompt
+        data object Dismissed : CoatPrompt
+    }
+
     data class LocationPermissionResult(val granted: Boolean) : CounterIntent
     data object GrantLocationClicked : CounterIntent
     data object LocationPermissionHintDismissed : CounterIntent

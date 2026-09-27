@@ -6,6 +6,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.usecase.AddCatsToPhoto
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
@@ -37,7 +38,8 @@ class CounterStore(
     private val logPhoto: LogPhoto,
     private val undoLastTally: UndoLastTally,
     private val undoImport: UndoImport,
-    private val setCoat: SetCoat,
+    setCoat: SetCoat,
+    addCatsToPhoto: AddCatsToPhoto,
     observeStats: ObserveStats,
     observeWalkElapsed: ObserveWalkElapsed,
     private val settingsRepository: SettingsRepository,
@@ -58,7 +60,7 @@ class CounterStore(
     private var importedIds: List<String> = emptyList()
     private val importRun = ReportedRun(settingsRepository, ReportedJob.GALLERY_IMPORT)
     private var importSummaryTimeoutJob: Job? = null
-    private var coatPromptEncounterId: String? = null
+    private val coatQuestion = CoatQuestion(setCoat, addCatsToPhoto)
 
     init {
         observeStats()
@@ -113,15 +115,9 @@ class CounterStore(
                 runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
-            is CounterIntent.CoatPromptPicked, CounterIntent.CoatPromptDismissed -> {
-                val encounterId = coatPromptEncounterId
-                // Closed before the write: the prompt never waits on storage, and a failed write still closes it.
-                coatPromptEncounterId = null
-                setState { copy(coatPrompt = null) }
-                if (intent is CounterIntent.CoatPromptPicked && encounterId != null) {
-                    runStorageWrite { setCoat(encounterId, intent.coat.toCatCoat()) }
-                }
-            }
+            is CounterIntent.CoatPrompt ->
+                coatQuestion.answer(intent, state.value.coatPrompt) { next -> setState { copy(coatPrompt = next) } }
+                    .forEach { emit(it) }
             is CounterIntent.LocationPermissionResult ->
                 setState { copy(locationPermissionHintVisible = !intent.granted) }
             CounterIntent.GrantLocationClicked -> emit(CounterEffect.RequestLocationPermission)
@@ -171,7 +167,7 @@ class CounterStore(
         runStorageWrite {
             when (val result = logPhoto(uri)) {
                 is PhotoResult.Logged -> {
-                    coatPromptEncounterId = result.encounter.id
+                    coatQuestion.ask(result.encounter)
                     setState { copy(coatPrompt = stateMapper.coatPrompt(result.encounter)) }
                     if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
                 }

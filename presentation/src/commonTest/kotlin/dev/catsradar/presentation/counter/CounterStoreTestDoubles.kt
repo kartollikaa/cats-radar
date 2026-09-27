@@ -89,10 +89,11 @@ internal class FakeEncounterRepository : EncounterRepository {
         encounters.update { it + encounter }
     }
 
-    override suspend fun insertAllIfSourceLive(
-        sourceEncounterId: String,
-        encounters: List<Encounter>,
-    ): Boolean = throw NotImplementedError("unused by this test")
+    override suspend fun insertAllIfSourceLive(sourceEncounterId: String, encounters: List<Encounter>): Boolean {
+        val sourceLive = this.encounters.value.any { it.id == sourceEncounterId && it.deletedAt == null }
+        if (sourceLive) this.encounters.update { it + encounters }
+        return sourceLive
+    }
 
     override suspend fun update(encounter: Encounter) {
         encounters.update { list -> list.map { if (it.id == encounter.id) encounter else it } }

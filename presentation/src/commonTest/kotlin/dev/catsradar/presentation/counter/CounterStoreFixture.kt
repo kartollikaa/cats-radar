@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.counter
 
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.usecase.AddCatsToPhoto
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveOpenWalk
@@ -36,6 +37,7 @@ internal fun TestScope.newCounterStore(
     imageResizer: FakeImageResizer = FakeImageResizer(),
     ticks: Flow<Unit> = flowOf(Unit),
     walkRepository: FakeWalkRepository = FakeWalkRepository(),
+    photoStorage: FakePhotoStorage = FakePhotoStorage(),
 ): CounterStore {
     val clock = FakeClock(CounterNow)
     val idGenerator = FakeIdGenerator()
@@ -65,10 +67,18 @@ internal fun TestScope.newCounterStore(
         undoLastTally = UndoLastTally(encounterRepository, clock, analytics = NoAnalytics),
         undoImport = UndoImport(encounterRepository, clock, analytics = NoAnalytics),
         setCoat = SetCoat(encounterRepository, clock, analytics = NoAnalytics),
+        addCatsToPhoto = AddCatsToPhoto(
+            encounterRepository,
+            photoStorage,
+            idGenerator,
+            FakeDeviceIdProvider(),
+            clock,
+            analytics = NoAnalytics,
+        ),
         observeStats = ObserveStats(encounterRepository, clock, TimeZone.UTC, ticks = ticks),
         observeWalkElapsed = ObserveWalkElapsed(ObserveOpenWalk(walkRepository), clock, ticks = ticks),
         settingsRepository = settingsRepository,
-        stateMapper = CounterStateMapper(FakeDateTimeFormatter(), FakePhotoStorage()),
+        stateMapper = CounterStateMapper(FakeDateTimeFormatter(), photoStorage),
         locationPermissionRequestState = locationPermissionRequestState,
     )
     runCurrent()

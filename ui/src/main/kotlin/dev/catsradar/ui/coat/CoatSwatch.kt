@@ -1,9 +1,11 @@
 package dev.catsradar.ui.coat
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -13,11 +15,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,14 +34,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 
 private val CellWidth = 70.dp
@@ -63,12 +73,15 @@ fun CoatGrid(
 /**
  * The same grid with any number of coats marked, for choosing several at once. A null in [selected]
  * marks "no coat", which gets a cell of its own after the coats only when [onUnspecifiedClick] is given.
+ * A coat in [counts] shows how many of it were counted; with [enabled] false no cell takes a tap.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CoatGrid(
     selected: ImmutableSet<CoatOption?>,
     modifier: Modifier = Modifier,
+    counts: ImmutableMap<CoatOption?, Int> = persistentMapOf(),
+    enabled: Boolean = true,
     onCoatClick: (CoatOption) -> Unit = {},
     onUnspecifiedClick: (() -> Unit)? = null,
 ) {
@@ -83,6 +96,8 @@ fun CoatGrid(
                 label = stringResource(coat.labelRes()),
                 selected = coat in selected,
                 modifier = Modifier.fillMaxRowHeight(),
+                count = counts[coat],
+                enabled = enabled,
                 onClick = { onCoatClick(coat) },
             ) {
                 CatFace(coat = coat, modifier = Modifier.size(FaceSize))
@@ -93,6 +108,8 @@ fun CoatGrid(
                 label = stringResource(R.string.coat_not_specified),
                 selected = null in selected,
                 modifier = Modifier.fillMaxRowHeight(),
+                count = counts[null],
+                enabled = enabled,
                 onClick = onClick,
             ) {
                 Icon(
@@ -145,28 +162,50 @@ private fun CoatCell(
     label: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    count: Int? = null,
+    enabled: Boolean = true,
     onClick: () -> Unit = {},
     face: @Composable () -> Unit,
 ) {
     val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val counted = count?.let { pluralStringResource(R.plurals.counter_coat_counted, it, it) }
     Column(
         modifier = modifier
             .width(CellWidth)
             // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
             .clip(MaterialTheme.shapes.small)
             .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small)
-            .selectable(selected = selected, onClick = onClick)
+            .selectable(selected = selected, enabled = enabled, onClick = onClick)
+            .then(if (counted != null) Modifier.semantics { stateDescription = counted } else Modifier)
             .padding(horizontal = 4.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        face()
+        Box {
+            face()
+            count?.let {
+                CountDot(count = it, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-4).dp))
+            }
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
         )
     }
+}
+
+@Composable
+private fun CountDot(count: Int, modifier: Modifier = Modifier) {
+    Text(
+        text = count.toString(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onPrimary,
+        modifier = modifier
+            .clearAndSetSemantics {}
+            .background(MaterialTheme.colorScheme.primary, CircleShape)
+            .padding(horizontal = 5.dp),
+    )
 }
 
 @StringRes

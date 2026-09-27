@@ -16,6 +16,7 @@ internal fun handleCounterEffect(
     locationPermissionRequester: LocationPermissionRequester,
     cameraLauncher: CameraLauncher,
     photoFailureReporter: MessageReporter,
+    catsFailureReporter: MessageReporter,
     captureDiscarder: CaptureDiscarder,
     milestoneAnnouncer: MilestoneAnnouncer,
     photoPickerLauncher: PhotoPickerLauncher,
@@ -28,6 +29,7 @@ internal fun handleCounterEffect(
         CounterEffect.RequestLocationPermission -> locationPermissionRequester.request()
         CounterEffect.OpenCamera -> cameraLauncher.launch(catId = null)
         CounterEffect.PhotoNotSaved -> photoFailureReporter.report()
+        CounterEffect.CatsNotSaved -> catsFailureReporter.report()
         is CounterEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
         is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)
         CounterEffect.PickPhotos -> photoPickerLauncher.launch()

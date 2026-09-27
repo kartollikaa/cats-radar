@@ -100,9 +100,14 @@ internal class FakeDateTimeFormatter : DateTimeFormatter {
 // Mirrors AndroidPhotoStorage's contract: a stored path is relative, and resolving prefixes it with
 // the app's own photo directory.
 internal class FakePhotoStorage(private val root: String = "/data/photos") : PhotoStorage {
+    var copyShouldThrow: Throwable? = null
+
     override fun resolve(relativePath: String): String = "$root/$relativePath"
 
-    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto = error("unused")
+    override suspend fun copy(stored: StoredPhoto, baseName: String): StoredPhoto {
+        copyShouldThrow?.let { throw it }
+        return StoredPhoto(photoPath = "$baseName.jpg", thumbPath = stored.thumbPath?.let { "${baseName}_thumb.jpg" })
+    }
 
     override suspend fun delete(relativePath: String) = Unit
 }

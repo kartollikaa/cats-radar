@@ -53,6 +53,23 @@
     <string name="counter_coat_prompt_hint">Tap a coat to note it</string>
     <string name="counter_coat_prompt_skip">Not now</string>
     <string name="counter_coat_prompt_photo">The photo you just took</string>
+    <string name="counter_coat_prompt_several">Several</string>
+    <string name="counter_coat_count_title_empty">How many cats are on it?</string>
+    <string name="counter_coat_count_hint">Tap a coat for each cat. Tap a cat above to take it out</string>
+    <string name="counter_coat_count_remove">Remove</string>
+    <plurals name="counter_coat_count_title">
+        <item quantity="one">%1$d cat on this photo</item>
+        <item quantity="other">%1$d cats on this photo</item>
+    </plurals>
+    <plurals name="counter_coat_count_save">
+        <item quantity="one">Save %1$d cat</item>
+        <item quantity="other">Save %1$d cats</item>
+    </plurals>
+    <plurals name="counter_coat_counted">
+        <item quantity="one">%1$d on the photo</item>
+        <item quantity="other">%1$d on the photo</item>
+    </plurals>
+    <string name="counter_cats_not_saved">Cats not saved</string>
 
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
