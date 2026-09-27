@@ -26,6 +26,10 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -62,6 +66,9 @@ class CounterWalkLookTest {
             }
         }
     }
+
+    // The ring's stroke is this share of its diameter.
+    private val ringStroke = 0.026f
 
     // On the number's row, a third of the square's side from its centre: inside the ring, clear of the digits.
     private fun cookieFill(): Color {
@@ -117,11 +124,22 @@ class CounterWalkLookTest {
     @Test
     fun `the ring keeps its colour on the warm cookie`() {
         show()
-        assertTrue(arc().holds(colors.primary))
+        assertEquals(colors.primary, headDotCentre())
 
         walking = true
         compose.waitForIdle()
 
-        assertTrue(arc().holds(colors.primary))
+        assertEquals(colors.primary, headDotCentre())
+    }
+
+    // The dot at the arc's head, where the milestone's fraction puts it on the ring's centre line.
+    private fun headDotCentre(): Color {
+        val pixels = arc().toPixelMap()
+        val stroke = pixels.width * ringStroke
+        val radius = (pixels.width - stroke) / 2
+        val angle = (360 * milestone.fraction - 90) * PI / 180
+        val x = (pixels.width / 2 + radius * cos(angle)).roundToInt()
+        val y = (pixels.height / 2 + radius * sin(angle)).roundToInt()
+        return pixels[x, y]
     }
 }

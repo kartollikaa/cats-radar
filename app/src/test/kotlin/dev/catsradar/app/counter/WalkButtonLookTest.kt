@@ -99,6 +99,7 @@ class WalkButtonLookTest {
             val camera = photo().getUnclippedBoundsInRoot()
             assertEquals(block.left.value, walk.left.value, 1f)
             assertEquals(56.dp, walk.height)
+            assertEquals(camera.height, walk.height)
             assertEquals(walk.top, camera.top)
             assertEquals((walk.right + 8.dp).value, camera.left.value, 1f)
         }

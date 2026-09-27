@@ -84,7 +84,7 @@ APIs again, this section is revisited before the pin moves.
 
 The order on screen: the location hint, the count, the coat grid, then Walk and Photo in one row. The
 status line under the count is gone (see *The tags on the ring*), the walk row under it too (see
-*The walk*), and the import's notice floats over the screen instead of taking a place in the column
+*The walk*), and from E15 the import's notice floats over the screen instead of taking a place in the column
 (see *The import notice*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
 the count reaches its floor. Everything under the count therefore costs the count its size, and the
 Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
