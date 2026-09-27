@@ -72,4 +72,17 @@ class CatsRadarThemeTest {
         }
         assertEquals(List(3) { FontWeight.Bold } + List(4) { FontWeight.SemiBold }, weights)
     }
+
+    @Test
+    fun `the emphasized styles are a weight above the theme's own`() {
+        var typography: Typography? = null
+        compose.setContent { CatsRadarTheme { typography = MaterialTheme.typography } }
+        compose.waitForIdle()
+
+        val weights = typography?.run {
+            listOf(displayLargeEmphasized, headlineMediumEmphasized, titleLargeEmphasized, titleMediumEmphasized)
+                .map { it.fontWeight }
+        }
+        assertEquals(listOf(FontWeight.ExtraBold, FontWeight.Bold, FontWeight.Bold, FontWeight.Bold), weights)
+    }
 }

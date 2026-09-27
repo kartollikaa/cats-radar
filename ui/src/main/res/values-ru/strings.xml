@@ -163,6 +163,12 @@
         <item quantity="many">%1$d котиков за %2$s</item>
         <item quantity="other">%1$d котика за %2$s</item>
     </plurals>
+    <plurals name="counter_count_caption" tools:ignore="ImpliedQuantity">
+        <item quantity="one">котик</item>
+        <item quantity="few">котика</item>
+        <item quantity="many">котиков</item>
+        <item quantity="other">котика</item>
+    </plurals>
     <plurals name="counter_outing_cats">
         <item quantity="one">%1$d котик</item>
         <item quantity="few">%1$d котика</item>

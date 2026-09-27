@@ -14,14 +14,15 @@
 | # | PR title | Purpose (one sentence) | Strategy | Size budget | Depends on | Status |
 |---|----------|------------------------|----------|-------------|------------|--------|
 | E1 | The Expressive theme | `CatsRadarTheme` draws with `MaterialExpressiveTheme` and the expressive motion scheme, and `app-shell.md` stops saying it cannot. | safe | ~150 | — | in-review |
-| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone and the Statistics line under it. | safe | ~450 | E1 | planned |
-| E3 | Stat tiles and the walk row | Today, Last 7 days and With a photo as tiles under the outing line; the walk button as an extended FAB and Undo as a tonal button. | safe | ~400 | E2 | planned |
+| E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone; the goal and the outing ride tags on the ring, and nothing sits under the count. | safe | ~450 | E1 | in-review |
+| E3 | The walk row | The walk button as an extended FAB and Undo as a tonal button. | safe | ~250 | E2 | planned |
 | E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | planned |
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
-| E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, which replaces the inline picker. | safe | ~500 | E4, E6 | planned |
+| E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in its header and a *No coat* tile, which replaces the inline picker; the coat question after a photo takes the same header. | safe | ~550 | E4, E6 | planned |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
+| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -42,11 +43,11 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** the block stays the button, with the same roll, badge and label.
 - **Cleanup owed:** none.
 
-### Slice E3 — Stat tiles and the walk row
-- **In scope:** the three tile counts in the Counter state; the tiles; the walk button's look; Undo as a
-  tonal button; `counting-cats.md`, `walking-mode.md` where it describes the button's look.
-- **Out of scope:** what the walk button does, and where Undo sits.
-- **Ships safely because:** additive tiles; the walk row keeps its behaviour and its no-jump rules.
+### Slice E3 — The walk row
+- **In scope:** the walk button's look; Undo as a tonal button; `counting-cats.md`, `walking-mode.md` where
+  it describes the button's look.
+- **Out of scope:** what the walk button does, and where Undo sits; stat tiles (dropped, see the log).
+- **Ships safely because:** the walk row keeps its behaviour and its no-jump rules.
 - **Cleanup owed:** none.
 
 ### Slice E4 — Coat faces in Material shapes
@@ -71,9 +72,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice E7 — The coat card and the coat sheet
-- **In scope:** the coat card; a coat-sheet key with `bottomSheet()` metadata; set, clear and dismiss;
+- **In scope:** the coat card; a coat-sheet key with `bottomSheet()` metadata; the header with the face or the
+  photo; the *No coat* tile; set, clear and dismiss;
   `coat.md` § Changing it later; retiring `EncounterDetailCoatPickerTest`.
-- **Out of scope:** the coat question after a photo and the map's filter (E4 styled them).
+- **Out of scope:** the map's filter (E4 styled it); the coat question after a photo takes only the header.
 - **Ships safely because:** the same `SetCoat` intent, reached from a sheet instead of a strip.
 - **Cleanup owed:** `CoatPicker` goes if nothing else uses it.
 
@@ -91,6 +93,14 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** additive; a read-only count.
 - **Cleanup owed:** none.
 
+### Slice E11 — Reaching a rung
+- **In scope:** the celebration when a tally lands on a rung of `Tuning.MILESTONES`: the cookie's bounce, the
+  ring's glow, the "100 cats!" tag until the undo window closes, and its undo; `counting-cats.md`.
+- **Out of scope:** the tags at rest (E2) and the walk row (E3).
+- **Ships safely because:** it adds motion and a tag on a state the Counter already carries; nothing under the
+  count moves.
+- **Cleanup owed:** none.
+
 ## Decision log
 
 - 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
@@ -101,5 +111,17 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   detail screen. The Counter slices, E1 to E4, go first; a detail slice starts only when no outing pager
   branch is open, so the two epics never edit `EncounterDetailScreen.kt` or `encounter-detail.md` in
   parallel.
+- 2026-09-27: the owner found the Counter's cookie "very small" in the prototype once the prototype drew
+  it honestly, with only the room the controls leave. Version 5's stat tiles, separate milestone line and
+  62 dp coat shapes left 140 px; the Roomy layout (no tiles, the milestone in the outing line's slot,
+  52 dp shapes) leaves about 300. E3 drops the tiles, E2 shares the slot, E4 keeps the grid no taller.
 - 2026-09-27: the owner said "work in autonomous mode": the spec's open details stand as decided, and each
   slice is planned, built, reviewed and gated in turn.
+- 2026-09-27: the owner found the milestone line under the cookie ("38 more to reach 100") foreign, and the
+  slot it kept empty. Five treatments were prototyped (Line, Ring, Cookie, Chip, Moments; prototype version 13)
+  and the owner chose **Ring**: the goal pinned where the ring closes with a dot at the arc's head, the outing on
+  a tag at the ring's bottom, and no line under the count. Folded into E2 while its gate was still open; the
+  celebration on reaching a rung is slice E11.
+- 2026-09-27: the owner asked for the coat sheet (from the coat card's Change, and after a photo) to be restyled
+  and reviewed; prototype version 14 draws it with the cat's face in the header and E4's shaped tiles. Between
+  "tap the current coat again" and a *No coat* tile, the owner chose the tile. E7 carries it.

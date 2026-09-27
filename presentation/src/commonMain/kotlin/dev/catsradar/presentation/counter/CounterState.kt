@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.counter
 
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 
 data class CounterState(
@@ -24,7 +25,12 @@ data class CounterState(
     val importSummary: ImportSummaryState? = null,
     /** Null unless a photo just taken is waiting for its coat. */
     val coatPrompt: CoatPromptState? = null,
+    /** Null before the total is read, and past the last milestone. */
+    val milestone: CounterMilestoneState? = null,
 )
+
+/** [fraction] is how far the total has come from the milestone already reached toward [next]. */
+data class CounterMilestoneState(val next: MilestoneState, val fraction: Float)
 
 /** [thumbPath] is absolute; null when no thumbnail could be made from the photo. */
 data class CoatPromptState(val thumbPath: String?)

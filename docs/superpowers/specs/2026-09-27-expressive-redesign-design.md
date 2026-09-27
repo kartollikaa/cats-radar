@@ -65,69 +65,86 @@ the wavy progress indicators and the `*Emphasized` type styles are public, some 
 opt-in (checked against the library's sources). `app-shell.md`'s *Why not `MaterialExpressiveTheme`*
 paragraph says otherwise and is replaced.
 
-- **Type.** The count, the stat values, the cat's title and the place line use the `*Emphasized`
-  variants of the styles they use today. Everything else keeps its style. The font is the
-  platform's.
+- **Type.** The count, the cat's title and the place line use the `*Emphasized` variants of the
+  styles they use today. Everything else keeps its style. The font is the platform's. The theme
+  defines the `*Emphasized` styles a weight above its own: Material's defaults are a step above
+  Material's regular weights, which the theme already exceeds.
 - **Shapes.** The theme's scale is unchanged. The new surfaces use `large` (28 dp) for cards and
   photos and `medium` (20 dp) for tiles and the map.
 - **Screen transitions** keep their own specs; `NavTransitionTimingTest` does not change.
 
 The theme reaches every screen, so the slice that changes it renders the screens it can draw, light
 and dark, before and after, as a check that no frame at rest moves. The Map tab and the bottom bar
-are not drawn by that harness; a change to motion alone cannot alter them at rest. The alpha pin is meant to go once the BOM's material3 has `SplitButtonLayout`; if
-that version hides any of these APIs again, this section is revisited before the pin moves.
+are not drawn by that harness; a change to motion alone cannot alter them at rest. The alpha pin is
+meant to go once the BOM's material3 has `SplitButtonLayout`; if that version hides any of these
+APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
 
-The order on screen is unchanged apart from the tiles: the notices, the count, the milestone line,
-the walk row, the outing line, the stat tiles, the coat grid, Photo. `FillOrScroll` still gives the
-count whatever room is left and scrolls the screen once the count reaches its floor.
+The order on screen: the notices, the count, the walk row, the coat grid, Photo. The status line
+under the count is gone (see *The tags on the ring*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
+the count reaches its floor. Everything under the count therefore costs the count its size, and the
+Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
+larger coat shapes, left the cookie less than half the room this layout leaves it, once the prototype
+drew it with only the height the controls leave (owner feedback, 2026-09-27: "the actual cookie in
+prototype is very small").
 
 **The count.** The number sits in a twelve-sided cookie (`MaterialShapes.Cookie12Sided`) in
 `primaryContainer`, the largest that fits the block's room, centred. The number is `onPrimaryContainer`
 in `displayLargeEmphasized` and still shrinks to fit rather than wrap. Under it, "cats" (a plural) in
 `titleMedium`. The whole block stays the button. It still squashes under a press and springs back; the
-cookie also turns a few degrees as it squashes and turns back with the motion scheme's spring. The
+cookie also turns a few degrees as it squashes and turns back on the motion scheme's default spring. The
 "+N" badge keeps its corner of the block, in `primary` and `onPrimary`. The roll, the badge's counting
 and the TalkBack label do not change.
 
 **The milestone arc.** A ring inside the cookie fills from the rung already reached to the next one
 on `Tuning.MILESTONES`: at 62 cats, 50 is reached and 100 is next, so the arc stands at 24 %. The
 track is `onPrimaryContainer` at a low alpha, the arc `primary`. The arc moves with the roll. Before
-the total is read and past the last rung there is no arc.
+the total is read, with no cats yet, and past the last rung there is no arc.
 
-**The milestone line.** Under the block, the Statistics line: "38 more to reach 100". It keeps its
-line while empty, before the total is read and past the last rung, so nothing under it moves.
+**The tags on the ring.** Nothing sits under the count: the owner found the Statistics line under the
+cookie foreign and the room it kept empty (2026-09-27), and with it gone the cookie takes that room.
+The next milestone is pinned where the ring closes: a small pill on `surface` at the ring's top, a flag
+and the rung's number in `primary`, and a dot at the arc's head, `primary` with a `primaryContainer`
+rim, travelling toward it. TalkBack reads the pill as the Statistics line, "38 more to reach 100".
+During an outing a second pill at the ring's bottom carries the outing line, count · time · rate with
+the line's own give-way rules and its one spoken item; the goal stays. The pills take no room in the
+column, so an outing starting or ending moves nothing under the count. Both pills sit on the stroke's
+centre line and squash with the cookie. In a small cookie the number keeps clear of them: its box
+loses what the pills reach into, the number shrinks, and "cats" under it gives way first. Past the
+last rung, and with no cats yet, there is no pill and no dot.
+
+**Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
+the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
+`primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
+Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
 
 **The walk row.** The walk button is drawn as an extended floating action button in
 `tertiaryContainer`: 56 dp tall with the FAB's corners. The walking cat, the fill that a held press
 drives, the timed hint and the one height stay as they are. Undo becomes a filled tonal button in its
 own place at the end of the row, and the rule that it never moves the walk button stands.
 
-**The stat tiles.** Three tiles in a row under the outing line: **Today**, **Last 7 days** and **With
-a photo**, the Statistics definitions, from the same `Stats` the count reads. Each tile is the number
-in `titleLargeEmphasized` over its label in `bodySmall`, on `surfaceContainerLow` with `medium`
-corners. They are not buttons. Each reads to TalkBack as one item ("5, Today"). Until the stats are
-read, the tiles show their labels without numbers, so the layout never shifts.
-
-**The coat grid.** Four across, as today. Each face sits in a 62 dp Material shape on
+**The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
 `surfaceContainerHighest`. The shapes go by column: `Circle`, `Square`, `Clover4Leaf`, `Arch`. The
 ringed coat's shape fills with `primaryContainer` and takes a 2 dp `primary` outline; its name stays
 under it. When the ring moves, clears and follows Undo does not change. The rule that a row's cells
 share the tallest one's height so their rings match goes: the ring is now on the shape, and every
 shape is the same size. The grid is shared, so the coat question after a photo and the map's coat
-filter get the same tiles, and the filter's *Not specified* cell takes the next shape in turn.
+filter get the same shapes, and the filter's *Not specified* cell takes the next shape in turn. The
+grid must not grow taller than today's.
 
 **Photo.** The split button it already is, filled `primary`: *Photo* with the camera, and the
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
 inner corners.
 
-**Unchanged:** the notice cards above the count and the coat question after a photo.
+**Unchanged:** the notice cards above the count. The coat question after a photo takes the coat
+sheet's header (section 3).
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
-Counter's state gains the milestone (reached, next, remaining) and the three tile counts; the mapper
-computes the arc's fraction, and the composable only draws it. The milestone line renders the way
-Statistics renders it.
+Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper
+computes from the rung passed; the composable only draws it. With no cats yet there is no milestone:
+a fresh Counter shows no ring and no tag rather than "1 more to reach 1". The goal tag's spoken
+label is the Statistics line.
 
 ## 3. A cat's detail
 
@@ -152,8 +169,8 @@ the cat's face at 170 dp, or the paw when no coat is noted, "No photo yet", and 
 progress indicator runs under it.
 
 **The title.** Named by the coat: "Ginger & white cat", or "A cat" with no coat noted, in
-`headlineMediumEmphasized`. Each coat has its own title resource, so the Russian can use the generic
-«кошка» the way Russian names an unknown cat.
+`headlineMediumEmphasized`. Each coat has its own title resource, so the Russian can name the cat
+the way the app's Russian already does, with «котик».
 
 **The facts row.** Under the title, outlined labels with `extraSmall` corners, 32 dp tall: the cat's
 number (section 4), the day, the time, and the place with its flag, or "No location yet" with a pin.
@@ -165,10 +182,16 @@ or the paw with no coat; the coat's name in `titleMediumEmphasized` with "Coat" 
 sheet.
 
 **The coat sheet** (a behaviour change). A bottom-sheet destination above the detail, like every
-other sheet: `SheetHeader` with "What coat was it?" and the line "Tap the current coat again to clear
-it", then the coat grid with the cat's coat ringed. A tap on a coat sets it and closes the sheet; a
-tap on the ringed coat clears it and closes the sheet; dismissing changes nothing. It replaces the
-inline picker. Setting the coat while a photo attaches still keeps both.
+other sheet. Its header is the cat's own face in a 64 dp `Clover4Leaf` on `primaryContainer`, or the
+paw on `surfaceContainerHighest` with no coat noted, beside "What coat was it?" in
+`headlineSmallEmphasized` and one supporting line; then the coat grid of section 2 with the cat's coat
+ringed and a twelfth *No coat* tile, the paw, ringed when no coat is noted (owner, 2026-09-27, over
+"tap the current coat again", which nothing on screen explained). A tap on a coat sets it and closes
+the sheet; a tap on *No coat* clears it and closes; dismissing changes nothing. It replaces the inline
+picker. The coat question after a photo takes the same header with the photo just taken in a `medium`
+square in place of the face, "Tap a coat to note it" and **Not now**; the map's filter keeps its own
+*Not specified* cell. Prototype version 14 draws both. Setting the coat while a photo attaches still
+keeps both.
 
 **The Where card.** On `surfaceContainerLow` with `large` corners, headed **Where you met**. The spot
 map at 16:10 with `medium` corners; the place with its flag, city and country in
@@ -205,16 +228,19 @@ count the DAO answers. The number is its own slice; until it lands, the facts ro
 2. **Delete moves** into the More menu and to the end of the page as **Remove this cat**. What it does
    is unchanged. `encounter-detail.md` changes.
 3. **The coat ring is drawn on the shape**, not around the whole cell. `coat.md` changes.
-4. **New information**: the milestone arc and line and the stat tiles on the Counter, the cat's
-   number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md` change.
+4. **New information**: the milestone arc and the goal on the ring on the Counter, the
+   cat's number and the accuracy circle on the detail. `counting-cats.md` and `encounter-detail.md`
+   change.
 
 ## Decided here
 
 - The colour policy stays: Expressive works with the wallpaper's colours as well as with the teal.
 - No bundled font.
-- The stat tiles are not buttons. Statistics is one tab away.
+- No stat tiles on the Counter. Version 5 of the prototype had Today, Last 7 days and With a photo
+  under the walk row; they cost the count more than half its room, and Statistics shows them one tab
+  away.
 - The cat's number follows the live log, so a delete or an older import renumbers.
-- The Russian titles name the cat with the generic «кошка».
+- The Russian titles use the app's own «котик».
 
 ## The outing pager
 
@@ -231,14 +257,15 @@ from a flat one.
 ## Testing
 
 - **Mappers**, whole-state `assertEquals`: the milestone at a rung, between rungs, below the first and
-  past the last; the tiles before and after the stats are read; each coat's title token; the facts row
+  past the last; each coat's title token; the facts row
   with and without a place.
 - **Domain:** `Milestone.reached` on every rung and between them; `ObserveEncounterNumber` counts only
   live cats, oldest first, breaks ties by id, and renumbers on a delete.
 - **Compose, Robolectric in `:app`:**
   - A tap anywhere on the count block logs a cat, the badge counts the run, and no arc is drawn past
     the last rung.
-  - The tiles show the three counts.
+  - The goal tag sits on the ring's top and the outing's on its bottom; nothing sits between the count
+    and the walk button; a cramped block keeps the number clear of both.
   - The ringed coat's shape is the one outlined.
   - A tap on the second photo opens the viewer on it; the add items open the camera and the picker
     and disable while attaching.

@@ -120,7 +120,10 @@ class CounterStoreWalkTest {
 
         val (store, _) = newStore(walkRepository = walks)
 
-        assertEquals(CounterState(totalLabel = "0", count = 0, undoVisible = false), store.state.value)
+        assertEquals(
+            CounterState(totalLabel = "0", count = 0, undoVisible = false),
+            store.state.value,
+        )
     }
 
     @Test
@@ -132,7 +135,12 @@ class CounterStoreWalkTest {
         settings.setWalkingMode(true)
         runCurrent()
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true),
+            CounterState(
+                totalLabel = "0",
+                count = 0,
+                undoVisible = false,
+                walkingMode = true,
+            ),
             store.state.value,
         )
 
