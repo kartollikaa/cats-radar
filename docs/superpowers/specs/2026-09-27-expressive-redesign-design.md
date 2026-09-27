@@ -66,17 +66,19 @@ the wavy progress indicators and the `*Emphasized` type styles are public, some 
 opt-in (checked against the library's sources). `app-shell.md`'s *Why not `MaterialExpressiveTheme`*
 paragraph says otherwise and is replaced.
 
-- **Type.** The count, the cat's title and the place line use the `*Emphasized`
-  variants of the styles they use today. Everything else keeps its style. The font is the
-  platform's.
+- **Type.** The count, the cat's title and the place line use the `*Emphasized` variants of the
+  styles they use today. Everything else keeps its style. The font is the platform's. The theme
+  defines the `*Emphasized` styles a weight above its own: Material's defaults are a step above
+  Material's regular weights, which the theme already exceeds.
 - **Shapes.** The theme's scale is unchanged. The new surfaces use `large` (28 dp) for cards and
   photos and `medium` (20 dp) for tiles and the map.
 - **Screen transitions** keep their own specs; `NavTransitionTimingTest` does not change.
 
 The theme reaches every screen, so the slice that changes it renders the screens it can draw, light
 and dark, before and after, as a check that no frame at rest moves. The Map tab and the bottom bar
-are not drawn by that harness; a change to motion alone cannot alter them at rest. The alpha pin is meant to go once the BOM's material3 has `SplitButtonLayout`; if
-that version hides any of these APIs again, this section is revisited before the pin moves.
+are not drawn by that harness; a change to motion alone cannot alter them at rest. The alpha pin is
+meant to go once the BOM's material3 has `SplitButtonLayout`; if that version hides any of these
+APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
 
@@ -130,9 +132,8 @@ inner corners.
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
 Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper
 computes from the rung passed; the composable only draws it. With no cats yet there is no milestone:
-a fresh Counter shows no ring and no line rather than "1 more to reach 1". The status line renders the milestone the way Statistics
-renders it. The theme defines the `*Emphasized` styles a weight above its own (Material's defaults are
-a step above Material's regular weights, which the theme already exceeds).
+a fresh Counter shows no ring and no line rather than "1 more to reach 1". The status line renders
+the milestone the way Statistics renders it.
 
 ## 3. A cat's detail
 
