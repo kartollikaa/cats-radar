@@ -60,7 +60,7 @@ internal fun EncounterDetailDestination(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
 ) {
-    val store = koinViewModel<EncounterDetailStore> { parametersOf(key.id) }
+    val store = koinViewModel<EncounterDetailStore> { parametersOf(key.id, null) }
     val state by store.state.collectAsStateWithLifecycle()
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)

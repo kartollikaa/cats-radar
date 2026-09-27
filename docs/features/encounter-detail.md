@@ -41,8 +41,21 @@ The state holds each cat as a page — a `CatPage` in `Loaded.pages`, beside the
 its position — and the mapper builds one page for each cat of the outing window it is handed, with each
 page's own place and attempt (`EncounterDetailStateMapperTest`, *a window maps to one page per cat, newest
 first, and names the cat on screen and its position*; *each page takes its own cat's place and attempt*).
-The Store hands it a window of the observed cat alone, so the screen has one page
-(`EncounterDetailStoreTest`, *the observed cat is the one page, and it is on screen*).
+The cat on screen is always one of the pages; the mapper refuses any other (*a cat on screen that is not on
+the pages is refused*).
+
+The pages are every live cat of the cat's outing (see [outings.md](./outings.md#the-window-around-a-set-of-cats)),
+newest first, and the screen draws the one on screen. It opens on the cat it was opened for
+(`EncounterDetailStoreTest`, *the pages are the opened cat's outing, newest first, with the opened cat on
+screen*). The Store can also start on a cat handed to it as the one a restored screen was showing, while
+that cat is live, and on the opened one otherwise (*the screen starts on the restored cat while it is live*;
+*a restored cat that is gone starts the screen on the opened one*); the screen does not save that cat yet, so
+after the process died it reopens on the cat it was opened for. A cat logged into the outing while the screen
+is open joins the pages, and the screen stays on its cat (*a cat logged into the outing joins the pages and the
+screen stays on its cat*). A cat leaves the pages only by being deleted, so an outing a delete splits in two
+stays whole on them (`OutingPagesTest`, *an outing a delete splits in two stays whole on the pages*). Each page
+shows its own cat's place (`EncounterDetailStoreTest`, *each page shows its own cat's place*). `OutingPages`
+keeps the pages and the cat on screen; the Store reads every live cat and hands it each change.
 
 ## Where it was found
 
@@ -95,11 +108,14 @@ reach it; that the real map lets them through is checked on a device.
 ## Delete and undo
 
 Delete is a soft delete: the row gets a `deletedAt` and disappears from every list and count, but
-stays in the database until the purge worker removes it. The screen then shows a "removed" state
-with an Undo chip for `Tuning.UNDO_VISIBLE`, the same window the Counter's undo uses, so the two
-undo gestures in the app behave alike. When the window closes the chip disappears and the screen
-navigates back to the list, exactly once. Undo inside the window clears `deletedAt`; the encounter
-is live again and the screen returns to showing it.
+stays in the database until the purge worker removes it. It deletes the cat on screen. The screen then
+shows a "removed" state with an Undo chip for `Tuning.UNDO_VISIBLE`, the same window the Counter's undo
+uses, so the two undo gestures in the app behave alike — even while other cats of its outing remain, and
+whatever happens to them meanwhile (*the removed state holds while another cat of the outing changes
+mid-delete*). When
+the window closes the chip disappears and the screen navigates back to the list, exactly once. Undo inside
+the window clears `deletedAt`; the encounter is live again and the screen returns to its pages with that
+cat on screen (`EncounterDetailStoreTest`, *delete removes the cat on screen, and undo shows it again*).
 
 The undo affordance lives on the detail screen rather than as a snackbar on the list. A snackbar
 would need the list's Store to learn about a deletion made by a different screen — cross-Store
@@ -131,25 +147,29 @@ can still be given another*). The new photo goes after the others (*a photo take
 is added after it*). A photo the cat already has is not added again, and the screen says so (*a
 picked photo the cat already has is not added again, and the screen says so*). A second tap before
 the camera or the picker answers opens nothing, so a double tap never opens two cameras (*a second
-tap before the camera answers opens nothing*). The camera and the picker are opened for a named
+tap before the camera answers opens nothing*); one camera or picker is open for the whole screen at a time,
+whichever page the next tap is on (*one camera or picker at a time across the pages*). The camera and the picker are opened for a named
 cat, and their answer names it back — even when the process died while they were in front, since
 the camera's queue and the picker remember the cat with the rest of the screen's saved state
 (`PhotoLaunchersTest`; `PendingCapturesTest`). A queue saved by an older version, whose shots named
 no cat, restores empty: the capture file waits for the start-up cleanup rather than landing on a
 guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both buttons
 disable and a progress bar shows under them, so a tap in the meantime opens nothing
-(`EncounterDetailStorePhotoTest`, *taking a photo while one is being attached opens nothing*).
+(`EncounterDetailStorePhotoTest`, *taking a photo while one is being attached opens nothing*). The attempt
+is its cat's: it shows on that cat's page alone (*a photo attached to another page shows the attempt on that
+page alone*), and it carries on, count and all, whichever cat is on screen (`EncounterDetailPickSeveralTest`,
+*a pick carries on with its count when its cat comes on screen*).
 
-A tap on the photo, on the coordinates or on *Set on map* only ever acts on the cat the screen is
-showing, and opens the viewer, the map or the location picker for that cat; a stray result naming a
-different cat opens none of them (`EncounterDetailStorePhotoTest`, *a tap naming a cat the screen does
-not show opens neither the viewer nor the map*; *set on map names the cat it was tapped for, and a cat
-the screen does not show opens nothing*). The coat cell, *Take a photo*, *Choose from gallery*, the photo,
-the coordinates and *Set on map* send the id of the page they sit on; Delete, Undo and Back act on the cat
-on screen (`EncounterDetailPagesTest`, *the screen draws the cat on screen, and its taps name that cat*; *a
-tap on the map of the cat on screen names that cat*).
+A tap on the photo, on the coordinates or on *Set on map* acts on the cat of the page it was on, and opens
+the viewer, the map or the location picker for that cat (`EncounterDetailStorePhotoTest`, *a tap on another
+page's photo, coordinates or set on map opens it for that cat*); a stray result naming a cat that is not on
+the pages opens none of them (*a tap naming a cat not on the pages opens neither the viewer nor the map*;
+*set on map names the cat it was tapped for, and a cat not on the pages opens nothing*). The coat cell,
+*Take a photo*, *Choose from gallery*, the photo, the coordinates and *Set on map* send the id of the page
+they sit on; Delete, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
+the cat on screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
 
-The attempt ends only when the observed cat carries the photo it attached: until then the progress bar
+The attempt ends only when its cat carries the photo it attached: until then the progress bar
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
 have the photo yet, and offer the buttons back for a moment before the photo appeared
 (*a successful attach stays in progress until the photo arrives, never offering again*).
@@ -196,10 +216,15 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - **An id with no live encounter** — never existed, purged, or deleted from somewhere else — shows a
   "no longer here" message. It is not a crash and not an empty card pretending to be a cat (*an id
   nobody has ever seen renders as missing*; *an encounter soft-deleted elsewhere is never presented
-  as live*). The distinction between "I deleted it" and "it is gone" is the Store's own flag: a null
-  emission right after its own delete is the delete taking effect, any other null is *Missing*.
-- **Deleted elsewhere while on screen** — the screen turns to *Missing* as soon as the row's flow
-  emits null (*an encounter deleted elsewhere while on screen turns the screen to missing*).
+  as live*). The distinction between "I deleted it" and "it is gone" is the Store's own flag: while the
+  cat it deleted is gone, an emission without that cat is the delete taking effect, even with other cats
+  of its outing still live; anything else that leaves no cat on the pages is *Missing*.
+- **Deleted elsewhere while on screen** — the screen moves to the next older cat on the pages, or to the
+  newer one when it was the oldest, with no undo of its own (`EncounterDetailStoreTest`, *a cat deleted
+  elsewhere hands the screen to the next older cat*; *the oldest cat deleted elsewhere hands the screen to
+  the newer one*). With no cat left on the pages it turns to *Missing* (*an encounter deleted elsewhere while
+  on screen turns the screen to missing*), and a cat of the pages brought back elsewhere — an undo, a backup
+  — returns the screen to it (*a cat deleted elsewhere and brought back returns the screen to it*).
 - **The write fails** — the screen goes back to showing the cat rather than a deletion that did not
   happen, and no back-navigation fires (*a failed delete restores the loaded state*). A failed undo
   reopens the window instead of stranding the user on a closed one.
@@ -223,9 +248,11 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Where the code lives
 
-- `domain/…/usecase/ObserveEncounter.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
-  `UndoDelete.kt`; `domain/…/region/EncounterPlace.kt` — which place a cat is in
-- `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`
+- `domain/…/usecase/ObserveEncounters.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
+  `UndoDelete.kt`; `domain/…/session/OutingWindow.kt` — the pages' outing; `domain/…/region/EncounterPlace.kt`
+  — which place a cat is in
+- `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`;
+  `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
 - `ui/…/detail/EncounterDetailScreen.kt`, `WhereCard.kt`, `DetailPhotoPager.kt`, `AddPhotoCard.kt`, `DetailInteractions.kt` (the two-value taps' payloads);
   `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/SpotMap.kt` —
   the **Where** section's map and the cat's dot on it
@@ -239,3 +266,6 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 ## Not built yet
 
 A cat's photos cannot be reordered (see `photos.md`).
+
+The screen draws the cat on screen alone: swiping between the pages, their position in the bar, keeping the
+cat on screen across the process dying, and moving on to the neighbouring outing are not built yet.
