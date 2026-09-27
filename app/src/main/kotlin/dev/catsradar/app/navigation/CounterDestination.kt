@@ -17,6 +17,7 @@ import dev.catsradar.app.permission.rememberLocationPermissionRequester
 import dev.catsradar.app.permission.rememberNotificationPermissionRequest
 import dev.catsradar.app.permission.rememberWalkingModeRequest
 import dev.catsradar.app.photo.CameraRequest
+import dev.catsradar.app.photo.PhotoLocationAccess
 import dev.catsradar.app.worker.ImportScheduler
 import dev.catsradar.app.worker.LocationAttachScheduler
 import dev.catsradar.app.worker.toCounterIntent
@@ -46,7 +47,8 @@ internal fun CounterDestination(
     val captureDiscarder = rememberCaptureDiscarder()
     val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val importScheduler = koinInject<ImportScheduler>()
-    val photoPickerLauncher = rememberPhotoPickerLauncher(store)
+    val photoLocationAccess = koinInject<PhotoLocationAccess>()
+    val photoPickerLauncher = rememberPhotoPickerLauncher(store, photoLocationAccess)
     val onWalkingModeChange = rememberWalkingModeRequest { enabled ->
         store.dispatch(CounterIntent.WalkingModeToggled(enabled))
     }
@@ -106,9 +108,9 @@ private fun ObserveImportWork(store: CounterStore, importScheduler: ImportSchedu
 }
 
 @Composable
-private fun rememberPhotoPickerLauncher(store: CounterStore): PhotoPickerLauncher {
+private fun rememberPhotoPickerLauncher(store: CounterStore, locationAccess: PhotoLocationAccess): PhotoPickerLauncher {
     val notificationPermission = rememberNotificationPermissionRequest()
-    return rememberGalleryImportPicker { uris ->
+    return rememberGalleryImportPicker(locationAccess) { uris ->
         // Asked for after the pick, not before it: a run the user has actually started is the only
         // moment a progress notification is worth a dialog, and a refusal still imports.
         if (uris.isNotEmpty()) notificationPermission()

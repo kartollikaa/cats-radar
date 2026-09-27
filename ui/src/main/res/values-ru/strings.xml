@@ -219,6 +219,8 @@
     <string name="detail_photo_attaching">Прикрепляем фото</string>
     <string name="detail_open_photo">Открыть на весь экран</string>
     <string name="detail_back">Назад</string>
+    <string name="detail_position">%1$d / %2$d</string>
+    <string name="detail_position_description">Котик %1$d из %2$d</string>
     <string name="detail_show_on_map">Показать на карте</string>
     <string name="detail_set_location">Указать на карте</string>
 
@@ -243,13 +245,17 @@
     <string name="viewer_position_description">Фото %1$d из %2$d</string>
 
     <string name="tab_settings">Настройки</string>
-    <string name="settings_save_originals">Сохранять фото в галерею</string>
-    <string name="settings_save_originals_explained">Своя копия всегда остаётся в приложении</string>
+    <string name="settings_save_originals">Сохранять фото с камеры в галерею</string>
+    <string name="settings_save_originals_explained">Оригиналы в полном размере — в альбоме Cats Radar. В приложении всегда остаётся уменьшенная копия</string>
+    <string name="settings_save_originals_off_title">Не сохранять в галерею?</string>
+    <string name="settings_save_originals_off_message">У новых фото с камеры останется только уменьшенная копия в приложении. Оригинал в полном размере потом не вернуть.</string>
+    <string name="settings_save_originals_off_confirm">Выключить</string>
+    <string name="settings_save_originals_off_cancel">Отмена</string>
     <string name="settings_section_logging">Фото</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_backup_explained">Один файл со всеми котиками, фото и местами</string>
-    <string name="settings_export">Сохранить</string>
-    <string name="settings_import">Загрузить</string>
+    <string name="settings_export">Экспорт</string>
+    <string name="settings_import">Импорт</string>
     <string name="settings_backup_ok">Понятно</string>
     <string name="settings_backup_exported">Копия сохранена</string>
     <string name="settings_backup_export_failed">Копию сохранить не удалось</string>
@@ -275,7 +281,7 @@
     <string name="settings_encounters_grid">Сетка котиков</string>
     <string name="settings_encounters_grid_explained">Фото — парами, остальные котики — плитками. Если выключить, у каждого котика своя строка</string>
     <string name="settings_updates">Обновления</string>
-    <string name="settings_updates_explained">Скачивает и устанавливает новую версию из релизов приложения на GitHub</string>
+    <string name="settings_updates_explained">Установите последнюю версию приложения</string>
     <string name="settings_updates_check">Проверить обновления</string>
     <string name="settings_updates_up_to_date">У вас последняя версия</string>
     <string name="settings_updates_downloading">Скачивается %1$s</string>

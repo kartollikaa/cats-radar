@@ -10,8 +10,8 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
-import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
+import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
@@ -50,7 +50,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -80,17 +82,199 @@ class EncounterDetailStoreTest {
     }
 
     @Test
-    fun `the observed cat is the one page, and it is on screen`() =
+    fun `the pages are the opened cat's outing, newest first, with the opened cat on screen`() =
         runTest(mainDispatcher) {
             repository.insert(encounterFixture(ID, OCCURRED))
+            repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+            repository.insert(encounterFixture(THIRD, OCCURRED - 1.days))
             val store = newStore()
             runCurrent()
 
             val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
-            assertEquals(listOf(ID), state.pages.map { it.id })
+            assertEquals(listOf(OTHER, ID), state.pages.map { it.id })
             assertEquals(ID, state.currentId)
-            assertEquals(1, state.currentNumber)
+            assertEquals(2, state.currentNumber)
         }
+
+    @Test
+    fun `the screen starts on the restored cat while it is live`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore(restoredId = OTHER)
+        runCurrent()
+
+        assertEquals(OTHER, store.shownPage().id)
+    }
+
+    @Test
+    fun `a restored cat that is gone starts the screen on the opened one`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes, deletedAt = NOW))
+        val store = newStore(restoredId = OTHER)
+        runCurrent()
+
+        assertEquals(ID, store.shownPage().id)
+    }
+
+    @Test
+    fun `a cat logged into the outing joins the pages and the screen stays on its cat`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(OTHER, ID), state.pages.map { it.id })
+        assertEquals(ID, state.currentId)
+    }
+
+    @Test
+    fun `a cat deleted elsewhere hands the screen to the next older cat`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(THIRD, OCCURRED - 10.minutes))
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        repository.softDelete(ID, NOW)
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(OTHER, THIRD), state.pages.map { it.id })
+        assertEquals(THIRD, state.currentId)
+    }
+
+    @Test
+    fun `the oldest cat deleted elsewhere hands the screen to the newer one`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        repository.softDelete(ID, NOW)
+        runCurrent()
+
+        assertEquals(OTHER, store.shownPage().id)
+    }
+
+    @Test
+    fun `a cat deleted elsewhere and brought back returns the screen to it`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+        repository.softDelete(ID, NOW)
+        runCurrent()
+        assertEquals(EncounterDetailState.Missing, store.state.value)
+
+        repository.undoDelete(ID)
+        runCurrent()
+
+        assertEquals(ID, store.shownPage().id)
+    }
+
+    @Test
+    fun `delete removes the cat on screen, and undo shows it again`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore(restoredId = OTHER)
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+        assertEquals(listOf(OTHER), repository.softDeletedIds)
+        assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+        store.dispatch(EncounterDetailIntent.UndoClicked)
+        runCurrent()
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(OTHER, ID), state.pages.map { it.id })
+        assertEquals(OTHER, state.currentId)
+    }
+
+    @Test
+    fun `settling on another page puts that cat on screen`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(OTHER, state.currentId)
+        assertEquals(1, state.currentNumber)
+    }
+
+    @Test
+    fun `a settled id off the pages is ignored`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))
+        val store = newStore()
+        runCurrent()
+        val before = assertIs<EncounterDetailState.Loaded>(store.state.value)
+
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        store.dispatch(EncounterDetailIntent.PageSettled("elsewhere"))
+        runCurrent()
+
+        assertEquals(before, store.state.value)
+    }
+
+    @Test
+    fun `after settling, a delete removes the settled cat`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+
+        assertEquals(listOf(OTHER), repository.softDeletedIds)
+    }
+
+    @Test
+    fun `the removed state holds while another cat of the outing changes mid-delete`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        repository.softDeleteDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
+        runCurrent()
+        assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+
+        advanceTimeBy(2.seconds)
+        runCurrent()
+        assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
+        assertEquals(listOf(ID), repository.softDeletedIds)
+    }
+
+    @Test
+    fun `each page shows its own cat's place`() = runTest(mainDispatcher) {
+        repository.insert(
+            encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
+                .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q"),
+        )
+        repository.insert(
+            encounterFixture(OTHER, OCCURRED + 10.minutes, locationSource = LocationSource.CURRENT_FIX)
+                .copy(lat = 38.72, lon = -9.14, placeCellId = "eycs0p"),
+        )
+        cells.upsert(namedCell("sp3e3q"))
+        cells.upsert(namedCell("eycs0p", countryCode = "PT", countryName = "Portugal", locality = "Lisbon"))
+        val store = newStore()
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf("Lisbon", "Barcelona"), state.pages.map { it.place?.title })
+    }
 
     @Test
     fun `an id nobody has ever seen renders as missing, without throwing`() = runTest(mainDispatcher) {
@@ -323,9 +507,10 @@ class EncounterDetailStoreTest {
         )
     }
 
-    private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
-        encounterId = ID,
-        observeEncounter = ObserveEncounter(repository),
+    private fun TestScope.newStore(restoredId: String? = null): EncounterDetailStore = EncounterDetailStore(
+        openedId = ID,
+        restoredId = restoredId,
+        observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(cells),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
@@ -348,14 +533,19 @@ class EncounterDetailStoreTest {
         timeZone = TimeZone.UTC,
     )
 
-    private fun namedCell(cellId: String) = PlaceCell(
+    private fun namedCell(
+        cellId: String,
+        countryCode: String = "ES",
+        countryName: String = "Spain",
+        locality: String = "Barcelona",
+    ) = PlaceCell(
         cellId = cellId,
         centerLat = 41.39,
         centerLon = 2.17,
-        countryCode = "ES",
-        countryName = "Spain",
+        countryCode = countryCode,
+        countryName = countryName,
         adminArea = null,
-        locality = "Barcelona",
+        locality = locality,
         subLocality = null,
         status = PlaceStatus.RESOLVED,
         attempts = 1,
@@ -368,6 +558,7 @@ class EncounterDetailStoreTest {
     private companion object {
         const val ID = "cat-1"
         const val OTHER = "cat-2"
+        const val THIRD = "cat-3"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")
         val OCCURRED = Instant.parse("2026-09-22T10:00:00Z")
     }
@@ -791,7 +982,7 @@ class EncounterDetailStorePhotoTest {
     }
 
     @Test
-    fun `a photo lands on the cat its result names, not on the one the screen observes`() = runTest(mainDispatcher) {
+    fun `a photo lands on the cat its result names, not on the cat on screen`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         repository.insert(encounterFixture(OTHER, OCCURRED))
         val store = newStore()
@@ -825,18 +1016,20 @@ class EncounterDetailStorePhotoTest {
     }
 
     @Test
-    fun `a tap naming a cat the screen does not show opens neither the viewer nor the map`() =
+    fun `a tap naming a cat not on the pages opens neither the viewer nor the map`() =
         runTest(mainDispatcher) {
             repository.insert(
                 encounterFixture(ID, OCCURRED).copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-1.jpg")
             )
-            repository.insert(encounterFixture(OTHER, OCCURRED))
+            repository.insert(
+                encounterFixture(OTHER, OCCURRED - 1.days, locationSource = LocationSource.CURRENT_FIX)
+                    .copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-2.jpg"),
+            )
             val store = newStore()
             runCurrent()
-            val photoId = store.shownPage().photos.first().id
 
             store.effects.test {
-                store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, photoId))
+                store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, OTHER))
                 store.dispatch(EncounterDetailIntent.CoordinatesClicked(OTHER))
                 runCurrent()
                 expectNoEvents()
@@ -844,10 +1037,10 @@ class EncounterDetailStorePhotoTest {
         }
 
     @Test
-    fun `set on map names the cat it was tapped for, and a cat the screen does not show opens nothing`() =
+    fun `set on map names the cat it was tapped for, and a cat not on the pages opens nothing`() =
         runTest(mainDispatcher) {
             repository.insert(encounterFixture(ID, OCCURRED))
-            repository.insert(encounterFixture(OTHER, OCCURRED))
+            repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))
             val store = newStore()
             runCurrent()
 
@@ -861,9 +1054,77 @@ class EncounterDetailStorePhotoTest {
             }
         }
 
-    private fun TestScope.newStore(): EncounterDetailStore = EncounterDetailStore(
-        encounterId = ID,
-        observeEncounter = ObserveEncounter(repository),
+    @Test
+    fun `a tap on another page's photo, coordinates or set on map opens it for that cat`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            repository.insert(
+                encounterFixture(OTHER, OCCURRED + 10.minutes, locationSource = LocationSource.CURRENT_FIX)
+                    .copy(lat = 41.39, lon = 2.17).withPhoto(photoPath = "cat-2.jpg"),
+            )
+            repository.insert(encounterFixture(THIRD, OCCURRED + 20.minutes))
+            val store = newStore()
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.PhotoClicked(OTHER, OTHER))
+                runCurrent()
+                assertEquals(EncounterDetailEffect.OpenPhoto(OTHER, OTHER), awaitItem())
+                store.dispatch(EncounterDetailIntent.CoordinatesClicked(OTHER))
+                runCurrent()
+                assertEquals(EncounterDetailEffect.OpenMap(OTHER), awaitItem())
+                store.dispatch(EncounterDetailIntent.SetLocationClicked(THIRD))
+                runCurrent()
+                assertEquals(EncounterDetailEffect.OpenLocationPicker(THIRD), awaitItem())
+            }
+        }
+
+    @Test
+    fun `one camera or picker at a time across the pages`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(OTHER))
+            store.dispatch(EncounterDetailIntent.TakePhotoClicked(OTHER))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenCamera(ID), awaitItem())
+            expectNoEvents()
+
+            store.dispatch(EncounterDetailIntent.PhotoTaken(ID, null))
+            store.dispatch(EncounterDetailIntent.PickPhotoClicked(OTHER))
+            runCurrent()
+            assertEquals(EncounterDetailEffect.OpenPhotoPicker(OTHER), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a photo attached to another page shows the attempt on that page alone`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        resizer.storeDelay = 1.seconds
+        val store = newStore()
+        runCurrent()
+
+        store.dispatch(EncounterDetailIntent.PhotosPicked(OTHER, listOf(PICKED)))
+        runCurrent()
+        val attaching = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(AddPhoto.ATTACHING, AddPhoto.READY), attaching.pages.map { it.addPhoto })
+
+        advanceTimeBy(2.seconds)
+        runCurrent()
+        val landed = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(AddPhoto.READY, AddPhoto.READY), landed.pages.map { it.addPhoto })
+        assertEquals(listOf(1, 0), landed.pages.map { it.photos.size })
+    }
+
+    private fun TestScope.newStore(restoredId: String? = null): EncounterDetailStore = EncounterDetailStore(
+        openedId = ID,
+        restoredId = restoredId,
+        observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(cells),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
@@ -891,6 +1152,7 @@ class EncounterDetailStorePhotoTest {
     private companion object {
         const val ID = "cat-1"
         const val OTHER = "cat-2"
+        const val THIRD = "cat-3"
         const val CAPTURE = "content://captures/1"
         const val PICKED = "content://picker/1"
         val NOW = Instant.parse("2026-09-22T12:00:00Z")

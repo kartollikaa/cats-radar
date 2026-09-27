@@ -245,7 +245,7 @@ class SettingsStoreTest {
     }
 
     @Test
-    fun `the gallery switch still follows the stored value, not the tap`() = runTest(mainDispatcher) {
+    fun `turning the gallery switch off asks first and stores nothing yet`() = runTest(mainDispatcher) {
         val repository = FakeSettingsRepository(saveOriginals = true)
         val store = settingsStore(repository)
         runCurrent()
@@ -253,7 +253,56 @@ class SettingsStoreTest {
         store.dispatch(SettingsIntent.SaveOriginalsToggled(false))
         runCurrent()
 
-        assertEquals(false, store.state.value.saveOriginalsToGallery)
+        assertEquals(true, store.state.value.confirmingSaveOriginalsOff)
+        assertEquals(true, store.state.value.saveOriginalsToGallery)
+        assertEquals(true, repository.saveOriginalsToGallery().first())
+    }
+
+    @Test
+    fun `confirming stores the gallery switch off, and the switch follows the stored value`() =
+        runTest(mainDispatcher) {
+            val repository = FakeSettingsRepository(saveOriginals = true)
+            val store = settingsStore(repository)
+            runCurrent()
+            store.dispatch(SettingsIntent.SaveOriginalsToggled(false))
+            runCurrent()
+
+            store.dispatch(SettingsIntent.SaveOriginalsOffConfirmed)
+            runCurrent()
+
+            assertEquals(false, repository.saveOriginalsToGallery().first())
+            assertEquals(false, store.state.value.saveOriginalsToGallery)
+            assertEquals(false, store.state.value.confirmingSaveOriginalsOff)
+        }
+
+    @Test
+    fun `cancelling keeps the gallery switch on`() = runTest(mainDispatcher) {
+        val repository = FakeSettingsRepository(saveOriginals = true)
+        val store = settingsStore(repository)
+        runCurrent()
+        store.dispatch(SettingsIntent.SaveOriginalsToggled(false))
+        runCurrent()
+
+        store.dispatch(SettingsIntent.SaveOriginalsOffCancelled)
+        runCurrent()
+
+        assertEquals(true, repository.saveOriginalsToGallery().first())
+        assertEquals(true, store.state.value.saveOriginalsToGallery)
+        assertEquals(false, store.state.value.confirmingSaveOriginalsOff)
+    }
+
+    @Test
+    fun `turning the gallery switch on stores it without asking`() = runTest(mainDispatcher) {
+        val repository = FakeSettingsRepository(saveOriginals = false)
+        val store = settingsStore(repository)
+        runCurrent()
+
+        store.dispatch(SettingsIntent.SaveOriginalsToggled(true))
+        runCurrent()
+
+        assertEquals(true, repository.saveOriginalsToGallery().first())
+        assertEquals(true, store.state.value.saveOriginalsToGallery)
+        assertEquals(false, store.state.value.confirmingSaveOriginalsOff)
     }
 
     @Test

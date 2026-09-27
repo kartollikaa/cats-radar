@@ -9,6 +9,7 @@ import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.toRateState
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 class CounterStateMapper(
     private val dateTimeFormatter: DateTimeFormatter,
@@ -48,7 +49,7 @@ class CounterStateMapper(
     )
 
     fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =
-        elapsed?.takeIf { walking }?.let(dateTimeFormatter::duration)
+        elapsed?.takeIf { walking && it >= 1.minutes }?.let(dateTimeFormatter::duration)
 
     fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
         added = addedCount,

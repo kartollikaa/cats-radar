@@ -2,6 +2,8 @@ package dev.catsradar.presentation.settings
 
 sealed interface SettingsIntent {
     data class SaveOriginalsToggled(val enabled: Boolean) : SettingsIntent
+    data object SaveOriginalsOffConfirmed : SettingsIntent
+    data object SaveOriginalsOffCancelled : SettingsIntent
     data class EncountersGridToggled(val enabled: Boolean) : SettingsIntent
     data object BuildInfoCopyClicked : SettingsIntent
 
