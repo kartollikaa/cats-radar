@@ -7,6 +7,7 @@ import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.photoFixture
 import dev.catsradar.presentation.encounters.withPhoto
 import dev.catsradar.presentation.statistics.MilestoneState
+import kotlinx.collections.immutable.persistentListOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -42,6 +43,25 @@ class CounterStateMapperTest {
         assertEquals(
             CounterState(totalLabel = "0", count = 0, undoVisible = false, locationPermissionHintVisible = true),
             mapper.map(count = 0, undoVisible = false, locationPermissionHintVisible = true),
+        )
+    }
+
+    @Test
+    fun `an import's summary shows its photos from the photo directory`() {
+        assertEquals(
+            ImportSummaryState(
+                added = 4,
+                skipped = null,
+                failed = 1,
+                undoable = true,
+                thumbPaths = persistentListOf("/data/photos/b_thumb.jpg", "/data/photos/c_thumb.jpg"),
+            ),
+            mapper.importSummary(
+                addedCount = 4,
+                skipped = 0,
+                failed = 1,
+                thumbPaths = listOf("b_thumb.jpg", "c_thumb.jpg")
+            ),
         )
     }
 

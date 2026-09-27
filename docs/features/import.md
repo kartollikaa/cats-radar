@@ -10,11 +10,17 @@ gallery — unless the answer already picked the photos; holding that icon names
 in a worker, so it survives leaving the screen; the Counter shows how far it has got, and at the
 end, briefly, what was added, skipped and failed, with one undo for the whole batch.
 
-Both show as a card above the count, on the same low surface as the Statistics and Settings rows,
-with a round icon at its start. While the run goes, the card shows the gallery icon, **Importing
-photos**, "7 of 23" and a progress bar. When it has finished, the card shows a check, the number
-added and, only when there were any, the skipped and failed lines, with **Undo** at its end, or
-**OK** when there is nothing to undo: the run added no cat, or has been undone.
+Both show as one card that drops in over the top of the count rather than taking a place above it,
+so the count keeps its size (`ImportIslandTest`); for as long as it shows, it covers the top of the
+ring, where the goal tag sits. While the run goes, the card shows the gallery icon, **Importing 7 of 23** and a
+wavy progress bar, and offers nothing to press. When it has finished, it shows a fanned stack of the
+first three added cats' photos — a check when none of them has one — then **9 cats added** and, under
+it, one muted line with only the parts that apply: *2 already here · 1 couldn't be read*, one of them
+alone, or no line. TalkBack reads the words as one item. **Undo** follows while the run can still be
+undone, then a **×** that closes the card; a swipe to either side closes it too. A tap on the card's
+body does nothing: it is kept for a manager of the imported photos. The running card has no photos
+because the Counter learns which cats a run added only when it ends. Photos that cannot be read
+leave the check in their place rather than holding the summary back.
 
 ## What an imported photo becomes
 
@@ -105,9 +111,9 @@ takes them back*).
 
 - **A summary goes away on its own, and never comes back after.** It stays for
   `IMPORT_SUMMARY_VISIBLE` from the moment the Counter learns the run has finished, and running out
-  does what OK does: the Undo lapses with it. A successful Undo, OK, or the time running out records
-  that run as dealt with (`SettingsRepository.acknowledgedRun`, kept in DataStore next to the
-  settings). After that, reading the same run back shows nothing and offers no second Undo. A failed
+  does what closing it does: the Undo lapses with it. A successful Undo, closing the card, or the
+  time running out records that run as dealt with (`SettingsRepository.acknowledgedRun`, kept in
+  DataStore next to the settings). After that, reading the same run back shows nothing and offers no second Undo. A failed
   Undo records nothing, so the offer survives it until the time runs out; one that fails after the
   time has run out puts nothing back.
 - **The countdown does not pause in the background.** A run that finishes while the user is in
@@ -167,7 +173,7 @@ takes them back*).
   `noBackupFilesDir`, keyed by the run's work id, and removed once the run finishes, successfully or
   not. A run the system stops keeps it for WorkManager's next attempt, and a new pick removes
   whatever an earlier run left. A batch that cannot be written (a full disk) or read back counts as
-  empty: its run imports nothing and ends, so the progress row still clears.
+  empty: its run imports nothing and ends, so the progress card still clears.
 - `sourceDigest` is the digest of the bytes the app was handed, and a redacted copy hashes
   differently from the original. The redaction is deterministic, so picking the same photo twice
   with the same access produces the same digest and the second one is skipped. Picked once without

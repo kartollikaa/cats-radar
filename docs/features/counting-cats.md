@@ -84,11 +84,12 @@ centred and clear of it, and gives way as it does when short of room: the count 
 time, the rate staying whole (`CounterMilestoneTest`). The outing rides
 a tag on the count's ring rather than a line of its own, so a walk or an outing starting or ending
 leaves the block the same size and nothing sits between the count and the coat grid
-(`CounterMilestoneTest`). The location hint and the import
-progress and summary appear above the count, each as the same notice card: a round icon, its words,
-read by TalkBack as one item, and its actions (see `import.md`). They take their room from the
-count, so the number shrinks and the coat grid and the row of Walk and Photo stay where they are,
-unless the block is already at its floor, when the Counter scrolls instead.
+(`CounterMilestoneTest`). The location hint appears above the count as a notice card: a round
+icon, its words, read by TalkBack as one item, and its actions. It takes its room from the count, so
+the number shrinks and the coat grid and the row of Walk and Photo stay where they are, unless the
+block is already at its floor, when the Counter scrolls instead. An import's progress and summary
+pass rather than last, so they float over the top of the count as a card of their own and leave its
+size alone (`ImportIslandTest`, see `import.md`).
 
 ## Undoing a run of taps
 

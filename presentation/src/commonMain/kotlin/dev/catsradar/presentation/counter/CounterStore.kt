@@ -7,6 +7,7 @@ import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
 import dev.catsradar.domain.usecase.AddCatsToPhoto
+import dev.catsradar.domain.usecase.FindCatThumbnails
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
@@ -19,6 +20,7 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.runStorageRead
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -27,6 +29,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+
+private const val IMPORT_THUMBNAILS = 3
 
 @Suppress("LongParameterList") // one parameter per collaborator
 class CounterStore(
@@ -37,6 +41,7 @@ class CounterStore(
     setCoat: SetCoat,
     addCatsToPhoto: AddCatsToPhoto,
     observeStats: ObserveStats,
+    private val findCatThumbnails: FindCatThumbnails,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
@@ -184,6 +189,11 @@ class CounterStore(
                 copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
             }
             is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
+                val thumbPaths = runStorageRead(fallback = emptyList()) {
+                    findCatThumbnails(intent.addedIds, limit = IMPORT_THUMBNAILS)
+                }
+                // A newer run claimed during the read is the one the user can deal with.
+                if (importRun.reportedId != intent.runId) return
                 importedIds = intent.addedIds
                 setState {
                     copy(
@@ -192,6 +202,7 @@ class CounterStore(
                             addedCount = intent.addedIds.size,
                             skipped = intent.skipped,
                             failed = intent.failed,
+                            thumbPaths = thumbPaths,
                         ),
                     )
                 }
@@ -205,6 +216,8 @@ class CounterStore(
             }
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
             CounterIntent.Import.SummaryDismissed -> {
+                importSummaryTimeoutJob?.cancel()
+                importedIds = emptyList()
                 setState { copy(importSummary = null) }
                 importRun.acknowledge()
             }

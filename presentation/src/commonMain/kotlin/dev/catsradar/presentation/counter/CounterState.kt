@@ -69,6 +69,8 @@ data class ImportSummaryState(
     val skipped: Int?,
     val failed: Int?,
     val undoable: Boolean,
+    /** Absolute; the first added cats' thumbnails, in the run's order, only those that have one. */
+    val thumbPaths: ImmutableList<String> = persistentListOf(),
 )
 
 /** [rate] is null until the outing is long enough and busy enough to measure. */

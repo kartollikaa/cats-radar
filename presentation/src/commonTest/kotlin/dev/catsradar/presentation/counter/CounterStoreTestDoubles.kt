@@ -56,6 +56,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     val attachLocationCalls = mutableListOf<Pair<String, LocationStamp>>()
     var attachLocationShouldThrow: Throwable? = null
     var attachLocationGate: CompletableDeferred<Unit>? = null
+    val lookupGates = mutableMapOf<String, CompletableDeferred<Unit>>()
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -70,8 +71,10 @@ internal class FakeEncounterRepository : EncounterRepository {
     override fun observeAll(): Flow<List<Encounter>> =
         encounters.map { list -> list.filter { it.deletedAt == null } }.delayedAfterFirst()
 
-    override fun observeById(id: String): Flow<Encounter?> =
-        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst()
+    override fun observeById(id: String): Flow<Encounter?> = flow {
+        lookupGates[id]?.await()
+        emitAll(encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst())
+    }
 
     private fun <T> Flow<T>.delayedAfterFirst(): Flow<T> {
         var firstEmission = true

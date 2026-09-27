@@ -34,9 +34,11 @@
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
     <string name="counter_import">Импорт из галереи</string>
-    <string name="counter_import_running">Импорт фото</string>
     <string name="counter_import_progress">%1$d из %2$d</string>
-    <string name="counter_import_ok">Понятно</string>
+    <string name="counter_import_running_count">Импорт: %1$d из %2$d</string>
+    <string name="counter_import_parts">%1$s · %2$s</string>
+    <string name="counter_import_close">Закрыть</string>
+    <string name="counter_import_undo">Отменить импорт</string>
     <plurals name="counter_import_added">
         <item quantity="one">%1$d котик добавлен</item>
         <item quantity="few">%1$d котика добавлено</item>

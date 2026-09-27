@@ -10,6 +10,7 @@ import dev.catsradar.domain.usecase.DownloadUpdate
 import dev.catsradar.domain.usecase.EndInterruptedWalk
 import dev.catsradar.domain.usecase.EndWalk
 import dev.catsradar.domain.usecase.ExportBackup
+import dev.catsradar.domain.usecase.FindCatThumbnails
 import dev.catsradar.domain.usecase.FollowWalkingMode
 import dev.catsradar.domain.usecase.ImportBackup
 import dev.catsradar.domain.usecase.ImportPhotos
@@ -88,6 +89,7 @@ val domainModule = module {
     // including ones with defaults, and the ticker default has no binding to resolve.
     factory { ObserveStats(encounterRepository = get(), clock = get(), timeZone = get()) }
     factory { ObserveOpenWalk(walkRepository = get()) }
+    factoryOf(::FindCatThumbnails)
     factoryOf(::ObserveWalkTracks)
     factory { ObserveWalkStats(observeWalkTracks = get(), computeDispatcher = Dispatchers.Default) }
     factoryOf(::ObserveOutingTracks)
