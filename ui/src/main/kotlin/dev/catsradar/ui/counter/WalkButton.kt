@@ -10,10 +10,11 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,8 +25,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,9 @@ import kotlin.time.Duration.Companion.seconds
 
 private val HoldToStop = 1.seconds
 private const val TicksPerHold = 20
+
+// Material's own extended-FAB corner; the theme's larger `large` shape would round the button into a pill.
+private val WalkButtonShape = ShapeDefaults.Large
 
 /**
  * Starts a walk on a tap, and stops one only when held until the fill crosses it: a stop ends the walk
@@ -111,7 +115,7 @@ internal fun WalkButton(
         walking = walking,
         elapsedLabel = elapsedLabel,
         fill = { fill.value },
-        modifier = modifier.clip(CircleShape).then(gesture),
+        modifier = modifier.shadow(elevation = 2.dp, shape = WalkButtonShape, clip = true).then(gesture),
     )
 }
 
@@ -126,12 +130,13 @@ private fun WalkButtonSurface(
     val fillColor = colors.tertiary.copy(alpha = 0.4f)
     Surface(
         modifier = modifier,
-        shape = CircleShape,
-        color = if (walking) colors.tertiaryContainer else colors.secondaryContainer,
-        contentColor = if (walking) colors.onTertiaryContainer else colors.onSecondaryContainer,
+        shape = WalkButtonShape,
+        color = colors.tertiaryContainer,
+        contentColor = colors.onTertiaryContainer,
     ) {
         Row(
             modifier = Modifier
+                .heightIn(min = 56.dp)
                 .drawBehind { drawFill(fill(), fillColor) }
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),

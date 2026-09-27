@@ -71,7 +71,10 @@ object StatsCalculator {
     }
 
     private fun nextMilestone(total: Int): Milestone? =
-        Tuning.MILESTONES.firstOrNull { it > total }?.let { Milestone(value = it, remaining = it - total) }
+        Tuning.MILESTONES.firstOrNull { it > total }?.let { next ->
+            val reached = Tuning.MILESTONES.lastOrNull { it <= total } ?: 0
+            Milestone(value = next, remaining = next - total, reached = reached)
+        }
 
     private fun overallRate(eligible: List<Session>): Rate? {
         if (eligible.isEmpty()) return null

@@ -156,12 +156,13 @@ Two chips sit at the map's top edge.
   as the map closes in on a street.
 - **Coats** opens the coat grid in a sheet, under a line saying that only cats of the marked coats
   stay on the map. Choosing coats shows only cats of those coats, and "Not specified" shows the cats
-  with none noted. "Not specified" is the grid's twelfth cell, a paw marked like any coat; that cell
-  is the filter's alone, and the Counter's grid and the detail's picker have none. The choice
-  applies to the dots, the photos, the clusters, the heat, a focused outing and a spot's list alike;
-  a focused outing's route is never thinned by it, whichever kind of line it draws. The view stays
-  where it is when the choice changes. "Every coat" clears it, and is disabled while nothing is
-  chosen. A choice that matches no cat says so, rather than showing a map with nothing on it.
+  with none noted. "Not specified" is the grid's twelfth cell, a paw in no coat's own shape,
+  marked like any coat; that cell is the filter's alone, and the Counter's grid and the detail's
+  picker have none. The choice applies to the dots, the photos, the clusters, the heat, a focused
+  outing and a spot's list alike; a focused outing's route is never thinned by it, whichever kind of
+  line it draws. The view stays where it is when the choice changes. "Every coat" clears it, and is
+  disabled while nothing is chosen. A choice that matches no cat says so, rather than showing a map
+  with nothing on it.
 
 Both last as long as the tab does; leaving the tab clears them, and so does a cat's coordinates
 opening the map (above).

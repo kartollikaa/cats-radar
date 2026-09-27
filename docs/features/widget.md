@@ -31,7 +31,7 @@ logged here is distinguishable from one logged in the app, from the notification
 The tap runs inside a broadcast, and Android gives a broadcast only a short window — which is why the
 location is handed to a worker and never waited for, and handed over before the count is read back.
 
-**No undo.** The undo window belongs to the Counter, where there is a chip to show and a screen to
+**No undo.** The undo window belongs to the Counter, where there is an Undo to show and a screen to
 show it on; a mis-tap on the widget is undone by opening the app.
 
 ## The number a tap shows

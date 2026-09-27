@@ -150,7 +150,7 @@ private fun Headline(state: StatisticsState, modifier: Modifier = Modifier) {
 @Composable
 private fun MilestoneLine(milestone: MilestoneState, modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(R.string.statistics_next_milestone, milestone.remainingLabel, milestone.valueLabel),
+        text = milestone.label(),
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier,
     )

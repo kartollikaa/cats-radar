@@ -35,7 +35,8 @@ one.
 `Tuning.MILESTONES` is a fixed ladder. The next milestone is the first rung **strictly above** the
 total, with the distance to it — a total sitting exactly on a rung points at the next one, never at
 itself, so the screen never says "0 to go". Past the last rung there is nothing left to reach and
-the field is empty.
+the field is empty. The milestone also names the rung the total has already passed, 0 below the
+first: the Counter's ring starts from it ([counting-cats.md](./counting-cats.md#feedback-for-the-tap)).
 
 ## Outings and rates
 

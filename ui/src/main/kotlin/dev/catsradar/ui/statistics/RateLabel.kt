@@ -2,6 +2,7 @@ package dev.catsradar.ui.statistics
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.R
@@ -12,3 +13,7 @@ internal fun RateState?.label(): String = when {
     unit == RateUnit.PER_MINUTE -> stringResource(R.string.statistics_rate_per_minute, value)
     else -> stringResource(R.string.statistics_rate_per_hour, value)
 }
+
+@Composable
+internal fun MilestoneState.label(): String =
+    stringResource(R.string.statistics_next_milestone, remainingLabel, valueLabel)
