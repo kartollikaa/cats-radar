@@ -56,7 +56,7 @@ class CoatPromptCountingTest {
         var severalTaps = 0
         compose.setContent {
             CatsRadarTheme {
-                CoatPrompt(prompt = CoatPromptState(thumbPath = null), onSeveralClick = { severalTaps++ })
+                CoatPrompt(prompt = CoatPromptState("cat", "cat", thumbPath = null), onSeveralClick = { severalTaps++ })
             }
         }
 
@@ -68,12 +68,12 @@ class CoatPromptCountingTest {
 
     @Test
     fun `counting shows the number of cats, the tray and Save once a cat is counted`() {
-        var prompt by mutableStateOf(CoatPromptState(thumbPath = null, counting = CoatCountState()))
+        var prompt by mutableStateOf(CoatPromptState("cat", "cat", thumbPath = null, counting = CoatCountState()))
         val removed = mutableListOf<Int>()
         var saves = 0
         compose.setContent {
             CatsRadarTheme {
-                CoatPrompt(prompt = prompt, onTrayCatClick = { removed += it }, onSaveClick = { saves++ })
+                CoatPrompt(prompt = prompt, onTrayCatClick = { removed += it.index }, onSaveClick = { saves++ })
             }
         }
         compose.onNodeWithText(context.getString(R.string.counter_coat_count_title_empty)).assertExists()
@@ -97,6 +97,8 @@ class CoatPromptCountingTest {
             CatsRadarTheme {
                 CoatPrompt(
                     prompt = CoatPromptState(
+                        catId = "cat",
+                        photoId = "cat",
                         thumbPath = null,
                         counting = CoatCountState(persistentListOf(CoatOption.GINGER, CoatOption.GINGER, null)),
                     ),

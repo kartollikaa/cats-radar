@@ -72,7 +72,10 @@ class CounterStateMapperTest {
     fun `the coat prompt shows the photo's thumbnail from the photo directory`() {
         val photo = photoFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
 
-        assertEquals(CoatPromptState(thumbPath = "/data/photos/cat-7_thumb.jpg"), mapper.coatPrompt(photo))
+        assertEquals(
+            CoatPromptState("cat-7", "cat-7", thumbPath = "/data/photos/cat-7_thumb.jpg"),
+            mapper.coatPrompt(photo),
+        )
     }
 
     @Test
@@ -80,6 +83,6 @@ class CounterStateMapperTest {
         val photo = encounterFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
             .withPhoto(photoPath = "cat-7.jpg", thumbPath = null)
 
-        assertEquals(CoatPromptState(thumbPath = null), mapper.coatPrompt(photo))
+        assertEquals(CoatPromptState("cat-7", "cat-7", thumbPath = null), mapper.coatPrompt(photo))
     }
 }

@@ -167,7 +167,6 @@ class CounterStore(
         runStorageWrite {
             when (val result = logPhoto(uri)) {
                 is PhotoResult.Logged -> {
-                    coatQuestion.ask(result.encounter)
                     setState { copy(coatPrompt = stateMapper.coatPrompt(result.encounter)) }
                     if (result.needsLocation) emit(CounterEffect.AttachLocation(result.encounter.id))
                 }

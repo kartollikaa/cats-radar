@@ -54,7 +54,11 @@ class CounterStateMapper(
     )
 
     fun coatPrompt(encounter: Encounter): CoatPromptState =
-        CoatPromptState(thumbPath = encounter.cover?.thumbPath?.let(photoStorage::resolve))
+        CoatPromptState(
+            catId = encounter.id,
+            photoId = encounter.cover?.id,
+            thumbPath = encounter.cover?.thumbPath?.let(photoStorage::resolve),
+        )
 
     private fun CurrentOuting.toState(): CurrentOutingState = CurrentOutingState(
         count = count,
