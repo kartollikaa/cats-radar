@@ -26,6 +26,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowContentResolver
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -149,6 +150,22 @@ class GalleryImportPickerTest {
     }
 
     @Test
+    @Config(sdk = [33])
+    fun beforeAndroid14NoAnswerIsTakenForLimitedAccess() {
+        sharedPhotos.selected(21)
+        grant(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
+        compose.runOnIdle {
+            picker.launch()
+            registry.answer(true)
+        }
+
+        assertIs<ActivityResultContracts.RequestPermission>(registry.launches.first().contract)
+        assertIs<PickGalleryPhotos>(registry.launches.last().contract)
+        assertNull(picked)
+    }
+
+    @Test
     fun pickedPhotosArriveStillReadableBeyondThisActivity() {
         compose.runOnIdle {
             picker.launch()
@@ -210,6 +227,11 @@ class GalleryImportPickerTest {
 
         override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int = 0
 
-        override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int = 0
+        override fun update(
+            uri: Uri,
+            values: ContentValues?,
+            selection: String?,
+            selectionArgs: Array<out String>?,
+        ): Int = 0
     }
 }
