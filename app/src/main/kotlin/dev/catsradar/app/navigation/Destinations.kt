@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.ImageLoader
 import dev.catsradar.presentation.encounters.EncountersEffect
 import dev.catsradar.presentation.encounters.EncountersIntent
 import dev.catsradar.presentation.encounters.EncountersStore
@@ -24,6 +25,7 @@ import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.map.MapScreen
 import dev.catsradar.ui.map.MapSpotScreen
 import dev.catsradar.ui.statistics.StatisticsScreen
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -67,6 +69,7 @@ internal fun MapDestination(
     modifier: Modifier = Modifier,
 ) {
     val store = koinViewModel<MapStore>()
+    val imageLoader = koinInject<ImageLoader>()
     val state by store.state.collectAsStateWithLifecycle()
     val openCat by rememberUpdatedState(onOpenCat)
     val openSpot by rememberUpdatedState(onOpenSpot)
@@ -84,6 +87,7 @@ internal fun MapDestination(
     }
     MapScreen(
         state = state,
+        imageLoader = imageLoader,
         modifier = modifier,
         contentPadding = contentPadding,
         onCatsTap = { ids -> store.dispatch(MapIntent.CatsTapped(ids)) },

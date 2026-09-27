@@ -1,5 +1,7 @@
 package dev.catsradar.app.di
 
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
 import dev.catsradar.presentation.AndroidDateTimeFormatter
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
@@ -32,6 +34,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val presentationModule = module {
+    single<ImageLoader> { SingletonImageLoader.get(androidContext()) }
     single<DateTimeFormatter> { AndroidDateTimeFormatter(androidContext()) }
     factoryOf(::CounterStateMapper)
     viewModelOf(::CounterStore)

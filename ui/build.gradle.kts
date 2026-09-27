@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     api(projects.presentation)
+    api(libs.coil.core)
     implementation(libs.coil.compose)
     implementation(libs.telephoto.zoomable.image.coil3)
     implementation(libs.androidx.core.ktx)

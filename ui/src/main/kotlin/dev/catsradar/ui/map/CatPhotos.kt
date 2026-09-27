@@ -7,10 +7,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.delay
@@ -180,10 +182,12 @@ private fun rememberCovers(photos: ImmutableList<String>): Expression<StringValu
 @Composable
 internal fun PhotoTiles(
     mapState: MapState,
+    imageLoader: ImageLoader,
     rim: Color,
     onTilesAdd: () -> Unit,
     onThumbnailUnreadable: (String) -> Unit,
 ) {
+    val context = LocalContext.current
     val density = LocalDensity.current
     val tile = remember(density, rim) {
         with(density) { PhotoTile(LargestTile.roundToPx(), TileCorner.toPx(), TileRim.toPx(), rim) }
@@ -192,10 +196,10 @@ internal fun PhotoTiles(
     val unreadable by rememberUpdatedState(onThumbnailUnreadable)
     val scope = rememberCoroutineScope()
     val supplied = remember { MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST) }
-    LaunchedEffect(mapState, tile) {
+    LaunchedEffect(mapState, tile, imageLoader) {
         mapState.missingImageResolver = resolver@{ id ->
             val thumbnail = thumbnailOf(id) ?: return@resolver null
-            val drawn = tile.draw(thumbnail)
+            val drawn = tile.draw(thumbnail, context, imageLoader)
             // The map asks from several threads at once; the report goes through the main one.
             if (drawn == null) scope.launch { unreadable(thumbnail) } else supplied.tryEmit(id)
             drawn?.let { ResolvedStyleImage(it) }

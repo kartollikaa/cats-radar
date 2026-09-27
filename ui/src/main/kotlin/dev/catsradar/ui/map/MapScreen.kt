@@ -20,6 +20,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import coil3.ImageLoader
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.map.MapArea
 import dev.catsradar.presentation.map.MapState
@@ -38,6 +39,7 @@ import org.maplibre.compose.map.MapState as MaplibreMapState
 @Composable
 fun MapScreen(
     state: MapState,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onCatsTap: (List<String>) -> Unit = {},
@@ -55,6 +57,7 @@ fun MapScreen(
             var choosingCoats by rememberSaveable { mutableStateOf(false) }
             CatsMap(
                 state = state,
+                imageLoader = imageLoader,
                 contentPadding = contentPadding,
                 modifier = modifier.fillMaxSize(),
                 onCatsTap = onCatsTap,
@@ -79,6 +82,7 @@ fun MapScreen(
 @Composable
 private fun CatsMap(
     state: MapState.Located,
+    imageLoader: ImageLoader,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onCatsTap: (List<String>) -> Unit = {},
@@ -108,7 +112,7 @@ private fun CatsMap(
             onCatsTap = { tapCats(it) },
         )
     }
-    PhotoTiles(mapState, colors.tileRim, onTilesAdd = { tileRound++ }, onThumbnailUnreadable)
+    PhotoTiles(mapState, imageLoader, colors.tileRim, onTilesAdd = { tileRound++ }, onThumbnailUnreadable)
     MapCamera(
         mapState,
         area = state.area,
@@ -205,6 +209,6 @@ private fun EmptyMap(modifier: Modifier = Modifier) {
 @Composable
 private fun MapScreenEmptyPreview() {
     CatsRadarTheme {
-        Surface { MapScreen(state = MapState.Empty) }
+        Surface { EmptyMap() }
     }
 }

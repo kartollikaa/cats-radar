@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import coil3.ImageLoader
 import dev.catsradar.app.navigation.ScreenViewTracker
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.notification.WalkingNotificationSync
@@ -163,6 +164,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<GallerySaver>())
         assertNotNull(koin.get<PhotoStorage>())
         assertNotNull(koin.get<AddCatsToPhoto>())
+        assertNotNull(koin.get<ImageLoader>())
         // verify() treats a constructor parameter with a default as satisfied, but factoryOf's
         // reflection still tries to inject it; only actually building the object catches that.
         assertNotNull(koin.get<ObserveStats>())
