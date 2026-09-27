@@ -24,7 +24,8 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 /**
  * Title centred on the bar, not between [startContent] and [endContent]; [titlePadding] keeps them clear of it.
- * No background and no insets — both belong to [modifier]. Without a [title] the bar offers no heading.
+ * No background and no insets — both belong to [modifier]. The [title] is the bar's heading unless
+ * [titleIsHeading] is false; without one the bar offers no heading.
  */
 @Composable
 fun CenterAppBar(
@@ -34,6 +35,7 @@ fun CenterAppBar(
     endContent: @Composable () -> Unit = {},
     contentPadding: PaddingValues = CenterAppBarDefaults.ContentPadding,
     titlePadding: PaddingValues = PaddingValues(horizontal = 64.dp),
+    titleIsHeading: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -49,7 +51,7 @@ fun CenterAppBar(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(titlePadding)
-                    .semantics(mergeDescendants = true) { heading() },
+                    .semantics(mergeDescendants = true) { if (titleIsHeading) heading() },
             ) {
                 ProvideTextStyle(MaterialTheme.typography.titleMedium) { title() }
             }

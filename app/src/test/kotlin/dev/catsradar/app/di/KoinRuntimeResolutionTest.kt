@@ -187,13 +187,6 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<ObserveStats>())
         assertNotNull(koin.get<ObserveWalkStats>())
         assertNotNull(koin.get<LogPhoto>())
-        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id") })
-        assertNotNull(koin.getStore<LocationPickerStore> { parametersOf("any-id") })
-        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", null) })
-        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
-        // Both the root (null parent) and a drilled-in level, because they take different paths.
-        assertNotNull(koin.getStore<RegionsStore> { parametersOf(null) })
-        assertNotNull(koin.getStore<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
         assertNotNull(koin.get<ScreenViewTracker>())
         assertNotNull(koin.get<WalkingNotificationSync>())
         assertNotNull(koin.get<WalkRecordingState>())
@@ -209,6 +202,23 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.get<AttachLocation>())
         assertNotNull(koin.get<ResolvePendingPlaces>())
         assertNotNull(koin.get<PurgeDeleted>())
+    }
+
+    @Test
+    fun `the Stores built from a destination's arguments are bound`() {
+        val koin = startKoin {
+            androidContext(ApplicationProvider.getApplicationContext<Context>())
+            modules(domainModule, dataModule, presentationModule, workerModule)
+        }.koin
+
+        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", "restored-id") })
+        assertNotNull(koin.getStore<LocationPickerStore> { parametersOf("any-id") })
+        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", null) })
+        assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
+        // Both the root (null parent) and a drilled-in level, because they take different paths.
+        assertNotNull(koin.getStore<RegionsStore> { parametersOf(null) })
+        assertNotNull(koin.getStore<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
     }
 
     @Test

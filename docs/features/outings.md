@@ -44,8 +44,10 @@ Because outings are derived and not stored, anything built on outings — the ou
 which one a cat is in — has to run the splitter over the live encounter list itself rather than
 reading a foreign key — `AttachLocation`'s backfill (`split`, see `location.md`), `StatsCalculator`
 (`groupByOuting`, `split`), the Encounters list's grouping and headers (`groupByOuting`, see
-`browsing-cats.md`), the map's outing focus (`outingOf`, in `MapStateMapper`) and walk tracks
-(`outingOf`, in `ObserveOutingTracks`) all do this today. That keeps the two concepts (an
+`browsing-cats.md`), the map's outing focus (`outingOf`, in `MapStateMapper`), walk tracks
+(`outingOf`, in `ObserveOutingTracks`) and the encounter detail's pages (`outingWindow`, in `OutingPages`,
+which passes the cats on its pages as `shown` after every change; see `encounter-detail.md`) all do this
+today. That keeps the two concepts (an
 encounter's own fields, and the grouping over them) from ever going stale relative to each other,
 at the cost of recomputing the split from scratch on every call.
 
@@ -62,8 +64,9 @@ at the cost of recomputing the split from scratch on every call.
   `presentation/src/commonMain/kotlin/dev/catsradar/presentation/encounters/EncountersStateMapper.kt`
   (`groupByOuting`),
   `presentation/src/commonMain/kotlin/dev/catsradar/presentation/map/MapStateMapper.kt`
-  (`outingOf`) and
-  `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveOutingTracks.kt` (`outingOf`)
+  (`outingOf`),
+  `domain/src/commonMain/kotlin/dev/catsradar/domain/usecase/ObserveOutingTracks.kt` (`outingOf`) and
+  `presentation/src/commonMain/kotlin/dev/catsradar/presentation/detail/OutingPages.kt` (`outingWindow`)
 
 ## Not handled yet
 
