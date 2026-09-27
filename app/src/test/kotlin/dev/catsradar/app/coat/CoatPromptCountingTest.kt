@@ -153,6 +153,7 @@ class CoatPromptCountingTest {
         val skip = context.getString(R.string.counter_coat_prompt_skip)
         compose.onNodeWithText(skip).performClick()
         compose.onAllNodesWithText(several).assertCountEquals(1).assertAll(radio)
+        compose.onAllNodesWithText(saveLabel(1)).assertCountEquals(0)
 
         prompt = asking.copy(counting = CoatCountState())
         compose.waitForIdle()

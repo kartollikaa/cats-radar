@@ -8,6 +8,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
@@ -62,6 +63,29 @@ class CoatPromptLookTest {
             assertTrue(filled * 10 > pixels.width * pixels.height, "tray cat $index is ${filled}px filled")
         }
         assertTrue(faces.fetchSemanticsNodes().size == tray.size)
+    }
+
+    @Test
+    fun `a counted cat wears its own coat's shape, not a circle`() {
+        lateinit var scheme: ColorScheme
+        compose.setContent {
+            CatsRadarTheme {
+                scheme = MaterialTheme.colorScheme
+                CoatPrompt(
+                    prompt = CoatPromptState(
+                        catId = "cat",
+                        photoId = "cat",
+                        thumbPath = null,
+                        counting = CoatCountState(persistentListOf(CoatOption.GINGER_WHITE)),
+                    ),
+                )
+            }
+        }
+
+        val pixels = compose.onNodeWithTag(CoatTrayFaceTestTag, useUnmergedTree = true).captureToImage().toPixelMap()
+        val corner = with(compose.density) { 4.dp.roundToPx() }
+
+        assertEquals(scheme.surfaceContainerHighest, pixels[corner, pixels.height - 1 - corner])
     }
 
     @Test

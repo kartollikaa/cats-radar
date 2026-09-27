@@ -274,7 +274,7 @@ class CounterStorePhotoPromptTest {
         val store = newCounterStore(encounterRepository = repository)
         store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
         runCurrent()
-        val asked = store.state.value.coatPrompt
+        val asked = assertNotNull(store.state.value.coatPrompt)
 
         store.dispatch(CounterIntent.CoatPrompt.OneCatClicked)
         runCurrent()
