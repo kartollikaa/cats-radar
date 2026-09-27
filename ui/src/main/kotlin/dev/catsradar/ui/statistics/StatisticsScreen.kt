@@ -39,7 +39,6 @@ import dev.catsradar.presentation.statistics.StatisticsState
 import dev.catsradar.presentation.statistics.WalkedState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CatFace
-import dev.catsradar.ui.coat.faceRim
 import dev.catsradar.ui.coat.labelRes
 import dev.catsradar.ui.coat.look
 import dev.catsradar.ui.components.EmptyState
@@ -148,12 +147,7 @@ private fun CoatShareRow(share: CoatShareState, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
-            // A white coat on the light track and a black one on the dark track need the faces' own rim to show.
-            ShareBar(
-                share = share.share,
-                color = coat?.look()?.fur ?: colors.outline,
-                rim = coat?.let { colors.faceRim() },
-            )
+            ShareBar(share = share.share, color = coat?.look()?.fur ?: colors.outline)
         }
     }
 }

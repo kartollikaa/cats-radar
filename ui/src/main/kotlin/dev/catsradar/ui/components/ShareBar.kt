@@ -1,7 +1,6 @@
 package dev.catsradar.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,9 +23,9 @@ const val ShareBarFillTestTag = "share-bar-fill"
 
 private val ShareBarHeight = 4.dp
 
-/** [share] of a whole, from 0 to 1, filled in [color]; [rim] outlines the fill where [color] may match the track. */
+/** [share] of a whole, from 0 to 1, filled in [color]. */
 @Composable
-internal fun ShareBar(share: Float, color: Color, modifier: Modifier = Modifier, rim: Color? = null) {
+internal fun ShareBar(share: Float, color: Color, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .testTag(ShareBarTestTag)
@@ -43,8 +42,7 @@ internal fun ShareBar(share: Float, color: Color, modifier: Modifier = Modifier,
                 .fillMaxWidth(share)
                 .fillMaxHeight()
                 .clip(CircleShape)
-                .background(color)
-                .then(if (rim != null) Modifier.border(1.dp, rim, CircleShape) else Modifier),
+                .background(color),
         )
     }
 }

@@ -126,8 +126,9 @@ The tab reads top to bottom as a dashboard.
   Longest streak, three to a row, each read by TalkBack as one item ("3, Today"). They are not buttons.
 - **By coat**: each coat's face, name and "38 · 26%", with a bar under the name in the coat's fur
   colour. The bar is the row's count over the biggest row's, *Not specified* included, so the busiest
-  row fills it. Every coat's bar keeps the faces' rim, so a white bar on the light track and a black one
-  on the dark track still show. *Not specified*'s bar is the outline colour.
+  row fills it. The bar is the fur alone, with no outline (owner, 2026-09-28), so a white coat's bar on
+  the light theme and a black one's on the dark are faint against the track. *Not specified*'s bar is the
+  outline colour.
 - **Places**, the card that opens the drill-down.
 - **Outings**: the figures two to a row — outings, time out, cats per hour, then walked and cats per km
   when something was walked, then the best outing with its own rate in its label ("Best outing · 1.3 /

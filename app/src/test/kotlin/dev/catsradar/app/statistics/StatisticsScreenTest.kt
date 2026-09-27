@@ -227,6 +227,15 @@ class StatisticsScreenTest {
     }
 
     @Test
+    fun `a coat's bar has no outline, its fur reaching its edge`() {
+        show(dashboard(ChartRange.WEEK))
+
+        val fill = compose.onAllNodesWithTag(ShareBarFillTestTag, useUnmergedTree = true)[0]
+        val pixels = fill.captureToImage().toPixelMap()
+        assertEquals(GingerFur, pixels[pixels.width / 2, 1])
+    }
+
+    @Test
     fun `the outings figures sit two to a row in their order, with the best outing's rate in its label`() {
         show(dashboard(ChartRange.WEEK))
 
