@@ -104,6 +104,30 @@ itself to accessibility services as its subject (the photo, the coat's name, or 
 location; a card's own text says the same. With nothing logged, the tab says so and points at the
 Counter.
 
+## A photo of several cats
+
+A photo can show several cats, each its own encounter with its own coat, all sharing one shot (see
+`data-model.md`). The tab shows such a photo **once**: the cats whose cover is a photo of the same shot are one
+entry, in the grid and in the list alike (`EncountersStateMapperTest`, *a shot of three cats is one entry holding
+all three*). The entry shows that photo with a **badge** — a paw and the number of cats — when it holds more
+than one: in the top corner of a pair tile or a tile, and beside the time on a card or a list row. For a screen
+reader the entry is a "Photo of 3 cats", with its time and location, which are the same for every cat of a shot.
+
+- **It packs like one photo.** In the grid a shot pairs, runs and tiles as a single photo would (*a shot packs
+  as one photo and pairs with the photo beside it*); in the list it is one row, and the outing's rounded corners
+  count it once.
+- **A tap opens the shot's first cat** — the oldest by `createdAt`, the one the camera or the import saved
+  (*a shot's entry opens its oldest cat*).
+- **Selection is by shot.** A long press or a selecting tap adds or removes every cat of the entry, and the bar
+  counts cats, not entries. Delete soft-deletes them all as one batch with one undo (`EncountersStoreTest`,
+  *deleting a selected shot removes its cats as one batch and one undo restores them*). A selection holding only
+  some cats of a shot — a cat added to a shot that is already selected — selects the whole entry.
+- **A cat whose cover is another photo keeps its own entry**, even when it also has the shot's photo; the shot's
+  entry holds only the cats it shows.
+- **Only this tab groups them.** The Places area list and the map's spot list, which use the same rows, keep one
+  row per cat, and a shot's cats are separate dots on the map (`MapSpotStateMapperTest`,
+  `RegionsStateMapperTest`, *the cats of a shot stay separate rows*).
+
 ## Grid or list
 
 The grid is optional: **Settings → Encounters → Grid of cats** (`SettingsRepository.encountersGrid()`, on

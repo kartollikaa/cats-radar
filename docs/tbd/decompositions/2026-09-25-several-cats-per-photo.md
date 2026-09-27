@@ -16,7 +16,7 @@
 | S2 | Backup format 6 carries shots | Photo records carry `shotId`, the archive says format 6, older formats read as one shot per photo, and export → import keeps a shot whole. | safe | ~450 | S1 | merged |
 | S2b | Every photo names its shot | `shotId` becomes the shot's id on every photo, never null: a photo of one cat names itself. Database v6; archive format unchanged. | safe | ~350 | S2 | merged |
 | S3 | Adding cats to a photo | `AddCatsToPhoto` copies the files and inserts every new cat in one transaction, with the location and analytics rules. | safe | ~550 | S1 | merged |
-| S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | planned |
+| S4 | Encounters shows one entry per shot | A shot packs as one entry with a cat-count badge, opens its first cat, and is selected and deleted as a whole, in the grid and the list. | safe | ~550 | S1 | in-review |
 | S5 | Counting cats in the coat sheet | **Several** turns the coat sheet into counting mode — tray, paw, **Save N cats** — and saves the shot through S3. | safe | ~600 | S2, S3, S4 | planned |
 | S6 | On this photo on the detail screen | The row of a photo's cats, switching between them without stacking screens, and **+** to add a cat. | safe | ~550 | S3, S4 | planned |
 
@@ -101,6 +101,10 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ## Decision log
+
+- 2026-09-27: **S4 in review**, started from an owner bug report on v1.5.2-beta: "no option in the coat sheet
+  to pick several cats". Only S1–S3 had shipped, and S3 has no screen, so nothing on a device could yet count
+  several cats; S4 and then S5 are the fix. A selection holding only some cats of a shot selects the whole entry.
 
 - 2026-09-27: **S3 merged** as #199. Merging main into it found `RemovePhotoTest` (#194) building its own
   `PhotoStorage` without the new `copy`: the widened interface failed at compile time, not on a device.
