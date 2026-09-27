@@ -31,17 +31,18 @@ outings without a new cat.
 
 **Inside the card**, a run's tiles take each coat's own shape (see `coat.md`), stretched to fill their
 square, with the face, the paw or the photo's thumbnail clipped to it. A shot of several cats, and a cat with
-no coat, takes no coat's shape; a chosen tile's ring follows its shape. A pair's times sit on a dark chip
-(`inverseSurface`), which reads on any photo in either theme. Every other cat inside the card — a short
-run's, and each row of the list — is a card of its own on the surface colour, the list's 6 dp apart with
-`medium` corners: it leads with the tile's shape, names the coat or "A cat" (a shot: "Photo of 3 cats",
-with its badge), and reads "time · place" under that, "No location yet" in the tertiary container's text
-colour. While selecting, the bar at the top is `primaryContainer`.
+no coat, takes no coat's shape. A pair's times sit on an opaque `inverseSurface` chip — dark in the light
+theme, light in the dark one — so they read on any photo. Every other cat inside the card — a short run's,
+and each row of the list — is a card of its own on the surface colour, the list's 6 dp apart with `medium`
+corners: it leads with the tile's shape, names the coat or "A cat" (a shot: "Photo of 3 cats", with its
+badge), and reads "time · place" under that, "No location yet" in the tertiary container's text colour. A
+screen reader hears the card's name, time and place; its lead stays silent, since the name beside it says
+the same. A chosen cat's ring follows its shape, round a tile and round a card's lead alike, and while
+selecting the bar at the top is `primaryContainer`.
 
 The card is drawn row by row: the header's piece carries the card's top corners, the outing's last row its
 bottom ones (the mapper marks it), and the gaps between rows sit inside the card, so the card stays
-unbroken while the list keeps one item per row and its scroll position by index. Cards inside the card — a
-short run's, and every row of the list — sit on the surface colour so they still stand apart from it.
+unbroken while the list keeps one item per row and its scroll position by index.
 
 The Places list and the map's spot sheet use the same rows without the card, the headline or the new header
 (`EncountersStateMapper.catRows`).
@@ -180,7 +181,8 @@ one coat's face would misname cats that may have several.
 The grid is optional: **Settings → Encounters → Grid of cats** (`SettingsRepository.encountersGrid()`, on
 unless turned off). Off, the tab goes back to one full row per cat, each a card of its own inside its
 outing's card. The Places list and the map's spot sheet keep the older rows: cards with a hairline gap,
-round at the outing's outer corners and tight where they meet, the time as the title. The mapper marks each row as the first, a middle, the last or the only one of its outing
+round at the outing's outer corners and tight where they meet, the time as the title. The mapper marks
+each row as the first, a middle, the last or the only one of its outing
 (`GroupPosition`), and states the layout (`EncountersLayout`) so the screen only picks the gaps and the
 header's inset. `EncountersStore` combines the setting with the encounters, so flipping the switch
 re-lays an open tab without waiting for a new cat. The Places area list is the same either way.

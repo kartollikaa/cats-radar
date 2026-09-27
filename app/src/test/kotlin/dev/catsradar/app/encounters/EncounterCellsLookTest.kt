@@ -5,8 +5,10 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -45,6 +47,7 @@ import dev.catsradar.ui.regions.RegionsScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -83,10 +86,9 @@ class EncounterCellsLookTest {
         return pixels[(pixels.width * x).toInt(), (pixels.height * y).toInt()]
     }
 
-    private fun pixelAt(x: Dp, y: Dp): Color {
-        val pixels = compose.onRoot().captureToImage().toPixelMap()
-        return with(compose.density) { pixels[x.roundToPx(), y.roundToPx()] }
-    }
+    private fun screen() = compose.onRoot().captureToImage().toPixelMap()
+
+    private fun PixelMap.at(x: Dp, y: Dp): Color = with(compose.density) { this@at[x.roundToPx(), y.roundToPx()] }
 
     private fun SemanticsNodeInteraction.textColor(): Color {
         val layouts = mutableListOf<TextLayoutResult>()
@@ -102,6 +104,7 @@ class EncounterCellsLookTest {
         assertEquals(scheme.surfaceContainerLow, leads()[0].pixelAtFraction(0.12f, 0.12f), "Ginger, a circle")
         assertEquals(scheme.surfaceContainerHighest, leads()[1].pixelAtFraction(0.12f, 0.12f), "Ginger & white")
         assertEquals(scheme.surfaceContainerHighest, leads()[1].pixelAtFraction(0.5f, 0.04f), "Ginger & white's top")
+        assertEquals(scheme.surfaceContainerHighest, leads()[2].pixelAtFraction(0.12f, 0.12f), "Ginger & white's photo")
     }
 
     @Test
@@ -121,14 +124,17 @@ class EncounterCellsLookTest {
         val time = compose.onNodeWithText("4:58 PM", useUnmergedTree = true)
         assertEquals(scheme.inverseOnSurface, time.textColor())
         val bounds = time.getUnclippedBoundsInRoot()
-        assertEquals(scheme.inverseSurface, pixelAt(bounds.left + 3.dp, bounds.top + (bounds.bottom - bounds.top) / 2))
+        val middle = bounds.top + (bounds.bottom - bounds.top) / 2
+        assertEquals(scheme.inverseSurface, screen().at(bounds.left - 4.dp, middle))
     }
 
     @Test
     fun `a cat's card names its coat, or a cat, or the photo's cats, and its time and place`() {
         show(list)
 
-        listOf("Ginger & white", "A cat", "Photo of 3 cats").forEach { compose.onNodeWithText(it).assertIsDisplayed() }
+        listOf("Ginger & white", "A cat", "Black", "Photo of 3 cats").forEach {
+            compose.onNodeWithText(it).assertIsDisplayed()
+        }
         compose.onNodeWithText("4:58 PM · Current location", useUnmergedTree = true).assertIsDisplayed()
         compose.onNodeWithText("4:51 PM · No location yet", useUnmergedTree = true).assertIsDisplayed()
     }
@@ -143,16 +149,38 @@ class EncounterCellsLookTest {
     }
 
     @Test
+    fun `a screen reader hears each cat's card name it once`() {
+        show(list)
+
+        listOf("Ginger & white", "Black", "Photo of 3 cats").forEach { name ->
+            val card = compose.onNodeWithText(name).fetchSemanticsNode().config
+            val spoken = card.getOrElse(SemanticsProperties.ContentDescription) { emptyList() } +
+                card.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text }
+            assertEquals(1, spoken.count { it == name }, "$name in $spoken")
+        }
+    }
+
+    @Test
+    fun `a chosen cat's card rings its lead`() {
+        val rows = list.rows.map { it.chosen("a1") }.toPersistentList()
+        show(list.copy(rows = rows, selectedIds = persistentSetOf("a1")))
+
+        assertEquals(scheme.primary, leads()[0].pixelAtFraction(0.02f, 0.5f), "the ring on the chosen cat's lead")
+        assertEquals(scheme.surfaceContainerHighest, leads()[1].pixelAtFraction(0.02f, 0.5f), "no ring on the next")
+    }
+
+    @Test
     fun `the list's cats are separate cards with medium corners inside the outing's card`() {
         show(list)
 
         val pieces = compose.onAllNodesWithTag(OutingCardTestTag, useUnmergedTree = true)
         val first = pieces[1].getUnclippedBoundsInRoot()
         val centre = first.left + (first.right - first.left) / 2
-        assertEquals(scheme.surfaceContainerLow, pixelAt(centre, first.bottom - 3.dp), "a gap between two cats")
         val card = compose.onAllNodesWithTag(OutingCatCardTestTag, useUnmergedTree = true)[0].getUnclippedBoundsInRoot()
-        assertEquals(scheme.surfaceContainerLow, pixelAt(card.left + 2.dp, card.top + 2.dp), "the card's round corner")
-        assertEquals(scheme.surface, pixelAt(centre, card.top + 2.dp), "the card itself")
+        val pixels = screen()
+        assertEquals(scheme.surfaceContainerLow, pixels.at(centre, first.bottom - 3.dp), "a gap between two cats")
+        assertEquals(scheme.surfaceContainerLow, pixels.at(card.left + 2.dp, card.top + 2.dp), "the card's corner")
+        assertEquals(scheme.surface, pixels.at(centre, card.top + 2.dp), "the card itself")
     }
 
     @Test
@@ -205,7 +233,12 @@ class EncounterCellsLookTest {
                     EncounterCell("c1", "4:40 PM", LocationLabel.CURRENT, CellLead.Coat(CoatOption.GINGER))
                         .copy(selected = gingerSelected),
                     EncounterCell("c2", "4:33 PM", LocationLabel.CURRENT, CellLead.Coat(CoatOption.GINGER_WHITE)),
-                    EncounterCell("c3", "4:21 PM", LocationLabel.NONE),
+                    EncounterCell(
+                        "c3",
+                        "4:21 PM",
+                        LocationLabel.NONE,
+                        CellLead.Photo("/photos/c3_thumb.jpg", CoatOption.GINGER_WHITE),
+                    ),
                 ),
             ),
             EncountersRow.Cards(
@@ -228,6 +261,15 @@ class EncounterCellsLookTest {
             EncountersRow.Single(EncounterCell("a2", "4:51 PM", LocationLabel.NONE), GroupPosition.MIDDLE),
             EncountersRow.Single(
                 EncounterCell(
+                    "a6",
+                    "4:45 PM",
+                    LocationLabel.FROM_OUTING,
+                    CellLead.Photo("/photos/a6_thumb.jpg", CoatOption.BLACK),
+                ),
+                GroupPosition.MIDDLE,
+            ),
+            EncountersRow.Single(
+                EncounterCell(
                     "a3",
                     "4:40 PM",
                     LocationLabel.CURRENT,
@@ -238,6 +280,9 @@ class EncounterCellsLookTest {
             ),
         ),
         layout = EncountersLayout.LIST,
-        totals = EncountersTotals(cats = 5, outings = 1),
+        totals = EncountersTotals(cats = 6, outings = 1),
     )
+
+    private fun EncountersRow.chosen(id: String) =
+        if (this is EncountersRow.Single && cell.id == id) copy(cell = cell.copy(selected = true)) else this
 }

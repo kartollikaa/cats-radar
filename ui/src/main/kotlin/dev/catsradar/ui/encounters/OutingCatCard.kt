@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -37,7 +38,6 @@ const val OutingCatCardTestTag = "outing-cat-card"
 internal fun OutingCatCard(
     cell: EncounterCell,
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.medium,
     selecting: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
@@ -46,19 +46,20 @@ internal fun OutingCatCard(
     Row(
         modifier = modifier
             .testTag(OutingCatCardTestTag)
-            .clip(shape)
+            .clip(MaterialTheme.shapes.medium)
             .background(if (cell.selected) colors.secondaryContainer else colors.surface)
             .selectableCell(cell.selected, selecting, toggleLabel(cell.selected), onClick, onLongClick)
             .padding(start = 8.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box {
+        val leadShape = cell.lead.coatShape()
+        // The title beside it already names the cat, so the lead would only say it again.
+        Box(modifier = Modifier.clearAndSetSemantics {}) {
             EncounterLead(
                 lead = cell.lead,
-                modifier = Modifier.size(48.dp),
-                badgeCount = cell.badgeCount,
-                shape = cell.lead.coatShape(),
+                modifier = Modifier.size(48.dp).selectionOutline(cell.selected, colors.primary, leadShape),
+                shape = leadShape,
             )
             if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd))
         }
@@ -92,12 +93,10 @@ internal fun OutingCatCard(
     }
 }
 
-/** The shape a cell's lead takes: its coat's own, or no coat's for a paw or a shot's photo. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun CellLead.coatShape(): Shape = coatShapeFor(coat()).toShape()
 
-/** The coat whose shape a cell's lead takes; none for a paw or a shot's photo. */
 internal fun CellLead.coat(): CoatOption? = when (this) {
     is CellLead.Coat -> coat
     is CellLead.Photo -> coat

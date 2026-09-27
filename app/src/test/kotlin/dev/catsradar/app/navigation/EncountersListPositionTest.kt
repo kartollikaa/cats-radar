@@ -93,7 +93,6 @@ class EncountersListPositionTest {
 
     private fun isShown(text: String) = compose.onNodeWithText(text).isDisplayed()
 
-    // A cat's card inside its outing's card reads its time first, then " · " and its place.
     private fun isCatShown(outing: Int) = compose.onNodeWithText("${time(outing)} ·", substring = true).isDisplayed()
 
     private companion object {
