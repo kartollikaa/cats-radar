@@ -26,7 +26,7 @@
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | in-review |
-| E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | in-progress |
+| E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | in-review |
 | E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | planned |
 
 Status values: `planned · in-progress · in-review · merged · dropped`

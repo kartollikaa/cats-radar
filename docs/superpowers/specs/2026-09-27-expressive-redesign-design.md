@@ -125,8 +125,7 @@ the ring fills and glows on the motion scheme's springs, and the bottom pill say
 `primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
 Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
 
-**The walk** (slice E14; until it lands, E3's walk row stands: the extended FAB in `tertiaryContainer`
-with Undo at the end of its row). A walk logs nothing: it turns on a mode, the notification with its
+**The walk** (slice E14, in place of E3's walk row). A walk logs nothing: it turns on a mode, the notification with its
 *Cat!* button, so the control is a mode switch and sits apart from the things that log a cat. The
 owner found the walk row "a mess and very awkward" (2026-09-27): two lines that repeated each other,
 a floating button that floated nowhere, the screen's one warm surface on a calm action, a lopsided row.
@@ -137,8 +136,10 @@ cookie**.
 - **The button** sits at the start of the bottom row, beside Photo: a Medium tonal button, 56 dp
   like the split button, `secondaryContainer` and `onSecondaryContainer`, the walking cat and
   *Walk*. Photo takes the rest of the row. A tap starts a walk. While a walk is on it takes
-  `tertiaryContainer` and `onTertiaryContainer`, the toggle's checked corners (squarer than the pill),
-  the stop glyph and *Hold to end*; the held press with its fill and haptic ticks moves here from the
+  `tertiaryContainer` and `onTertiaryContainer`, the toggle's checked corners (squarer than the pill)
+  and *Hold to end*, with the walking cat still at its start, walking, where the prototype drew a stop
+  glyph: a moving cat says "on a walk" better than a square, and the words already say what the press
+  does; the held press with its fill and haptic ticks moves here from the
   old button unchanged (`walking-mode.md` § *Stopping takes a hold*), and a press let go early raises
   the hint the way the milestones raise their toast: *Hold to end the walk*. The button carries no
   time: the outing's tag on the ring has the outing's, and the notification's chronometer has the
@@ -150,9 +151,11 @@ cookie**.
   again, for as long as the walk lasts; it stands still when no walk is on, and when the system's
   animator scale is zero. If it ever wears on the owner, the same breath on the outing tag's dot alone
   is the fallback.
-- **Undo** floats in the count block's bottom-end corner, opposite the "+N" badge, the filled tonal
-  button it already is. It appears and goes without moving anything, and a tap on it takes a cat back
-  and never logs one. The rule that the controls do not jump stands: nothing under the count moves when
+- **Undo** floats in the count block's top-start corner, across from the "+N" badge, the filled tonal
+  button it already is; the prototype drew it at the bottom end, where the outing's tag reaches on a
+  narrow phone. It appears and goes without moving anything, and a tap on it takes a cat back and
+  never logs one. It gives up the older rule that kept Undo outside the block: while it shows, a tap
+  on that corner undoes rather than logs. The rule that the controls do not jump stands: nothing under the count moves when
   a walk starts or ends or Undo comes and goes.
 
 **The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
