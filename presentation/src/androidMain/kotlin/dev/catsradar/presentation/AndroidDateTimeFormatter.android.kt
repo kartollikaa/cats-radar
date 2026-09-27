@@ -1,6 +1,7 @@
 package dev.catsradar.presentation
 
 import android.content.Context
+import android.text.format.DateFormat
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -36,5 +37,18 @@ class AndroidDateTimeFormatter(private val context: Context) : DateTimeFormatter
         } else {
             context.getString(R.string.duration_minutes, minutes)
         }
+    }
+
+    override fun weekday(date: LocalDate): String = date.formatBest("EEE")
+
+    override fun dayMonth(date: LocalDate): String = date.formatBest("dMMM")
+
+    override fun weekdayDayMonth(date: LocalDate): String = date.formatBest("EEEdMMM")
+
+    // The locale's own order and punctuation for the fields a skeleton names: "Sep 26" here, "26 сент." in Russian.
+    private fun LocalDate.formatBest(skeleton: String): String {
+        val locale = Locale.getDefault()
+        return JavaDateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale)
+            .format(toJavaLocalDate())
     }
 }

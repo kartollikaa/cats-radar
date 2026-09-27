@@ -58,6 +58,15 @@ class AndroidDateTimeFormatterTest {
     }
 
     @Test
+    fun shortDatesNameTheWeekdayTheDayAndTheMonthWithoutTheYear() {
+        val date = LocalDate.parse("2026-09-26")
+
+        assertEquals("Sat", formatter.weekday(date))
+        assertEquals("Sep 26", formatter.dayMonth(date))
+        assertEquals("Sat, Sep 26", formatter.weekdayDayMonth(date))
+    }
+
+    @Test
     fun durationUnderAnHourLeavesOutTheHourPart() {
         assertEquals("45 min", formatter.duration(MINUTES_UNDER_AN_HOUR.minutes))
     }
