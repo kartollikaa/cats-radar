@@ -149,16 +149,16 @@ item (`PhotoViewerStoreTest`, *an original still in the gallery is offered there
 checked it*; *an original is not offered while the viewer is still checking it*), and an original the
 user has deleted gets no button at all (*an original deleted from the gallery is not offered there when
 the viewer opens*; `PhotoViewerEntryTest`, *an original deleted from the gallery is not offered by the
-nav host's own viewer entry*). The check does not close a removal the user is being asked about (*the
-check finishing keeps a removal the user is being asked about*).
+nav host's own viewer entry*). The check does not close a removal the user is being asked about
+(`PhotoViewerStoreTest`, *the check finishing keeps a removal the user is being asked about*).
 
 The tap checks again, because the user may have deleted the original in another app since the viewer
 opened. An item gone by then opens nothing: a message says the photo is no longer in the gallery, and
 its button goes (`PhotoViewerStoreTest`, *an original deleted after the check says so once at the tap
 and is offered no more*; `PhotoViewerEntryTest`, *an original deleted after the viewer checked it is
 named as such at the tap, and offered no more*). A change to the cat while the viewer is open checks
-again, and until that check lands the button keeps its last answer (*an original deleted while the
-viewer is open is offered no more once the cat changes*). Coming back to the viewer from another app
+again, and until that check lands the button keeps its last answer (`PhotoViewerStoreTest`, *an
+original deleted while the viewer is open is offered no more once the cat changes*). Coming back to the viewer from another app
 does not check again by itself; the tap does.
 
 A picked item is never checked: without access to the user's photos the app cannot see it, so a
