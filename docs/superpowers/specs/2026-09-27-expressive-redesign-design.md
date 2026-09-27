@@ -96,8 +96,9 @@ prototype is very small").
 it, "cats" (a plural) in `titleMedium`. The whole block stays the button. It still squashes under a
 press and springs back. The cookie turns a step further with each cat and stays there, an undo
 turning it back a step (owner, 2026-09-27: it used to spring back after each press); the turn moves
-on the motion scheme's default spring, and a first count or an import finishing sets it in place
-rather than spinning it round. The "+N" badge keeps its corner of the block, in `primary` and
+on the motion scheme's default spring, and the first count read, or a jump of more than a handful of
+cats at once (an import landing), sets it in place rather than spinning it round. The "+N" badge
+keeps its corner of the block, in `primary` and
 `onPrimary`. The roll, the badge's counting and the TalkBack label do not change.
 
 **The milestone arc.** A ring inside the cookie fills from the rung already reached to the next one

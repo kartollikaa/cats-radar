@@ -36,8 +36,10 @@ line, "38 more to reach 100" (`CounterMilestoneTest`). The tags squash with the 
 small cookie the number keeps clear of them: it shrinks, and "cats" under it gives way first. Before
 the total is read, with no cats yet, and past the last rung, there is no ring. It squashes under a
 press and springs back, the cookie turns a step further with each cat and keeps its turn — an Undo
-turns it back a step, and an import finishing or the first count sets it in place without a spin
-(`CookieTurnTest`) — and the number **rolls up** when a cat is added and **down** when one is undone
+turns it back a step, while the first count read, and a jump of more than a handful of cats at once
+(an import landing), set it in place without a spin; a small import turns it as taps would
+(`CookieTurnTest`, `CookieTurnAnimationTest`) — and the number **rolls up** when a cat is added and
+**down** when one is undone
 — the screen compares the number it had with the one it now has, so an undo, or an import finishing
 while the Counter is showing, rolls the right way. It rolls like an odometer, one digit at a time:
 only the digits that change move, each in its own window, and a carry ripples to the left — 49 to 50

@@ -101,7 +101,7 @@ internal fun RollingCount(label: String, count: Int?, modifier: Modifier = Modif
 
 /** The count the last applied composition showed, or null on the first. */
 @Composable
-private fun rememberShownCount(count: Int?): Int? {
+internal fun rememberShownCount(count: Int?): Int? {
     val shown = remember { ShownCount() }
     val previous = shown.value
     SideEffect { shown.value = count }

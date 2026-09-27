@@ -10,23 +10,20 @@ import kotlin.math.abs
 
 private const val CookieTurnStep = 8f
 
-// More cats at once than this (an import finishing) set the cookie's turn in place rather than spin it round.
+// A jump of more cats than this at once is an import landing, not taps: the turn is set in place rather than spun.
 private const val MaxTurnedSteps = 5
 
-/** The cookie's turn for the count it shows: a step per cat, so each one turns it further and an undo turns it back. */
-internal fun cookieTurnFor(count: Int?): Float = (count ?: 0) * CookieTurnStep
+fun cookieTurnFor(count: Int?): Float = (count ?: 0) * CookieTurnStep
 
 internal fun cookieTurnAnimates(shown: Int?, next: Int?): Boolean =
     shown != null && next != null && abs(next - shown) <= MaxTurnedSteps
 
 @Composable
-internal fun rememberCookieTurn(count: Int?): State<Float> {
+fun rememberCookieTurn(count: Int?): State<Float> {
     val turn = remember { Animatable(cookieTurnFor(count)) }
-    val shown = remember { LastTurnedCount(count) }
+    val previous = rememberShownCount(count)
     val spec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
     LaunchedEffect(count) {
-        val previous = shown.value
-        shown.value = count
         val target = cookieTurnFor(count)
         if (cookieTurnAnimates(previous, count)) {
             turn.animateTo(target, spec)
@@ -36,5 +33,3 @@ internal fun rememberCookieTurn(count: Int?): State<Float> {
     }
     return turn.asState()
 }
-
-private class LastTurnedCount(var value: Int?)
