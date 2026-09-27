@@ -43,7 +43,7 @@ class CounterStateMapper(
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
-        // The first cat is not a milestone to reach: a fresh Counter shows no ring and no line.
+        // With no cats the first rung is not a milestone to reach, so the state carries none.
         milestone = milestone?.takeIf { count > 0 }?.toState(),
     )
 
