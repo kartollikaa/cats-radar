@@ -73,7 +73,7 @@ fun EncounterDetailScreen(
         BackBar(
             contentDescription = stringResource(R.string.detail_back),
             contentPadding = contentPadding,
-            title = several?.let { loaded -> { PagePosition(loaded.currentNumber, loaded.pages.size) } },
+            center = several?.let { loaded -> { PagePosition(loaded.currentNumber, loaded.pages.size) } },
             onBackClick = onBackClick,
         )
     }

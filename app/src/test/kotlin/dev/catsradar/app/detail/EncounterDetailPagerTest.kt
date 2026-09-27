@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -12,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
@@ -94,6 +98,27 @@ class EncounterDetailPagerTest {
 
         compose.onNodeWithText("2 / 3").assertIsDisplayed()
         compose.onNodeWithContentDescription(context.getString(R.string.detail_position_description, 2, 3))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Heading))
+    }
+
+    @Test
+    fun `a cat swiped away from and back to keeps its photo`() {
+        compose.setContent {
+            CatsRadarTheme { EncounterDetailScreen(state = loadedOn(photographed, photographed, older)) }
+        }
+
+        compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
+            .performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
+            .performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
+        compose.onNodeWithTag(DetailPagesTestTag).performTouchInput { swipeRight() }
+        compose.waitForIdle()
+
+        compose.onNodeWithText(NEWER_TIME).assertExists()
+        compose.onNodeWithContentDescription(context.getString(R.string.viewer_position_description, 2, 2))
             .assertExists()
     }
 
