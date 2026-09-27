@@ -1,10 +1,12 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
 import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.photoFixture
 import dev.catsradar.presentation.encounters.withPhoto
+import dev.catsradar.presentation.statistics.MilestoneState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -84,5 +86,38 @@ class CounterStateMapperTest {
             .withPhoto(photoPath = "cat-7.jpg", thumbPath = null)
 
         assertEquals(CoatPromptState("cat-7", "cat-7", thumbPath = null), mapper.coatPrompt(photo))
+    }
+
+    @Test
+    fun `the count carries the next milestone and how far it has come from the last one`() {
+        assertEquals(
+            CounterMilestoneState(MilestoneState(valueLabel = "100", remainingLabel = "38"), fraction = 12f / 50f),
+            mapper.map(
+                count = 62,
+                undoVisible = false,
+                milestone = Milestone(value = 100, remaining = 38, reached = 50),
+            ).milestone,
+        )
+    }
+
+    @Test
+    fun `with no cats yet there is no milestone to reach`() {
+        val first = Milestone(value = 1, remaining = 1, reached = 0)
+
+        assertNull(mapper.map(count = 0, undoVisible = false, milestone = first).milestone)
+    }
+
+    @Test
+    fun `at the first cat the arc starts from nothing`() {
+        assertEquals(
+            0f,
+            mapper.map(count = 1, undoVisible = false, milestone = Milestone(value = 10, remaining = 9, reached = 1))
+                .milestone?.fraction,
+        )
+    }
+
+    @Test
+    fun `past the last rung there is no milestone`() {
+        assertNull(mapper.map(count = 10_000, undoVisible = false, milestone = null).milestone)
     }
 }

@@ -104,7 +104,9 @@ class StatisticsStateMapperTest {
 
     @Test
     fun `the next milestone carries both the target and the distance to it`() {
-        val state = mapper.map(stats(total = 147, nextMilestone = Milestone(value = 250, remaining = 103)))
+        val state = mapper.map(
+            stats(total = 147, nextMilestone = Milestone(value = 250, remaining = 103, reached = 100)),
+        )
 
         assertEquals(MilestoneState(valueLabel = "250", remainingLabel = "103"), state.nextMilestone)
     }
@@ -162,7 +164,7 @@ class StatisticsStateMapperTest {
             byCoat = listOf(CoatCount(CatCoat.GINGER, 12, 12.0 / 21), CoatCount(null, 9, 9.0 / 21)),
             currentStreak = 3,
             longestStreak = 8,
-            nextMilestone = Milestone(value = 25, remaining = 4),
+            nextMilestone = Milestone(value = 25, remaining = 4, reached = 10),
             outings = 6,
             activeTime = 150.minutes,
             overallRate = Rate(perHour = 36.0),

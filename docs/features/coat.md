@@ -9,11 +9,16 @@ The Counter shows the coats as a **grid of four across**. Tapping one **logs a c
 immediately**: one tap, not tap-then-choose. The big button above it logs a cat whose coat nobody
 noted. Both paths are the same tally — same undo, same location attach, same burst.
 
-After a tap the grid rings the coat just used — a line in the theme's primary colour around that
-coat's whole cell, face and name together — so a run of the same cat down the same street reads
-back at a glance. An Undo moves the ring back to the coat of the newest cat still undoable, and it
-clears when the undo window closes or the last of those cats is undone. The cells of one grid row
-share the tallest one's height, so rings side by side — several coats chosen on the map — match.
+Each face sits in a Material shape on the theme's highest container, and every coat has a shape of
+its own — ginger a circle, black a puffy diamond, grey and white a pentagon, all of them soft,
+rounded forms, each stretched onto the whole of its square so that every shape is the same size — so
+a coat is known by its shape as well as its face; "no coat" has one too (`CoatShapesTest`). After a
+tap the grid rings the coat just used — its shape fills with the primary container inside a line in
+the primary colour, its name under it — so a run of the same cat down the same street reads back at
+a glance (`CoatGridLookTest`). An Undo moves the ring back to the coat of the newest cat still
+undoable, and it clears when the undo window closes or the last of those cats is undone. Every shape
+is the same size, so rings side by side — several coats chosen on the map — match, and the grid is
+no taller than it was when the faces sat in plain cells.
 
 This replaced an earlier design where a coat strip appeared *after* a tap. A tap on the grid has
 already chosen the coat, so a strip asking again was one control too many, and changing a coat
@@ -112,11 +117,12 @@ see the colours.
 
 **Every face is visible on both themes.** A white cat on the light surface and a black one on the
 dark surface have almost no contrast with what is behind them, so each face has a line around it in
-the theme's `outline` colour. Dark-furred cats have amber eyes, and each coat's nose is pink or dark,
-whichever shows against what it sits on. `CoatLookTest` holds all three to the contrast a meaningful
-shape needs: the line against the surface in both themes, the eyes against the fur, and the nose
-against the muzzle or the fur. The rim test fails if the line goes back to `outlineVariant`, which is
-not enough.
+the theme's `outline` colour. Dark-furred cats have amber eyes, and each coat's nose is pink or
+dark, whichever shows against what it sits on. `CoatLookTest` holds all three to the contrast a
+meaningful shape needs: the line against the surface and against the shape a face sits in, in both
+themes (a ringed face's line takes the primary colour, since the outline fades on the primary
+container in the dark theme), the eyes against the fur, and the nose against the muzzle or the fur.
+The rim test fails if the line goes back to `outlineVariant`, which is not enough.
 
 The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
 the picker and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn
@@ -137,10 +143,12 @@ coats, wherever the row's end leaves it. A cat with no coat opens the row at the
 (`EncounterDetailCoatPickerTest`). Only the opening position is chosen: after that the row stays
 wherever it is scrolled, including when the coat is changed.
 
-The chosen coat is ringed the same way as on the Counter. Every cell in that row takes the tallest
-name's height, so the ring is the same size whichever coat it is on and the row never changes
-height while it scrolls. That is why the row is not lazy: a lazy row measures only the cells on
-screen, and a three-line name scrolling in would grow the card and push Delete down.
+The chosen coat is ringed with a line around its whole cell, face and name together, as the grids
+did before they took their shapes; the row keeps that look until the detail sets the coat in a
+sheet. Every cell in that row takes the tallest name's height, so the ring is the same size
+whichever coat it is on and the row never changes height while it scrolls. That is why the row is
+not lazy: a lazy row measures only the cells on screen, and a three-line name scrolling in would
+grow the card and push Delete down.
 
 ## In the statistics
 
@@ -162,9 +170,11 @@ cats are in it — it is the absence of an answer, not an answer that happens to
 - `domain/…/model/CatCoat.kt`, `domain/…/usecase/SetCoat.kt`, `LogTally` (takes a coat)
 - `domain/…/stats/StatsCalculator.kt` — the by-coat counts
 - `presentation/…/coat/CoatOption.kt` — the presentation token, because `:ui` cannot see `:domain`
-- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, and ask after a photo) and `CoatPicker` (amend)
+- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, ask after a photo and count its cats, filter the map) with its
+  shaped tiles and `coatShapeFor`, and `CoatPicker` (amend)
 - `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo, its count and tray; `CounterStore` opens and
   closes it, `presentation/…/counter/CoatCounting.kt` moves it between prompts and `CoatQuestion.kt` makes its writes
+- `ui/…/coat/CoatShapes.kt` — each coat's shape, stretched onto its square
 - `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, and the line around every face
 - `ui/…/coat/CatFace.kt` — the face itself
 

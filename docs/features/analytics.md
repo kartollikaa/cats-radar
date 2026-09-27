@@ -39,7 +39,7 @@ its feature switches from Firebase Remote Config. Debug builds do not initialize
   | Event | Parameters | When |
   |---|---|---|
   | `cat_logged` | `kind` (`tally`, `photo`), `origin` (`app`, `widget`, `notification` for a tally; `camera` or `gallery` for a photo), `has_coat` (`true`/`false`) | a cat is saved, including each cat added later to an existing photo |
-  | `tally_undone` | — | the Undo chip removes a tally |
+  | `tally_undone` | — | the Counter's Undo removes a tally |
   | `coat_set` | `coat` (one of the eleven, or `none` when cleared) | a coat is written; setting the same coat again logs nothing |
   | `photo_attached` | `source` (`camera`, `gallery`) | a logged cat gets a photo |
   | `location_set_by_hand` | — | a cat with no location gets the point under the picker's pin |

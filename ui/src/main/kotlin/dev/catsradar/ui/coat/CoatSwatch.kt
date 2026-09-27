@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,10 +24,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,6 +39,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -42,6 +48,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.RoundedPolygon
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -51,8 +58,11 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 
+const val CoatShapeTestTag = "coat-shape"
+
 private val CellWidth = 70.dp
 private val FaceSize = 34.dp
+private val TileFaceSize = 38.dp
 private val PickerGap = 12.dp
 private const val CoatsPerRow = 4
 
@@ -93,22 +103,24 @@ fun CoatGrid(
         maxItemsInEachRow = CoatsPerRow,
     ) {
         CoatOption.entries.forEach { coat ->
-            CoatCell(
+            val ringed = coat in selected
+            CoatTile(
                 label = stringResource(coat.labelRes()),
-                selected = coat in selected,
-                modifier = Modifier.fillMaxRowHeight(),
+                shape = coatShapeFor(coat),
+                selected = ringed,
                 count = counts[coat],
                 enabled = enabled,
                 onClick = { onCoatClick(coat) },
             ) {
-                CatFace(coat = coat, modifier = Modifier.size(FaceSize))
+                val rim = if (ringed) MaterialTheme.colorScheme.ringedFaceRim() else MaterialTheme.colorScheme.faceRim()
+                CatFace(coat = coat, modifier = Modifier.size(TileFaceSize), rim = rim)
             }
         }
         onUnspecifiedClick?.let { onClick ->
-            CoatCell(
+            CoatTile(
                 label = stringResource(R.string.coat_not_specified),
+                shape = coatShapeFor(null),
                 selected = null in selected,
-                modifier = Modifier.fillMaxRowHeight(),
                 count = counts[null],
                 enabled = enabled,
                 onClick = onClick,
@@ -117,7 +129,7 @@ fun CoatGrid(
                     painter = painterResource(R.drawable.ic_nav_pets),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(FaceSize).padding(4.dp),
+                    modifier = Modifier.size(TileFaceSize).padding(6.dp),
                 )
             }
         }
@@ -158,9 +170,11 @@ fun CoatPicker(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun CoatCell(
+private fun CoatTile(
     label: String,
+    shape: RoundedPolygon,
     selected: Boolean,
     modifier: Modifier = Modifier,
     count: Int? = null,
@@ -168,32 +182,41 @@ private fun CoatCell(
     onClick: () -> Unit = {},
     face: @Composable () -> Unit,
 ) {
-    val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val colors = MaterialTheme.colorScheme
+    val outline = shape.toShape()
+    val interactionSource = remember { MutableInteractionSource() }
     val counted = count?.let { pluralStringResource(R.plurals.counter_coat_counted, it, it) }
     Column(
         modifier = modifier
             .width(CellWidth)
             .alpha(if (enabled) 1f else 0.38f)
-            // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
-            .clip(MaterialTheme.shapes.small)
-            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small)
-            .selectable(selected = selected, enabled = enabled, onClick = onClick)
-            .then(if (counted != null) Modifier.semantics { stateDescription = counted } else Modifier)
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
+            .then(if (counted != null) Modifier.semantics { stateDescription = counted } else Modifier),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Box {
-            face()
-            count?.let {
-                CountDot(count = it, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-4).dp))
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .testTag(CoatShapeTestTag)
+                    .clip(outline)
+                    .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
+                    .then(if (selected) Modifier.border(2.dp, colors.primary, outline) else Modifier)
+                    .indication(interactionSource, ripple()),
+                contentAlignment = Alignment.Center,
+            ) {
+                face()
             }
+            count?.let { CountDot(count = it, modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp)) }
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-        )
+        Text(text = label, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
     }
 }
 
@@ -208,6 +231,35 @@ private fun CountDot(count: Int, modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.primary, CircleShape)
             .padding(horizontal = 5.dp),
     )
+}
+
+@Composable
+private fun CoatCell(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    face: @Composable () -> Unit,
+) {
+    val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    Column(
+        modifier = modifier
+            .width(CellWidth)
+            // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
+            .clip(MaterialTheme.shapes.small)
+            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small)
+            .selectable(selected = selected, onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        face()
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 @StringRes

@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.RateState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -29,7 +30,12 @@ data class CounterState(
     val importSummary: ImportSummaryState? = null,
     /** Null unless a photo just taken is waiting for its coat. */
     val coatPrompt: CoatPromptState? = null,
+    /** Null before the total is read, and past the last milestone. */
+    val milestone: CounterMilestoneState? = null,
 )
+
+/** [fraction] is how far the total has come from the milestone already reached toward [next]. */
+data class CounterMilestoneState(val next: MilestoneState, val fraction: Float)
 
 /**
  * The question about [catId]'s photo, [photoId] (null when the cat has none). [thumbPath] is absolute; null when no
