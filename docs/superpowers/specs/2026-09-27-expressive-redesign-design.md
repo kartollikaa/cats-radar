@@ -483,7 +483,7 @@ from a flat one.
   - The ringed coat's shape is the one outlined.
   - A tap on the second photo opens the viewer on it; the add items open the camera and the picker
     and disable while attaching.
-  - The coat card opens the sheet; a coat sets and closes; the ringed coat clears and closes.
+  - The coat card opens the sheet; a coat sets and closes; *No coat* clears and closes.
   - Statistics: the pill switches the chart between seven and thirty bars; a tap on a bar names its day;
     the tiles show the six numbers; each coat row's bar is the width of its share.
   - The menu's entries and the Remove button reach the same intents as today's.
