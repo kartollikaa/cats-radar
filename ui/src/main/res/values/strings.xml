@@ -122,6 +122,8 @@
     <string name="detail_title_no_coat">A cat</string>
     <string name="detail_more">More</string>
     <string name="detail_remove">Remove this cat</string>
+    <string name="detail_number">#%1$d</string>
+    <string name="detail_number_spoken">Cat number %1$d</string>
     <string name="detail_deleted">Cat removed</string>
     <string name="detail_undo">Undo</string>
     <string name="detail_missing">This cat is no longer here</string>
