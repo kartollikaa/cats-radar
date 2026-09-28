@@ -262,3 +262,4 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   the clearest so the bar ends on a colour that shows. There is no outline and the bar stays 4 dp. E10 carries it.
 - 2026-09-29: the owner said "merge it when ready". **E10 merged** as #223, the gated tree landing unchanged. Its plan is
   archived. Every slice of the epic is now merged.
+- 2026-09-29: E10 first shipped in v1.8.0-beta.
