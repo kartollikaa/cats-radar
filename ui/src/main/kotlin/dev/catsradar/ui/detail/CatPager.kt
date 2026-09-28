@@ -64,6 +64,7 @@ internal fun CatPager(
 ) {
     val currentState by rememberUpdatedState(state)
     val currentOnPageSettle by rememberUpdatedState(onPageSettle)
+    val gestures = rememberPagerGestures(pagerState)
     val pagesMoving = remember(pagerState) { { pagerState.isScrollInProgress } }
     LaunchedEffect(state.currentId) {
         val onScreen = currentState.currentNumber - 1
@@ -80,8 +81,8 @@ internal fun CatPager(
         modifier = modifier.fillMaxSize().testTag(DetailPagesTestTag),
         overscrollEffect = null,
         key = { index -> state.pages[index].pageKey },
-        flingBehavior = rememberCarryOnFling(pagerState),
-        pageNestedScrollConnection = rememberPagesTakeOnlyTheirOwnDrag(pagerState),
+        flingBehavior = gestures.fling,
+        pageNestedScrollConnection = gestures.connection,
     ) { index ->
         val page = state.pages[index]
         CatPageContent(

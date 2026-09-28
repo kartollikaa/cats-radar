@@ -9,35 +9,43 @@ import androidx.compose.foundation.gestures.TargetedFlingBehavior
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
+import kotlinx.coroutines.flow.first
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * The pages' own fling, except after a touch that stopped them on their way without moving them — a tap, or a drag the
- * photo row took over: then they carry on to the page they were heading for instead of snapping to the nearest one.
+ * The pages' own fling and nested scrolling, changed so that a touch on a page while the pages settle belongs to what
+ * it lands on. A drag on a page moves the pages only once it has reached them. Pages that such a touch stopped
+ * without moving them — a tap, or a drag the photo row took over — carry on to the page they were heading for once
+ * it lets go, instead of snapping to the nearest page.
  */
-@Composable
-internal fun rememberCarryOnFling(pagerState: PagerState): TargetedFlingBehavior {
-    val usual = PagerDefaults.flingBehavior(pagerState)
-    return remember(pagerState, usual) { CarryOnFling(pagerState, usual) }
-}
+internal class PagerGestures(val fling: TargetedFlingBehavior, val connection: NestedScrollConnection)
 
-/** The pages' own nested scrolling, except that a drag on a page moves the pages only once it has reached them. */
 @Composable
-internal fun rememberPagesTakeOnlyTheirOwnDrag(pagerState: PagerState): NestedScrollConnection {
-    val usual = PagerDefaults.pageNestedScrollConnection(pagerState, Orientation.Horizontal)
-    return remember(usual) { PagesTakeOnlyTheirOwnDrag(usual) }
+internal fun rememberPagerGestures(pagerState: PagerState): PagerGestures {
+    val usualFling = PagerDefaults.flingBehavior(pagerState)
+    val usualConnection = PagerDefaults.pageNestedScrollConnection(pagerState, Orientation.Horizontal)
+    return remember(pagerState, usualFling, usualConnection) {
+        val connection = PagesTakeOnlyTheirOwnDrag(usualConnection)
+        PagerGestures(CarryOnFling(pagerState, usualFling) { connection.pageDragged }, connection)
+    }
 }
 
 private class CarryOnFling(
     private val pagerState: PagerState,
     private val usual: TargetedFlingBehavior,
+    private val pageDragged: () -> Boolean,
 ) : TargetedFlingBehavior {
     private var stopped: StoppedOnTheWay? = null
 
@@ -54,6 +62,10 @@ private class CarryOnFling(
         }
         try {
             return if (stop != null) {
+                track((stop.headingFor - pagerState.position()) * pagerState.pageSpan())
+                // Held still until the drag on the page lets go, the photos under it follow the finger alone.
+                withFrameNanos {}
+                snapshotFlow { pageDragged() }.first { !it }
                 carryOn(stop.headingFor, track)
                 0f
             } else {
@@ -85,8 +97,13 @@ private class CarryOnFling(
 private class PagesTakeOnlyTheirOwnDrag(private val usual: NestedScrollConnection) : NestedScrollConnection by usual {
     private var reachedPages = false
 
-    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
-        if (reachedPages) usual.onPreScroll(available, source) else Offset.Zero
+    var pageDragged by mutableStateOf(false)
+        private set
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        if (source == NestedScrollSource.UserInput) pageDragged = true
+        return if (reachedPages) usual.onPreScroll(available, source) else Offset.Zero
+    }
 
     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
         if (source == NestedScrollSource.UserInput && available.x != 0f) reachedPages = true
@@ -95,6 +112,7 @@ private class PagesTakeOnlyTheirOwnDrag(private val usual: NestedScrollConnectio
 
     override suspend fun onPreFling(available: Velocity): Velocity {
         reachedPages = false
+        pageDragged = false
         return usual.onPreFling(available)
     }
 }
