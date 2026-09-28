@@ -54,6 +54,9 @@ import kotlinx.collections.immutable.toPersistentList
 private val RowInset = 16.dp
 
 private val CardInset = 12.dp
+
+// Inside an outing's card each cat of the list is a card of its own, set apart rather than joined.
+private val CardListGap = 6.dp
 private val CardTextInset = 12.dp
 
 private const val LEADING_ITEM_KEY = "leading"
@@ -156,7 +159,11 @@ internal fun EncounterRows(
     leadingItem: (@Composable () -> Unit)? = null,
 ) {
     val list = layout == EncountersLayout.LIST
-    val rowGap = if (list) ListRowGap else CellGap
+    val rowGap = when {
+        list && outingCards -> CardListGap
+        list -> ListRowGap
+        else -> CellGap
+    }
     LazyColumn(
         modifier = modifier,
         state = listState,

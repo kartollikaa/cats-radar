@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
@@ -23,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+
+const val SelectionBadgeTestTag = "selection-badge"
 
 /** A tap opens the cat, or toggles it while selecting; a long press toggles it where [onLongClick] is given. */
 internal fun Modifier.selectableCell(
@@ -50,7 +53,11 @@ internal fun toggleLabel(selected: Boolean): String =
 @Composable
 internal fun SelectionBadge(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+        modifier = modifier
+            .testTag(SelectionBadgeTestTag)
+            .size(24.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

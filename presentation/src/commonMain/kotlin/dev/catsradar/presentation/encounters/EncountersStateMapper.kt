@@ -126,12 +126,12 @@ class EncountersStateMapper(
 
     private fun Encounter.thumbnail(): String? = cover?.thumbPath?.let(photoStorage::resolve)
 
-    /** Without [showsCoat] a cell with no picture shows a paw: one coat would misname the cats of a shot. */
+    /** Without [showsCoat] a cell carries no coat, and a paw when it has no picture: one coat would misname a shot. */
     private fun Encounter.lead(showsCoat: Boolean): CellLead {
         val thumbnail = thumbnail()
         val coatOption = coat?.toOption()?.takeIf { showsCoat }
         return when {
-            thumbnail != null -> CellLead.Photo(thumbnail)
+            thumbnail != null -> CellLead.Photo(thumbnail, coatOption)
             coatOption != null -> CellLead.Coat(coatOption)
             else -> CellLead.Paw
         }

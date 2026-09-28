@@ -13,6 +13,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.encounters.CellLead
@@ -96,10 +97,10 @@ class EncounterShotEntryTest {
 
         compose.onNodeWithContentDescription("Photo of 3 cats, 14:30, Current location").assertExists()
         compose.onNodeWithContentDescription("Photo of 2 cats, 14:20, Current location").assertExists()
-        compose.onNodeWithContentDescription("Photo of 4 cats").assertExists()
+        compose.onNodeWithText("Photo of 4 cats").assertExists()
         compose.onNodeWithContentDescription("Photo of this cat, 14:30, Current location").assertExists()
         compose.onAllNodesWithContentDescription("Photo of 1 cat", substring = true).assertCountEquals(0)
-        compose.onNodeWithContentDescription("Photo of 4 cats").assert(!hasText("4"))
+        compose.onNodeWithText("Photo of 4 cats").assert(!hasText("4"))
         compose.onAllNodesWithText("4")
             .assertAll(SemanticsMatcher.keyIsDefined(SemanticsProperties.HideFromAccessibility))
     }

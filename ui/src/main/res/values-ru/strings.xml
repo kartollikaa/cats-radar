@@ -96,6 +96,8 @@
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_outing_on_map">На карте</string>
     <string name="encounters_on_a_walk">На прогулке</string>
+    <string name="encounters_card_line">%1$s · %2$s</string>
+    <string name="encounters_card_no_coat">Котик</string>
     <string name="encounters_totals">%1$s · %2$s</string>
     <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>

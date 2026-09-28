@@ -121,8 +121,8 @@ private fun EntryCell.requireOpensFirstCat() =
 
 /** What a cell shows first: the most telling thing known about that cat. */
 sealed interface CellLead {
-    /** [thumbnailPath] is absolute. */
-    data class Photo(val thumbnailPath: String) : CellLead
+    /** [thumbnailPath] is absolute; [coat] is the one cat's coat, null for a shot of several or with none noted. */
+    data class Photo(val thumbnailPath: String, val coat: CoatOption? = null) : CellLead
 
     data class Coat(val coat: CoatOption) : CellLead
 
