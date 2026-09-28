@@ -128,8 +128,10 @@ first cat is a milestone: it is the one most worth marking.
   goes with the window (`CounterStoreMilestoneMomentTest`, *the moment lasts until the undo window
   closes*; *further taps keep the moment*). A rung reached with no run open, by an import or a cat the
   widget logged, shows for the undo window's length (*a rung reached with no run open*).
-- **An Undo takes it back.** A count that falls below the rung ends the moment and forgets the rung
-  was reached, so landing on it again celebrates again (*an undo below the rung takes the moment back*).
+- **An Undo takes it back.** A count that falls back below a rung the Counter celebrated, by an Undo
+  or an import taken back, ends the moment if it still shows and forgets the rung was reached, so
+  landing on it again celebrates again (*an undo below the rung takes the moment back*; *an import
+  undone after its moment has ended still forgets the rung it jumped to*).
 - **Each rung once.** The rung is recorded as seen **before** the moment shows, so a process death
   between the two does not celebrate it again on the next launch (*the rung is recorded as seen before
   the moment shows*; *the next launch does not celebrate the same rung again*).

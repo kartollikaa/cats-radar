@@ -17,6 +17,7 @@ internal class MilestoneMoment(
 ) {
     var rung: Int? = null
         private set
+    private var celebrated: Int? = null
     private var seenBefore = 0
     private var timeout: Job? = null
 
@@ -29,16 +30,18 @@ internal class MilestoneMoment(
         // the same milestone again on the next launch.
         settingsRepository.setLastSeenMilestone(reached)
         if (rung == null) seenBefore = seen
+        celebrated = reached
         rung = reached
         show()
         timeout?.cancel()
         if (!runOpen()) endAfterTheWindow()
     }
 
-    // Taken back with the cats that reached it, so landing on the rung again celebrates it again.
+    // Taken back with the cats that reached it, even after it has ended, so landing on it again celebrates again.
     suspend fun takeBackBelow(total: Int) {
-        val reached = rung ?: return
+        val reached = celebrated ?: return
         if (total >= reached) return
+        celebrated = null
         rung = null
         timeout?.cancel()
         runStorageWrite { settingsRepository.setLastSeenMilestone(seenBefore) }

@@ -31,8 +31,8 @@ data class CounterState(
     /** Null before the total is read, and past the last milestone. */
     val milestone: CounterMilestoneState? = null,
     /**
-     * The rung the count has just landed on, until the run of taps that reached it closes. The ring shows it in
-     * place of [milestone] and [currentOuting], which stay so the number keeps the room they give it.
+     * The rung the count has just landed on, until the run of taps that reached it closes. [milestone] and
+     * [currentOuting] keep their values while it lasts.
      */
     val milestoneMoment: MilestoneMomentState? = null,
 )

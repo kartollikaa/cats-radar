@@ -130,8 +130,10 @@ class CounterStoreMilestoneMomentTest {
 
         repository.insert(externalEncounter("widget-cat"))
         runCurrent()
+        advanceTimeBy(Tuning.UNDO_VISIBLE - 1.milliseconds)
+        runCurrent()
         assertEquals(firstCat, store.state.value.milestoneMoment)
-        advanceTimeBy(Tuning.UNDO_VISIBLE)
+        advanceTimeBy(1.milliseconds)
         runCurrent()
 
         assertNull(store.state.value.milestoneMoment)
@@ -177,6 +179,28 @@ class CounterStoreMilestoneMomentTest {
             assertEquals(MilestoneMomentState(250) to 50, jumped to afterUndo)
             assertEquals(MilestoneMomentState(100), store.state.value.milestoneMoment)
         }
+
+    @Test
+    fun `an import undone after its moment has ended still forgets the rung it jumped to`() = runTest(mainDispatcher) {
+        val settings = FakeSettingsRepository(lastMilestone = 50)
+        val (store, repository) = newStore(settings)
+        repeat(99) { repository.insert(externalEncounter("old-$it")) }
+        runCurrent()
+        val imported = List(161) { "imported-$it" }
+        imported.forEach { repository.insert(externalEncounter(it)) }
+        runCurrent()
+        store.dispatch(CounterIntent.Import.Finished("run-1", imported.toPersistentList(), skipped = 0, failed = 0))
+        runCurrent()
+        advanceTimeBy(Tuning.UNDO_VISIBLE + 1.seconds)
+        runCurrent()
+        val ended = store.state.value.milestoneMoment
+
+        store.dispatch(CounterIntent.Import.UndoClicked)
+        runCurrent()
+        val afterUndo = settings.lastSeenMilestone().first()
+
+        assertEquals(null to 50, ended to afterUndo)
+    }
 
     @Test
     fun `a rung already seen shows no moment`() = runTest(mainDispatcher) {
