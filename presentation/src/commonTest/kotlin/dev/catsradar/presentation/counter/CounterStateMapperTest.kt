@@ -98,17 +98,19 @@ class CounterStateMapperTest {
     }
 
     @Test
-    fun `while a rung's moment lasts the goal and the outing step aside, and after it both return`() {
+    fun `a rung's moment rides beside the goal and the outing, and after it they are all that is left`() {
         val outing = CurrentOuting(count = 4, elapsed = 12.minutes, rate = null)
         val next = Milestone(value = 250, remaining = 150, reached = 100)
+        val atRest = CounterState(
+            totalLabel = "100",
+            count = 100,
+            undoVisible = true,
+            currentOuting = CurrentOutingState(count = 4, elapsedLabel = "12m", rate = null),
+            milestone = CounterMilestoneState(MilestoneState(valueLabel = "250", remainingLabel = "150"), 0f),
+        )
 
         assertEquals(
-            CounterState(
-                totalLabel = "100",
-                count = 100,
-                undoVisible = true,
-                milestoneMoment = MilestoneMomentState(value = 100),
-            ),
+            atRest.copy(milestoneMoment = MilestoneMomentState(value = 100)),
             mapper.map(
                 count = 100,
                 undoVisible = true,
@@ -117,16 +119,7 @@ class CounterStateMapperTest {
                 milestoneMoment = 100,
             ),
         )
-        assertEquals(
-            CounterState(
-                totalLabel = "100",
-                count = 100,
-                undoVisible = false,
-                currentOuting = CurrentOutingState(count = 4, elapsedLabel = "12m", rate = null),
-                milestone = CounterMilestoneState(MilestoneState(valueLabel = "250", remainingLabel = "150"), 0f),
-            ),
-            mapper.map(count = 100, undoVisible = false, currentOuting = outing, milestone = next),
-        )
+        assertEquals(atRest, mapper.map(count = 100, undoVisible = true, currentOuting = outing, milestone = next))
     }
 
     @Test

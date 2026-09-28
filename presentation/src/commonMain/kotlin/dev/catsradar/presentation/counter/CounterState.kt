@@ -28,9 +28,12 @@ data class CounterState(
     val importSummary: ImportSummaryState? = null,
     /** Null unless a photo just taken is waiting for its coat. */
     val coatPrompt: CoatPromptState? = null,
-    /** Null before the total is read, past the last milestone, and while [milestoneMoment] lasts. */
+    /** Null before the total is read, and past the last milestone. */
     val milestone: CounterMilestoneState? = null,
-    /** The rung the count has just landed on, until the run of taps that reached it closes. */
+    /**
+     * The rung the count has just landed on, until the run of taps that reached it closes. The ring shows it in
+     * place of [milestone] and [currentOuting], which stay so the number keeps the room they give it.
+     */
     val milestoneMoment: MilestoneMomentState? = null,
 )
 

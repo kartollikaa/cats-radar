@@ -35,8 +35,7 @@ class CounterStateMapper(
         count = count,
         undoVisible = undoVisible,
         locationPermissionHintVisible = locationPermissionHintVisible,
-        // The moment takes the ring to itself: the goal and the outing step aside while it lasts.
-        currentOuting = currentOuting?.takeIf { milestoneMoment == null }?.toState(),
+        currentOuting = currentOuting?.toState(),
         tapBurst = tapBurst,
         lastCoat = lastCoat,
         walkingMode = walkingMode,
@@ -44,7 +43,7 @@ class CounterStateMapper(
         importSummary = importSummary,
         coatPrompt = coatPrompt,
         // With no cats the first rung is not a milestone to reach, so the state carries none.
-        milestone = milestone?.takeIf { count > 0 && milestoneMoment == null }?.toState(),
+        milestone = milestone?.takeIf { count > 0 }?.toState(),
         milestoneMoment = milestoneMoment?.let(::MilestoneMomentState),
     )
 
