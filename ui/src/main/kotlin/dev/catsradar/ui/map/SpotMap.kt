@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
@@ -68,8 +69,8 @@ private val StillMap = MapUiOptions(from = MapUiOptions.None) { renderMode = And
 
 /**
  * A map centred on [position] with the cat's dot on that point, in the colours of its [coat] as the Map
- * tab draws it, and a fix [accuracyMeters] wide drawn to scale around it. It takes no gestures: a tap or a
- * drag on it reaches whatever holds it.
+ * tab draws it, and a circle of radius [accuracyMeters] drawn to scale around it. It takes no gestures: a tap
+ * or a drag on it reaches whatever holds it.
  */
 @Composable
 internal fun SpotMap(
@@ -141,7 +142,7 @@ private fun BoxScope.AccuracyCircle(accuracyMeters: Int?, latitude: Double) {
     val radius = accuracyMeters?.let { (it / metersPerDp(StreetZoom, latitude)).dp } ?: return
     if (radius * 2 <= DotSize) return
     val primary = MaterialTheme.colorScheme.primary
-    Canvas(modifier = Modifier.align(Alignment.Center).size(radius * 2).testTag(AccuracyCircleTestTag)) {
+    Canvas(modifier = Modifier.align(Alignment.Center).requiredSize(radius * 2).testTag(AccuracyCircleTestTag)) {
         val outline = AccuracyOutline.toPx()
         drawCircle(color = primary.copy(alpha = AccuracyFillAlpha))
         drawCircle(color = primary, radius = size.minDimension / 2 - outline / 2, style = Stroke(width = outline))

@@ -163,9 +163,10 @@ skips it, since the card would otherwise read it before the place. A cat with co
 no map and no pill, and a tap on its card opens nothing (*a cat not on the map shows no map*; `DetailWhereTest`).
 
 Around the dot the map draws the fix's accuracy to scale: a primary disc at a low alpha with a primary outline,
-as wide as the accuracy at the map's street zoom and the cat's latitude, using the scale MapLibre itself
+whose radius is the accuracy at the map's street zoom and the cat's latitude, using the scale MapLibre itself
 projects with. It is drawn only when the accuracy is known and the circle would be wider than the dot, so a
-fix good to a few metres shows the dot alone (`DetailWhereTest`, `MetersPerDpTest`).
+fix good to a few metres shows the dot alone. A circle larger than the map runs past its edges rather than
+shrinking to fit (`DetailWhereTest`, `MetersPerDpTest`).
 
 The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
 screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a

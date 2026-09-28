@@ -244,6 +244,18 @@ class DetailWhereTest {
     }
 
     @Test
+    fun `a circle larger than the map runs past its edges instead of shrinking to fit`() {
+        show(located.copy(accuracyMeters = 1_000))
+
+        compose.onNodeWithTag(WhereCardTestTag).performScrollTo()
+        val map = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).bounds()
+        val pixels = compose.onRoot().captureToImage().toPixelMap()
+        val disc = scheme.primary.copy(alpha = 0.16f).compositeOver(scheme.surfaceContainerHighest)
+        assertClose(disc, pixels[(map.left + 24.dp.px()).toInt(), map.center.y.toInt()])
+        assertClose(disc, pixels[map.center.x.toInt(), (map.top + 24.dp.px()).toInt()])
+    }
+
+    @Test
     fun `an accuracy smaller than the dot, or none, draws no circle`() {
         show(located)
 
