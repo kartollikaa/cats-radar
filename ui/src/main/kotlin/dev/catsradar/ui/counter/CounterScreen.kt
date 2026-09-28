@@ -1,10 +1,19 @@
 package dev.catsradar.ui.counter
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -31,53 +40,98 @@ fun CounterScreen(
     onUndoImportClick: () -> Unit = {},
     onImportSummaryDismiss: () -> Unit = {},
     onWalkingModeChange: (Boolean) -> Unit = {},
+    onWalkHoldRelease: () -> Unit = {},
     onCoatPromptAction: (CoatPromptAction) -> Unit = {},
+) {
+    Box(modifier = modifier.fillMaxSize().semantics { isTraversalGroup = true }) {
+        CounterColumn(
+            state = state,
+            onTallyClick = onTallyClick,
+            onUndoClick = onUndoClick,
+            onCameraClick = onCameraClick,
+            onCoatTallyClick = onCoatTallyClick,
+            onImportClick = onImportClick,
+            onWalkingModeChange = onWalkingModeChange,
+            onWalkHoldRelease = onWalkHoldRelease,
+        )
+        // Over the count rather than above it, so a notice never takes the count's room.
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics {
+                    // A traversal index orders only traversal groups; on a plain column it is ignored.
+                    isTraversalGroup = true
+                    traversalIndex = -1f
+                },
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ImportIsland(
+                progress = state.importProgress,
+                summary = state.importSummary,
+                onUndoClick = onUndoImportClick,
+                onDismiss = onImportSummaryDismiss,
+            )
+            LocationIsland(visible = state.locationPermissionHintVisible, onAction = onLocationHintAction)
+        }
+    }
+    state.coatPrompt?.let {
+        CoatPromptSheet(prompt = it, onAction = onCoatPromptAction)
+    }
+}
+
+@Composable
+private fun CounterColumn(
+    state: CounterState,
+    onTallyClick: () -> Unit,
+    onUndoClick: () -> Unit,
+    onCameraClick: () -> Unit,
+    onCoatTallyClick: (CoatOption) -> Unit,
+    onImportClick: () -> Unit,
+    onWalkingModeChange: (Boolean) -> Unit,
+    onWalkHoldRelease: () -> Unit,
 ) {
     // A large font or a small phone must never leave the tally button zero pixels tall.
     FillOrScroll(
         minFill = 120.dp,
         gap = 16.dp,
         padding = 24.dp,
-        modifier = modifier.fillMaxSize(),
-        above = {
-            // Above the count, which gives up its room first.
-            state.importProgress?.let { ImportProgress(it) }
-            state.importSummary?.let {
-                ImportSummary(state = it, onUndoClick = onUndoImportClick, onDismissClick = onImportSummaryDismiss)
-            }
-            if (state.locationPermissionHintVisible) {
-                LocationPermissionHint(onAction = onLocationHintAction)
-            }
-        },
+        modifier = Modifier.fillMaxSize(),
         fill = {
             TallyBlock(
                 totalLabel = state.totalLabel,
                 count = state.count,
                 tapBurst = state.tapBurst,
                 milestone = state.milestone,
+                moment = state.milestoneMoment,
                 currentOuting = state.currentOuting,
+                walking = state.walkingMode,
+                undoVisible = state.undoVisible,
                 onClick = onTallyClick,
+                onUndoClick = onUndoClick,
             )
         },
         below = {
-            WalkRow(
-                walkingMode = state.walkingMode,
-                walkElapsedLabel = state.walkElapsedLabel,
-                undoVisible = state.undoVisible,
-                onWalkingModeChange = onWalkingModeChange,
-                onUndoClick = onUndoClick,
-            )
             CoatGrid(highlighted = state.lastCoat, onCoatClick = onCoatTallyClick)
-            PhotoButton(
-                onCameraClick = onCameraClick,
-                onImportClick = onImportClick,
+            // One row while both fit; a large font puts Photo on a line of its own rather than clip either.
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                WalkButton(
+                    walking = state.walkingMode,
+                    onWalkingChange = onWalkingModeChange,
+                    onHoldRelease = onWalkHoldRelease,
+                )
+                PhotoButton(
+                    onCameraClick = onCameraClick,
+                    onImportClick = onImportClick,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         },
     )
-    state.coatPrompt?.let {
-        CoatPromptSheet(prompt = it, onAction = onCoatPromptAction)
-    }
 }
 
 @ThemePreviews
@@ -149,6 +203,5 @@ private val sampleCounterStateOutingInProgress = CounterState(
         rate = RateState(value = "6.9", unit = RateUnit.PER_HOUR),
     ),
     walkingMode = true,
-    walkElapsedLabel = "48 min",
     milestone = CounterMilestoneState(MilestoneState(valueLabel = "25", remainingLabel = "13"), fraction = 2f / 15f),
 )

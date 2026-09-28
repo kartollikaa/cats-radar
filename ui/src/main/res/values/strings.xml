@@ -30,20 +30,22 @@
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Undo</string>
     <string name="counter_import">Import from gallery</string>
-    <string name="counter_import_running">Importing photos</string>
     <string name="counter_import_progress">%1$d of %2$d</string>
-    <string name="counter_import_ok">OK</string>
+    <string name="counter_import_running_count">Importing %1$d of %2$d</string>
+    <string name="counter_import_parts">%1$s · %2$s</string>
+    <string name="counter_import_close">Close</string>
+    <string name="counter_import_undo">Undo the import</string>
     <plurals name="counter_import_added">
         <item quantity="one">%1$d cat added</item>
         <item quantity="other">%1$d cats added</item>
     </plurals>
     <plurals name="counter_import_skipped">
-        <item quantity="one">%1$d already had it</item>
-        <item quantity="other">%1$d already had them</item>
+        <item quantity="one">%1$d already here</item>
+        <item quantity="other">%1$d already here</item>
     </plurals>
     <plurals name="counter_import_failed">
-        <item quantity="one">%1$d could not be read</item>
-        <item quantity="other">%1$d could not be read</item>
+        <item quantity="one">%1$d couldn\'t be read</item>
+        <item quantity="other">%1$d couldn\'t be read</item>
     </plurals>
     <string name="counter_photo_not_saved">Photo not saved</string>
     <string name="counter_location_hint">Location permission needed for cat spots</string>
@@ -53,11 +55,13 @@
     <string name="counter_coat_prompt_hint">Tap a coat to note it</string>
     <string name="counter_coat_prompt_skip">Not now</string>
     <string name="counter_coat_prompt_photo">The photo you just took</string>
+    <string name="counter_coat_prompt_one">One cat</string>
     <string name="counter_coat_prompt_several">Several</string>
     <string name="counter_coat_count_title_empty">How many cats are on it?</string>
     <string name="counter_coat_count_hint">Tap a coat for each cat. Tap a cat above to take it out</string>
     <string name="counter_coat_count_full">That is as many cats as one photo holds. Tap a cat above to take it out</string>
     <string name="counter_coat_count_remove">Remove</string>
+    <string name="counter_coat_count_tray_empty">Counted cats gather here</string>
     <plurals name="counter_coat_count_title">
         <item quantity="one">%1$d cat on this photo</item>
         <item quantity="other">%1$d cats on this photo</item>
@@ -201,6 +205,7 @@
     <string name="coat_black">Black</string>
     <string name="coat_black_white">Black &amp; white</string>
     <string name="coat_not_specified">Not specified</string>
+    <string name="coat_none">No coat</string>
     <string name="statistics_by_coat">By coat</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Where</string>
@@ -314,11 +319,11 @@
     <string name="settings_about_copy">Copy build info</string>
     <string name="settings_about_copied">Build info copied</string>
     <string name="settings_about_clip_label">Cats Radar build info</string>
+    <string name="counter_walk">Walk</string>
+    <string name="counter_walk_hold">Hold to end</string>
+    <string name="counter_walk_hold_hint">Hold to end the walk</string>
     <string name="counter_walk_start">Start a walk</string>
-    <string name="counter_walk_start_hint">tap to begin</string>
     <string name="counter_walk_stop">Stop the walk</string>
-    <string name="counter_walk_stop_hint">press and hold</string>
-    <string name="counter_walk_stop_hint_timed">%1$s · press and hold</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">cat today</item>

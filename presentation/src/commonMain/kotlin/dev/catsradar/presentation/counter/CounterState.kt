@@ -22,8 +22,6 @@ data class CounterState(
     /** The coat of the cat the undo window belongs to, so the grid can show which one it was. */
     val lastCoat: CoatOption? = null,
     val walkingMode: Boolean = false,
-    /** How long the walk has lasted; null unless [walkingMode] is on and its walk has started. */
-    val walkElapsedLabel: String? = null,
     /** Null unless an import is running. */
     val importProgress: ImportProgressState? = null,
     /** Null until an import finishes, and again once it is dismissed. */
@@ -32,7 +30,14 @@ data class CounterState(
     val coatPrompt: CoatPromptState? = null,
     /** Null before the total is read, and past the last milestone. */
     val milestone: CounterMilestoneState? = null,
+    /**
+     * The rung the count has just landed on, until the run of taps that reached it closes. [milestone] and
+     * [currentOuting] keep their values while it lasts.
+     */
+    val milestoneMoment: MilestoneMomentState? = null,
 )
+
+data class MilestoneMomentState(val value: Int)
 
 /** [fraction] is how far the total has come from the milestone already reached toward [next]. */
 data class CounterMilestoneState(val next: MilestoneState, val fraction: Float)
@@ -59,7 +64,11 @@ data class CoatCountState(val tray: ImmutableList<CoatOption?> = persistentListO
     val catCount: Int? get() = tray.size.takeIf { it > 0 }
 }
 
-data class ImportProgressState(val done: Int, val total: Int)
+data class ImportProgressState(
+    val done: Int,
+    val total: Int,
+    val previewUris: ImmutableList<String> = persistentListOf(),
+)
 
 /**
  * [skipped] and [failed] are null when there were none — a run where everything worked should not
@@ -71,6 +80,8 @@ data class ImportSummaryState(
     val skipped: Int?,
     val failed: Int?,
     val undoable: Boolean,
+    /** Absolute; the first added cats' thumbnails, in the run's order, only those that have one. */
+    val thumbPaths: ImmutableList<String> = persistentListOf(),
 )
 
 /** [rate] is null until the outing is long enough and busy enough to measure. */

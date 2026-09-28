@@ -18,14 +18,18 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.isWhole
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.CurrentOutingState
 import dev.catsradar.presentation.statistics.MilestoneState
+import dev.catsradar.presentation.statistics.RateState
+import dev.catsradar.presentation.statistics.RateUnit
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CountNumberTestTag
 import dev.catsradar.ui.counter.CounterScreen
@@ -58,7 +62,9 @@ class CounterMilestoneTest {
     private fun counter(milestone: CounterMilestoneState?) =
         CounterState(totalLabel = "62", count = 62, undoVisible = false, milestone = milestone)
 
-    private fun walkButton() = compose.onNodeWithText(context.getString(R.string.counter_walk_start))
+    private fun walkButton() = compose.onNodeWithText(context.getString(R.string.counter_walk))
+
+    private fun coats() = compose.onNodeWithText(context.getString(R.string.coat_ginger))
 
     private fun goalTag() = compose.onNodeWithContentDescription("38 more to reach 100")
 
@@ -71,9 +77,9 @@ class CounterMilestoneTest {
     // The ring's stroke is this share of its diameter; a tag is pinned to the stroke's centre line.
     private val halfStroke = 0.026f / 2
 
-    private fun nodesBetweenCountAndWalkButton(): List<SemanticsNode> {
+    private fun nodesBetweenCountAndCoats(): List<SemanticsNode> {
         val top = with(compose.density) { block().bottom.toPx() }
-        val bottom = with(compose.density) { walkButton().getUnclippedBoundsInRoot().top.toPx() }
+        val bottom = with(compose.density) { coats().getUnclippedBoundsInRoot().top.toPx() }
         fun under(node: SemanticsNode): List<SemanticsNode> = node.children.flatMap(::under) +
             listOfNotNull(node.takeIf { it.boundsInRoot.top >= top && it.boundsInRoot.bottom <= bottom })
         return under(compose.onRoot(useUnmergedTree = true).fetchSemanticsNode())
@@ -90,6 +96,82 @@ class CounterMilestoneTest {
         assertEquals((ring.top + ring.width * halfStroke).value, ((tag.top + tag.bottom) / 2).value, 1f)
     }
 
+    // The room the Counter gets on a 411 × 891 phone once the status bar and the tab bar take theirs.
+    @Test
+    @Config(qualifiers = "w411dp-h760dp")
+    fun `with Undo showing, a long outing tag keeps clear of it and stays centred`() {
+        val longOuting = CurrentOutingState(
+            count = 14,
+            elapsedLabel = "1 h 35 min",
+            rate = RateState(value = "12.5", unit = RateUnit.PER_HOUR),
+        )
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = counter(sixtyTwoOfHundred).copy(
+                        currentOuting = longOuting,
+                        undoVisible = true,
+                        tapBurst = 1,
+                    ),
+                )
+            }
+        }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+        val tag = compose.onNodeWithText("1 h 35 min", substring = true).getUnclippedBoundsInRoot()
+        val block = block()
+        assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
+        assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h760dp", fontScale = 1.5f)
+    fun `at a large font too, the outing tag keeps clear of Undo`() {
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = counter(sixtyTwoOfHundred).copy(currentOuting = outing, undoVisible = true, tapBurst = 1),
+                )
+            }
+        }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+        val tag = compose.onNodeWithText("35 min", substring = true).getUnclippedBoundsInRoot()
+        val block = block()
+        assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
+        assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
+        assertTrue(compose.isWhole("35 min"), "the outing's time was squeezed out of its tag $tag")
+    }
+
+    // Tall enough that the cookie fills the block's width, so Undo sits in its very corner.
+    @Test
+    @Config(qualifiers = "w320dp-h900dp", fontScale = 1.3f)
+    fun `where the cookie fills the width, the outing tag narrows to clear Undo in its corner`() {
+        val longOuting = CurrentOutingState(
+            count = 14,
+            elapsedLabel = "1 h 35 min",
+            rate = RateState(value = "12.5", unit = RateUnit.PER_HOUR),
+        )
+        compose.setContent {
+            CatsRadarTheme {
+                CounterScreen(
+                    state = counter(sixtyTwoOfHundred).copy(
+                        currentOuting = longOuting,
+                        undoVisible = true,
+                        tapBurst = 1,
+                    ),
+                )
+            }
+        }
+
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+        val tag = compose.onNodeWithText("1 h 35 min", substring = true).getUnclippedBoundsInRoot()
+        val block = block()
+        assertTrue(block.width <= block.height, "the cookie does not fill the block's width: $block")
+        assertTrue(tag.right <= undo.left, "the tag $tag runs under Undo $undo")
+        assertEquals(((block.left + block.right) / 2).value, ((tag.left + tag.right) / 2).value, 1f)
+    }
+
     @Test
     fun `during an outing its tag sits at the ring's bottom, and the goal stays`() {
         compose.setContent {
@@ -103,17 +185,17 @@ class CounterMilestoneTest {
     }
 
     @Test
-    fun `nothing sits between the count and the walk button, with or without an outing`() {
+    fun `nothing sits between the count and the coats, with or without an outing`() {
         var current by mutableStateOf<CurrentOutingState?>(null)
         compose.setContent {
             CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(currentOuting = current)) }
         }
 
-        val walkTop = walkButton().getUnclippedBoundsInRoot().top
-        assertEquals(emptyList(), nodesBetweenCountAndWalkButton())
+        val coatsTop = coats().getUnclippedBoundsInRoot().top
+        assertEquals(emptyList(), nodesBetweenCountAndCoats())
         current = outing
-        assertEquals(emptyList(), nodesBetweenCountAndWalkButton())
-        assertEquals(walkTop, walkButton().getUnclippedBoundsInRoot().top)
+        assertEquals(emptyList(), nodesBetweenCountAndCoats())
+        assertEquals(coatsTop, coats().getUnclippedBoundsInRoot().top)
     }
 
     @Test
@@ -168,8 +250,10 @@ class CounterMilestoneTest {
     }
 
     @Test
-    fun `the block still reads to TalkBack as the total alone`() {
-        compose.setContent { CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred)) } }
+    fun `the block still reads to TalkBack as the total alone, with Undo showing in it too`() {
+        compose.setContent {
+            CatsRadarTheme { CounterScreen(state = counter(sixtyTwoOfHundred).copy(undoVisible = true, tapBurst = 1)) }
+        }
 
         val block = compose.onNodeWithContentDescription("62").fetchSemanticsNode().config
         assertEquals(listOf("62"), block.getOrNull(SemanticsProperties.ContentDescription))

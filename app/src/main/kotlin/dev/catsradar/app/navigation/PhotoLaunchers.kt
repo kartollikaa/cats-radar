@@ -1,6 +1,7 @@
 package dev.catsradar.app.navigation
 
 import android.Manifest
+import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -89,6 +90,23 @@ internal fun rememberCatPhotosPicker(onResult: (PickedPhotos) -> Unit): CatPhoto
             pickingFor = catId
             resultLauncher.launch(Unit)
         }
+    }
+}
+
+@Composable
+internal fun rememberReplacingMessageReporter(@StringRes messageRes: Int): MessageReporter {
+    val context = LocalContext.current
+    return remember(context, messageRes) { ReplacingToastReporter(context, messageRes) }
+}
+
+/** Shows [messageRes] as a toast, first taking away the one it showed last, so repeats never queue. */
+internal class ReplacingToastReporter(private val context: Context, @StringRes private val messageRes: Int) :
+    MessageReporter {
+    private var shown: Toast? = null
+
+    override fun report() {
+        shown?.cancel()
+        shown = Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).also { it.show() }
     }
 }
 

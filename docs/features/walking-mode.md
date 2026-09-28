@@ -4,26 +4,19 @@ A cat seen on a walk should cost one tap. Walking mode puts an ongoing notificat
 on the lock screen with a **Cat!** button, so the phone comes out of the pocket, gets tapped, and
 goes back — no unlock, no app launch, no hunting for the right screen.
 
-Started from the **Counter** — a button with a small cat, centred under the count, that reads
-*Start a walk*, then *Stop the walk* — because that is the screen someone is on when they set out.
+Started from the **Counter** — a button with a small cat beside Photo, under the coat grid, that
+reads *Walk*, then *Hold to end* — because that is the screen someone is on when they set out. While
+a walk is on the Counter's cookie wears it: warm, and breathing (`counting-cats.md`).
 It is the only control in the app that turns the mode on; Settings has no switch for it.
 
 ## How long the walk has lasted
 
-While a walk is on, the Counter's button and the notification both say how long it has lasted, and
-the cat on the button walks.
+While a walk is on, the notification says how long it has lasted, and the cat on the Counter's
+button walks. The Counter's button carries no time: beside Photo it reads only *Hold to end*, and the
+outing's tag on the count's ring already shows the outing's ("3 cats · 26 min").
 
 - **It counts from the walk's start**, the moment the walk was turned on, not from the outing's
-  first cat. The outing already has its own line on the Counter ("3 cats · 26 min"); the walk is
-  the thing the button starts and stops.
-- **On the button it is minutes**: the second line reads *32 min · press and hold* (*32 мин ·
-  удерживайте*: the hint is cut short so the line stays about as long as the plain hint was),
-  formatted like every other duration on the Counter. It moves shortly after each minute turns,
-  and nothing keeps it ticking while walking mode is off.
-- **The first minute shows no time on the button**, only the plain *press and hold*. A walk started
-  mid-outing would otherwise put *0 min* right under the outing's own "15 min", two times that look
-  as if they should agree. The time appears at *1 min*. The notification's chronometer counts
-  seconds, so its zero is a clock starting and it shows from the start.
+  first cat; the walk is the thing the button starts and stops.
 - **In the notification it is a chronometer** counting up from the start, `12:34` then `1:02:03`. The
   system ticks it, so the time moves with no repost and keeps moving while the app's process is
   dead. From API 37 the notification is a `MetricStyle` with two metrics, *Cats* and *Walk*, and
@@ -32,12 +25,11 @@ the cat on the button walks.
   walk is for; the time is one glance further, in the card. `setShortCriticalText` outranks both
   the metrics and the chronometer as the chip's content, so nothing else can take its place there.
 - **Until the walk exists there is no time.** The flag goes on first and the walk follows it a
-  moment later; in between, the button shows the plain hint and the notification shows no time,
-  rather than a clock started from a guess. A **Cat!** from the lock screen reads the walk's start
+  moment later; in between, the notification shows no time, rather than a clock started from a
+  guess. A **Cat!** from the lock screen reads the walk's start
   again as it re-posts, so the time does not drop off the notification with the tap.
 - **A start ahead of the clock counts from now.** A clock set back after the walk began would
-  otherwise count up from below zero; the button shows the plain hint, as in any first minute, and
-  the notification starts at zero.
+  otherwise count up from below zero; the notification starts at zero.
 - **The walk ending is not news to the notification.** **Done** turns the mode off and ends the
   walk, and the two can arrive in either order; the notification keeps the walk's start until the
   mode goes off and clears it, rather than being put back up, without a time, a moment after it
@@ -49,15 +41,17 @@ the cat on the button walks.
 ## Stopping takes a hold
 
 On the Counter a tap starts a walk but never stops one. A stop ends the walk and its recorded route,
-and the button sits just under the count, where a thumb tallying cats can slip onto it, and so can
-a phone going back into a pocket. So while a walk is on the button has to be held until a fill has
+and the button sits beside Photo, under the coats a thumb is tallying, where it can slip onto it,
+and so can a phone going back into a pocket. So while a walk is on the button has to be held until a fill has
 crossed it (`HoldToStop` in `WalkButton.kt`); the walk stops the moment it has, with a haptic, before
 the finger lifts. On the way the fill is cut into `TicksPerHold` even steps, and the phone ticks softly
 as each one fills, so the hold can be felt working without looking at it; the last step gives the
 stop's haptic instead of a tick. A press that picks the fill up mid-drain ticks on from where it is
 rather than from the start. Let go earlier, or drift off the button, and the ticks stop, the fill
-drains back and nothing changes. The button's second line says *press and hold* meanwhile, after the
-walk's time: a gesture nothing hints at is one nobody finds.
+drains back and nothing changes. A finger lifted before the fill has crossed also raises a short
+message, *Hold to end the walk*, and a second early release replaces it rather than queueing behind
+it; a press that drifts off the button or is taken by a scroll raises none. The button reads *Hold to
+end* for as long as a walk is on: a gesture nothing hints at is one nobody finds.
 
 Starting stays one tap, because a walk started by mistake loses nothing.
 
@@ -260,8 +254,7 @@ activity, so from a locked phone Android asks for the unlock first and the camer
 - `data/…/platform/SharedPreferencesWalkRecordingState.kt` — the mark a running recording leaves
 - `app/…/notification/WalkingActionReceiver.kt` — the tally and the stop
 - `app/…/permission/NotificationPermission.kt` — the permission-gated switch behind the button
-- `ui/…/counter/WalkButton.kt` — the Counter's button and its hold
-- `domain/…/usecase/ObserveWalkElapsed.kt` — how long the open walk has lasted, for the button
+- `ui/…/counter/WalkButton.kt` — the Counter's button and its hold; `CookieBreath.kt` — the cookie's breath
 - `domain/…/repository/SettingsRepository.kt` — `walkingMode`, so the mode survives a restart
 
 ## Not built yet

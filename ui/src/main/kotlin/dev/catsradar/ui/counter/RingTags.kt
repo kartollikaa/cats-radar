@@ -21,8 +21,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.counter.MilestoneMomentState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.statistics.label
@@ -45,18 +49,24 @@ private const val NumberFraction = 0.58f
 private val PillPadding = 4.dp
 private val GoalSides = 10.dp
 private val OutingSides = 12.dp
+private val UndoClearance = 4.dp
 
 /** Where the ring's stroke runs, measured from the top of the square it is drawn in. */
 private fun ringLine(
     square: Float
 ): Float = (1 - RingFraction) / 2 * square + RingFraction * square * RingStrokeFraction / 2
 
-/** The goal at the ring's top and the outing at its bottom, over a block whose square holds the ring. */
+/**
+ * The goal at the ring's top and the outing at its bottom, over a block whose square holds the ring. The outing
+ * narrows on both sides by [undoWidth], in pixels, so it stays centred and clear of Undo at the block's end.
+ */
 @Composable
 internal fun BoxScope.RingTags(
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
     scale: () -> Float,
+    undoWidth: () -> Int = { 0 },
 ) {
     Box(
         modifier = Modifier
@@ -66,17 +76,22 @@ internal fun BoxScope.RingTags(
                 scaleY = scale()
             },
     ) {
-        milestone?.let {
-            GoalTag(next = it.next, modifier = Modifier.align(Alignment.TopCenter).onRingLine(top = true))
+        if (moment == null) {
+            milestone?.let {
+                GoalTag(next = it.next, modifier = Modifier.align(Alignment.TopCenter).onRingLine(top = true))
+            }
         }
-        currentOuting?.let {
-            // Its sides may overhang the block, so the outing's own line keeps the block's width.
-            RingPill(
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                sides = OutingSides,
-                modifier = Modifier.align(Alignment.BottomCenter).onRingLine(top = false, overhang = OutingSides),
-            ) {
-                CurrentOuting(it)
+        // Its sides may overhang the block, so the bottom tag's own line keeps the block's width.
+        val bottom = Modifier
+            .align(Alignment.BottomCenter)
+            .onRingLine(top = false, overhang = OutingSides, clearOf = undoWidth)
+        if (moment != null) {
+            RungPill(moment = moment, modifier = bottom)
+        } else {
+            currentOuting?.let {
+                RingPill(contentColor = MaterialTheme.colorScheme.onSurface, sides = OutingSides, modifier = bottom) {
+                    CurrentOuting(it)
+                }
             }
         }
     }
@@ -113,10 +128,16 @@ private fun rememberPillHeight(style: TextStyle, shown: Boolean): Dp {
 }
 
 // Centred on the ring's line; the ring's square is the largest that fits the block, centred in it.
-private fun Modifier.onRingLine(top: Boolean, overhang: Dp = 0.dp): Modifier = layout { measurable, constraints ->
-    val width = constraints.maxWidth + 2 * overhang.roundToPx()
-    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = width))
+private fun Modifier.onRingLine(
+    top: Boolean,
+    overhang: Dp = 0.dp,
+    clearOf: () -> Int = { 0 },
+): Modifier = layout { measurable, constraints ->
     val square = min(constraints.maxWidth, constraints.maxHeight)
+    val corner = clearOf()
+    val free = constraints.maxWidth + 2 * overhang.roundToPx()
+    val width = if (corner == 0) free else min(free, constraints.maxWidth - 2 * (corner + UndoClearance.roundToPx()))
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = width.coerceAtLeast(0)))
     val line = (constraints.maxHeight - square) / 2f + ringLine(square.toFloat())
     layout(placeable.width, placeable.height) {
         val shift = (line - placeable.height / 2f).roundToInt()
@@ -146,16 +167,35 @@ private fun GoalTag(next: MilestoneState, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun RungPill(moment: MilestoneMomentState, modifier: Modifier = Modifier) {
+    RingPill(
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        sides = OutingSides,
+        color = MaterialTheme.colorScheme.primary,
+        // Its own node, so TalkBack speaks it once as it appears.
+        modifier = modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+    ) {
+        Text(
+            text = pluralStringResource(R.plurals.counter_milestone, moment.value, moment.value),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
 private fun RingPill(
     contentColor: Color,
     sides: Dp,
     modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.surface,
     content: @Composable RowScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
+        color = color,
         contentColor = contentColor,
         shadowElevation = 1.dp,
     ) {

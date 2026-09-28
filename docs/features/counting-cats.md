@@ -7,13 +7,15 @@ before the insert even starts, so the tap never waits on the write, let alone on
 on screen is the total from `ObserveStats`, every non-deleted encounter; after a tap an "Undo" button
 shows for `Tuning.UNDO_VISIBLE`, and each press of it soft-deletes the newest cat of the run of taps
 it belongs to (below). The very first tally the app ever sees also fires a system location-permission
-request; a later denial surfaces as a dismissible one-line hint on the counter screen with its own
+request; a later denial surfaces as a dismissible hint floating over the top of the Counter with its own
 "Grant" button.
 
 ## Feedback for the tap
 
-Each tap raises a **"+N"** badge in the count block's top corner that counts the cats of the current
-run of taps, the same run Undo walks back (below), and stays up for as long as that run is open.
+Each tap raises a **"+N"** badge that counts the cats of the current run of taps, the same run Undo
+walks back (below), and stays up for as long as that run is open. It sits in the count block's top
+corner: at the block's end, level with the cookie's top, as Undo sits at its bottom, so a narrow phone
+or the largest font never puts it under the goal tag (`CounterBurstBadgeTest`).
 Every tap adds one and every Undo takes one off: three taps read "+3", an Undo turns it into "+2",
 and the Undo that takes back the run's last cat takes the badge with it. When the undo window runs
 out, the badge goes with Undo, and the next tap starts again from one. Like the haptic, a tap's
@@ -35,18 +37,22 @@ small tag names the rung the arc is heading for, "⚑ 100", which TalkBack reads
 line, "38 more to reach 100" (`CounterMilestoneTest`). The tags squash with the cookie, and in a
 small cookie the number keeps clear of them: it shrinks, and "cats" under it gives way first. Before
 the total is read, with no cats yet, and past the last rung, there is no ring. It squashes under a
-press, turns a few degrees as it does, and springs back, and the number **rolls up** when a cat is
-added and **down** when one is undone — the screen compares the number it had with the one it now
-has, so an undo, or an import finishing while the Counter is showing, rolls the right way. It rolls
-like an odometer, one digit at a time: only the digits that change move, each in its own window, and
-a carry ripples to the left — 49 to 50 turns the units over at once and the tens a beat later, and
-99 to 100 rolls a hundreds digit in, which an Undo rolls back out. An Undo pressed mid-roll turns
-the roll back down rather than finishing it upward. Every digit is the same width, so a rolling
-digit never shoves its neighbours, and the number reads left to right under a right-to-left language
-too. The roll follows the database, so it lands a moment after the burst: the burst answers the
-finger, the roll answers the write. The units start rolling on the frame the new number arrives
-rather than easing into motion, and settle with a small overshoot. The squash is drawn only: what a
-press can land on stays the whole block.
+press and springs back, the cookie turns a step further with each cat and keeps its turn — an Undo
+turns it back a step, while the first count read, and a jump of more than a handful of cats at once
+(an import landing), set it in place without a spin; a small import turns it as taps would
+(`CookieTurnTest`, `CookieTurnAnimationTest`) — and the number **rolls up** when a cat is added and
+**down** when one is undone
+— the screen compares the number it had with the one it now has, so an undo, or an import finishing
+while the Counter is showing, rolls the right way. It rolls like an odometer, one digit at a time:
+only the digits that change move, each in its own window, and a carry ripples to the left — 49 to 50
+turns the units over at once and the tens a beat later, and 99 to 100 rolls a hundreds digit in,
+which an Undo rolls back out. An Undo pressed mid-roll turns the roll back down rather than
+finishing it upward. Every digit is the same width, so a rolling digit never shoves its neighbours,
+and the number reads left to right under a right-to-left language too. The roll follows the
+database, so it lands a moment after the burst: the burst answers the finger, the roll answers the
+write. The units start rolling on the frame the new number arrives rather than easing into motion,
+and settle with a small overshoot. The squash is drawn only: what a press can land on stays the
+whole block.
 
 Two changes are not rolled. The first total after the app starts is not a change, so until it has
 been read the block shows no number at all, rather than a 0 that then rolls up to it. And a change
@@ -55,28 +61,38 @@ the Counter comes back, because nothing was on screen to roll it.
 
 The number shrinks to fit the block rather than wrapping, so a short phone, a large font or a
 five-digit total keeps it on one line. The block has a floor, though: when the screen cannot fit
-everything — a small phone at a large font, say, or a small phone with the location hint showing —
+everything — a small phone at a large font, say —
 it keeps a height at which the number still reads, and the Counter scrolls instead. Scrolling is
 switched on only then, because an enabled scroll delays every press and turns a tap that drifts a
 few pixels into a drag: on a screen with room to spare, a tap is only ever a tap.
 
-**The controls do not jump.** Undo has a place of its own at the far end of the walk button's row,
-outside the count block — inside the block, a follow-up tap on the same spot would land on Undo and
-take a cat away instead of adding one. The walk button sits in the middle of that row, and Undo
-appearing beside it does not move it. Only where the two would meet — a narrow phone, a large font,
-a longer translation — does the button step aside toward the start, and past that it shortens its
-label: Undo is never squeezed. The walk button is an extended floating action button in the theme's
-tertiary container whether a walk is on or not, and Undo is a filled tonal button beside it
-(`WalkRowLookTest`). A tap on the button starts a walk, but stopping one takes a press held until a
-fill crosses the button ([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). The button
-keeps one height whether it starts or stops a walk, growing only for a large font rather than
-clipping its two lines, and the outing rides a tag on the count's ring rather than a line of its
-own, so a walk or an outing starting or ending leaves the block the same size and nothing sits
-between the count and the walk button (`CounterMilestoneTest`). The location hint and the import
-progress and summary appear above the count, each as the same notice card: a round icon, its words,
-read by TalkBack as one item, and its actions (see `import.md`). They take their room from the
-count, so the number shrinks and the walk button, the coat grid and the Photo button stay where they
-are, unless the block is already at its floor, when the Counter scrolls instead.
+**The controls do not jump.** The walk button and Photo share the row under the coat grid: Walk at
+its start, as tall as the split button and as wide as its longer label whether a walk is on or not,
+and Photo taking the rest, so a walk starting or ending moves nothing; a large font puts Photo on a
+line of its own, in both states alike, rather than clip either label (`WalkButtonLookTest`). Walk is a tonal button that reads
+*Walk*; while a walk is on it takes the tertiary container and squarer corners and reads *Hold to
+end*. A tap on it starts a walk, but stopping one takes a press held until a fill crosses the button
+([walking-mode.md](./walking-mode.md#stopping-takes-a-hold)). While a walk is on the cookie wears it
+too: its fill and its number take the tertiary container's colours, the arc, its dot and the tags
+keep their own while the ring's faint track and the dot's rim follow the cookie, and the shape alone
+breathes, a slow swell and settle that stands still without a walk
+and when the system's animations are off (`CounterWalkLookTest`, `CookieBreathTest`). Undo is a
+filled tonal button level with the bottom of the cookie at the block's end: in the cookie's corner
+when the cookie fills the block's width, beside it when the block is wider. It appears and goes
+without moving anything, and a tap on it takes a cat back and never logs one (`CounterControlsTest`).
+Being inside the block, it takes that spot from the tally while it shows, so a tap there undoes rather
+than logs. While it shows, the outing's tag narrows by Undo's width on both sides, so it stays
+centred and clear of it, and gives way as it does when short of room: the count first, then the
+time, the rate staying whole (`CounterMilestoneTest`). The outing rides
+a tag on the count's ring rather than a line of its own, so a walk or an outing starting or ending
+leaves the block the same size and nothing sits between the count and the coat grid
+(`CounterMilestoneTest`). The Counter's notices float over the top of the count and leave its size
+alone. An import's progress and summary are one card (see `import.md`); the location hint, after a
+denied request, is another of the same make: the pin in a round icon, "Location permission needed for
+cat spots", read by TalkBack as one item, **Grant** as a tonal button, and a × that dismisses it, as a
+swipe to either side does; its body takes no tap (`LocationIslandTest`). Shown together, the import's
+card sits above the hint's, and TalkBack reaches both before the count (`LocationIslandTest`, in the order
+TalkBack reads).
 
 ## Undoing a run of taps
 
@@ -105,9 +121,25 @@ advance on a ticker as well as on each cat, so the elapsed time moves while noth
 
 ## Milestones
 
-Crossing a milestone raises a toast, once. The milestone reached is persisted **before** the toast
-is emitted, so a process death between the two does not celebrate the same milestone again on the
-next launch. The first cat is a milestone — it is the one most worth marking.
+A count that lands on a milestone of `Tuning.MILESTONES` celebrates on the ring, once: the cookie
+bounces, the ring stands full and glows as it settles, and a filled pill at the ring's bottom says
+"100 cats!" in the outing's place, while the goal tag and the arc's dot step aside. The number keeps
+its size (`CounterMilestoneMomentTest`). TalkBack hears the pill once, as a polite live region. The
+first cat is a milestone: it is the one most worth marking.
+
+- **It lasts until the run closes.** While taps keep the undo window open the moment stays, and it
+  goes with the window (`CounterStoreMilestoneMomentTest`, *the moment lasts until the undo window
+  closes*; *further taps keep the moment*). A rung reached with no run open, by an import or a cat the
+  widget logged, shows for the undo window's length (*a rung reached with no run open*).
+- **An Undo takes it back.** A count that falls back below a rung the Counter celebrated, by an Undo,
+  an import taken back or a cat removed while the Counter is open, ends the moment if it still shows
+  and forgets the rung was reached, so landing on it again celebrates again (*an undo below the rung takes the moment back*; *an import
+  undone after its moment has ended still forgets the rung it jumped to*).
+- **Each rung once.** The rung is recorded as seen **before** the moment shows, so a process death
+  between the two does not celebrate it again on the next launch (*the rung is recorded as seen before
+  the moment shows*; *the next launch does not celebrate the same rung again*). A rung whose record
+  cannot be written is not celebrated, and counting goes on (*a rung whose record cannot be written
+  shows no moment*).
 
 ## At the edges
 
@@ -165,8 +197,10 @@ the window closed does not reopen it*).
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/counter/` — `CounterState`,
   `CounterIntent`, `CounterEffect`, `CounterStore`, `CounterStateMapper`
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
-  press), `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the
-  block's floor and the scroll past it), `WalkRow.kt` (the walk button and Undo's place beside it),
+  press), `Island.kt` (the floating notices' card), `LocationIsland.kt` (the location hint),
+  `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the block's
+  floor and the scroll past it), `WalkButton.kt` (Walk beside Photo, and its hold),
+  `CookieBreath.kt` (the cookie's breath during a walk),
   `RingTags.kt` (the goal and the outing on the ring), `CurrentOuting.kt` (the outing's line), `UndoButton.kt`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/CatsRadarNavHost.kt`,
   `CounterEffectHandler.kt`

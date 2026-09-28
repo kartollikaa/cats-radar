@@ -34,9 +34,11 @@
     <string name="counter_tap_burst">+%1$d</string>
     <string name="counter_undo">Отменить</string>
     <string name="counter_import">Импорт из галереи</string>
-    <string name="counter_import_running">Импорт фото</string>
     <string name="counter_import_progress">%1$d из %2$d</string>
-    <string name="counter_import_ok">Понятно</string>
+    <string name="counter_import_running_count">Импорт: %1$d из %2$d</string>
+    <string name="counter_import_parts">%1$s · %2$s</string>
+    <string name="counter_import_close">Закрыть</string>
+    <string name="counter_import_undo">Отменить импорт</string>
     <plurals name="counter_import_added">
         <item quantity="one">%1$d котик добавлен</item>
         <item quantity="few">%1$d котика добавлено</item>
@@ -58,16 +60,18 @@
     <string name="counter_photo_not_saved">Фото не сохранилось</string>
     <string name="counter_location_hint">Без доступа к геолокации котики будут без места</string>
     <string name="counter_location_grant">Разрешить</string>
-    <string name="counter_location_dismiss">Не надо</string>
+    <string name="counter_location_dismiss">Скрыть</string>
     <string name="counter_coat_prompt_title">Какого окраса котик?</string>
     <string name="counter_coat_prompt_hint">Нажмите на окрас, чтобы отметить его</string>
     <string name="counter_coat_prompt_skip">Не сейчас</string>
     <string name="counter_coat_prompt_photo">Только что снятое фото</string>
+    <string name="counter_coat_prompt_one">Один котик</string>
     <string name="counter_coat_prompt_several">Несколько</string>
     <string name="counter_coat_count_title_empty">Сколько котиков на фото?</string>
     <string name="counter_coat_count_hint">Нажмите на окрас каждого котика. Нажмите на котика выше, чтобы убрать его</string>
     <string name="counter_coat_count_full">Больше котиков на одно фото не поместится. Нажмите на котика выше, чтобы убрать его</string>
     <string name="counter_coat_count_remove">Убрать</string>
+    <string name="counter_coat_count_tray_empty">Здесь соберутся посчитанные котики</string>
     <plurals name="counter_coat_count_title">
         <item quantity="one">%1$d котик на этом фото</item>
         <item quantity="few">%1$d котика на этом фото</item>
@@ -241,6 +245,7 @@
     <string name="coat_black">Чёрный</string>
     <string name="coat_black_white">Чёрный с белым</string>
     <string name="coat_not_specified">Не указан</string>
+    <string name="coat_none">Не отмечен</string>
     <string name="statistics_by_coat">По окрасу</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Где</string>
@@ -360,11 +365,11 @@
     <string name="settings_about_copy">Скопировать данные о сборке</string>
     <string name="settings_about_copied">Данные о сборке скопированы</string>
     <string name="settings_about_clip_label">Данные о сборке Cats Radar</string>
+    <string name="counter_walk">Прогулка</string>
+    <string name="counter_walk_hold">Держите — стоп</string>
+    <string name="counter_walk_hold_hint">Удерживайте, чтобы закончить прогулку</string>
     <string name="counter_walk_start">Начать прогулку</string>
-    <string name="counter_walk_start_hint">нажмите, чтобы начать</string>
     <string name="counter_walk_stop">Закончить прогулку</string>
-    <string name="counter_walk_stop_hint">нажмите и удерживайте</string>
-    <string name="counter_walk_stop_hint_timed">%1$s · удерживайте</string>
     <!-- The count is drawn above this caption in its own Text, so the phrase itself carries no number. -->
     <plurals name="widget_today" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик сегодня</item>

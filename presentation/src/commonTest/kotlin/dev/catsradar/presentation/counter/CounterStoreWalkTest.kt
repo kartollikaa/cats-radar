@@ -1,6 +1,6 @@
 package dev.catsradar.presentation.counter
 
-import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
+import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -14,9 +14,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CounterStoreWalkTest {
@@ -35,14 +32,26 @@ class CounterStoreWalkTest {
 
     private fun TestScope.newStore(
         settingsRepository: FakeSettingsRepository = milestonesAlreadyCelebrated(),
-        walkRepository: FakeWalkRepository = FakeWalkRepository(),
     ): Pair<CounterStore, FakeEncounterRepository> {
         val encounters = FakeEncounterRepository()
         return newCounterStore(
             encounterRepository = encounters,
             settingsRepository = settingsRepository,
-            walkRepository = walkRepository,
         ) to encounters
+    }
+
+    @Test
+    fun `a press let go before the hold is up raises the hint`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+
+        store.effects.test {
+            store.dispatch(CounterIntent.WalkHoldReleased)
+            runCurrent()
+
+            assertEquals(CounterEffect.WalkNeedsHold, awaitItem())
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -93,110 +102,5 @@ class CounterStoreWalkTest {
         runCurrent()
 
         assertEquals(true, store.state.value.walkingMode)
-    }
-
-    @Test
-    fun `a walk on shows how long it has lasted`() = runTest(mainDispatcher) {
-        val settings = FakeSettingsRepository().apply { setWalkingMode(true) }
-        val walks = FakeWalkRepository().apply { startAt(CounterNow - 32.minutes) }
-
-        val (store, _) = newStore(settingsRepository = settings, walkRepository = walks)
-
-        assertEquals(
-            CounterState(
-                totalLabel = "0",
-                count = 0,
-                undoVisible = false,
-                walkingMode = true,
-                walkElapsedLabel = FakeDateTimeFormatter().duration(32.minutes),
-            ),
-            store.state.value,
-        )
-    }
-
-    @Test
-    fun `with no walk on the state carries no walk time`() = runTest(mainDispatcher) {
-        val walks = FakeWalkRepository().apply { startAt(CounterNow - 32.minutes) }
-
-        val (store, _) = newStore(walkRepository = walks)
-
-        assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false),
-            store.state.value,
-        )
-    }
-
-    @Test
-    fun `walking mode just turned on shows no time until its walk has started`() = runTest(mainDispatcher) {
-        val settings = FakeSettingsRepository()
-        val walks = FakeWalkRepository()
-        val (store, _) = newStore(settingsRepository = settings, walkRepository = walks)
-
-        settings.setWalkingMode(true)
-        runCurrent()
-        assertEquals(
-            CounterState(
-                totalLabel = "0",
-                count = 0,
-                undoVisible = false,
-                walkingMode = true,
-            ),
-            store.state.value,
-        )
-
-        walks.startAt(CounterNow - 1.minutes)
-        runCurrent()
-        assertEquals(1.minutes.toString(), store.state.value.walkElapsedLabel)
-    }
-
-    @Test
-    fun `a walk not yet a minute old shows no time`() = runTest(mainDispatcher) {
-        val settings = FakeSettingsRepository().apply { setWalkingMode(true) }
-        val walks = FakeWalkRepository().apply { startAt(CounterNow - 59.seconds) }
-
-        val (store, _) = newStore(settingsRepository = settings, walkRepository = walks)
-
-        assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true),
-            store.state.value,
-        )
-    }
-
-    @Test
-    fun `walking mode turned off drops the time even before its walk has ended`() = runTest(mainDispatcher) {
-        val settings = FakeSettingsRepository().apply { setWalkingMode(true) }
-        val walks = FakeWalkRepository().apply { startAt(CounterNow - 5.minutes) }
-        val (store, _) = newStore(settingsRepository = settings, walkRepository = walks)
-
-        settings.setWalkingMode(false)
-        runCurrent()
-
-        assertEquals(false, store.state.value.walkingMode)
-        assertNull(store.state.value.walkElapsedLabel)
-    }
-
-    @Test
-    fun `the walk time survives the stats flow rebuilding the whole state`() = runTest(mainDispatcher) {
-        val settings = FakeSettingsRepository().apply { setWalkingMode(true) }
-        val walks = FakeWalkRepository().apply { startAt(CounterNow - 5.minutes) }
-        val (store, repository) = newStore(settingsRepository = settings, walkRepository = walks)
-
-        repository.insert(externalEncounter(id = "a-cat"))
-        runCurrent()
-
-        assertEquals(5.minutes.toString(), store.state.value.walkElapsedLabel)
-    }
-
-    @Test
-    fun `nothing watches the walks while walking mode is off`() = runTest(mainDispatcher) {
-        val settings = milestonesAlreadyCelebrated()
-        val walks = FakeWalkRepository()
-        newStore(settingsRepository = settings, walkRepository = walks)
-        assertEquals(0, walks.watching)
-
-        settings.setWalkingMode(true)
-        runCurrent()
-
-        assertEquals(1, walks.watching)
     }
 }
