@@ -117,6 +117,20 @@ class CounterMilestoneMomentTest {
     }
 
     @Test
+    fun `a moment that ends mid-bounce lets the cookie settle back to its size`() {
+        show()
+        val resting = number()
+        compose.mainClock.autoAdvance = false
+        state = atRest.copy(milestoneMoment = hundred)
+        compose.mainClock.advanceTimeBy(120)
+
+        state = atRest
+        compose.mainClock.advanceTimeBy(3_000)
+
+        assertEquals(resting, number())
+    }
+
+    @Test
     fun `the ring stands full for the moment`() {
         state = atRest.copy(milestoneMoment = hundred)
         show()

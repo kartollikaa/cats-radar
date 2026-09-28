@@ -1,6 +1,7 @@
 package dev.catsradar.presentation.counter
 
 import dev.catsradar.domain.Tuning
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -135,6 +136,47 @@ class CounterStoreMilestoneMomentTest {
 
         assertNull(store.state.value.milestoneMoment)
     }
+
+    @Test
+    fun `a run that opens after the moment began keeps it until that run closes`() = runTest(mainDispatcher) {
+        val (store, repository) = newStore()
+        runCurrent()
+        repository.insert(externalEncounter("widget-cat"))
+        runCurrent()
+
+        advanceTimeBy(3.seconds)
+        tap(store)
+        advanceTimeBy(Tuning.UNDO_VISIBLE - 1.milliseconds)
+        runCurrent()
+        assertEquals(firstCat, store.state.value.milestoneMoment)
+        advanceTimeBy(1.milliseconds)
+        runCurrent()
+
+        assertNull(store.state.value.milestoneMoment)
+    }
+
+    @Test
+    fun `undoing a jump past a rung restores what was seen before it, so the skipped rung still celebrates`() =
+        runTest(mainDispatcher) {
+            val settings = FakeSettingsRepository(lastMilestone = 50)
+            val (store, repository) = newStore(settings)
+            repeat(99) { repository.insert(externalEncounter("old-$it")) }
+            runCurrent()
+            val imported = List(161) { "imported-$it" }
+            imported.forEach { repository.insert(externalEncounter(it)) }
+            runCurrent()
+            val jumped = store.state.value.milestoneMoment
+            store.dispatch(CounterIntent.Import.Finished("run-1", imported.toPersistentList(), skipped = 0, failed = 0))
+            runCurrent()
+
+            store.dispatch(CounterIntent.Import.UndoClicked)
+            runCurrent()
+            val afterUndo = settings.lastSeenMilestone().first()
+            tap(store)
+
+            assertEquals(MilestoneMomentState(250) to 50, jumped to afterUndo)
+            assertEquals(MilestoneMomentState(100), store.state.value.milestoneMoment)
+        }
 
     @Test
     fun `a rung already seen shows no moment`() = runTest(mainDispatcher) {

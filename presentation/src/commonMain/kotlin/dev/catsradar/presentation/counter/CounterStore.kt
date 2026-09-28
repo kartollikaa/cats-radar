@@ -70,7 +70,7 @@ class CounterStore(
                 latestStats = stats
                 moment.takeBackBelow(stats.total)
                 showStats()
-                moment.reach(stats.total, runOpen = state.value.undoVisible)
+                moment.reach(stats.total, runOpen = { state.value.undoVisible })
             }
             .launchIn(viewModelScope)
         settingsRepository.walkingMode()
@@ -260,6 +260,7 @@ class CounterStore(
             return
         }
         setState { copy(undoVisible = true, lastCoat = newest.coat) }
+        moment.holdForTheRun()
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
             expiredThroughSequence = newest.sequence

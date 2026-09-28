@@ -172,7 +172,7 @@ private fun RungPill(moment: MilestoneMomentState, modifier: Modifier = Modifier
         contentColor = MaterialTheme.colorScheme.onPrimary,
         sides = OutingSides,
         color = MaterialTheme.colorScheme.primary,
-        // Its own node, spoken once as it appears, where the milestone toast used to speak.
+        // Its own node, so TalkBack speaks it once as it appears.
         modifier = modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
     ) {
         Text(

@@ -9,8 +9,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import dev.catsradar.presentation.counter.MilestoneMomentState
@@ -29,8 +27,7 @@ internal fun rememberRungBounce(moment: MilestoneMomentState?): State<Float> {
     val up = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val settle = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
     LaunchedEffect(moment?.value) {
-        if (moment == null) return@LaunchedEffect
-        bounce.animateTo(RungBounce, up)
+        if (moment != null) bounce.animateTo(RungBounce, up)
         bounce.animateTo(1f, settle)
     }
     return bounce.asState()
@@ -49,25 +46,8 @@ internal fun RungRing(moment: MilestoneMomentState, modifier: Modifier = Modifie
     val ring = MaterialTheme.colorScheme.primary
     Canvas(modifier = modifier.testTag(RungRingTestTag)) {
         val stroke = size.minDimension * RingStrokeFraction
-        val topLeft = Offset(stroke / 2, stroke / 2)
-        val circle = Size(size.width - stroke, size.height - stroke)
-        drawArc(
-            color = ring.copy(alpha = glow.value),
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter = false,
-            topLeft = topLeft,
-            size = circle,
-            style = Stroke(width = stroke * GlowWidth),
-        )
-        drawArc(
-            color = ring,
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter = false,
-            topLeft = topLeft,
-            size = circle,
-            style = Stroke(width = stroke),
-        )
+        val radius = (size.minDimension - stroke) / 2
+        drawCircle(color = ring.copy(alpha = glow.value), radius = radius, style = Stroke(width = stroke * GlowWidth))
+        drawCircle(color = ring, radius = radius, style = Stroke(width = stroke))
     }
 }

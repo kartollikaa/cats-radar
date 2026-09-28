@@ -17,19 +17,22 @@ internal class MilestoneMoment(
 ) {
     var rung: Int? = null
         private set
+    private var seenBefore = 0
     private var timeout: Job? = null
 
     /** Celebrates the highest rung [total] has reached if it is new; with no run open to close it, for the window. */
-    suspend fun reach(total: Int, runOpen: Boolean) {
+    suspend fun reach(total: Int, runOpen: () -> Boolean) {
         val reached = Tuning.MILESTONES.filter { it <= total }.maxOrNull() ?: return
-        if (reached <= settingsRepository.lastSeenMilestone().first()) return
+        val seen = settingsRepository.lastSeenMilestone().first()
+        if (reached <= seen) return
         // Persisted before it shows: a process death between the two would otherwise celebrate
         // the same milestone again on the next launch.
         settingsRepository.setLastSeenMilestone(reached)
+        if (rung == null) seenBefore = seen
         rung = reached
         show()
         timeout?.cancel()
-        if (!runOpen) endAfterTheWindow()
+        if (!runOpen()) endAfterTheWindow()
     }
 
     // Taken back with the cats that reached it, so landing on the rung again celebrates it again.
@@ -38,8 +41,12 @@ internal class MilestoneMoment(
         if (total >= reached) return
         rung = null
         timeout?.cancel()
-        val below = Tuning.MILESTONES.filter { it < reached }.maxOrNull() ?: 0
-        runStorageWrite { settingsRepository.setLastSeenMilestone(below) }
+        runStorageWrite { settingsRepository.setLastSeenMilestone(seenBefore) }
+    }
+
+    /** A run has opened: its close ends the moment, not the window started without one. */
+    fun holdForTheRun() {
+        timeout?.cancel()
     }
 
     fun endAfterTheWindow() {
