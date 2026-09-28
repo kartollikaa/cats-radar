@@ -194,10 +194,13 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
   tag at the ring's top, which is the price of floating. (E15 kept the location hint in the column;
   the owner floated it too in E16, see *The location hint*.)
 - **What it shows.** At its start, a fanned stack of the first three imported photos (40 dp,
-  `small` corners, each tilted a little), or a check when none has a photo. Running, the gallery icon
-  stands in the stack's place, because progress reports counts and the added cats are known only when
-  the run ends. Running: *Importing 7 of 12* in `titleSmall` over an Expressive wavy progress
-  indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the
+  `small` corners, each tilted a little, each set apart by a 2 dp ring in the card's colour), or a check
+  when none has a photo. Running, the stack fans out the picked photos instead (slice E17; the owner,
+  2026-09-28: "show images previews as in the prototype"): the batch's first three, one more as the run
+  reaches each, with the one in hand showing from the start. They are the picked photos rather than the
+  cats, which are known only when the run ends; the gallery icon stands in when there are none. The
+  stack's slot keeps a full stack's width, so the words hold still as it fills. Running: *Importing 7 of
+  12* in `titleSmall` over an Expressive wavy progress indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the
   parts that apply, *2 already here · 1 couldn't be read*; TalkBack reads the words as one item.
 - **Closing it.** Undo is the filled tonal button, and a × icon button after it closes the notice; a
   swipe to either side closes it too. Closing does what OK did: the run is recorded as dealt with and
@@ -416,6 +419,7 @@ from the same grouping. Nothing else in the domain changes.
   long).
 - The import notice is the floating Photo card, closable by × or a swipe, its tap reserved for an
   imported-photos manager (owner, 2026-09-27).
+- A running import's card shows the picked photos as the run reaches them (owner, 2026-09-28).
 
 ## The outing pager
 
@@ -460,7 +464,8 @@ from a flat one.
     whole; nothing sits between the count and the coats.
   - The import notice: the cookie is the same size with the notice and without it; × and a swipe
     close it and record the run as dealt with; Undo takes the batch back; the body has no click; only
-    the lines that apply are shown.
+    the lines that apply are shown; a running card's stack fills by progress without moving its words,
+    and a stacked photo's ring covers the one beneath in the card's colour.
 - **Kept green:** the Counter's *controls do not jump* and floor tests, `NavTransitionTimingTest`,
   `BottomSheetUsageTest`, `BottomSheetNavigationTest`, `CatsRadarColorsTest` (no palette change).
 - **Renders:** before and after, light and dark, of every changed surface, from the Robolectric render

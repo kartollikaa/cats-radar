@@ -29,6 +29,7 @@
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
 | E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | merged |
 | E16 | The location hint floats | The location hint is a floating card like the import's, with Grant, × and a swipe; it stacks under an import's card, and the count keeps its size. | safe | ~350 | E15 | in-review |
+| E17 | The running import shows its photos | While an import runs, its card fans out the picked photos as the run reaches them, and every stacked photo wears a ring in the card's colour. | safe | ~250 | E16 | in-progress |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -158,6 +159,13 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** the same state and the same two actions behind a new surface.
 - **Cleanup owed:** none; `NoticeCard` stays for E8.
 
+### Slice E17 — The running import shows its photos
+- **In scope:** the worker's progress carrying its batch's first photos; the running card's stack filling by progress;
+  the ring on every stacked photo; `import.md`; spec § 2 *The import notice*.
+- **Out of scope:** what an import writes; which photos the finished card shows; the imported-photos manager.
+- **Ships safely because:** the same run and the same counts; a report without photos shows the gallery icon as before.
+- **Cleanup owed:** none.
+
 ## Decision log
 
 - 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
@@ -208,3 +216,5 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   tree identical to its gated head, before it merged. The plans of E1 to E4, E14 and E15 are archived.
 - 2026-09-28: the owner asked that the location hint be "like the import popup", reversing E15's line that what
   lasts sits in the column. E16 carries it.
+- 2026-09-28: the owner asked that the import card show the photos "as in the prototype", where the running card's
+  stack filled as the run went; E15 had kept the gallery icon while a run goes. E17 carries it.
