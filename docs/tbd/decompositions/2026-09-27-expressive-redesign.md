@@ -6,8 +6,8 @@
 - **Size budgets:** target ≤600 reviewable lines, cap 1000 (see tbd:sizing-pull-requests). Excluded from the
   count: `*.md`, string resources.
 - **Integration strategy:** every slice is **naturally safe**. Each changes one surface in place and ships
-  whole; the two behaviour changes, E6's Remove and E7's coat sheet, are complete inside their slices. E1
-  goes first because every other slice draws on its theme.
+  whole; the behaviour changes, E6's Remove, E7a's way back to one tap and E7b's coat sheet, are complete
+  inside their slices. E1 goes first because every other slice draws on its theme.
 
 ## Slices
 
@@ -19,11 +19,12 @@
 | E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | merged |
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
-| E7 | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in its header and a *No coat* tile, which replaces the inline picker; the coat question after a photo takes the same header. | safe | ~550 | E4, E6 | planned |
+| E7a | The coat question after a photo | The sheet after a photo keeps the photo in its header through a count, names its mode with a *One cat · Several* group that also leads back to one tap, counts cats in their shapes, and calls the paw *No coat*. | safe | ~450 | E4 | in-review |
+| E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | planned |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
-| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
+| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | in-review |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
@@ -58,7 +59,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 ### Slice E4 — Coat faces in Material shapes
 - **In scope:** the coat grid's tiles and ring, shared by the Counter, the coat question and the map's
   filter; the filled split button; `coat.md`, `map.md` where it describes the filter's cells.
-- **Out of scope:** the detail's picker (E7 replaces it).
+- **Out of scope:** the detail's picker (E7b replaces it).
 - **Ships safely because:** the same taps reach the same intents; only the ring's outline moves.
 - **Cleanup owed:** none.
 
@@ -72,15 +73,24 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 ### Slice E6 — The detail names its cat
 - **In scope:** a title token per coat; the facts row; More and its menu in the bar; the Remove button;
   EN and RU strings; `encounter-detail.md`.
-- **Out of scope:** the cat's number (E9); the coat card (E7); the Where card (E8).
+- **Out of scope:** the cat's number (E9); the coat card (E7b); the Where card (E8).
 - **Ships safely because:** Remove sends the Delete intent; the removed state and its Undo are unchanged.
 - **Cleanup owed:** none.
 
-### Slice E7 — The coat card and the coat sheet
-- **In scope:** the coat card; a coat-sheet key with `bottomSheet()` metadata; the header with the face or the
-  photo; the *No coat* tile; set, clear and dismiss;
+### Slice E7a — The coat question after a photo
+- **In scope:** the Counter's coat prompt: the header with the photo, or the paw, through the count; the
+  *One cat · Several* connected group and `OneCatClicked`, which empties the tray; the tray in coat shapes; the
+  paw tile's *No coat*; `coat.md` § Asked after a photo and § Several cats on the photo.
+- **Out of scope:** the detail's coat card and sheet (E7b); the map's filter keeps *Not specified*; what saving
+  writes.
+- **Ships safely because:** the same prompt state and writes; one new intent that only clears the tray.
+- **Cleanup owed:** none.
+
+### Slice E7b — The coat card and the coat sheet
+- **In scope:** the coat card; a coat-sheet key with `bottomSheet()` metadata; E7a's header with the cat's face;
+  the *No coat* tile; set, clear and dismiss;
   `coat.md` § Changing it later; retiring `EncounterDetailCoatPickerTest`.
-- **Out of scope:** the map's filter (E4 styled it); the coat question after a photo takes only the header.
+- **Out of scope:** the map's filter (E4 styled it); the coat question after a photo (E7a).
 - **Ships safely because:** the same `SetCoat` intent, reached from a sheet instead of a strip.
 - **Cleanup owed:** `CoatPicker` goes if nothing else uses it.
 
@@ -107,8 +117,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice E11 — Reaching a rung
-- **In scope:** the celebration when a tally lands on a rung of `Tuning.MILESTONES`: the cookie's bounce, the
-  ring's glow, the "100 cats!" tag until the undo window closes, and its undo; `counting-cats.md`.
+- **In scope:** the celebration when the count lands on a rung of `Tuning.MILESTONES`: the cookie's bounce, the
+  ring's glow, the "100 cats!" tag until the undo window closes, and its undo; the milestone toast and its effect
+  go; `counting-cats.md` § Milestones.
 - **Out of scope:** the tags at rest (E2) and the walk row (E3).
 - **Ships safely because:** it adds motion and a tag on a state the Counter already carries; nothing under the
   count moves.
@@ -175,7 +186,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   celebration on reaching a rung is slice E11.
 - 2026-09-27: the owner asked for the coat sheet (from the coat card's Change, and after a photo) to be restyled
   and reviewed; prototype version 14 draws it with the cat's face in the header and E4's shaped tiles. Between
-  "tap the current coat again" and a *No coat* tile, the owner chose the tile. E7 carries it.
+  "tap the current coat again" and a *No coat* tile, the owner chose the tile. E7b carries it.
 - 2026-09-27: the owner asked for a no-location alert on a cat's page like the Counter's import notice, and a
   prototype of Encounters. Prototype version 15 drew both; the owner put the alert under the title ("under")
   rather than at the top, and approved the Encounters drawing ("looks ok"). The alert joins E8; Encounters is
@@ -197,3 +208,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - 2026-09-28: the owner passed E13's and E14's look checks and said "merge" after E15's renders. **E13, E14 and E15
   merged** as #222, #224 and #227, bottom first; each upper branch took the pinned main that its lower PR left, a
   tree identical to its gated head, before it merged. The plans of E1 to E4, E14 and E15 are archived.
+- 2026-09-28: the owner asked whether the coat selection sheet could be redesigned to match. The sheet after a photo
+  had grown a count since version 14 drew it, so E7 split: E7a, that sheet, on the Counter now; E7b, the detail's coat
+  card and sheet, with the other detail slices. Of *Header*, *One or several* and *On the photo* (prototype version 25)
+  the owner picked **One or several**. E7a carries it.

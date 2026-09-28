@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.counter.MilestoneMomentState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.statistics.label
@@ -90,6 +91,7 @@ internal fun TallyBlock(
     tapBurst: Int?,
     modifier: Modifier = Modifier,
     milestone: CounterMilestoneState? = null,
+    moment: MilestoneMomentState? = null,
     currentOuting: CurrentOutingState? = null,
     walking: Boolean = false,
     undoVisible: Boolean = false,
@@ -102,6 +104,7 @@ internal fun TallyBlock(
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, animationSpec = press, label = "tallyPress")
     val turn by rememberCookieTurn(count)
     val breath by rememberCookieBreath(breathing = walking)
+    val rungBounce by rememberRungBounce(moment)
     val cookieColors = rememberCookieColors(walking)
     val tallyLabel = stringResource(R.string.counter_tally)
     val cookie = MaterialShapes.Cookie12Sided.toShape()
@@ -124,8 +127,8 @@ internal fun TallyBlock(
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer {
-                    scaleX = scale * breath
-                    scaleY = scale * breath
+                    scaleX = scale * breath * rungBounce
+                    scaleY = scale * breath * rungBounce
                     rotationZ = turn
                 }
                 .clip(cookieInBlock)
@@ -136,18 +139,19 @@ internal fun TallyBlock(
             modifier = Modifier
                 .aspectRatio(1f)
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
+                    scaleX = scale * rungBounce
+                    scaleY = scale * rungBounce
                 },
             contentAlignment = Alignment.Center,
         ) {
-            CookieContent(totalLabel, count, milestone, currentOuting, cookieColors)
+            CookieContent(totalLabel, count, milestone, moment, currentOuting, cookieColors)
         }
         TagsAndUndo(
             milestone = milestone,
+            moment = moment,
             currentOuting = currentOuting,
             tapBurst = tapBurst,
-            scale = { scale },
+            scale = { scale * rungBounce },
             undoVisible = undoVisible,
             onUndoClick = onUndoClick,
         )
@@ -158,6 +162,7 @@ internal fun TallyBlock(
 @Composable
 private fun BoxScope.TagsAndUndo(
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
     tapBurst: Int?,
     scale: () -> Float,
@@ -167,6 +172,7 @@ private fun BoxScope.TagsAndUndo(
     var undoWidth by remember { mutableIntStateOf(0) }
     RingTags(
         milestone = milestone,
+        moment = moment,
         currentOuting = currentOuting,
         scale = scale,
         undoWidth = { if (undoVisible) undoWidth else 0 },
@@ -218,11 +224,16 @@ private fun BoxScope.CookieContent(
     totalLabel: String,
     count: Int?,
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
     colors: CookieColors,
 ) {
-    milestone?.let {
-        MilestoneArc(fraction = it.fraction, colors = colors, modifier = Modifier.fillMaxSize(RingFraction))
+    if (moment != null) {
+        RungRing(moment = moment, modifier = Modifier.fillMaxSize(RingFraction))
+    } else {
+        milestone?.let {
+            MilestoneArc(fraction = it.fraction, colors = colors, modifier = Modifier.fillMaxSize(RingFraction))
+        }
     }
     CompositionLocalProvider(LocalContentColor provides colors.ink) {
         CountAndCaption(

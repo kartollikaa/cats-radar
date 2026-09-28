@@ -101,6 +101,7 @@ private fun CounterColumn(
                 count = state.count,
                 tapBurst = state.tapBurst,
                 milestone = state.milestone,
+                moment = state.milestoneMoment,
                 currentOuting = state.currentOuting,
                 walking = state.walkingMode,
                 undoVisible = state.undoVisible,
