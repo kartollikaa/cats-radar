@@ -293,7 +293,8 @@ class EncounterDetailPagerTest {
 
         compose.onNodeWithTag(DetailPagesTestTag).performTouchInput {
             down(Offset(width * 0.9f, centerY))
-            moveBy(Offset(-3f, 0f))
+            moveBy(Offset(-2f, 0f), delayMillis = 8)
+            moveBy(Offset(-2f, 0f), delayMillis = 8)
             up()
         }
         compose.mainClock.autoAdvance = true

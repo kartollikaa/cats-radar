@@ -78,7 +78,7 @@ internal fun CatPager(
     }
     HorizontalPager(
         state = pagerState,
-        modifier = modifier.fillMaxSize().testTag(DetailPagesTestTag),
+        modifier = modifier.fillMaxSize().testTag(DetailPagesTestTag).then(gestures.touches),
         overscrollEffect = null,
         key = { index -> state.pages[index].pageKey },
         flingBehavior = gestures.fling,
