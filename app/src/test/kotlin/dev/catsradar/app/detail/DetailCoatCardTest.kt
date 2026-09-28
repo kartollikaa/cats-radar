@@ -105,6 +105,7 @@ class DetailCoatCardTest {
         compose.assertGhostHem(lead, outside = scheme.surfaceContainerLow, inside = scheme.surfaceContainerHighest)
         compose.onNodeWithTag(CoatCardFaceTestTag, useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.detail_coat_not_noted), useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("Tap to add it", useUnmergedTree = true).assertExists()
         compose.onNodeWithText(context.getString(R.string.detail_coat_add), useUnmergedTree = true).assertExists()
         val change = context.getString(R.string.detail_coat_change)
         compose.onNodeWithText(change, useUnmergedTree = true).assertDoesNotExist()
