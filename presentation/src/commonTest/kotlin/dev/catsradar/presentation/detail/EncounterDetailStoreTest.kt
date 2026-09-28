@@ -10,6 +10,7 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.SetCoat
@@ -277,6 +278,36 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `each page shows its own cat's number in the live log`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(THIRD, OCCURRED - 1.days))
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(OTHER to 3, ID to 2), state.pages.map { it.id to it.numberInLog })
+    }
+
+    @Test
+    fun `a delete elsewhere or an older cat arriving renumbers the cat on screen without leaving it`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(THIRD, OCCURRED - 1.days))
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+            assertEquals(ID to 2, store.shownPage().let { it.id to it.numberInLog })
+
+            repository.softDelete(THIRD, NOW)
+            runCurrent()
+            assertEquals(ID to 1, store.shownPage().let { it.id to it.numberInLog })
+
+            repository.insert(encounterFixture("imported", OCCURRED - 2.days))
+            runCurrent()
+            assertEquals(ID to 2, store.shownPage().let { it.id to it.numberInLog })
+        }
+
+    @Test
     fun `an id nobody has ever seen renders as missing, without throwing`() = runTest(mainDispatcher) {
         val store = newStore()
         runCurrent()
@@ -512,6 +543,7 @@ class EncounterDetailStoreTest {
         restoredId = restoredId,
         observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(cells),
+        observeEncounterNumber = ObserveEncounterNumber(repository),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
@@ -1126,6 +1158,7 @@ class EncounterDetailStorePhotoTest {
         restoredId = restoredId,
         observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(cells),
+        observeEncounterNumber = ObserveEncounterNumber(repository),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),

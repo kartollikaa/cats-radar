@@ -46,6 +46,8 @@ data class CatPage(
     val setsLocation: Boolean = false,
     /** Null while the cat has no named place: no location, or its cell not named yet. */
     val place: DetailPlace? = null,
+    /** The cat's place among the live cats, oldest first; null until it is counted. */
+    val numberInLog: Int? = null,
     /** The cats on this page's photo, oldest first; empty when the photo shows only this cat. */
     val onThisPhoto: ImmutableList<ShotCat> = persistentListOf(),
     /** The same whichever cat of the photo is on the page. */
