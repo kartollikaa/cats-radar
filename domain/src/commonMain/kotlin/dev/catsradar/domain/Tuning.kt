@@ -26,6 +26,7 @@ object Tuning {
     const val GEOCODE_BATCH: Int = 20
     const val MAX_GEOCODE_ATTEMPTS: Int = 5
     const val IMPORT_BATCH_MAX: Int = 100
+    const val IMPORT_PREVIEWS: Int = 3
     const val ATTACH_BATCH_MAX: Int = 20
 
     /** The most cats one photo can be counted as, the photographed cat included. */

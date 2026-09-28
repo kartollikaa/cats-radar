@@ -23,9 +23,10 @@ private fun workInfo(
     progress = progress,
 )
 
-private fun progressData(done: Int, total: Int): Data = Data.Builder()
+private fun progressData(done: Int, total: Int, previews: List<String>? = null): Data = Data.Builder()
     .putInt(ImportPhotosWorker.KEY_DONE, done)
     .putInt(ImportPhotosWorker.KEY_TOTAL, total)
+    .apply { previews?.let { putStringArray(ImportPhotosWorker.KEY_PREVIEWS, it.toTypedArray()) } }
     .build()
 
 private fun outputData(addedIds: List<String>, skipped: Int, failed: Int): Data = Data.Builder()
@@ -37,10 +38,27 @@ private fun outputData(addedIds: List<String>, skipped: Int, failed: Int): Data 
 class ImportWorkInfoTest {
 
     @Test
-    fun `a running worker reports how far it has got`() {
+    fun `a running worker reports how far it has got, with its first photos`() {
+        val intent = workInfo(
+            WorkInfo.State.RUNNING,
+            progress = progressData(done = 3, total = 10, previews = listOf("content://a", "content://b")),
+        ).toCounterIntent()
+
+        assertEquals(
+            CounterIntent.Import.Progressed(
+                done = 3,
+                total = 10,
+                previews = persistentListOf("content://a", "content://b"),
+            ),
+            intent,
+        )
+    }
+
+    @Test
+    fun `a report without photos reads as none`() {
         val intent = workInfo(WorkInfo.State.RUNNING, progress = progressData(done = 3, total = 10)).toCounterIntent()
 
-        assertEquals(CounterIntent.Import.Progressed(done = 3, total = 10), intent)
+        assertEquals(CounterIntent.Import.Progressed(done = 3, total = 10, previews = persistentListOf()), intent)
     }
 
     @Test

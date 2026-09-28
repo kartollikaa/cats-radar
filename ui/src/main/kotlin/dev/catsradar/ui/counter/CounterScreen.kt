@@ -2,6 +2,7 @@ package dev.catsradar.ui.counter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,24 +48,32 @@ fun CounterScreen(
             state = state,
             onTallyClick = onTallyClick,
             onUndoClick = onUndoClick,
-            onLocationHintAction = onLocationHintAction,
             onCameraClick = onCameraClick,
             onCoatTallyClick = onCoatTallyClick,
             onImportClick = onImportClick,
             onWalkingModeChange = onWalkingModeChange,
             onWalkHoldRelease = onWalkHoldRelease,
         )
-        // Over the count rather than above it, so an import never takes the count's room.
-        ImportIsland(
-            progress = state.importProgress,
-            summary = state.importSummary,
+        // Over the count rather than above it, so a notice never takes the count's room.
+        Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .semantics { traversalIndex = -1f },
-            onUndoClick = onUndoImportClick,
-            onDismiss = onImportSummaryDismiss,
-        )
+                .semantics {
+                    // A traversal index orders only traversal groups; on a plain column it is ignored.
+                    isTraversalGroup = true
+                    traversalIndex = -1f
+                },
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ImportIsland(
+                progress = state.importProgress,
+                summary = state.importSummary,
+                onUndoClick = onUndoImportClick,
+                onDismiss = onImportSummaryDismiss,
+            )
+            LocationIsland(visible = state.locationPermissionHintVisible, onAction = onLocationHintAction)
+        }
     }
     state.coatPrompt?.let {
         CoatPromptSheet(prompt = it, onAction = onCoatPromptAction)
@@ -76,7 +85,6 @@ private fun CounterColumn(
     state: CounterState,
     onTallyClick: () -> Unit,
     onUndoClick: () -> Unit,
-    onLocationHintAction: (LocationHintAction) -> Unit,
     onCameraClick: () -> Unit,
     onCoatTallyClick: (CoatOption) -> Unit,
     onImportClick: () -> Unit,
@@ -89,18 +97,13 @@ private fun CounterColumn(
         gap = 16.dp,
         padding = 24.dp,
         modifier = Modifier.fillMaxSize(),
-        above = {
-            // Above the count, which gives up its room first.
-            if (state.locationPermissionHintVisible) {
-                LocationPermissionHint(onAction = onLocationHintAction)
-            }
-        },
         fill = {
             TallyBlock(
                 totalLabel = state.totalLabel,
                 count = state.count,
                 tapBurst = state.tapBurst,
                 milestone = state.milestone,
+                moment = state.milestoneMoment,
                 currentOuting = state.currentOuting,
                 walking = state.walkingMode,
                 undoVisible = state.undoVisible,

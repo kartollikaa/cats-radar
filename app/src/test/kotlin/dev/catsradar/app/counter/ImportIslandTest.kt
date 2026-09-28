@@ -1,17 +1,20 @@
 package dev.catsradar.app.counter
 
 import android.content.Context
+import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
@@ -27,12 +30,15 @@ import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.talkBackOrder
+import dev.catsradar.app.testing.turnTalkBackOn
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.ImportProgressState
 import dev.catsradar.presentation.counter.ImportSummaryState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.ImportCheckTestTag
+import dev.catsradar.ui.counter.ImportGalleryTestTag
 import dev.catsradar.ui.counter.ImportThumbTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -42,6 +48,7 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Config(qualifiers = "w411dp-h760dp")
 @RunWith(AndroidJUnit4::class)
@@ -60,8 +67,11 @@ class ImportIslandTest {
 
     private val mixed = ImportSummaryState(added = 9, skipped = 2, failed = 1, undoable = true)
 
+    private lateinit var host: View
+
     private fun show() {
         compose.setContent {
+            host = LocalView.current
             CatsRadarTheme {
                 CounterScreen(
                     state = state,
@@ -163,14 +173,15 @@ class ImportIslandTest {
     }
 
     @Test
-    fun `TalkBack reaches the card before the count it covers`() {
+    fun `TalkBack reads the card before the count it covers`() {
+        turnTalkBackOn()
         state = state.copy(importSummary = mixed)
         show()
 
-        compose.onNode(
-            hasAnyDescendant(hasText(plural(R.plurals.counter_import_added, 9))) and
-                SemanticsMatcher.expectValue(SemanticsProperties.TraversalIndex, -1f),
-        ).assertExists()
+        val order = compose.talkBackOrder(host)
+        val card = order.indexOfFirst { plural(R.plurals.counter_import_added, 9) in it }
+
+        assertTrue(card in 0 until order.indexOf("147"), "$order")
     }
 
     @Test
@@ -197,6 +208,47 @@ class ImportIslandTest {
         compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true).assertCountEquals(0)
         compose.onAllNodesWithTag(ImportCheckTestTag, useUnmergedTree = true).assertCountEquals(1)
     }
+
+    @Test
+    fun `a running card shows the photos it has, and the gallery icon without any`() {
+        state = state.copy(importProgress = running(done = 1, "content://a", "content://b"))
+        show()
+
+        compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true).assertCountEquals(2)
+        compose.onAllNodesWithTag(ImportGalleryTestTag, useUnmergedTree = true).assertCountEquals(0)
+        state = state.copy(importProgress = running(done = 1))
+        compose.waitForIdle()
+        compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithTag(ImportGalleryTestTag, useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun `a running card's words hold still as its stack fills`() {
+        state = state.copy(importProgress = running(done = 2, "content://a"))
+        show()
+        val words = compose.onNodeWithText(context.getString(R.string.counter_import_running_count, 2, 12))
+        val withOne = words.getUnclippedBoundsInRoot()
+
+        state = state.copy(importProgress = running(done = 2, "content://a", "content://b", "content://c"))
+        compose.waitForIdle()
+
+        assertEquals(withOne, words.getUnclippedBoundsInRoot())
+    }
+
+    @Test
+    fun `a running card's photos are neither pressable nor read out`() {
+        state = state.copy(importProgress = running(done = 2, "content://a", "content://b", "content://c"))
+        show()
+
+        val photos = compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true)
+        photos.assertCountEquals(3)
+        photos.assertAll(
+            hasClickAction().not() and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription),
+        )
+    }
+
+    private fun running(done: Int, vararg photos: String) =
+        ImportProgressState(done = done, total = 12, previewUris = persistentListOf(*photos))
 
     private fun allDescribedAs(id: Int) =
         compose.onAllNodes(hasContentDescription(context.getString(id)), useUnmergedTree = true)
