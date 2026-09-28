@@ -131,6 +131,7 @@ private fun CoatPromptAction.toCounterIntent(): CounterIntent = when (this) {
     is CoatPromptAction.CoatPicked -> CounterIntent.CoatPrompt.Picked(coat)
     CoatPromptAction.UnseenPicked -> CounterIntent.CoatPrompt.UnseenPicked
     is CoatPromptAction.TrayCatClicked -> CounterIntent.CoatPrompt.TrayCatClicked(tap.index, tap.coat)
+    CoatPromptAction.OneCatClicked -> CounterIntent.CoatPrompt.OneCatClicked
     CoatPromptAction.SeveralClicked -> CounterIntent.CoatPrompt.SeveralClicked
     CoatPromptAction.SaveClicked -> CounterIntent.CoatPrompt.SaveClicked
     CoatPromptAction.Dismissed -> CounterIntent.CoatPrompt.Dismissed

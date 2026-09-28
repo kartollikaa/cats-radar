@@ -44,6 +44,7 @@ sealed interface CounterIntent {
         /** The paw: a cat on the photo whose coat nobody saw. */
         data object UnseenPicked : CoatPrompt
         data object SeveralClicked : CoatPrompt
+        data object OneCatClicked : CoatPrompt
 
         /** [coat] is the tapped cat's, so a tap landing after the tray moved takes out no other cat. */
         data class TrayCatClicked(val index: Int, val coat: CoatOption?) : CoatPrompt
