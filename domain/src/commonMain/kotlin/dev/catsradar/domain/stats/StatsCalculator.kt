@@ -39,6 +39,7 @@ object StatsCalculator {
             byCoat = byCoat(live),
             currentStreak = Streaks.current(days.toSet(), today),
             longestStreak = Streaks.longest(days.toSet()),
+            byDay = days.countByDay(today, MONTH_DAYS),
             nextMilestone = nextMilestone(live.size),
             outings = sessions.size,
             activeTime = sessions.fold(Duration.ZERO) { total, session -> total + session.duration },
@@ -59,6 +60,14 @@ object StatsCalculator {
     private fun List<LocalDate>.countWithin(today: LocalDate, days: Int): Int {
         val earliest = today.minus(DatePeriod(days = days - 1))
         return count { it >= earliest && it <= today }
+    }
+
+    private fun List<LocalDate>.countByDay(today: LocalDate, days: Int): List<DayCount> {
+        val counts = groupingBy { it }.eachCount()
+        return (days - 1 downTo 0).map { back ->
+            val date = today.minus(DatePeriod(days = back))
+            DayCount(date, counts[date] ?: 0)
+        }
     }
 
     private fun byCoat(live: List<Encounter>): List<CoatCount> {

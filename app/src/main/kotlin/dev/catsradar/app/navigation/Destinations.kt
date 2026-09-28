@@ -20,6 +20,7 @@ import dev.catsradar.presentation.map.MapSpotIntent
 import dev.catsradar.presentation.map.MapSpotStore
 import dev.catsradar.presentation.map.MapState
 import dev.catsradar.presentation.map.MapStore
+import dev.catsradar.presentation.statistics.StatisticsIntent
 import dev.catsradar.presentation.statistics.StatisticsStore
 import dev.catsradar.ui.encounters.EncountersScreen
 import dev.catsradar.ui.map.MapScreen
@@ -142,6 +143,8 @@ internal fun StatisticsDestination(
         state = state,
         modifier = modifier,
         contentPadding = contentPadding,
+        onRangeClick = { store.dispatch(StatisticsIntent.RangePicked(it)) },
+        onDayClick = { store.dispatch(StatisticsIntent.DayPicked(it)) },
         onPlacesClick = onPlacesClick,
     )
 }

@@ -157,20 +157,19 @@
 
     <string name="statistics_empty">Отметьте котика — и появятся цифры</string>
     <string name="statistics_next_milestone">ещё %1$s до %2$s</string>
-    <string name="statistics_when">Когда</string>
     <string name="statistics_today">Сегодня</string>
     <string name="statistics_week">За 7 дней</string>
     <string name="statistics_month">За 30 дней</string>
     <string name="statistics_with_photo">С фото</string>
-    <string name="statistics_streaks">Серии</string>
-    <string name="statistics_current_streak">Текущая</string>
-    <string name="statistics_longest_streak">Самая длинная</string>
+    <string name="statistics_current_streak">Серия</string>
+    <string name="statistics_longest_streak">Лучшая серия</string>
+    <string name="statistics_range_week">7 дней</string>
+    <string name="statistics_range_month">30 дней</string>
     <string name="statistics_outings">Вылазки</string>
     <string name="statistics_outing_count">Вылазок</string>
     <string name="statistics_active_time">Время на улице</string>
     <string name="statistics_overall_rate">Котиков в час</string>
-    <string name="statistics_best_outing">Лучшая вылазка</string>
-    <string name="statistics_best_outing_rate">Её темп</string>
+    <string name="statistics_best_outing_with_rate">Лучшая вылазка · %1$s</string>
     <string name="statistics_rate_per_hour">%1$s / ч</string>
     <string name="statistics_rate_per_minute">%1$s / мин</string>
     <string name="statistics_rate_unavailable">—</string>
@@ -214,6 +213,24 @@
         <item quantity="few">%1$d котика за %2$s</item>
         <item quantity="many">%1$d котиков за %2$s</item>
         <item quantity="other">%1$d котика за %2$s</item>
+    </plurals>
+    <plurals name="statistics_streak_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
+    <plurals name="statistics_picked_day">
+        <item quantity="one">%1$d котик · %2$s</item>
+        <item quantity="few">%1$d котика · %2$s</item>
+        <item quantity="many">%1$d котиков · %2$s</item>
+        <item quantity="other">%1$d котика · %2$s</item>
+    </plurals>
+    <plurals name="statistics_day_bar">
+        <item quantity="one">%1$d котик, %2$s</item>
+        <item quantity="few">%1$d котика, %2$s</item>
+        <item quantity="many">%1$d котиков, %2$s</item>
+        <item quantity="other">%1$d котика, %2$s</item>
     </plurals>
     <plurals name="encounters_total_cats">
         <item quantity="one">%1$d котик</item>

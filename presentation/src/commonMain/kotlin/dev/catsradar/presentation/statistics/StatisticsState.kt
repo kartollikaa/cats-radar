@@ -8,13 +8,15 @@ data class StatisticsState(
     /** The count itself, not a label: only the platform knows the plural form for it. */
     val total: Int = 0,
     val hasAnyCats: Boolean = false,
+    val chart: DayChartState = DayChartState(),
     val todayLabel: String = "0",
     val weekLabel: String = "0",
     val monthLabel: String = "0",
     val withPhotoLabel: String = "0",
     val byCoat: ImmutableList<CoatShareState> = persistentListOf(),
-    val currentStreakLabel: String = "0",
-    val longestStreakLabel: String = "0",
+    /** The streaks as counts, not labels: only the platform knows the plural form of their days. */
+    val currentStreak: Int = 0,
+    val longestStreak: Int = 0,
     val nextMilestone: MilestoneState? = null,
     val outingsLabel: String = "0",
     val activeTimeLabel: String = "",
@@ -25,8 +27,38 @@ data class StatisticsState(
     val walked: WalkedState? = null,
 )
 
-/** [coat] of null is the "not specified" row. */
-data class CoatShareState(val coat: CoatOption?, val countLabel: String, val sharePercentLabel: String)
+/** [coat] of null is the "not specified" row; [share] is its count over the busiest row's, for its bar. */
+data class CoatShareState(
+    val coat: CoatOption?,
+    val countLabel: String,
+    val sharePercentLabel: String,
+    val share: Float,
+)
+
+enum class ChartRange(val days: Int) { WEEK(days = 7), MONTH(days = 30) }
+
+/** The cats of each day of [range], oldest first and today last, and the day the line under them names. */
+data class DayChartState(
+    val range: ChartRange = ChartRange.WEEK,
+    val bars: ImmutableList<DayBarState> = persistentListOf(),
+    val picked: PickedDayState? = null,
+)
+
+/**
+ * One day's bar. [epochDay] is the day as days since 1970-01-01; [height] is the day's cats over the busiest
+ * day's, 0 with none; [axisLabel] is null for a bar drawn without one.
+ */
+data class DayBarState(
+    val epochDay: Long,
+    val count: Int,
+    val height: Float,
+    val isToday: Boolean,
+    val isPicked: Boolean,
+    val axisLabel: String?,
+    val dayLabel: String,
+)
+
+data class PickedDayState(val count: Int, val dayLabel: String)
 
 data class MilestoneState(val valueLabel: String, val remainingLabel: String)
 

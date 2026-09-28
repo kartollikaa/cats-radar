@@ -113,8 +113,8 @@ private fun LabelAndValue(label: String, value: String, modifier: Modifier = Mod
 @Composable
 private fun SectionCardPreview() {
     CatsRadarTheme {
-        SectionCard(titleRes = R.string.statistics_when, modifier = Modifier.padding(16.dp)) {
-            ValueRow(label = "Today", value = "3")
+        SectionCard(titleRes = R.string.statistics_outings, modifier = Modifier.padding(16.dp)) {
+            ValueRow(label = "Outings", value = "38")
             ValueRow(label = "Best outing", value = "12 cats in 1 h 20 min, a Tuesday evening")
         }
     }
