@@ -30,6 +30,7 @@ class CounterStateMapper(
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
         milestone: Milestone? = null,
+        milestoneMoment: Int? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         count = count,
@@ -44,6 +45,7 @@ class CounterStateMapper(
         coatPrompt = coatPrompt,
         // With no cats the first rung is not a milestone to reach, so the state carries none.
         milestone = milestone?.takeIf { count > 0 }?.toState(),
+        milestoneMoment = milestoneMoment?.let(::MilestoneMomentState),
     )
 
     fun importProgress(done: Int, total: Int, previews: List<String>): ImportProgressState = ImportProgressState(

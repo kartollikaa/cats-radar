@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.stats.CurrentOuting
 import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
@@ -11,6 +12,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 class CounterStateMapperTest {
@@ -126,6 +128,31 @@ class CounterStateMapperTest {
                 milestone = Milestone(value = 100, remaining = 38, reached = 50),
             ).milestone,
         )
+    }
+
+    @Test
+    fun `a rung's moment rides beside the goal and the outing, and after it they are all that is left`() {
+        val outing = CurrentOuting(count = 4, elapsed = 12.minutes, rate = null)
+        val next = Milestone(value = 250, remaining = 150, reached = 100)
+        val atRest = CounterState(
+            totalLabel = "100",
+            count = 100,
+            undoVisible = true,
+            currentOuting = CurrentOutingState(count = 4, elapsedLabel = "12m", rate = null),
+            milestone = CounterMilestoneState(MilestoneState(valueLabel = "250", remainingLabel = "150"), 0f),
+        )
+
+        assertEquals(
+            atRest.copy(milestoneMoment = MilestoneMomentState(value = 100)),
+            mapper.map(
+                count = 100,
+                undoVisible = true,
+                currentOuting = outing,
+                milestone = next,
+                milestoneMoment = 100,
+            ),
+        )
+        assertEquals(atRest, mapper.map(count = 100, undoVisible = true, currentOuting = outing, milestone = next))
     }
 
     @Test

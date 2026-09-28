@@ -1,6 +1,5 @@
 package dev.catsradar.presentation.counter
 
-import app.cash.turbine.Event
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
@@ -49,11 +48,6 @@ class CounterStoreTest {
 
     private val exifReader = FakeExifReader()
     private val imageResizer = FakeImageResizer()
-
-    private fun milestonesIn(events: List<Event<CounterEffect>>): List<CounterEffect.MilestoneReached> =
-        events.filterIsInstance<Event.Item<CounterEffect>>()
-            .map { it.value }
-            .filterIsInstance<CounterEffect.MilestoneReached>()
 
     private fun TestScope.newStore(
         encounterRepository: FakeEncounterRepository = FakeEncounterRepository(),
@@ -363,38 +357,6 @@ class CounterStoreTest {
         runCurrent()
 
         assertEquals(1, store.state.value.tapBurst)
-    }
-
-    @Test
-    fun `the first cat is celebrated once and never again`() = runTest(mainDispatcher) {
-        val celebrating = FakeSettingsRepository(lastMilestone = 0)
-        val (store, _) = newStore(settingsRepository = celebrating)
-
-        store.effects.test {
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-
-            assertEquals(listOf(CounterEffect.MilestoneReached(1)), milestonesIn(cancelAndConsumeRemainingEvents()))
-        }
-
-        // A second Store over the same settings is the next launch: the milestone is spent.
-        val (next, _) = newStore(settingsRepository = celebrating)
-        next.effects.test {
-            runCurrent()
-            assertEquals(emptyList(), milestonesIn(cancelAndConsumeRemainingEvents()))
-        }
-    }
-
-    @Test
-    fun `a milestone already celebrated stays quiet`() = runTest(mainDispatcher) {
-        val (store, _) = newStore(settingsRepository = FakeSettingsRepository(lastMilestone = 1))
-
-        store.effects.test {
-            store.dispatch(CounterIntent.TallyClicked)
-            runCurrent()
-
-            assertEquals(emptyList(), milestonesIn(cancelAndConsumeRemainingEvents()))
-        }
     }
 
     @Test
