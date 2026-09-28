@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -25,6 +26,8 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
+const val SelectionBarTestTag = "selection-bar"
+
 @Composable
 internal fun SelectionBar(
     selectedCount: Int,
@@ -33,7 +36,11 @@ internal fun SelectionBar(
     onDismiss: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
 ) {
-    Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainer) {
+    Surface(
+        modifier = modifier.fillMaxWidth().testTag(SelectionBarTestTag),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
         Row(
             modifier = Modifier.padding(top = topInset).height(64.dp).padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),

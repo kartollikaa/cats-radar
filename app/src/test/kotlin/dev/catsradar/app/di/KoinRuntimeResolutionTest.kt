@@ -68,6 +68,7 @@ import dev.catsradar.domain.usecase.RecordWalk
 import dev.catsradar.domain.usecase.RepairPlaceCells
 import dev.catsradar.domain.usecase.ResolvePendingPlaces
 import dev.catsradar.presentation.Store
+import dev.catsradar.presentation.coatsheet.CoatSheetStore
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.locationpicker.LocationPickerStore
 import dev.catsradar.presentation.regions.RegionsStore
@@ -214,6 +215,7 @@ class KoinRuntimeResolutionTest {
         assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", null) })
         assertNotNull(koin.getStore<EncounterDetailStore> { parametersOf("any-id", "restored-id") })
         assertNotNull(koin.getStore<LocationPickerStore> { parametersOf("any-id") })
+        assertNotNull(koin.getStore<CoatSheetStore> { parametersOf("any-id") })
         assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", null) })
         assertNotNull(koin.getStore<PhotoViewerStore> { parametersOf("any-id", "any-photo") })
         // Both the root (null parent) and a drilled-in level, because they take different paths.

@@ -2,7 +2,9 @@ package dev.catsradar.presentation.encounters
 
 import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.CatCoat
+import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.model.LocationSource
+import dev.catsradar.domain.model.Walk
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -11,9 +13,12 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class EncountersStateMapperTest {
@@ -27,6 +32,98 @@ class EncountersStateMapperTest {
         val state = mapper.map(emptyList(), today, grid = true)
 
         assertEquals(EncountersState(), state)
+    }
+
+    @Test
+    fun `an outing's header names its day, its start, its cats and its span`() {
+        val outing = listOf(
+            encounterFixture("first", BASE),
+            encounterFixture("middle", BASE + 20.minutes),
+            encounterFixture("last", BASE + 48.minutes),
+        )
+
+        val header = mapper.map(outing, today, grid = true).rows.first()
+
+        assertEquals(header("header-first", BASE, count = 3, span = 48.minutes), header)
+    }
+
+    @Test
+    fun `a lone cat's outing, or one whose cats share a minute, has no span`() {
+        val lone = listOf(encounterFixture("lone", BASE))
+        val burst = listOf(encounterFixture("a", BASE), encounterFixture("b", BASE + 40.seconds))
+
+        val spans = listOf(lone, burst).map { headerOf(it).spanLabel }
+
+        assertEquals(listOf(null, null), spans)
+    }
+
+    @Test
+    fun `a walk that meets an outing puts it on a walk, its ends included, and a walk still on has not ended`() {
+        val meeting = listOf(
+            walk("inside", BASE + 5.minutes, BASE + 10.minutes),
+            walk("ends as it starts", BASE - 1.hours, BASE),
+            walk("starts as it ends", BASE + 30.minutes, BASE + 2.hours),
+            walk("still on", BASE - 2.hours, end = null),
+        )
+
+        assertEquals(listOf(true, true, true, true), meeting.map { halfHourOuting().onWalk(it) })
+    }
+
+    @Test
+    fun `a walk wholly before or after an outing leaves it off a walk`() {
+        val apart = listOf(
+            walk("before", BASE - 2.hours, BASE - 1.milliseconds),
+            walk("after", BASE + 30.minutes + 1.milliseconds, BASE + 1.hours),
+            walk("on since after", BASE + 31.minutes, end = null),
+        )
+
+        assertEquals(listOf(false, false, false), apart.map { halfHourOuting().onWalk(it) })
+    }
+
+    @Test
+    fun `the tab totals every cat, a shot's cats each, and every outing`() {
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = BASE)
+        val later = encounterFixture("later", BASE + 8.hours)
+
+        assertEquals(EncountersTotals(cats = 4, outings = 2), mapper.map(shot + later, today, grid = true).totals)
+    }
+
+    @Test
+    fun `each outing's last row closes it, in the grid and in the list`() {
+        val evening = listOf(
+            photoFixture("p1", BASE + 8.hours),
+            photoFixture("p2", BASE + 8.hours + 1.minutes),
+            encounterFixture("e", BASE + 8.hours + 2.minutes),
+        )
+        val morning = (0 until 5).map { encounterFixture("m$it", BASE + it.minutes) }
+
+        listOf(true, false).forEach { grid ->
+            val rows = mapper.map(evening + morning, today, grid = grid).rows
+
+            val lastOfEach = rows.mapIndexed { index, row ->
+                if (row is OutingHeader) null else index == rows.lastIndex || rows[index + 1] is OutingHeader
+            }
+            assertEquals(lastOfEach, rows.map { it.closes() }, "grid = $grid")
+            assertTrue(false in lastOfEach, "an outing with several rows, grid = $grid")
+        }
+    }
+
+    @Test
+    fun `a one-cat cell leading with its photo still carries its coat for its shape, and a shot carries none`() {
+        val photo = photoFixture("photo", BASE).copy(coat = CatCoat.BLACK)
+        val shot = shotFixture("s1", "s2", occurredAt = BASE + 8.hours).map { it.copy(coat = CatCoat.GINGER) }
+
+        val leads = mapper.map(listOf(photo) + shot, today, grid = false).rows
+            .filterIsInstance<EncountersRow.Single>()
+            .map { it.cell.lead }
+
+        assertEquals(
+            listOf(
+                CellLead.Photo("/data/photos/s1_thumb.jpg", coat = null),
+                CellLead.Photo("/data/photos/photo_thumb.jpg", coat = CoatOption.BLACK),
+            ),
+            leads,
+        )
     }
 
     @Test
@@ -44,7 +141,7 @@ class EncountersStateMapperTest {
         assertEquals(
             EncountersState(
                 rows = persistentListOf(
-                    OutingHeader(key = "header-e1", label = "2026-09-22, $BASE"),
+                    header("header-e1", BASE, count = 5, span = 4.minutes),
                     EncountersRow.PhotoPair(
                         first = photoCell("p2", BASE + 4.minutes, "/data/photos/p2.jpg"),
                         second = photoCell("p1", BASE + 3.minutes, "/data/photos/p1.jpg"),
@@ -55,8 +152,10 @@ class EncountersStateMapperTest {
                             cell("e2", BASE + 1.minutes, CellLead.Coat(CoatOption.GREY)),
                             cell("e1", BASE),
                         ),
+                        closesOuting = true,
                     ),
                 ),
+                totals = EncountersTotals(cats = 5, outings = 1),
             ),
             state,
         )
@@ -71,13 +170,15 @@ class EncountersStateMapperTest {
 
         assertEquals(
             persistentListOf(
-                OutingHeader(key = "header-evening", label = "2026-09-22, ${BASE + 8.hours}"),
+                header("header-evening", BASE + 8.hours, count = 1),
                 EncountersRow.Cards(
                     persistentListOf(cell("evening", BASE + 8.hours, CellLead.Photo("/data/photos/evening_thumb.jpg"))),
+                    closesOuting = true,
                 ),
-                OutingHeader(key = "header-morning", label = "2026-09-22, $BASE"),
+                header("header-morning", BASE, count = 1),
                 EncountersRow.Cards(
                     persistentListOf(cell("morning", BASE, CellLead.Photo("/data/photos/morning_thumb.jpg"))),
+                    closesOuting = true,
                 ),
             ),
             rows,
@@ -93,13 +194,15 @@ class EncountersStateMapperTest {
 
         assertEquals(
             persistentListOf(
-                OutingHeader(key = "header-e0", label = "2026-09-22, ${BASE + 8.hours}"),
+                header("header-e0", BASE + 8.hours, count = 2, span = 1.minutes),
                 EncountersRow.Cards(
                     persistentListOf(cell("e1", BASE + 8.hours + 1.minutes), cell("e0", BASE + 8.hours)),
+                    closesOuting = true,
                 ),
-                OutingHeader(key = "header-m0", label = "2026-09-22, $BASE"),
+                header("header-m0", BASE, count = 3, span = 2.minutes),
                 EncountersRow.Tiles(
                     persistentListOf(cell("m2", BASE + 2.minutes), cell("m1", BASE + 1.minutes), cell("m0", BASE)),
+                    closesOuting = true,
                 ),
             ),
             rows,
@@ -121,6 +224,7 @@ class EncountersStateMapperTest {
                     cell("middle", BASE + 1.minutes),
                     cell("older", BASE),
                 ),
+                closesOuting = true,
             ),
             rows.last(),
         )
@@ -138,9 +242,9 @@ class EncountersStateMapperTest {
         assertEquals(
             EncountersState(
                 rows = persistentListOf(
-                    OutingHeader(key = "header-lone", label = "2026-09-22, ${BASE + 5.hours}"),
+                    header("header-lone", BASE + 5.hours, count = 1),
                     EncountersRow.Single(cell("lone", BASE + 5.hours), GroupPosition.ONLY),
-                    OutingHeader(key = "header-oldest", label = "2026-09-22, $BASE"),
+                    header("header-oldest", BASE, count = 3, span = 10.minutes),
                     EncountersRow.Single(
                         cell("newest", BASE + 10.minutes, CellLead.Photo("/data/photos/newest_thumb.jpg")),
                         GroupPosition.FIRST,
@@ -152,6 +256,7 @@ class EncountersStateMapperTest {
                     EncountersRow.Single(cell("oldest", BASE), GroupPosition.LAST),
                 ),
                 layout = EncountersLayout.LIST,
+                totals = EncountersTotals(cats = 4, outings = 2),
             ),
             state,
         )
@@ -196,7 +301,7 @@ class EncountersStateMapperTest {
             mapOf(
                 "neither" to CellLead.Paw,
                 "coatOnly" to CellLead.Coat(CoatOption.GINGER),
-                "both" to CellLead.Photo("/data/photos/both_thumb.jpg"),
+                "both" to CellLead.Photo("/data/photos/both_thumb.jpg", coat = CoatOption.GINGER),
             ),
             leads,
         )
@@ -215,6 +320,7 @@ class EncountersStateMapperTest {
                     cell("bare", BASE + 5.minutes),
                     cell("coated", BASE, CellLead.Coat(CoatOption.GREY)),
                 ),
+                closesOuting = true,
             ),
             rows.last(),
         )
@@ -288,6 +394,7 @@ class EncountersStateMapperTest {
             EncountersRow.PhotoPair(
                 first = photoCell("newer", BASE + 10.minutes, "/data/photos/newer.jpg"),
                 second = photoCell("older", BASE, "/data/photos/older.jpg"),
+                closesOuting = true,
             ),
             rows.last(),
         )
@@ -320,12 +427,14 @@ class EncountersStateMapperTest {
         assertEquals(
             EncountersState(
                 rows = persistentListOf(
-                    OutingHeader(key = "header-earlier", label = "2026-09-22, $BASE"),
+                    header("header-earlier", BASE, count = 2, span = 5.minutes),
                     EncountersRow.Cards(
                         persistentListOf(cell("later", BASE + 5.minutes).copy(selected = true), cell("earlier", BASE)),
+                        closesOuting = true,
                     ),
                 ),
                 selectedIds = persistentSetOf("later"),
+                totals = EncountersTotals(cats = 2, outings = 1),
             ),
             state,
         )
@@ -412,12 +521,13 @@ class EncountersStateMapperTest {
 
         assertEquals(
             persistentListOf(
-                OutingHeader(key = "header-first", label = "2026-09-22, $BASE"),
+                header("header-first", BASE, count = 3),
                 EncountersRow.Cards(
                     persistentListOf(
                         cell("first", BASE, CellLead.Photo("/data/photos/first_thumb.jpg"))
                             .copy(catIds = persistentListOf("first", "second", "third")),
                     ),
+                    closesOuting = true,
                 ),
             ),
             rows,
@@ -447,7 +557,7 @@ class EncountersStateMapperTest {
 
         assertEquals(
             persistentListOf(
-                OutingHeader(key = "header-older", label = "2026-09-22, $BASE"),
+                header("header-older", BASE, count = 5, span = 2.minutes),
                 EncountersRow.PhotoPair(
                     first = photoCell("newer", BASE + 2.minutes, "/data/photos/newer.jpg"),
                     second = photoCell("s1", BASE + 1.minutes, "/data/photos/s1.jpg")
@@ -455,6 +565,7 @@ class EncountersStateMapperTest {
                 ),
                 EncountersRow.Cards(
                     persistentListOf(cell("older", BASE, CellLead.Photo("/data/photos/older_thumb.jpg"))),
+                    closesOuting = true,
                 ),
             ),
             rows,
@@ -471,7 +582,7 @@ class EncountersStateMapperTest {
 
         assertEquals(
             persistentListOf(
-                OutingHeader(key = "header-earlier", label = "2026-09-22, $BASE"),
+                header("header-earlier", BASE, count = 4, span = 2.minutes),
                 EncountersRow.Single(cell("later", BASE + 2.minutes), GroupPosition.FIRST),
                 EncountersRow.Single(
                     cell("s1", BASE + 1.minutes, CellLead.Photo("/data/photos/s1_thumb.jpg"))
@@ -557,6 +668,34 @@ class EncountersStateMapperTest {
             is EncountersRow.Single -> listOf(CellView(row.cell.id, row.cell.location, row.cell.lead))
         }
     }
+
+    private fun walk(id: String, start: Instant, end: Instant?) =
+        Walk(id = id, startedAt = start, endedAt = end, deviceId = "device-1", createdAt = start, updatedAt = start)
+
+    private fun halfHourOuting() = listOf(encounterFixture("a", BASE), encounterFixture("b", BASE + 30.minutes))
+
+    private fun List<Encounter>.onWalk(walk: Walk): Boolean = headerOf(this, listOf(walk)).onWalk
+
+    private fun headerOf(outing: List<Encounter>, walks: List<Walk> = emptyList()) =
+        mapper.map(outing, today, grid = true, walks = walks).rows.first() as OutingHeader
+
+    private fun EncountersRow.closes(): Boolean? = when (this) {
+        is OutingHeader -> null
+        is EncountersRow.PhotoPair -> closesOuting
+        is EncountersRow.Tiles -> closesOuting
+        is EncountersRow.Cards -> closesOuting
+        is EncountersRow.Single -> position == GroupPosition.LAST || position == GroupPosition.ONLY
+    }
+
+    private fun header(key: String, start: Instant, count: Int, span: Duration? = null, day: String = "2026-09-22") =
+        OutingHeader(
+            key = key,
+            label = "$day, $start",
+            dayLabel = day,
+            startLabel = start.toString(),
+            count = count,
+            spanLabel = span?.toString(),
+        )
 
     private fun cell(id: String, occurredAt: Instant, lead: CellLead = CellLead.Paw) = EncounterCell(
         id = id,

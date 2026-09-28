@@ -66,13 +66,13 @@ class EncountersListPositionTest {
     fun `back from a cat returns to the list scrolled where it was`() {
         compose.onNode(hasScrollToKeyAction()).performScrollToKey(EncountersRow.Single(cell(FAR), ONLY).key)
         compose.waitForIdle()
-        assertTrue(isShown(time(FAR)), "the list is scrolled to the far cat before it opens")
+        assertTrue(isCatShown(FAR), "the list is scrolled to the far cat before it opens")
 
         settle { backStack.push(EncounterDetail("$FAR")) }
         settle { backStack.popOrNull() }
 
         assertEquals(listOf(Counter, Encounters), backStack.toList())
-        assertTrue(isShown(time(FAR)), "the far cat is still on screen")
+        assertTrue(isCatShown(FAR), "the far cat is still on screen")
         assertFalse(isShown(header(1)), "the list did not jump back to the top")
     }
 
@@ -93,6 +93,8 @@ class EncountersListPositionTest {
 
     private fun isShown(text: String) = compose.onNodeWithText(text).isDisplayed()
 
+    private fun isCatShown(outing: Int) = compose.onNodeWithText("${time(outing)} ·", substring = true).isDisplayed()
+
     private companion object {
         const val COUNTER = "counter screen"
         const val CAT = "cat screen"
@@ -109,7 +111,7 @@ class EncountersListPositionTest {
         fun outings(range: IntRange) = EncountersState(
             rows = range.flatMap { outing ->
                 listOf(
-                    OutingHeader(key = "header-$outing", label = header(outing)),
+                    OutingHeader(key = "header-$outing", label = header(outing), dayLabel = header(outing)),
                     EncountersRow.Single(cell(outing), ONLY),
                 )
             }.toPersistentList(),

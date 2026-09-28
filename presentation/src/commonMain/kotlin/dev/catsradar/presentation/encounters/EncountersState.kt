@@ -12,6 +12,8 @@ data class EncountersState(
     val selectedIds: ImmutableSet<String> = persistentSetOf(),
     /** How many cats the last delete removed while its undo is still offered; null once it is not. */
     val removedCount: Int? = null,
+    /** Null with no cats. */
+    val totals: EncountersTotals? = null,
 ) {
     val isEmpty: Boolean get() = rows.isEmpty()
     val isSelecting: Boolean get() = selectedIds.isNotEmpty()
@@ -20,14 +22,22 @@ data class EncountersState(
 
 enum class EncountersLayout { GRID, LIST }
 
+/** Counts, not labels: only the platform knows their plural forms. [cats] counts a shot's cats each. */
+data class EncountersTotals(val cats: Int, val outings: Int)
+
+/** A row of the list. A pair, tile or card row whose `closesOuting` is set is the last row of its outing. */
 sealed interface EncountersRow {
     val key: String
 
-    data class PhotoPair(val first: PhotoCell, val second: PhotoCell) : EncountersRow {
+    data class PhotoPair(
+        val first: PhotoCell,
+        val second: PhotoCell,
+        val closesOuting: Boolean = false,
+    ) : EncountersRow {
         override val key: String get() = "pair-${first.id}"
     }
 
-    data class Tiles(val cells: ImmutableList<EncounterCell>) : EncountersRow {
+    data class Tiles(val cells: ImmutableList<EncounterCell>, val closesOuting: Boolean = false) : EncountersRow {
         init {
             require(cells.isNotEmpty()) { "a tile row holds at least one cat" }
         }
@@ -35,7 +45,7 @@ sealed interface EncountersRow {
         override val key: String get() = "tiles-${cells.first().id}"
     }
 
-    data class Cards(val cells: ImmutableList<EncounterCell>) : EncountersRow {
+    data class Cards(val cells: ImmutableList<EncounterCell>, val closesOuting: Boolean = false) : EncountersRow {
         init {
             require(cells.isNotEmpty()) { "a card row holds at least one cat" }
         }
@@ -52,11 +62,20 @@ sealed interface EncountersRow {
 /** Where a row sits among the rows of its outing. */
 enum class GroupPosition { FIRST, MIDDLE, LAST, ONLY }
 
+/**
+ * [count] is every cat of the outing, a shot's cats each; [spanLabel] is null when its cats are under a minute apart;
+ * [onWalk] says a stored walk overlapped it.
+ */
 data class OutingHeader(
     override val key: String,
     val label: String,
     /** The id the map focuses this outing by, when one of its cats has a location. */
     val mapOutingId: String? = null,
+    val dayLabel: String = "",
+    val startLabel: String = "",
+    val count: Int = 0,
+    val spanLabel: String? = null,
+    val onWalk: Boolean = false,
 ) : EncountersRow
 
 /** One cell of the list: [id] is the cat a tap opens; [catIds] are every cat the cell stands for, [id] first. */
@@ -102,8 +121,8 @@ private fun EntryCell.requireOpensFirstCat() =
 
 /** What a cell shows first: the most telling thing known about that cat. */
 sealed interface CellLead {
-    /** [thumbnailPath] is absolute. */
-    data class Photo(val thumbnailPath: String) : CellLead
+    /** [thumbnailPath] is absolute; [coat] is the one cat's coat, null for a shot of several or with none noted. */
+    data class Photo(val thumbnailPath: String, val coat: CoatOption? = null) : CellLead
 
     data class Coat(val coat: CoatOption) : CellLead
 

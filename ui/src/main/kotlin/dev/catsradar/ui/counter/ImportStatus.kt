@@ -41,6 +41,7 @@ import coil3.compose.AsyncImage
 import dev.catsradar.presentation.counter.ImportProgressState
 import dev.catsradar.presentation.counter.ImportSummaryState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.NoticeIcon
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList

@@ -17,15 +17,16 @@
 | E2 | The count in a cookie, with its milestone | The Counter's number sits in a twelve-sided cookie with an arc toward the next milestone; the goal and the outing ride tags on the ring, and nothing sits under the count. | safe | ~450 | E1 | merged |
 | E3 | The walk row | The walk button as an extended FAB and Undo as a tonal button. | safe | ~250 | E2 | merged |
 | E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | merged |
-| E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
-| E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
+| E5 | The detail's photos as a carousel | A cat's photos become a multi-aspect carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | merged |
+| E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | merged |
 | E7a | The coat question after a photo | The sheet after a photo keeps the photo in its header through a count, names its mode with a *One cat · Several* group that also leads back to one tap, counts cats in their shapes, and calls the paw *No coat*. | safe | ~450 | E4 | merged |
-| E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | planned |
-| E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
-| E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
+| E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | merged |
+| E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | merged |
+| E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | merged |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | in-review |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | merged |
-| E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
+| E12a | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; the headline totals the tab. | safe | ~550 | E1 | merged |
+| E12b | The cats inside the outing cards | Tiles take the coat shapes, pair tiles their chip, the short run's and the list's cards their new look, and the selection its ring and bar. | safe | ~450 | E4, E12a | merged |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
 | E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | merged |
@@ -127,13 +128,22 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   count moves.
 - **Cleanup owed:** none.
 
-### Slice E12 — Encounters in outing cards
+### Slice E12a — Encounters in outing cards
 - **In scope:** the headline and its totals; each outing as a card with its header (the day, the count and
-  span labels, the walk chip, On the map as a pill); the grid's tiles in the coat shapes and the pair tiles'
-  corners; the list's cards; the selection's ring, check and bar; the mapper's new labels and the walk
-  overlap; `browsing-cats.md`.
-- **Out of scope:** the packing rules, the selection's behaviour, delete and its undo, the Places list.
+  span labels, the walk chip, On the map as a pill); the mapper's new labels, the closing row and the walk
+  overlap; cards inside the card on `surface`; `browsing-cats.md`.
+- **Out of scope:** the cats inside the card (E12b); the packing rules, the selection's behaviour, delete and
+  its undo; the Places list and the spot sheet, which keep their rows.
 - **Ships safely because:** the same rows in the same order doing the same things; the labels are additive.
+- **Cleanup owed:** none.
+
+### Slice E12b — The cats inside the outing cards
+- **In scope:** the grid's tiles in the coat shapes with the face, the paw or the photo clipped to the shape;
+  the pair tiles' corners and dark time chip; the short run's and the list's cards (the tile's shape, the
+  coat's name or "A cat", time and place, "No location yet" in `onTertiaryContainer`); the selection's ring,
+  check and `primaryContainer` bar; `browsing-cats.md`.
+- **Out of scope:** the card and its header (E12a); what selecting and deleting do.
+- **Ships safely because:** the same cells doing the same things; only their drawing changes.
 - **Cleanup owed:** none.
 
 ### Slice E13 — The cookie turns with each cat
@@ -208,6 +218,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   prototype of Encounters. Prototype version 15 drew both; the owner put the alert under the title ("under")
   rather than at the top, and approved the Encounters drawing ("looks ok"). The alert joins E8; Encounters is
   E12.
+- 2026-09-27: E12 is split into E12a (the outing card, its header and the headline) and E12b (the cats inside the
+  card). The Places list and the map's spot sheet share the rows and keep today's look, so the rows carry two drawing
+  paths, which one slice would have carried past the size cap.
 - 2026-09-27: before merging, the owner asked that each tally turn the Counter's cookie a step further and keep
   it there (it sprang back), which is E13; and that every coat have its own shape rather than one per column, then
   that the spiky shapes be calmer, which E4 carries.
@@ -237,3 +250,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   #235 and #236, in that order. Each tree was built and gated before it landed; the badge fix's `TallyBlock` resolution
   kept E11's rung moment and the badge's new place, and was reviewed and re-audited. The plans of E7a, E11, E16 and
   E17 are archived.
+- 2026-09-28: the owner said "merge them". **E5, E6, E9, E7b and E8 merged** as #230, #232, #233, #238 and #239,
+  bottom first, then **E12a and E12b** as #225 and #226. The detail stack landed on the main it was built on, each
+  merge a tree identical to its gated head; the E12 branches then took that main, and each tree was gated before it
+  landed. The plans of E5 to E9 and E12 are archived. E10 waits on the owner's pick for the faint coat bars.

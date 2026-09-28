@@ -54,6 +54,7 @@ private fun NavKey.analyticsScreen(): AnalyticsScreen? = when (this) {
     is Regions -> AnalyticsScreen.REGIONS
     CatsMap -> AnalyticsScreen.MAP
     is MapSpot -> AnalyticsScreen.MAP_SPOT
+    is CoatSheet -> AnalyticsScreen.COAT_SHEET
     Settings -> AnalyticsScreen.SETTINGS
     else -> null
 }

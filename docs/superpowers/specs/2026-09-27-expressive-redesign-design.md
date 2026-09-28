@@ -266,16 +266,20 @@ This is one cat's page. When the outing pager lands, it pages these.
 circle. More opens a menu: **Show on the map**, disabled when the map does not draw the cat, and
 **Remove this cat**. The outing pager's "2 / 5" takes the bar's centre when P3b lands.
 
-**Photos.** A multi-browse carousel (`HorizontalMultiBrowseCarousel`) of the cat's photos, oldest
-first. Its large items are 300 dp wide at 4:5, with `large` corners, 8 dp apart, inside 20 dp side
-padding. After the photos come two narrower items, **Take a photo** and **From gallery**, an icon
-over a label on `surfaceContainerLow`. They open the camera and the picker as the buttons do today and
-disable while an attempt runs. With more than one photo, a small outlined label under the carousel
-says which is in front ("2 / 3"); TalkBack reads it as "Photo 2 of 3". A tap on a photo opens the
-viewer on that photo. When the cat gains a photo, the carousel moves to it. While photos attach, a
-wavy linear progress indicator runs under the carousel, determinate when several are counted.
+**Photos.** A carousel of the cat's photos, oldest first: Material's multi-aspect carousel
+(`MultiAspectCarouselScope` over a snapping `LazyRow`, one item a fling), since
+`HorizontalMultiBrowseCarousel` sizes every item alike and cannot draw the narrower add items (E5,
+2026-09-28). Its photos are 300 dp wide at 4:5, with `large` corners, 8 dp apart, inside the page's 16
+dp side inset, so the first photo stays in line with the back arrow as `encounter-detail.md` asks
+(amended from 20 dp in E5). After the photos come two narrower items, 140 dp wide and as tall, **Take
+a photo** and **From gallery**, an icon over a label on `surfaceContainerLow`. They open the camera
+and the picker as the buttons do today and disable while an attempt runs. With more than one photo, a
+small outlined label under the carousel says which is in front ("2 / 3"); TalkBack reads it as "Photo
+2 of 3". A tap on a photo opens the viewer on that photo. When the cat gains a photo, the carousel
+moves to it. While photos attach, a wavy linear progress indicator runs under the carousel,
+determinate when several are counted.
 
-**No photo.** A 4:5 block in `primaryContainer` with `large` corners inside the same side padding:
+**No photo.** A 4:5 block in `primaryContainer` with `large` corners inside the same side inset:
 the cat's face at 170 dp, or the paw when no coat is noted, "No photo yet", and a connected
 `ButtonGroup` of **Take a photo** and **Gallery**. During an attempt the group disables and the
 progress indicator runs under it.
@@ -338,7 +342,7 @@ The facts row opens with the cat's number: "#62" in English, "№ 62" in Russian
 62". It is the cat's place among the live cats, oldest first by the time it was logged, ties broken by
 id. A delete renumbers the cats logged after it, and an imported photo from before a cat renumbers
 that cat. `ObserveEncounterNumber(id)` in `:domain` emits it, null while the cat is not live, from a
-count the DAO answers. The number is its own slice; until it lands, the facts row starts with the day.
+count the DAO answers. A cat with no number starts its facts row with the day.
 
 ## 5. Statistics
 
@@ -479,7 +483,7 @@ from a flat one.
   - The ringed coat's shape is the one outlined.
   - A tap on the second photo opens the viewer on it; the add items open the camera and the picker
     and disable while attaching.
-  - The coat card opens the sheet; a coat sets and closes; the ringed coat clears and closes.
+  - The coat card opens the sheet; a coat sets and closes; *No coat* clears and closes.
   - Statistics: the pill switches the chart between seven and thirty bars; a tap on a bar names its day;
     the tiles show the six numbers; each coat row's bar is the width of its share.
   - The menu's entries and the Remove button reach the same intents as today's.

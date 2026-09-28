@@ -53,6 +53,7 @@ private class FakeEncounterRepository(seed: Encounter) : EncounterRepository {
 
     override fun observeAll(): Flow<List<Encounter>> = encounters
     override fun observeById(id: String): Flow<Encounter?> = encounters.map { list -> list.firstOrNull { it.id == id } }
+    override fun observeNumber(id: String): Flow<Int?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun insertAllIfSourceLive(
         sourceEncounterId: String,

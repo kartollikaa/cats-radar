@@ -43,7 +43,7 @@ fun EncounterDetailScreen(
     onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onUndoClick: () -> Unit = {},
-    onCoatClick: (CoatInteraction) -> Unit = {},
+    onCoatCardClick: (catId: String) -> Unit = {},
     onTakePhotoClick: (catId: String) -> Unit = {},
     onPickPhotoClick: (catId: String) -> Unit = {},
     onPhotoClick: (PhotoInteraction) -> Unit = {},
@@ -61,7 +61,7 @@ fun EncounterDetailScreen(
                 onPageSettle = onPageSettle,
                 onPhotoCatClick = onPhotoCatClick,
                 onDeleteClick = onDeleteClick,
-                onCoatClick = onCoatClick,
+                onCoatCardClick = onCoatCardClick,
                 onTakePhotoClick = onTakePhotoClick,
                 onPickPhotoClick = onPickPhotoClick,
                 onPhotoClick = onPhotoClick,
@@ -76,6 +76,15 @@ fun EncounterDetailScreen(
             contentDescription = stringResource(R.string.detail_back),
             contentPadding = contentPadding,
             center = several?.let { loaded -> { PagePosition(loaded.currentNumber, loaded.pages.size) } },
+            end = {
+                if (state is EncounterDetailState.Loaded) {
+                    DetailMore(
+                        showsOnMap = state.pages.firstOrNull { it.id == state.currentId }?.mapPosition != null,
+                        onShowOnMapClick = { onCoordinatesClick(state.currentId) },
+                        onRemoveClick = onDeleteClick,
+                    )
+                }
+            },
             onBackClick = onBackClick,
         )
     }

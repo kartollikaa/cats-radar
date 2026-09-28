@@ -3,7 +3,6 @@ package dev.catsradar.ui.coat
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,17 +10,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -37,8 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -61,9 +52,7 @@ import kotlinx.collections.immutable.persistentSetOf
 const val CoatShapeTestTag = "coat-shape"
 
 private val CellWidth = 70.dp
-private val FaceSize = 34.dp
 private val TileFaceSize = 38.dp
-private val PickerGap = 12.dp
 private const val CoatsPerRow = 4
 
 /**
@@ -137,40 +126,6 @@ fun CoatGrid(
     }
 }
 
-/** A picker that edits one cat's coat: tapping the current coat again clears it. */
-@Composable
-fun CoatPicker(
-    selected: CoatOption?,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(),
-    onCoatClick: (CoatOption?) -> Unit = {},
-) {
-    val coats = CoatOption.entries
-    val coatPitch = with(LocalDensity.current) { CellWidth.roundToPx() + PickerGap.roundToPx() }
-    // Opens one coat before the selected one, so the row visibly scrolls both ways.
-    val scrollState = rememberScrollState(initial = (coats.indexOf(selected) - 1).coerceAtLeast(0) * coatPitch)
-    // Not lazy: every cell is measured, so all of them take the tallest name's height.
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(scrollState)
-            .padding(contentPadding)
-            .height(IntrinsicSize.Max),
-        horizontalArrangement = Arrangement.spacedBy(PickerGap),
-    ) {
-        coats.forEach { coat ->
-            CoatCell(
-                label = stringResource(coat.labelRes()),
-                selected = coat == selected,
-                modifier = Modifier.fillMaxHeight(),
-                onClick = { onCoatClick(coat.takeIf { it != selected }) },
-            ) {
-                CatFace(coat = coat, modifier = Modifier.size(FaceSize))
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CoatTile(
@@ -234,35 +189,6 @@ private fun CountDot(count: Int, modifier: Modifier = Modifier) {
     )
 }
 
-@Composable
-private fun CoatCell(
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    face: @Composable () -> Unit,
-) {
-    val ring = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
-    Column(
-        modifier = modifier
-            .width(CellWidth)
-            // Clipped first so the ripple follows the cell's rounded shape instead of a hard rectangle.
-            .clip(MaterialTheme.shapes.small)
-            .border(width = 2.dp, color = ring, shape = MaterialTheme.shapes.small)
-            .selectable(selected = selected, onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        face()
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
 @StringRes
 fun CoatOption.labelRes(): Int = when (this) {
     CoatOption.GINGER -> R.string.coat_ginger
@@ -291,13 +217,5 @@ private fun CoatGridPreview() {
 private fun CoatGridWithUnspecifiedPreview() {
     CatsRadarTheme {
         Surface { CoatGrid(selected = persistentSetOf(CoatOption.GINGER, null), onUnspecifiedClick = {}) }
-    }
-}
-
-@ThemePreviews
-@Composable
-private fun CoatPickerPreview() {
-    CatsRadarTheme {
-        Surface { CoatPicker(selected = CoatOption.GREY_WHITE) }
     }
 }

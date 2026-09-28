@@ -51,7 +51,7 @@ class EncounterLongPressTest {
             }
         }
 
-        compose.onNodeWithText("14:32").performSemanticsAction(SemanticsActions.OnLongClick)
+        compose.onNodeWithText("14:32", substring = true).performSemanticsAction(SemanticsActions.OnLongClick)
 
         assertEquals(listOf("c1"), pressed)
     }

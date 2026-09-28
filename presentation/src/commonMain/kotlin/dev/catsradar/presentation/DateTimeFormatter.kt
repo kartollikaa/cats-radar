@@ -15,7 +15,7 @@ interface DateTimeFormatter {
     /** [instant] as a localized wall-clock time at [offset]. */
     fun time(instant: Instant, offset: UtcOffset): String
 
-    /** [duration] as a short span; the hour part is left out below one hour. */
+    /** [duration] as a short span in whole minutes; the hour part is left out below one hour. */
     fun duration(duration: Duration): String
 
     /** [date]'s weekday, abbreviated. */

@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -50,6 +51,8 @@ import dev.catsradar.ui.coat.labelRes
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
+
+const val CellLeadTestTag = "cell-lead"
 
 // Between rows and between the cells of a row alike, so the grid's gutters read as one.
 internal val CellGap = 8.dp
@@ -114,7 +117,7 @@ internal fun CardRow(
     ) {
         row.cells.forEach { cell ->
             key(cell.id) {
-                EncounterCard(
+                OutingCatCard(
                     cell = cell,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     selecting = selecting,
@@ -157,11 +160,11 @@ private fun PhotoTile(
         Text(
             text = cell.timeLabel,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.inverseOnSurface,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(8.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
+                .background(MaterialTheme.colorScheme.inverseSurface, CircleShape)
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         )
         cell.badgeCount?.let { ShotBadge(count = it, modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) }
@@ -179,6 +182,7 @@ private fun EncounterTile(
 ) {
     val subject = cell.badgeCount?.let { shotDescription(it) } ?: cell.lead.description()
     val description = cellDescription(subject, cell.timeLabel, cell.location)
+    val shape = cell.lead.coatShape()
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.small)
@@ -193,7 +197,8 @@ private fun EncounterTile(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .selectionOutline(cell.selected, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small),
+                    .selectionOutline(cell.selected, MaterialTheme.colorScheme.primary, shape),
+                shape = shape,
             )
             // The bottom corner: a tile this narrow has no room for the badge beside the selection check.
             cell.badgeCount?.let {
@@ -264,8 +269,16 @@ internal fun EncounterCard(
 }
 
 @Composable
-private fun EncounterLead(lead: CellLead, modifier: Modifier = Modifier, badgeCount: Int? = null) {
-    val tile = modifier.clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+internal fun EncounterLead(
+    lead: CellLead,
+    modifier: Modifier = Modifier,
+    badgeCount: Int? = null,
+    shape: Shape = MaterialTheme.shapes.small,
+) {
+    val tile = modifier
+        .testTag(CellLeadTestTag)
+        .clip(shape)
+        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
     val shot = badgeCount?.let { shotDescription(it) }
     when (lead) {
         is CellLead.Photo -> AsyncImage(

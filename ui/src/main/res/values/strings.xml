@@ -79,6 +79,10 @@
     <string name="encounters_empty">No cats logged yet</string>
     <string name="encounters_empty_hint">Tap the count on the Counter and the cat shows up here</string>
     <string name="encounters_outing_on_map">On the map</string>
+    <string name="encounters_on_a_walk">On a walk</string>
+    <string name="encounters_card_line">%1$s · %2$s</string>
+    <string name="encounters_card_no_coat">A cat</string>
+    <string name="encounters_totals">%1$s · %2$s</string>
     <string name="encounters_outing_on_map_description">Show the outing of %1$s on the map</string>
     <string name="encounters_photo_description">Photo of this cat</string>
     <string name="encounters_paw_description">A cat</string>
@@ -109,8 +113,22 @@
     <string name="location_none">No location yet</string>
 
     <string name="detail_photo_description">Photo of this cat</string>
-    <string name="detail_accuracy">±%1$d m</string>
-    <string name="detail_delete">Delete</string>
+    <string name="detail_title_ginger">Ginger cat</string>
+    <string name="detail_title_ginger_white">Ginger &amp; white cat</string>
+    <string name="detail_title_white">White cat</string>
+    <string name="detail_title_tricolor_mostly_white">Calico cat</string>
+    <string name="detail_title_tricolor_little_white">Calico cat</string>
+    <string name="detail_title_brown">Brown cat</string>
+    <string name="detail_title_brown_white">Brown &amp; white cat</string>
+    <string name="detail_title_grey">Grey cat</string>
+    <string name="detail_title_grey_white">Grey &amp; white cat</string>
+    <string name="detail_title_black">Black cat</string>
+    <string name="detail_title_black_white">Black &amp; white cat</string>
+    <string name="detail_title_no_coat">A cat</string>
+    <string name="detail_more">More</string>
+    <string name="detail_remove">Remove this cat</string>
+    <string name="detail_number">#%1$d</string>
+    <string name="detail_number_spoken">Cat number %1$d</string>
     <string name="detail_deleted">Cat removed</string>
     <string name="detail_undo">Undo</string>
     <string name="detail_missing">This cat is no longer here</string>
@@ -180,6 +198,22 @@
         <item quantity="one">%1$d cat, %2$s</item>
         <item quantity="other">%1$d cats, %2$s</item>
     </plurals>
+    <plurals name="encounters_total_cats">
+        <item quantity="one">%1$d cat</item>
+        <item quantity="other">%1$d cats</item>
+    </plurals>
+    <plurals name="encounters_total_outings">
+        <item quantity="one">%1$d outing</item>
+        <item quantity="other">%1$d outings</item>
+    </plurals>
+    <plurals name="encounters_outing_summary">
+        <item quantity="one">%1$s · %2$d cat · %3$s</item>
+        <item quantity="other">%1$s · %2$d cats · %3$s</item>
+    </plurals>
+    <plurals name="encounters_outing_summary_short">
+        <item quantity="one">%1$s · %2$d cat</item>
+        <item quantity="other">%1$s · %2$d cats</item>
+    </plurals>
     <plurals name="counter_count_caption" tools:ignore="ImpliedQuantity">
         <item quantity="one">cat</item>
         <item quantity="other">cats</item>
@@ -208,13 +242,25 @@
     <string name="coat_none">No coat</string>
     <string name="statistics_by_coat">By coat</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
-    <string name="detail_where">Where</string>
+    <string name="detail_where_you_met">Where you met</string>
+    <string name="detail_source_accuracy">%1$s · ±%2$d m</string>
+    <string name="detail_place_city_country">%1$s, %2$s</string>
+    <string name="detail_no_location_title">No location for this cat</string>
+    <string name="detail_no_location_body">It was logged without a fix, so it is not on the map or in Places.</string>
     <string name="detail_coat">Coat</string>
+    <string name="detail_coat_not_noted">Coat not noted</string>
+    <string name="detail_coat_add_hint">Tap to add it</string>
+    <string name="detail_coat_change">Change</string>
+    <string name="detail_coat_add">Add</string>
+    <string name="detail_coat_sheet_title">What coat was it?</string>
+    <string name="detail_coat_sheet_hint_change">Pick another, or “No coat”</string>
+    <string name="detail_coat_sheet_hint_add">Tap the coat that fits</string>
     <string name="detail_on_this_photo">On this photo</string>
     <string name="detail_on_this_photo_cat">%1$s, cat %2$d of %3$d</string>
-    <string name="detail_photo">Add a photo</string>
     <string name="detail_take_photo">Take a photo</string>
-    <string name="detail_pick_photo">Choose from gallery</string>
+    <string name="detail_from_gallery">From gallery</string>
+    <string name="detail_gallery">Gallery</string>
+    <string name="detail_no_photo">No photo yet</string>
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_already_there">This photo is already on this cat</string>
     <string name="detail_photos_already_there">These photos are already on this cat</string>

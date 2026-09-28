@@ -73,6 +73,7 @@ class AnalyticsEncodingTest {
             AnalyticsScreen.REGIONS to "regions",
             AnalyticsScreen.MAP to "map",
             AnalyticsScreen.MAP_SPOT to "map_spot",
+            AnalyticsScreen.COAT_SHEET to "coat_sheet",
             AnalyticsScreen.SETTINGS to "settings",
         )
 

@@ -13,6 +13,40 @@ groups or packs. Counter and Encounters sit behind a bottom `NavigationBar`; Cou
 back-stack root (spec §2): selecting a tab rewrites the stack to `[Counter]` or `[Counter, tab]`,
 back from a tab returns to Counter, and back from Counter exits.
 
+## The outing card
+
+The tab opens on its title and its totals, "147 cats · 38 outings": every cat on screen, a shot's cats each,
+and every outing. They are the list's first item and scroll away with it.
+
+Each outing is **one card** on the low surface. Its header names the day in large type — Today, Yesterday
+or the date — and under it the start, the count and the span from its first cat to its last: "4:12 PM · 6
+cats · 48 min". An outing whose cats are under a minute apart, a lone cat among them, shows no span, since a
+span in whole minutes would read "0 min". **On the map** is a tonal pill beside the day, on the rule under
+*Showing an outing on the map*.
+
+An outing a walk met wears an **On a walk** chip. A walk meets an outing when the walk's window — its start
+to its end, or with no end while it is still on — touches the outing's first-to-last span, ends included;
+the stored walks come from `WalkRepository.observeAll()`, so a walk starting over an open tab marks its
+outings without a new cat.
+
+**Inside the card**, a run's tiles take each coat's own shape (see `coat.md`), stretched to fill their
+square, with the face, the paw or the photo's thumbnail clipped to it. A shot of several cats, and a cat with
+no coat, takes no coat's shape. A pair's times sit on an opaque `inverseSurface` chip — dark in the light
+theme, light in the dark one — so they read on any photo. Every other cat inside the card — a short run's,
+and each row of the list — is a card of its own on the surface colour with `medium` corners, the list's
+set a little apart. It leads with the tile's shape, names the coat or "A cat" (a shot: "Photo of 3 cats",
+with its badge), and reads "time · place" under that, "No location yet" in the tertiary container's text
+colour. A screen reader hears the card's name, time and place; its lead stays silent, since the name
+beside it says the same. A chosen cat's ring follows its shape, round a tile and round a card's lead alike,
+and while selecting the bar at the top is `primaryContainer`.
+
+The card is drawn row by row: the header's piece carries the card's top corners, the outing's last row its
+bottom ones (the mapper marks it), and the gaps between rows sit inside the card, so the card stays
+unbroken while the list keeps one item per row and its scroll position by index.
+
+The Places list and the map's spot sheet use the same rows without the card, the headline or the new header
+(`EncountersStateMapper.catRows`).
+
 ## At the edges
 
 An outing header shows the local date and start time of its *earliest* encounter (its start, per
@@ -67,8 +101,9 @@ row counts stop being trivial to read and group on every emission.
   (`EncountersRow`, and the `EncounterListItem` rows the Places area list uses),
   `EncounterGridPacker`, `EncountersIntent`, `EncountersEffect`, `EncountersStore`,
   `EncountersStateMapper`, `EncountersSelection.kt` (`withSelection`)
-- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `EncounterGridRows.kt`,
-  `EncounterSingleRow.kt`, `CellSelection.kt`, `SelectionBar.kt`, `UndoBar.kt`
+- `ui/src/main/kotlin/dev/catsradar/ui/encounters/` — `EncountersScreen.kt`, `OutingCard.kt` (the headline,
+  the card's pieces, its header, the walk chip and the pill), `EncounterGridRows.kt`, `EncounterSingleRow.kt`,
+  `CellSelection.kt`, `SelectionBar.kt`, `UndoBar.kt`
 - `ui/src/main/kotlin/dev/catsradar/ui/navigation/` — `BottomNavTab`, `CatsRadarBottomBar`
 - `app/src/main/kotlin/dev/catsradar/app/navigation/` — `Encounters`, `BottomNavigation.kt`
   (`BottomNavBackStack`), `CatsRadarNavHost.kt`, `Destinations.kt` (`EncountersDestination`, which
@@ -76,7 +111,7 @@ row counts stop being trivial to read and group on every emission.
 
 ## Showing an outing on the map
 
-An outing's header ends in "On the map" when at least one of its cats has a location. The mapper
+An outing's header offers "On the map" when at least one of its cats has a location. The mapper
 decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
 that outing alone (`map.md`). The map's spot sheet and the cats of a place (`places.md`) use the same
 rows and offer the same action.
@@ -119,7 +154,8 @@ A photo can show several cats, each its own encounter with its own coat, all sha
 entry, in the grid and in the list alike (`EncountersStateMapperTest`, *a shot of three cats is one entry holding
 all three*). The entry shows that photo with a **badge** — a paw and the number of cats — when it holds more
 than one: in the top corner of a pair tile, in the bottom corner of a tile, which is too narrow to hold it
-beside the selection check, and beside the time on a card or a list row. For a screen
+beside the selection check, and beside the name on a card inside an outing's card (beside the time in the
+Places list and the spot sheet). For a screen
 reader the entry is a "Photo of 3 cats", with its time and location; the badge itself is hidden from it. The
 time and location are the first cat's, which every other cat copied when it joined the shot; a place set by hand
 on one of them later shows on that cat's own screen, not here. A shot without a thumbnail leads with a paw, since
@@ -143,9 +179,10 @@ one coat's face would misname cats that may have several.
 ## Grid or list
 
 The grid is optional: **Settings → Encounters → Grid of cats** (`SettingsRepository.encountersGrid()`, on
-unless turned off). Off, the tab goes back to one full row per cat, and each outing reads as one card:
-its rows are cards of their own with a hairline gap, round at the outing's outer corners and tight where
-they meet. The mapper marks each row as the first, a middle, the last or the only one of its outing
+unless turned off). Off, the tab goes back to one full row per cat, each a card of its own inside its
+outing's card. The Places list and the map's spot sheet keep the older rows: cards with a hairline gap,
+round at the outing's outer corners and tight where they meet, the time as the title. The mapper marks
+each row as the first, a middle, the last or the only one of its outing
 (`GroupPosition`), and states the layout (`EncountersLayout`) so the screen only picks the gaps and the
 header's inset. `EncountersStore` combines the setting with the encounters, so flipping the switch
 re-lays an open tab without waiting for a new cat. The Places area list is the same either way.

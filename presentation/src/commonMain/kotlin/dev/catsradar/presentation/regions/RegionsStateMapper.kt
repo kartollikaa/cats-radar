@@ -29,7 +29,7 @@ class RegionsStateMapper(private val encountersMapper: EncountersStateMapper) {
             view.encounters.isEmpty() -> RegionsState.Empty(RegionsEmptyLabel.NO_CATS_HERE)
             else -> RegionsState.Cats(
                 header = header(parent, view, view.encounters.size),
-                rows = encountersMapper.map(view.encounters, today, grid = false, byShot = false).rows,
+                rows = encountersMapper.catRows(view.encounters, today),
             )
         }
     }

@@ -95,6 +95,10 @@
     <string name="encounters_empty">Пока ни одного котика</string>
     <string name="encounters_empty_hint">Нажмите на число на Счётчике — и котик появится здесь</string>
     <string name="encounters_outing_on_map">На карте</string>
+    <string name="encounters_on_a_walk">На прогулке</string>
+    <string name="encounters_card_line">%1$s · %2$s</string>
+    <string name="encounters_card_no_coat">Котик</string>
+    <string name="encounters_totals">%1$s · %2$s</string>
     <string name="encounters_outing_on_map_description">Показать вылазку %1$s на карте</string>
     <string name="encounters_photo_description">Фото этого котика</string>
     <string name="encounters_paw_description">Котик</string>
@@ -131,8 +135,22 @@
     <string name="location_none">Места пока нет</string>
 
     <string name="detail_photo_description">Фото этого котика</string>
-    <string name="detail_accuracy">±%1$d м</string>
-    <string name="detail_delete">Удалить</string>
+    <string name="detail_title_ginger">Рыжий котик</string>
+    <string name="detail_title_ginger_white">Рыже-белый котик</string>
+    <string name="detail_title_white">Белый котик</string>
+    <string name="detail_title_tricolor_mostly_white">Трёхцветный котик</string>
+    <string name="detail_title_tricolor_little_white">Трёхцветный котик</string>
+    <string name="detail_title_brown">Коричневый котик</string>
+    <string name="detail_title_brown_white">Коричнево-белый котик</string>
+    <string name="detail_title_grey">Серый котик</string>
+    <string name="detail_title_grey_white">Серо-белый котик</string>
+    <string name="detail_title_black">Чёрный котик</string>
+    <string name="detail_title_black_white">Чёрно-белый котик</string>
+    <string name="detail_title_no_coat">Котик</string>
+    <string name="detail_more">Ещё</string>
+    <string name="detail_remove">Удалить котика</string>
+    <string name="detail_number">№\u00A0%1$d</string>
+    <string name="detail_number_spoken">Котик номер %1$d</string>
     <string name="detail_deleted">Котик удалён</string>
     <string name="detail_undo">Вернуть</string>
     <string name="detail_missing">Этого котика больше нет</string>
@@ -214,6 +232,30 @@
         <item quantity="many">%1$d котиков, %2$s</item>
         <item quantity="other">%1$d котика, %2$s</item>
     </plurals>
+    <plurals name="encounters_total_cats">
+        <item quantity="one">%1$d котик</item>
+        <item quantity="few">%1$d котика</item>
+        <item quantity="many">%1$d котиков</item>
+        <item quantity="other">%1$d котика</item>
+    </plurals>
+    <plurals name="encounters_total_outings">
+        <item quantity="one">%1$d вылазка</item>
+        <item quantity="few">%1$d вылазки</item>
+        <item quantity="many">%1$d вылазок</item>
+        <item quantity="other">%1$d вылазки</item>
+    </plurals>
+    <plurals name="encounters_outing_summary">
+        <item quantity="one">%1$s · %2$d котик · %3$s</item>
+        <item quantity="few">%1$s · %2$d котика · %3$s</item>
+        <item quantity="many">%1$s · %2$d котиков · %3$s</item>
+        <item quantity="other">%1$s · %2$d котика · %3$s</item>
+    </plurals>
+    <plurals name="encounters_outing_summary_short">
+        <item quantity="one">%1$s · %2$d котик</item>
+        <item quantity="few">%1$s · %2$d котика</item>
+        <item quantity="many">%1$s · %2$d котиков</item>
+        <item quantity="other">%1$s · %2$d котика</item>
+    </plurals>
     <plurals name="counter_count_caption" tools:ignore="ImpliedQuantity">
         <item quantity="one">котик</item>
         <item quantity="few">котика</item>
@@ -248,13 +290,25 @@
     <string name="coat_none">Не отмечен</string>
     <string name="statistics_by_coat">По окрасу</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
-    <string name="detail_where">Где</string>
+    <string name="detail_where_you_met">Где встретили</string>
+    <string name="detail_source_accuracy">%1$s · ±%2$d м</string>
+    <string name="detail_place_city_country">%1$s, %2$s</string>
+    <string name="detail_no_location_title">У котика нет места</string>
+    <string name="detail_no_location_body">Его отметили без координат, поэтому его нет на карте и в Местах.</string>
     <string name="detail_coat">Окрас</string>
+    <string name="detail_coat_not_noted">Окрас не отмечен</string>
+    <string name="detail_coat_add_hint">Нажмите, чтобы добавить</string>
+    <string name="detail_coat_change">Изменить</string>
+    <string name="detail_coat_add">Добавить</string>
+    <string name="detail_coat_sheet_title">Какого окраса котик?</string>
+    <string name="detail_coat_sheet_hint_change">Выберите другой или „Не отмечен“</string>
+    <string name="detail_coat_sheet_hint_add">Нажмите на подходящий окрас</string>
     <string name="detail_on_this_photo">На этом фото</string>
     <string name="detail_on_this_photo_cat">%1$s, котик %2$d из %3$d</string>
-    <string name="detail_photo">Добавить фото</string>
-    <string name="detail_take_photo">Сфотографировать</string>
-    <string name="detail_pick_photo">Выбрать из галереи</string>
+    <string name="detail_take_photo">Снять фото</string>
+    <string name="detail_from_gallery">Из галереи</string>
+    <string name="detail_gallery">Галерея</string>
+    <string name="detail_no_photo">Фото пока нет</string>
     <string name="detail_photo_not_attached">Фото не прикрепилось</string>
     <string name="detail_photo_already_there">Это фото уже есть у котика</string>
     <string name="detail_photos_already_there">Эти фото уже есть у котика</string>
