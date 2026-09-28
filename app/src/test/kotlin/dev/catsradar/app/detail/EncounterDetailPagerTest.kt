@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -15,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
@@ -24,6 +26,7 @@ import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
+import dev.catsradar.ui.detail.DetailCarouselTestTag
 import dev.catsradar.ui.detail.DetailPagesTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -120,24 +123,25 @@ class EncounterDetailPagerTest {
     }
 
     @Test
-    fun `a cat swiped away from and back to keeps its photo`() {
+    fun `a cat swiped away from and back to keeps its place in the row`() {
         compose.setContent {
             CatsRadarTheme { EncounterDetailScreen(state = loadedOn(photographed, photographed, older)) }
         }
-
-        compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
-            .performTouchInput { swipeLeft() }
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput { swipeLeft() }
         compose.waitForIdle()
-        compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
-            .performTouchInput { swipeLeft() }
+        compose.onNodeWithText(context.getString(R.string.viewer_position, 2, 2)).assertExists()
+
+        // Across the time, below the row, so the drag moves the pages rather than the row.
+        val belowTheRow = compose.onNodeWithText(NEWER_TIME).fetchSemanticsNode().boundsInRoot.center.y
+        compose.onNodeWithTag(DetailPagesTestTag)
+            .performTouchInput { swipe(Offset(right - 1f, belowTheRow), Offset(left + 1f, belowTheRow)) }
         compose.waitForIdle()
         compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
         compose.onNodeWithTag(DetailPagesTestTag).performTouchInput { swipeRight() }
         compose.waitForIdle()
 
         compose.onNodeWithText(NEWER_TIME).assertExists()
-        compose.onNodeWithContentDescription(context.getString(R.string.viewer_position_description, 2, 2))
-            .assertExists()
+        compose.onNodeWithText(context.getString(R.string.viewer_position, 2, 2)).assertExists()
     }
 
     @Test
@@ -150,7 +154,7 @@ class EncounterDetailPagerTest {
     }
 
     @Test
-    fun `a drag past a cat's last photo moves on to the next cat`() {
+    fun `a drag past the row's end moves on to the next cat`() {
         val settled = mutableListOf<String>()
         compose.setContent {
             CatsRadarTheme {
@@ -160,21 +164,25 @@ class EncounterDetailPagerTest {
                 )
             }
         }
-        val photo = compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
 
-        photo.performTouchInput { swipeLeft() }
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput { swipeLeft() }
         compose.waitForIdle()
-        compose.onNodeWithContentDescription(context.getString(R.string.viewer_position_description, 2, 2))
-            .assertExists()
-        compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description))
-            .performTouchInput { swipeLeft() }
-        compose.waitForIdle()
+        assertEquals(emptyList(), settled, "the first drag moves the row, not the pages")
+        compose.onNodeWithText(context.getString(R.string.viewer_position, 2, 2)).assertExists()
+        repeat(SWIPES_TO_PASS_THE_ROW) {
+            if (settled.isEmpty()) {
+                compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput { swipeLeft() }
+                compose.waitForIdle()
+            }
+        }
 
         compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
         assertEquals(listOf(older.id), settled)
     }
 
     private companion object {
+        // One advance per swipe: to the second photo, to the row's end, then over into the next cat.
+        const val SWIPES_TO_PASS_THE_ROW = 3
         const val LOGGED_TIME = "14:40"
         const val NEWER_TIME = "14:32"
         const val OLDER_TIME = "13:58"

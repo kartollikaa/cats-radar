@@ -274,7 +274,7 @@ nothing, which keeps a fixture that large small in the repository.
 
 A photographed cat shows its cover's thumbnail in an Encounters tile or card, the cover's full copy
 when it shares a pair row with the photo next to it (see `browsing-cats.md`), and every photo's full
-copy in a pager on the detail screen, all loaded from app-private storage with Coil; a tap on one on
+copy in a carousel on the detail screen, all loaded from app-private storage with Coil; a tap on one on
 the detail screen opens it fullscreen (see [encounter-detail.md](./encounter-detail.md#its-photos) and
 [photo-viewer.md](./photo-viewer.md)). The mapper resolves the stored **relative**
 path into an absolute one — the cell carries a path Coil can open, not the path the database happens

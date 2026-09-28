@@ -67,10 +67,11 @@ deleted, so an outing a delete splits in two stays whole on them (`OutingPagesTe
 two stays whole on the pages*). Each page shows its own cat's place (`EncounterDetailStoreTest`, *each page shows
 its own cat's place*).
 
-A cat with several photos keeps its own photo pager inside its page: a drag that starts on a photo moves the
-photos first, and past the cat's last photo the rest of the drag moves on to the next cat (`EncounterDetailPagerTest`,
-*a drag past a cat's last photo moves on to the next cat*). Each page keeps its photo position while the user
-swipes to other cats and back (*a cat swiped away from and back to keeps its photo*).
+A cat with photos keeps its own carousel inside its page: a drag that starts on it moves the carousel first,
+one item a fling, and past its end — its two add items — the rest of the drag moves on to the next cat
+(`EncounterDetailPagerTest`, *a drag past the row's end moves on to the next cat*). Each page keeps its place in the
+carousel while the user swipes to other cats and back (*a cat swiped away from and back to keeps its place in the
+row*).
 
 The cat on screen is saved with the screen, so after the process died it reopens on the cat that was on screen,
 while that cat is live, and on the opened one otherwise (`EncounterDetailPagerEntryTest`, *a restored entry
@@ -166,26 +167,38 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 ## Its photos
 
-A cat's photos lead the screen as a pager of the app's copies, oldest first, swiped sideways (see
-[photos.md](./photos.md#seeing-one)); while there is more than one, a position — "2 / 3" — sits in the
-corner of the photo on screen (`DetailPhotoPagerTest`, *a cat with several photos shows where the pager
-is*; *a cat with one photo shows no position*). A tap on a photo opens the viewer on that photo (see
-[photo-viewer.md](./photo-viewer.md); `EncounterDetailStorePhotoTest`, *a tap on a cat's second photo
-opens the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
-opens that cat's viewer above it*). When the cat gains a photo, whoever added it, the pager moves to
-the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
-pager to it*).
+A cat's photos lead the screen as a carousel of the app's copies, oldest first (see
+[photos.md](./photos.md#seeing-one)): Material's multi-aspect carousel, each photo a tall 4:5 card with large
+corners that masks and slides as it leaves the edge, one item a fling, the first in line with the back arrow
+(`DetailPhotoCarouselTest`, *a cat's photos run oldest first, 300 dp wide at 4 to 5, 8 dp apart, the first in line
+with the back arrow*). After the photos come two narrower items as tall as a photo, **Take a photo** and **From
+gallery**, an icon over its label on the low container (*after the photos come take a photo and from gallery,
+narrower and as tall, on the low container*). While there is more than one photo, an outlined label under the
+carousel names the one in front — "2 / 3", read out as "Photo 2 of 3"; scrolled onto the add items it names the
+last photo (*a cat with several photos shows under the row which photo is in front*; *a cat with one photo shows no
+position*; *scrolling the row to the next photo names it*). A tap on a photo opens the viewer on that photo (see
+[photo-viewer.md](./photo-viewer.md); *a tap on the second photo opens the viewer on it*;
+`EncounterDetailStorePhotoTest`, *a tap on a cat's second photo opens the viewer on that photo*;
+`PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry opens that cat's viewer above it*).
+When the cat gains a photo, whoever added it, the carousel moves to it, wherever it lands among the others — the
+end for a new photo, further back for an older one a backup brought in (`DetailPhotoCarouselTest`, *a photo that
+arrives brings the row to it*; *an older photo that arrives brings the row to it*). For a screen reader each of
+several photos says which it is, "Photo 2 of 3", and a lone photo is "Photo of this cat" (*each photo of several
+tells TalkBack which it is, and a lone photo says it is the cat's*).
+
+A cat without a photo opens on itself instead: a 4:5 block in the primary container with large corners, the cat's
+face — or the paw with no coat noted — "No photo yet", and a connected pair, **Take a photo** and **Gallery**
+(`DetailNoPhotoTest`).
 
 The fullscreen viewer can remove its displayed attachment after confirmation. The detail underneath
 then follows the repository: the cat and its other photos remain, or the no-photo state appears after
 the last attachment goes; another cat attached from the same shot is separate and stays unchanged
 (see [photo-viewer.md](./photo-viewer.md#remove-from-the-cat)).
 
-**Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
-*Choose from gallery* — the system camera, or the system picker for several images — on every live
-cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat that already has a photo
-can still be given another*). The new photo goes after the others (*a photo taken of a cat that has one
-is added after it*). A photo the cat already has is not added again, and the screen says so (*a
+The add items at the carousel's end, and the pair on a cat with none, open the system camera or the system
+picker for several images on every live cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat
+that already has a photo can still be given another*). The new photo goes after the others (*a photo taken of a
+cat that has one is added after it*). A photo the cat already has is not added again, and the screen says so (*a
 picked photo the cat already has is not added again, and the screen says so*). A second tap before
 the camera or the picker answers opens nothing, so a double tap never opens two cameras (*a second
 tap before the camera answers opens nothing*); one camera or picker is open for the whole screen at a time,
@@ -194,8 +207,11 @@ cat, and their answer names it back — even when the process died while they we
 the camera's queue and the picker remember the cat with the rest of the screen's saved state
 (`PhotoLaunchersTest`; `PendingCapturesTest`). A queue saved by an older version, whose shots named
 no cat, restores empty: the capture file waits for the start-up cleanup rather than landing on a
-guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both buttons
-disable and a progress bar shows under them, so a tap in the meantime opens nothing
+guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both add items, or both
+buttons of the pair, disable and a wavy progress indicator runs under the carousel or under the pair, so a tap in
+the meantime opens nothing (`DetailPhotoCarouselTest`, *while a photo is being attached, both add items are
+disabled*; *while photos attach, the progress runs under the row*; `DetailNoPhotoTest`, *during an attempt both
+buttons are disabled and the progress runs under them*)
 (`EncounterDetailStorePhotoTest`, *taking a photo while one is being attached opens nothing*). The attempt
 is its cat's: it shows on that cat's page alone (*a photo attached to another page shows the attempt on that
 page alone*), and it carries on, count and all, whichever cat is on screen (`EncounterDetailPickSeveralTest`,
@@ -208,20 +224,20 @@ the viewer opens on the cat swiped to*; *after a swipe, set on map opens the pic
 swipe, the coordinates open the map on the cat swiped to*); a stray result naming a cat that is not on
 the pages opens none of them (*a tap naming a cat not on the pages opens neither the viewer nor the map*;
 *set on map names the cat it was tapped for, and a cat not on the pages opens nothing*). The coat cell,
-*Take a photo*, *Choose from gallery*, the photo, the coordinates and *Set on map* send the id of the page
+*Take a photo*, *From gallery* or *Gallery*, the photo, the coordinates and *Set on map* send the id of the page
 they sit on; Delete, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
 the cat on screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
 
-The attempt ends only when its cat carries the photo it attached: until then the progress bar
+The attempt ends only when its cat carries the photo it attached: until then the progress indicator
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
-have the photo yet, and offer the buttons back for a moment before the photo appeared
+have the photo yet, and enable the add items again for a moment before the photo appeared
 (*a successful attach stays in progress until the photo arrives, never offering again*).
 
 **Several from the gallery.** The picker lets the user choose up to `Tuning.ATTACH_BATCH_MAX` images; a
 picker that ignores the limit — the document picker used where no photo picker is available — is cut to the
 first ones chosen (`PickSeveralPhotosTest`). The photos are attached one after another, in the order
 picked, after the cat's own (`EncounterDetailPickSeveralTest`, *every picked photo lands after the
-cat's own, in the order picked*). While they are, both buttons stay disabled and the progress bar fills
+cat's own, in the order picked*). While they are, both stay disabled and the progress indicator fills
 as each one goes through, read out as "Attached 2 of 5 photos"; a single photo, picked or taken, shows the
 bar without a count as before (*a pick of several shows how many are through as it goes*; *a single
 picked photo or a camera photo shows the attempt without a count*; *a tap on either button mid-pick
@@ -297,7 +313,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`;
   `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
 - `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `WhereCard.kt`,
-  `DetailPhotoPager.kt`, `AddPhotoCard.kt`, `DetailInteractions.kt` (the two-value taps' payloads);
+  `DetailPhotoCarousel.kt` (the photos and the add items), `NoPhotoBlock.kt` (a cat without a photo), `AttachingBar.kt`,
+  `DetailInteractions.kt` (the two-value taps' payloads);
   `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/SpotMap.kt` —
   the **Where** section's map and the cat's dot on it
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,

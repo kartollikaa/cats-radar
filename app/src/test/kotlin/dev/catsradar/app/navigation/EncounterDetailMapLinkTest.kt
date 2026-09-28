@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ApplicationProvider
@@ -65,7 +66,7 @@ class EncounterDetailMapLinkTest {
         val backStack = show(listOf(Counter, Encounters, EncounterDetail(ID)), cat = located())
         awaitTheDatabase { mapLink().fetchSemanticsNodes().isNotEmpty() }
 
-        compose.onNode(opensTheMap() and hasText(COORDINATES)).performClick()
+        compose.onNode(opensTheMap() and hasText(COORDINATES)).performScrollTo().performClick()
         compose.waitForIdle()
 
         assertEquals(listOf(Counter, CatsMap), backStack.toList())
@@ -77,7 +78,7 @@ class EncounterDetailMapLinkTest {
         val backStack = show(listOf(Counter, CatsMap, EncounterDetail(ID)), cat = located())
         awaitTheDatabase { mapLink().fetchSemanticsNodes().isNotEmpty() }
 
-        mapLink().onFirst().performClick()
+        mapLink().onFirst().performScrollTo().performClick()
         compose.waitForIdle()
 
         assertEquals(listOf(Counter, CatsMap), backStack.toList())

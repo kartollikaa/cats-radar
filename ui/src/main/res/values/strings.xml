@@ -201,9 +201,10 @@
     <string name="detail_coat">Coat</string>
     <string name="detail_on_this_photo">On this photo</string>
     <string name="detail_on_this_photo_cat">%1$s, cat %2$d of %3$d</string>
-    <string name="detail_photo">Add a photo</string>
     <string name="detail_take_photo">Take a photo</string>
-    <string name="detail_pick_photo">Choose from gallery</string>
+    <string name="detail_from_gallery">From gallery</string>
+    <string name="detail_gallery">Gallery</string>
+    <string name="detail_no_photo">No photo yet</string>
     <string name="detail_photo_not_attached">Photo not attached</string>
     <string name="detail_photo_already_there">This photo is already on this cat</string>
     <string name="detail_photos_already_there">These photos are already on this cat</string>

@@ -61,8 +61,9 @@ class EncounterDetailPagesTest {
         compose.onNodeWithText(THIRD_TIME).assertDoesNotExist()
 
         compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description)).performClick()
+        compose.scrollCarouselToEnd(photos = 1)
         compose.onNodeWithText(context.getString(R.string.detail_take_photo)).performClick()
-        compose.onNodeWithText(context.getString(R.string.detail_pick_photo)).performClick()
+        compose.onNodeWithText(context.getString(R.string.detail_from_gallery)).performClick()
         compose.onNodeWithText(context.getString(R.string.detail_set_location)).performScrollTo().performClick()
         compose.scrollListToEnd()
         compose.onNodeWithText(context.getString(R.string.coat_ginger)).performClick()
@@ -85,7 +86,7 @@ class EncounterDetailPagesTest {
             }
         }
 
-        compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).performTouchInput { click() }
+        compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).performScrollTo().performTouchInput { click() }
 
         assertEquals(listOf("cat-2"), taps)
     }
