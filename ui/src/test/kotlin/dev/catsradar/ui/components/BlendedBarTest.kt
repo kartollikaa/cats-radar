@@ -1,5 +1,6 @@
 package dev.catsradar.ui.components
 
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import dev.catsradar.ui.coat.Black
 import dev.catsradar.ui.coat.Ginger
@@ -32,6 +33,13 @@ class BlendedBarTest {
         assertNotEquals(White, shaded)
         assertTrue(shaded.luminance() < White.luminance())
         assertInRange(contrast(shaded, lightTrack))
+    }
+
+    @Test
+    fun `a faint colour is shaded along the way to the text colour, not toward any other`() {
+        val shaded = White.legibleOn(lightTrack, lightInk, MinContrast)
+
+        assertTrue((1..100).any { step -> lerp(White, lightInk, step / 100f) == shaded })
     }
 
     @Test
