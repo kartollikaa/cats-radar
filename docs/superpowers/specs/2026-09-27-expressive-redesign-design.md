@@ -297,7 +297,7 @@ The facts row opens with the cat's number: "#62" in English, "№ 62" in Russian
 62". It is the cat's place among the live cats, oldest first by the time it was logged, ties broken by
 id. A delete renumbers the cats logged after it, and an imported photo from before a cat renumbers
 that cat. `ObserveEncounterNumber(id)` in `:domain` emits it, null while the cat is not live, from a
-count the DAO answers. The number is its own slice; until it lands, the facts row starts with the day.
+count the DAO answers. A cat with no number starts its facts row with the day.
 
 ## 5. Statistics
 

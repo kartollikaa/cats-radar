@@ -2,9 +2,10 @@
 
 Tapping a row in the Encounters list opens that cat, among the other cats of its outing (see
 [Paging through the outing](#paging-through-the-outing)). Under its photos the page names the cat by its
-coat — "Ginger & white cat", or "A cat" with no coat noted, «котик» in Russian — and a row of outlined facts
-follows: the day it was logged (relative — "Today", "Yesterday" — or a calendar date), the time, and its
-place with the flag when it has a named one. The facts are labels, not buttons; they wrap onto a second line
+coat — "Ginger & white cat", or "A cat" with no coat noted, «котик» in Russian — and a row of facts
+follows: the cat's number (see [Its number](#its-number)), then outlined labels for the day it was logged
+(relative — "Today", "Yesterday" — or a calendar date), the time, and its place with the flag when it has a
+named one. The facts are labels, not buttons; they wrap onto a second line
 when they must, and a screen reader hears them as one item, without the flag (`DetailNamesTest`). Further
 down come where its coordinates came from in words, and the coordinates themselves when there are any, with
 the fix's accuracy under them. The screen is pushed
@@ -46,8 +47,9 @@ offset, not the device's, so a cat logged abroad stays on the day it was logged
 
 The state holds each cat as a page — a `CatPage` in `Loaded.pages`, beside the id of the cat on screen and
 its position — and the mapper builds one page for each cat of the outing window it is handed, with each
-page's own place and attempt (`EncounterDetailStateMapperTest`, *a window maps to one page per cat, newest
-first, and names the cat on screen and its position*; *each page takes its own cat's place and attempt*).
+page's own place, number and attempt (`EncounterDetailStateMapperTest`, *a window maps to one page per cat,
+newest first, and names the cat on screen and its position*; *each page takes its own cat's place and attempt*;
+*each page takes its own cat's number, a shot's page the number of the cat on screen, and none is none*).
 The cat on screen is always one of the pages; the mapper refuses any other (*a cat on screen that is not on
 the pages is refused*).
 
@@ -104,6 +106,21 @@ which of its cats was on screen.
 The window stays a list of cats, so handing over after a delete, the neighbouring outings and restoring by id work
 as above; only the page list groups a shot, by `groupedByShot`, the same grouping Encounters uses. Every cat of a
 shot keeps one page key, which is why switching between them keeps the page.
+
+## Its number
+
+The facts row opens with the cat's number: its place among the live cats, oldest first by the time it was
+logged, with cats logged at the same instant ordered by id (`EncounterDaoNumberTest`). It reads "#62" in
+English and "№ 62" in Russian, in a label filled with the theme's primary container, as tall as the outlined
+ones, and a screen reader says "Cat number 62" as part of the row (`DetailNumberTest`, `DetailNumberRuTest`).
+On a photo of several cats it is the number of the cat on screen.
+
+The number is a place in the log, not an id, so it follows the log while the cat is on screen: a cat from
+before it removed anywhere in the app moves it down by one, the undo moves it back, and a photo imported from
+before it moves it up (`EncounterDetailStoreTest`, *a delete elsewhere or an older cat arriving renumbers the
+cat on screen without leaving it*). The DAO counts it afresh on every write to the log, and
+`ObserveEncounterNumber` passes it on only when it changes (`ObserveEncounterNumberTest`). A cat that is not
+live has no number, and a page without one starts its row with the day.
 
 ## Where it was found
 
@@ -314,15 +331,18 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 
 ## Where the code lives
 
-- `domain/…/usecase/ObserveEncounters.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
+- `domain/…/usecase/ObserveEncounters.kt`, `ObserveEncounterPlace.kt`, `ObserveEncounterNumber.kt`, `DeleteEncounter.kt`,
   `UndoDelete.kt`; `domain/…/session/OutingWindow.kt` — the pages' outing; `domain/…/region/EncounterPlace.kt`
   — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`;
   `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
-- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `WhereCard.kt`,
+- `data/…/db/EncounterDao.kt` — `observeNumber`, the count behind a cat's number
+- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `DetailHeading.kt`
+  (the title and the facts row), `DetailMore.kt` (More and its menu), `WhereCard.kt`,
   `DetailPhotoCarousel.kt` (the photos and the add items), `NoPhotoBlock.kt` (a cat without a photo), `AttachingBar.kt`,
   `DetailInteractions.kt` (the two-value taps' payloads);
-  `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/SpotMap.kt` —
+  `ui/…/components/BackBar.kt` — the bar, `Labels.kt` — the facts' labels, `Flag.kt` — a flag TalkBack skips;
+  `ui/…/map/SpotMap.kt` —
   the **Where** section's map and the cat's dot on it
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, which saves the cat on screen with the screen,
