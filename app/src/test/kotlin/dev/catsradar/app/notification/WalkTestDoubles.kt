@@ -147,6 +147,7 @@ internal class InMemoryEncounters : EncounterRepository {
     override fun observeAll(): Flow<List<Encounter>> = rows
 
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by these tests")
+    override fun observeNumber(id: String): Flow<Int?> = throw NotImplementedError("unused by these tests")
     override suspend fun insert(encounter: Encounter) = rows.update { it + encounter }
     override suspend fun insertAllIfSourceLive(
         sourceEncounterId: String,

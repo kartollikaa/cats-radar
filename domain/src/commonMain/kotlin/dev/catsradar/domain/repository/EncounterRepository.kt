@@ -14,6 +14,9 @@ interface EncounterRepository {
 
     fun observeById(id: String): Flow<Encounter?>
 
+    /** The cat's place among the live cats, oldest first by `occurredAt`, then by id; null while it is not live. */
+    fun observeNumber(id: String): Flow<Int?>
+
     suspend fun insert(encounter: Encounter)
 
     /** Inserts the whole batch only while [sourceEncounterId] still names a live cat. */

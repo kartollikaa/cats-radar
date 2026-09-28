@@ -76,6 +76,8 @@ internal class FakeEncounterRepository : EncounterRepository {
         emitAll(encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst())
     }
 
+    override fun observeNumber(id: String): Flow<Int?> = throw NotImplementedError("unused by the counter")
+
     private fun <T> Flow<T>.delayedAfterFirst(): Flow<T> {
         var firstEmission = true
         return onEach { if (firstEmission) firstEmission = false else delay(observeDelay) }
