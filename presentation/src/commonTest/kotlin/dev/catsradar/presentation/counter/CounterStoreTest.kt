@@ -405,18 +405,59 @@ class CounterStoreTest {
     }
 
     @Test
-    fun `picking photos shows a progress row and asks the screen to start the import`() =
+    fun `picking photos shows a progress row with the first photo and asks the screen to start the import`() =
         runTest(mainDispatcher) {
             val (store, _) = newStore()
             store.effects.test {
                 store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a", "content://b")))
                 runCurrent()
 
-                assertEquals(ImportProgressState(done = 0, total = 2), store.state.value.importProgress)
+                assertEquals(
+                    ImportProgressState(done = 0, total = 2, previewUris = persistentListOf("content://a")),
+                    store.state.value.importProgress,
+                )
                 assertEquals(CounterEffect.StartImport(persistentListOf("content://a", "content://b")), awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    @Test
+    fun `a Counter that comes back mid-run shows the photos from the run's report`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(
+            CounterIntent.Import.Progressed(
+                done = 1,
+                total = 5,
+                previews = persistentListOf("content://a", "content://b", "content://c"),
+            ),
+        )
+        runCurrent()
+
+        assertEquals(
+            ImportProgressState(done = 1, total = 5, previewUris = persistentListOf("content://a", "content://b")),
+            store.state.value.importProgress,
+        )
+    }
+
+    @Test
+    fun `the run's report, not the pick, says which photos the card shows`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a", "content://b", "content://c")))
+        runCurrent()
+        store.dispatch(
+            CounterIntent.Import.Progressed(
+                done = 1,
+                total = 3,
+                previews = persistentListOf("content://x", "content://y", "content://z"),
+            ),
+        )
+        runCurrent()
+
+        assertEquals(
+            ImportProgressState(done = 1, total = 3, previewUris = persistentListOf("content://x", "content://y")),
+            store.state.value.importProgress,
+        )
+    }
 
     @Test
     fun `dismissing the picker starts nothing and leaves the screen as it was`() = runTest(mainDispatcher) {
@@ -625,7 +666,10 @@ class CounterStoreTest {
             store.dispatch(finished)
             runCurrent()
 
-            assertEquals(ImportProgressState(done = 0, total = 1), store.state.value.importProgress)
+            assertEquals(
+                ImportProgressState(done = 0, total = 1, previewUris = persistentListOf("content://a")),
+                store.state.value.importProgress,
+            )
             assertNull(store.state.value.importSummary)
         }
 

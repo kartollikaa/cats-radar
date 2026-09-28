@@ -30,8 +30,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-private const val IMPORT_THUMBNAILS = 3
-
 @Suppress("LongParameterList") // one parameter per collaborator
 class CounterStore(
     private val logTally: LogTally,
@@ -180,18 +178,22 @@ class CounterStore(
             is CounterIntent.Import.PhotosPicked -> if (intent.uris.isNotEmpty()) {
                 setState {
                     copy(
-                        importProgress = ImportProgressState(done = 0, total = intent.uris.size),
+                        importProgress = stateMapper.importProgress(
+                            done = 0,
+                            total = intent.uris.size,
+                            previews = intent.uris,
+                        ),
                         importSummary = null,
                     )
                 }
                 emit(CounterEffect.StartImport(intent.uris))
             }
             is CounterIntent.Import.Progressed -> setState {
-                copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
+                copy(importProgress = stateMapper.importProgress(intent.done, intent.total, intent.previews))
             }
             is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
                 val thumbPaths = runStorageRead(fallback = emptyList()) {
-                    findCatThumbnails(intent.addedIds, limit = IMPORT_THUMBNAILS)
+                    findCatThumbnails(intent.addedIds, limit = Tuning.IMPORT_PREVIEWS)
                 }
                 // A newer run claimed during the read is the one the user can deal with.
                 if (importRun.reportedId != intent.runId) return

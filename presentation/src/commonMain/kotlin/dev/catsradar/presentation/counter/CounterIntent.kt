@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 sealed interface CounterIntent {
     data object TallyClicked : CounterIntent
@@ -21,7 +22,11 @@ sealed interface CounterIntent {
 
         /** [uris] is empty when the picker was dismissed without choosing anything. */
         data class PhotosPicked(val uris: ImmutableList<String>) : Import
-        data class Progressed(val done: Int, val total: Int) : Import
+        data class Progressed(
+            val done: Int,
+            val total: Int,
+            val previews: ImmutableList<String> = persistentListOf(),
+        ) : Import
 
         /** The same run may be reported again; [runId] tells a repeat from a new run. */
         data class Finished(

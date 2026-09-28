@@ -68,6 +68,39 @@ class CounterStateMapperTest {
     }
 
     @Test
+    fun `a running import's stack holds the photos the run has reached and the one in hand`() {
+        val picked = listOf("content://a", "content://b", "content://c")
+
+        assertEquals(
+            listOf(
+                persistentListOf("content://a"),
+                persistentListOf("content://a", "content://b"),
+                persistentListOf("content://a", "content://b", "content://c"),
+                persistentListOf("content://a", "content://b", "content://c"),
+            ),
+            listOf(0, 1, 2, 9).map { mapper.importProgress(done = it, total = 12, previews = picked).previewUris },
+        )
+    }
+
+    @Test
+    fun `a running import's stack holds no more than three photos, and no more than it was given`() {
+        val four = listOf("content://a", "content://b", "content://c", "content://d")
+
+        assertEquals(
+            ImportProgressState(
+                done = 5,
+                total = 12,
+                previewUris = persistentListOf("content://a", "content://b", "content://c"),
+            ),
+            mapper.importProgress(done = 5, total = 12, previews = four),
+        )
+        assertEquals(
+            ImportProgressState(done = 2, total = 2, previewUris = persistentListOf("content://a", "content://b")),
+            mapper.importProgress(done = 2, total = 2, previews = four.take(2)),
+        )
+    }
+
+    @Test
     fun `the coat prompt shows the photo's thumbnail from the photo directory`() {
         val photo = photoFixture(id = "cat-7", occurredAt = Instant.parse("2026-09-22T10:00:00Z"))
 
