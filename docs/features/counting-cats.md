@@ -118,9 +118,25 @@ advance on a ticker as well as on each cat, so the elapsed time moves while noth
 
 ## Milestones
 
-Crossing a milestone raises a toast, once. The milestone reached is persisted **before** the toast
-is emitted, so a process death between the two does not celebrate the same milestone again on the
-next launch. The first cat is a milestone — it is the one most worth marking.
+A count that lands on a milestone of `Tuning.MILESTONES` celebrates on the ring, once: the cookie
+bounces, the ring stands full and glows as it settles, and a filled pill at the ring's bottom says
+"100 cats!" in the outing's place, while the goal tag and the arc's dot step aside. The number keeps
+its size (`CounterMilestoneMomentTest`). TalkBack hears the pill once, as a polite live region. The
+first cat is a milestone: it is the one most worth marking.
+
+- **It lasts until the run closes.** While taps keep the undo window open the moment stays, and it
+  goes with the window (`CounterStoreMilestoneMomentTest`, *the moment lasts until the undo window
+  closes*; *further taps keep the moment*). A rung reached with no run open, by an import or a cat the
+  widget logged, shows for the undo window's length (*a rung reached with no run open*).
+- **An Undo takes it back.** A count that falls back below a rung the Counter celebrated, by an Undo,
+  an import taken back or a cat removed while the Counter is open, ends the moment if it still shows
+  and forgets the rung was reached, so landing on it again celebrates again (*an undo below the rung takes the moment back*; *an import
+  undone after its moment has ended still forgets the rung it jumped to*).
+- **Each rung once.** The rung is recorded as seen **before** the moment shows, so a process death
+  between the two does not celebrate it again on the next launch (*the rung is recorded as seen before
+  the moment shows*; *the next launch does not celebrate the same rung again*). A rung whose record
+  cannot be written is not celebrated, and counting goes on (*a rung whose record cannot be written
+  shows no moment*).
 
 ## At the edges
 

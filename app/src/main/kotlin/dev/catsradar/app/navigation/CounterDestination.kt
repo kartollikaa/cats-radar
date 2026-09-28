@@ -1,16 +1,12 @@
 package dev.catsradar.app.navigation
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.catsradar.app.permission.LocationPermissionRequester
 import dev.catsradar.app.permission.rememberLocationPermissionRequester
@@ -74,7 +70,6 @@ private fun CarryOutCounterEffects(store: CounterStore, importScheduler: ImportS
     val catsFailureReporter = rememberMessageReporter(R.string.counter_cats_not_saved)
     val walkHoldHint = rememberReplacingMessageReporter(R.string.counter_walk_hold_hint)
     val captureDiscarder = rememberCaptureDiscarder()
-    val milestoneAnnouncer = rememberMilestoneAnnouncer()
     val photoLocationAccess = koinInject<PhotoLocationAccess>()
     val photoPickerLauncher = rememberPhotoPickerLauncher(store, photoLocationAccess)
     LaunchedEffect(
@@ -95,7 +90,6 @@ private fun CarryOutCounterEffects(store: CounterStore, importScheduler: ImportS
                 photoFailureReporter,
                 catsFailureReporter,
                 captureDiscarder,
-                milestoneAnnouncer,
                 photoPickerLauncher,
                 importScheduler,
                 walkHoldHint,
@@ -130,18 +124,6 @@ private fun rememberPhotoPickerLauncher(store: CounterStore, locationAccess: Pho
         // moment a progress notification is worth a dialog, and a refusal still imports.
         if (uris.isNotEmpty()) notificationPermission()
         store.dispatch(CounterIntent.Import.PhotosPicked(uris.map(Uri::toString).toImmutableList()))
-    }
-}
-
-@Composable
-private fun rememberMilestoneAnnouncer(): MilestoneAnnouncer {
-    val context = LocalContext.current
-    val resources = LocalResources.current
-    return remember(context, resources) {
-        MilestoneAnnouncer { value ->
-            val text = resources.getQuantityString(R.plurals.counter_milestone, value, value)
-            Toast.makeText(context, text, Toast.LENGTH_LONG).show()
-        }
     }
 }
 

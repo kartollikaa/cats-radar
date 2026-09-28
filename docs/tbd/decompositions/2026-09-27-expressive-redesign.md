@@ -24,7 +24,7 @@
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
-| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | planned |
+| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | in-review |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
@@ -117,8 +117,9 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Cleanup owed:** none.
 
 ### Slice E11 — Reaching a rung
-- **In scope:** the celebration when a tally lands on a rung of `Tuning.MILESTONES`: the cookie's bounce, the
-  ring's glow, the "100 cats!" tag until the undo window closes, and its undo; `counting-cats.md`.
+- **In scope:** the celebration when the count lands on a rung of `Tuning.MILESTONES`: the cookie's bounce, the
+  ring's glow, the "100 cats!" tag until the undo window closes, and its undo; the milestone toast and its effect
+  go; `counting-cats.md` § Milestones.
 - **Out of scope:** the tags at rest (E2) and the walk row (E3).
 - **Ships safely because:** it adds motion and a tag on a state the Counter already carries; nothing under the
   count moves.

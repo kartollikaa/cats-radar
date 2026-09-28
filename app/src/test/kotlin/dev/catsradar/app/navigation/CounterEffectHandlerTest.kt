@@ -78,14 +78,6 @@ private class RecordingImportScheduler : ImportScheduler {
     override fun observe(): Flow<WorkInfo?> = emptyFlow()
 }
 
-private class RecordingMilestoneAnnouncer : MilestoneAnnouncer {
-    val announced = mutableListOf<Int>()
-
-    override fun announce(value: Int) {
-        announced += value
-    }
-}
-
 private class CountingMessageReporter : MessageReporter {
     var reportCount = 0
         private set
@@ -103,7 +95,6 @@ class CounterEffectHandlerTest {
     private val photoFailureReporter = CountingMessageReporter()
     private val catsFailureReporter = CountingMessageReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
-    private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
     private val importScheduler = RecordingImportScheduler()
     private val walkHoldHint = CountingMessageReporter()
@@ -117,7 +108,6 @@ class CounterEffectHandlerTest {
         photoFailureReporter,
         catsFailureReporter,
         captureDiscarder,
-        milestoneAnnouncer,
         photoPickerLauncher,
         importScheduler,
         walkHoldHint,
@@ -164,7 +154,6 @@ class CounterEffectHandlerPhotoTest {
     private val photoFailureReporter = CountingMessageReporter()
     private val catsFailureReporter = CountingMessageReporter()
     private val captureDiscarder = RecordingCaptureDiscarder()
-    private val milestoneAnnouncer = RecordingMilestoneAnnouncer()
     private val photoPickerLauncher = CountingPhotoPickerLauncher()
     private val importScheduler = RecordingImportScheduler()
     private val walkHoldHint = CountingMessageReporter()
@@ -178,7 +167,6 @@ class CounterEffectHandlerPhotoTest {
         photoFailureReporter,
         catsFailureReporter,
         captureDiscarder,
-        milestoneAnnouncer,
         photoPickerLauncher,
         importScheduler,
         walkHoldHint,
@@ -215,13 +203,6 @@ class CounterEffectHandlerPhotoTest {
 
         assertEquals(1, walkHoldHint.reportCount)
         assertEquals(0 to 0, photoFailureReporter.reportCount to catsFailureReporter.reportCount)
-    }
-
-    @Test
-    fun `MilestoneReached announces exactly the milestone it names`() {
-        handle(CounterEffect.MilestoneReached(100))
-
-        assertEquals(listOf(100), milestoneAnnouncer.announced)
     }
 
     @Test
