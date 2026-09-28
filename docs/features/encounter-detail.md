@@ -89,12 +89,13 @@ row*), and every cat's carousel draws its cards whole however many pages were sw
 *the photo in front fills its card on every cat paged to, after a row was scrolled*).
 
 The pages take a moment to come to rest after a swipe, and a touch in that moment stops them. A sideways drag that
-starts on the carousel then moves the carousel while the pages wait under it, and once the finger lifts they carry on
-to the cat they were heading for (`EncounterDetailPagerTest`, *a drag on the row while the pages still settle moves the
-row, not the pages*); after a tap they carry on at once (*a tap while the pages still settle lets them carry on to the
-cat they head for*). A drag anywhere else
-catches the pages as before, so a second quick swipe moves on to the cat after (*a second flick below the row while
-the pages still settle moves on to the cat after*).
+starts on the carousel then moves the carousel while the pages wait under it, and once the finger lifts they carry
+on to the cat they were heading for (`EncounterDetailPagerTest`, *a drag on the row while the pages still settle
+moves the row, not the pages*; *while the row is dragged during a settle the pages wait under it, then carry on*);
+after a tap they carry on at once (*a tap while the pages still settle, however shaky, lets them carry on to the cat
+they head for*). A drag that runs on past the carousel's end moves the pages itself, and they come to rest where it
+leaves them. A drag anywhere else catches the pages as before, so a second quick swipe moves on to the cat after (*a
+second flick below the row while the pages still settle moves on to the cat after*).
 
 The cat on screen is saved with the screen, so after the process died it reopens on the cat that was on screen,
 while that cat is live, and on the opened one otherwise (`EncounterDetailPagerEntryTest`, *a restored entry

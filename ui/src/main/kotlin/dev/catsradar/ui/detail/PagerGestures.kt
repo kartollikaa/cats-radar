@@ -24,12 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/**
- * The pages' own fling and nested scrolling, changed so that a touch on a page while the pages settle belongs to what
- * it lands on. A drag on a page moves the pages only once it has reached them. Pages that such a touch stopped
- * without moving them — a tap, or a drag the photo row took over — carry on to the page they were heading for once
- * it lets go, instead of snapping to the nearest page.
- */
+/** The pages' fling and nested scrolling, changed so that a touch while the pages settle belongs to what it lands on. */
 internal class PagerGestures(val fling: TargetedFlingBehavior, val connection: NestedScrollConnection)
 
 @Composable
@@ -38,14 +33,16 @@ internal fun rememberPagerGestures(pagerState: PagerState): PagerGestures {
     val usualConnection = PagerDefaults.pageNestedScrollConnection(pagerState, Orientation.Horizontal)
     return remember(pagerState, usualFling, usualConnection) {
         val connection = PagesTakeOnlyTheirOwnDrag(usualConnection)
-        PagerGestures(CarryOnFling(pagerState, usualFling) { connection.pageDragged }, connection)
+        PagerGestures(CarryOnFling(pagerState, usualFling, connection), connection)
     }
 }
 
+// Pages a touch stopped without moving them — a tap, or a drag the photo row took over — carry on to the page they were
+// heading for once it lets go; the usual fling would snap them to the nearest page, often the one they came from.
 private class CarryOnFling(
     private val pagerState: PagerState,
     private val usual: TargetedFlingBehavior,
-    private val pageDragged: () -> Boolean,
+    private val pageDrags: PagesTakeOnlyTheirOwnDrag,
 ) : TargetedFlingBehavior {
     private var stopped: StoppedOnTheWay? = null
 
@@ -53,8 +50,9 @@ private class CarryOnFling(
         initialVelocity: Float,
         onRemainingDistanceUpdated: (Float) -> Unit,
     ): Float {
-        val stop = stopped?.takeIf { initialVelocity == 0f && abs(pagerState.position() - it.at) < STILL_PAGES }
+        val stop = stopped?.takeIf { pagerState.isStillAt(it.at) }
         stopped = null
+        pageDrags.startOver()
         var headingFor = stop?.headingFor ?: pagerState.currentPage
         val track = { remaining: Float ->
             headingFor = pagerState.pageAfter(remaining)
@@ -64,10 +62,13 @@ private class CarryOnFling(
             return if (stop != null) {
                 track((stop.headingFor - pagerState.position()) * pagerState.pageSpan())
                 // Held still until the drag on the page lets go, the photos under it follow the finger alone.
-                withFrameNanos {}
-                snapshotFlow { pageDragged() }.first { !it }
-                carryOn(stop.headingFor, track)
-                0f
+                pageDrags.awaitLetGo()
+                if (pagerState.isStillAt(stop.at)) {
+                    carryOn(stop.headingFor, track)
+                    0f
+                } else {
+                    with(usual) { performFling(0f, track) }
+                }
             } else {
                 with(usual) { performFling(initialVelocity, track) }
             }
@@ -97,8 +98,19 @@ private class CarryOnFling(
 private class PagesTakeOnlyTheirOwnDrag(private val usual: NestedScrollConnection) : NestedScrollConnection by usual {
     private var reachedPages = false
 
-    var pageDragged by mutableStateOf(false)
-        private set
+    private var pageDragged by mutableStateOf(false)
+
+    // A scroll sent without a fling after it, as a screen reader's scroll action is, would otherwise leave both flags set.
+    fun startOver() {
+        reachedPages = false
+        pageDragged = false
+    }
+
+    // Waits a frame first, so that a drag already under way can say so.
+    suspend fun awaitLetGo() {
+        withFrameNanos {}
+        snapshotFlow { pageDragged }.first { !it }
+    }
 
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         if (source == NestedScrollSource.UserInput) pageDragged = true
@@ -111,8 +123,7 @@ private class PagesTakeOnlyTheirOwnDrag(private val usual: NestedScrollConnectio
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
-        reachedPages = false
-        pageDragged = false
+        startOver()
         return usual.onPreFling(available)
     }
 }
@@ -121,6 +132,8 @@ private class PagesTakeOnlyTheirOwnDrag(private val usual: NestedScrollConnectio
 private const val STILL_PAGES = 0.02f
 
 private fun PagerState.position(): Float = currentPage + currentPageOffsetFraction
+
+private fun PagerState.isStillAt(position: Float): Boolean = abs(position() - position) < STILL_PAGES
 
 private fun PagerState.pageSpan(): Float = (layoutInfo.pageSize + layoutInfo.pageSpacing).toFloat()
 

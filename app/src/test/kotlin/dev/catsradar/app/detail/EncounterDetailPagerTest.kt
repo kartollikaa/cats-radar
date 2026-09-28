@@ -9,7 +9,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -228,6 +227,34 @@ class EncounterDetailPagerTest {
     }
 
     @Test
+    fun `while the row is dragged during a settle the pages wait under it, then carry on`() {
+        val settled = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(
+                    state = loadedOn(newer, newer, photographedOlder, oldest),
+                    onPageSettle = { settled += it },
+                )
+            }
+        }
+        flickPagesAndLeaveThemSettling(frames = 3)
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput {
+            down(Offset(width * 0.6f, centerY))
+            repeat(4) { moveBy(Offset(-12f, 0f)) }
+        }
+        compose.mainClock.advanceTimeByFrame()
+        val held = timeLeft(OLDER_TIME)
+
+        repeat(6) { compose.mainClock.advanceTimeByFrame() }
+
+        assertEquals(held, timeLeft(OLDER_TIME), "the pages moved under the finger")
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput { up() }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(listOf(photographedOlder.id), settled)
+    }
+
+    @Test
     fun `a second flick below the row while the pages still settle moves on to the cat after`() {
         val settled = mutableListOf<String>()
         compose.setContent {
@@ -254,7 +281,7 @@ class EncounterDetailPagerTest {
     }
 
     @Test
-    fun `a tap while the pages still settle lets them carry on to the cat they head for`() {
+    fun `a tap while the pages still settle, however shaky, lets them carry on to the cat they head for`() {
         val settled = mutableListOf<String>()
         compose.setContent {
             CatsRadarTheme {
@@ -264,13 +291,19 @@ class EncounterDetailPagerTest {
         flickPagesAndLeaveThemSettling(frames = 3)
         assertEquals(emptyList(), settled, "the pages are still on their way")
 
-        compose.onNodeWithTag(DetailPagesTestTag).performTouchInput { click(Offset(width * 0.9f, centerY)) }
+        compose.onNodeWithTag(DetailPagesTestTag).performTouchInput {
+            down(Offset(width * 0.9f, centerY))
+            moveBy(Offset(-3f, 0f))
+            up()
+        }
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()
 
         compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
         assertEquals(listOf(older.id), settled)
     }
+
+    private fun timeLeft(time: String): Float = compose.onNodeWithText(time).fetchSemanticsNode().boundsInRoot.left
 
     // A short, quick drag: the pages still have most of the way to go when the finger lifts.
     private fun flickPagesAndLeaveThemSettling(frames: Int) {
