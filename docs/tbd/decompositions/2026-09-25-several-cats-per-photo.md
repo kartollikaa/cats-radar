@@ -105,7 +105,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 
 - 2026-09-27: **S4 merged** as #216, **S5** as #218, **S6** as #219, stacked and merged bottom-up; the owner's
   rows-of-three rule for a lone photo's tile row merged beside them as #220. S6b (**+** on the detail page) is
-  what is left of the epic.
+  what is left of the epic. S4, S5, S6 and #220 first shipped in v1.7.0-beta.
 
 - 2026-09-27: **S6 in review**, stacked on S5. On a device the owner opened a shot of three cats and found three pages
   of the detail screen's outing pager (shipped meanwhile as the outing-pager epic): "it should be 1 encounter at all

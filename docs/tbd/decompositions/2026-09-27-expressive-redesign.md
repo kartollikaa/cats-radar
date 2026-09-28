@@ -254,3 +254,5 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   bottom first, then **E12a and E12b** as #225 and #226. The detail stack landed on the main it was built on, each
   merge a tree identical to its gated head; the E12 branches then took that main, and each tree was gated before it
   landed. The plans of E5 to E9 and E12 are archived. E10 waits on the owner's pick for the faint coat bars.
+- 2026-09-28: E1 to E4 first shipped in v1.6.0-beta. E5 to E9, E11 to E17 and the "+N" badge fix first shipped in
+  v1.7.0-beta.
