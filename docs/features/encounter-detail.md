@@ -228,9 +228,9 @@ the pages opens none of them (*a tap naming a cat not on the pages opens neither
 they sit on; Delete, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
 the cat on screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
 
-The attempt ends only when its cat carries the photo it attached: until then the progress bar
+The attempt ends only when its cat carries the photo it attached: until then the progress indicator
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
-have the photo yet, and offer the buttons back for a moment before the photo appeared
+have the photo yet, and enable the add items again for a moment before the photo appeared
 (*a successful attach stays in progress until the photo arrives, never offering again*).
 
 **Several from the gallery.** The picker lets the user choose up to `Tuning.ATTACH_BATCH_MAX` images; a
