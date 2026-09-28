@@ -13,6 +13,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
@@ -22,13 +25,13 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeLeft
@@ -87,6 +90,7 @@ class DetailPhotoCarouselTest {
     }
 
     @Test
+    @Config(qualifiers = "w411dp-h2400dp-xxhdpi")
     fun `the row starts under the bar however short the page is`() {
         show(catWith("cover"))
         val alone = compose.onNodeWithTag(DetailCarouselTestTag).bounds().top
@@ -215,6 +219,39 @@ class DetailPhotoCarouselTest {
     }
 
     @Test
+    fun `an older photo that arrives brings the row to it`() {
+        show(catWith("second", "third"))
+        compose.onNodeWithTag(DetailCarouselTestTag).performScrollToIndex(1)
+        compose.waitForIdle()
+
+        state = catWith("first", "second", "third")
+        compose.waitForIdle()
+
+        position(1, of = 3).assertIsDisplayed()
+        onScreenPhoto().performClick()
+        assertEquals(listOf("photo first"), taps)
+    }
+
+    @Test
+    fun `each photo of several tells TalkBack which it is, and a lone photo says it is the cat's`() {
+        show(catWith("first", "second", "third"))
+        val several = photoNodes().fetchSemanticsNodes().map { it.config[SemanticsProperties.ContentDescription] }
+
+        state = catWith("only")
+        compose.waitForIdle()
+        val lone = photoNodes().fetchSemanticsNodes().map { it.config[SemanticsProperties.ContentDescription] }
+
+        assertEquals(
+            listOf(
+                listOf(context.getString(R.string.viewer_position_description, 1, 3)),
+                listOf(context.getString(R.string.viewer_position_description, 2, 3)),
+            ),
+            several,
+        )
+        assertEquals(listOf(listOf(context.getString(R.string.detail_photo_description))), lone)
+    }
+
+    @Test
     fun `while photos attach, the progress runs under the row`() {
         show(catWith("cover").withAttempt(AttachProgress(done = 2, total = 5)))
 
@@ -251,8 +288,7 @@ class DetailPhotoCarouselTest {
         }
     }
 
-    private fun photoNodes() =
-        compose.onAllNodesWithContentDescription(context.getString(R.string.detail_photo_description))
+    private fun photoNodes() = compose.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Image))
 
     private fun photos(): List<Rect> = photoNodes().fetchSemanticsNodes().map { it.boundsInRoot }.sortedBy { it.left }
 

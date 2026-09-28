@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -92,7 +92,14 @@ private fun PhotoButtons(enabled: Boolean, onTakePhotoClick: () -> Unit, onPickP
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = MaterialTheme.colorScheme.onSurface,
     )
-    Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+    // At the largest fonts the pair cannot share a line, and stacking beats breaking a word in two.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(
+            ButtonGroupDefaults.ConnectedSpaceBetween,
+            Alignment.CenterHorizontally,
+        ),
+        verticalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+    ) {
         Button(
             onClick = onTakePhotoClick,
             shapes = ButtonShapes(

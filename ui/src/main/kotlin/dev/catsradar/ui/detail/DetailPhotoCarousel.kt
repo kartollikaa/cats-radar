@@ -31,7 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -80,10 +80,11 @@ internal fun DetailPhotoCarousel(
     onPickPhotoClick: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
-    var photosSeen by rememberSaveable { mutableIntStateOf(photos.size) }
-    LaunchedEffect(photos.size) {
-        if (photos.size > photosSeen) listState.animateScrollToItem(photos.lastIndex)
-        photosSeen = photos.size
+    var seenIds by rememberSaveable { mutableStateOf(photos.map { it.id }) }
+    LaunchedEffect(photos) {
+        val arrived = photos.indexOfFirst { it.id !in seenIds }
+        if (arrived >= 0) listState.animateScrollToItem(arrived)
+        seenIds = photos.map { it.id }
     }
     val lastPhoto = photos.lastIndex
     val front by remember(listState, lastPhoto) { derivedStateOf { listState.photoInFront(lastPhoto) } }
@@ -126,6 +127,7 @@ private fun PhotoRow(
             itemsIndexed(photos, key = { _, photo -> photo.id }) { index, photo ->
                 CarouselPhoto(
                     photo = photo,
+                    description = photoDescription(index, photos.size),
                     modifier = Modifier
                         .size(PhotoWidth, ItemHeight)
                         .maskClip(shape, rememberDrawInfo(index, listState)),
@@ -179,11 +181,24 @@ private fun rememberSingleAdvanceFling(listState: LazyListState): FlingBehavior 
     return rememberSnapFlingBehavior(snapping)
 }
 
+// Several photos stand side by side, so each says which it is; a lone one needs no number.
 @Composable
-private fun CarouselPhoto(photo: DetailPhoto, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+private fun photoDescription(index: Int, count: Int): String = if (count > 1) {
+    stringResource(R.string.viewer_position_description, index + 1, count)
+} else {
+    stringResource(R.string.detail_photo_description)
+}
+
+@Composable
+private fun CarouselPhoto(
+    photo: DetailPhoto,
+    description: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+) {
     AsyncImage(
         model = photo.path,
-        contentDescription = stringResource(R.string.detail_photo_description),
+        contentDescription = description,
         modifier = modifier
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .clickable(onClickLabel = stringResource(R.string.detail_open_photo), role = Role.Image, onClick = onClick),

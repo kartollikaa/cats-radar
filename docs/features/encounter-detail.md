@@ -180,8 +180,11 @@ position*; *scrolling the row to the next photo names it*). A tap on a photo ope
 [photo-viewer.md](./photo-viewer.md); *a tap on the second photo opens the viewer on it*;
 `EncounterDetailStorePhotoTest`, *a tap on a cat's second photo opens the viewer on that photo*;
 `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry opens that cat's viewer above it*).
-When the cat gains a photo, whoever added it, the carousel moves to the last one — the newest, unless a backup
-brought an older photo in (`DetailPhotoCarouselTest`, *a photo that arrives brings the row to it*).
+When the cat gains a photo, whoever added it, the carousel moves to it, wherever it lands among the others — the
+end for a new photo, further back for an older one a backup brought in (`DetailPhotoCarouselTest`, *a photo that
+arrives brings the row to it*; *an older photo that arrives brings the row to it*). For a screen reader each of
+several photos says which it is, "Photo 2 of 3", and a lone photo is "Photo of this cat" (*each photo of several
+tells TalkBack which it is, and a lone photo says it is the cat's*).
 
 A cat without a photo opens on itself instead: a 4:5 block in the primary container with large corners, the cat's
 face — or the paw with no coat noted — "No photo yet", and a connected pair, **Take a photo** and **Gallery**
