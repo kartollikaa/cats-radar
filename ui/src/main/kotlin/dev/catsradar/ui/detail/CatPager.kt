@@ -1,19 +1,17 @@
 package dev.catsradar.ui.detail
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +21,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -162,14 +161,7 @@ private fun CatFacts(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
-        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-            Text(
-                text = page.dayLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(text = page.timeLabel, style = MaterialTheme.typography.displayMedium)
-        }
+        DetailHeading(page)
         WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             // Keyed by the cat: another cat of the same photo opens the row on its own coat.
@@ -182,13 +174,15 @@ private fun CatFacts(
                 )
             }
         }
-        OutlinedButton(
+        FilledTonalButton(
             onClick = onDeleteClick,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            ),
         ) {
-            Text(text = stringResource(R.string.detail_delete))
+            Text(text = stringResource(R.string.detail_remove))
         }
     }
 }

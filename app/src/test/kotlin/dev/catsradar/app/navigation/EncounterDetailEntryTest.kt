@@ -65,8 +65,8 @@ class EncounterDetailEntryTest {
     fun `the back arrow in the nav host's own detail entry closes only the detail, even tapped twice`() {
         val opened = listOf(Counter, Encounters, EncounterDetail(ID))
         val backStack = show(opened)
-        val delete = hasText(context.getString(R.string.detail_delete))
-        awaitTheDatabase { compose.onAllNodes(delete).fetchSemanticsNodes().isNotEmpty() }
+        val remove = hasText(context.getString(R.string.detail_remove))
+        awaitTheDatabase { compose.onAllNodes(remove).fetchSemanticsNodes().isNotEmpty() }
         val back = compose.onNode(hasContentDescription(context.getString(R.string.detail_back)))
 
         back.performClick()

@@ -3,18 +3,15 @@ package dev.catsradar.ui.detail
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
@@ -51,6 +48,7 @@ import dev.catsradar.presentation.detail.AddPhoto
 import dev.catsradar.presentation.detail.AttachProgress
 import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.ui.R
+import dev.catsradar.ui.components.OutlinedLabel
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
@@ -243,16 +241,9 @@ private fun AddItem(
 @Composable
 private fun PositionLabel(number: Int, count: Int, modifier: Modifier = Modifier) {
     val description = stringResource(R.string.viewer_position_description, number, count)
-    Box(
-        modifier = modifier
-            .heightIn(min = 32.dp)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall)
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
+    OutlinedLabel(modifier = modifier) {
         Text(
             text = stringResource(R.string.viewer_position, number, count),
-            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.semantics { contentDescription = description },
         )
     }

@@ -25,6 +25,7 @@ fun BackBar(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     center: (@Composable () -> Unit)? = null,
+    end: @Composable () -> Unit = {},
     onBackClick: () -> Unit = {},
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -41,6 +42,7 @@ fun BackBar(
                 Icon(painter = painterResource(R.drawable.ic_arrow_back), contentDescription = contentDescription)
             }
         },
+        endContent = end,
     )
 }
 
