@@ -119,8 +119,11 @@ The number is a place in the log, not an id, so it follows the log while the cat
 before it removed anywhere in the app moves it down by one, the undo moves it back, and a photo imported from
 before it moves it up (`EncounterDetailStoreTest`, *a delete elsewhere or an older cat arriving renumbers the
 cat on screen without leaving it*). The DAO counts it afresh on every write to the log, and
-`ObserveEncounterNumber` passes it on only when it changes (`ObserveEncounterNumberTest`). A cat that is not
-live has no number, and a page without one starts its row with the day.
+`ObserveEncounterNumber` passes it on only when it changes (`ObserveEncounterNumberTest`, `EncounterDaoNumberTest`,
+*an observed number emits again when a write moves the cat*). A cat removed here and brought back with Undo shows
+its number at once, and a count that moves after a swipe leaves the screen on the cat swiped to
+(`EncounterDetailStoreTest`). A cat that is not live has no number, and a page without one starts its row with
+the day.
 
 ## Where it was found
 

@@ -50,6 +50,9 @@ class EncounterDetailStore(
     private val pages = OutingPages(openedId, restoredId)
     private val attempts = PhotoAttempts()
     private var shown: ShownPages? = null
+
+    // The pages the running lookups started from: a later lookup under them must not undo a settle.
+    private var lookedUpFor: ShownPages? = null
     private var lookups: Map<String, CatLookup> = emptyMap()
 
     // Deleted here and not yet undone: the removed state stands, and an emission without this cat is the delete
@@ -68,8 +71,11 @@ class EncounterDetailStore(
                 lookUp(next?.window, observeEncounterPlace, observeEncounterNumber).map { found -> next to found }
             }
             .onEach { (next, found) ->
-                shown = next
-                lookups = found
+                if (next != lookedUpFor) {
+                    lookedUpFor = next
+                    shown = next
+                }
+                if (deletedId == null) lookups = found
                 attempts.arrived(next?.window?.cats.orEmpty())
                 setState { if (deletedId == null) pagesState() else this }
             }
