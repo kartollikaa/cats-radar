@@ -10,6 +10,7 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.SetCoat
@@ -34,8 +35,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -194,6 +197,62 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `undo brings the cat back with its number at once`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(THIRD, OCCURRED - 10.minutes))
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        runCurrent()
+        val seen = mutableListOf<EncounterDetailState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { store.state.collect { seen += it } }
+
+        store.dispatch(EncounterDetailIntent.DeleteClicked)
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.UndoClicked)
+        runCurrent()
+
+        val afterUndo = seen.dropWhile { it !is EncounterDetailState.Deleted }
+            .filterIsInstance<EncounterDetailState.Loaded>()
+        assertEquals(listOf(2), afterUndo.map { loaded -> loaded.pages.single { it.id == ID }.numberInLog }.distinct())
+    }
+
+    @Test
+    fun `the first page shown already carries its number`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(THIRD, OCCURRED - 1.days))
+        repository.insert(encounterFixture(ID, OCCURRED))
+        val store = newStore()
+        val seen = mutableListOf<EncounterDetailState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { store.state.collect { seen += it } }
+        runCurrent()
+
+        assertEquals(2, seen.filterIsInstance<EncounterDetailState.Loaded>().first().pages.single().numberInLog)
+    }
+
+    @Test
+    fun `a place or a number arriving after a swipe keeps the cat the user settled on`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture("far", OCCURRED - 2.days))
+        repository.insert(encounterFixture("near", OCCURRED - 1.days))
+        repository.insert(
+            encounterFixture(ID, OCCURRED, locationSource = LocationSource.CURRENT_FIX)
+                .copy(lat = 41.39, lon = 2.17, placeCellId = "sp3e3q"),
+        )
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+        runCurrent()
+
+        cells.upsert(namedCell("sp3e3q"))
+        runCurrent()
+        val named = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(OTHER, named.currentId)
+        assertEquals("Barcelona", named.pages.single { it.id == ID }.place?.title)
+
+        repository.softDelete("far", NOW)
+        runCurrent()
+        assertEquals(OTHER to 3, store.shownPage().let { it.id to it.numberInLog })
+    }
+
+    @Test
     fun `settling on another page puts that cat on screen`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
@@ -275,6 +334,39 @@ class EncounterDetailStoreTest {
         val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
         assertEquals(listOf("Lisbon", "Barcelona"), state.pages.map { it.place?.title })
     }
+
+    @Test
+    fun `each page shows its own cat's number in the live log`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(THIRD, OCCURRED - 1.days))
+        repository.insert(encounterFixture(ID, OCCURRED))
+        repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+        val store = newStore()
+        runCurrent()
+
+        val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+        assertEquals(listOf(OTHER to 3, ID to 2), state.pages.map { it.id to it.numberInLog })
+    }
+
+    @Test
+    fun `a delete elsewhere or an older cat arriving renumbers the cat on screen without leaving it`() =
+        runTest(mainDispatcher) {
+            // Two outings back, so the pages and their neighbouring outings stay as they are.
+            repository.insert(encounterFixture(THIRD, OCCURRED - 2.days))
+            repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))
+            repository.insert(encounterFixture(ID, OCCURRED))
+            val store = newStore()
+            runCurrent()
+            assertEquals(ID to 3, store.shownPage().let { it.id to it.numberInLog })
+
+            repository.softDelete(THIRD, NOW)
+            runCurrent()
+            assertEquals(ID to 2, store.shownPage().let { it.id to it.numberInLog })
+
+            repository.insert(encounterFixture("imported", OCCURRED - 3.days))
+            runCurrent()
+            assertEquals(ID to 3, store.shownPage().let { it.id to it.numberInLog })
+            assertEquals(listOf(ID), assertIs<EncounterDetailState.Loaded>(store.state.value).pages.map { it.id })
+        }
 
     @Test
     fun `an id nobody has ever seen renders as missing, without throwing`() = runTest(mainDispatcher) {
@@ -512,6 +604,7 @@ class EncounterDetailStoreTest {
         restoredId = restoredId,
         observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(cells),
+        observeEncounterNumber = ObserveEncounterNumber(repository),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
@@ -1126,6 +1219,7 @@ class EncounterDetailStorePhotoTest {
         restoredId = restoredId,
         observeEncounters = ObserveEncounters(repository),
         observeEncounterPlace = ObserveEncounterPlace(cells),
+        observeEncounterNumber = ObserveEncounterNumber(repository),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
         setCoat = SetCoat(repository, clock, analytics = NoAnalytics),

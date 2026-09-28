@@ -146,6 +146,8 @@
     <string name="detail_title_no_coat">Котик</string>
     <string name="detail_more">Ещё</string>
     <string name="detail_remove">Удалить котика</string>
+    <string name="detail_number">№\u00A0%1$d</string>
+    <string name="detail_number_spoken">Котик номер %1$d</string>
     <string name="detail_deleted">Котик удалён</string>
     <string name="detail_undo">Вернуть</string>
     <string name="detail_missing">Этого котика больше нет</string>

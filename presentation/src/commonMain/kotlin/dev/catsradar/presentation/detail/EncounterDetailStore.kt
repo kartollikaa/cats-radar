@@ -2,12 +2,12 @@ package dev.catsradar.presentation.detail
 
 import androidx.lifecycle.viewModelScope
 import dev.catsradar.domain.Tuning
-import dev.catsradar.domain.region.EncounterPlace
 import dev.catsradar.domain.session.OutingWindow
 import dev.catsradar.domain.time.today
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.AttachResult
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.PhotoSource
@@ -37,6 +37,7 @@ class EncounterDetailStore(
     restoredId: String?,
     observeEncounters: ObserveEncounters,
     observeEncounterPlace: ObserveEncounterPlace,
+    observeEncounterNumber: ObserveEncounterNumber,
     private val deleteEncounter: DeleteEncounter,
     private val undoDelete: UndoDelete,
     private val setCoat: SetCoat,
@@ -49,7 +50,10 @@ class EncounterDetailStore(
     private val pages = OutingPages(openedId, restoredId)
     private val attempts = PhotoAttempts()
     private var shown: ShownPages? = null
-    private var places: Map<String, EncounterPlace?> = emptyMap()
+
+    // The pages the running lookups started from: a later lookup under them must not undo a settle.
+    private var lookedUpFor: ShownPages? = null
+    private var lookups: Map<String, CatLookup> = emptyMap()
 
     // Deleted here and not yet undone: the removed state stands, and an emission without this cat is the delete
     // taking effect.
@@ -63,10 +67,15 @@ class EncounterDetailStore(
             .filter { live -> deletedId.let { it == null || live.holdsLive(it) } }
             .map { live -> pages.update(live) }
             .distinctUntilChanged()
-            .flatMapLatest { next -> observeEncounterPlace.placesOn(next?.window).map { found -> next to found } }
+            .flatMapLatest { next ->
+                lookUp(next?.window, observeEncounterPlace, observeEncounterNumber).map { found -> next to found }
+            }
             .onEach { (next, found) ->
-                shown = next
-                places = found
+                if (next != lookedUpFor) {
+                    lookedUpFor = next
+                    shown = next
+                }
+                if (deletedId == null) lookups = found
                 attempts.arrived(next?.window?.cats.orEmpty())
                 setState { if (deletedId == null) pagesState() else this }
             }
@@ -79,7 +88,7 @@ class EncounterDetailStore(
             currentId = onScreen.currentId,
             today = clock.today(timeZone),
             attaching = attempts.progress,
-            places = places,
+            lookups = lookups,
         )
     } ?: EncounterDetailState.Missing
 
@@ -193,12 +202,6 @@ class EncounterDetailStore(
 private fun EncounterDetailState.page(catId: String): CatPage? =
     (this as? EncounterDetailState.Loaded)?.pages?.firstOrNull { it.id == catId }
 
-private fun ObserveEncounterPlace.placesOn(window: OutingWindow?): Flow<Map<String, EncounterPlace?>> {
-    val cats = window?.cats.orEmpty()
-    if (cats.isEmpty()) return flowOf(emptyMap())
-    return combine(cats.map { cat -> invoke(cat).map { place -> cat.id to place } }) { it.toMap() }
-}
-
 // A cat removed mid-pick answers NotAttachable, which says nothing: the screen already shows it gone.
 private fun List<AttachResult?>.message(): EncounterDetailEffect? {
     val notAttached = count { it == null || it == AttachResult.Unreadable }
@@ -209,4 +212,18 @@ private fun List<AttachResult?>.message(): EncounterDetailEffect? {
         size == 1 -> EncounterDetailEffect.PhotoAlreadyThere
         else -> EncounterDetailEffect.PhotosAlreadyThere
     }
+}
+
+private fun lookUp(
+    window: OutingWindow?,
+    observePlace: ObserveEncounterPlace,
+    observeNumber: ObserveEncounterNumber,
+): Flow<Map<String, CatLookup>> {
+    val cats = window?.cats.orEmpty()
+    if (cats.isEmpty()) return flowOf(emptyMap())
+    return combine(
+        cats.map { cat ->
+            combine(observePlace(cat), observeNumber(cat.id)) { place, number -> cat.id to CatLookup(place, number) }
+        },
+    ) { it.toMap() }
 }

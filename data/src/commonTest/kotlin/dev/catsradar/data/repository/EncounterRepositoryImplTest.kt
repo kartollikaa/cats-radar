@@ -29,6 +29,14 @@ class EncounterRepositoryImplTest {
     }
 
     @Test
+    fun observeNumberDelegates() = runTest {
+        dao.observeNumberResult = 62
+
+        assertEquals(62, repository.observeNumber("encounter-id-1").first())
+        assertEquals("encounter-id-1", dao.observeNumberCall)
+    }
+
+    @Test
     fun insertWritesTheCatAndEveryPhotoOfIt() = runTest {
         val cover = distinctEncounter().cover!!
         val second = cover.copy(id = "photo-2", photoPath = "photos/b.jpg")

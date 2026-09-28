@@ -26,17 +26,17 @@ class EncounterDetailStateMapper(
     private val photoStorage: PhotoStorage,
 ) {
 
-    /** [currentId] is one of [window]'s cats; [attaching] and [places] are keyed by cat id. */
+    /** [currentId] is one of [window]'s cats; [attaching] and [lookups] are keyed by cat id. */
     fun map(
         window: OutingWindow,
         currentId: String,
         today: LocalDate,
         attaching: Map<String, AttachProgress> = emptyMap(),
-        places: Map<String, EncounterPlace?> = emptyMap(),
+        lookups: Map<String, CatLookup> = emptyMap(),
     ): EncounterDetailState.Loaded {
         val pages = window.cats.groupedByShot().map { cats ->
             val shown = cats.firstOrNull { it.id == currentId } ?: cats.first()
-            page(shown, today, attaching[shown.id], places[shown.id], onThisPhoto = cats)
+            page(shown, today, attaching[shown.id], lookups[shown.id] ?: CatLookup(), onThisPhoto = cats)
         }
         val currentNumber = pages.indexOfFirst { it.id == currentId } + 1
         require(currentNumber > 0) { "The cat on screen, $currentId, is not on the pages" }
@@ -52,7 +52,7 @@ class EncounterDetailStateMapper(
         encounter: Encounter,
         today: LocalDate,
         attaching: AttachProgress? = null,
-        place: EncounterPlace? = null,
+        lookup: CatLookup = CatLookup(),
         onThisPhoto: List<Encounter> = listOf(encounter),
     ): CatPage {
         val lat = encounter.lat
@@ -74,7 +74,7 @@ class EncounterDetailStateMapper(
             attachProgress = attaching?.takeIf { it.total > 1 },
             mapPosition = if (lat != null && lon != null && encounter.isOnTheMap()) MapPosition(lat, lon) else null,
             setsLocation = encounter.locationSource == LocationSource.NONE,
-            place = place?.let { found ->
+            place = lookup.place?.let { found ->
                 // A city-state's locality repeats its country's name.
                 val city = found.city?.takeIf { !it.equals(found.country, ignoreCase = true) }
                 DetailPlace(
@@ -83,6 +83,7 @@ class EncounterDetailStateMapper(
                     flag = countryFlag(found.countryCode),
                 )
             },
+            numberInLog = lookup.numberInLog,
             onThisPhoto = onThisPhoto.takeIf { it.size > 1 }.orEmpty()
                 .map { ShotCat(it.id, it.coat?.toOption(), onScreen = it.id == encounter.id) }
                 .toImmutableList(),
@@ -90,6 +91,9 @@ class EncounterDetailStateMapper(
         )
     }
 }
+
+/** What a page shows of its cat beyond the cat's own row. */
+data class CatLookup(val place: EncounterPlace? = null, val numberInLog: Int? = null)
 
 private const val COORDINATE_DECIMALS = 5
 

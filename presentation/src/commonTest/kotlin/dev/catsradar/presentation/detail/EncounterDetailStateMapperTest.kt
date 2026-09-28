@@ -198,12 +198,49 @@ class EncounterDetailStateMapperTest {
             currentId = "older",
             today = today,
             attaching = mapOf("newer" to AttachProgress(done = 1, total = 3)),
-            places = mapOf("newer" to lisbon, "older" to barcelona),
+            lookups = mapOf("newer" to CatLookup(place = lisbon), "older" to CatLookup(place = barcelona)),
         )
 
         assertEquals(listOf("Lisbon", "Barcelona"), state.pages.map { it.place?.title })
         assertEquals(listOf(AttachProgress(done = 1, total = 3), null), state.pages.map { it.attachProgress })
         assertEquals(listOf(AddPhoto.ATTACHING, AddPhoto.READY), state.pages.map { it.addPhoto })
+    }
+
+    @Test
+    fun `a cat's number in the live log reaches its page`() {
+        val state = mapper.page(encounterFixture("e1", OCCURRED), today, lookup = CatLookup(numberInLog = 62))
+
+        assertEquals(
+            CatPage(
+                id = "e1",
+                dayLabel = "2026-09-22",
+                timeLabel = OCCURRED.toString(),
+                location = LocationLabel.NONE,
+                coordinatesLabel = null,
+                accuracyMeters = null,
+                setsLocation = true,
+                numberInLog = 62,
+            ),
+            state,
+        )
+    }
+
+    @Test
+    fun `each page takes its own cat's number, a shot's page the number of the cat on screen, and none is none`() {
+        val later = encounterFixture("later", OCCURRED + 10.minutes)
+        val lone = encounterFixture("lone", OCCURRED + 5.minutes)
+        val shot = shotFixture("s1", "s2", "s3", occurredAt = OCCURRED)
+        val window = OutingWindow(cats = listOf(later, lone) + shot.asReversed(), newer = null, older = null)
+
+        val state = mapper.map(
+            window,
+            currentId = "s2",
+            today = today,
+            lookups = listOf("later" to 7, "s1" to 2, "s2" to 3, "s3" to 4)
+                .associate { (id, number) -> id to CatLookup(numberInLog = number) },
+        )
+
+        assertEquals(listOf("later" to 7, "lone" to null, "s2" to 3), state.pages.map { it.id to it.numberInLog })
     }
 
     @Test
@@ -228,7 +265,7 @@ class EncounterDetailStateMapperTest {
 
         assertEquals(
             DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
-            mapper.page(encounterFixture("e1", OCCURRED), today, place = place).place,
+            mapper.page(encounterFixture("e1", OCCURRED), today, lookup = CatLookup(place = place)).place,
         )
     }
 
@@ -238,7 +275,7 @@ class EncounterDetailStateMapperTest {
 
         assertEquals(
             DetailPlace(title = "Spain", country = null, flag = "🇪🇸"),
-            mapper.page(encounterFixture("e1", OCCURRED), today, place = place).place,
+            mapper.page(encounterFixture("e1", OCCURRED), today, lookup = CatLookup(place = place)).place,
         )
     }
 
@@ -248,7 +285,7 @@ class EncounterDetailStateMapperTest {
 
         assertEquals(
             DetailPlace(title = "Singapore", country = null, flag = "🇸🇬"),
-            mapper.page(encounterFixture("e1", OCCURRED), today, place = place).place,
+            mapper.page(encounterFixture("e1", OCCURRED), today, lookup = CatLookup(place = place)).place,
         )
     }
 

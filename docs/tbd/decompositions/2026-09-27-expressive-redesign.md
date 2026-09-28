@@ -22,7 +22,7 @@
 | E7a | The coat question after a photo | The sheet after a photo keeps the photo in its header through a count, names its mode with a *One cat · Several* group that also leads back to one tap, counts cats in their shapes, and calls the paw *No coat*. | safe | ~450 | E4 | merged |
 | E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | planned |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
-| E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
+| E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | in-review |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | merged |
 | E12 | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; tiles take the coat shapes; the headline totals the tab. | safe | ~550 | E4 | planned |

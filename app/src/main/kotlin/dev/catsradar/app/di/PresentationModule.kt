@@ -83,6 +83,7 @@ val presentationModule = module {
             restoredId = restoredId,
             observeEncounters = get(),
             observeEncounterPlace = get(),
+            observeEncounterNumber = get(),
             deleteEncounter = get(),
             undoDelete = get(),
             setCoat = get(),

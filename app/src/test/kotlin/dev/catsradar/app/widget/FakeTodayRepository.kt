@@ -77,6 +77,7 @@ internal class FakeTodayRepository : EncounterRepository {
         throw NotImplementedError("unused by this test")
 
     override fun observeById(id: String): Flow<Encounter?> = throw NotImplementedError("unused by this test")
+    override fun observeNumber(id: String): Flow<Int?> = throw NotImplementedError("unused by this test")
     override suspend fun insert(encounter: Encounter): Unit = throw NotImplementedError("unused by this test")
     override suspend fun insertAllIfSourceLive(
         sourceEncounterId: String,

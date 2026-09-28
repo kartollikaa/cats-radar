@@ -4,6 +4,7 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.SetCoat
@@ -109,6 +110,7 @@ class EncounterDetailShotTest {
             restoredId = restoredId,
             observeEncounters = ObserveEncounters(repository),
             observeEncounterPlace = ObserveEncounterPlace(FakePlaceCellRepository()),
+            observeEncounterNumber = ObserveEncounterNumber(repository),
             deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
             undoDelete = UndoDelete(repository, analytics = NoAnalytics),
             setCoat = SetCoat(repository, clock, analytics = NoAnalytics),

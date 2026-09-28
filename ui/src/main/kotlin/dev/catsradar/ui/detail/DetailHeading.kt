@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -23,12 +24,14 @@ import dev.catsradar.presentation.detail.DetailPlace
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.titleRes
+import dev.catsradar.ui.components.FilledLabel
 import dev.catsradar.ui.components.Flag
 import dev.catsradar.ui.components.OutlinedLabel
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
 const val DetailFactsTestTag = "detail-facts"
+const val DetailNumberTestTag = "detail-number"
 
 @Composable
 internal fun DetailHeading(page: CatPage, modifier: Modifier = Modifier) {
@@ -44,10 +47,22 @@ internal fun DetailHeading(page: CatPage, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            page.numberInLog?.let { NumberLabel(it) }
             FactLabel(R.drawable.ic_calendar, page.dayLabel)
             FactLabel(R.drawable.ic_schedule, page.timeLabel)
             page.place?.let { PlaceLabel(it) }
         }
+    }
+}
+
+@Composable
+private fun NumberLabel(number: Int) {
+    val spoken = stringResource(R.string.detail_number_spoken, number)
+    FilledLabel(modifier = Modifier.testTag(DetailNumberTestTag)) {
+        Text(
+            text = stringResource(R.string.detail_number, number),
+            modifier = Modifier.semantics { contentDescription = spoken },
+        )
     }
 }
 
@@ -87,6 +102,7 @@ private val samplePlaced = CatPage(
     accuracyMeters = 10,
     coat = CoatOption.GINGER_WHITE,
     place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
+    numberInLog = 62,
 )
 
 private val sampleBare = CatPage(
