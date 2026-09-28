@@ -88,11 +88,11 @@ class EncounterDetailMapLinkTest {
     @Test
     fun `a cat without coordinates offers no map`() {
         show(listOf(Counter, Encounters, EncounterDetail(ID)), cat = tally(ID, OCCURRED))
-        val noLocation = hasText(context.getString(R.string.location_none))
+        val noLocation = hasText(context.getString(R.string.detail_no_location_title))
         awaitTheDatabase { compose.onAllNodes(noLocation).fetchSemanticsNodes().isNotEmpty() }
 
         compose.onNode(noLocation).assert(hasNoClickAction())
-        assertTrue(mapLink().fetchSemanticsNodes().isEmpty(), "the Where section opens a map")
+        assertTrue(mapLink().fetchSemanticsNodes().isEmpty(), "the page opens a map")
     }
 
     @Test

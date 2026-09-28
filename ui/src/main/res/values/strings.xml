@@ -109,7 +109,6 @@
     <string name="location_none">No location yet</string>
 
     <string name="detail_photo_description">Photo of this cat</string>
-    <string name="detail_accuracy">±%1$d m</string>
     <string name="detail_title_ginger">Ginger cat</string>
     <string name="detail_title_ginger_white">Ginger &amp; white cat</string>
     <string name="detail_title_white">White cat</string>
@@ -212,7 +211,11 @@
     <string name="coat_none">No coat</string>
     <string name="statistics_by_coat">By coat</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
-    <string name="detail_where">Where</string>
+    <string name="detail_where_you_met">Where you met</string>
+    <string name="detail_source_accuracy">%1$s · ±%2$d m</string>
+    <string name="detail_place_city_country">%1$s, %2$s</string>
+    <string name="detail_no_location_title">No location for this cat</string>
+    <string name="detail_no_location_body">It was logged without a fix, so it is not on the map or in Places.</string>
     <string name="detail_coat">Coat</string>
     <string name="detail_coat_not_noted">Coat not noted</string>
     <string name="detail_coat_add_hint">Tap to add it</string>

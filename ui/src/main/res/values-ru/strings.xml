@@ -131,7 +131,6 @@
     <string name="location_none">Места пока нет</string>
 
     <string name="detail_photo_description">Фото этого котика</string>
-    <string name="detail_accuracy">±%1$d м</string>
     <string name="detail_title_ginger">Рыжий котик</string>
     <string name="detail_title_ginger_white">Рыже-белый котик</string>
     <string name="detail_title_white">Белый котик</string>
@@ -246,7 +245,11 @@
     <string name="coat_none">Не отмечен</string>
     <string name="statistics_by_coat">По окрасу</string>
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
-    <string name="detail_where">Где</string>
+    <string name="detail_where_you_met">Где встретили</string>
+    <string name="detail_source_accuracy">%1$s · ±%2$d м</string>
+    <string name="detail_place_city_country">%1$s, %2$s</string>
+    <string name="detail_no_location_title">У котика нет места</string>
+    <string name="detail_no_location_body">Его отметили без координат, поэтому его нет на карте и в Местах.</string>
     <string name="detail_coat">Окрас</string>
     <string name="detail_coat_not_noted">Окрас не отмечен</string>
     <string name="detail_coat_add_hint">Нажмите, чтобы добавить</string>
