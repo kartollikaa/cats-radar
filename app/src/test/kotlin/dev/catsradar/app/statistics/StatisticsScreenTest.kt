@@ -282,7 +282,8 @@ class StatisticsScreenTest {
         val start = fill.pixelAt(0.03f)
         val onTrack = contrast(start, scheme.surfaceContainerHighest)
         assertTrue(onTrack >= 1.29f && onTrack < 1.4f, "the bar starts $onTrack apart from the track")
-        assertTrue(abs(start.red - start.blue) < 0.05f, "the bar starts on a shaded white, was $start")
+        val tint = maxOf(abs(start.red - start.green), abs(start.green - start.blue), abs(start.red - start.blue))
+        assertTrue(tint < 0.03f, "the bar starts on a white shaded toward the text colour, was $start")
         assertClose(GingerFur, fill.pixelAt(0.97f))
     }
 
