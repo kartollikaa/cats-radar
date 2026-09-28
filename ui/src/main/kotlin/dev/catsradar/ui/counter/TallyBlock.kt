@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -80,6 +79,7 @@ import kotlin.math.sin
 
 const val MilestoneArcTestTag = "milestone-arc"
 const val CountNumberTestTag = "count-number"
+const val TapBurstTestTag = "tap-burst"
 
 /** The count, as a button: squashes under a press, and rolls up on a tally and down on an undo. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -141,17 +141,25 @@ internal fun TallyBlock(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            CookieContent(totalLabel, count, tapBurst, milestone, currentOuting, cookieColors)
+            CookieContent(totalLabel, count, milestone, currentOuting, cookieColors)
         }
-        TagsAndUndo(milestone, currentOuting, scale = { scale }, undoVisible = undoVisible, onUndoClick = onUndoClick)
+        TagsAndUndo(
+            milestone = milestone,
+            currentOuting = currentOuting,
+            tapBurst = tapBurst,
+            scale = { scale },
+            undoVisible = undoVisible,
+            onUndoClick = onUndoClick,
+        )
     }
 }
 
-/** The ring's tags, and Undo at the cookie's bottom end, which the outing's tag keeps clear of. */
+/** The ring's tags, the run's "+N" at the cookie's top end and Undo at its bottom end, clear of the tags. */
 @Composable
 private fun BoxScope.TagsAndUndo(
     milestone: CounterMilestoneState?,
     currentOuting: CurrentOutingState?,
+    tapBurst: Int?,
     scale: () -> Float,
     undoVisible: Boolean,
     onUndoClick: () -> Unit,
@@ -164,21 +172,23 @@ private fun BoxScope.TagsAndUndo(
         undoWidth = { if (undoVisible) undoWidth else 0 },
     )
     Box(modifier = Modifier.matchParentSize()) {
+        TapBurst(count = tapBurst, modifier = Modifier.atCookieEnd(bottom = false))
         UndoButton(
             visible = undoVisible,
             onClick = onUndoClick,
-            modifier = Modifier.atCookieBottomEnd().onSizeChanged { undoWidth = it.width },
+            modifier = Modifier.atCookieEnd(bottom = true).onSizeChanged { undoWidth = it.width },
         )
     }
 }
 
-// Beside a cookie narrower than its block, so the outing's tag keeps its width; in its corner when it fills the width.
-private fun Modifier.atCookieBottomEnd(): Modifier = layout { measurable, constraints ->
+// Beside a cookie narrower than its block, so the ring's tags keep their width; in its corner when it fills the width.
+private fun Modifier.atCookieEnd(bottom: Boolean): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
     val square = min(constraints.maxWidth, constraints.maxHeight)
-    val bottom = (constraints.maxHeight + square) / 2
+    val top = (constraints.maxHeight - square) / 2
+    val y = if (bottom) top + square - placeable.height else top
     layout(constraints.maxWidth, constraints.maxHeight) {
-        placeable.placeRelative(constraints.maxWidth - placeable.width, bottom - placeable.height)
+        placeable.placeRelative(constraints.maxWidth - placeable.width, y)
     }
 }
 
@@ -207,7 +217,6 @@ private fun rememberCookieColors(walking: Boolean): CookieColors {
 private fun BoxScope.CookieContent(
     totalLabel: String,
     count: Int?,
-    tapBurst: Int?,
     milestone: CounterMilestoneState?,
     currentOuting: CurrentOutingState?,
     colors: CookieColors,
@@ -225,7 +234,6 @@ private fun BoxScope.CookieContent(
             ),
         )
     }
-    TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
 }
 
 @Composable
@@ -340,6 +348,7 @@ private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.testTag(TapBurstTestTag),
         ) {
             Text(
                 text = stringResource(R.string.counter_tap_burst, lastShown.intValue),
