@@ -292,19 +292,22 @@ class EncounterDetailStoreTest {
     @Test
     fun `a delete elsewhere or an older cat arriving renumbers the cat on screen without leaving it`() =
         runTest(mainDispatcher) {
-            repository.insert(encounterFixture(THIRD, OCCURRED - 1.days))
+            // Two outings back, so the pages and their neighbouring outings stay as they are.
+            repository.insert(encounterFixture(THIRD, OCCURRED - 2.days))
+            repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))
             repository.insert(encounterFixture(ID, OCCURRED))
             val store = newStore()
             runCurrent()
-            assertEquals(ID to 2, store.shownPage().let { it.id to it.numberInLog })
+            assertEquals(ID to 3, store.shownPage().let { it.id to it.numberInLog })
 
             repository.softDelete(THIRD, NOW)
             runCurrent()
-            assertEquals(ID to 1, store.shownPage().let { it.id to it.numberInLog })
-
-            repository.insert(encounterFixture("imported", OCCURRED - 2.days))
-            runCurrent()
             assertEquals(ID to 2, store.shownPage().let { it.id to it.numberInLog })
+
+            repository.insert(encounterFixture("imported", OCCURRED - 3.days))
+            runCurrent()
+            assertEquals(ID to 3, store.shownPage().let { it.id to it.numberInLog })
+            assertEquals(listOf(ID), assertIs<EncounterDetailState.Loaded>(store.state.value).pages.map { it.id })
         }
 
     @Test
