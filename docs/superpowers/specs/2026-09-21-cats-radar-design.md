@@ -47,7 +47,7 @@ country → city → area, and an encounter rate derived from automatically dete
 | Bulk import | Multi-select from the gallery in v1; EXIF date and GPS become the encounter's. |
 | Widget | Home-screen "+1" widget in v1. |
 | Regions UX | Drill-down Country → City → Area; unresolved areas never show a raw geohash. |
-| Gamification | Day streak + milestone toasts in v1. |
+| Gamification | Day streak + milestones, celebrated on the Counter's ring (the redesign's slice E11 replaced the v1 toast). |
 | Architecture | Layered modules `:domain` / `:data` / `:presentation` / `:ui` / `:app`; minimal MVI (`Store` with State/Intent/Effect). |
 | Quality gates | detekt + formatting + compose-rules, Android Lint, Konsist architecture tests; all in `./gradlew check` and CI. |
 | Coat (2026-09-22) | Optional cat coat from a fixed list of eleven, in v1: column in the first schema, picker after a tally or photo, editable in detail, statistics by coat. |
@@ -311,7 +311,7 @@ truncated to a day; `today` = the device's current local date.
 | By coat | count per `CatCoat` value plus one "Not specified" row for `coat = null`, sorted by count desc; rows with zero are hidden |
 | Current streak | consecutive local dates with ≥ 1 encounter ending `today` or `today − 1`; 0 otherwise |
 | Longest streak | max run of consecutive local dates with ≥ 1 encounter |
-| Milestones | `MILESTONES = [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]`. When `Total` crosses a value greater than `lastSeenMilestone`, show a toast once and persist it. Statistics shows the next milestone and the distance to it. |
+| Milestones | `MILESTONES = [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]`. When `Total` reaches a value greater than `lastSeenMilestone`, persist it, then celebrate it once on the Counter's ring until the run closes; an Undo below it takes the celebration back and restores the rung below (see the Expressive spec § 2, *Reaching a rung*). Statistics shows the next milestone and the distance to it. |
 | Rate-eligible session | `n ≥ 2` and `duration ≥ MIN_RATE_DURATION` (5 min) |
 | Session rate | `n / duration` for an eligible session |
 | Overall rate | `Σ n_i / Σ duration_i` over eligible sessions; "—" when none |
