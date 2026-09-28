@@ -478,6 +478,26 @@ class CounterStoreTest {
     }
 
     @Test
+    fun `the run's report, not the pick, says which photos the card shows`() = runTest(mainDispatcher) {
+        val (store, _) = newStore()
+        store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf("content://a", "content://b", "content://c")))
+        runCurrent()
+        store.dispatch(
+            CounterIntent.Import.Progressed(
+                done = 1,
+                total = 3,
+                previews = persistentListOf("content://x", "content://y", "content://z"),
+            ),
+        )
+        runCurrent()
+
+        assertEquals(
+            ImportProgressState(done = 1, total = 3, previewUris = persistentListOf("content://x", "content://y")),
+            store.state.value.importProgress,
+        )
+    }
+
+    @Test
     fun `dismissing the picker starts nothing and leaves the screen as it was`() = runTest(mainDispatcher) {
         val (store, _) = newStore()
         store.dispatch(CounterIntent.Import.PhotosPicked(persistentListOf()))

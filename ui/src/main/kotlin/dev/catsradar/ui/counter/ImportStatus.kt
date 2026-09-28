@@ -174,7 +174,7 @@ private fun PhotoStack(paths: ImmutableList<String>, slots: Int = paths.size) {
     }
 }
 
-// Outside the edge rather than a border, which would cover the photo's own.
+// Outside the edge rather than a border, which would eat into the photo itself.
 private fun Modifier.ring(color: Color, shape: Shape): Modifier = drawBehind {
     val width = 2.dp.toPx()
     val outline = shape.createOutline(Size(size.width + 2 * width, size.height + 2 * width), layoutDirection, this)
