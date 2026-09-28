@@ -7,11 +7,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
@@ -33,6 +35,7 @@ import dev.catsradar.presentation.counter.ImportSummaryState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.ImportCheckTestTag
+import dev.catsradar.ui.counter.ImportGalleryTestTag
 import dev.catsradar.ui.counter.ImportThumbTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -197,6 +200,47 @@ class ImportIslandTest {
         compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true).assertCountEquals(0)
         compose.onAllNodesWithTag(ImportCheckTestTag, useUnmergedTree = true).assertCountEquals(1)
     }
+
+    @Test
+    fun `a running card shows the photos it has, and the gallery icon without any`() {
+        state = state.copy(importProgress = running(done = 1, "content://a", "content://b"))
+        show()
+
+        compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true).assertCountEquals(2)
+        compose.onAllNodesWithTag(ImportGalleryTestTag, useUnmergedTree = true).assertCountEquals(0)
+        state = state.copy(importProgress = running(done = 1))
+        compose.waitForIdle()
+        compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithTag(ImportGalleryTestTag, useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun `a running card's words hold still as its stack fills`() {
+        state = state.copy(importProgress = running(done = 2, "content://a"))
+        show()
+        val words = compose.onNodeWithText(context.getString(R.string.counter_import_running_count, 2, 12))
+        val withOne = words.getUnclippedBoundsInRoot()
+
+        state = state.copy(importProgress = running(done = 2, "content://a", "content://b", "content://c"))
+        compose.waitForIdle()
+
+        assertEquals(withOne, words.getUnclippedBoundsInRoot())
+    }
+
+    @Test
+    fun `a running card's photos are neither pressable nor read out`() {
+        state = state.copy(importProgress = running(done = 2, "content://a", "content://b", "content://c"))
+        show()
+
+        val photos = compose.onAllNodesWithTag(ImportThumbTestTag, useUnmergedTree = true)
+        photos.assertCountEquals(3)
+        photos.assertAll(
+            hasClickAction().not() and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription),
+        )
+    }
+
+    private fun running(done: Int, vararg photos: String) =
+        ImportProgressState(done = done, total = 12, previewUris = persistentListOf(*photos))
 
     private fun allDescribedAs(id: Int) =
         compose.onAllNodes(hasContentDescription(context.getString(id)), useUnmergedTree = true)

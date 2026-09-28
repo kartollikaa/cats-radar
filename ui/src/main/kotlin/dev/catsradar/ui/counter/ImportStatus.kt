@@ -22,7 +22,13 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -42,8 +48,11 @@ import kotlinx.collections.immutable.persistentListOf
 
 const val ImportThumbTestTag = "import-thumb"
 const val ImportCheckTestTag = "import-check"
+const val ImportGalleryTestTag = "import-gallery"
 
 private val ThumbTilts = listOf(-8f, -1f, 7f)
+private val ThumbSize = 40.dp
+private val ThumbStep = 11.dp
 
 @Composable
 internal fun ImportIsland(
@@ -70,7 +79,11 @@ internal fun ImportIsland(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RowScope.Running(progress: ImportProgressState) {
-    NoticeIcon(R.drawable.ic_photo_library)
+    if (progress.previewUris.isEmpty()) {
+        NoticeIcon(R.drawable.ic_photo_library, modifier = Modifier.testTag(ImportGalleryTestTag))
+    } else {
+        PhotoStack(progress.previewUris, slots = ThumbTilts.size)
+    }
     Column(modifier = Modifier.weight(1f).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = stringResource(R.string.counter_import_running_count, progress.done, progress.total),
@@ -135,25 +148,37 @@ private fun restOf(summary: ImportSummaryState): String? {
     }
 }
 
+/** As wide as [slots] photos, so a stack that fills later keeps its neighbours in place. */
 @Composable
-private fun PhotoStack(paths: ImmutableList<String>) {
+private fun PhotoStack(paths: ImmutableList<String>, slots: Int = paths.size) {
     val shown = paths.take(ThumbTilts.size)
-    Box(modifier = Modifier.size(width = 40.dp + 11.dp * (shown.size - 1), height = 44.dp)) {
+    val ringColor = islandColor()
+    val shape = MaterialTheme.shapes.small
+    val width = ThumbSize + ThumbStep * (slots.coerceIn(1, ThumbTilts.size) - 1)
+    Box(modifier = Modifier.size(width = width, height = 44.dp)) {
         shown.forEachIndexed { index, path ->
             AsyncImage(
                 model = path,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .offset(x = 11.dp * index, y = 2.dp)
-                    .size(40.dp)
+                    .offset(x = ThumbStep * index, y = 2.dp)
+                    .size(ThumbSize)
                     .rotate(ThumbTilts[index])
-                    .clip(MaterialTheme.shapes.small)
+                    .ring(ringColor, shape)
+                    .clip(shape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .testTag(ImportThumbTestTag),
             )
         }
     }
+}
+
+// Outside the edge rather than a border, which would cover the photo's own.
+private fun Modifier.ring(color: Color, shape: Shape): Modifier = drawBehind {
+    val width = 2.dp.toPx()
+    val outline = shape.createOutline(Size(size.width + 2 * width, size.height + 2 * width), layoutDirection, this)
+    translate(-width, -width) { drawOutline(outline, color) }
 }
 
 @ThemePreviews
@@ -162,6 +187,7 @@ private fun ImportIslandPreview() {
     CatsRadarTheme {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
             ImportIsland(progress = sampleProgress, summary = null)
+            ImportIsland(progress = sampleFilling, summary = null)
             ImportIsland(progress = null, summary = sampleMixedRun)
             ImportIsland(progress = null, summary = sampleUndoneRun)
         }
@@ -169,6 +195,14 @@ private fun ImportIslandPreview() {
 }
 
 private val sampleProgress = ImportProgressState(done = 7, total = 12)
+private val sampleFilling = ImportProgressState(
+    done = 1,
+    total = 12,
+    previewUris = persistentListOf(
+        "content://media/external/images/media/1041",
+        "content://media/external/images/media/1042",
+    ),
+)
 private val sampleMixedRun = ImportSummaryState(
     added = 9,
     skipped = 2,

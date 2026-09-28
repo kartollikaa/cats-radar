@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /** A notice floating over the top of the Counter, dropping in when it becomes [visible]. */
@@ -31,11 +33,15 @@ internal fun Island(visible: Boolean, modifier: Modifier = Modifier, content: @C
 }
 
 @Composable
+@ReadOnlyComposable
+internal fun islandColor(): Color = MaterialTheme.colorScheme.surfaceContainerHigh
+
+@Composable
 internal fun IslandCard(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = islandColor(),
         shadowElevation = 6.dp,
     ) {
         Row(
