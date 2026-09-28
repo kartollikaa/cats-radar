@@ -57,7 +57,11 @@ data class CoatCountState(val tray: ImmutableList<CoatOption?> = persistentListO
     val catCount: Int? get() = tray.size.takeIf { it > 0 }
 }
 
-data class ImportProgressState(val done: Int, val total: Int)
+data class ImportProgressState(
+    val done: Int,
+    val total: Int,
+    val previewUris: ImmutableList<String> = persistentListOf(),
+)
 
 /**
  * [skipped] and [failed] are null when there were none — a run where everything worked should not

@@ -16,7 +16,7 @@ colour, shared with `IslandCard`.
 
 ## Global constraints
 
-- The stack's size is one constant, `Tuning.IMPORT_STACK_PHOTOS`, for the worker's report, the running card and the
+- The stack's size is one constant, `Tuning.IMPORT_PREVIEWS`, for the worker's report, the running card and the
   finished card's thumbnails.
 - The finished card keeps the added cats' own thumbnails; only the running card shows picked photos.
 - The photos are decorative: no content description, nothing to press.
@@ -26,8 +26,8 @@ colour, shared with `IslandCard`.
 
 ### Task 1: The photos reach the state
 
-- `Tuning.IMPORT_STACK_PHOTOS`; `CounterStore`'s `IMPORT_THUMBNAILS` goes.
-- `ImportPhotosWorker` puts `KEY_PREVIEWS` (the batch's first `IMPORT_STACK_PHOTOS`) in each progress report;
+- `Tuning.IMPORT_PREVIEWS`; `CounterStore`'s `IMPORT_THUMBNAILS` goes.
+- `ImportPhotosWorker` puts `KEY_PREVIEWS` (the batch's first `IMPORT_PREVIEWS`) in each progress report;
   `ImportWorkInfo` reads it into `Import.Progressed(done, total, previews)`.
 - `ImportProgressState.previewUris`; `CounterStateMapper.importProgress(done, total, previews)` keeps
   `previews.take(done + 1)` up to the stack's size; `CounterStore` builds progress through it on `PhotosPicked` and

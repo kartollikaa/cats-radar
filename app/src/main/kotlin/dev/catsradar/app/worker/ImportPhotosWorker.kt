@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import dev.catsradar.app.notification.ImportNotifier
 import dev.catsradar.app.photo.releaseReadAccess
 import dev.catsradar.app.reporting.NonFatalReporter
+import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.usecase.ImportSummary
 import kotlinx.coroutines.CancellationException
 
@@ -35,11 +36,16 @@ class ImportPhotosWorker internal constructor(
     private suspend fun import(uris: List<String>): Result {
         if (uris.isEmpty()) return Result.success(summaryOf(emptyList(), skipped = 0, failed = 0))
 
+        val previews: Array<String?> = uris.take(Tuning.IMPORT_PREVIEWS).toTypedArray()
         return try {
             notifier.showProgress(done = 0, total = uris.size)
             val summary = importPhotos(uris) { done, total ->
                 setProgressAsync(
-                    Data.Builder().putInt(KEY_DONE, done).putInt(KEY_TOTAL, total).build(),
+                    Data.Builder()
+                        .putInt(KEY_DONE, done)
+                        .putInt(KEY_TOTAL, total)
+                        .putStringArray(KEY_PREVIEWS, previews)
+                        .build(),
                 )
                 notifier.showProgress(done = done, total = total)
             }
@@ -68,6 +74,7 @@ class ImportPhotosWorker internal constructor(
     companion object {
         const val KEY_DONE = "done"
         const val KEY_TOTAL = "total"
+        const val KEY_PREVIEWS = "previews"
         const val KEY_ADDED_IDS = "addedIds"
         const val KEY_SKIPPED = "skipped"
         const val KEY_FAILED = "failed"
