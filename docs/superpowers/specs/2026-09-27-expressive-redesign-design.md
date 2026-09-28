@@ -82,10 +82,10 @@ APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
 
-The order on screen: the location hint, the count, the coat grid, then Walk and Photo in one row. The
+The order on screen: the count, the coat grid, then Walk and Photo in one row. The
 status line under the count is gone (see *The tags on the ring*), the walk row under it too (see
 *The walk*), and from E15 the import's notice floats over the screen instead of taking a place in the column
-(see *The import notice*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
+(see *The import notice*); from E16 the location hint floats beside it (see *The location hint*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
 the count reaches its floor. Everything under the count therefore costs the count its size, and the
 Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
 larger coat shapes, left the cookie less than half the room this layout leaves it, once the prototype
@@ -202,8 +202,8 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
 - **It floats.** A card on `surfaceContainerHigh`, as the map's floating cards are, with a shadow and
   `large` corners, 12 dp in from the sides, just under the status bar, over the top of the count rather
   than in the column, dropping in on the motion scheme; the cookie keeps its size. For the notice's ten seconds it covers the goal
-  tag at the ring's top, which is the price of floating. The location hint stays a card in the
-  column: what lasts sits in the column, what passes floats.
+  tag at the ring's top, which is the price of floating. (E15 kept the location hint in the column;
+  the owner floated it too in E16, see *The location hint*.)
 - **What it shows.** At its start, a fanned stack of the first three imported photos (40 dp,
   `small` corners, each tilted a little), or a check when none has a photo. Running, the gallery icon
   stands in the stack's place, because progress reports counts and the added cats are known only when
@@ -236,6 +236,18 @@ button of the same weight, and the paw tile's *Not specified* broke mid-word at 
   detail's sheet uses; the map's filter keeps *Not specified*.
 - **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
   counted. What saving writes does not change.
+
+**The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
+should be like the import popup". The hint that follows a denied location request leaves the column and
+floats like the import's card:
+
+- **The same card.** `surfaceContainerHigh`, a shadow, `large` corners, 12 dp in, dropping in on the
+  motion scheme, over the top of the count, which keeps its size.
+- **What it shows.** The pin in a round `secondaryContainer` icon, "Location permission needed for cat
+  spots", **Grant** as a filled tonal button and a × that dismisses it; a swipe to either side dismisses
+  it too. The words are one TalkBack item; the body takes no tap.
+- **Beside an import.** Both cards stack at the top, the import's first, 8 dp apart, and TalkBack reaches
+  them before the count. What Grant and Dismiss do does not change.
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
 Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper

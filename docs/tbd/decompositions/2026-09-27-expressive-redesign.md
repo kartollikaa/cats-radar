@@ -29,6 +29,7 @@
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
 | E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | merged |
+| E16 | The location hint floats | The location hint is a floating card like the import's, with Grant, × and a swipe; it stacks under an import's card, and the count keeps its size. | safe | ~350 | E15 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -160,6 +161,14 @@ Status values: `planned · in-progress · in-review · merged · dropped`
 - **Ships safely because:** the same run, summary and undo behind a new surface; the timeout is unchanged.
 - **Cleanup owed:** `ImportStatus.kt`'s two cards; `counter_import_ok` if nothing else uses it.
 
+### Slice E16 — The location hint floats
+- **In scope:** the location hint as a floating card sharing the import's `IslandCard`; Grant, × and the swipe;
+  the two cards stacked at the top; `counting-cats.md`'s notices paragraph; spec § 2 *The location hint*.
+- **Out of scope:** when the hint shows and what Grant and Dismiss do; the detail's no-location alert (E8), which
+  keeps `NoticeCard`.
+- **Ships safely because:** the same state and the same two actions behind a new surface.
+- **Cleanup owed:** none; `NoticeCard` stays for E8.
+
 ## Decision log
 
 - 2026-09-27: the owner asked for an audit of the screens, mostly a cat's detail, to make them more
@@ -212,3 +221,5 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   had grown a count since version 14 drew it, so E7 split: E7a, that sheet, on the Counter now; E7b, the detail's coat
   card and sheet, with the other detail slices. Of *Header*, *One or several* and *On the photo* (prototype version 25)
   the owner picked **One or several**. E7a carries it.
+- 2026-09-28: the owner asked that the location hint be "like the import popup", reversing E15's line that what
+  lasts sits in the column. E16 carries it.

@@ -1,14 +1,9 @@
 package dev.catsradar.ui.counter
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -21,12 +16,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -49,6 +42,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 const val ImportThumbTestTag = "import-thumb"
 const val ImportCheckTestTag = "import-check"
+const val ImportIslandTestTag = "import-island"
 
 private val ThumbTilts = listOf(-8f, -1f, 7f)
 
@@ -60,13 +54,7 @@ internal fun ImportIsland(
     onUndoClick: () -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
-    AnimatedVisibility(
-        visible = progress != null || summary != null,
-        modifier = modifier,
-        enter = slideInVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) { -it } +
-            fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()),
-        exit = ExitTransition.None,
-    ) {
+    Island(visible = progress != null || summary != null, modifier = modifier.testTag(ImportIslandTestTag)) {
         when {
             summary != null -> SwipeToDismissBox(
                 state = rememberSwipeToDismissBoxState(),
@@ -76,24 +64,6 @@ internal fun ImportIsland(
                 IslandCard { Summary(summary, onUndoClick = onUndoClick, onDismiss = onDismiss) }
             }
             progress != null -> IslandCard { Running(progress) }
-        }
-    }
-}
-
-@Composable
-private fun IslandCard(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 6.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 4.dp, bottom = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            content()
         }
     }
 }
