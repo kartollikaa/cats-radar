@@ -120,10 +120,21 @@ centre line and squash with the cookie. In a small cookie the number keeps clear
 loses what the pills reach into, the number shrinks, and "cats" under it gives way first. Past the
 last rung, and with no cats yet, there is no pill and no dot.
 
-**Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
-the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
-`primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
-Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
+**Reaching a rung** (slice E11). A count that lands on a rung: the cookie bounces and the ring
+stands full and glows on the motion scheme's springs, and the bottom pill says "100 cats!", filled in
+`primary`, in the outing's place meanwhile; the goal tag and the arc's dot step aside, and the count
+keeps its size. Line, Cookie, Chip and Moments were the other treatments in prototype version 13; the
+owner chose Ring. The moment replaces the milestone toast, and keeps its rule: each rung once,
+recorded before it shows, so a process death never celebrates it twice. Decided in autonomous mode
+(2026-09-28):
+
+- **Any count that lands on a rung** celebrates, a tap's or an import's, as the toast did.
+- **It lasts until the run closes**: while taps keep the undo window open it stays, and it goes when
+  the window does. A rung reached with no run open (an import, the widget) shows for the undo
+  window's length.
+- **An Undo takes it back.** A count that falls back below the rung ends the moment and forgets the
+  rung was reached, so landing on it again celebrates again.
+- **TalkBack** hears the pill once, as a polite live region, where the toast used to speak.
 
 **The walk** (slice E14, in place of E3's walk row). A walk logs nothing: it turns on a mode, the notification with its
 *Cat!* button, so the control is a mode switch and sits apart from the things that log a cat. The
