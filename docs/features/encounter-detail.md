@@ -1,21 +1,28 @@
 # Encounter detail
 
 Tapping a row in the Encounters list opens that cat, among the other cats of its outing (see
-[Paging through the outing](#paging-through-the-outing)): the day it was logged (relative — "Today",
-"Yesterday" — or a calendar date), the time, where its coordinates came from in words, and the
-coordinates themselves when there are any, with the fix's accuracy under them. The screen is pushed
+[Paging through the outing](#paging-through-the-outing)). Under its photos the page names the cat by its
+coat — "Ginger & white cat", or "A cat" with no coat noted, «котик» in Russian — and a row of facts
+follows: the cat's number (see [Its number](#its-number)), then outlined labels for the day it was logged
+(relative — "Today", "Yesterday" — or a calendar date), the time, and its place with the flag when it has a
+named one. The facts are labels, not buttons; they wrap onto a second line
+when they must, and a screen reader hears them as one item, without the flag (`DetailNamesTest`). Further
+down, a cat with a location has its **Where you met** card (see [Where it was found](#where-it-was-found)), and a cat
+without one has a notice in its place, right under the facts. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
 return to the list, never to the Counter root. The same screen opens from a dot on the Map
 ([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
-above the screen it was tapped in. A cat that is on the map has a small map of its spot at the top of
-its **Where** section (see [Its map](#its-map)) and its coordinates drawn in the theme's primary colour
-with a map mark beside them, and a tap anywhere in that section switches to the Map tab with the view
-on that cat (see [map.md](./map.md#a-cats-coordinates)). A cat with no location offers *Set on map*
-there instead, which opens the location picker for that cat above the screen, once however often it
-is tapped (`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever
-way it came (`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
+above the screen it was tapped in. A cat that is on the map has a small map of its spot in its
+card (see [Its map](#its-map)) and a filled **Show on the map** pill at the card's foot, and a tap anywhere on the
+card switches to the Map tab with the view on that cat (see [map.md](./map.md#a-cats-coordinates)); the pill is the
+card's visible cue, not a second control (`DetailWhereTest`). A cat with no location has no card: a notice under its
+facts, the pin in a round tertiary icon, reads **No location for this cat** and "It was logged without a fix, so it
+is not on the map or in Places.", as one item to a screen reader, with a tonal *Set on map* at its end, which opens
+the location picker for that cat above the screen, once however often it is tapped (`EncounterDetailEntryTest`).
+The notice gives way to the card as soon as the cat has a location, whichever way it came
+(`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
 The picker itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the
-coat picker together are taller than most phones, and Delete must never end up below the bottom edge.
+coat card together are taller than most phones, and *Remove this cat* must never end up below the bottom edge.
 
 A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
 "removed" state or *Missing* (`EncounterDetailScreenTest`). It leaves the same way system back does,
@@ -23,11 +30,13 @@ once however often it is tapped, and only if the screen is still on top (`Encoun
 *back navigates back once, however often it is tapped*; `EncounterDetailEntryTest`). The bar has no
 fill of its own: the list runs edge to edge, under the status bar and under the arrow, which sits in
 a tonal circle so it stays readable over whatever passes beneath it, its edge in line with the
-content's (*the back button lines up with the content under it*). Only the list's content is
-inset, so at rest the first line starts below the bar and, scrolled to the end, Delete ends above the
-bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar while its first line
-starts below the bar*; *scrolled to the end, delete clears the bottom bar*). The coat
-picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
+content's (*the back button lines up with the content under it*). At the bar's other end **More**
+sits in the same tonal circle and opens a menu for the cat on screen: *Show on the map*, disabled while the
+map does not draw the cat, and *Remove this cat*; a removed or missing cat has no More (`DetailNamesTest`).
+Only the list's content is inset, so at rest the first line starts below the bar and, scrolled to the end,
+*Remove this cat* ends above the bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar
+while its first line starts below the bar*; *scrolled to the end, remove this cat clears the bottom bar*). The coat is
+a card that opens the coat sheet for the cat on screen; how the two look and behave is in
 [coat.md](./coat.md#changing-it-later).
 
 Every label is built in `EncounterDetailStateMapper`; the composable renders strings and resolves
@@ -40,8 +49,9 @@ offset, not the device's, so a cat logged abroad stays on the day it was logged
 
 The state holds each cat as a page — a `CatPage` in `Loaded.pages`, beside the id of the cat on screen and
 its position — and the mapper builds one page for each cat of the outing window it is handed, with each
-page's own place and attempt (`EncounterDetailStateMapperTest`, *a window maps to one page per cat, newest
-first, and names the cat on screen and its position*; *each page takes its own cat's place and attempt*).
+page's own place, number and attempt (`EncounterDetailStateMapperTest`, *a window maps to one page per cat,
+newest first, and names the cat on screen and its position*; *each page takes its own cat's place and attempt*;
+*each page takes its own cat's number, a shot's page the number of the cat on screen, and none is none*).
 The cat on screen is always one of the pages; the mapper refuses any other (*a cat on screen that is not on
 the pages is refused*).
 
@@ -55,7 +65,7 @@ where the cat on screen is — "2 / 5", read by TalkBack as "Cat 2 of 5" — and
 (`EncounterDetailPagerTest`, *several pages show the position of the cat on screen, read as Cat n of m*; *a single
 cat shows no position*).
 
-A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and Delete
+A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and *Remove this cat*
 removes it (`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
 `EncounterDetailStoreTest`, *settling on another page puts that cat on screen*; *after settling, a delete removes
 the settled cat*). Only the state moves the cat on screen, and the pager follows it — when a cat deleted
@@ -67,10 +77,11 @@ deleted, so an outing a delete splits in two stays whole on them (`OutingPagesTe
 two stays whole on the pages*). Each page shows its own cat's place (`EncounterDetailStoreTest`, *each page shows
 its own cat's place*).
 
-A cat with several photos keeps its own photo pager inside its page: a drag that starts on a photo moves the
-photos first, and past the cat's last photo the rest of the drag moves on to the next cat (`EncounterDetailPagerTest`,
-*a drag past a cat's last photo moves on to the next cat*). Each page keeps its photo position while the user
-swipes to other cats and back (*a cat swiped away from and back to keeps its photo*).
+A cat with photos keeps its own carousel inside its page: a drag that starts on it moves the carousel first,
+one item a fling, and past its end — its two add items — the rest of the drag moves on to the next cat
+(`EncounterDetailPagerTest`, *a drag past the row's end moves on to the next cat*). Each page keeps its place in the
+carousel while the user swipes to other cats and back (*a cat swiped away from and back to keeps its place in the
+row*).
 
 The cat on screen is saved with the screen, so after the process died it reopens on the cat that was on screen,
 while that cat is live, and on the opened one otherwise (`EncounterDetailPagerEntryTest`, *a restored entry
@@ -87,10 +98,10 @@ the one the screen was opened on or last moved to, else the shot's first cat, th
 
 Under its photos the page has an **On this photo** row: every cat of the shot, oldest first, as its coat's face
 or a paw for a coat nobody noted, the cat on screen ringed and read as selected. A tap on another face shows that
-cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, opened on
-that cat's coat, its place and Delete are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
+cat on the same page — the position does not move, nor does the page's own scroll — so its coat card, which opens
+that cat's sheet, its place and *Remove this cat* are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
 coat and delete act on the cat of the photo on screen*; `EncounterDetailShotRowTest`, *switching the cat of the
-photo keeps the pager where it is*). Delete removes only the cat on screen, with the usual removed state and undo;
+photo keeps the pager where it is*). *Remove this cat* removes only the cat on screen, with the usual removed state and undo;
 the photo's other cats stay, and Encounters shows the shot with one cat fewer. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers
 which of its cats was on screen.
 
@@ -98,21 +109,41 @@ The window stays a list of cats, so handing over after a delete, the neighbourin
 as above; only the page list groups a shot, by `groupedByShot`, the same grouping Encounters uses. Every cat of a
 shot keeps one page key, which is why switching between them keeps the page.
 
+## Its number
+
+The facts row opens with the cat's number: its place among the live cats, oldest first by the time it was
+logged, with cats logged at the same instant ordered by id (`EncounterDaoNumberTest`). It reads "#62" in
+English and "№ 62" in Russian, in a label filled with the theme's primary container, as tall as the outlined
+ones, and a screen reader says "Cat number 62" as part of the row (`DetailNumberTest`, `DetailNumberRuTest`).
+On a photo of several cats it is the number of the cat on screen.
+
+The number is a place in the log, not an id, so it follows the log while the cat is on screen: a cat from
+before it removed anywhere in the app moves it down by one, the undo moves it back, and a photo imported from
+before it moves it up (`EncounterDetailStoreTest`, *a delete elsewhere or an older cat arriving renumbers the
+cat on screen without leaving it*). The DAO counts it afresh on every write to the log, and
+`ObserveEncounterNumber` passes it on only when it changes (`ObserveEncounterNumberTest`, `EncounterDaoNumberTest`,
+*an observed number emits again when a write moves the cat*). A cat removed here and brought back with Undo shows
+its number at once, and a count that moves after a swipe leaves the screen on the cat swiped to
+(`EncounterDetailStoreTest`). A cat that is not live has no number, and a page without one starts its row with
+the day.
+
 ## Where it was found
 
-Under its map, when it has one (see [Its map](#its-map)), the **Where** section names the place the
-cat was found in, the way Places files it (see [places.md](./places.md#browsing-them)): the city, the
-country under it, and the country's flag before both, unless the country's code is not two letters,
-as in Places. The city is the cat's
+The card is headed **Where you met** and sits on the low container with large corners. Under its map, when it has
+one (see [Its map](#its-map)), it names the place the cat was found in, the way Places files it (see
+[places.md](./places.md#browsing-them)): the country's flag, then the city and the country on one emphasized line
+("Barcelona, Spain"), unless the country's code is not two letters, as in Places. Under the place, where the
+coordinates came from and the fix's accuracy share one quiet line ("Current location · ±12 m", or the source alone
+without an accuracy), and the coordinates follow in small print (`DetailWhereTest`). The city is the cat's
 cell's locality, or its admin area when it has none, and a country with no name of its own shows its
 two-letter code (`ObserveEncounterPlaceTest`). A cell that names a country but no city — the cats
-Places lists under No city — shows the country alone, in the city's place, and so does a city named
+Places lists under No city — shows the country alone, and so does a city named
 like its country, such as Singapore, which would otherwise show the one name twice
-(`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named yet, has no
-place line; the section starts with where its coordinates came from. The line appears while the
+(`EncounterDetailStateMapperTest`). A cat whose cell is not named yet has no place line; the card
+goes straight from its map to where its coordinates came from. The line appears while the
 screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place reaches the
 screen once its cell is named*). TalkBack reads the city and the country with the rest of the
-section and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
+card and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
 
 The names are the cat's own cell's. Places names a country after the first of its cats whose cell
 has a name for it, so the two differ only when cells of one country were named differently — in
@@ -120,7 +151,7 @@ another language, say.
 
 ## Its map
 
-A cat the map draws, one whose coordinates lie on the globe, opens its **Where** section with a map of
+A cat the map draws, one whose coordinates lie on the globe, has a 16:10 map in its card of
 the few streets around it, centred on the cat, with the cat's dot on its spot: the dot the Map tab draws
 for a cat without a photo, in the cat's coat colours, or blue with no coat noted — a photographed cat
 gets the dot here too, its photos being on the screen already (`EncounterDetailScreenTest`, *a cat on the
@@ -128,12 +159,18 @@ map shows a map with the cat's dot at its centre*). Setting the coat recolours i
 Map tab's light or dark style, whichever the theme is, and carries the tiles' attribution
 in its corner, open at first, until its ⓘ folds it away. The text and ⓘ sit directly over the tiles,
 without a white container. The attribution is plain text, without the Map tab's links, and TalkBack
-skips it, since the section would otherwise read it before the place. A cat with no coordinates, or
-with coordinates off the globe, shows no map (*a cat not on the map shows no map*).
+skips it, since the card would otherwise read it before the place. A cat with coordinates off the globe shows
+no map and no pill, and a tap on its card opens nothing (*a cat not on the map shows no map*; `DetailWhereTest`).
+
+Around the dot the map draws the fix's accuracy to scale: a primary disc at a low alpha with a primary outline,
+whose radius is the accuracy at the map's street zoom and the cat's latitude, using the scale MapLibre itself
+projects with. It is drawn only when the accuracy is known and the circle would be wider than the dot, so a
+fix good to a few metres shows the dot alone. A circle larger than the map runs past its edges rather than
+shrinking to fit (`DetailWhereTest`, `MetersPerDpTest`).
 
 The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
 screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a
-tap anywhere else in the section does (*a tap on the map opens the map*). Should the cat's coordinates
+tap anywhere else on the card does (*a tap on the map opens the map*). Should the cat's coordinates
 change while the screen is open, the map is drawn afresh around the new spot rather than moved there.
 
 Its tiles come over the network, like the Map tab's (see [map.md](./map.md#where-the-map-comes-from)).
@@ -142,21 +179,23 @@ fetched yet, the map says it could not load, with no dot on an empty area; when 
 this area has not, the dot sits on the map's plain background.
 
 MapLibre's runtime is native, so neither a Compose preview nor a JVM test can start it. Under
-`LocalInspectionMode` the map is a plain block with the dot at its centre, and the screen tests switch
-that mode on to reach it. So the tests prove the dot's place and that the section's taps and drags
-reach it; that the real map lets them through is checked on a device.
+`LocalInspectionMode` the map is a plain block with the dot and the accuracy circle at its centre, and the screen
+tests switch that mode on to reach it. So the tests prove the dot's place, the circle's size and that the card's
+taps and drags reach them; that the real map lets them through, and that the circle matches its streets, is checked
+on a device.
 
 ## Delete and undo
 
-Delete is a soft delete: the row gets a `deletedAt` and disappears from every list and count, but
-stays in the database until the purge worker removes it. It deletes the cat on screen. The screen then
-shows a "removed" state with an Undo chip for `Tuning.UNDO_VISIBLE`, the same window the Counter's undo
-uses, so the two undo gestures in the app behave alike — even while other cats of its outing remain, and
-whatever happens to them meanwhile (*the removed state holds while another cat of the outing changes
-mid-delete*). When
-the window closes the chip disappears and the screen navigates back to the list, exactly once. Undo inside
-the window clears `deletedAt`; the encounter is live again and the screen returns to its pages with that
-cat on screen (`EncounterDetailStoreTest`, *delete removes the cat on screen, and undo shows it again*).
+**Remove this cat** — the tonal button on the error container that ends the page, centred, or the same entry
+in More — deletes the cat on screen (`DetailNamesTest`). A delete is a soft delete: the row gets a `deletedAt`
+and disappears from every list and count, but stays in the database until the purge worker removes it. It
+deletes the cat on screen. The screen then shows a "removed" state with an Undo chip for
+`Tuning.UNDO_VISIBLE`, the same window the Counter's undo uses, so the two undo gestures in the app behave
+alike — even while other cats of its outing remain, and whatever happens to them meanwhile (*the removed state
+holds while another cat of the outing changes mid-delete*). When the window closes the chip disappears and the
+screen navigates back to the list, exactly once. Undo inside the window clears `deletedAt`; the encounter is
+live again and the screen returns to its pages with that cat on screen (`EncounterDetailStoreTest`, *delete
+removes the cat on screen, and undo shows it again*).
 
 The undo affordance lives on the detail screen rather than as a snackbar on the list. A snackbar
 would need the list's Store to learn about a deletion made by a different screen — cross-Store
@@ -166,26 +205,38 @@ timing and cannot be tested with virtual time. Keeping the window in `EncounterD
 
 ## Its photos
 
-A cat's photos lead the screen as a pager of the app's copies, oldest first, swiped sideways (see
-[photos.md](./photos.md#seeing-one)); while there is more than one, a position — "2 / 3" — sits in the
-corner of the photo on screen (`DetailPhotoPagerTest`, *a cat with several photos shows where the pager
-is*; *a cat with one photo shows no position*). A tap on a photo opens the viewer on that photo (see
-[photo-viewer.md](./photo-viewer.md); `EncounterDetailStorePhotoTest`, *a tap on a cat's second photo
-opens the viewer on that photo*; `PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry
-opens that cat's viewer above it*). When the cat gains a photo, whoever added it, the pager moves to
-the last one — the newest, unless a backup brought an older photo in (*a photo that arrives brings the
-pager to it*).
+A cat's photos lead the screen as a carousel of the app's copies, oldest first (see
+[photos.md](./photos.md#seeing-one)): Material's multi-aspect carousel, each photo a tall 4:5 card with large
+corners that masks and slides as it leaves the edge, one item a fling, the first in line with the back arrow
+(`DetailPhotoCarouselTest`, *a cat's photos run oldest first, 300 dp wide at 4 to 5, 8 dp apart, the first in line
+with the back arrow*). After the photos come two narrower items as tall as a photo, **Take a photo** and **From
+gallery**, an icon over its label on the low container (*after the photos come take a photo and from gallery,
+narrower and as tall, on the low container*). While there is more than one photo, an outlined label under the
+carousel names the one in front — "2 / 3", read out as "Photo 2 of 3"; scrolled onto the add items it names the
+last photo (*a cat with several photos shows under the row which photo is in front*; *a cat with one photo shows no
+position*; *scrolling the row to the next photo names it*). A tap on a photo opens the viewer on that photo (see
+[photo-viewer.md](./photo-viewer.md); *a tap on the second photo opens the viewer on it*;
+`EncounterDetailStorePhotoTest`, *a tap on a cat's second photo opens the viewer on that photo*;
+`PhotoViewerEntryTest`, *a tap on the photo in the nav host's own detail entry opens that cat's viewer above it*).
+When the cat gains a photo, whoever added it, the carousel moves to it, wherever it lands among the others — the
+end for a new photo, further back for an older one a backup brought in (`DetailPhotoCarouselTest`, *a photo that
+arrives brings the row to it*; *an older photo that arrives brings the row to it*). For a screen reader each of
+several photos says which it is, "Photo 2 of 3", and a lone photo is "Photo of this cat" (*each photo of several
+tells TalkBack which it is, and a lone photo says it is the cat's*).
+
+A cat without a photo opens on itself instead: a 4:5 block in the primary container with large corners, the cat's
+face — or the paw with no coat noted — "No photo yet", and a connected pair, **Take a photo** and **Gallery**
+(`DetailNoPhotoTest`).
 
 The fullscreen viewer can remove its displayed attachment after confirmation. The detail underneath
 then follows the repository: the cat and its other photos remain, or the no-photo state appears after
 the last attachment goes; another cat attached from the same shot is separate and stays unchanged
 (see [photo-viewer.md](./photo-viewer.md#remove-from-the-cat)).
 
-**Add a photo** comes under the photos, or in their place on a cat with none: *Take a photo* and
-*Choose from gallery* — the system camera, or the system picker for several images — on every live
-cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat that already has a photo
-can still be given another*). The new photo goes after the others (*a photo taken of a cat that has one
-is added after it*). A photo the cat already has is not added again, and the screen says so (*a
+The add items at the carousel's end, and the pair on a cat with none, open the system camera or the system
+picker for several images on every live cat, one that has photos included (`EncounterDetailStorePhotoTest`, *a cat
+that already has a photo can still be given another*). The new photo goes after the others (*a photo taken of a
+cat that has one is added after it*). A photo the cat already has is not added again, and the screen says so (*a
 picked photo the cat already has is not added again, and the screen says so*). A second tap before
 the camera or the picker answers opens nothing, so a double tap never opens two cameras (*a second
 tap before the camera answers opens nothing*); one camera or picker is open for the whole screen at a time,
@@ -194,8 +245,11 @@ cat, and their answer names it back — even when the process died while they we
 the camera's queue and the picker remember the cat with the rest of the screen's saved state
 (`PhotoLaunchersTest`; `PendingCapturesTest`). A queue saved by an older version, whose shots named
 no cat, restores empty: the capture file waits for the start-up cleanup rather than landing on a
-guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both buttons
-disable and a progress bar shows under them, so a tap in the meantime opens nothing
+guessed cat. Once the camera or the picker hands its photos back, the attempt starts: both add items, or both
+buttons of the pair, disable and a wavy progress indicator runs under the carousel or under the pair, so a tap in
+the meantime opens nothing (`DetailPhotoCarouselTest`, *while a photo is being attached, both add items are
+disabled*; *while photos attach, the progress runs under the row*; `DetailNoPhotoTest`, *during an attempt both
+buttons are disabled and the progress runs under them*)
 (`EncounterDetailStorePhotoTest`, *taking a photo while one is being attached opens nothing*). The attempt
 is its cat's: it shows on that cat's page alone (*a photo attached to another page shows the attempt on that
 page alone*), and it carries on, count and all, whichever cat is on screen (`EncounterDetailPickSeveralTest`,
@@ -208,20 +262,20 @@ the viewer opens on the cat swiped to*; *after a swipe, set on map opens the pic
 swipe, the coordinates open the map on the cat swiped to*); a stray result naming a cat that is not on
 the pages opens none of them (*a tap naming a cat not on the pages opens neither the viewer nor the map*;
 *set on map names the cat it was tapped for, and a cat not on the pages opens nothing*). The coat cell,
-*Take a photo*, *Choose from gallery*, the photo, the coordinates and *Set on map* send the id of the page
-they sit on; Delete, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
+*Take a photo*, *From gallery* or *Gallery*, the photo, the coordinates and *Set on map* send the id of the page
+they sit on; *Remove this cat*, More, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
 the cat on screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
 
-The attempt ends only when its cat carries the photo it attached: until then the progress bar
+The attempt ends only when its cat carries the photo it attached: until then the progress indicator
 stays. Redrawing on `AttachPhoto`'s result instead would redraw from the last emission, which does not
-have the photo yet, and offer the buttons back for a moment before the photo appeared
+have the photo yet, and enable the add items again for a moment before the photo appeared
 (*a successful attach stays in progress until the photo arrives, never offering again*).
 
 **Several from the gallery.** The picker lets the user choose up to `Tuning.ATTACH_BATCH_MAX` images; a
 picker that ignores the limit — the document picker used where no photo picker is available — is cut to the
 first ones chosen (`PickSeveralPhotosTest`). The photos are attached one after another, in the order
 picked, after the cat's own (`EncounterDetailPickSeveralTest`, *every picked photo lands after the
-cat's own, in the order picked*). While they are, both buttons stay disabled and the progress bar fills
+cat's own, in the order picked*). While they are, both stay disabled and the progress indicator fills
 as each one goes through, read out as "Attached 2 of 5 photos"; a single photo, picked or taken, shows the
 bar without a count as before (*a pick of several shows how many are through as it goes*; *a single
 picked photo or a camera photo shows the attempt without a count*; *a tap on either button mid-pick
@@ -285,21 +339,26 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - **Setting the coat while a photo is being attached** keeps both (see
   [coat.md](./coat.md#at-the-edges)).
 - **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown
-  as numbers, but the map does not draw that cat, so its **Where** section shows no map and opens
+  as numbers, but the map does not draw that cat, so its card shows no map and no pill, and opens
   nothing (`EncounterDetailStorePhotoTest`, *a cat that is not on the map opens no map*). A cat with no
   coordinates has nothing to open either.
 
 ## Where the code lives
 
-- `domain/…/usecase/ObserveEncounters.kt`, `ObserveEncounterPlace.kt`, `DeleteEncounter.kt`,
+- `domain/…/usecase/ObserveEncounters.kt`, `ObserveEncounterPlace.kt`, `ObserveEncounterNumber.kt`, `DeleteEncounter.kt`,
   `UndoDelete.kt`; `domain/…/session/OutingWindow.kt` — the pages' outing; `domain/…/region/EncounterPlace.kt`
   — which place a cat is in
 - `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`;
   `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
-- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `WhereCard.kt`,
-  `DetailPhotoPager.kt`, `AddPhotoCard.kt`, `DetailInteractions.kt` (the two-value taps' payloads);
-  `ui/…/components/BackBar.kt` — the bar, `Flag.kt` — a flag TalkBack skips; `ui/…/map/SpotMap.kt` —
-  the **Where** section's map and the cat's dot on it
+- `data/…/db/EncounterDao.kt` — `observeNumber`, the count behind a cat's number
+- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `DetailHeading.kt`
+  (the title and the facts row), `DetailMore.kt` (More and its menu), `WhereCard.kt` (the card and the no-location
+  notice), `CoatCard.kt` and `CoatSheet.kt` (the coat, see [coat.md](./coat.md#changing-it-later)),
+  `DetailPhotoCarousel.kt` (the photos and the add items), `NoPhotoBlock.kt` (a cat without a photo), `AttachingBar.kt`,
+  `PhotoInteraction.kt` (a photo tap's payload);
+  `ui/…/components/BackBar.kt` — the bar, `Labels.kt` — the facts' labels, `Flag.kt` — a flag TalkBack skips,
+  `NoticeCard.kt` — the notice; `ui/…/map/SpotMap.kt` — the card's map, the cat's dot and the accuracy circle,
+  `MetersPerDp.kt` — the map's scale
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, which saves the cat on screen with the screen,
   wired into `CatsRadarNavHost.kt`, which

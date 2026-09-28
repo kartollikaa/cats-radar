@@ -38,6 +38,7 @@ internal data class SetCoatCall(val id: String, val coat: CatCoat?, val updatedA
 internal class FakeEncounterDao : EncounterDao {
     var observeAllResult: List<EncounterWithPhotos> = emptyList()
     var observeByIdResult: EncounterWithPhotos? = null
+    var observeNumberResult: Int? = null
     var findBySourceDigestResult: EncounterWithPhotos? = null
     var purgeDeletedBeforeResult: Int = 0
     var loadDeletedBeforeResult: List<EncounterWithPhotos> = emptyList()
@@ -48,6 +49,7 @@ internal class FakeEncounterDao : EncounterDao {
     val inserted = mutableListOf<EncounterEntity>()
     val updated = mutableListOf<EncounterEntity>()
     var observeByIdCall: String? = null
+    var observeNumberCall: String? = null
     var softDeleteCall: Pair<String, Instant>? = null
     var clearDeletedAtCall: String? = null
     val clearDeletedAtIfDeletedAtCalls = mutableListOf<Pair<String, Instant>>()
@@ -70,6 +72,11 @@ internal class FakeEncounterDao : EncounterDao {
     override fun observeById(id: String): Flow<EncounterWithPhotos?> {
         observeByIdCall = id
         return flowOf(observeByIdResult)
+    }
+
+    override fun observeNumber(id: String): Flow<Int?> {
+        observeNumberCall = id
+        return flowOf(observeNumberResult)
     }
 
     override suspend fun insert(encounter: EncounterEntity) {

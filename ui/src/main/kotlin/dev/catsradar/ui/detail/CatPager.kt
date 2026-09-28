@@ -1,44 +1,42 @@
 package dev.catsradar.ui.detail
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
-import dev.catsradar.ui.coat.CoatPicker
-import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
 
 const val DetailPagesTestTag = "detail-pages"
+
+// In line with the back arrow's edge, as everything on the page is.
+internal val PageInset = 16.dp
 
 /** [onPageSettle] names the cat a swipe comes to rest on, only when it is not already [state]'s cat on screen. */
 @Composable
@@ -49,7 +47,7 @@ internal fun CatPager(
     onPageSettle: (catId: String) -> Unit = {},
     onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    onCoatClick: (CoatInteraction) -> Unit = {},
+    onCoatCardClick: (catId: String) -> Unit = {},
     onTakePhotoClick: (catId: String) -> Unit = {},
     onPickPhotoClick: (catId: String) -> Unit = {},
     onPhotoClick: (PhotoInteraction) -> Unit = {},
@@ -82,7 +80,7 @@ internal fun CatPager(
             contentPadding = contentPadding,
             onPhotoCatClick = onPhotoCatClick,
             onDeleteClick = onDeleteClick,
-            onCoatClick = { coat -> onCoatClick(CoatInteraction(page.id, coat)) },
+            onCoatCardClick = { onCoatCardClick(page.id) },
             onTakePhotoClick = { onTakePhotoClick(page.id) },
             onPickPhotoClick = { onPickPhotoClick(page.id) },
             onPhotoClick = { photoId -> onPhotoClick(PhotoInteraction(page.id, photoId)) },
@@ -99,7 +97,7 @@ private fun CatPageContent(
     contentPadding: PaddingValues = PaddingValues(),
     onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    onCoatClick: (CoatOption?) -> Unit = {},
+    onCoatCardClick: () -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
@@ -107,48 +105,74 @@ private fun CatPageContent(
     onSetLocationClick: () -> Unit = {},
 ) {
     Column(
+        // The pager centres a page shorter than itself; filled, a short cat's page still starts under the bar.
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
-            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
+            .padding(top = 8.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        if (page.photos.isNotEmpty()) DetailPhotoPager(page.photos, onPhotoClick = onPhotoClick)
-        if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
-        AddPhotoCard(
-            page.addPhoto,
-            progress = page.attachProgress,
-            onTakePhotoClick = onTakePhotoClick,
-            onPickPhotoClick = onPickPhotoClick,
-        )
-        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-            Text(
-                text = page.dayLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        if (page.photos.isEmpty()) {
+            NoPhotoBlock(
+                coat = page.coat,
+                addPhoto = page.addPhoto,
+                modifier = Modifier.padding(horizontal = PageInset),
+                progress = page.attachProgress,
+                onTakePhotoClick = onTakePhotoClick,
+                onPickPhotoClick = onPickPhotoClick,
             )
-            Text(text = page.timeLabel, style = MaterialTheme.typography.displayMedium)
+        } else {
+            DetailPhotoCarousel(
+                photos = page.photos,
+                addPhoto = page.addPhoto,
+                progress = page.attachProgress,
+                onPhotoClick = onPhotoClick,
+                onTakePhotoClick = onTakePhotoClick,
+                onPickPhotoClick = onPickPhotoClick,
+            )
         }
-        WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
-        SectionCard(R.string.detail_coat) {
-            // Keyed by the cat: another cat of the same photo opens the row on its own coat.
-            key(page.id) {
-                CoatPicker(
-                    selected = page.coat,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    onCoatClick = onCoatClick,
-                )
-            }
+        CatFacts(
+            page,
+            onPhotoCatClick = onPhotoCatClick,
+            onDeleteClick = onDeleteClick,
+            onCoatCardClick = onCoatCardClick,
+            onCoordinatesClick = onCoordinatesClick,
+            onSetLocationClick = onSetLocationClick,
+        )
+    }
+}
+
+@Composable
+private fun CatFacts(
+    page: CatPage,
+    onPhotoCatClick: (catId: String) -> Unit,
+    onDeleteClick: () -> Unit,
+    onCoatCardClick: () -> Unit,
+    onCoordinatesClick: () -> Unit,
+    onSetLocationClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = PageInset),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
+        DetailHeading(page)
+        if (page.setsLocation) {
+            NoLocationNotice(onSetLocationClick = onSetLocationClick)
+        } else {
+            WhereCard(page, onCoordinatesClick = onCoordinatesClick)
         }
-        OutlinedButton(
+        CoatCard(coat = page.coat, onClick = onCoatCardClick)
+        FilledTonalButton(
             onClick = onDeleteClick,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            ),
         ) {
-            Text(text = stringResource(R.string.detail_delete))
+            Text(text = stringResource(R.string.detail_remove))
         }
     }
 }

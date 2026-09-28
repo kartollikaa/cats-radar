@@ -2,16 +2,21 @@ package dev.catsradar.app.counter
 
 import android.content.Context
 import android.view.View
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -34,6 +39,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -54,11 +60,13 @@ class LocationIslandTest {
     private var tallies = 0
 
     private lateinit var host: View
+    private lateinit var scheme: ColorScheme
 
     private fun show() {
         compose.setContent {
             host = LocalView.current
             CatsRadarTheme {
+                scheme = MaterialTheme.colorScheme
                 CounterScreen(state = state, onTallyClick = { tallies++ }, onLocationHintAction = { actions += it })
             }
         }
@@ -69,6 +77,19 @@ class LocationIslandTest {
     private fun hint() = compose.onNodeWithText(words)
 
     private fun block() = compose.onNodeWithContentDescription("147").getUnclippedBoundsInRoot()
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `the hint's pin keeps its secondary tone`() {
+        show()
+        compose.waitForIdle()
+
+        val text = hint().fetchSemanticsNode().boundsInRoot
+        val island = compose.onNodeWithTag(LocationIslandTestTag).fetchSemanticsNode().boundsInRoot
+        val pixels = compose.onRoot().captureToImage().toPixelMap()
+        val row = (island.left.toInt() until text.left.toInt()).map { pixels[it, text.center.y.toInt()] }
+        assertTrue(scheme.secondaryContainer in row, "the pin's circle is in the secondary container")
+    }
 
     @Test
     fun `the count keeps its size with the hint showing`() {

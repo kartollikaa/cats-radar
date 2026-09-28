@@ -23,6 +23,18 @@ interface EncounterDao {
     @Query("SELECT * FROM encounters WHERE id = :id AND deletedAt IS NULL")
     fun observeById(id: String): Flow<EncounterWithPhotos?>
 
+    @Query(
+        """
+        SELECT (
+            SELECT COUNT(*) FROM encounters AS other
+            WHERE other.deletedAt IS NULL
+                AND (other.occurredAt < cat.occurredAt OR (other.occurredAt = cat.occurredAt AND other.id <= cat.id))
+        )
+        FROM encounters AS cat WHERE cat.id = :id AND cat.deletedAt IS NULL
+        """,
+    )
+    fun observeNumber(id: String): Flow<Int?>
+
     @Insert
     suspend fun insert(encounter: EncounterEntity)
 

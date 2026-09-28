@@ -26,6 +26,7 @@ internal fun handleEncounterDetailEffect(
     onOpenPhoto: (PhotoViewer) -> Unit,
     onOpenMap: (catId: String) -> Unit,
     onOpenLocationPicker: (catId: String) -> Unit,
+    onOpenCoatSheet: (catId: String) -> Unit,
     cameraLauncher: CameraLauncher,
     photoPickerLauncher: CatPhotosPickerLauncher,
     photoFailureReporter: MessageReporter,
@@ -41,6 +42,7 @@ internal fun handleEncounterDetailEffect(
         is EncounterDetailEffect.OpenPhoto -> onOpenPhoto(PhotoViewer(effect.catId, effect.photoId))
         is EncounterDetailEffect.OpenMap -> onOpenMap(effect.catId)
         is EncounterDetailEffect.OpenLocationPicker -> onOpenLocationPicker(effect.catId)
+        is EncounterDetailEffect.OpenCoatSheet -> onOpenCoatSheet(effect.catId)
         EncounterDetailEffect.PhotoNotAttached -> photoFailureReporter.report()
         is EncounterDetailEffect.PhotosNotAttached -> notAttachedCountReporter.report(effect.count)
         EncounterDetailEffect.PhotoAlreadyThere -> alreadyThereReporter.report()
@@ -72,6 +74,7 @@ internal fun EncounterDetailDestination(
     onOpenPhoto: (PhotoViewer) -> Unit,
     onOpenMap: (catId: String) -> Unit,
     onOpenLocationPicker: (catId: String) -> Unit,
+    onOpenCoatSheet: (catId: String) -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
 ) {
@@ -81,6 +84,7 @@ internal fun EncounterDetailDestination(
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)
     val currentOnOpenMap by rememberUpdatedState(onOpenMap)
     val currentOnOpenLocationPicker by rememberUpdatedState(onOpenLocationPicker)
+    val currentOnOpenCoatSheet by rememberUpdatedState(onOpenCoatSheet)
     val cameraLauncher = rememberCameraLauncher { shot -> dispatchCameraShot(shot, store::dispatch) }
     val photoPicker = rememberCatPhotosPicker { picked ->
         store.dispatch(EncounterDetailIntent.PhotosPicked(picked.catId, picked.uris))
@@ -107,6 +111,7 @@ internal fun EncounterDetailDestination(
                 onOpenPhoto = { viewer -> currentOnOpenPhoto(viewer) },
                 onOpenMap = { catId -> currentOnOpenMap(catId) },
                 onOpenLocationPicker = { catId -> currentOnOpenLocationPicker(catId) },
+                onOpenCoatSheet = { catId -> currentOnOpenCoatSheet(catId) },
                 cameraLauncher = cameraLauncher,
                 photoPickerLauncher = photoPicker,
                 photoFailureReporter = photoFailureReporter,
@@ -136,7 +141,7 @@ private fun DispatchingDetailScreen(
         onPhotoCatClick = { catId -> dispatch(EncounterDetailIntent.PhotoCatClicked(catId)) },
         onDeleteClick = { dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { dispatch(EncounterDetailIntent.UndoClicked) },
-        onCoatClick = { pick -> dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
+        onCoatCardClick = { catId -> dispatch(EncounterDetailIntent.CoatCardClicked(catId)) },
         onTakePhotoClick = { catId -> dispatch(EncounterDetailIntent.TakePhotoClicked(catId)) },
         onPickPhotoClick = { catId -> dispatch(EncounterDetailIntent.PickPhotoClicked(catId)) },
         onPhotoClick = { tap -> dispatch(EncounterDetailIntent.PhotoClicked(tap.catId, tap.photoId)) },

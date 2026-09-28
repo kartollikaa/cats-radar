@@ -30,6 +30,7 @@ class ScreenViewTrackerTest {
         Regions(kind = RegionKind.COUNTRY, countryCode = "PT") to AnalyticsScreen.REGIONS,
         CatsMap to AnalyticsScreen.MAP,
         MapSpot(catIds = setOf("cat-1"), coats = emptySet()) to AnalyticsScreen.MAP_SPOT,
+        CoatSheet("cat-1") to AnalyticsScreen.COAT_SHEET,
         Settings to AnalyticsScreen.SETTINGS,
     )
 

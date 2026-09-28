@@ -53,6 +53,13 @@ class FakeEncounterRepository :
     override fun observeById(id: String): Flow<Encounter?> =
         encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }
 
+    // Mirrors the DAO's count, so a delete or an older cat renumbers here as it does in the app.
+    override fun observeNumber(id: String): Flow<Int?> = encounters.map { list ->
+        val live = list.filter { it.deletedAt == null }
+        val cat = live.firstOrNull { it.id == id } ?: return@map null
+        live.count { it.occurredAt < cat.occurredAt || (it.occurredAt == cat.occurredAt && it.id <= cat.id) }
+    }
+
     // Mirrors the DAO's plain @Insert, which aborts on an id that is already there.
     override suspend fun insert(encounter: Encounter) {
         check(encounters.value.none { it.id == encounter.id }) { "UNIQUE constraint failed: ${encounter.id}" }

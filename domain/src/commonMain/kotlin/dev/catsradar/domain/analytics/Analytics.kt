@@ -56,6 +56,7 @@ enum class AnalyticsScreen {
     REGIONS,
     MAP,
     MAP_SPOT,
+    COAT_SHEET,
     SETTINGS,
 }
 

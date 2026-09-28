@@ -18,6 +18,8 @@ class EncounterRepositoryImpl(private val dao: EncounterDao) : EncounterReposito
 
     override fun observeById(id: String): Flow<Encounter?> = dao.observeById(id).map { it?.toDomain() }
 
+    override fun observeNumber(id: String): Flow<Int?> = dao.observeNumber(id)
+
     override suspend fun insert(encounter: Encounter) =
         dao.insertWithPhotos(encounter.toEntity(), encounter.photos.map { it.toEntity() })
 
