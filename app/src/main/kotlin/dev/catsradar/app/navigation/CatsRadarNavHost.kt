@@ -161,7 +161,11 @@ private fun EntryProviderScope<NavKey>.catEntries(
                 backStack.selectTab(BottomNavTab.MAP)
             },
             onOpenLocationPicker = { catId -> backStack.push(LocationPicker(catId)) },
+            onOpenCoatSheet = { catId -> backStack.push(CoatSheet(catId)) },
         )
+    }
+    entry<CoatSheet>(metadata = BottomSheetSceneStrategy.bottomSheet()) { key ->
+        CoatSheetDestination(key = key, onClose = { backStack.popIfOnTop(key) })
     }
     entry<PhotoViewer>(metadata = photoViewerMetadata()) { key ->
         PhotoViewerDestination(key = key, onClose = { backStack.popIfOnTop(key) })

@@ -20,7 +20,7 @@
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-aspect carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | in-review |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | in-review |
 | E7a | The coat question after a photo | The sheet after a photo keeps the photo in its header through a count, names its mode with a *One cat · Several* group that also leads back to one tap, counts cats in their shapes, and calls the paw *No coat*. | safe | ~450 | E4 | merged |
-| E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | planned |
+| E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | in-review |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | in-review |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |

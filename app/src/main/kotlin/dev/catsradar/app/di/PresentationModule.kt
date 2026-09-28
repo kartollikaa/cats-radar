@@ -5,6 +5,8 @@ import coil3.SingletonImageLoader
 import dev.catsradar.presentation.AndroidDateTimeFormatter
 import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.presentation.coatsheet.CoatSheetStateMapper
+import dev.catsradar.presentation.coatsheet.CoatSheetStore
 import dev.catsradar.presentation.counter.CounterStateMapper
 import dev.catsradar.presentation.counter.CounterStore
 import dev.catsradar.presentation.detail.EncounterDetailStateMapper
@@ -42,6 +44,10 @@ val presentationModule = module {
     viewModelOf(::EncountersStore)
     factoryOf(::MapStateMapper)
     viewModelOf(::MapStore)
+    factoryOf(::CoatSheetStateMapper)
+    viewModel { (catId: String) ->
+        CoatSheetStore(catId = catId, observeEncounter = get(), setCoat = get(), stateMapper = get())
+    }
     factoryOf(::MapSpotStateMapper)
     viewModel { (catIds: Set<String>, coats: Set<CoatOption?>) ->
         MapSpotStore(
@@ -86,7 +92,6 @@ val presentationModule = module {
             observeEncounterNumber = get(),
             deleteEncounter = get(),
             undoDelete = get(),
-            setCoat = get(),
             attachPhoto = get(),
             stateMapper = get(),
             clock = get(),

@@ -20,7 +20,7 @@ there instead, which opens the location picker for that cat above the screen, on
 is tapped (`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever
 way it came (`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
 The picker itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the
-coat picker together are taller than most phones, and *Remove this cat* must never end up below the bottom edge.
+coat card together are taller than most phones, and *Remove this cat* must never end up below the bottom edge.
 
 A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
 "removed" state or *Missing* (`EncounterDetailScreenTest`). It leaves the same way system back does,
@@ -33,8 +33,8 @@ sits in the same tonal circle and opens a menu for the cat on screen: *Show on t
 map does not draw the cat, and *Remove this cat*; a removed or missing cat has no More (`DetailNamesTest`).
 Only the list's content is inset, so at rest the first line starts below the bar and, scrolled to the end,
 *Remove this cat* ends above the bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar
-while its first line starts below the bar*; *scrolled to the end, remove this cat clears the bottom bar*). The coat
-picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
+while its first line starts below the bar*; *scrolled to the end, remove this cat clears the bottom bar*). The coat is
+a card that opens the coat sheet for the cat on screen; how the two look and behave is in
 [coat.md](./coat.md#changing-it-later).
 
 Every label is built in `EncounterDetailStateMapper`; the composable renders strings and resolves
@@ -96,8 +96,8 @@ the one the screen was opened on or last moved to, else the shot's first cat, th
 
 Under its photos the page has an **On this photo** row: every cat of the shot, oldest first, as its coat's face
 or a paw for a coat nobody noted, the cat on screen ringed and read as selected. A tap on another face shows that
-cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, opened on
-that cat's coat, its place and *Remove this cat* are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
+cat on the same page — the position does not move, nor does the page's own scroll — so its coat card, which opens
+that cat's sheet, its place and *Remove this cat* are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
 coat and delete act on the cat of the photo on screen*; `EncounterDetailShotRowTest`, *switching the cat of the
 photo keeps the pager where it is*). *Remove this cat* removes only the cat on screen, with the usual removed state and undo;
 the photo's other cats stay, and Encounters shows the shot with one cat fewer. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers

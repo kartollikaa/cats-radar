@@ -30,7 +30,7 @@ its feature switches from Firebase Remote Config. Debug builds do not initialize
 
 - **A screen view** each time a different screen comes to the top: `screen_view` with `screen_name`
   one of `counter`, `encounters`, `encounter_detail`, `photo_viewer`, `location_picker`, `statistics`, `regions`, `map`,
-  `map_spot`, `settings`. The same screen again with nothing in between is not counted twice; going back to a
+  `map_spot`, `coat_sheet`, `settings`. The same screen again with nothing in between is not counted twice; going back to a
   screen after another counts it again, and so does coming back to the app from the background;
   turning the phone, which rebuilds the screen, does not.
 - **What was done**, one event per fact, logged only after the fact is written — a failed action

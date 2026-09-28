@@ -31,7 +31,7 @@ internal fun loadedOn(onScreen: CatPage, vararg pages: CatPage): EncounterDetail
 
 internal val scrollsVertically = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
-// performScrollTo() scrolls only the nearest scrollable, the coat row, not the screen's list.
+// performScrollTo() scrolls only the nearest scrollable, the photo carousel, not the screen's list.
 internal fun ComposeContentTestRule.scrollListToEnd() {
     onNode(scrollsVertically).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 10_000f) }
 }
@@ -50,4 +50,13 @@ internal fun ComposeContentTestRule.assertLargeCorner(box: Rect, outside: Color,
         val deep = pixels[(box.left + 9.5.dp.toPx()).toInt(), (box.top + 9.5.dp.toPx()).toInt()]
         assertEquals(outside to inside, out to deep, "outside and inside a large corner of $box")
     }
+}
+
+// No coat's ghost shape: its hem dips at the middle and swells towards the corner.
+internal fun ComposeContentTestRule.assertGhostHem(box: Rect, outside: Color, inside: Color) {
+    val pixels = onRoot().captureToImage().toPixelMap()
+    val y = (box.top + box.height * 0.92f).toInt()
+    val notch = pixels[(box.left + box.width * 0.5f).toInt(), y]
+    val swell = pixels[(box.left + box.width * 0.8f).toInt(), y]
+    assertEquals(outside to inside, notch to swell, "the ghost's hem in $box")
 }

@@ -1,16 +1,14 @@
 package dev.catsradar.presentation.detail
 
-import dev.catsradar.domain.model.CatCoat
+import app.cash.turbine.test
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
-import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
-import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
@@ -83,13 +81,14 @@ class EncounterDetailShotTest {
         store.dispatch(EncounterDetailIntent.PhotoCatClicked(SECOND))
         runCurrent()
 
-        store.dispatch(EncounterDetailIntent.CoatPicked(store.shownPage().id, CoatOption.GINGER))
-        runCurrent()
+        store.effects.test {
+            store.dispatch(EncounterDetailIntent.CoatCardClicked(store.shownPage().id))
+            assertEquals(EncounterDetailEffect.OpenCoatSheet(SECOND), awaitItem())
+        }
         store.dispatch(EncounterDetailIntent.DeleteClicked)
         runCurrent()
 
         val cats = repository.encounters().associateBy { it.id }
-        assertEquals(CatCoat.GINGER, cats.getValue(SECOND).coat)
         assertEquals(listOf(SECOND), cats.values.filter { it.deletedAt != null }.map { it.id })
     }
 
@@ -113,7 +112,6 @@ class EncounterDetailShotTest {
             observeEncounterNumber = ObserveEncounterNumber(repository),
             deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
             undoDelete = UndoDelete(repository, analytics = NoAnalytics),
-            setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
             attachPhoto = AttachPhoto(
                 encounterRepository = repository,
                 settingsRepository = FakeSettingsRepository(),
