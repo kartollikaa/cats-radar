@@ -25,9 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.MultiAspectCarouselItemDrawInfo
 import androidx.compose.material3.carousel.MultiAspectCarouselScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,13 +71,17 @@ private val ItemHeight = PhotoWidth * 5 / 4
 private const val TAKE_KEY = "take-a-photo"
 private const val PICK_KEY = "from-gallery"
 
-/** [photos] is never empty: a cat without one gets [NoPhotoBlock]. */
+/**
+ * [photos] is never empty: a cat without one gets [NoPhotoBlock]. While [takesDragAtOnce] holds, a sideways drag on
+ * the row is the row's from its first move, before a parent that is still scrolling can keep it.
+ */
 @Composable
 internal fun DetailPhotoCarousel(
     photos: ImmutableList<DetailPhoto>,
     addPhoto: AddPhoto,
     modifier: Modifier = Modifier,
     progress: AttachProgress? = null,
+    takesDragAtOnce: () -> Boolean = { false },
     onPhotoClick: (photoId: String) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
@@ -92,6 +100,7 @@ internal fun DetailPhotoCarousel(
             photos = photos,
             listState = listState,
             addEnabled = addPhoto == AddPhoto.READY,
+            takesDragAtOnce = takesDragAtOnce,
             onPhotoClick = onPhotoClick,
             onTakePhotoClick = onTakePhotoClick,
             onPickPhotoClick = onPickPhotoClick,
@@ -109,51 +118,62 @@ private fun PhotoRow(
     photos: ImmutableList<DetailPhoto>,
     listState: LazyListState,
     addEnabled: Boolean,
+    takesDragAtOnce: () -> Boolean,
     modifier: Modifier = Modifier,
     onPhotoClick: (photoId: String) -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
 ) {
     val shape = MaterialTheme.shapes.large
-    MultiAspectCarouselScope {
-        LazyRow(
-            state = listState,
-            modifier = modifier.fillMaxWidth().testTag(DetailCarouselTestTag),
-            contentPadding = PaddingValues(horizontal = PageInset),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            flingBehavior = rememberSingleAdvanceFling(listState),
-        ) {
-            itemsIndexed(photos, key = { _, photo -> photo.id }) { index, photo ->
-                CarouselPhoto(
-                    photo = photo,
-                    description = photoDescription(index, photos.size),
-                    modifier = Modifier
-                        .size(PhotoWidth, ItemHeight)
-                        .maskClip(shape, rememberDrawInfo(index, listState)),
-                    onClick = { onPhotoClick(photo.id) },
-                )
-            }
-            item(key = TAKE_KEY) {
-                AddItem(
-                    iconRes = R.drawable.ic_photo_camera,
-                    labelRes = R.string.detail_take_photo,
-                    enabled = addEnabled,
-                    modifier = Modifier
-                        .size(AddItemWidth, ItemHeight)
-                        .maskClip(shape, rememberDrawInfo(photos.size, listState)),
-                    onClick = onTakePhotoClick,
-                )
-            }
-            item(key = PICK_KEY) {
-                AddItem(
-                    iconRes = R.drawable.ic_photo_library,
-                    labelRes = R.string.detail_from_gallery,
-                    enabled = addEnabled,
-                    modifier = Modifier
-                        .size(AddItemWidth, ItemHeight)
-                        .maskClip(shape, rememberDrawInfo(photos.size + 1, listState)),
-                    onClick = onPickPhotoClick,
-                )
+    val configuration = LocalViewConfiguration.current
+    val eager = remember(configuration, takesDragAtOnce) { NoSlopWhile(configuration, takesDragAtOnce) }
+    CompositionLocalProvider(LocalViewConfiguration provides eager) {
+        MultiAspectCarouselScope {
+            LazyRow(
+                state = listState,
+                modifier = modifier.fillMaxWidth().testTag(DetailCarouselTestTag),
+                contentPadding = PaddingValues(horizontal = PageInset),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                flingBehavior = rememberSingleAdvanceFling(listState),
+            ) {
+                itemsIndexed(photos, key = { _, photo -> photo.id }) { index, photo ->
+                    OwnNodes(index, listState) {
+                        CarouselPhoto(
+                            photo = photo,
+                            description = photoDescription(index, photos.size),
+                            modifier = Modifier
+                                .size(PhotoWidth, ItemHeight)
+                                .maskClip(shape, rememberDrawInfo(index, listState)),
+                            onClick = { onPhotoClick(photo.id) },
+                        )
+                    }
+                }
+                item(key = TAKE_KEY) {
+                    OwnNodes(photos.size, listState) {
+                        AddItem(
+                            iconRes = R.drawable.ic_photo_camera,
+                            labelRes = R.string.detail_take_photo,
+                            enabled = addEnabled,
+                            modifier = Modifier
+                                .size(AddItemWidth, ItemHeight)
+                                .maskClip(shape, rememberDrawInfo(photos.size, listState)),
+                            onClick = onTakePhotoClick,
+                        )
+                    }
+                }
+                item(key = PICK_KEY) {
+                    OwnNodes(photos.size + 1, listState) {
+                        AddItem(
+                            iconRes = R.drawable.ic_photo_library,
+                            labelRes = R.string.detail_from_gallery,
+                            enabled = addEnabled,
+                            modifier = Modifier
+                                .size(AddItemWidth, ItemHeight)
+                                .maskClip(shape, rememberDrawInfo(photos.size + 1, listState)),
+                            onClick = onPickPhotoClick,
+                        )
+                    }
+                }
             }
         }
     }
@@ -163,6 +183,13 @@ private fun PhotoRow(
 @Composable
 private fun rememberDrawInfo(index: Int, listState: LazyListState): MultiAspectCarouselItemDrawInfo =
     remember(index, listState) { MultiAspectCarouselItemDrawInfo(index, listState) }
+
+// material3 1.5.0-alpha27's maskClip node keeps masking as the item it was made for, even when the pager or the row
+// hands it to another cat's page or another photo; a node of its own for every item and row keeps the mask true.
+@Composable
+private fun OwnNodes(index: Int, listState: LazyListState, content: @Composable () -> Unit) {
+    key(index, listState) { content() }
+}
 
 // Scrolled onto the add items, the last photo is still the one in front.
 private fun LazyListState.photoInFront(lastPhoto: Int): Int =
@@ -178,6 +205,13 @@ private fun rememberSingleAdvanceFling(listState: LazyListState): FlingBehavior 
         }
     }
     return rememberSnapFlingBehavior(snapping)
+}
+
+// A parent still scrolling takes a new drag on its down and keeps every move the row lets pass before its slop;
+// with no slop the row takes the first sideways move, and the parent lets go.
+private class NoSlopWhile(private val base: ViewConfiguration, private val noSlop: () -> Boolean) :
+    ViewConfiguration by base {
+    override val touchSlop: Float get() = if (noSlop()) 0f else base.touchSlop
 }
 
 // Several photos stand side by side, so each says which it is; a lone one needs no number.

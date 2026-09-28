@@ -50,6 +50,7 @@ import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
 import dev.catsradar.ui.detail.AddItemIconTestTag
 import dev.catsradar.ui.detail.DetailCarouselTestTag
+import dev.catsradar.ui.detail.DetailPagesTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.toImmutableList
@@ -274,6 +275,38 @@ class DetailPhotoCarouselTest {
         compose.onNodeWithText(context.getString(R.string.detail_take_photo)).assertIsEnabled()
     }
 
+    @Test
+    fun `the photo in front fills its card on every cat paged to, after a row was scrolled`() {
+        val cats = listOf("14:32", "14:10", "13:58", "13:40").mapIndexed { n, time ->
+            catPage("cat-$n", time, "cover-$n", "second-$n", "third-$n")
+        }
+        show(loadedOn(cats.first(), *cats.toTypedArray()))
+        compose.onNodeWithTag(DetailCarouselTestTag).performScrollToIndex(1)
+        compose.waitForIdle()
+
+        cats.zipWithNext().forEach { (from, to) ->
+            // Across the time, below the row, so the drag moves the pages rather than the row.
+            val belowTheRow = compose.onNodeWithText(from.timeLabel).bounds().center.y
+            compose.onNodeWithTag(DetailPagesTestTag)
+                .performTouchInput { swipe(Offset(right - 1f, belowTheRow), Offset(left + 1f, belowTheRow)) }
+            compose.waitForIdle()
+            compose.onNodeWithText(to.timeLabel).assertIsDisplayed()
+
+            assertFrontPhotoFillsItsCard("${to.id}'s first photo")
+        }
+    }
+
+    private fun assertFrontPhotoFillsItsCard(which: String) {
+        val front = photos().maxBy { it.width }
+        val pixels = screen()
+        val across = listOf(front.left + 3.dp.px(), front.center.x, front.right - 3.dp.px())
+        assertEquals(
+            across.map { scheme.surfaceContainerHighest },
+            across.map { pixels.at(it, front.center.y) },
+            "$which in front across $front",
+        )
+    }
+
     private fun show(cat: EncounterDetailState) {
         state = cat
         compose.setContent {
@@ -312,16 +345,16 @@ class DetailPhotoCarouselTest {
 
     private fun Dp.px(): Float = with(compose.density) { toPx() }
 
-    private fun catWith(vararg photoIds: String) = loadedWith(
-        CatPage(
-            id = "cat-1",
-            dayLabel = "Today",
-            timeLabel = "14:32",
-            location = LocationLabel.NONE,
-            coordinatesLabel = null,
-            accuracyMeters = null,
-            photos = photoIds.map { DetailPhoto(id = it, path = "/data/photos/$it.jpg") }.toImmutableList(),
-        ),
+    private fun catWith(vararg photoIds: String) = loadedWith(catPage("cat-1", "14:32", *photoIds))
+
+    private fun catPage(id: String, time: String, vararg photoIds: String) = CatPage(
+        id = id,
+        dayLabel = "Today",
+        timeLabel = time,
+        location = LocationLabel.NONE,
+        coordinatesLabel = null,
+        accuracyMeters = null,
+        photos = photoIds.map { DetailPhoto(id = it, path = "/data/photos/$it.jpg") }.toImmutableList(),
     )
 
     private fun EncounterDetailState.Loaded.withAttempt(progress: AttachProgress? = null) =
