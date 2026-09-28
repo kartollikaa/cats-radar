@@ -60,7 +60,7 @@
     <string name="counter_photo_not_saved">Фото не сохранилось</string>
     <string name="counter_location_hint">Без доступа к геолокации котики будут без места</string>
     <string name="counter_location_grant">Разрешить</string>
-    <string name="counter_location_dismiss">Не надо</string>
+    <string name="counter_location_dismiss">Скрыть</string>
     <string name="counter_coat_prompt_title">Какого окраса котик?</string>
     <string name="counter_coat_prompt_hint">Нажмите на окрас, чтобы отметить его</string>
     <string name="counter_coat_prompt_skip">Не сейчас</string>

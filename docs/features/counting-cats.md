@@ -89,7 +89,8 @@ alone. An import's progress and summary are one card (see `import.md`); the loca
 denied request, is another of the same make: the pin in a round icon, "Location permission needed for
 cat spots", read by TalkBack as one item, **Grant** as a tonal button, and a × that dismisses it, as a
 swipe to either side does; its body takes no tap (`LocationIslandTest`). Shown together, the import's
-card sits above the hint's, and TalkBack reaches both before the count.
+card sits above the hint's, and TalkBack reaches both before the count (`LocationIslandTest`, in the order
+TalkBack reads).
 
 ## Undoing a run of taps
 
