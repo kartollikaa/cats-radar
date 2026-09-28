@@ -32,6 +32,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
@@ -132,7 +133,7 @@ class DetailWhereTest {
 
         val line = compose.onNodeWithText("Current location · ±12 m", useUnmergedTree = true)
         val style = line.textLayout().layoutInput.style
-        assertEquals(typography.bodyMedium.fontSize, style.fontSize)
+        assertTypeScale(typography.bodyMedium, style)
         assertEquals(scheme.onSurfaceVariant, style.color)
     }
 
@@ -150,11 +151,16 @@ class DetailWhereTest {
         compose.onNodeWithTag(WhereCardTestTag).performScrollTo()
         val coordinates = compose.onNodeWithText("41.40150, 2.16000", useUnmergedTree = true)
         val style = coordinates.textLayout().layoutInput.style
-        assertEquals(typography.bodySmall.fontSize, style.fontSize)
+        assertTypeScale(typography.bodySmall, style)
         assertEquals(scheme.onSurfaceVariant, style.color)
-        val end = coordinates.bounds()
+        val text = coordinates.bounds()
+        val card = compose.onNodeWithTag(WhereCardTestTag).bounds()
         val pixels = compose.onRoot().captureToImage().toPixelMap()
-        assertEquals(scheme.surfaceContainerLow, pixels[(end.right + 14.dp.px()).toInt(), end.center.y.toInt()])
+        val besideText = (text.right + 2.dp.px()).toInt() until card.right.toInt()
+        val inked = besideText.flatMap { x ->
+            (text.top.toInt()..text.bottom.toInt()).map { y -> pixels[x, y] }
+        }.filter { it != scheme.surfaceContainerLow }
+        assertEquals(emptyList<Color>(), inked)
     }
 
     @Test
@@ -277,6 +283,13 @@ class DetailWhereTest {
     private fun assertClose(expected: Color, actual: Color) {
         val channels = listOf(expected.red to actual.red, expected.green to actual.green, expected.blue to actual.blue)
         assertTrue(channels.all { (e, a) -> abs(e - a) <= 2f / 255 }, "expected $expected, was $actual")
+    }
+
+    private fun assertTypeScale(expected: TextStyle, actual: TextStyle) {
+        assertEquals(
+            listOf(expected.fontSize, expected.fontWeight, expected.letterSpacing, expected.lineHeight),
+            listOf(actual.fontSize, actual.fontWeight, actual.letterSpacing, actual.lineHeight),
+        )
     }
 
     private fun metersPerDp(latitude: Double) = cos(Math.toRadians(latitude)) * 2 * PI * 6378137.0 / (32768 * 512)
