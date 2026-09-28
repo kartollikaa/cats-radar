@@ -8,6 +8,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.Role
@@ -47,6 +49,7 @@ import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.detail.NoLocationNoticeTestTag
 import dev.catsradar.ui.detail.WhereCardTestTag
 import dev.catsradar.ui.detail.WherePillTestTag
+import dev.catsradar.ui.map.AccuracyCircleTestTag
 import dev.catsradar.ui.map.SpotMapTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import org.junit.Rule
@@ -55,6 +58,9 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -221,6 +227,47 @@ class DetailWhereTest {
 
         compose.onNodeWithTag(NoLocationNoticeTestTag).assertDoesNotExist()
     }
+
+    @Test
+    fun `the spot map draws the fix's accuracy to scale around the dot`() {
+        show(located.copy(accuracyMeters = 100))
+
+        compose.onNodeWithTag(WhereCardTestTag).performScrollTo()
+        val map = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).bounds()
+        val radius = (100 / metersPerDp(latitude = 41.4015)).dp.px()
+        val pixels = compose.onRoot().captureToImage().toPixelMap()
+        val disc = scheme.primary.copy(alpha = 0.16f).compositeOver(scheme.surfaceContainerHighest)
+        assertClose(disc, pixels[(map.center.x + radius * 0.7f).toInt(), map.center.y.toInt()])
+        assertClose(scheme.primary, pixels[(map.center.x + radius - 0.75.dp.px()).toInt(), map.center.y.toInt()])
+        val beyond = pixels[(map.center.x + radius + 3.dp.px()).toInt(), map.center.y.toInt()]
+        assertEquals(scheme.surfaceContainerHighest, beyond)
+    }
+
+    @Test
+    fun `an accuracy smaller than the dot, or none, draws no circle`() {
+        show(located)
+
+        compose.onNodeWithTag(WhereCardTestTag).performScrollTo()
+        compose.onNodeWithTag(AccuracyCircleTestTag, useUnmergedTree = true).assertDoesNotExist()
+        val map = compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).bounds()
+        val pixels = compose.onRoot().captureToImage().toPixelMap()
+        assertEquals(scheme.surfaceContainerHighest, pixels[(map.center.x + 12.dp.px()).toInt(), map.center.y.toInt()])
+    }
+
+    @Test
+    fun `a cat with no accuracy draws no circle`() {
+        show(located.copy(accuracyMeters = null))
+
+        compose.onNodeWithTag(WhereCardTestTag).performScrollTo()
+        compose.onNodeWithTag(AccuracyCircleTestTag, useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    private fun assertClose(expected: Color, actual: Color) {
+        val channels = listOf(expected.red to actual.red, expected.green to actual.green, expected.blue to actual.blue)
+        assertTrue(channels.all { (e, a) -> abs(e - a) <= 2f / 255 }, "expected $expected, was $actual")
+    }
+
+    private fun metersPerDp(latitude: Double) = cos(Math.toRadians(latitude)) * 2 * PI * 6378137.0 / (32768 * 512)
 
     private fun show(page: CatPage) {
         compose.setContent {

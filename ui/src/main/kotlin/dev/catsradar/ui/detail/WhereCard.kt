@@ -80,6 +80,7 @@ internal fun WhereCard(page: CatPage, modifier: Modifier = Modifier, onCoordinat
                     .fillMaxWidth()
                     .aspectRatio(16f / 10f)
                     .clip(MaterialTheme.shapes.medium),
+                accuracyMeters = page.accuracyMeters,
             )
         }
         WhereLines(page)

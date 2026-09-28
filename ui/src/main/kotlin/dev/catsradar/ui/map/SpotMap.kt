@@ -1,5 +1,6 @@
 package dev.catsradar.ui.map
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -53,6 +55,10 @@ private const val StreetZoom = 15.0
 
 const val SpotMapTestTag = "spot-map"
 const val CatDotTestTag = "cat-dot"
+const val AccuracyCircleTestTag = "accuracy-circle"
+
+private const val AccuracyFillAlpha = 0.16f
+private val AccuracyOutline = 1.5.dp
 
 // Small enough for the whole line to fit across a phone-wide card.
 private val SmallAttributionTextStyle = AttributionDefaults.ContentTextStyle.copy(fontSize = 10.sp)
@@ -62,24 +68,31 @@ private val StillMap = MapUiOptions(from = MapUiOptions.None) { renderMode = And
 
 /**
  * A map centred on [position] with the cat's dot on that point, in the colours of its [coat] as the Map
- * tab draws it. It takes no gestures: a tap or a drag on it reaches whatever holds it.
+ * tab draws it, and a fix [accuracyMeters] wide drawn to scale around it. It takes no gestures: a tap or a
+ * drag on it reaches whatever holds it.
  */
 @Composable
-internal fun SpotMap(position: MapPosition, coat: CoatOption?, modifier: Modifier = Modifier) {
+internal fun SpotMap(
+    position: MapPosition,
+    coat: CoatOption?,
+    modifier: Modifier = Modifier,
+    accuracyMeters: Int? = null,
+) {
     Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
         // The map's native runtime cannot start in a preview or a JVM test.
         if (LocalInspectionMode.current) {
             Box(modifier = Modifier.matchParentSize().clearAndSetSemantics { testTag = SpotMapTestTag })
+            AccuracyCircle(accuracyMeters, position.latitude)
             CentreDot(coat)
         } else {
             // Built afresh at a new position rather than moved there, so it never shows a stale spot.
-            key(position) { TileMap(position, coat) }
+            key(position) { TileMap(position, coat, accuracyMeters) }
         }
     }
 }
 
 @Composable
-private fun BoxScope.TileMap(position: MapPosition, coat: CoatOption?) {
+private fun BoxScope.TileMap(position: MapPosition, coat: CoatOption?, accuracyMeters: Int?) {
     val camera = CameraPosition(target = Position(position.longitude, position.latitude), zoom = StreetZoom)
     val mapState = rememberMapState(baseStyle = mapStyle(), initialCameraPosition = camera)
     MaplibreMap(
@@ -98,6 +111,7 @@ private fun BoxScope.TileMap(position: MapPosition, coat: CoatOption?) {
             modifier = Modifier.align(Alignment.Center).padding(16.dp),
         )
     } else {
+        AccuracyCircle(accuracyMeters, position.latitude)
         CentreDot(coat)
         val attributionColor = MaterialTheme.colorScheme.onSurface
         // The tiles' licence requires it; TalkBack skips it, or the card would read it before the place.
@@ -120,6 +134,19 @@ private fun BoxScope.TileMap(position: MapPosition, coat: CoatOption?) {
 }
 
 private fun plainText(attributions: List<String>) = attributions.joinToString(" ") { AnnotatedString.fromHtml(it).text }
+
+// The map sits at street zoom on the cat, so its scale there is the one the circle takes.
+@Composable
+private fun BoxScope.AccuracyCircle(accuracyMeters: Int?, latitude: Double) {
+    val radius = accuracyMeters?.let { (it / metersPerDp(StreetZoom, latitude)).dp } ?: return
+    if (radius * 2 <= DotSize) return
+    val primary = MaterialTheme.colorScheme.primary
+    Canvas(modifier = Modifier.align(Alignment.Center).size(radius * 2).testTag(AccuracyCircleTestTag)) {
+        val outline = AccuracyOutline.toPx()
+        drawCircle(color = primary.copy(alpha = AccuracyFillAlpha))
+        drawCircle(color = primary, radius = size.minDimension / 2 - outline / 2, style = Stroke(width = outline))
+    }
+}
 
 @Composable
 private fun BoxScope.CentreDot(coat: CoatOption?) {
