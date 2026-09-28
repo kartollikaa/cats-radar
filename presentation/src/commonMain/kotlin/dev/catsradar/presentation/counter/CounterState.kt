@@ -28,9 +28,13 @@ data class CounterState(
     val importSummary: ImportSummaryState? = null,
     /** Null unless a photo just taken is waiting for its coat. */
     val coatPrompt: CoatPromptState? = null,
-    /** Null before the total is read, and past the last milestone. */
+    /** Null before the total is read, past the last milestone, and while [milestoneMoment] lasts. */
     val milestone: CounterMilestoneState? = null,
+    /** The rung the count has just landed on, until the run of taps that reached it closes. */
+    val milestoneMoment: MilestoneMomentState? = null,
 )
+
+data class MilestoneMomentState(val value: Int)
 
 /** [fraction] is how far the total has come from the milestone already reached toward [next]. */
 data class CounterMilestoneState(val next: MilestoneState, val fraction: Float)

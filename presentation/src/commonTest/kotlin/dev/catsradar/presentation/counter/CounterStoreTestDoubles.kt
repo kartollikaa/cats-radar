@@ -349,7 +349,10 @@ internal class FakeSettingsRepository(
 
     override fun lastSeenMilestone(): Flow<Int> = milestone
 
+    var lastSeenGate: CompletableDeferred<Unit>? = null
+
     override suspend fun setLastSeenMilestone(value: Int) {
+        lastSeenGate?.await()
         milestone.value = value
     }
 
