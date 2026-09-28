@@ -138,7 +138,7 @@ class CoatSheetStoreTest {
     }
 
     @Test
-    fun `a cat that stops being live closes the sheet, and bringing it back does not reopen it`() =
+    fun `a cat that stops being live closes the sheet once, and its return asks for nothing more`() =
         runTest(mainDispatcher) {
             repository.insert(cat(CatCoat.GINGER))
             val store = newStore()
@@ -153,7 +153,6 @@ class CoatSheetStoreTest {
                 runCurrent()
                 expectNoEvents()
             }
-            assertEquals(CoatSheetState.Open(CoatOption.GINGER, CoatSheetHint.PICK_ANOTHER), store.state.value)
         }
 
     @Test

@@ -215,7 +215,7 @@
     <string name="detail_where">Where</string>
     <string name="detail_coat">Coat</string>
     <string name="detail_coat_not_noted">Coat not noted</string>
-    <string name="detail_coat_add_hint">Add it from the sheet</string>
+    <string name="detail_coat_add_hint">Tap to add it</string>
     <string name="detail_coat_change">Change</string>
     <string name="detail_coat_add">Add</string>
     <string name="detail_coat_sheet_title">What coat was it?</string>

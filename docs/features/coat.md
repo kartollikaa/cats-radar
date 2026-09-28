@@ -143,7 +143,7 @@ archives hold those names, and renaming what nobody sees would need a migration 
 
 A cat's page shows its coat as a card: the face in its coat's shape, or the paw in no coat's, the coat's name
 with "Coat" under it, and a tonal **Change** pill at the end; a cat with no coat reads "Coat not noted" and
-**Add** (`DetailCoatCardTest`). The whole card is one button, read as one item; the pill is its visible cue.
+**Add**, with "Tap to add it" under it (`DetailCoatCardTest`). The whole card is one button, read as one item; the pill is its visible cue.
 Each page of the outing's pages has the card of its own cat (see
 [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)).
 
@@ -152,9 +152,9 @@ The card opens the coat sheet over the detail, a sheet destination like the map'
 primary container, or the paw on the highest container with no coat noted, beside "What coat was it?" and "Pick
 another, or “No coat”" or "Tap the coat that fits" (`DetailCoatSheetTest`). Under it is the coat grid with the
 cat's coat ringed and a twelfth *No coat* cell, ringed when no coat is noted. A tap on a coat sets it and closes the
-sheet; *No coat* clears it and closes; a tap on the ringed coat changes nothing and closes; a swipe down or back
-closes it and changes nothing (`CoatSheetStoreTest`). Only the first answer counts: a second tap before the sheet is
-gone writes nothing. A cat removed while its sheet is up closes the sheet, and bringing it back does not reopen it.
+sheet; *No coat* clears it and closes; a tap on the ringed coat changes nothing and closes (`CoatSheetStoreTest`); a swipe down
+closes it and changes nothing (`CoatSheetDismissTest`). Only the first answer counts: a second tap before the sheet is
+gone writes nothing. A cat removed while its sheet is up closes the sheet.
 Nothing else needs a "clear" control.
 
 ## In the statistics

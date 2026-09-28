@@ -37,7 +37,7 @@ Prototype versions 5 and 14. Criteria: `expressive-e7b.md`. Stacked on E9 (#233)
   - `surfaceContainerLow` with `large` corners, 16 dp inside;
   - the face (54 dp) in its coat's 72 dp shape on `surfaceContainerHighest`, or the paw in no coat's shape;
   - the name in `titleMediumEmphasized` over "Coat" in `bodyMedium`/`onSurfaceVariant`;
-  - with no coat, "Coat not noted" over "Add it from the sheet";
+  - with no coat, "Coat not noted" over "Tap to add it" (the prototype's "Add it from the sheet" names a part of the UI the user is not told about);
   - a tonal pill at the end: **Change**, or **Add** with no coat.
   - The whole card is one button, read as one item, and the pill is its visible cue, not a second control, as on the Where card.
 - **The sheet's head:**

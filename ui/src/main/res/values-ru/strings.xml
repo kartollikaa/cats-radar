@@ -249,7 +249,7 @@
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
     <string name="detail_coat_not_noted">Окрас не отмечен</string>
-    <string name="detail_coat_add_hint">Отметьте его в списке</string>
+    <string name="detail_coat_add_hint">Нажмите, чтобы добавить</string>
     <string name="detail_coat_change">Изменить</string>
     <string name="detail_coat_add">Добавить</string>
     <string name="detail_coat_sheet_title">Какого окраса котик?</string>
