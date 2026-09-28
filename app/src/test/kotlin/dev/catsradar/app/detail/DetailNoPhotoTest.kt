@@ -69,7 +69,7 @@ class DetailNoPhotoTest {
         assertEquals(block.width * 5 / 4, block.height, 1f)
         val pixels = compose.onRoot().captureToImage().toPixelMap()
         assertEquals(scheme.primaryContainer, pixels[block.center.x.toInt(), (block.top + 16.dp.px()).toInt()])
-        assertEquals(scheme.surface, pixels[(block.left + 3.dp.px()).toInt(), (block.top + 3.dp.px()).toInt()])
+        compose.assertLargeCorner(block, outside = scheme.surface, inside = scheme.primaryContainer)
         val face = compose.onNodeWithTag(NoPhotoFaceTestTag, useUnmergedTree = true).bounds()
         assertEquals(170.dp.px(), face.width, 1f)
         compose.onNodeWithText(context.getString(R.string.detail_no_photo)).assertIsDisplayed()

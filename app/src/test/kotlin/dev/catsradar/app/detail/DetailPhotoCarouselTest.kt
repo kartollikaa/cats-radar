@@ -25,6 +25,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -47,6 +48,7 @@ import dev.catsradar.presentation.detail.DetailPhoto
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
+import dev.catsradar.ui.detail.AddItemIconTestTag
 import dev.catsradar.ui.detail.DetailCarouselTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -105,15 +107,7 @@ class DetailPhotoCarouselTest {
     fun `a photo has large corners`() {
         show(catWith("first", "second"))
 
-        val first = photos().first()
-        val pixels = screen()
-        // Only a large corner splits these two: a medium one covers the first, an extra large one misses the second.
-        assertEquals(scheme.surface, pixels.at(first.left + 7.dp.px(), first.top + 7.dp.px()), "outside the corner")
-        assertEquals(
-            scheme.surfaceContainerHighest,
-            pixels.at(first.left + 9.5.dp.px(), first.top + 9.5.dp.px()),
-            "inside the corner",
-        )
+        compose.assertLargeCorner(photos().first(), outside = scheme.surface, inside = scheme.surfaceContainerHighest)
     }
 
     @Test
@@ -131,6 +125,16 @@ class DetailPhotoCarouselTest {
             assertTrue(item.width < photo.width, "narrower than a photo: $item")
             assertEquals(photo.height, item.height, 1f)
             assertEquals(scheme.surfaceContainerLow, pixels.at(item.center.x, item.top + 12.dp.px()))
+        }
+        val icons = compose.onAllNodesWithTag(AddItemIconTestTag, useUnmergedTree = true).fetchSemanticsNodes()
+            .map { it.boundsInRoot }.sortedBy { it.left }
+        val labels = listOf(R.string.detail_take_photo, R.string.detail_from_gallery)
+            .map { compose.onNodeWithText(context.getString(it), useUnmergedTree = true).bounds() }
+        icons.zip(labels).zip(listOf(take, pick)).forEach { (iconAndLabel, item) ->
+            val (icon, label) = iconAndLabel
+            assertTrue(icon.bottom <= label.top, "the icon over its label: $icon, $label")
+            assertEquals(label.center.x, icon.center.x, 2f)
+            assertTrue(item.contains(icon.center) && item.contains(label.center), "both inside $item")
         }
     }
 

@@ -58,6 +58,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlin.math.abs
 
 const val DetailCarouselTestTag = "detail-carousel"
+const val AddItemIconTestTag = "add-item-icon"
 
 private val PhotoWidth = 300.dp
 private val AddItemWidth = 140.dp
@@ -228,7 +229,7 @@ private fun AddItem(
             painter = painterResource(iconRes),
             contentDescription = null,
             tint = content,
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(28.dp).testTag(AddItemIconTestTag),
         )
         Text(
             text = stringResource(labelRes),
