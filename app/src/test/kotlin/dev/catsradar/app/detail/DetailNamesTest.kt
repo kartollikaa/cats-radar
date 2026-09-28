@@ -203,6 +203,20 @@ class DetailNamesTest {
     }
 
     @Test
+    fun `among several cats, more acts on the cat on screen`() {
+        show(loadedOn(placedPage, barePage, placedPage))
+        more().performClick()
+        menuItem(R.string.detail_show_on_map).performClick()
+
+        state = loadedOn(barePage, placedPage, barePage)
+        compose.waitForIdle()
+        more().performClick()
+
+        assertEquals(listOf("map cat-7"), taps)
+        menuItem(R.string.detail_show_on_map).assertIsNotEnabled()
+    }
+
+    @Test
     fun `a cat the map does not draw cannot be shown on the map`() {
         show(bare)
 
@@ -276,29 +290,27 @@ class DetailNamesTest {
     private fun Dp.px(): Float = with(compose.density) { toPx() }
 
     private companion object {
-        val placed = loadedWith(
-            CatPage(
-                id = "cat-7",
-                dayLabel = "Yesterday",
-                timeLabel = "4:12 PM",
-                location = LocationLabel.CURRENT,
-                coordinatesLabel = "41.40150, 2.16000",
-                accuracyMeters = 10,
-                coat = CoatOption.GINGER_WHITE,
-                mapPosition = MapPosition(latitude = 41.4015, longitude = 2.16),
-                place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
-            ),
+        val placedPage = CatPage(
+            id = "cat-7",
+            dayLabel = "Yesterday",
+            timeLabel = "4:12 PM",
+            location = LocationLabel.CURRENT,
+            coordinatesLabel = "41.40150, 2.16000",
+            accuracyMeters = 10,
+            coat = CoatOption.GINGER_WHITE,
+            mapPosition = MapPosition(latitude = 41.4015, longitude = 2.16),
+            place = DetailPlace(title = "Barcelona", country = "Spain", flag = "🇪🇸"),
         )
-        val bare = loadedWith(
-            CatPage(
-                id = "cat-8",
-                dayLabel = "Sep 24, 2026",
-                timeLabel = "11:17 PM",
-                location = LocationLabel.NONE,
-                coordinatesLabel = null,
-                accuracyMeters = null,
-                setsLocation = true,
-            ),
+        val barePage = CatPage(
+            id = "cat-8",
+            dayLabel = "Sep 24, 2026",
+            timeLabel = "11:17 PM",
+            location = LocationLabel.NONE,
+            coordinatesLabel = null,
+            accuracyMeters = null,
+            setsLocation = true,
         )
+        val placed = loadedWith(placedPage)
+        val bare = loadedWith(barePage)
     }
 }
