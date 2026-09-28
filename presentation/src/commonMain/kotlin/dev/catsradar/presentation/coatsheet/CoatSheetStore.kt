@@ -9,7 +9,6 @@ import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.transformWhile
 
 sealed interface CoatSheetIntent {
     data class CoatClicked(val coat: CoatOption) : CoatSheetIntent
@@ -32,11 +31,6 @@ class CoatSheetStore(
 
     init {
         observeEncounter(catId)
-            // Once the cat is gone the sheet is over: bringing it back must not reopen it.
-            .transformWhile { cat ->
-                emit(cat)
-                cat != null
-            }
             .onEach { cat -> if (cat == null) emit(CoatSheetEffect.Close) else setState { stateMapper.map(cat.coat) } }
             .launchIn(viewModelScope)
     }

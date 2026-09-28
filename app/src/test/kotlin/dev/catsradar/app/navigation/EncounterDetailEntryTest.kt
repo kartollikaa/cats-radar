@@ -10,6 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -44,6 +45,7 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Instant
@@ -117,6 +119,22 @@ class EncounterDetailEntryTest {
         assertEquals(listOf(Counter, Encounters, EncounterDetail(ID)), backStack.toList())
         val stored = runBlocking { GlobalContext.get().get<EncounterRepository>().observeById(ID).first() }
         assertEquals(CatCoat.GINGER, stored?.coat)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xxhdpi")
+    fun `in the coat sheet, no coat clears the cat's coat and closes the sheet`() {
+        val backStack = show(listOf(Counter, Encounters, EncounterDetail(ID), CoatSheet(ID)))
+        val repository = GlobalContext.get().get<EncounterRepository>()
+        runBlocking { repository.setCoat(ID, CatCoat.BLACK, OCCURRED) }
+        val black = hasText(context.getString(R.string.coat_black)) and isSelected()
+        awaitTheDatabase { compose.onAllNodes(black).fetchSemanticsNodes().isNotEmpty() }
+        val noCoat = hasText(context.getString(R.string.coat_none))
+
+        compose.onNode(noCoat).performClick()
+        awaitTheDatabase { backStack.toList().last() is EncounterDetail }
+
+        assertEquals(null, runBlocking { repository.observeById(ID).first() }?.coat)
     }
 
     @Test

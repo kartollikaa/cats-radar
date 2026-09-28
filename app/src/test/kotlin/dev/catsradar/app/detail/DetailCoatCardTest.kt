@@ -72,7 +72,11 @@ class DetailCoatCardTest {
         val card = compose.onNodeWithTag(CoatCardTestTag).performScrollTo().bounds()
         val pixels = compose.onRoot().captureToImage().toPixelMap()
         assertEquals(scheme.surfaceContainerLow, pixels[(card.left + 8.dp.px()).toInt(), card.center.y.toInt()])
-        assertEquals(scheme.surface, pixels[(card.left + 1.dp.px()).toInt(), (card.top + 1.dp.px()).toInt()])
+        val outsideTheCurve = 7.dp.px()
+        assertEquals(
+            scheme.surface,
+            pixels[(card.left + outsideTheCurve).toInt(), (card.top + outsideTheCurve).toInt()],
+        )
         val insideTheCurve = 9.5.dp.px()
         assertEquals(
             scheme.surfaceContainerLow,
