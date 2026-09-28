@@ -82,10 +82,10 @@ APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
 
-The order on screen: the location hint, the count, the coat grid, then Walk and Photo in one row. The
+The order on screen: the count, the coat grid, then Walk and Photo in one row. The
 status line under the count is gone (see *The tags on the ring*), the walk row under it too (see
 *The walk*), and from E15 the import's notice floats over the screen instead of taking a place in the column
-(see *The import notice*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
+(see *The import notice*); from E16 the location hint floats beside it (see *The location hint*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
 the count reaches its floor. Everything under the count therefore costs the count its size, and the
 Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
 larger coat shapes, left the cookie less than half the room this layout leaves it, once the prototype
@@ -120,10 +120,21 @@ centre line and squash with the cookie. In a small cookie the number keeps clear
 loses what the pills reach into, the number shrinks, and "cats" under it gives way first. Past the
 last rung, and with no cats yet, there is no pill and no dot.
 
-**Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
-the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
-`primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
-Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
+**Reaching a rung** (slice E11). A count that lands on a rung: the cookie bounces and the ring
+stands full and glows on the motion scheme's springs, and the bottom pill says "100 cats!", filled in
+`primary`, in the outing's place meanwhile; the goal tag and the arc's dot step aside, and the count
+keeps its size. Line, Cookie, Chip and Moments were the other treatments in prototype version 13; the
+owner chose Ring. The moment replaces the milestone toast, and keeps its rule: each rung once,
+recorded before it shows, so a process death never celebrates it twice. Decided in autonomous mode
+(2026-09-28):
+
+- **Any count that lands on a rung** celebrates, a tap's or an import's, as the toast did.
+- **It lasts until the run closes**: while taps keep the undo window open it stays, and it goes when
+  the window does. A rung reached with no run open (an import, the widget) shows for the undo
+  window's length.
+- **An Undo takes it back.** A count that falls back below the rung ends the moment and forgets the
+  rung was reached, so landing on it again celebrates again.
+- **TalkBack** hears the pill once, as a polite live region, where the toast used to speak.
 
 **The walk** (slice E14, in place of E3's walk row). A walk logs nothing: it turns on a mode, the notification with its
 *Cat!* button, so the control is a mode switch and sits apart from the things that log a cat. The
@@ -191,13 +202,16 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
 - **It floats.** A card on `surfaceContainerHigh`, as the map's floating cards are, with a shadow and
   `large` corners, 12 dp in from the sides, just under the status bar, over the top of the count rather
   than in the column, dropping in on the motion scheme; the cookie keeps its size. For the notice's ten seconds it covers the goal
-  tag at the ring's top, which is the price of floating. The location hint stays a card in the
-  column: what lasts sits in the column, what passes floats.
+  tag at the ring's top, which is the price of floating. (E15 kept the location hint in the column;
+  the owner floated it too in E16, see *The location hint*.)
 - **What it shows.** At its start, a fanned stack of the first three imported photos (40 dp,
-  `small` corners, each tilted a little), or a check when none has a photo. Running, the gallery icon
-  stands in the stack's place, because progress reports counts and the added cats are known only when
-  the run ends. Running: *Importing 7 of 12* in `titleSmall` over an Expressive wavy progress
-  indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the
+  `small` corners, each tilted a little, each set apart by a 2 dp ring in the card's colour), or a check
+  when none has a photo. Running, the stack fans out the picked photos instead (slice E17; the owner,
+  2026-09-28: "show images previews as in the prototype"): the batch's first three, one more as the run
+  reaches each, with the one in hand showing from the start. They are the picked photos rather than the
+  cats, which are known only when the run ends; the gallery icon stands in when there are none. The
+  stack's slot keeps a full stack's width, so the words hold still as it fills. Running: *Importing 7 of
+  12* in `titleSmall` over an Expressive wavy progress indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the
   parts that apply, *2 already here · 1 couldn't be read*; TalkBack reads the words as one item.
 - **Closing it.** Undo is the filled tonal button, and a × icon button after it closes the notice; a
   swipe to either side closes it too. Closing does what OK did: the run is recorded as dealt with and
@@ -205,7 +219,38 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
   card's body does nothing and is reserved: the owner has booked it for an imported-photos manager
   that edits the batch at once, so the body must never be what closes the notice.
 
-The coat question after a photo takes the coat sheet's header (section 3).
+**The coat question after a photo** (slice E7a). The owner asked whether the coat selection sheet
+could match the rest (2026-09-28). It had grown a count since version 14 drew it, and in that count the
+photo dropped out of the header into a tray of plain faces, *Several* sat beside *Not now* as a text
+button of the same weight, and the paw tile's *Not specified* broke mid-word at the largest font. Of
+*Header*, *One or several* and *On the photo* (prototype version 25) the owner chose **One or several**.
+
+- **The header stays.** The photo just taken in a 64 dp `medium` square, or the paw in no coat's
+  shape on `surfaceContainerHighest` when there is no thumbnail, beside the question in
+  `headlineSmallEmphasized` and one supporting line. Through a count only the words change (*4 cats
+  on this photo*); the photo does not move. The detail's coat sheet (section 3, slice E7b) takes the
+  same header with the cat's face.
+- **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
+  check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and
+  empties the tray: a behaviour change, since a count had no way back but leaving the sheet.
+- **The count.** Counted cats line up under the group in their coat shapes, each with a small ×,
+  heard as its coat with a Remove action; before the first, a muted line says they gather there. The
+  grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the
+  detail's sheet uses; the map's filter keeps *Not specified*.
+- **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
+  counted. What saving writes does not change.
+
+**The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
+should be like the import popup". The hint that follows a denied location request leaves the column and
+floats like the import's card:
+
+- **The same card.** `surfaceContainerHigh`, a shadow, `large` corners, 12 dp in, dropping in on the
+  motion scheme, over the top of the count, which keeps its size.
+- **What it shows.** The pin in a round `secondaryContainer` icon, "Location permission needed for cat
+  spots", **Grant** as a filled tonal button and a × that dismisses it; a swipe to either side dismisses
+  it too. The words are one TalkBack item; the body takes no tap.
+- **Beside an import.** Both cards stack at the top, the import's first, 8 dp apart, and TalkBack reaches
+  them before the count. What Grant and Dismiss do does not change.
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
 Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper
@@ -408,6 +453,7 @@ from the same grouping. Nothing else in the domain changes.
   long).
 - The import notice is the floating Photo card, closable by × or a swipe, its tap reserved for an
   imported-photos manager (owner, 2026-09-27).
+- A running import's card shows the picked photos as the run reaches them (owner, 2026-09-28).
 
 ## The outing pager
 
@@ -452,7 +498,8 @@ from a flat one.
     whole; nothing sits between the count and the coats.
   - The import notice: the cookie is the same size with the notice and without it; × and a swipe
     close it and record the run as dealt with; Undo takes the batch back; the body has no click; only
-    the lines that apply are shown.
+    the lines that apply are shown; a running card's stack fills by progress without moving its words,
+    and a stacked photo's ring covers the one beneath in the card's colour.
 - **Kept green:** the Counter's *controls do not jump* and floor tests, `NavTransitionTimingTest`,
   `BottomSheetUsageTest`, `BottomSheetNavigationTest`, `CatsRadarColorsTest` (no palette change).
 - **Renders:** before and after, light and dark, of every changed surface, from the Robolectric render

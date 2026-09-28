@@ -95,6 +95,7 @@ fun CoatGrid(
     enabled: Boolean = true,
     onCoatClick: (CoatOption) -> Unit = {},
     onUnspecifiedClick: (() -> Unit)? = null,
+    @StringRes unspecifiedLabel: Int = R.string.coat_not_specified,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -118,7 +119,7 @@ fun CoatGrid(
         }
         onUnspecifiedClick?.let { onClick ->
             CoatTile(
-                label = stringResource(R.string.coat_not_specified),
+                label = stringResource(unspecifiedLabel),
                 shape = coatShapeFor(null),
                 selected = null in selected,
                 count = counts[null],

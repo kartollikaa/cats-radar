@@ -24,7 +24,11 @@ private fun Data.toProgressIntent(): CounterIntent? {
     // WorkManager delivers one RUNNING emission before the worker has posted any progress of its
     // own; its empty Data would otherwise read as "0 of 0" and blank the row that was just shown.
     if (total == 0) return null
-    return CounterIntent.Import.Progressed(done = getInt(ImportPhotosWorker.KEY_DONE, 0), total = total)
+    return CounterIntent.Import.Progressed(
+        done = getInt(ImportPhotosWorker.KEY_DONE, 0),
+        total = total,
+        previews = getStringArray(ImportPhotosWorker.KEY_PREVIEWS)?.toList().orEmpty().toImmutableList(),
+    )
 }
 
 private fun Data.toFinishedIntent(runId: UUID): CounterIntent = CounterIntent.Import.Finished(
