@@ -1,17 +1,21 @@
 package dev.catsradar.app.counter
 
+import android.content.Context
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.statistics.MilestoneState
+import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
 import dev.catsradar.ui.counter.TapBurstTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -23,15 +27,17 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 abstract class CounterBurstBadgeTest {
 
-    private val compose = createComposeRule()
+    protected val compose = createComposeRule()
+    protected val context: Context = ApplicationProvider.getApplicationContext()
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(ComponentActivityRegistered()).around(compose)
 
-    private fun show() {
+    protected fun show() {
         compose.setContent {
             CatsRadarTheme {
                 CounterScreen(
@@ -47,7 +53,9 @@ abstract class CounterBurstBadgeTest {
         }
     }
 
-    private fun badge() = compose.onNodeWithTag(TapBurstTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    protected fun block() = compose.onNodeWithContentDescription("62").getUnclippedBoundsInRoot()
+
+    protected fun badge() = compose.onNodeWithTag(TapBurstTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
     private fun goalTag() = compose.onNodeWithContentDescription("38 more to reach 100").getUnclippedBoundsInRoot()
 
@@ -64,7 +72,7 @@ abstract class CounterBurstBadgeTest {
     @Test
     fun `the badge sits at the block's end, level with the cookie's top`() {
         show()
-        val block = compose.onNodeWithContentDescription("62").getUnclippedBoundsInRoot()
+        val block = block()
         val side = minOf(block.width, block.height)
         val cookieTop = (block.top + block.bottom) / 2 - side / 2
 
@@ -97,4 +105,28 @@ class CounterBurstBadgeMidLargestFontTest : CounterBurstBadgeTest()
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w320dp-h900dp")
 @RunWith(AndroidJUnit4::class)
-class CounterBurstBadgeFullWidthTest : CounterBurstBadgeTest()
+class CounterBurstBadgeFullWidthTest : CounterBurstBadgeTest() {
+
+    @Test
+    fun `here the cookie fills the block's width`() {
+        show()
+        val block = block()
+
+        assertTrue(block.height >= block.width, "$block")
+    }
+}
+
+// The shortest block the Counter keeps, at the largest font: the badge and Undo share the block's end.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w320dp-h480dp", fontScale = 2f)
+@RunWith(AndroidJUnit4::class)
+class CounterBurstBadgeFloorTest : CounterBurstBadgeTest() {
+
+    @Test
+    fun `the badge and Undo do not meet`() {
+        show()
+        val undo = compose.onNodeWithText(context.getString(R.string.counter_undo)).getUnclippedBoundsInRoot()
+
+        assertTrue(badge().bottom <= undo.top, "${badge()} over $undo")
+    }
+}

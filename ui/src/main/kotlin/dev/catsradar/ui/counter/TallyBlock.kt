@@ -181,7 +181,7 @@ private fun BoxScope.TagsAndUndo(
     }
 }
 
-// Beside a cookie narrower than its block, so the ring's tags keep their width; in its corner when it fills the width.
+// Beside a cookie narrower than its block, clear of the ring's tags; in its corner when it fills the width.
 private fun Modifier.atCookieEnd(bottom: Boolean): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
     val square = min(constraints.maxWidth, constraints.maxHeight)
