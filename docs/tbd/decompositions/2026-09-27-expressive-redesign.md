@@ -23,7 +23,7 @@
 | E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | merged |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | merged |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | merged |
-| E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | in-review |
+| E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | merged |
 | E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | merged |
 | E12a | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; the headline totals the tab. | safe | ~550 | E1 | merged |
 | E12b | The cats inside the outing cards | Tiles take the coat shapes, pair tiles their chip, the short run's and the list's cards their new look, and the selection its ring and bar. | safe | ~450 | E4, E12a | merged |
@@ -260,3 +260,5 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   prototype versions 26 to 30 the owner chose, over an outline, to shade a faint colour to 1.3:1, and asked that a
   two-colour or calico coat's bar blend its colours along one fill, running from the faintest colour on the track to
   the clearest so the bar ends on a colour that shows. There is no outline and the bar stays 4 dp. E10 carries it.
+- 2026-09-29: the owner said "merge it when ready". **E10 merged** as #223, the gated tree landing unchanged. Its plan is
+  archived. Every slice of the epic is now merged.
