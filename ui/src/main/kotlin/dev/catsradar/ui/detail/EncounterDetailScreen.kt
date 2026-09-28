@@ -76,6 +76,15 @@ fun EncounterDetailScreen(
             contentDescription = stringResource(R.string.detail_back),
             contentPadding = contentPadding,
             center = several?.let { loaded -> { PagePosition(loaded.currentNumber, loaded.pages.size) } },
+            end = {
+                if (state is EncounterDetailState.Loaded) {
+                    DetailMore(
+                        showsOnMap = state.pages.getOrNull(state.currentNumber - 1)?.mapPosition != null,
+                        onShowOnMapClick = { onCoordinatesClick(state.currentId) },
+                        onRemoveClick = onDeleteClick,
+                    )
+                }
+            },
             onBackClick = onBackClick,
         )
     }

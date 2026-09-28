@@ -130,7 +130,20 @@
 
     <string name="detail_photo_description">Фото этого котика</string>
     <string name="detail_accuracy">±%1$d м</string>
-    <string name="detail_delete">Удалить</string>
+    <string name="detail_title_ginger">Рыжий котик</string>
+    <string name="detail_title_ginger_white">Рыже-белый котик</string>
+    <string name="detail_title_white">Белый котик</string>
+    <string name="detail_title_tricolor_mostly_white">Трёхцветный котик</string>
+    <string name="detail_title_tricolor_little_white">Трёхцветный котик</string>
+    <string name="detail_title_brown">Коричневый котик</string>
+    <string name="detail_title_brown_white">Коричнево-белый котик</string>
+    <string name="detail_title_grey">Серый котик</string>
+    <string name="detail_title_grey_white">Серо-белый котик</string>
+    <string name="detail_title_black">Чёрный котик</string>
+    <string name="detail_title_black_white">Чёрно-белый котик</string>
+    <string name="detail_title_no_coat">Котик</string>
+    <string name="detail_more">Ещё</string>
+    <string name="detail_remove">Удалить котика</string>
     <string name="detail_deleted">Котик удалён</string>
     <string name="detail_undo">Вернуть</string>
     <string name="detail_missing">Этого котика больше нет</string>

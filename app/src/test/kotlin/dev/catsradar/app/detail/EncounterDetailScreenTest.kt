@@ -13,6 +13,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -38,6 +40,7 @@ import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.FlagTestTag
+import dev.catsradar.ui.detail.DetailFactsTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.map.CatDotTestTag
 import dev.catsradar.ui.map.SpotMapTestTag
@@ -113,14 +116,14 @@ class EncounterDetailScreenTest {
     }
 
     @Test
-    fun `scrolled to the end, delete clears the bottom bar`() {
+    fun `scrolled to the end, remove this cat clears the bottom bar`() {
         show(loadedWith(cat))
         val screenBottom = compose.onRoot().fetchSemanticsNode().boundsInRoot.bottom
 
         compose.scrollListToEnd()
-        val delete = compose.onNodeWithText(context.getString(R.string.detail_delete)).fetchSemanticsNode()
+        val remove = compose.onNodeWithText(context.getString(R.string.detail_remove)).fetchSemanticsNode()
 
-        assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), delete.boundsInRoot.bottom, 1f)
+        assertEquals(screenBottom - (BOTTOM_BAR + 16.dp).px(), remove.boundsInRoot.bottom, 1f)
     }
 
     @Test
@@ -170,10 +173,13 @@ class EncounterDetailScreenTest {
     fun `the where card names the cat's city and country after its flag, and TalkBack reads them without it`() {
         show(loadedWith(cat.copy(place = DetailPlace(title = "Barcelona", country = "Spain", flag = FLAG))))
 
-        val city = compose.onNodeWithText("Barcelona", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-        val flag = compose.onNodeWithTag(FlagTestTag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val inWhere = !hasAnyAncestor(hasTestTag(DetailFactsTestTag))
+        val city = compose.onNode(hasText("Barcelona") and inWhere, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val flag = compose.onNode(hasTestTag(FlagTestTag) and inWhere, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
         assertTrue(flag.right <= city.left, "the flag ends at ${flag.right}px, past the city at ${city.left}px")
-        compose.onNodeWithText("Barcelona")
+        compose.onNode(hasText("Barcelona") and hasText("Spain"))
             .assertTextContains("Spain")
             .assertTextContains(context.getString(R.string.location_none))
             .assert(!hasText(FLAG, substring = true))
