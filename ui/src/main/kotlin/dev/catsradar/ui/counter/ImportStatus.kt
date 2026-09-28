@@ -42,6 +42,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 const val ImportThumbTestTag = "import-thumb"
 const val ImportCheckTestTag = "import-check"
+const val ImportIslandTestTag = "import-island"
 
 private val ThumbTilts = listOf(-8f, -1f, 7f)
 
@@ -53,7 +54,7 @@ internal fun ImportIsland(
     onUndoClick: () -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
-    Island(visible = progress != null || summary != null, modifier = modifier) {
+    Island(visible = progress != null || summary != null, modifier = modifier.testTag(ImportIslandTestTag)) {
         when {
             summary != null -> SwipeToDismissBox(
                 state = rememberSwipeToDismissBoxState(),

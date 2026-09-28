@@ -1,17 +1,16 @@
 package dev.catsradar.app.counter
 
 import android.content.Context
+import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
@@ -27,6 +26,8 @@ import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.talkBackOrder
+import dev.catsradar.app.testing.turnTalkBackOn
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.ImportProgressState
 import dev.catsradar.presentation.counter.ImportSummaryState
@@ -42,6 +43,7 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Config(qualifiers = "w411dp-h760dp")
 @RunWith(AndroidJUnit4::class)
@@ -60,8 +62,11 @@ class ImportIslandTest {
 
     private val mixed = ImportSummaryState(added = 9, skipped = 2, failed = 1, undoable = true)
 
+    private lateinit var host: View
+
     private fun show() {
         compose.setContent {
+            host = LocalView.current
             CatsRadarTheme {
                 CounterScreen(
                     state = state,
@@ -163,14 +168,15 @@ class ImportIslandTest {
     }
 
     @Test
-    fun `TalkBack reaches the card before the count it covers`() {
+    fun `TalkBack reads the card before the count it covers`() {
+        turnTalkBackOn()
         state = state.copy(importSummary = mixed)
         show()
 
-        compose.onNode(
-            hasAnyDescendant(hasText(plural(R.plurals.counter_import_added, 9))) and
-                SemanticsMatcher.expectValue(SemanticsProperties.TraversalIndex, -1f),
-        ).assertExists()
+        val order = compose.talkBackOrder(host)
+        val card = order.indexOfFirst { plural(R.plurals.counter_import_added, 9) in it }
+
+        assertTrue(card in 0 until order.indexOf("147"), "$order")
     }
 
     @Test

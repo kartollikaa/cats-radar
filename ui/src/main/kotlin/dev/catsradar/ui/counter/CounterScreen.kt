@@ -59,7 +59,11 @@ fun CounterScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .semantics { traversalIndex = -1f },
+                .semantics {
+                    // A traversal index orders only traversal groups; on a plain column it is ignored.
+                    isTraversalGroup = true
+                    traversalIndex = -1f
+                },
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ImportIsland(

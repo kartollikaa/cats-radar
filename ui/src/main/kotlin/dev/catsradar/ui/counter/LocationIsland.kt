@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -20,6 +21,8 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
+const val LocationIslandTestTag = "location-island"
+
 /** The ask for location after it was denied: Grant asks again, and × or a swipe dismisses it. */
 @Composable
 internal fun LocationIsland(
@@ -27,7 +30,7 @@ internal fun LocationIsland(
     modifier: Modifier = Modifier,
     onAction: (LocationHintAction) -> Unit = {},
 ) {
-    Island(visible = visible, modifier = modifier) {
+    Island(visible = visible, modifier = modifier.testTag(LocationIslandTestTag)) {
         SwipeToDismissBox(
             state = rememberSwipeToDismissBoxState(),
             backgroundContent = {},
