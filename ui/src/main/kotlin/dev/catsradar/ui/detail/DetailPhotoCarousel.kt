@@ -137,39 +137,39 @@ private fun PhotoRow(
                 flingBehavior = rememberSingleAdvanceFling(listState),
             ) {
                 itemsIndexed(photos, key = { _, photo -> photo.id }) { index, photo ->
-                    OwnNodes(index, listState) {
+                    CarouselItem(index, listState) { drawInfo ->
                         CarouselPhoto(
                             photo = photo,
                             description = photoDescription(index, photos.size),
                             modifier = Modifier
                                 .size(PhotoWidth, ItemHeight)
-                                .maskClip(shape, rememberDrawInfo(index, listState)),
+                                .maskClip(shape, drawInfo),
                             onClick = { onPhotoClick(photo.id) },
                         )
                     }
                 }
                 item(key = TAKE_KEY) {
-                    OwnNodes(photos.size, listState) {
+                    CarouselItem(photos.size, listState) { drawInfo ->
                         AddItem(
                             iconRes = R.drawable.ic_photo_camera,
                             labelRes = R.string.detail_take_photo,
                             enabled = addEnabled,
                             modifier = Modifier
                                 .size(AddItemWidth, ItemHeight)
-                                .maskClip(shape, rememberDrawInfo(photos.size, listState)),
+                                .maskClip(shape, drawInfo),
                             onClick = onTakePhotoClick,
                         )
                     }
                 }
                 item(key = PICK_KEY) {
-                    OwnNodes(photos.size + 1, listState) {
+                    CarouselItem(photos.size + 1, listState) { drawInfo ->
                         AddItem(
                             iconRes = R.drawable.ic_photo_library,
                             labelRes = R.string.detail_from_gallery,
                             enabled = addEnabled,
                             modifier = Modifier
                                 .size(AddItemWidth, ItemHeight)
-                                .maskClip(shape, rememberDrawInfo(photos.size + 1, listState)),
+                                .maskClip(shape, drawInfo),
                             onClick = onPickPhotoClick,
                         )
                     }
@@ -179,16 +179,16 @@ private fun PhotoRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun rememberDrawInfo(index: Int, listState: LazyListState): MultiAspectCarouselItemDrawInfo =
-    remember(index, listState) { MultiAspectCarouselItemDrawInfo(index, listState) }
-
 // material3 1.5.0-alpha27's maskClip node keeps masking as the item it was made for, even when the pager or the row
 // hands it to another cat's page or another photo; a node of its own for every item and row keeps the mask true.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OwnNodes(index: Int, listState: LazyListState, content: @Composable () -> Unit) {
-    key(index, listState) { content() }
+private fun CarouselItem(
+    index: Int,
+    listState: LazyListState,
+    content: @Composable (MultiAspectCarouselItemDrawInfo) -> Unit,
+) {
+    key(index, listState) { content(remember { MultiAspectCarouselItemDrawInfo(index, listState) }) }
 }
 
 // Scrolled onto the add items, the last photo is still the one in front.

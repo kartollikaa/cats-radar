@@ -194,7 +194,11 @@ private fun CatFacts(
 private fun CatPagerPreview() {
     CatsRadarTheme {
         Surface {
-            CatPager(state = samplePages, pagerState = rememberCatPagerState(samplePages), contentPadding = PaddingValues())
+            CatPager(
+                state = samplePages,
+                pagerState = rememberCatPagerState(samplePages),
+                contentPadding = PaddingValues(),
+            )
         }
     }
 }
