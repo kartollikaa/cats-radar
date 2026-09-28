@@ -36,17 +36,11 @@ class ImportPhotosWorker internal constructor(
     private suspend fun import(uris: List<String>): Result {
         if (uris.isEmpty()) return Result.success(summaryOf(emptyList(), skipped = 0, failed = 0))
 
-        val previews: Array<String?> = uris.take(Tuning.IMPORT_PREVIEWS).toTypedArray()
+        val previews = previewsThatFit(uris.take(Tuning.IMPORT_PREVIEWS))
         return try {
             notifier.showProgress(done = 0, total = uris.size)
             val summary = importPhotos(uris) { done, total ->
-                setProgressAsync(
-                    Data.Builder()
-                        .putInt(KEY_DONE, done)
-                        .putInt(KEY_TOTAL, total)
-                        .putStringArray(KEY_PREVIEWS, previews)
-                        .build(),
-                )
+                setProgressAsync(progressOf(done, total, previews))
                 notifier.showProgress(done = done, total = total)
             }
             Result.success(summaryOf(summary.added.map { it.id }, summary.skipped, summary.failed))
@@ -64,6 +58,18 @@ class ImportPhotosWorker internal constructor(
             notifier.clear()
         }
     }
+
+    // Data refuses a payload past its size cap: photos too long to report go unshown rather than fail the run.
+    private fun previewsThatFit(uris: List<String>): Array<String?> {
+        val previews = uris.toTypedArray<String?>()
+        return if (runCatching { progressOf(done = 0, total = 0, previews) }.isSuccess) previews else emptyArray()
+    }
+
+    private fun progressOf(done: Int, total: Int, previews: Array<String?>): Data = Data.Builder()
+        .putInt(KEY_DONE, done)
+        .putInt(KEY_TOTAL, total)
+        .putStringArray(KEY_PREVIEWS, previews)
+        .build()
 
     private fun summaryOf(addedIds: List<String>, skipped: Int, failed: Int): Data = Data.Builder()
         .putStringArray(KEY_ADDED_IDS, addedIds.toTypedArray())

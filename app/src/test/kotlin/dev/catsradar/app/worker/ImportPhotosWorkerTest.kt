@@ -100,6 +100,29 @@ class ImportPhotosWorkerTest {
     }
 
     @Test
+    fun photosTooLongToReportAreLeftOutOfTheReportAndTheRunStillImportsThemAll() = runTest {
+        val tooLong = "content://media/external/images/media/" + "7".repeat(Data.MAX_DATA_BYTES)
+        val batch = listOf(tooLong, photos[0].toString())
+        batches.replaceWith(runId, batch)
+        val imported = mutableListOf<String>()
+
+        val result = worker { uris, onProgress ->
+            uris.forEachIndexed { index, uri ->
+                imported += uri
+                onProgress(index + 1, uris.size)
+            }
+            ImportSummary()
+        }.doWork()
+
+        assertEquals(ListenableWorker.Result.Success::class, result::class)
+        assertEquals(batch, imported)
+        assertEquals(
+            listOf(emptyList<String>(), emptyList()),
+            reports.map { it.getStringArray(ImportPhotosWorker.KEY_PREVIEWS)?.toList() },
+        )
+    }
+
+    @Test
     fun aRunWithNoStoredBatchImportsNothing() = runTest {
         batches.delete(runId)
         val imported = mutableListOf<String>()
