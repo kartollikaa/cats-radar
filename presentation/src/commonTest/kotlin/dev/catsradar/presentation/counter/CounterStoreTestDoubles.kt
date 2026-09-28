@@ -10,8 +10,6 @@ import dev.catsradar.domain.model.LocationStamp
 import dev.catsradar.domain.model.PlaceCell
 import dev.catsradar.domain.model.PlaceCellAssignment
 import dev.catsradar.domain.model.PlaceStatus
-import dev.catsradar.domain.model.TrackPoint
-import dev.catsradar.domain.model.Walk
 import dev.catsradar.domain.model.oldestFirst
 import dev.catsradar.domain.platform.DeviceIdProvider
 import dev.catsradar.domain.platform.Digest
@@ -26,14 +24,12 @@ import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.domain.repository.PlaceCellRepository
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
-import dev.catsradar.domain.repository.WalkRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -60,6 +56,7 @@ internal class FakeEncounterRepository : EncounterRepository {
     val attachLocationCalls = mutableListOf<Pair<String, LocationStamp>>()
     var attachLocationShouldThrow: Throwable? = null
     var attachLocationGate: CompletableDeferred<Unit>? = null
+    val lookupGates = mutableMapOf<String, CompletableDeferred<Unit>>()
 
     /** Consumed one per insert, in call order: a write held back lands after the ones behind it. */
     val insertDelays = ArrayDeque<Duration>()
@@ -74,8 +71,10 @@ internal class FakeEncounterRepository : EncounterRepository {
     override fun observeAll(): Flow<List<Encounter>> =
         encounters.map { list -> list.filter { it.deletedAt == null } }.delayedAfterFirst()
 
-    override fun observeById(id: String): Flow<Encounter?> =
-        encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst()
+    override fun observeById(id: String): Flow<Encounter?> = flow {
+        lookupGates[id]?.await()
+        emitAll(encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst())
+    }
 
     private fun <T> Flow<T>.delayedAfterFirst(): Flow<T> {
         var firstEmission = true
@@ -350,7 +349,12 @@ internal class FakeSettingsRepository(
 
     override fun lastSeenMilestone(): Flow<Int> = milestone
 
+    var lastSeenGate: CompletableDeferred<Unit>? = null
+    var lastSeenWriteFails = false
+
     override suspend fun setLastSeenMilestone(value: Int) {
+        lastSeenGate?.await()
+        check(!lastSeenWriteFails) { "preferences unwritable" }
         milestone.value = value
     }
 
@@ -375,39 +379,4 @@ internal class FakeSettingsRepository(
         check(!writesFail) { "preferences unwritable" }
         acknowledgedRuns.update { it + (job to runId) }
     }
-}
-
-/** Holds at most the one walk that is on; the Counter only ever reads that one. */
-internal class FakeWalkRepository : WalkRepository {
-    private val open = MutableStateFlow<Walk?>(null)
-    val watching: Int get() = open.subscriptionCount.value
-
-    fun startAt(at: Instant) {
-        open.value = Walk(
-            id = "walk-1",
-            startedAt = at,
-            endedAt = null,
-            deviceId = "device-1",
-            createdAt = at,
-            updatedAt = at,
-        )
-    }
-
-    override suspend fun openWalk(): Walk? = open.value
-    override fun observeAll(): Flow<List<Walk>> = open.map { listOfNotNull(it) }
-    override suspend fun startIfNoneOpen(walk: Walk): Walk = open.value ?: walk.also { open.value = it }
-
-    override suspend fun end(id: String, endedAt: Instant, updatedAt: Instant): Boolean {
-        val ending = open.value?.takeIf { it.id == id } ?: return false
-        open.value = null
-        return ending.endedAt == null
-    }
-
-    override suspend fun appendPoint(point: TrackPoint) = Unit
-    override suspend fun lastPoint(walkId: String): TrackPoint? = null
-    override fun observeTrack(walkId: String): Flow<List<TrackPoint>> = flowOf(emptyList())
-    override suspend fun loadEveryPoint(): List<TrackPoint> = emptyList()
-    override fun observeEveryPoint(): Flow<List<TrackPoint>> = flowOf(emptyList())
-    override suspend fun upsert(walk: Walk) = Unit
-    override suspend fun appendPoints(points: List<TrackPoint>) = Unit
 }

@@ -18,9 +18,9 @@ internal fun handleCounterEffect(
     photoFailureReporter: MessageReporter,
     catsFailureReporter: MessageReporter,
     captureDiscarder: CaptureDiscarder,
-    milestoneAnnouncer: MilestoneAnnouncer,
     photoPickerLauncher: PhotoPickerLauncher,
     importScheduler: ImportScheduler,
+    walkHoldHint: MessageReporter,
 ) {
     when (effect) {
         CounterEffect.HapticTick -> haptics.tick()
@@ -31,12 +31,8 @@ internal fun handleCounterEffect(
         CounterEffect.PhotoNotSaved -> photoFailureReporter.report()
         CounterEffect.CatsNotSaved -> catsFailureReporter.report()
         is CounterEffect.DiscardCapture -> captureDiscarder.discard(effect.uri)
-        is CounterEffect.MilestoneReached -> milestoneAnnouncer.announce(effect.value)
         CounterEffect.PickPhotos -> photoPickerLauncher.launch()
         is CounterEffect.StartImport -> importScheduler.start(effect.uris)
+        CounterEffect.WalkNeedsHold -> walkHoldHint.report()
     }
-}
-
-internal fun interface MilestoneAnnouncer {
-    fun announce(value: Int)
 }

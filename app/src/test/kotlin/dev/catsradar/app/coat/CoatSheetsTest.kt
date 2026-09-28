@@ -109,6 +109,7 @@ class CoatSheetsTest {
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_title)).assertExists()
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_hint)).assertExists()
         compose.onNodeWithText(notSpecified).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.coat_none)).assertDoesNotExist()
 
         compose.onNodeWithText(context.getString(R.string.coat_ginger)).performClick()
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_skip)).performClick()

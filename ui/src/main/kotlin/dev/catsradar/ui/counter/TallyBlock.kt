@@ -1,6 +1,7 @@
 package dev.catsradar.ui.counter
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -33,14 +33,17 @@ import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -49,6 +52,8 @@ import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -62,6 +67,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.counter.MilestoneMomentState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.statistics.label
@@ -74,6 +80,7 @@ import kotlin.math.sin
 
 const val MilestoneArcTestTag = "milestone-arc"
 const val CountNumberTestTag = "count-number"
+const val TapBurstTestTag = "tap-burst"
 
 /** The count, as a button: squashes under a press, and rolls up on a tally and down on an undo. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -84,18 +91,21 @@ internal fun TallyBlock(
     tapBurst: Int?,
     modifier: Modifier = Modifier,
     milestone: CounterMilestoneState? = null,
+    moment: MilestoneMomentState? = null,
     currentOuting: CurrentOutingState? = null,
+    walking: Boolean = false,
+    undoVisible: Boolean = false,
     onClick: () -> Unit = {},
+    onUndoClick: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val press = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, animationSpec = press, label = "tallyPress")
-    val turn by animateFloatAsState(
-        targetValue = if (pressed) 8f else 0f,
-        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-        label = "tallyTurn",
-    )
+    val turn by rememberCookieTurn(count)
+    val breath by rememberCookieBreath(breathing = walking)
+    val rungBounce by rememberRungBounce(moment)
+    val cookieColors = rememberCookieColors(walking)
     val tallyLabel = stringResource(R.string.counter_tally)
     val cookie = MaterialShapes.Cookie12Sided.toShape()
     val cookieInBlock = remember(cookie) { CentredSquare(cookie) }
@@ -117,39 +127,115 @@ internal fun TallyBlock(
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
+                    scaleX = scale * breath * rungBounce
+                    scaleY = scale * breath * rungBounce
                     rotationZ = turn
                 }
                 .clip(cookieInBlock)
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(cookieColors.fill)
                 .indication(interactionSource, ripple()),
         )
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
+                    scaleX = scale * rungBounce
+                    scaleY = scale * rungBounce
                 },
             contentAlignment = Alignment.Center,
         ) {
-            CookieContent(totalLabel, count, tapBurst, milestone, currentOuting)
+            CookieContent(totalLabel, count, milestone, moment, currentOuting, cookieColors)
         }
-        RingTags(milestone = milestone, currentOuting = currentOuting, scale = { scale })
+        TagsAndUndo(
+            milestone = milestone,
+            moment = moment,
+            currentOuting = currentOuting,
+            tapBurst = tapBurst,
+            scale = { scale * rungBounce },
+            undoVisible = undoVisible,
+            onUndoClick = onUndoClick,
+        )
     }
+}
+
+/** The ring's tags, with the run's "+N" and Undo at the block's end, level with the cookie's top and bottom. */
+@Composable
+private fun BoxScope.TagsAndUndo(
+    milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
+    currentOuting: CurrentOutingState?,
+    tapBurst: Int?,
+    scale: () -> Float,
+    undoVisible: Boolean,
+    onUndoClick: () -> Unit,
+) {
+    var undoWidth by remember { mutableIntStateOf(0) }
+    RingTags(
+        milestone = milestone,
+        moment = moment,
+        currentOuting = currentOuting,
+        scale = scale,
+        undoWidth = { if (undoVisible) undoWidth else 0 },
+    )
+    Box(modifier = Modifier.matchParentSize()) {
+        TapBurst(count = tapBurst, modifier = Modifier.atCookieEnd(bottom = false))
+        UndoButton(
+            visible = undoVisible,
+            onClick = onUndoClick,
+            modifier = Modifier.atCookieEnd(bottom = true).onSizeChanged { undoWidth = it.width },
+        )
+    }
+}
+
+// Beside a cookie narrower than its block, clear of the ring's tags; in its corner when it fills the width.
+private fun Modifier.atCookieEnd(bottom: Boolean): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+    val square = min(constraints.maxWidth, constraints.maxHeight)
+    val top = (constraints.maxHeight - square) / 2
+    val y = if (bottom) top + square - placeable.height else top
+    layout(constraints.maxWidth, constraints.maxHeight) {
+        placeable.placeRelative(constraints.maxWidth - placeable.width, y)
+    }
+}
+
+@Immutable
+private data class CookieColors(val fill: Color, val ink: Color)
+
+/** The cookie in `primaryContainer`, or in `tertiaryContainer` while a walk is on, easing between the two. */
+@Composable
+private fun rememberCookieColors(walking: Boolean): CookieColors {
+    val colors = MaterialTheme.colorScheme
+    val spec = MaterialTheme.motionScheme.defaultEffectsSpec<Color>()
+    val fill by animateColorAsState(
+        targetValue = if (walking) colors.tertiaryContainer else colors.primaryContainer,
+        animationSpec = spec,
+        label = "cookieFill",
+    )
+    val ink by animateColorAsState(
+        targetValue = if (walking) colors.onTertiaryContainer else colors.onPrimaryContainer,
+        animationSpec = spec,
+        label = "cookieInk",
+    )
+    return CookieColors(fill = fill, ink = ink)
 }
 
 @Composable
 private fun BoxScope.CookieContent(
     totalLabel: String,
     count: Int?,
-    tapBurst: Int?,
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
+    colors: CookieColors,
 ) {
-    milestone?.let { MilestoneArc(fraction = it.fraction, modifier = Modifier.fillMaxSize(RingFraction)) }
-    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+    if (moment != null) {
+        RungRing(moment = moment, modifier = Modifier.fillMaxSize(RingFraction))
+    } else {
+        milestone?.let {
+            MilestoneArc(fraction = it.fraction, colors = colors, modifier = Modifier.fillMaxSize(RingFraction))
+        }
+    }
+    CompositionLocalProvider(LocalContentColor provides colors.ink) {
         CountAndCaption(
             totalLabel = totalLabel,
             count = count,
@@ -159,19 +245,18 @@ private fun BoxScope.CookieContent(
             ),
         )
     }
-    TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
 }
 
 @Composable
-private fun MilestoneArc(fraction: Float, modifier: Modifier = Modifier) {
+private fun MilestoneArc(fraction: Float, colors: CookieColors, modifier: Modifier = Modifier) {
     val progress by animateFloatAsState(
         targetValue = fraction,
         animationSpec = MaterialTheme.motionScheme.slowSpatialSpec(),
         label = "milestoneArc",
     )
-    val track = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+    val track = colors.ink.copy(alpha = 0.15f)
     val arc = MaterialTheme.colorScheme.primary
-    val rim = MaterialTheme.colorScheme.primaryContainer
+    val rim = colors.fill
     Canvas(modifier = modifier.testTag(MilestoneArcTestTag)) {
         val stroke = size.minDimension * RingStrokeFraction
         val topLeft = Offset(stroke / 2, stroke / 2)
@@ -274,6 +359,7 @@ private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.testTag(TapBurstTestTag),
         ) {
             Text(
                 text = stringResource(R.string.counter_tap_burst, lastShown.intValue),

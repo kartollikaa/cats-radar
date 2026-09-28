@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.stats.CurrentOuting
 import dev.catsradar.domain.stats.Milestone
 import dev.catsradar.presentation.encounters.FakeDateTimeFormatter
 import dev.catsradar.presentation.encounters.FakePhotoStorage
@@ -7,12 +8,11 @@ import dev.catsradar.presentation.encounters.encounterFixture
 import dev.catsradar.presentation.encounters.photoFixture
 import dev.catsradar.presentation.encounters.withPhoto
 import dev.catsradar.presentation.statistics.MilestoneState
+import kotlinx.collections.immutable.persistentListOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class CounterStateMapperTest {
@@ -49,24 +49,54 @@ class CounterStateMapperTest {
     }
 
     @Test
-    fun `the walk time is formatted only while walking mode is on and a walk has started`() {
-        assertEquals(32.minutes.toString(), mapper.walkElapsedLabel(walking = true, elapsed = 32.minutes))
-        assertNull(mapper.walkElapsedLabel(walking = true, elapsed = null))
-        assertNull(mapper.walkElapsedLabel(walking = false, elapsed = 32.minutes))
-    }
-
-    @Test
-    fun `a walk shows no time until its first whole minute`() {
-        assertNull(mapper.walkElapsedLabel(walking = true, elapsed = Duration.ZERO))
-        assertNull(mapper.walkElapsedLabel(walking = true, elapsed = 59.seconds))
-        assertEquals(1.minutes.toString(), mapper.walkElapsedLabel(walking = true, elapsed = 1.minutes))
-    }
-
-    @Test
-    fun `the walk time is carried through a rebuild of the whole state`() {
+    fun `an import's summary shows its photos from the photo directory`() {
         assertEquals(
-            CounterState(totalLabel = "0", count = 0, undoVisible = false, walkingMode = true, walkElapsedLabel = "5m"),
-            mapper.map(count = 0, undoVisible = false, walkingMode = true, walkElapsedLabel = "5m"),
+            ImportSummaryState(
+                added = 4,
+                skipped = null,
+                failed = 1,
+                undoable = true,
+                thumbPaths = persistentListOf("/data/photos/b_thumb.jpg", "/data/photos/c_thumb.jpg"),
+            ),
+            mapper.importSummary(
+                addedCount = 4,
+                skipped = 0,
+                failed = 1,
+                thumbPaths = listOf("b_thumb.jpg", "c_thumb.jpg")
+            ),
+        )
+    }
+
+    @Test
+    fun `a running import's stack holds the photos the run has reached and the one in hand`() {
+        val picked = listOf("content://a", "content://b", "content://c")
+
+        assertEquals(
+            listOf(
+                persistentListOf("content://a"),
+                persistentListOf("content://a", "content://b"),
+                persistentListOf("content://a", "content://b", "content://c"),
+                persistentListOf("content://a", "content://b", "content://c"),
+            ),
+            listOf(0, 1, 2, 9).map { mapper.importProgress(done = it, total = 12, previews = picked).previewUris },
+        )
+    }
+
+    @Test
+    fun `a running import's stack holds no more than three photos, and no more than it was given`() {
+        val four = listOf("content://a", "content://b", "content://c", "content://d")
+
+        assertEquals(
+            ImportProgressState(
+                done = 5,
+                total = 12,
+                previewUris = persistentListOf("content://a", "content://b", "content://c"),
+            ),
+            mapper.importProgress(done = 5, total = 12, previews = four),
+        )
+        assertEquals(
+            ImportProgressState(done = 2, total = 2, previewUris = persistentListOf("content://a", "content://b")),
+            mapper.importProgress(done = 2, total = 2, previews = four.take(2)),
         )
     }
 
@@ -98,6 +128,31 @@ class CounterStateMapperTest {
                 milestone = Milestone(value = 100, remaining = 38, reached = 50),
             ).milestone,
         )
+    }
+
+    @Test
+    fun `a rung's moment rides beside the goal and the outing, and after it they are all that is left`() {
+        val outing = CurrentOuting(count = 4, elapsed = 12.minutes, rate = null)
+        val next = Milestone(value = 250, remaining = 150, reached = 100)
+        val atRest = CounterState(
+            totalLabel = "100",
+            count = 100,
+            undoVisible = true,
+            currentOuting = CurrentOutingState(count = 4, elapsedLabel = "12m", rate = null),
+            milestone = CounterMilestoneState(MilestoneState(valueLabel = "250", remainingLabel = "150"), 0f),
+        )
+
+        assertEquals(
+            atRest.copy(milestoneMoment = MilestoneMomentState(value = 100)),
+            mapper.map(
+                count = 100,
+                undoVisible = true,
+                currentOuting = outing,
+                milestone = next,
+                milestoneMoment = 100,
+            ),
+        )
+        assertEquals(atRest, mapper.map(count = 100, undoVisible = true, currentOuting = outing, milestone = next))
     }
 
     @Test

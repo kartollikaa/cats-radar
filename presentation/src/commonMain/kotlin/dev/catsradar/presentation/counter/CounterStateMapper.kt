@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.stats.CurrentOuting
@@ -8,8 +9,7 @@ import dev.catsradar.presentation.DateTimeFormatter
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.presentation.statistics.toRateState
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
+import kotlinx.collections.immutable.toImmutableList
 
 class CounterStateMapper(
     private val dateTimeFormatter: DateTimeFormatter,
@@ -26,11 +26,11 @@ class CounterStateMapper(
         tapBurst: Int? = null,
         lastCoat: CoatOption? = null,
         walkingMode: Boolean = false,
-        walkElapsedLabel: String? = null,
         importProgress: ImportProgressState? = null,
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
         milestone: Milestone? = null,
+        milestoneMoment: Int? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         count = count,
@@ -40,22 +40,32 @@ class CounterStateMapper(
         tapBurst = tapBurst,
         lastCoat = lastCoat,
         walkingMode = walkingMode,
-        walkElapsedLabel = walkElapsedLabel,
         importProgress = importProgress,
         importSummary = importSummary,
         coatPrompt = coatPrompt,
         // With no cats the first rung is not a milestone to reach, so the state carries none.
         milestone = milestone?.takeIf { count > 0 }?.toState(),
+        milestoneMoment = milestoneMoment?.let(::MilestoneMomentState),
     )
 
-    fun walkElapsedLabel(walking: Boolean, elapsed: Duration?): String? =
-        elapsed?.takeIf { walking && it >= 1.minutes }?.let(dateTimeFormatter::duration)
+    fun importProgress(done: Int, total: Int, previews: List<String>): ImportProgressState = ImportProgressState(
+        done = done,
+        total = total,
+        // The photo in hand counts too, so a run shows its first photo before any is done.
+        previewUris = previews.take(minOf(done + 1, Tuning.IMPORT_PREVIEWS)).toImmutableList(),
+    )
 
-    fun importSummary(addedCount: Int, skipped: Int, failed: Int): ImportSummaryState = ImportSummaryState(
+    fun importSummary(
+        addedCount: Int,
+        skipped: Int,
+        failed: Int,
+        thumbPaths: List<String>,
+    ): ImportSummaryState = ImportSummaryState(
         added = addedCount,
         skipped = skipped.takeIf { it > 0 },
         failed = failed.takeIf { it > 0 },
         undoable = addedCount > 0,
+        thumbPaths = thumbPaths.map(photoStorage::resolve).toImmutableList(),
     )
 
     fun coatPrompt(encounter: Encounter): CoatPromptState =

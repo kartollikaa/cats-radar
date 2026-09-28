@@ -13,3 +13,10 @@ internal suspend fun runStorageWrite(onFailure: () -> Unit = {}, block: suspend 
         onFailure()
     }
 }
+
+/** [block]'s result, or [fallback] when storage fails; cancellation still propagates. */
+internal suspend fun <T> runStorageRead(fallback: T, block: suspend () -> T): T {
+    var result = fallback
+    runStorageWrite { result = block() }
+    return result
+}
