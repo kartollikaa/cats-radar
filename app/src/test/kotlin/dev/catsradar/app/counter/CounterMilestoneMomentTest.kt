@@ -37,6 +37,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 @Config(qualifiers = "w411dp-h891dp")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -122,11 +123,15 @@ class CounterMilestoneMomentTest {
         val resting = number()
         compose.mainClock.autoAdvance = false
         state = atRest.copy(milestoneMoment = hundred)
+        compose.waitForIdle()
         compose.mainClock.advanceTimeBy(120)
+        val midBounce = number()
 
         state = atRest
+        compose.waitForIdle()
         compose.mainClock.advanceTimeBy(3_000)
 
+        assertNotEquals(resting, midBounce)
         assertEquals(resting, number())
     }
 
