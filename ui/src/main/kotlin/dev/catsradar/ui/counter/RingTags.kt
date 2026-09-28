@@ -21,8 +21,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.counter.MilestoneMomentState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.statistics.label
@@ -59,6 +63,7 @@ private fun ringLine(
 @Composable
 internal fun BoxScope.RingTags(
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
     scale: () -> Float,
     undoWidth: () -> Int = { 0 },
@@ -71,19 +76,22 @@ internal fun BoxScope.RingTags(
                 scaleY = scale()
             },
     ) {
-        milestone?.let {
-            GoalTag(next = it.next, modifier = Modifier.align(Alignment.TopCenter).onRingLine(top = true))
+        if (moment == null) {
+            milestone?.let {
+                GoalTag(next = it.next, modifier = Modifier.align(Alignment.TopCenter).onRingLine(top = true))
+            }
         }
-        currentOuting?.let {
-            // Its sides may overhang the block, so the outing's own line keeps the block's width.
-            RingPill(
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                sides = OutingSides,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .onRingLine(top = false, overhang = OutingSides, clearOf = undoWidth),
-            ) {
-                CurrentOuting(it)
+        // Its sides may overhang the block, so the bottom tag's own line keeps the block's width.
+        val bottom = Modifier
+            .align(Alignment.BottomCenter)
+            .onRingLine(top = false, overhang = OutingSides, clearOf = undoWidth)
+        if (moment != null) {
+            RungPill(moment = moment, modifier = bottom)
+        } else {
+            currentOuting?.let {
+                RingPill(contentColor = MaterialTheme.colorScheme.onSurface, sides = OutingSides, modifier = bottom) {
+                    CurrentOuting(it)
+                }
             }
         }
     }
@@ -159,16 +167,35 @@ private fun GoalTag(next: MilestoneState, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun RungPill(moment: MilestoneMomentState, modifier: Modifier = Modifier) {
+    RingPill(
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        sides = OutingSides,
+        color = MaterialTheme.colorScheme.primary,
+        // Its own node, so TalkBack speaks it once as it appears.
+        modifier = modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+    ) {
+        Text(
+            text = pluralStringResource(R.plurals.counter_milestone, moment.value, moment.value),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
 private fun RingPill(
     contentColor: Color,
     sides: Dp,
     modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.surface,
     content: @Composable RowScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
+        color = color,
         contentColor = contentColor,
         shadowElevation = 1.dp,
     ) {

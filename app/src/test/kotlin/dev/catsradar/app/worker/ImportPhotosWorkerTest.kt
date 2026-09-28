@@ -2,8 +2,10 @@ package dev.catsradar.app.worker
 
 import android.content.Context
 import android.net.Uri
+import androidx.concurrent.futures.ResolvableFuture
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
@@ -39,9 +41,15 @@ class ImportPhotosWorkerTest {
 
     private fun held(): Set<Uri> = context.contentResolver.persistedUriPermissions.map { it.uri }.toSet()
 
+    private val reports = mutableListOf<Data>()
+
     private fun worker(importPhotos: PhotoImport): ImportPhotosWorker =
         TestListenableWorkerBuilder<ImportPhotosWorker>(context)
             .setId(runId)
+            .setProgressUpdater { _, _, data ->
+                reports += data
+                ResolvableFuture.create<Void>().apply { set(null) }
+            }
             .setWorkerFactory(
                 object : WorkerFactory() {
                     override fun createWorker(
@@ -74,6 +82,44 @@ class ImportPhotosWorkerTest {
         worker { uris, _ -> ImportSummary().also { imported += uris } }.doWork()
 
         assertEquals(photos.map(Uri::toString), imported)
+    }
+
+    @Test
+    fun eachProgressReportCarriesTheBatchsFirstPhotos() = runTest {
+        val batch = (19..22).map {
+            "content://media/picker_get_content/0/com.android.providers.media.photopicker/media/$it"
+        }
+        batches.replaceWith(runId, batch)
+
+        worker { uris, onProgress -> ImportSummary().also { (1..2).forEach { onProgress(it, uris.size) } } }.doWork()
+
+        assertEquals(
+            listOf(batch.take(3), batch.take(3)),
+            reports.map { it.getStringArray(ImportPhotosWorker.KEY_PREVIEWS)?.toList() },
+        )
+    }
+
+    @Test
+    fun photosTooLongToReportAreLeftOutOfTheReportAndTheRunStillImportsThemAll() = runTest {
+        val tooLong = "content://media/external/images/media/" + "7".repeat(Data.MAX_DATA_BYTES)
+        val batch = listOf(tooLong, photos[0].toString())
+        batches.replaceWith(runId, batch)
+        val imported = mutableListOf<String>()
+
+        val result = worker { uris, onProgress ->
+            uris.forEachIndexed { index, uri ->
+                imported += uri
+                onProgress(index + 1, uris.size)
+            }
+            ImportSummary()
+        }.doWork()
+
+        assertEquals(ListenableWorker.Result.Success::class, result::class)
+        assertEquals(batch, imported)
+        assertEquals(
+            listOf(emptyList<String>(), emptyList()),
+            reports.map { it.getStringArray(ImportPhotosWorker.KEY_PREVIEWS)?.toList() },
+        )
     }
 
     @Test

@@ -1,5 +1,6 @@
 package dev.catsradar.presentation.counter
 
+import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.model.Encounter
 import dev.catsradar.domain.platform.PhotoStorage
 import dev.catsradar.domain.stats.CurrentOuting
@@ -29,6 +30,7 @@ class CounterStateMapper(
         importSummary: ImportSummaryState? = null,
         coatPrompt: CoatPromptState? = null,
         milestone: Milestone? = null,
+        milestoneMoment: Int? = null,
     ): CounterState = CounterState(
         totalLabel = count.toString(),
         count = count,
@@ -43,6 +45,14 @@ class CounterStateMapper(
         coatPrompt = coatPrompt,
         // With no cats the first rung is not a milestone to reach, so the state carries none.
         milestone = milestone?.takeIf { count > 0 }?.toState(),
+        milestoneMoment = milestoneMoment?.let(::MilestoneMomentState),
+    )
+
+    fun importProgress(done: Int, total: Int, previews: List<String>): ImportProgressState = ImportProgressState(
+        done = done,
+        total = total,
+        // The photo in hand counts too, so a run shows its first photo before any is done.
+        previewUris = previews.take(minOf(done + 1, Tuning.IMPORT_PREVIEWS)).toImmutableList(),
     )
 
     fun importSummary(
