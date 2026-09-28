@@ -10,17 +10,20 @@ gallery — unless the answer already picked the photos; holding that icon names
 in a worker, so it survives leaving the screen; the Counter shows how far it has got, and at the
 end, briefly, what was added, skipped and failed, with one undo for the whole batch.
 
-Both show as one card that drops in over the top of the count rather than taking a place above it,
-so the count keeps its size (`ImportIslandTest`); for as long as it shows, it covers the top of the
-ring, where the goal tag sits. While the run goes, the card shows the gallery icon, **Importing 7 of 23** and a
-wavy progress bar, and offers nothing to press. When it has finished, it shows a fanned stack of the
-first three added cats' photos — a check when none of them has one — then **9 cats added** and, under
-it, one muted line with only the parts that apply: *2 already here · 1 couldn't be read*, one of them
-alone, or no line. TalkBack reads the words as one item. **Undo** follows while the run can still be
-undone, then a **×** that closes the card; a swipe to either side closes it too. A tap on the card's
-body does nothing: it is kept for a manager of the imported photos. The running card has no photos
-because the Counter learns which cats a run added only when it ends. Photos that cannot be read
-leave the check in their place rather than holding the summary back.
+Both show as one card that drops in over the top of the count rather than taking a place above it, so the count
+keeps its size (`ImportIslandTest`); for as long as it shows, it covers the top of the ring, where the goal tag
+sits. While the run goes, the card fans out the picked photos, **Importing 7 of 23** and a wavy progress bar,
+and offers nothing to press: the batch's first photo from the start, and one more as the run reaches each of the
+next two. They are the photos, not yet the cats — one may turn out a duplicate — and the worker puts them in its
+progress, so a Counter opened mid-run shows them too; the gallery icon stands in when the run reported none. The
+stack keeps room for three, so the words hold still as it fills. When it has finished, it shows a fanned stack
+of the first three added cats' photos — a check when none of them has one — then **9 cats added** and, under it,
+one muted line with only the parts that apply: *2 already here · 1 couldn't be read*, one of them alone, or no
+line. TalkBack reads the words as one item. **Undo** follows while the run can still be undone, then a **×**
+that closes the card; a swipe to either side closes it too. A tap on the card's body does nothing: it is kept
+for a manager of the imported photos. Each stacked photo, running or finished, wears a thin ring in the card's
+colour, which sets it apart from the one beneath (`ImportIslandLookTest`). Photos that cannot be read leave the
+check in their place rather than holding the summary back.
 
 ## What an imported photo becomes
 
@@ -174,6 +177,10 @@ takes them back*).
   not. A run the system stops keeps it for WorkManager's next attempt, and a new pick removes
   whatever an earlier run left. A batch that cannot be written (a full disk) or read back counts as
   empty: its run imports nothing and ends, so the progress card still clears.
+- **The running card's photos ride in the worker's progress.** Progress data has the same size cap, so each report
+  carries only the batch's first `IMPORT_PREVIEWS` URIs, and a Counter that comes back mid-run reads them from the
+  work rather than from its own memory. They load while the run holds its read grants; once it ends and lets go,
+  the finished card shows the added cats' own thumbnails instead.
 - `sourceDigest` is the digest of the bytes the app was handed, and a redacted copy hashes
   differently from the original. The redaction is deterministic, so picking the same photo twice
   with the same access produces the same digest and the second one is skipped. Picked once without
