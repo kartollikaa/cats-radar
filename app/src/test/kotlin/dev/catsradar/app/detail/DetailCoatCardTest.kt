@@ -72,16 +72,7 @@ class DetailCoatCardTest {
         val card = compose.onNodeWithTag(CoatCardTestTag).performScrollTo().bounds()
         val pixels = compose.onRoot().captureToImage().toPixelMap()
         assertEquals(scheme.surfaceContainerLow, pixels[(card.left + 8.dp.px()).toInt(), card.center.y.toInt()])
-        val outsideTheCurve = 7.dp.px()
-        assertEquals(
-            scheme.surface,
-            pixels[(card.left + outsideTheCurve).toInt(), (card.top + outsideTheCurve).toInt()],
-        )
-        val insideTheCurve = 9.5.dp.px()
-        assertEquals(
-            scheme.surfaceContainerLow,
-            pixels[(card.left + insideTheCurve).toInt(), (card.top + insideTheCurve).toInt()],
-        )
+        compose.assertLargeCorner(card, outside = scheme.surface, inside = scheme.surfaceContainerLow)
         compose.onAllNodesWithText(context.getString(R.string.coat_black)).assertCountEquals(0)
     }
 
@@ -110,6 +101,8 @@ class DetailCoatCardTest {
 
         compose.onNodeWithTag(CoatCardTestTag).performScrollTo()
         compose.onNodeWithTag(CoatCardPawTestTag, useUnmergedTree = true).assertIsDisplayed()
+        val lead = compose.onNodeWithTag(CoatCardLeadTestTag, useUnmergedTree = true).bounds()
+        compose.assertGhostHem(lead, outside = scheme.surfaceContainerLow, inside = scheme.surfaceContainerHighest)
         compose.onNodeWithTag(CoatCardFaceTestTag, useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.detail_coat_not_noted), useUnmergedTree = true).assertExists()
         compose.onNodeWithText(context.getString(R.string.detail_coat_add), useUnmergedTree = true).assertExists()

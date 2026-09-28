@@ -84,6 +84,7 @@ class DetailCoatSheetTest {
         val lead = compose.onNodeWithTag(CoatSheetLeadTestTag).bounds()
         val pixels = compose.onRoot().captureToImage().toPixelMap()
         assertEquals(scheme.surfaceContainerHighest, pixels[lead.center.x.toInt(), (lead.top + 5.dp.px()).toInt()])
+        compose.assertGhostHem(lead, outside = scheme.surface, inside = scheme.surfaceContainerHighest)
         compose.onNodeWithText("Tap the coat that fits").assertIsDisplayed()
     }
 
