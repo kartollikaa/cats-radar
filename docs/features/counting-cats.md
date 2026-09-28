@@ -12,8 +12,10 @@ request; a later denial surfaces as a dismissible one-line hint on the counter s
 
 ## Feedback for the tap
 
-Each tap raises a **"+N"** badge in the count block's top corner that counts the cats of the current
-run of taps, the same run Undo walks back (below), and stays up for as long as that run is open.
+Each tap raises a **"+N"** badge that counts the cats of the current run of taps, the same run Undo
+walks back (below), and stays up for as long as that run is open. It sits in the count block's top
+corner: at the block's end, level with the cookie's top, as Undo sits at its bottom, so a narrow phone
+or the largest font never puts it under the goal tag (`CounterBurstBadgeTest`).
 Every tap adds one and every Undo takes one off: three taps read "+3", an Undo turns it into "+2",
 and the Undo that takes back the run's last cat takes the badge with it. When the undo window runs
 out, the badge goes with Undo, and the next tap starts again from one. Like the haptic, a tap's
