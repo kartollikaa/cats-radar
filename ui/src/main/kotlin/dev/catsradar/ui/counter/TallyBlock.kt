@@ -154,7 +154,7 @@ internal fun TallyBlock(
     }
 }
 
-/** The ring's tags, the run's "+N" at the cookie's top end and Undo at its bottom end, clear of the tags. */
+/** The ring's tags, with the run's "+N" and Undo at the block's end, level with the cookie's top and bottom. */
 @Composable
 private fun BoxScope.TagsAndUndo(
     milestone: CounterMilestoneState?,
