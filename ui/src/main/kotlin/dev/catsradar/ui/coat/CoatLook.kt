@@ -3,6 +3,9 @@ package dev.catsradar.ui.coat
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import dev.catsradar.presentation.coat.CoatOption
+import dev.catsradar.ui.components.BarPart
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 internal val Ginger = Color(0xFFE8833A)
 internal val White = Color(0xFFF7F5F2)
@@ -55,4 +58,16 @@ internal fun CoatOption.look(): CoatLook = when (this) {
     CoatOption.GREY_WHITE -> CoatLook(fur = Grey, eyes = DarkEyes, nose = DarkNose, muzzle = White)
     CoatOption.BLACK -> CoatLook(fur = Black, eyes = AmberEyes, nose = PinkNose)
     CoatOption.BLACK_WHITE -> CoatLook(fur = Black, eyes = AmberEyes, nose = DarkNose, muzzle = White)
+}
+
+/** The colours a coat's share bar blends, each weighted by how much of its face it covers. */
+internal fun CoatOption.barParts(): ImmutableList<BarPart> = when (this) {
+    CoatOption.GINGER, CoatOption.WHITE, CoatOption.BROWN, CoatOption.GREY, CoatOption.BLACK ->
+        persistentListOf(BarPart(look().fur, 1f))
+    CoatOption.GINGER_WHITE -> persistentListOf(BarPart(Ginger, 2f), BarPart(White, 1f))
+    CoatOption.BROWN_WHITE -> persistentListOf(BarPart(Brown, 2f), BarPart(White, 1f))
+    CoatOption.GREY_WHITE -> persistentListOf(BarPart(Grey, 2f), BarPart(White, 1f))
+    CoatOption.BLACK_WHITE -> persistentListOf(BarPart(Black, 2f), BarPart(White, 1f))
+    CoatOption.TRICOLOR_MOSTLY_WHITE -> persistentListOf(BarPart(White, 2f), BarPart(Ginger, 1f), BarPart(Black, 1f))
+    CoatOption.TRICOLOR_LITTLE_WHITE -> persistentListOf(BarPart(Ginger, 5f), BarPart(Black, 3f), BarPart(White, 2f))
 }

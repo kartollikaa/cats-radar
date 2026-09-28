@@ -21,6 +21,10 @@
 - **Tile labels:** Today, Last 7 days, Last 30 days, With a photo, Streak, Longest streak. **Outings grid:** Outings, Time out, Cats per hour, Walked, Cats per km, Best outing (with its rate in the label, "Best outing · 1.3 / min"), two to a row in that order, the walked pair only when something was walked and the best outing only when there is one.
 - The counts stay `Int` in State where a plural reads them (`currentStreak`, `longestStreak`, the bars' and the picked day's counts).
 
+- **The coat bars (owner, 2026-09-29, prototype versions 26–30):** a mixed coat's colours blend along one fill,
+  faintest first on the track; a colour fainter than 1.3:1 is shaded toward `onSurface`; no outline; 4 dp.
+  `BlendedBar.kt` in `ui/components`, the parts in `CoatLook.kt`; criteria AC-16 amended, AC-32 and AC-33.
+
 ## Global Constraints
 
 - Counter files (`ui/…/counter/`, `counting-cats.md`, `walking-mode.md`, `import.md`, spec § 2) are not touched.

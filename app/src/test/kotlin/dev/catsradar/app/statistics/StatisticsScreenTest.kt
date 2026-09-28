@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -51,6 +52,8 @@ import dev.catsradar.ui.statistics.DayBarTestTag
 import dev.catsradar.ui.statistics.OutingFigureTestTag
 import dev.catsradar.ui.statistics.StatTileTestTag
 import dev.catsradar.ui.statistics.StatisticsScreen
+import dev.catsradar.ui.theme.CatsRadarDarkColors
+import dev.catsradar.ui.theme.CatsRadarLightColors
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -61,7 +64,10 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -79,9 +85,14 @@ class StatisticsScreenTest {
     private lateinit var scheme: ColorScheme
     private lateinit var typography: Typography
 
-    private fun show(state: StatisticsState, onRange: (ChartRange) -> Unit = {}, onDay: (Long) -> Unit = {}) {
+    private fun show(
+        state: StatisticsState,
+        onRange: (ChartRange) -> Unit = {},
+        onDay: (Long) -> Unit = {},
+        colors: ColorScheme = CatsRadarLightColors,
+    ) {
         compose.setContent {
-            CatsRadarTheme {
+            CatsRadarTheme(colorScheme = colors) {
                 scheme = MaterialTheme.colorScheme
                 typography = MaterialTheme.typography
                 StatisticsScreen(state = state, onRangeClick = onRange, onDayClick = onDay)
@@ -96,6 +107,24 @@ class StatisticsScreenTest {
     private fun SemanticsNodeInteraction.centrePixel(): Color {
         val pixels = captureToImage().toPixelMap()
         return pixels[pixels.width / 2, pixels.height / 2]
+    }
+
+    private fun SemanticsNodeInteraction.pixelAt(fraction: Float): Color {
+        val pixels = captureToImage().toPixelMap()
+        return pixels[(pixels.width * fraction).toInt(), pixels.height / 2]
+    }
+
+    private fun coatFill(row: Int) = compose.onAllNodesWithTag(ShareBarFillTestTag, useUnmergedTree = true)[row]
+
+    private fun withCoats(vararg rows: CoatShareState) =
+        dashboard(ChartRange.WEEK).copy(byCoat = persistentListOf(*rows))
+
+    private fun contrast(a: Color, b: Color): Float =
+        (max(a.luminance(), b.luminance()) + 0.05f) / (min(a.luminance(), b.luminance()) + 0.05f)
+
+    private fun assertClose(expected: Color, actual: Color) {
+        val channels = listOf(expected.red to actual.red, expected.green to actual.green, expected.blue to actual.blue)
+        assertTrue(channels.all { (e, a) -> abs(e - a) <= 2f / 255 }, "expected $expected, was $actual")
     }
 
     private fun SemanticsNodeInteraction.topPixel(): Color {
@@ -236,6 +265,37 @@ class StatisticsScreenTest {
     }
 
     @Test
+    fun `a white coat's bar is shaded until it shows on the light track`() {
+        show(withCoats(CoatShareState(CoatOption.WHITE, countLabel = "38", sharePercentLabel = "26", share = 1f)))
+
+        val fill = coatFill(0).centrePixel()
+        assertNotEquals(WhiteFur, fill)
+        val onTrack = contrast(fill, scheme.surfaceContainerHighest)
+        assertTrue(onTrack >= 1.29f && onTrack < 1.4f, "the shaded white stands $onTrack apart from the track")
+    }
+
+    @Test
+    fun `a two-colour coat's bar runs from its faint white into ginger on the light theme`() {
+        show(withCoats(GingerAndWhite))
+
+        val fill = coatFill(0)
+        val start = fill.pixelAt(0.03f)
+        val onTrack = contrast(start, scheme.surfaceContainerHighest)
+        assertTrue(onTrack >= 1.29f && onTrack < 1.4f, "the bar starts $onTrack apart from the track")
+        assertTrue(abs(start.red - start.blue) < 0.05f, "the bar starts on a shaded white, was $start")
+        assertClose(GingerFur, fill.pixelAt(0.97f))
+    }
+
+    @Test
+    fun `a two-colour coat's bar runs from ginger into white on the dark theme`() {
+        show(withCoats(GingerAndWhite), colors = CatsRadarDarkColors)
+
+        val fill = coatFill(0)
+        assertClose(GingerFur, fill.pixelAt(0.03f))
+        assertClose(WhiteFur, fill.pixelAt(0.97f))
+    }
+
+    @Test
     fun `the outings figures sit two to a row in their order, with the best outing's rate in its label`() {
         show(dashboard(ChartRange.WEEK))
 
@@ -354,5 +414,8 @@ class StatisticsScreenTest {
             listOf(1, 3, 0, 2, 4, 1, 0, 3, 2, 5, 1, 0, 2, 3, 1, 4, 2, 0, 3, 1, 2, 3, 2, 2, 4, 1, 3, 6, 0, 3)
 
         val GingerFur = Color(0xFFE8833A)
+        val WhiteFur = Color(0xFFF7F5F2)
+        val GingerAndWhite =
+            CoatShareState(CoatOption.GINGER_WHITE, countLabel = "38", sharePercentLabel = "26", share = 1f)
     }
 }

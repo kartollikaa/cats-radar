@@ -124,11 +124,21 @@ The tab reads top to bottom as a dashboard.
   today.
 - **The tiles**: Today (the one highlighted), Last 7 days, Last 30 days, With a photo, Streak and
   Longest streak, three to a row, each read by TalkBack as one item ("3, Today"). They are not buttons.
-- **By coat**: each coat's face, name and "38 · 26%", with a bar under the name in the coat's fur
-  colour. The bar is the row's count over the biggest row's, *Not specified* included, so the busiest
-  row fills it. The bar is the fur alone, with no outline (owner, 2026-09-28), so a white coat's bar on
-  the light theme and a black one's on the dark are faint against the track. *Not specified*'s bar is the
-  outline colour.
+- **By coat**: each coat's face, name and "38 · 26%", with a 4 dp bar under the name. The bar is the row's
+  count over the biggest row's, *Not specified* included, so the busiest row fills it. It is drawn in the
+  coat's own colours, with no outline:
+  - a one-colour coat's bar is its fur;
+  - a two-colour or calico coat's bar is one fill whose colours blend into each other, each taking the
+    share of the face it covers: two thirds for the main colour of a two-colour coat, half white for a
+    mostly-white calico, a fifth for a little-white one;
+  - the colours run from the one closest to the track to the one furthest from it, so the bar always ends
+    on a colour that shows. Ginger & white runs white into ginger on the light theme and ginger into white
+    on the dark;
+  - a colour fainter than 1.3:1 against the track is blended toward the text colour just far enough to
+    reach it. A white bar on the light theme is a light grey, still paler than the Grey coat's, and a black
+    bar on the dark theme a charcoal.
+
+  *Not specified*'s bar is the outline colour. (`StatisticsScreenTest`, `BlendedBarTest`.)
 - **Places**, the card that opens the drill-down.
 - **Outings**: the figures two to a row — outings, time out, cats per hour, then walked and cats per km
   when something was walked, then the best outing with its own rate in its label ("Best outing · 1.3 /
@@ -153,7 +163,8 @@ same way, and a value with no digit ("—") stays whole.
   the chart's range and picked day (`ChartChoice`)
 - `ui/…/statistics/` — `StatisticsScreen.kt`, `DayChart.kt` (the bars, their labels, the line and the pill),
   `StatTiles.kt`, `OutingsGrid.kt`, `SmallUnits.kt` (large numbers, small words)
-- `ui/…/components/ShareBar.kt` — the share bar the coats and the Places drill-down both draw
+- `ui/…/components/ShareBar.kt` — the share bar the coats and the Places drill-down both draw;
+  `BlendedBar.kt` blends a coat's colours and shades the faint ones
 - `domain/…/usecase/ObserveStats.kt`, `ObserveWalkStats.kt` — combined by `StatisticsStore`, which
   reads the encounter list once and hands the same list to both
 - `domain/…/usecase/ObserveWalkTracks.kt` — every walk with its route, which `ObserveWalkStats` sums

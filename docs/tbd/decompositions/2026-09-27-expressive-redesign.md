@@ -254,3 +254,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   bottom first, then **E12a and E12b** as #225 and #226. The detail stack landed on the main it was built on, each
   merge a tree identical to its gated head; the E12 branches then took that main, and each tree was gated before it
   landed. The plans of E5 to E9 and E12 are archived. E10 waits on the owner's pick for the faint coat bars.
+- 2026-09-29: the Stats coat bars. White on the light theme and black on the dark were faint against the track. In
+  prototype versions 26 to 30 the owner chose, over an outline, to shade a faint colour to 1.3:1, and asked that a
+  two-colour or calico coat's bar blend its colours along one fill, running from the faintest colour on the track to
+  the clearest so the bar ends on a colour that shows. There is no outline and the bar stays 4 dp. E10 carries it.

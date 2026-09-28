@@ -162,7 +162,8 @@ Nothing else needs a "clear" control.
 The **By coat** block counts each coat with its share of the total. Coats nobody has seen are
 absent rather than listed as zero, and the "not specified" row always comes **last**, however many
 cats are in it — it is the absence of an answer, not an answer that happens to be popular. Each row
-has a share bar in the coat's fur colour, the busiest row's full; see
+has a share bar in the coat's own colours, the busiest row's full: a two-colour or calico coat's colours
+blend along one bar, and a colour too faint for the track is shaded until it shows; see
 [statistics.md](./statistics.md#the-screen).
 
 ## At the edges
@@ -188,7 +189,8 @@ has a share bar in the coat's fur colour, the busiest row's full; see
   `CoatPromptTray.kt` its tray; `CounterStore` opens and
   closes it, `presentation/…/counter/CoatCounting.kt` moves it between prompts and `CoatQuestion.kt` makes its writes
 - `ui/…/coat/CoatShapes.kt` — each coat's shape, stretched onto its square
-- `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, and the line around every face
+- `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, the line around every face, and the colours
+  its share bar blends
 - `ui/…/coat/CatFace.kt` — the face itself
 
 ## On the map

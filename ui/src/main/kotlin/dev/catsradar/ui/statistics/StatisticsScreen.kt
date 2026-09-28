@@ -39,8 +39,8 @@ import dev.catsradar.presentation.statistics.StatisticsState
 import dev.catsradar.presentation.statistics.WalkedState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CatFace
+import dev.catsradar.ui.coat.barParts
 import dev.catsradar.ui.coat.labelRes
-import dev.catsradar.ui.coat.look
 import dev.catsradar.ui.components.EmptyState
 import dev.catsradar.ui.components.HeadlineCard
 import dev.catsradar.ui.components.SectionCard
@@ -53,6 +53,9 @@ import kotlinx.collections.immutable.toImmutableList
 
 // A coat nobody noted keeps a blank of the same size, so the names still line up.
 private val CoatFaceSize = 28.dp
+
+// A white bar shows on the light track at this contrast and still stays paler than the Grey coat's bar.
+private const val FaintBarContrast = 1.3f
 
 @Composable
 fun StatisticsScreen(
@@ -147,7 +150,11 @@ private fun CoatShareRow(share: CoatShareState, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
-            ShareBar(share = share.share, color = coat?.look()?.fur ?: colors.outline)
+            if (coat != null) {
+                ShareBar(share = share.share, parts = coat.barParts(), minContrast = FaintBarContrast)
+            } else {
+                ShareBar(share = share.share, color = colors.outline)
+            }
         }
     }
 }
