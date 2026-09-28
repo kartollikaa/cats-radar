@@ -109,7 +109,7 @@ class EncountersListPositionTest {
         fun outings(range: IntRange) = EncountersState(
             rows = range.flatMap { outing ->
                 listOf(
-                    OutingHeader(key = "header-$outing", label = header(outing)),
+                    OutingHeader(key = "header-$outing", label = header(outing), dayLabel = header(outing)),
                     EncountersRow.Single(cell(outing), ONLY),
                 )
             }.toPersistentList(),

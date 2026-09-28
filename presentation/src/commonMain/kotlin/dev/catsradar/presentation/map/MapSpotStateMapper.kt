@@ -19,7 +19,7 @@ class MapSpotStateMapper(private val encountersMapper: EncountersStateMapper) {
         if (cats.isEmpty()) return null
         return MapSpotState.Listed(
             catCount = cats.size,
-            rows = encountersMapper.map(cats, today, grid = false, byShot = false).rows,
+            rows = encountersMapper.catRows(cats, today),
         )
     }
 }

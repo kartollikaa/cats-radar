@@ -37,6 +37,7 @@ import dev.catsradar.presentation.encounters.EncounterCell
 import dev.catsradar.presentation.encounters.EncountersLayout
 import dev.catsradar.presentation.encounters.EncountersRow
 import dev.catsradar.presentation.encounters.EncountersState
+import dev.catsradar.presentation.encounters.EncountersTotals
 import dev.catsradar.presentation.encounters.GroupPosition
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.encounters.OutingHeader
@@ -51,6 +52,8 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 
 private val RowInset = 16.dp
+
+private val CardInset = 12.dp
 private val CardTextInset = 12.dp
 
 private const val LEADING_ITEM_KEY = "leading"
@@ -98,6 +101,10 @@ fun EncountersScreen(
             if (state.isEmpty) {
                 EmptyEncounters(modifier = Modifier.fillMaxSize().padding(listPadding))
             } else {
+                val headline = rememberHeadline(
+                    totals = state.totals,
+                    modifier = Modifier.padding(start = CardInset, top = 16.dp, end = CardInset),
+                )
                 EncounterRows(
                     rows = state.rows,
                     layout = state.layout,
@@ -105,9 +112,11 @@ fun EncountersScreen(
                     listState = listState,
                     contentPadding = listPadding,
                     selecting = state.isSelecting,
+                    outingCards = true,
                     onEncounterClick = onEncounterClick,
                     onEncounterLongClick = onEncounterLongClick,
                     onOutingMapClick = onOutingMapClick,
+                    leadingItem = headline,
                 )
             }
             state.removedCount?.let { count ->
@@ -128,7 +137,10 @@ fun EncountersScreen(
 private fun LazyListState.isRestingAtTop(): Boolean =
     firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0 && !isScrollInProgress
 
-/** Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any. */
+/**
+ * Cats grouped by outing, drawn as the Encounters tab draws them in [layout], after [leadingItem] if any; with
+ * [outingCards] each outing is one card.
+ */
 @Composable
 internal fun EncounterRows(
     rows: ImmutableList<EncountersRow>,
@@ -137,34 +149,61 @@ internal fun EncounterRows(
     listState: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(),
     selecting: Boolean = false,
+    outingCards: Boolean = false,
     onEncounterClick: (String) -> Unit = {},
     onEncounterLongClick: ((String) -> Unit)? = null,
     onOutingMapClick: (String) -> Unit = {},
     leadingItem: (@Composable () -> Unit)? = null,
 ) {
     val list = layout == EncountersLayout.LIST
+    val rowGap = if (list) ListRowGap else CellGap
     LazyColumn(
         modifier = modifier,
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(if (list) ListRowGap else CellGap),
+        // In a card the gaps are the card's own, drawn inside its pieces so it stays unbroken.
+        verticalArrangement = if (outingCards) Arrangement.Top else Arrangement.spacedBy(rowGap),
     ) {
         leadingItem?.let { item(key = LEADING_ITEM_KEY, contentType = LEADING_ITEM_KEY) { it() } }
         items(items = rows, key = { it.key }, contentType = { it::class }) { row ->
-            val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
-            when (row) {
-                is OutingHeader -> OutingHeaderRow(
-                    header = row,
-                    alignWithCardText = list,
-                    modifier = rowModifier,
-                    onMapClick = onOutingMapClick,
+            if (outingCards) {
+                OutingCardRow(
+                    row = row,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = CardInset),
+                    rowGap = rowGap,
+                    selecting = selecting,
+                    onEncounterClick = onEncounterClick,
+                    onEncounterLongClick = onEncounterLongClick,
+                    onOutingMapClick = onOutingMapClick,
                 )
-                is EncountersRow.PhotoPair ->
-                    PhotoPairRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
-                is EncountersRow.Tiles -> TileRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
-                is EncountersRow.Cards -> CardRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
-                is EncountersRow.Single ->
-                    SingleRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
+            } else {
+                val rowModifier = Modifier.fillMaxWidth().padding(horizontal = RowInset)
+                when (row) {
+                    is OutingHeader -> OutingHeaderRow(
+                        header = row,
+                        alignWithCardText = list,
+                        modifier = rowModifier,
+                        onMapClick = onOutingMapClick,
+                    )
+                    is EncountersRow.PhotoPair ->
+                        PhotoPairRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
+                    is EncountersRow.Tiles ->
+                        TileRow(row, rowModifier, selecting, onEncounterClick, onEncounterLongClick)
+                    is EncountersRow.Cards -> CardRow(
+                        row = row,
+                        modifier = rowModifier,
+                        selecting = selecting,
+                        onEncounterClick = onEncounterClick,
+                        onEncounterLongClick = onEncounterLongClick,
+                    )
+                    is EncountersRow.Single -> SingleRow(
+                        row = row,
+                        modifier = rowModifier,
+                        selecting = selecting,
+                        onEncounterClick = onEncounterClick,
+                        onEncounterLongClick = onEncounterLongClick,
+                    )
+                }
             }
         }
     }
@@ -263,9 +302,29 @@ private fun EncountersScreenUndoPreview() {
 
 private val sampleEncountersStateEmpty = EncountersState()
 
+private val sampleWalkedHeader = OutingHeader(
+    key = "header-1",
+    label = "Today, 14:10",
+    mapOutingId = "1",
+    dayLabel = "Today",
+    startLabel = "14:10",
+    count = 5,
+    spanLabel = "22 min",
+    onWalk = true,
+)
+
+private val sampleMorningHeader = OutingHeader(
+    key = "header-6",
+    label = "Today, 09:05",
+    dayLabel = "Today",
+    startLabel = "09:05",
+    count = 2,
+    spanLabel = "15 min",
+)
+
 private val sampleEncountersStateList = EncountersState(
     rows = persistentListOf(
-        OutingHeader(key = "header-1", label = "Today, 14:10"),
+        sampleWalkedHeader.copy(count = 3, spanLabel = "18 min"),
         EncountersRow.Single(
             EncounterCell("3", "14:28", LocationLabel.CURRENT, CellLead.Coat(CoatOption.GINGER)),
             GroupPosition.FIRST,
@@ -275,16 +334,17 @@ private val sampleEncountersStateList = EncountersState(
             EncounterCell("1", "14:10", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.BLACK)),
             GroupPosition.LAST,
         ),
-        OutingHeader(key = "header-4", label = "Today, 09:05"),
+        sampleMorningHeader.copy(key = "header-4", count = 1, spanLabel = null),
         EncountersRow.Single(EncounterCell("4", "09:05", LocationLabel.NONE), GroupPosition.ONLY),
     ),
     layout = EncountersLayout.LIST,
+    totals = EncountersTotals(cats = 4, outings = 2),
 )
 
 // Two outings on the same day, so the preview also shows how their headers tell them apart.
 private val sampleEncountersStatePopulated = EncountersState(
     rows = persistentListOf(
-        OutingHeader(key = "header-1", label = "Today, 14:10"),
+        sampleWalkedHeader,
         EncountersRow.PhotoPair(
             first = PhotoCell("1", "14:32", LocationLabel.FROM_PHOTO, "/photos/1.jpg", "/photos/1_thumb.jpg"),
             second = PhotoCell("2", "14:30", LocationLabel.CURRENT, "/photos/2.jpg", "/photos/2_thumb.jpg"),
@@ -295,15 +355,18 @@ private val sampleEncountersStatePopulated = EncountersState(
                 EncounterCell("4", "14:20", LocationLabel.FROM_OUTING),
                 EncounterCell("5", "14:10", LocationLabel.FROM_OUTING, CellLead.Coat(CoatOption.BLACK)),
             ),
+            closesOuting = true,
         ),
-        OutingHeader(key = "header-6", label = "Today, 09:05"),
+        sampleMorningHeader,
         EncountersRow.Cards(
             persistentListOf(
                 EncounterCell("6", "09:20", LocationLabel.LAST_KNOWN, CellLead.Coat(CoatOption.TRICOLOR_MOSTLY_WHITE)),
                 EncounterCell("7", "09:05", LocationLabel.NONE),
             ),
+            closesOuting = true,
         ),
     ),
+    totals = EncountersTotals(cats = 7, outings = 2),
 )
 
 private val sampleEncountersStateSelecting = sampleEncountersStatePopulated.copy(
