@@ -205,7 +205,26 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
   card's body does nothing and is reserved: the owner has booked it for an imported-photos manager
   that edits the batch at once, so the body must never be what closes the notice.
 
-The coat question after a photo takes the coat sheet's header (section 3).
+**The coat question after a photo** (slice E7a). The owner asked whether the coat selection sheet
+could match the rest (2026-09-28). It had grown a count since version 14 drew it, and in that count the
+photo dropped out of the header into a tray of plain faces, *Several* sat beside *Not now* as a text
+button of the same weight, and the paw tile's *Not specified* broke mid-word at the largest font. Of
+*Header*, *One or several* and *On the photo* (prototype version 25) the owner chose **One or several**.
+
+- **The header stays.** The photo just taken in a 64 dp `medium` square, or the paw in no coat's
+  shape on `surfaceContainerHighest` when there is no thumbnail, beside the question in
+  `headlineSmallEmphasized` and one supporting line. Through a count only the words change (*4 cats
+  on this photo*); the photo does not move. The detail's coat sheet (section 3, slice E7b) takes the
+  same header with the cat's face.
+- **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
+  check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and
+  empties the tray: a behaviour change, since a count had no way back but leaving the sheet.
+- **The count.** Counted cats line up under the group in their coat shapes, each with a small ×,
+  heard as its coat with a Remove action; before the first, a muted line says they gather there. The
+  grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the
+  detail's sheet uses; the map's filter keeps *Not specified*.
+- **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
+  counted. What saving writes does not change.
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
 Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper

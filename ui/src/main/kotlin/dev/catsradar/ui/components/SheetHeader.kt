@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
@@ -22,6 +23,7 @@ internal fun SheetHeader(
     title: String,
     modifier: Modifier = Modifier,
     supporting: String? = null,
+    titleStyle: TextStyle = MaterialTheme.typography.titleLarge,
     leading: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -33,7 +35,7 @@ internal fun SheetHeader(
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                style = titleStyle,
                 modifier = Modifier.semantics { heading() },
             )
             supporting?.let {
