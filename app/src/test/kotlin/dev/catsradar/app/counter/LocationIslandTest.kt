@@ -1,17 +1,16 @@
 package dev.catsradar.app.counter
 
 import android.content.Context
+import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.hasAnyDescendant
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -20,11 +19,15 @@ import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.talkBackOrder
+import dev.catsradar.app.testing.turnTalkBackOn
 import dev.catsradar.presentation.counter.CounterState
 import dev.catsradar.presentation.counter.ImportProgressState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.counter.CounterScreen
+import dev.catsradar.ui.counter.ImportIslandTestTag
 import dev.catsradar.ui.counter.LocationHintAction
+import dev.catsradar.ui.counter.LocationIslandTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import org.junit.Rule
 import org.junit.Test
@@ -50,8 +53,11 @@ class LocationIslandTest {
     private val actions = mutableListOf<LocationHintAction>()
     private var tallies = 0
 
+    private lateinit var host: View
+
     private fun show() {
         compose.setContent {
+            host = LocalView.current
             CatsRadarTheme {
                 CounterScreen(state = state, onTallyClick = { tallies++ }, onLocationHintAction = { actions += it })
             }
@@ -124,22 +130,25 @@ class LocationIslandTest {
     fun `beside an import both cards show, the import's above the hint's`() {
         state = hinting.copy(importProgress = ImportProgressState(done = 3, total = 9))
         show()
-        val import = compose.onNodeWithText(context.getString(R.string.counter_import_running_count, 3, 9))
-            .getUnclippedBoundsInRoot()
+        compose.onNodeWithText(context.getString(R.string.counter_import_running_count, 3, 9)).assertExists()
+        hint().assertExists()
 
-        val hint = hint().getUnclippedBoundsInRoot()
+        val import = compose.onNodeWithTag(ImportIslandTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val hint = compose.onNodeWithTag(LocationIslandTestTag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
         assertTrue(import.bottom <= hint.top, "$import over $hint")
     }
 
     @Test
-    fun `TalkBack reaches the hint before the count it covers`() {
+    fun `TalkBack reads both cards before the count they cover`() {
+        turnTalkBackOn()
+        state = hinting.copy(importProgress = ImportProgressState(done = 3, total = 9))
         show()
 
-        compose.onNode(
-            hasAnyDescendant(hasText(words)) and
-                SemanticsMatcher.expectValue(SemanticsProperties.TraversalIndex, -1f),
-        ).assertExists()
+        val order = compose.talkBackOrder(host)
+        val running = context.getString(R.string.counter_import_running_count, 3, 9)
+
+        assertEquals(listOf(running, words, "147"), order.filter { it in setOf(running, words, "147") }, "$order")
     }
 
     @Test
