@@ -2,6 +2,7 @@ package dev.catsradar.presentation.counter
 
 import dev.catsradar.presentation.coat.CoatOption
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 sealed interface CounterIntent {
     data object TallyClicked : CounterIntent
@@ -12,13 +13,20 @@ sealed interface CounterIntent {
     data object UndoClicked : CounterIntent
     data class WalkingModeToggled(val enabled: Boolean) : CounterIntent
 
+    /** A press on the walk's stop let go before the hold was up. */
+    data object WalkHoldReleased : CounterIntent
+
     /** Importing from the gallery: a sub-flow of the Counter, not a screen of its own. */
     sealed interface Import : CounterIntent {
         data object Requested : Import
 
         /** [uris] is empty when the picker was dismissed without choosing anything. */
         data class PhotosPicked(val uris: ImmutableList<String>) : Import
-        data class Progressed(val done: Int, val total: Int) : Import
+        data class Progressed(
+            val done: Int,
+            val total: Int,
+            val previews: ImmutableList<String> = persistentListOf(),
+        ) : Import
 
         /** The same run may be reported again; [runId] tells a repeat from a new run. */
         data class Finished(
@@ -41,6 +49,7 @@ sealed interface CounterIntent {
         /** The paw: a cat on the photo whose coat nobody saw. */
         data object UnseenPicked : CoatPrompt
         data object SeveralClicked : CoatPrompt
+        data object OneCatClicked : CoatPrompt
 
         /** [coat] is the tapped cat's, so a tap landing after the tray moved takes out no other cat. */
         data class TrayCatClicked(val index: Int, val coat: CoatOption?) : CoatPrompt

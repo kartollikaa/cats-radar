@@ -82,8 +82,10 @@ APIs again, this section is revisited before the pin moves.
 
 ## 2. The Counter
 
-The order on screen: the notices, the count, the walk row, the coat grid, Photo. The status line
-under the count is gone (see *The tags on the ring*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
+The order on screen: the count, the coat grid, then Walk and Photo in one row. The
+status line under the count is gone (see *The tags on the ring*), the walk row under it too (see
+*The walk*), and from E15 the import's notice floats over the screen instead of taking a place in the column
+(see *The import notice*); from E16 the location hint floats beside it (see *The location hint*). `FillOrScroll` still gives the count whatever room is left and scrolls the screen once
 the count reaches its floor. Everything under the count therefore costs the count its size, and the
 Counter adds no row. Version 5 of the prototype, with three stat tiles, a separate milestone line and
 larger coat shapes, left the cookie less than half the room this layout leaves it, once the prototype
@@ -91,12 +93,15 @@ drew it with only the height the controls leave (owner feedback, 2026-09-27: "th
 prototype is very small").
 
 **The count.** The number sits in a twelve-sided cookie (`MaterialShapes.Cookie12Sided`) in
-`primaryContainer`, the largest that fits the block's room, centred. The number is `onPrimaryContainer`
-in `displayLargeEmphasized` and still shrinks to fit rather than wrap. Under it, "cats" (a plural) in
-`titleMedium`. The whole block stays the button. It still squashes under a press and springs back; the
-cookie also turns a few degrees as it squashes and turns back on the motion scheme's default spring. The
-"+N" badge keeps its corner of the block, in `primary` and `onPrimary`. The roll, the badge's counting
-and the TalkBack label do not change.
+`primaryContainer`, the largest that fits the block's room, centred. The number is
+`onPrimaryContainer` in `displayLargeEmphasized` and still shrinks to fit rather than wrap. Under
+it, "cats" (a plural) in `titleMedium`. The whole block stays the button. It still squashes under a
+press and springs back. The cookie turns a step further with each cat and stays there, an undo
+turning it back a step (owner, 2026-09-27: it used to spring back after each press); the turn moves
+on the motion scheme's default spring, and the first count read, or a jump of more than a handful of
+cats at once (an import landing), sets it in place rather than spinning it round. The "+N" badge
+keeps its corner of the block, in `primary` and
+`onPrimary`. The roll, the badge's counting and the TalkBack label do not change.
 
 **The milestone arc.** A ring inside the cookie fills from the rung already reached to the next one
 on `Tuning.MILESTONES`: at 62 cats, 50 is reached and 100 is next, so the arc stands at 24 %. The
@@ -115,17 +120,60 @@ centre line and squash with the cookie. In a small cookie the number keeps clear
 loses what the pills reach into, the number shrinks, and "cats" under it gives way first. Past the
 last rung, and with no cats yet, there is no pill and no dot.
 
-**Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
-the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
-`primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
-Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
+**Reaching a rung** (slice E11). A count that lands on a rung: the cookie bounces and the ring
+stands full and glows on the motion scheme's springs, and the bottom pill says "100 cats!", filled in
+`primary`, in the outing's place meanwhile; the goal tag and the arc's dot step aside, and the count
+keeps its size. Line, Cookie, Chip and Moments were the other treatments in prototype version 13; the
+owner chose Ring. The moment replaces the milestone toast, and keeps its rule: each rung once,
+recorded before it shows, so a process death never celebrates it twice. Decided in autonomous mode
+(2026-09-28):
 
-**The walk row.** The walk button is drawn as an extended floating action button in
-`tertiaryContainer`: 56 dp tall with Material's own extended-FAB corners, 16 dp as the prototype
-draws them (`extendedFabShape` reads the theme's larger `large` shape, a pill at this height); a
-larger font grows it rather than clipping it. The walking cat, the fill that a held press drives, the
-timed hint and the one height stay as they are. Undo becomes a filled tonal button in its own place at
-the end of the row, and the rule that it never moves the walk button stands.
+- **Any count that lands on a rung** celebrates, a tap's or an import's, as the toast did.
+- **It lasts until the run closes**: while taps keep the undo window open it stays, and it goes when
+  the window does. A rung reached with no run open (an import, the widget) shows for the undo
+  window's length.
+- **An Undo takes it back.** A count that falls back below the rung ends the moment and forgets the
+  rung was reached, so landing on it again celebrates again.
+- **TalkBack** hears the pill once, as a polite live region, where the toast used to speak.
+
+**The walk** (slice E14, in place of E3's walk row). A walk logs nothing: it turns on a mode, the notification with its
+*Cat!* button, so the control is a mode switch and sits apart from the things that log a cat. The
+owner found the walk row "a mess and very awkward" (2026-09-27): two lines that repeated each other,
+a floating button that floated nowhere, the screen's one warm surface on a calm action, a lopsided row.
+Three takes were prototyped (versions 17 to 20); *On the ring* was set aside because a start on the
+tally's edge would cause misses, and the owner chose **With Photo** with the **warm, breathing
+cookie**.
+
+- **The button** sits at the start of the bottom row, beside Photo: a Medium tonal button, 56 dp
+  like the split button, `secondaryContainer` and `onSecondaryContainer`, the walking cat and
+  *Walk*, as wide as its longer label in both states so a walk starting or ending moves nothing
+  beside it. Photo takes the rest of the row. A tap starts a walk. While a walk is on it takes
+  `tertiaryContainer` and `onTertiaryContainer`, the toggle's checked corners (squarer than the pill)
+  and *Hold to end*, with the walking cat still at its start, walking, where the prototype drew a stop
+  glyph: a moving cat says "on a walk" better than a square, and the words already say what the press
+  does; the held press with its fill and haptic ticks moves here from the
+  old button unchanged (`walking-mode.md` § *Stopping takes a hold*), and a press let go early raises
+  a short message, *Hold to end the walk*, which a second early release replaces rather than queues
+  behind; a press that drifts off the button or is taken by a scroll raises none. The button carries no
+  time: the outing's tag on the ring has the outing's, and the notification's chronometer has the
+  walk's. A larger font puts Photo on a line of its own, in both states alike, rather than clip
+  either label.
+- **The cookie wears the walk.** While a walk is on, the cookie's fill is `tertiaryContainer` and the
+  number and "cats" `onTertiaryContainer`; the arc, its dot and the tags keep their colours, and the
+  ring's faint track and the dot's rim, drawn from the cookie's own colours, follow it. The change
+  animates on the theme's colour spec both ways. And the cookie breathes: the shape alone, not the
+  ring, the number or the tags, swells two per cent and settles over about three seconds, again and
+  again, for as long as the walk lasts; it stands still when no walk is on, and when the system's
+  animator scale is zero. If it ever wears on the owner, the same breath on the outing tag's dot alone
+  is the fallback.
+- **Undo** floats in the cookie's bottom-end corner, below the "+N" badge, the filled tonal button it
+  already is (owner, 2026-09-27: "undo should go bottom right corner of cookie", over the top-start
+  corner first built): level with the cookie's bottom at the block's end, so beside a cookie narrower
+  than its block, where the outing's tag keeps its width. It appears and goes without moving anything, and a tap on it takes a cat back
+  and never logs one. It gives up the older rule that kept Undo outside the block: while it shows, a tap
+  on that corner undoes rather than logs. While it shows, the outing's tag at the ring's bottom narrows
+  by Undo's width on both sides, staying centred and clear of it; its give-way rules shorten it. The rule that the controls do not jump stands: nothing under the count moves when
+  a walk starts or ends or Undo comes and goes.
 
 **The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
 `surfaceContainerHighest`, and each coat has a shape of its own (owner, 2026-09-27, over one shape
@@ -143,10 +191,66 @@ filter's *Not specified* cell takes no coat's shape. The grid must not grow tall
 
 **Photo.** The split button it already is, filled `primary`: *Photo* with the camera, and the
 gallery icon for an import at the trailing end. `SplitButtonDefaults` gives the two halves their
-inner corners.
+inner corners. From E14 it shares its row with Walk and takes what Walk leaves.
 
-**Unchanged:** the notice cards above the count. The coat question after a photo takes the coat
-sheet's header (section 3).
+**The import notice** (slice E15). The owner
+asked to revisit "the block of a successful import" (2026-09-27): a settings row set above the count
+that shrank the cookie, three lines of fine print at one size, an import of photos that showed none,
+and the quietest Undo on the screen. Of *Photo card*, *By Photo* and *On the count* the owner chose
+the **Photo card**, then asked that it not shrink the cookie, "so that island will be like a popup".
+
+- **It floats.** A card on `surfaceContainerHigh`, as the map's floating cards are, with a shadow and
+  `large` corners, 12 dp in from the sides, just under the status bar, over the top of the count rather
+  than in the column, dropping in on the motion scheme; the cookie keeps its size. For the notice's ten seconds it covers the goal
+  tag at the ring's top, which is the price of floating. (E15 kept the location hint in the column;
+  the owner floated it too in E16, see *The location hint*.)
+- **What it shows.** At its start, a fanned stack of the first three imported photos (40 dp,
+  `small` corners, each tilted a little, each set apart by a 2 dp ring in the card's colour), or a check
+  when none has a photo. Running, the stack fans out the picked photos instead (slice E17; the owner,
+  2026-09-28: "show images previews as in the prototype"): the batch's first three, one more as the run
+  reaches each, with the one in hand showing from the start. They are the picked photos rather than the
+  cats, which are known only when the run ends; the gallery icon stands in when there are none. The
+  stack's slot keeps a full stack's width, so the words hold still as it fills. Running: *Importing 7 of
+  12* in `titleSmall` over an Expressive wavy progress indicator. Finished: *9 cats added* in `titleMedium`, and under it one muted line with only the
+  parts that apply, *2 already here · 1 couldn't be read*; TalkBack reads the words as one item.
+- **Closing it.** Undo is the filled tonal button, and a × icon button after it closes the notice; a
+  swipe to either side closes it too. Closing does what OK did: the run is recorded as dealt with and
+  the Undo lapses; the cats stay. OK itself goes. The running notice has no controls. A tap on the
+  card's body does nothing and is reserved: the owner has booked it for an imported-photos manager
+  that edits the batch at once, so the body must never be what closes the notice.
+
+**The coat question after a photo** (slice E7a). The owner asked whether the coat selection sheet
+could match the rest (2026-09-28). It had grown a count since version 14 drew it, and in that count the
+photo dropped out of the header into a tray of plain faces, *Several* sat beside *Not now* as a text
+button of the same weight, and the paw tile's *Not specified* broke mid-word at the largest font. Of
+*Header*, *One or several* and *On the photo* (prototype version 25) the owner chose **One or several**.
+
+- **The header stays.** The photo just taken in a 64 dp `medium` square, or the paw in no coat's
+  shape on `surfaceContainerHighest` when there is no thumbnail, beside the question in
+  `headlineSmallEmphasized` and one supporting line. Through a count only the words change (*4 cats
+  on this photo*); the photo does not move. The detail's coat sheet (section 3, slice E7b) takes the
+  same header with the cat's face.
+- **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
+  check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and
+  empties the tray: a behaviour change, since a count had no way back but leaving the sheet.
+- **The count.** Counted cats line up under the group in their coat shapes, each with a small ×,
+  heard as its coat with a Remove action; before the first, a muted line says they gather there. The
+  grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the
+  detail's sheet uses; the map's filter keeps *Not specified*.
+- **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
+  counted. What saving writes does not change.
+
+**The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
+should be like the import popup". The hint that follows a denied location request leaves the column and
+floats like the import's card:
+
+- **The same card.** `surfaceContainerHigh`, a shadow, `large` corners, 12 dp in, dropping in on the
+  motion scheme, over the top of the count, which keeps its size.
+- **What it shows.** The pin in a round `secondaryContainer` icon, "Location permission needed for cat
+  spots", **Grant** as a filled tonal button and a × that dismisses it; a swipe to either side dismisses
+  it too. The words are one TalkBack item; the body takes no tap.
+- **Beside an import.** Both cards stack at the top, the import's first, 8 dp apart, and TalkBack reaches
+  them before the count. What Grant and Dismiss do does not change.
 
 **Underneath.** `Milestone` in `:domain` gains `reached: Int`, the rung below the total, or 0. The
 Counter's state gains the milestone as the Statistics labels plus the arc's fraction, which the mapper
@@ -319,6 +423,11 @@ from the same grouping. Nothing else in the domain changes.
    `statistics.md` and `browsing-cats.md` change.
 5. **A cat with no location says so** in an alert under its facts, with Set on map; its Where card
    appears once it has a location. `encounter-detail.md` changes.
+6. **The walk moves beside Photo** and shows no time of its own; the cookie turns warm and breathes
+   while a walk is on; a press let go early raises a hint; Undo floats in the count block.
+   `counting-cats.md` and `walking-mode.md` change.
+7. **The import notice floats and is closable**: × and a swipe close it, OK goes, and its body is not
+   tappable. `import.md` and `counting-cats.md` change.
 
 ## Decided here
 
@@ -334,6 +443,13 @@ from the same grouping. Nothing else in the domain changes.
 - A cat with no location gets the notice-card alert under its facts rather than at the top of the page
   (owner, 2026-09-27).
 - Encounters joins the redesign (owner, 2026-09-27) as prototype version 15 draws it.
+- The walk is a mode switch beside Photo, with the cookie warm and breathing while a walk is on
+  (owner, 2026-09-27, after three takes; *On the ring* set aside for misses; a breath rather than a
+  pulse, so it reads as live from the corner of the eye and never beats on a screen tapped all walk
+  long).
+- The import notice is the floating Photo card, closable by × or a swipe, its tap reserved for an
+  imported-photos manager (owner, 2026-09-27).
+- A running import's card shows the picked photos as the run reaches them (owner, 2026-09-28).
 
 ## The outing pager
 
@@ -371,6 +487,15 @@ from a flat one.
     goes once the cat has a location.
   - Encounters: an outing's header carries its count, span and walk chip; the tiles take the coat
     shapes; a long press still selects and Delete still offers Undo.
+  - The walk: Walk stands beside Photo at the split button's height; a tap starts a walk and only the
+    held press ends one; while a walk is on the button and the cookie's fill are `tertiaryContainer`
+    and the cookie's breath runs, and it does not run without a walk or at animator scale zero; Undo
+    floats in the block's corner, moves nothing and logs no cat; at font scale 1.5 both labels stay
+    whole; nothing sits between the count and the coats.
+  - The import notice: the cookie is the same size with the notice and without it; × and a swipe
+    close it and record the run as dealt with; Undo takes the batch back; the body has no click; only
+    the lines that apply are shown; a running card's stack fills by progress without moving its words,
+    and a stacked photo's ring covers the one beneath in the card's colour.
 - **Kept green:** the Counter's *controls do not jump* and floor tests, `NavTransitionTimingTest`,
   `BottomSheetUsageTest`, `BottomSheetNavigationTest`, `CatsRadarColorsTest` (no palette change).
 - **Renders:** before and after, light and dark, of every changed surface, from the Robolectric render

@@ -50,7 +50,7 @@ class WalkingCatAnimationTest {
 
     private fun button(walking: Boolean): Bitmap =
         compose.onNodeWithText(
-            context.getString(if (walking) R.string.counter_walk_stop else R.string.counter_walk_start),
+            context.getString(if (walking) R.string.counter_walk_hold else R.string.counter_walk),
         ).captureToImage().asAndroidBitmap()
 
     @Test

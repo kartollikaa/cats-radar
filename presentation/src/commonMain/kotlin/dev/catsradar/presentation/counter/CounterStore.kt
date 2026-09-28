@@ -6,11 +6,12 @@ import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.platform.LocationPermissionRequestState
 import dev.catsradar.domain.repository.ReportedJob
 import dev.catsradar.domain.repository.SettingsRepository
+import dev.catsradar.domain.stats.Stats
 import dev.catsradar.domain.usecase.AddCatsToPhoto
+import dev.catsradar.domain.usecase.FindCatThumbnails
 import dev.catsradar.domain.usecase.LogPhoto
 import dev.catsradar.domain.usecase.LogTally
 import dev.catsradar.domain.usecase.ObserveStats
-import dev.catsradar.domain.usecase.ObserveWalkElapsed
 import dev.catsradar.domain.usecase.PhotoResult
 import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoImport
@@ -20,16 +21,13 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.runStorageRead
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList") // one parameter per collaborator
@@ -41,7 +39,7 @@ class CounterStore(
     setCoat: SetCoat,
     addCatsToPhoto: AddCatsToPhoto,
     observeStats: ObserveStats,
-    observeWalkElapsed: ObserveWalkElapsed,
+    private val findCatThumbnails: FindCatThumbnails,
     private val settingsRepository: SettingsRepository,
     private val stateMapper: CounterStateMapper,
     private val locationPermissionRequestState: LocationPermissionRequestState,
@@ -60,49 +58,42 @@ class CounterStore(
     private var importedIds: List<String> = emptyList()
     private val importRun = ReportedRun(settingsRepository, ReportedJob.GALLERY_IMPORT)
     private var importSummaryTimeoutJob: Job? = null
+    private var latestStats: Stats? = null
+    private val moment = MilestoneMoment(settingsRepository, viewModelScope, show = ::showStats)
     private val coatQuestion = CoatQuestion(setCoat, addCatsToPhoto)
 
     init {
         observeStats()
             .onEach { stats ->
-                setState {
-                    stateMapper.map(
-                        count = stats.total,
-                        undoVisible = undoVisible,
-                        locationPermissionHintVisible = locationPermissionHintVisible,
-                        currentOuting = stats.currentOuting,
-                        tapBurst = tapBurst,
-                        lastCoat = lastCoat,
-                        walkingMode = walkingMode,
-                        walkElapsedLabel = walkElapsedLabel,
-                        importProgress = importProgress,
-                        importSummary = importSummary,
-                        coatPrompt = coatPrompt,
-                        milestone = stats.nextMilestone,
-                    )
-                }
-                announceMilestone(stats.total)
+                latestStats = stats
+                moment.takeBackBelow(stats.total)
+                showStats()
+                moment.reach(stats.total, runOpen = { state.value.undoVisible })
             }
             .launchIn(viewModelScope)
         settingsRepository.walkingMode()
-            // Nothing ticks the walk's clock while walking mode is off.
-            .flatMapLatest { enabled ->
-                val elapsed = if (enabled) observeWalkElapsed().onStart { emit(null) } else flowOf(null)
-                elapsed.map { enabled to stateMapper.walkElapsedLabel(enabled, it) }
-            }
-            .onEach { (enabled, elapsedLabel) ->
-                setState { copy(walkingMode = enabled, walkElapsedLabel = elapsedLabel) }
-            }
+            .onEach { enabled -> setState { copy(walkingMode = enabled) } }
             .launchIn(viewModelScope)
     }
 
-    private suspend fun announceMilestone(total: Int) {
-        val reached = Tuning.MILESTONES.filter { it <= total }.maxOrNull() ?: return
-        if (reached <= settingsRepository.lastSeenMilestone().first()) return
-        // Persisted before the effect: a process death between the two would otherwise celebrate
-        // the same milestone again on the next launch.
-        settingsRepository.setLastSeenMilestone(reached)
-        emit(CounterEffect.MilestoneReached(reached))
+    private fun showStats() {
+        val stats = latestStats ?: return
+        setState {
+            stateMapper.map(
+                count = stats.total,
+                undoVisible = undoVisible,
+                locationPermissionHintVisible = locationPermissionHintVisible,
+                currentOuting = stats.currentOuting,
+                tapBurst = tapBurst,
+                lastCoat = lastCoat,
+                walkingMode = walkingMode,
+                importProgress = importProgress,
+                importSummary = importSummary,
+                coatPrompt = coatPrompt,
+                milestone = stats.nextMilestone,
+                milestoneMoment = moment.rung,
+            )
+        }
     }
 
     override suspend fun handle(intent: CounterIntent) {
@@ -114,6 +105,7 @@ class CounterStore(
             // Only the flag is written; the notification follows it from outside the screen.
             is CounterIntent.WalkingModeToggled ->
                 runStorageWrite { settingsRepository.setWalkingMode(intent.enabled) }
+            CounterIntent.WalkHoldReleased -> emit(CounterEffect.WalkNeedsHold)
             is CounterIntent.Import -> handleImport(intent)
             is CounterIntent.CoatTallyClicked -> onTallyClicked(intent.coat.toCatCoat())
             is CounterIntent.CoatPrompt ->
@@ -186,16 +178,25 @@ class CounterStore(
             is CounterIntent.Import.PhotosPicked -> if (intent.uris.isNotEmpty()) {
                 setState {
                     copy(
-                        importProgress = ImportProgressState(done = 0, total = intent.uris.size),
+                        importProgress = stateMapper.importProgress(
+                            done = 0,
+                            total = intent.uris.size,
+                            previews = intent.uris,
+                        ),
                         importSummary = null,
                     )
                 }
                 emit(CounterEffect.StartImport(intent.uris))
             }
             is CounterIntent.Import.Progressed -> setState {
-                copy(importProgress = ImportProgressState(done = intent.done, total = intent.total))
+                copy(importProgress = stateMapper.importProgress(intent.done, intent.total, intent.previews))
             }
             is CounterIntent.Import.Finished -> if (importRun.claim(intent.runId)) {
+                val thumbPaths = runStorageRead(fallback = emptyList()) {
+                    findCatThumbnails(intent.addedIds, limit = Tuning.IMPORT_PREVIEWS)
+                }
+                // A newer run claimed during the read is the one the user can deal with.
+                if (importRun.reportedId != intent.runId) return
                 importedIds = intent.addedIds
                 setState {
                     copy(
@@ -204,6 +205,7 @@ class CounterStore(
                             addedCount = intent.addedIds.size,
                             skipped = intent.skipped,
                             failed = intent.failed,
+                            thumbPaths = thumbPaths,
                         ),
                     )
                 }
@@ -217,6 +219,8 @@ class CounterStore(
             }
             CounterIntent.Import.UndoClicked -> onUndoImportClicked()
             CounterIntent.Import.SummaryDismissed -> {
+                importSummaryTimeoutJob?.cancel()
+                importedIds = emptyList()
                 setState { copy(importSummary = null) }
                 importRun.acknowledge()
             }
@@ -254,15 +258,18 @@ class CounterStore(
         val newest = undoableRun.lastOrNull()
         if (newest == null) {
             setState { copy(undoVisible = false, lastCoat = null) }
+            moment.endAfterTheWindow()
             return
         }
         setState { copy(undoVisible = true, lastCoat = newest.coat) }
+        moment.holdForTheRun()
         undoTimeoutJob = viewModelScope.launch {
             delay(Tuning.UNDO_VISIBLE)
             expiredThroughSequence = newest.sequence
             undoableRun.clear()
             setState { copy(undoVisible = false, lastCoat = null) }
             showBurst()
+            moment.end()
         }
     }
 
