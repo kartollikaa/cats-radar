@@ -6,8 +6,8 @@
 "100 cats!" pill in the outing's place) until the run closes, instead of a toast.
 
 **Architecture:** `CounterStore` keeps the rung it is celebrating and the latest `Stats`, so it can end the moment
-outside a stats emission; `CounterStateMapper.map(milestoneMoment = …)` turns the moment into state and, while it
-lasts, drops the goal and the outing so the ring carries only the moment. `TallyBlock` draws the full ring with a
+outside a stats emission; `CounterStateMapper.map(milestoneMoment = …)` puts the moment in state beside the goal and
+the outing, which stay so the number keeps its room; the ring shows the moment in their place. `TallyBlock` draws the full ring with a
 glow, bounces the cookie, and `RingTags` shows the pill. `CounterEffect.MilestoneReached` and the toast go.
 
 **Tech Stack:** Compose `Animatable` on the motion scheme; `commonTest` Store tests with a virtual clock;
@@ -26,7 +26,7 @@ Robolectric UI tests in `:app`.
 ### Task 1: The moment in the Store and the mapper
 
 - `MilestoneMomentState(value: Int)`, `CounterState.milestoneMoment`.
-- Mapper: `map(…, milestoneMoment: Int? = null)`; while set, `milestone` and `currentOuting` are null.
+- Mapper: `map(…, milestoneMoment: Int? = null)`; the goal and the outing stay beside it (AC-8 amended).
 - Store: `announceMilestone` persists, then starts the moment; the run's close ends it; with no run open it ends
   after `Tuning.UNDO_VISIBLE`; a total below the rung takes it back and restores the rung below as last seen.
 - Remove `CounterEffect.MilestoneReached`, `MilestoneAnnouncer`, the toast and their tests.
