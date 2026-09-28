@@ -7,10 +7,9 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -18,7 +17,6 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.catsradar.app.detail.scrollListToEnd
 import dev.catsradar.app.di.dataModule
 import dev.catsradar.app.di.domainModule
 import dev.catsradar.app.di.presentationModule
@@ -29,9 +27,12 @@ import dev.catsradar.app.photo.PickSeveralPhotos
 import dev.catsradar.app.testing.ComponentActivityRegistered
 import dev.catsradar.app.testing.FileProviderCacheReset
 import dev.catsradar.app.testing.RecordingActivityResultRegistry
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.repository.EncounterRepository
 import dev.catsradar.ui.R
+import dev.catsradar.ui.detail.CoatCardTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Rule
@@ -39,6 +40,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.robolectric.Shadows.shadowOf
@@ -92,16 +94,29 @@ class EncounterDetailEntryTest {
     }
 
     @Test
-    fun `the Ginger coat cell sets that coat on the cat on screen`() {
-        show(listOf(Counter, Encounters, EncounterDetail(ID)))
+    fun `the coat card opens the coat sheet for the cat on screen`() {
+        val backStack = show(listOf(Counter, Encounters, EncounterDetail(ID)))
+        val card = hasTestTag(CoatCardTestTag)
+        awaitTheDatabase { compose.onAllNodes(card).fetchSemanticsNodes().isNotEmpty() }
+
+        compose.onNode(card).performScrollTo().performClick()
+        awaitTheDatabase { backStack.toList().last() is CoatSheet }
+
+        assertEquals(listOf(Counter, Encounters, EncounterDetail(ID), CoatSheet(ID)), backStack.toList())
+    }
+
+    @Test
+    fun `in the coat sheet, Ginger sets that coat on the cat and closes the sheet`() {
+        val backStack = show(listOf(Counter, Encounters, EncounterDetail(ID), CoatSheet(ID)))
         val ginger = hasText(context.getString(R.string.coat_ginger))
         awaitTheDatabase { compose.onAllNodes(ginger).fetchSemanticsNodes().isNotEmpty() }
 
-        compose.scrollListToEnd()
         compose.onNode(ginger).performClick()
-        awaitTheDatabase { compose.onAllNodes(ginger.and(isSelected())).fetchSemanticsNodes().isNotEmpty() }
+        awaitTheDatabase { backStack.toList().last() is EncounterDetail }
 
-        compose.onNode(ginger).assertIsSelected()
+        assertEquals(listOf(Counter, Encounters, EncounterDetail(ID)), backStack.toList())
+        val stored = runBlocking { GlobalContext.get().get<EncounterRepository>().observeById(ID).first() }
+        assertEquals(CatCoat.GINGER, stored?.coat)
     }
 
     @Test

@@ -11,10 +11,8 @@ import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
 import dev.catsradar.domain.usecase.PhotoSource
-import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.Store
-import dev.catsradar.presentation.coat.toCatCoat
 import dev.catsradar.presentation.runStorageWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,7 +38,6 @@ class EncounterDetailStore(
     observeEncounterNumber: ObserveEncounterNumber,
     private val deleteEncounter: DeleteEncounter,
     private val undoDelete: UndoDelete,
-    private val setCoat: SetCoat,
     private val attachPhoto: AttachPhoto,
     private val stateMapper: EncounterDetailStateMapper,
     private val clock: Clock,
@@ -102,8 +99,6 @@ class EncounterDetailStore(
                 shown = shown?.settledOn(intent.catId)
                 refresh()
             }
-            // A failed write leaves the shown coat as it was: the flow re-emits the stored value.
-            is EncounterDetailIntent.CoatPicked -> runStorageWrite { setCoat(intent.catId, intent.coat?.toCatCoat()) }
             is EncounterDetailIntent.TakePhotoClicked ->
                 requestPhoto(intent.catId, EncounterDetailEffect.OpenCamera(intent.catId))
             is EncounterDetailIntent.PickPhotoClicked ->

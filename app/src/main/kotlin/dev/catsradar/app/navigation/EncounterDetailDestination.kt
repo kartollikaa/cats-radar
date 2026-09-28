@@ -141,7 +141,7 @@ private fun DispatchingDetailScreen(
         onPhotoCatClick = { catId -> dispatch(EncounterDetailIntent.PhotoCatClicked(catId)) },
         onDeleteClick = { dispatch(EncounterDetailIntent.DeleteClicked) },
         onUndoClick = { dispatch(EncounterDetailIntent.UndoClicked) },
-        onCoatClick = { pick -> dispatch(EncounterDetailIntent.CoatPicked(pick.catId, pick.coat)) },
+        onCoatCardClick = { catId -> dispatch(EncounterDetailIntent.CoatCardClicked(catId)) },
         onTakePhotoClick = { catId -> dispatch(EncounterDetailIntent.TakePhotoClicked(catId)) },
         onPickPhotoClick = { catId -> dispatch(EncounterDetailIntent.PickPhotoClicked(catId)) },
         onPhotoClick = { tap -> dispatch(EncounterDetailIntent.PhotoClicked(tap.catId, tap.photoId)) },

@@ -3,6 +3,7 @@ package dev.catsradar.presentation.detail
 import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import dev.catsradar.domain.Tuning
+import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.model.PlaceCell
@@ -10,6 +11,7 @@ import dev.catsradar.domain.model.PlaceStatus
 import dev.catsradar.domain.platform.GalleryItemLocator
 import dev.catsradar.domain.usecase.AttachPhoto
 import dev.catsradar.domain.usecase.DeleteEncounter
+import dev.catsradar.domain.usecase.ObserveEncounter
 import dev.catsradar.domain.usecase.ObserveEncounterNumber
 import dev.catsradar.domain.usecase.ObserveEncounterPlace
 import dev.catsradar.domain.usecase.ObserveEncounters
@@ -17,7 +19,9 @@ import dev.catsradar.domain.usecase.SetCoat
 import dev.catsradar.domain.usecase.UndoDelete
 import dev.catsradar.presentation.NoAnalytics
 import dev.catsradar.presentation.coat.CoatOption
-import dev.catsradar.presentation.coat.toOption
+import dev.catsradar.presentation.coatsheet.CoatSheetIntent
+import dev.catsradar.presentation.coatsheet.CoatSheetStateMapper
+import dev.catsradar.presentation.coatsheet.CoatSheetStore
 import dev.catsradar.presentation.counter.FakeClock
 import dev.catsradar.presentation.counter.FakeDeviceIdProvider
 import dev.catsradar.presentation.counter.FakeDigest
@@ -52,7 +56,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -306,7 +309,7 @@ class EncounterDetailStoreTest {
 
         store.dispatch(EncounterDetailIntent.DeleteClicked)
         runCurrent()
-        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
+        repository.setCoat(OTHER, CatCoat.GINGER, NOW)
         runCurrent()
         assertEquals(EncounterDetailState.Deleted(undoVisible = true), store.state.value)
 
@@ -568,10 +571,10 @@ class EncounterDetailStoreTest {
         }
 
     @Test
-    fun `the coat card opens the sheet for its own cat, and a cat not on the pages opens none`() =
+    fun `the coat card opens the sheet for the cat it belongs to, and a cat not on the pages opens none`() =
         runTest(mainDispatcher) {
             repository.insert(encounterFixture(ID, OCCURRED))
-            repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+            repository.insert(encounterFixture(OTHER, OCCURRED))
             val store = newStore()
             runCurrent()
 
@@ -584,20 +587,6 @@ class EncounterDetailStoreTest {
                 expectNoEvents()
             }
         }
-
-    @Test
-    fun `a coat lands on the cat it was picked for`() = runTest(mainDispatcher) {
-        repository.insert(encounterFixture(ID, OCCURRED))
-        repository.insert(encounterFixture(OTHER, OCCURRED))
-        val store = newStore()
-        runCurrent()
-
-        store.dispatch(EncounterDetailIntent.CoatPicked(OTHER, CoatOption.GINGER))
-        runCurrent()
-
-        assertEquals(CoatOption.GINGER, repository.observeById(OTHER).value()?.coat?.toOption())
-        assertNull(assertNotNull(repository.observeById(ID).value()).coat)
-    }
 
     @Test
     fun `the cat's place reaches the screen once its cell is named`() = runTest(mainDispatcher) {
@@ -625,7 +614,6 @@ class EncounterDetailStoreTest {
         observeEncounterNumber = ObserveEncounterNumber(repository),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
-        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
         attachPhoto = AttachPhoto(
             encounterRepository = repository,
             settingsRepository = FakeSettingsRepository(),
@@ -689,6 +677,34 @@ class EncounterDetailStorePhotoTest {
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
+
+    @Test
+    fun `a coat set in the coat sheet while a photo is being attached keeps both`() = runTest(mainDispatcher) {
+        repository.insert(encounterFixture(ID, OCCURRED))
+        resizer.storeDelay = 5.seconds
+        val store = newStore()
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.TakePhotoClicked(ID))
+        runCurrent()
+        store.dispatch(EncounterDetailIntent.PhotoTaken(ID, "content://captures/1"))
+        runCurrent()
+        assertEquals(AddPhoto.ATTACHING, store.shownPage().addPhoto)
+
+        val sheet = CoatSheetStore(
+            catId = ID,
+            observeEncounter = ObserveEncounter(repository),
+            setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
+            stateMapper = CoatSheetStateMapper(),
+        )
+        runCurrent()
+        sheet.dispatch(CoatSheetIntent.CoatClicked(CoatOption.GINGER))
+        runCurrent()
+        advanceTimeBy(6.seconds)
+        runCurrent()
+
+        val cat = assertNotNull(repository.observeById(ID).value())
+        assertEquals(CatCoat.GINGER to 1, cat.coat to cat.photos.size)
+    }
 
     @Test
     fun `take a photo opens the camera and choose from gallery opens the picker`() = runTest(mainDispatcher) {
@@ -1240,7 +1256,6 @@ class EncounterDetailStorePhotoTest {
         observeEncounterNumber = ObserveEncounterNumber(repository),
         deleteEncounter = DeleteEncounter(repository, clock, analytics = NoAnalytics),
         undoDelete = UndoDelete(repository, analytics = NoAnalytics),
-        setCoat = SetCoat(repository, clock, analytics = NoAnalytics),
         attachPhoto = AttachPhoto(
             encounterRepository = repository,
             settingsRepository = FakeSettingsRepository(),

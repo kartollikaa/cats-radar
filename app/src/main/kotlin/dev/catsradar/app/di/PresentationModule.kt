@@ -92,7 +92,6 @@ val presentationModule = module {
             observeEncounterNumber = get(),
             deleteEncounter = get(),
             undoDelete = get(),
-            setCoat = get(),
             attachPhoto = get(),
             stateMapper = get(),
             clock = get(),

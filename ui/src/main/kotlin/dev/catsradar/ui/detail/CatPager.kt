@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -26,13 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.detail.CatPage
 import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.ui.R
-import dev.catsradar.ui.coat.CoatPicker
-import dev.catsradar.ui.components.SectionCard
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
@@ -51,7 +47,7 @@ internal fun CatPager(
     onPageSettle: (catId: String) -> Unit = {},
     onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    onCoatClick: (CoatInteraction) -> Unit = {},
+    onCoatCardClick: (catId: String) -> Unit = {},
     onTakePhotoClick: (catId: String) -> Unit = {},
     onPickPhotoClick: (catId: String) -> Unit = {},
     onPhotoClick: (PhotoInteraction) -> Unit = {},
@@ -84,7 +80,7 @@ internal fun CatPager(
             contentPadding = contentPadding,
             onPhotoCatClick = onPhotoCatClick,
             onDeleteClick = onDeleteClick,
-            onCoatClick = { coat -> onCoatClick(CoatInteraction(page.id, coat)) },
+            onCoatCardClick = { onCoatCardClick(page.id) },
             onTakePhotoClick = { onTakePhotoClick(page.id) },
             onPickPhotoClick = { onPickPhotoClick(page.id) },
             onPhotoClick = { photoId -> onPhotoClick(PhotoInteraction(page.id, photoId)) },
@@ -101,7 +97,7 @@ private fun CatPageContent(
     contentPadding: PaddingValues = PaddingValues(),
     onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    onCoatClick: (CoatOption?) -> Unit = {},
+    onCoatCardClick: () -> Unit = {},
     onTakePhotoClick: () -> Unit = {},
     onPickPhotoClick: () -> Unit = {},
     onPhotoClick: (photoId: String) -> Unit = {},
@@ -140,7 +136,7 @@ private fun CatPageContent(
             page,
             onPhotoCatClick = onPhotoCatClick,
             onDeleteClick = onDeleteClick,
-            onCoatClick = onCoatClick,
+            onCoatCardClick = onCoatCardClick,
             onCoordinatesClick = onCoordinatesClick,
             onSetLocationClick = onSetLocationClick,
         )
@@ -152,7 +148,7 @@ private fun CatFacts(
     page: CatPage,
     onPhotoCatClick: (catId: String) -> Unit,
     onDeleteClick: () -> Unit,
-    onCoatClick: (CoatOption?) -> Unit,
+    onCoatCardClick: () -> Unit,
     onCoordinatesClick: () -> Unit,
     onSetLocationClick: () -> Unit,
 ) {
@@ -163,17 +159,7 @@ private fun CatFacts(
         if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
         DetailHeading(page)
         WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
-        SectionCard(R.string.detail_coat) {
-            // Keyed by the cat: another cat of the same photo opens the row on its own coat.
-            key(page.id) {
-                CoatPicker(
-                    selected = page.coat,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    onCoatClick = onCoatClick,
-                )
-            }
-        }
+        CoatCard(coat = page.coat, onClick = onCoatCardClick)
         FilledTonalButton(
             onClick = onDeleteClick,
             modifier = Modifier.align(Alignment.CenterHorizontally),
