@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -68,6 +67,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.counter.CounterMilestoneState
 import dev.catsradar.presentation.counter.CurrentOutingState
+import dev.catsradar.presentation.counter.MilestoneMomentState
 import dev.catsradar.presentation.statistics.MilestoneState
 import dev.catsradar.ui.R
 import dev.catsradar.ui.statistics.label
@@ -80,6 +80,7 @@ import kotlin.math.sin
 
 const val MilestoneArcTestTag = "milestone-arc"
 const val CountNumberTestTag = "count-number"
+const val TapBurstTestTag = "tap-burst"
 
 /** The count, as a button: squashes under a press, and rolls up on a tally and down on an undo. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -90,6 +91,7 @@ internal fun TallyBlock(
     tapBurst: Int?,
     modifier: Modifier = Modifier,
     milestone: CounterMilestoneState? = null,
+    moment: MilestoneMomentState? = null,
     currentOuting: CurrentOutingState? = null,
     walking: Boolean = false,
     undoVisible: Boolean = false,
@@ -102,6 +104,7 @@ internal fun TallyBlock(
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, animationSpec = press, label = "tallyPress")
     val turn by rememberCookieTurn(count)
     val breath by rememberCookieBreath(breathing = walking)
+    val rungBounce by rememberRungBounce(moment)
     val cookieColors = rememberCookieColors(walking)
     val tallyLabel = stringResource(R.string.counter_tally)
     val cookie = MaterialShapes.Cookie12Sided.toShape()
@@ -124,8 +127,8 @@ internal fun TallyBlock(
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer {
-                    scaleX = scale * breath
-                    scaleY = scale * breath
+                    scaleX = scale * breath * rungBounce
+                    scaleY = scale * breath * rungBounce
                     rotationZ = turn
                 }
                 .clip(cookieInBlock)
@@ -136,22 +139,32 @@ internal fun TallyBlock(
             modifier = Modifier
                 .aspectRatio(1f)
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
+                    scaleX = scale * rungBounce
+                    scaleY = scale * rungBounce
                 },
             contentAlignment = Alignment.Center,
         ) {
-            CookieContent(totalLabel, count, tapBurst, milestone, currentOuting, cookieColors)
+            CookieContent(totalLabel, count, milestone, moment, currentOuting, cookieColors)
         }
-        TagsAndUndo(milestone, currentOuting, scale = { scale }, undoVisible = undoVisible, onUndoClick = onUndoClick)
+        TagsAndUndo(
+            milestone = milestone,
+            moment = moment,
+            currentOuting = currentOuting,
+            tapBurst = tapBurst,
+            scale = { scale * rungBounce },
+            undoVisible = undoVisible,
+            onUndoClick = onUndoClick,
+        )
     }
 }
 
-/** The ring's tags, and Undo at the cookie's bottom end, which the outing's tag keeps clear of. */
+/** The ring's tags, with the run's "+N" and Undo at the block's end, level with the cookie's top and bottom. */
 @Composable
 private fun BoxScope.TagsAndUndo(
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
+    tapBurst: Int?,
     scale: () -> Float,
     undoVisible: Boolean,
     onUndoClick: () -> Unit,
@@ -159,26 +172,29 @@ private fun BoxScope.TagsAndUndo(
     var undoWidth by remember { mutableIntStateOf(0) }
     RingTags(
         milestone = milestone,
+        moment = moment,
         currentOuting = currentOuting,
         scale = scale,
         undoWidth = { if (undoVisible) undoWidth else 0 },
     )
     Box(modifier = Modifier.matchParentSize()) {
+        TapBurst(count = tapBurst, modifier = Modifier.atCookieEnd(bottom = false))
         UndoButton(
             visible = undoVisible,
             onClick = onUndoClick,
-            modifier = Modifier.atCookieBottomEnd().onSizeChanged { undoWidth = it.width },
+            modifier = Modifier.atCookieEnd(bottom = true).onSizeChanged { undoWidth = it.width },
         )
     }
 }
 
-// Beside a cookie narrower than its block, so the outing's tag keeps its width; in its corner when it fills the width.
-private fun Modifier.atCookieBottomEnd(): Modifier = layout { measurable, constraints ->
+// Beside a cookie narrower than its block, clear of the ring's tags; in its corner when it fills the width.
+private fun Modifier.atCookieEnd(bottom: Boolean): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
     val square = min(constraints.maxWidth, constraints.maxHeight)
-    val bottom = (constraints.maxHeight + square) / 2
+    val top = (constraints.maxHeight - square) / 2
+    val y = if (bottom) top + square - placeable.height else top
     layout(constraints.maxWidth, constraints.maxHeight) {
-        placeable.placeRelative(constraints.maxWidth - placeable.width, bottom - placeable.height)
+        placeable.placeRelative(constraints.maxWidth - placeable.width, y)
     }
 }
 
@@ -207,13 +223,17 @@ private fun rememberCookieColors(walking: Boolean): CookieColors {
 private fun BoxScope.CookieContent(
     totalLabel: String,
     count: Int?,
-    tapBurst: Int?,
     milestone: CounterMilestoneState?,
+    moment: MilestoneMomentState?,
     currentOuting: CurrentOutingState?,
     colors: CookieColors,
 ) {
-    milestone?.let {
-        MilestoneArc(fraction = it.fraction, colors = colors, modifier = Modifier.fillMaxSize(RingFraction))
+    if (moment != null) {
+        RungRing(moment = moment, modifier = Modifier.fillMaxSize(RingFraction))
+    } else {
+        milestone?.let {
+            MilestoneArc(fraction = it.fraction, colors = colors, modifier = Modifier.fillMaxSize(RingFraction))
+        }
     }
     CompositionLocalProvider(LocalContentColor provides colors.ink) {
         CountAndCaption(
@@ -225,7 +245,6 @@ private fun BoxScope.CookieContent(
             ),
         )
     }
-    TapBurst(count = tapBurst, modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
 }
 
 @Composable
@@ -340,6 +359,7 @@ private fun TapBurst(count: Int?, modifier: Modifier = Modifier) {
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.testTag(TapBurstTestTag),
         ) {
             Text(
                 text = stringResource(R.string.counter_tap_burst, lastShown.intValue),

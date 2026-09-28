@@ -30,7 +30,14 @@ data class CounterState(
     val coatPrompt: CoatPromptState? = null,
     /** Null before the total is read, and past the last milestone. */
     val milestone: CounterMilestoneState? = null,
+    /**
+     * The rung the count has just landed on, until the run of taps that reached it closes. [milestone] and
+     * [currentOuting] keep their values while it lasts.
+     */
+    val milestoneMoment: MilestoneMomentState? = null,
 )
+
+data class MilestoneMomentState(val value: Int)
 
 /** [fraction] is how far the total has come from the milestone already reached toward [next]. */
 data class CounterMilestoneState(val next: MilestoneState, val fraction: Float)

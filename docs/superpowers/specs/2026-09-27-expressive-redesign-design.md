@@ -120,10 +120,21 @@ centre line and squash with the cookie. In a small cookie the number keeps clear
 loses what the pills reach into, the number shrinks, and "cats" under it gives way first. Past the
 last rung, and with no cats yet, there is no pill and no dot.
 
-**Reaching a rung** (slice E11, not yet built). A tally that lands on a rung: the cookie bounces and
-the ring fills and glows on the motion scheme's springs, and the bottom pill says "100 cats!" in
-`primary` until the undo window closes, in the outing's place meanwhile; an Undo takes it back. Line,
-Cookie, Chip and Moments were the other treatments in prototype version 13; the owner chose Ring.
+**Reaching a rung** (slice E11). A count that lands on a rung: the cookie bounces and the ring
+stands full and glows on the motion scheme's springs, and the bottom pill says "100 cats!", filled in
+`primary`, in the outing's place meanwhile; the goal tag and the arc's dot step aside, and the count
+keeps its size. Line, Cookie, Chip and Moments were the other treatments in prototype version 13; the
+owner chose Ring. The moment replaces the milestone toast, and keeps its rule: each rung once,
+recorded before it shows, so a process death never celebrates it twice. Decided in autonomous mode
+(2026-09-28):
+
+- **Any count that lands on a rung** celebrates, a tap's or an import's, as the toast did.
+- **It lasts until the run closes**: while taps keep the undo window open it stays, and it goes when
+  the window does. A rung reached with no run open (an import, the widget) shows for the undo
+  window's length.
+- **An Undo takes it back.** A count that falls back below the rung ends the moment and forgets the
+  rung was reached, so landing on it again celebrates again.
+- **TalkBack** hears the pill once, as a polite live region, where the toast used to speak.
 
 **The walk** (slice E14, in place of E3's walk row). A walk logs nothing: it turns on a mode, the notification with its
 *Cat!* button, so the control is a mode switch and sits apart from the things that log a cat. The
@@ -205,7 +216,26 @@ the **Photo card**, then asked that it not shrink the cookie, "so that island wi
   card's body does nothing and is reserved: the owner has booked it for an imported-photos manager
   that edits the batch at once, so the body must never be what closes the notice.
 
-The coat question after a photo takes the coat sheet's header (section 3).
+**The coat question after a photo** (slice E7a). The owner asked whether the coat selection sheet
+could match the rest (2026-09-28). It had grown a count since version 14 drew it, and in that count the
+photo dropped out of the header into a tray of plain faces, *Several* sat beside *Not now* as a text
+button of the same weight, and the paw tile's *Not specified* broke mid-word at the largest font. Of
+*Header*, *One or several* and *On the photo* (prototype version 25) the owner chose **One or several**.
+
+- **The header stays.** The photo just taken in a 64 dp `medium` square, or the paw in no coat's
+  shape on `surfaceContainerHighest` when there is no thumbnail, beside the question in
+  `headlineSmallEmphasized` and one supporting line. Through a count only the words change (*4 cats
+  on this photo*); the photo does not move. The detail's coat sheet (section 3, slice E7b) takes the
+  same header with the cat's face.
+- **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
+  check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and
+  empties the tray: a behaviour change, since a count had no way back but leaving the sheet.
+- **The count.** Counted cats line up under the group in their coat shapes, each with a small ×,
+  heard as its coat with a Remove action; before the first, a muted line says they gather there. The
+  grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the
+  detail's sheet uses; the map's filter keeps *Not specified*.
+- **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
+  counted. What saving writes does not change.
 
 **The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
 should be like the import popup". The hint that follows a denied location request leaves the column and
