@@ -7,18 +7,20 @@ follows: the cat's number (see [Its number](#its-number)), then outlined labels 
 (relative — "Today", "Yesterday" — or a calendar date), the time, and its place with the flag when it has a
 named one. The facts are labels, not buttons; they wrap onto a second line
 when they must, and a screen reader hears them as one item, without the flag (`DetailNamesTest`). Further
-down come where its coordinates came from in words, and the coordinates themselves when there are any, with
-the fix's accuracy under them. The screen is pushed
+down, a cat with a location has its **Where you met** card (see [Where it was found](#where-it-was-found)), and a cat
+without one has a notice in its place, right under the facts. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
 return to the list, never to the Counter root. The same screen opens from a dot on the Map
 ([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
-above the screen it was tapped in. A cat that is on the map has a small map of its spot at the top of
-its **Where** section (see [Its map](#its-map)) and its coordinates drawn in the theme's primary colour
-with a map mark beside them, and a tap anywhere in that section switches to the Map tab with the view
-on that cat (see [map.md](./map.md#a-cats-coordinates)). A cat with no location offers *Set on map*
-there instead, which opens the location picker for that cat above the screen, once however often it
-is tapped (`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever
-way it came (`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
+above the screen it was tapped in. A cat that is on the map has a small map of its spot in its
+card (see [Its map](#its-map)) and a filled **Show on the map** pill at the card's foot, and a tap anywhere on the
+card switches to the Map tab with the view on that cat (see [map.md](./map.md#a-cats-coordinates)); the pill is the
+card's visible cue, not a second control (`DetailWhereTest`). A cat with no location has no card: a notice under its
+facts, the pin in a round tertiary icon, reads **No location for this cat** and "It was logged without a fix, so it
+is not on the map or in Places.", as one item to a screen reader, with a tonal *Set on map* at its end, which opens
+the location picker for that cat above the screen, once however often it is tapped (`EncounterDetailEntryTest`).
+The notice gives way to the card as soon as the cat has a location, whichever way it came
+(`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
 The picker itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the
 coat card together are taller than most phones, and *Remove this cat* must never end up below the bottom edge.
 
@@ -127,19 +129,21 @@ the day.
 
 ## Where it was found
 
-Under its map, when it has one (see [Its map](#its-map)), the **Where** section names the place the
-cat was found in, the way Places files it (see [places.md](./places.md#browsing-them)): the city, the
-country under it, and the country's flag before both, unless the country's code is not two letters,
-as in Places. The city is the cat's
+The card is headed **Where you met** and sits on the low container with large corners. Under its map, when it has
+one (see [Its map](#its-map)), it names the place the cat was found in, the way Places files it (see
+[places.md](./places.md#browsing-them)): the country's flag, then the city and the country on one emphasized line
+("Barcelona, Spain"), unless the country's code is not two letters, as in Places. Under the place, where the
+coordinates came from and the fix's accuracy share one quiet line ("Current location · ±12 m", or the source alone
+without an accuracy), and the coordinates follow in small print (`DetailWhereTest`). The city is the cat's
 cell's locality, or its admin area when it has none, and a country with no name of its own shows its
 two-letter code (`ObserveEncounterPlaceTest`). A cell that names a country but no city — the cats
-Places lists under No city — shows the country alone, in the city's place, and so does a city named
+Places lists under No city — shows the country alone, and so does a city named
 like its country, such as Singapore, which would otherwise show the one name twice
-(`EncounterDetailStateMapperTest`). A cat with no location, or whose cell is not named yet, has no
-place line; the section starts with where its coordinates came from. The line appears while the
+(`EncounterDetailStateMapperTest`). A cat whose cell is not named yet has no place line; the card
+goes straight from its map to where its coordinates came from. The line appears while the
 screen is open once the cell gets its name (`EncounterDetailStoreTest`, *the cat's place reaches the
 screen once its cell is named*). TalkBack reads the city and the country with the rest of the
-section and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
+card and skips the flag, which would only repeat the country (`EncounterDetailScreenTest`).
 
 The names are the cat's own cell's. Places names a country after the first of its cats whose cell
 has a name for it, so the two differ only when cells of one country were named differently — in
@@ -147,7 +151,7 @@ another language, say.
 
 ## Its map
 
-A cat the map draws, one whose coordinates lie on the globe, opens its **Where** section with a map of
+A cat the map draws, one whose coordinates lie on the globe, has a 16:10 map in its card of
 the few streets around it, centred on the cat, with the cat's dot on its spot: the dot the Map tab draws
 for a cat without a photo, in the cat's coat colours, or blue with no coat noted — a photographed cat
 gets the dot here too, its photos being on the screen already (`EncounterDetailScreenTest`, *a cat on the
@@ -155,12 +159,18 @@ map shows a map with the cat's dot at its centre*). Setting the coat recolours i
 Map tab's light or dark style, whichever the theme is, and carries the tiles' attribution
 in its corner, open at first, until its ⓘ folds it away. The text and ⓘ sit directly over the tiles,
 without a white container. The attribution is plain text, without the Map tab's links, and TalkBack
-skips it, since the section would otherwise read it before the place. A cat with no coordinates, or
-with coordinates off the globe, shows no map (*a cat not on the map shows no map*).
+skips it, since the card would otherwise read it before the place. A cat with coordinates off the globe shows
+no map and no pill, and a tap on its card opens nothing (*a cat not on the map shows no map*; `DetailWhereTest`).
+
+Around the dot the map draws the fix's accuracy to scale: a primary disc at a low alpha with a primary outline,
+whose radius is the accuracy at the map's street zoom and the cat's latitude, using the scale MapLibre itself
+projects with. It is drawn only when the accuracy is known and the circle would be wider than the dot, so a
+fix good to a few metres shows the dot alone. A circle larger than the map runs past its edges rather than
+shrinking to fit (`DetailWhereTest`, `MetersPerDpTest`).
 
 The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
 screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a
-tap anywhere else in the section does (*a tap on the map opens the map*). Should the cat's coordinates
+tap anywhere else on the card does (*a tap on the map opens the map*). Should the cat's coordinates
 change while the screen is open, the map is drawn afresh around the new spot rather than moved there.
 
 Its tiles come over the network, like the Map tab's (see [map.md](./map.md#where-the-map-comes-from)).
@@ -169,9 +179,10 @@ fetched yet, the map says it could not load, with no dot on an empty area; when 
 this area has not, the dot sits on the map's plain background.
 
 MapLibre's runtime is native, so neither a Compose preview nor a JVM test can start it. Under
-`LocalInspectionMode` the map is a plain block with the dot at its centre, and the screen tests switch
-that mode on to reach it. So the tests prove the dot's place and that the section's taps and drags
-reach it; that the real map lets them through is checked on a device.
+`LocalInspectionMode` the map is a plain block with the dot and the accuracy circle at its centre, and the screen
+tests switch that mode on to reach it. So the tests prove the dot's place, the circle's size and that the card's
+taps and drags reach them; that the real map lets them through, and that the circle matches its streets, is checked
+on a device.
 
 ## Delete and undo
 
@@ -328,7 +339,7 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - **Setting the coat while a photo is being attached** keeps both (see
   [coat.md](./coat.md#at-the-edges)).
 - **Coordinates that name no place on Earth** — past a pole or the 180th meridian — are still shown
-  as numbers, but the map does not draw that cat, so its **Where** section shows no map and opens
+  as numbers, but the map does not draw that cat, so its card shows no map and no pill, and opens
   nothing (`EncounterDetailStorePhotoTest`, *a cat that is not on the map opens no map*). A cat with no
   coordinates has nothing to open either.
 
@@ -341,12 +352,13 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
 - `data/…/db/EncounterDao.kt` — `observeNumber`, the count behind a cat's number
 - `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `DetailHeading.kt`
-  (the title and the facts row), `DetailMore.kt` (More and its menu), `WhereCard.kt`,
+  (the title and the facts row), `DetailMore.kt` (More and its menu), `WhereCard.kt` (the card and the no-location
+  notice), `CoatCard.kt` and `CoatSheet.kt` (the coat, see [coat.md](./coat.md#changing-it-later)),
   `DetailPhotoCarousel.kt` (the photos and the add items), `NoPhotoBlock.kt` (a cat without a photo), `AttachingBar.kt`,
-  `DetailInteractions.kt` (the two-value taps' payloads);
-  `ui/…/components/BackBar.kt` — the bar, `Labels.kt` — the facts' labels, `Flag.kt` — a flag TalkBack skips;
-  `ui/…/map/SpotMap.kt` —
-  the **Where** section's map and the cat's dot on it
+  `PhotoInteraction.kt` (a photo tap's payload);
+  `ui/…/components/BackBar.kt` — the bar, `Labels.kt` — the facts' labels, `Flag.kt` — a flag TalkBack skips,
+  `NoticeCard.kt` — the notice; `ui/…/map/SpotMap.kt` — the card's map, the cat's dot and the accuracy circle,
+  `MetersPerDp.kt` — the map's scale
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, which saves the cat on screen with the screen,
   wired into `CatsRadarNavHost.kt`, which

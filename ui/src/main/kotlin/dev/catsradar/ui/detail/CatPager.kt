@@ -158,7 +158,11 @@ private fun CatFacts(
     ) {
         if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
         DetailHeading(page)
-        WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
+        if (page.setsLocation) {
+            NoLocationNotice(onSetLocationClick = onSetLocationClick)
+        } else {
+            WhereCard(page, onCoordinatesClick = onCoordinatesClick)
+        }
         CoatCard(coat = page.coat, onClick = onCoatCardClick)
         FilledTonalButton(
             onClick = onDeleteClick,

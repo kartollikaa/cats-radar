@@ -174,13 +174,13 @@ class EncounterDetailScreenTest {
         show(loadedWith(cat.copy(place = DetailPlace(title = "Barcelona", country = "Spain", flag = FLAG))))
 
         val inWhere = !hasAnyAncestor(hasTestTag(DetailFactsTestTag))
-        val city = compose.onNode(hasText("Barcelona") and inWhere, useUnmergedTree = true)
+        val city = compose.onNode(hasText("Barcelona, Spain") and inWhere, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
         val flag = compose.onNode(hasTestTag(FlagTestTag) and inWhere, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
         assertTrue(flag.right <= city.left, "the flag ends at ${flag.right}px, past the city at ${city.left}px")
-        compose.onNode(hasText("Barcelona") and hasText("Spain"))
-            .assertTextContains("Spain")
+        compose.onNode(hasText("Barcelona, Spain"))
+            .assertTextContains("Barcelona, Spain")
             .assertTextContains(context.getString(R.string.location_none))
             .assert(!hasText(FLAG, substring = true))
     }

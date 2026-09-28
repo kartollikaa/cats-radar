@@ -1,4 +1,4 @@
-package dev.catsradar.ui.counter
+package dev.catsradar.ui.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,9 @@ import dev.catsradar.ui.theme.ThemePreviews
 internal fun NoticeCard(
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
+    iconContainer: Color = MaterialTheme.colorScheme.secondaryContainer,
+    iconContent: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+    action: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -41,26 +45,32 @@ internal fun NoticeCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NoticeIcon(iconRes)
+            NoticeIcon(iconRes, container = iconContainer, content = iconContent)
             Column(
                 modifier = Modifier.weight(1f).padding(end = 8.dp).semantics(mergeDescendants = true) {},
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 content = content,
             )
+            action?.invoke()
         }
     }
 }
 
 @Composable
-internal fun NoticeIcon(@DrawableRes iconRes: Int, modifier: Modifier = Modifier) {
+internal fun NoticeIcon(
+    @DrawableRes iconRes: Int,
+    modifier: Modifier = Modifier,
+    container: Color = MaterialTheme.colorScheme.secondaryContainer,
+    content: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+) {
     Box(
-        modifier = modifier.size(40.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+        modifier = modifier.size(40.dp).background(container, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            tint = content,
             modifier = Modifier.size(20.dp),
         )
     }
