@@ -25,16 +25,24 @@ internal class MilestoneMoment(
     suspend fun reach(total: Int, runOpen: () -> Boolean) {
         val reached = Tuning.MILESTONES.filter { it <= total }.maxOrNull() ?: return
         val seen = settingsRepository.lastSeenMilestone().first()
-        if (reached <= seen) return
-        // Persisted before it shows: a process death between the two would otherwise celebrate
-        // the same milestone again on the next launch.
-        settingsRepository.setLastSeenMilestone(reached)
+        if (reached <= seen || !recorded(reached)) return
         if (rung == null) seenBefore = seen
         celebrated = reached
         rung = reached
         show()
         timeout?.cancel()
         if (!runOpen()) endAfterTheWindow()
+    }
+
+    // Persisted before it shows: a process death between the two would otherwise celebrate
+    // the same milestone again on the next launch.
+    private suspend fun recorded(reached: Int): Boolean {
+        var written = false
+        runStorageWrite {
+            settingsRepository.setLastSeenMilestone(reached)
+            written = true
+        }
+        return written
     }
 
     // Taken back with the cats that reached it, even after it has ended, so landing on it again celebrates again.

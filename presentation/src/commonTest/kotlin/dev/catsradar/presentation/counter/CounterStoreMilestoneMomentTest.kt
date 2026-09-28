@@ -222,6 +222,19 @@ class CounterStoreMilestoneMomentTest {
         val next = newCounterStore(encounterRepository = repository, settingsRepository = settings)
         runCurrent()
 
-        assertEquals(1 to null, store.state.value.count to next.state.value.milestoneMoment)
+        assertEquals(1 to null, next.state.value.count to next.state.value.milestoneMoment)
+    }
+
+    @Test
+    fun `a rung whose record cannot be written shows no moment, and the count keeps up`() = runTest(mainDispatcher) {
+        val settings = FakeSettingsRepository(lastMilestone = 0)
+        settings.lastSeenWriteFails = true
+        val (store, _) = newStore(settings)
+
+        tap(store)
+        val afterFirst = store.state.value.milestoneMoment
+        tap(store)
+
+        assertEquals(null to 2, afterFirst to store.state.value.count)
     }
 }
