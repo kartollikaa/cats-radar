@@ -28,7 +28,7 @@
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
 | E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | merged |
-| E16 | The location hint floats | The location hint is a floating card like the import's, with Grant, × and a swipe; it stacks under an import's card, and the count keeps its size. | safe | ~350 | E15 | in-progress |
+| E16 | The location hint floats | The location hint is a floating card like the import's, with Grant, × and a swipe; it stacks under an import's card, and the count keeps its size. | safe | ~350 | E15 | in-review |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
