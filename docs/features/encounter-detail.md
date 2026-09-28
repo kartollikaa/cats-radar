@@ -1,9 +1,13 @@
 # Encounter detail
 
 Tapping a row in the Encounters list opens that cat, among the other cats of its outing (see
-[Paging through the outing](#paging-through-the-outing)): the day it was logged (relative — "Today",
-"Yesterday" — or a calendar date), the time, where its coordinates came from in words, and the
-coordinates themselves when there are any, with the fix's accuracy under them. The screen is pushed
+[Paging through the outing](#paging-through-the-outing)). Under its photos the page names the cat by its
+coat — "Ginger & white cat", or "A cat" with no coat noted, «котик» in Russian — and a row of outlined facts
+follows: the day it was logged (relative — "Today", "Yesterday" — or a calendar date), the time, and its
+place with the flag when it has a named one. The facts are labels, not buttons; they wrap onto a second line
+when they must, and a screen reader hears them as one item, without the flag (`DetailNamesTest`). Further
+down come where its coordinates came from in words, and the coordinates themselves when there are any, with
+the fix's accuracy under them. The screen is pushed
 above the list, so the bottom bar still shows Encounters as selected; system back and the tab both
 return to the list, never to the Counter root. The same screen opens from a dot on the Map
 ([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
@@ -15,7 +19,7 @@ there instead, which opens the location picker for that cat above the screen, on
 is tapped (`EncounterDetailEntryTest`); the button goes as soon as the cat has a location, whichever
 way it came (`EncounterDetailStateMapperTest`, *only a cat with no location is offered one on a map*).
 The picker itself is in [location.md](./location.md#on-a-map). The screen scrolls: a photo and the
-coat picker together are taller than most phones, and Delete must never end up below the bottom edge.
+coat picker together are taller than most phones, and *Remove this cat* must never end up below the bottom edge.
 
 A back arrow sits at the top, pinned while the rest scrolls, whether the screen shows the cat, the
 "removed" state or *Missing* (`EncounterDetailScreenTest`). It leaves the same way system back does,
@@ -23,10 +27,12 @@ once however often it is tapped, and only if the screen is still on top (`Encoun
 *back navigates back once, however often it is tapped*; `EncounterDetailEntryTest`). The bar has no
 fill of its own: the list runs edge to edge, under the status bar and under the arrow, which sits in
 a tonal circle so it stays readable over whatever passes beneath it, its edge in line with the
-content's (*the back button lines up with the content under it*). Only the list's content is
-inset, so at rest the first line starts below the bar and, scrolled to the end, Delete ends above the
-bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar while its first line
-starts below the bar*; *scrolled to the end, delete clears the bottom bar*). The coat
+content's (*the back button lines up with the content under it*). At the bar's other end **More**
+sits in the same tonal circle and opens a menu for the cat on screen: *Show on the map*, disabled while the
+map does not draw the cat, and *Remove this cat*; a removed or missing cat has no More (`DetailNamesTest`).
+Only the list's content is inset, so at rest the first line starts below the bar and, scrolled to the end,
+*Remove this cat* ends above the bottom bar (`EncounterDetailScreenTest`, *the list runs under the status bar
+while its first line starts below the bar*; *scrolled to the end, remove this cat clears the bottom bar*). The coat
 picker opens with the cat's own coat on screen, ringed; how it opens and behaves is in
 [coat.md](./coat.md#changing-it-later).
 
@@ -149,15 +155,16 @@ reach it; that the real map lets them through is checked on a device.
 
 ## Delete and undo
 
-Delete is a soft delete: the row gets a `deletedAt` and disappears from every list and count, but
-stays in the database until the purge worker removes it. It deletes the cat on screen. The screen then
-shows a "removed" state with an Undo chip for `Tuning.UNDO_VISIBLE`, the same window the Counter's undo
-uses, so the two undo gestures in the app behave alike — even while other cats of its outing remain, and
-whatever happens to them meanwhile (*the removed state holds while another cat of the outing changes
-mid-delete*). When
-the window closes the chip disappears and the screen navigates back to the list, exactly once. Undo inside
-the window clears `deletedAt`; the encounter is live again and the screen returns to its pages with that
-cat on screen (`EncounterDetailStoreTest`, *delete removes the cat on screen, and undo shows it again*).
+**Remove this cat** — the tonal button on the error container that ends the page, centred, or the same entry
+in More — deletes the cat on screen (`DetailNamesTest`). A delete is a soft delete: the row gets a `deletedAt`
+and disappears from every list and count, but stays in the database until the purge worker removes it. It
+deletes the cat on screen. The screen then shows a "removed" state with an Undo chip for
+`Tuning.UNDO_VISIBLE`, the same window the Counter's undo uses, so the two undo gestures in the app behave
+alike — even while other cats of its outing remain, and whatever happens to them meanwhile (*the removed state
+holds while another cat of the outing changes mid-delete*). When the window closes the chip disappears and the
+screen navigates back to the list, exactly once. Undo inside the window clears `deletedAt`; the encounter is
+live again and the screen returns to its pages with that cat on screen (`EncounterDetailStoreTest`, *delete
+removes the cat on screen, and undo shows it again*).
 
 The undo affordance lives on the detail screen rather than as a snackbar on the list. A snackbar
 would need the list's Store to learn about a deletion made by a different screen — cross-Store
