@@ -19,19 +19,19 @@
 | E4 | Coat faces in Material shapes | Every coat grid draws its faces in a shape per column, with the ring on the shape; Photo is the filled split button. | safe | ~350 | E1 | merged |
 | E5 | The detail's photos as a carousel | A cat's photos become a multi-browse carousel ending in the two add items, and a cat without one opens on its face and a button group. | safe | ~600 | E1 | planned |
 | E6 | The detail names its cat | The title from the coat, the facts row, More in the bar, and Remove this cat in place of Delete. | safe | ~500 | E1 | planned |
-| E7a | The coat question after a photo | The sheet after a photo keeps the photo in its header through a count, names its mode with a *One cat · Several* group that also leads back to one tap, counts cats in their shapes, and calls the paw *No coat*. | safe | ~450 | E4 | in-review |
+| E7a | The coat question after a photo | The sheet after a photo keeps the photo in its header through a count, names its mode with a *One cat · Several* group that also leads back to one tap, counts cats in their shapes, and calls the paw *No coat*. | safe | ~450 | E4 | merged |
 | E7b | The coat card and the coat sheet | The detail's coat is a card that opens a sheet destination, with the cat's face in E7a's header and a *No coat* tile, which replaces the inline picker. | safe | ~450 | E6, E7a | planned |
 | E8 | Where you met | The Where card restyled around its map, with the fix's accuracy drawn to scale around the dot; a cat with no location gets the notice-card alert under its facts instead of the card. | safe | ~450 | E6 | planned |
 | E9 | The cat's number | Each cat's place in the live log, oldest first, opens the facts row. | safe | ~400 | E6 | planned |
 | E10 | Statistics as a dashboard | The Stats tab gets the per-day chart with its range pill, stat tiles, coat share bars and an outings grid. | safe | ~600 | E1 | planned |
-| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | in-review |
+| E11 | Reaching a rung | The cookie bounces and the ring glows when a tally lands on a milestone, and the bottom tag says "100 cats!" until the run closes. | safe | ~250 | E2 | merged |
 | E12a | Encounters in outing cards | Each outing becomes a card headed by its day, count, span and walk, with On the map as a pill; the headline totals the tab. | safe | ~550 | E1 | in-review |
 | E12b | The cats inside the outing cards | Tiles take the coat shapes, pair tiles their chip, the short run's and the list's cards their new look, and the selection its ring and bar. | safe | ~450 | E4, E12a | in-review |
 | E13 | The cookie turns with each cat | Each logged cat turns the Counter's cookie a step further and it keeps the turn; an undo turns it back. | safe | ~150 | E4 | merged |
 | E14 | The walk beside Photo | Walk is a tonal button beside Photo that turns warm and reads *Hold to end* while a walk is on; the cookie wears the walk and breathes; Undo floats in the count block. | safe | ~550 | E13 | merged |
 | E15 | The import notice floats | The import's progress and summary are a floating card over the count with the first photos, one muted line, Undo, × and a swipe to close; the cookie keeps its size. | safe | ~450 | E14 | merged |
-| E16 | The location hint floats | The location hint is a floating card like the import's, with Grant, × and a swipe; it stacks under an import's card, and the count keeps its size. | safe | ~350 | E15 | in-review |
-| E17 | The running import shows its photos | While an import runs, its card fans out the picked photos as the run reaches them, and every stacked photo wears a ring in the card's colour. | safe | ~250 | E16 | in-review |
+| E16 | The location hint floats | The location hint is a floating card like the import's, with Grant, × and a swipe; it stacks under an import's card, and the count keeps its size. | safe | ~350 | E15 | merged |
+| E17 | The running import shows its photos | While an import runs, its card fans out the picked photos as the run reaches them, and every stacked photo wears a ring in the card's colour. | safe | ~250 | E16 | merged |
 
 Status values: `planned · in-progress · in-review · merged · dropped`
 
@@ -246,3 +246,7 @@ Status values: `planned · in-progress · in-review · merged · dropped`
   lasts sits in the column. E16 carries it.
 - 2026-09-28: the owner asked that the import card show the photos "as in the prototype", where the running card's
   stack filled as the run went; E15 had kept the gallery icon while a run goes. E17 carries it.
+- 2026-09-28: the owner said "merge them". **E7a, E11, the "+N" badge fix, E16 and E17 merged** as #229, #231, #234,
+  #235 and #236, in that order. Each tree was built and gated before it landed; the badge fix's `TallyBlock` resolution
+  kept E11's rung moment and the badge's new place, and was reviewed and re-audited. The plans of E7a, E11, E16 and
+  E17 are archived.
