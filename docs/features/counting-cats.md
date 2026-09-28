@@ -178,7 +178,7 @@ the window closed does not reopen it*).
 - `presentation/src/commonMain/kotlin/dev/catsradar/presentation/counter/` — `CounterState`,
   `CounterIntent`, `CounterEffect`, `CounterStore`, `CounterStateMapper`
 - `ui/src/main/kotlin/dev/catsradar/ui/counter/CounterScreen.kt`, `TallyBlock.kt` (the count and its
-  press), `Island.kt` (the floating notices' card), `LocationPermissionHint.kt` (the location hint's),
+  press), `Island.kt` (the floating notices' card), `LocationIsland.kt` (the location hint),
   `RollingCount.kt` (the digit-by-digit roll and the shrink to fit), `FillOrScroll.kt` (the block's
   floor and the scroll past it), `WalkButton.kt` (Walk beside Photo, and its hold),
   `CookieBreath.kt` (the cookie's breath during a walk),
