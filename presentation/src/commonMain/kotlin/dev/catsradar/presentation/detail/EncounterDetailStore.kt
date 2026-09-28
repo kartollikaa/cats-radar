@@ -114,6 +114,8 @@ class EncounterDetailStore(
                 }
             is EncounterDetailIntent.CoordinatesClicked ->
                 emitIfOffered(intent.catId, EncounterDetailEffect.OpenMap(intent.catId)) { mapPosition != null }
+            is EncounterDetailIntent.CoatCardClicked ->
+                emitIfOffered(intent.catId, EncounterDetailEffect.OpenCoatSheet(intent.catId)) { true }
             is EncounterDetailIntent.SetLocationClicked ->
                 emitIfOffered(intent.catId, EncounterDetailEffect.OpenLocationPicker(intent.catId)) { setsLocation }
             is EncounterDetailIntent.PhotoTaken ->

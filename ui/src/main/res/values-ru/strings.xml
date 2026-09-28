@@ -248,6 +248,9 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Где</string>
     <string name="detail_coat">Окрас</string>
+    <string name="detail_coat_sheet_title">Какого окраса котик?</string>
+    <string name="detail_coat_sheet_hint_change">Выберите другой или „Не отмечен“</string>
+    <string name="detail_coat_sheet_hint_add">Нажмите на подходящий окрас</string>
     <string name="detail_on_this_photo">На этом фото</string>
     <string name="detail_on_this_photo_cat">%1$s, котик %2$d из %3$d</string>
     <string name="detail_take_photo">Снять фото</string>

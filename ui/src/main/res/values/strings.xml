@@ -214,6 +214,9 @@
     <string name="statistics_coat_share">%1$s · %2$s%%</string>
     <string name="detail_where">Where</string>
     <string name="detail_coat">Coat</string>
+    <string name="detail_coat_sheet_title">What coat was it?</string>
+    <string name="detail_coat_sheet_hint_change">Pick another, or “No coat”</string>
+    <string name="detail_coat_sheet_hint_add">Tap the coat that fits</string>
     <string name="detail_on_this_photo">On this photo</string>
     <string name="detail_on_this_photo_cat">%1$s, cat %2$d of %3$d</string>
     <string name="detail_take_photo">Take a photo</string>

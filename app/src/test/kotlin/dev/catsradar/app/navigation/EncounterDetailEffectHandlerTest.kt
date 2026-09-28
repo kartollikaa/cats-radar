@@ -14,6 +14,7 @@ class EncounterDetailEffectHandlerTest {
         onOpenPhoto = { viewer -> calls += "photo ${viewer.encounterId} ${viewer.photoId}" },
         onOpenMap = { catId -> calls += "map $catId" },
         onOpenLocationPicker = { catId -> calls += "location picker $catId" },
+        onOpenCoatSheet = { catId -> calls += "coat sheet $catId" },
         cameraLauncher = { catId -> calls += "camera $catId" },
         photoPickerLauncher = { catId -> calls += "picker $catId" },
         photoFailureReporter = { calls += "failure" },
@@ -36,6 +37,7 @@ class EncounterDetailEffectHandlerTest {
         handle(EncounterDetailEffect.DiscardCapture("content://captures/1"))
         handle(EncounterDetailEffect.OpenMap("cat-1"))
         handle(EncounterDetailEffect.OpenLocationPicker("cat-1"))
+        handle(EncounterDetailEffect.OpenCoatSheet("cat-1"))
 
         assertEquals(
             listOf(
@@ -50,6 +52,7 @@ class EncounterDetailEffectHandlerTest {
                 "discard content://captures/1",
                 "map cat-1",
                 "location picker cat-1",
+                "coat sheet cat-1",
             ),
             calls,
         )

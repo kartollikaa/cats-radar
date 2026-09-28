@@ -568,6 +568,24 @@ class EncounterDetailStoreTest {
         }
 
     @Test
+    fun `the coat card opens the sheet for its own cat, and a cat not on the pages opens none`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+            val store = newStore()
+            runCurrent()
+
+            store.effects.test {
+                store.dispatch(EncounterDetailIntent.CoatCardClicked(OTHER))
+                assertEquals(EncounterDetailEffect.OpenCoatSheet(OTHER), awaitItem())
+
+                store.dispatch(EncounterDetailIntent.CoatCardClicked("elsewhere"))
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+
+    @Test
     fun `a coat lands on the cat it was picked for`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         repository.insert(encounterFixture(OTHER, OCCURRED))
