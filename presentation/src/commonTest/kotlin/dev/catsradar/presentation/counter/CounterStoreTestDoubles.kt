@@ -76,6 +76,13 @@ internal class FakeEncounterRepository : EncounterRepository {
         emitAll(encounters.map { list -> list.firstOrNull { it.id == id && it.deletedAt == null } }.delayedAfterFirst())
     }
 
+    // Mirrors the DAO's count, so a delete or an older cat renumbers here as it does in the app.
+    override fun observeNumber(id: String): Flow<Int?> = encounters.map { list ->
+        val live = list.filter { it.deletedAt == null }
+        val cat = live.firstOrNull { it.id == id } ?: return@map null
+        live.count { it.occurredAt < cat.occurredAt || (it.occurredAt == cat.occurredAt && it.id <= cat.id) }
+    }
+
     private fun <T> Flow<T>.delayedAfterFirst(): Flow<T> {
         var firstEmission = true
         return onEach { if (firstEmission) firstEmission = false else delay(observeDelay) }

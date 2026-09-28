@@ -100,7 +100,7 @@ class EncounterDetailPagerEntryTest {
         show(older = tally(OLDER, OCCURRED).copy(lat = 41.39, lon = 2.17, locationSource = LocationSource.CURRENT_FIX))
         swipeToTheOlderCat()
 
-        compose.onNode(hasText(COORDINATES)).performClick()
+        compose.onNode(hasText(COORDINATES)).performScrollTo().performClick()
         compose.waitForIdle()
 
         assertEquals(MapIntent.CatRequested(OLDER), mapFocus.consume())

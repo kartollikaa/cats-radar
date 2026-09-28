@@ -64,7 +64,7 @@ logs a cat (*no prompt without a logged camera photo*).
   thumbnail could not be made*; `CoatPromptCountingTest`, *without a thumbnail the question sits beside
   the paw*).
 - **A photo given to a logged cat on its detail screen asks nothing** — that screen shows the coat
-  picker already.
+  card already.
 
 ### Several cats on the photo
 
@@ -133,7 +133,7 @@ container in the dark theme), the eyes against the fur, and the nose against the
 The rim test fails if the line goes back to `outlineVariant`, which is not enough.
 
 The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
-the picker and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn
+the card, the sheet and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn
 with those paths (see [app-shell.md](./app-shell.md)).
 
 The labels say **calico**. The stored values are still `TRICOLOR_*`: the database and backup
@@ -141,22 +141,21 @@ archives hold those names, and renaming what nobody sees would need a migration 
 
 ## Changing it later
 
-The detail screen shows the coat and lets it be changed, or cleared by tapping the current one
-again; each page of the outing's pages sets the coat of its own cat (see
-[encounter-detail.md](./encounter-detail.md#paging-through-the-outing)). Nothing else needs a "clear" control.
+A cat's page shows its coat as a card: the face in its coat's shape, or the paw in no coat's, the coat's name
+with "Coat" under it, and a tonal **Change** pill at the end; a cat with no coat reads "Coat not noted" and
+**Add**, with "Tap to add it" under it (`DetailCoatCardTest`). The whole card is one button, read as one item; the pill is its visible cue.
+Each page of the outing's pages has the card of its own cat (see
+[encounter-detail.md](./encounter-detail.md#paging-through-the-outing)).
 
-The coats there sit in one row wider than a phone, and the row opens scrolled so the cat's own coat
-is on screen, whole: second from the start with the coat before it showing, or, for the last few
-coats, wherever the row's end leaves it. A cat with no coat opens the row at the first coat
-(`EncounterDetailCoatPickerTest`). Only the opening position is chosen: after that the row stays
-wherever it is scrolled, including when the coat is changed.
-
-The chosen coat is ringed with a line around its whole cell, face and name together, as the grids
-did before they took their shapes; the row keeps that look until the detail sets the coat in a
-sheet. Every cell in that row takes the tallest name's height, so the ring is the same size
-whichever coat it is on and the row never changes height while it scrolls. That is why the row is
-not lazy: a lazy row measures only the cells on screen, and a three-line name scrolling in would
-grow the card and push Delete down.
+The card opens the coat sheet over the detail, a sheet destination like the map's spot list (`CoatSheetNavigationTest`),
+and a coat picked there shows on the card once the sheet closes. Its head is the cat's face in its coat's shape on the
+primary container, or the paw on the highest container with no coat noted, beside "What coat was it?" and "Pick
+another, or “No coat”" or "Tap the coat that fits" (`DetailCoatSheetTest`). Under it is the coat grid with the
+cat's coat ringed and a twelfth *No coat* cell, ringed when no coat is noted. A tap on a coat sets it and closes the
+sheet; *No coat* clears it and closes; a tap on the ringed coat changes nothing and closes (`CoatSheetStoreTest`); a swipe down
+closes it and changes nothing (`CoatSheetNavigationTest`). Only the first answer counts: a second tap before the sheet is
+gone writes nothing. A cat removed while its sheet is up closes the sheet.
+Nothing else needs a "clear" control.
 
 ## In the statistics
 
@@ -171,15 +170,18 @@ cats are in it — it is the absence of an answer, not an answer that happens to
   than resurrecting a row.
 - **A coat set while a photo or a location is being attached keeps both** — only the coat and its
   `updatedAt` are written.
-- **A failed write leaves the shown coat as it was**, because the screen re-reads it from the flow.
+- **A failed write leaves the shown coat as it was**, because the screen re-reads it from the flow; the
+  coat sheet closes all the same.
 
 ## Where the code lives
 
 - `domain/…/model/CatCoat.kt`, `domain/…/usecase/SetCoat.kt`, `LogTally` (takes a coat)
 - `domain/…/stats/StatsCalculator.kt` — the by-coat counts
 - `presentation/…/coat/CoatOption.kt` — the presentation token, because `:ui` cannot see `:domain`
-- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, ask after a photo and count its cats, filter the map) with its
-  shaped tiles and `coatShapeFor`, and `CoatPicker` (amend)
+- `ui/…/coat/CoatSwatch.kt` — `CoatGrid` (log, ask after a photo and count its cats, filter the map, change a
+  cat's coat) with its shaped tiles and `coatShapeFor`
+- `ui/…/detail/CoatCard.kt` — the detail's coat card; `ui/…/detail/CoatSheet.kt` — the coat sheet's content;
+  `presentation/…/coatsheet/` — its Store, which writes through `SetCoat`; `app/…/navigation/CoatSheet.kt` — its key
 - `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo, its header and *One cat · Several*;
   `CoatPromptTray.kt` its tray; `CounterStore` opens and
   closes it, `presentation/…/counter/CoatCounting.kt` moves it between prompts and `CoatQuestion.kt` makes its writes

@@ -20,6 +20,7 @@ import dev.catsradar.presentation.detail.EncounterDetailState
 import dev.catsradar.presentation.encounters.LocationLabel
 import dev.catsradar.presentation.map.MapPosition
 import dev.catsradar.ui.R
+import dev.catsradar.ui.detail.CoatCardTestTag
 import dev.catsradar.ui.detail.EncounterDetailScreen
 import dev.catsradar.ui.map.SpotMapTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -52,7 +53,7 @@ class EncounterDetailPagesTest {
                     onTakePhotoClick = { taps += "take $it" },
                     onPickPhotoClick = { taps += "pick $it" },
                     onSetLocationClick = { taps += "set on map $it" },
-                    onCoatClick = { taps += "coat ${it.catId} ${it.coat}" },
+                    onCoatCardClick = { taps += "coat $it" },
                 )
             }
         }
@@ -61,14 +62,14 @@ class EncounterDetailPagesTest {
         compose.onNodeWithText(THIRD_TIME).assertDoesNotExist()
 
         compose.onNodeWithContentDescription(context.getString(R.string.detail_photo_description)).performClick()
+        compose.scrollCarouselToEnd(photos = 1)
         compose.onNodeWithText(context.getString(R.string.detail_take_photo)).performClick()
-        compose.onNodeWithText(context.getString(R.string.detail_pick_photo)).performClick()
+        compose.onNodeWithText(context.getString(R.string.detail_from_gallery)).performClick()
         compose.onNodeWithText(context.getString(R.string.detail_set_location)).performScrollTo().performClick()
-        compose.scrollListToEnd()
-        compose.onNodeWithText(context.getString(R.string.coat_ginger)).performClick()
+        compose.onNodeWithTag(CoatCardTestTag).performScrollTo().performClick()
 
         assertEquals(
-            listOf("photo cat-2 photo-2", "take cat-2", "pick cat-2", "set on map cat-2", "coat cat-2 GINGER"),
+            listOf("photo cat-2 photo-2", "take cat-2", "pick cat-2", "set on map cat-2", "coat cat-2"),
             taps,
         )
     }
@@ -85,7 +86,7 @@ class EncounterDetailPagesTest {
             }
         }
 
-        compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).performTouchInput { click() }
+        compose.onNodeWithTag(SpotMapTestTag, useUnmergedTree = true).performScrollTo().performTouchInput { click() }
 
         assertEquals(listOf("cat-2"), taps)
     }
