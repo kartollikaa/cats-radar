@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -25,6 +27,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.test.core.app.ApplicationProvider
@@ -90,12 +93,15 @@ class StatisticsScreenTest {
         onRange: (ChartRange) -> Unit = {},
         onDay: (Long) -> Unit = {},
         colors: ColorScheme = CatsRadarLightColors,
+        direction: LayoutDirection = LayoutDirection.Ltr,
     ) {
         compose.setContent {
-            CatsRadarTheme(colorScheme = colors) {
-                scheme = MaterialTheme.colorScheme
-                typography = MaterialTheme.typography
-                StatisticsScreen(state = state, onRangeClick = onRange, onDayClick = onDay)
+            CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                CatsRadarTheme(colorScheme = colors) {
+                    scheme = MaterialTheme.colorScheme
+                    typography = MaterialTheme.typography
+                    StatisticsScreen(state = state, onRangeClick = onRange, onDayClick = onDay)
+                }
             }
         }
     }
@@ -294,6 +300,16 @@ class StatisticsScreenTest {
         val fill = coatFill(0)
         assertClose(GingerFur, fill.pixelAt(0.03f))
         assertClose(WhiteFur, fill.pixelAt(0.97f))
+    }
+
+    @Test
+    fun `in a right-to-left layout a two-colour coat's bar still starts faint and ends on ginger`() {
+        show(withCoats(GingerAndWhite), direction = LayoutDirection.Rtl)
+
+        val fill = coatFill(0)
+        assertClose(GingerFur, fill.pixelAt(0.03f))
+        val start = contrast(fill.pixelAt(0.97f), scheme.surfaceContainerHighest)
+        assertTrue(start >= 1.29f && start < 1.4f, "the bar's start, at its right edge, stands $start apart")
     }
 
     @Test

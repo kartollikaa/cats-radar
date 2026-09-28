@@ -132,7 +132,7 @@ The tab reads top to bottom as a dashboard.
     share of the face it covers: two thirds for the main colour of a two-colour coat, half white for a
     mostly-white calico, a fifth for a little-white one;
   - the colours run from the one closest to the track to the one furthest from it, so the bar always ends
-    on a colour that shows. Ginger & white runs white into ginger on the light theme and ginger into white
+    on a colour that shows, whichever way the layout reads. Ginger & white runs white into ginger on the light theme and ginger into white
     on the dark;
   - a colour fainter than 1.3:1 against the track is blended toward the text colour just far enough to
     reach it. A white bar on the light theme is a light grey, still paler than the Grey coat's, and a black

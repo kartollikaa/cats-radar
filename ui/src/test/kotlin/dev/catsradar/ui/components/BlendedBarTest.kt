@@ -6,6 +6,7 @@ import dev.catsradar.ui.coat.Ginger
 import dev.catsradar.ui.coat.White
 import dev.catsradar.ui.theme.CatsRadarDarkColors
 import dev.catsradar.ui.theme.CatsRadarLightColors
+import dev.catsradar.ui.theme.contrast
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -30,7 +31,7 @@ class BlendedBarTest {
 
         assertNotEquals(White, shaded)
         assertTrue(shaded.luminance() < White.luminance())
-        assertInRange(contrastRatio(shaded, lightTrack))
+        assertInRange(contrast(shaded, lightTrack))
     }
 
     @Test
@@ -39,7 +40,7 @@ class BlendedBarTest {
 
         assertNotEquals(Black, shaded)
         assertTrue(shaded.luminance() > Black.luminance())
-        assertInRange(contrastRatio(shaded, darkTrack))
+        assertInRange(contrast(shaded, darkTrack))
     }
 
     @Test

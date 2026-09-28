@@ -19,10 +19,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import dev.catsradar.ui.coat.Ginger
-import dev.catsradar.ui.coat.White
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
@@ -52,8 +52,9 @@ internal fun ShareBar(share: Float, color: Color, modifier: Modifier = Modifier)
 internal fun ShareBar(share: Float, parts: ImmutableList<BarPart>, minContrast: Float, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val track = colors.shareBarTrack
-    val fill = remember(parts, track, colors.onSurface, minContrast) {
-        blendedBrush(parts, track, colors.onSurface, minContrast)
+    val rightToLeft = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val fill = remember(parts, track, colors.onSurface, minContrast, rightToLeft) {
+        blendedBrush(parts, track, colors.onSurface, minContrast, rightToLeft)
     }
     ShareBarFrame(share = share, fill = fill, modifier = modifier)
 }
@@ -85,11 +86,14 @@ private fun ShareBarFrame(share: Float, fill: Brush, modifier: Modifier = Modifi
 @Composable
 private fun ShareBarPreview() {
     CatsRadarTheme {
+        val colors = MaterialTheme.colorScheme
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            ShareBar(share = 0.6f, color = MaterialTheme.colorScheme.primary)
-            ShareBar(share = 0.8f, parts = sampleGingerAndWhite, minContrast = 1.3f)
+            ShareBar(share = 0.6f, color = colors.primary)
+            ShareBar(
+                share = 0.8f,
+                parts = persistentListOf(BarPart(colors.tertiary, 2f), BarPart(colors.surface, 1f)),
+                minContrast = 1.3f,
+            )
         }
     }
 }
-
-private val sampleGingerAndWhite = persistentListOf(BarPart(Ginger, 2f), BarPart(White, 1f))
