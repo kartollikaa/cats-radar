@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
@@ -32,7 +33,11 @@ const val DetailFactsTestTag = "detail-facts"
 @Composable
 internal fun DetailHeading(page: CatPage, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(text = stringResource(page.coat.titleRes()), style = MaterialTheme.typography.headlineMediumEmphasized)
+        Text(
+            text = stringResource(page.coat.titleRes()),
+            style = MaterialTheme.typography.headlineMediumEmphasized,
+            modifier = Modifier.semantics { heading() },
+        )
         FlowRow(
             // The labels are not buttons: TalkBack hears the row as one line of facts.
             modifier = Modifier.testTag(DetailFactsTestTag).semantics(mergeDescendants = true) {},

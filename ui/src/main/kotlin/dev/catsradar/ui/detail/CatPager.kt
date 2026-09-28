@@ -161,7 +161,7 @@ private fun CatFacts(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (page.onThisPhoto.isNotEmpty()) OnThisPhotoRow(page.onThisPhoto, onCatClick = onPhotoCatClick)
-        DetailHeading(page, modifier = Modifier.padding(horizontal = 4.dp))
+        DetailHeading(page)
         WhereCard(page, onCoordinatesClick = onCoordinatesClick, onSetLocationClick = onSetLocationClick)
         SectionCard(R.string.detail_coat) {
             // Keyed by the cat: another cat of the same photo opens the row on its own coat.

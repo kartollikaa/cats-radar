@@ -79,7 +79,7 @@ fun EncounterDetailScreen(
             end = {
                 if (state is EncounterDetailState.Loaded) {
                     DetailMore(
-                        showsOnMap = state.pages.getOrNull(state.currentNumber - 1)?.mapPosition != null,
+                        showsOnMap = state.pages.firstOrNull { it.id == state.currentId }?.mapPosition != null,
                         onShowOnMapClick = { onCoordinatesClick(state.currentId) },
                         onRemoveClick = onDeleteClick,
                     )

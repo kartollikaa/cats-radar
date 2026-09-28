@@ -61,7 +61,7 @@ where the cat on screen is — "2 / 5", read by TalkBack as "Cat 2 of 5" — and
 (`EncounterDetailPagerTest`, *several pages show the position of the cat on screen, read as Cat n of m*; *a single
 cat shows no position*).
 
-A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and Delete
+A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and *Remove this cat*
 removes it (`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
 `EncounterDetailStoreTest`, *settling on another page puts that cat on screen*; *after settling, a delete removes
 the settled cat*). Only the state moves the cat on screen, and the pager follows it — when a cat deleted
@@ -95,9 +95,9 @@ the one the screen was opened on or last moved to, else the shot's first cat, th
 Under its photos the page has an **On this photo** row: every cat of the shot, oldest first, as its coat's face
 or a paw for a coat nobody noted, the cat on screen ringed and read as selected. A tap on another face shows that
 cat on the same page — the position does not move, nor does the page's own scroll — so its coat picker, opened on
-that cat's coat, its place and Delete are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
+that cat's coat, its place and *Remove this cat* are that cat's (`EncounterDetailShotTest`, *tapping a cat of the photo shows it on the same page*; *the
 coat and delete act on the cat of the photo on screen*; `EncounterDetailShotRowTest`, *switching the cat of the
-photo keeps the pager where it is*). Delete removes only the cat on screen, with the usual removed state and undo;
+photo keeps the pager where it is*). *Remove this cat* removes only the cat on screen, with the usual removed state and undo;
 the photo's other cats stay, and Encounters shows the shot with one cat fewer. A page of one cat has no row. Swiping away from a shot and back shows its first cat again: nothing remembers
 which of its cats was on screen.
 
@@ -232,7 +232,7 @@ swipe, the coordinates open the map on the cat swiped to*); a stray result namin
 the pages opens none of them (*a tap naming a cat not on the pages opens neither the viewer nor the map*;
 *set on map names the cat it was tapped for, and a cat not on the pages opens nothing*). The coat cell,
 *Take a photo*, *From gallery* or *Gallery*, the photo, the coordinates and *Set on map* send the id of the page
-they sit on; Delete, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
+they sit on; *Remove this cat*, More, Undo and Back act on the cat on screen (`EncounterDetailPagesTest`, *the screen draws
 the cat on screen, and its taps name that cat*; *a tap on the map of the cat on screen names that cat*).
 
 The attempt ends only when its cat carries the photo it attached: until then the progress indicator

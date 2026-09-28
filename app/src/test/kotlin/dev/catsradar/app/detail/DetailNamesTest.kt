@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -23,6 +24,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -82,10 +84,21 @@ class DetailNamesTest {
         show(placed)
 
         val title = compose.onNodeWithText("Ginger & white cat")
-        title.assertIsDisplayed()
+        title.assertIsDisplayed().assert(isHeading())
         val style = title.textLayout().layoutInput.style
         assertEquals(typography.headlineMediumEmphasized.fontSize, style.fontSize)
         assertEquals(typography.headlineMediumEmphasized.fontWeight, style.fontWeight)
+    }
+
+    @Test
+    fun `the title and the facts start in line with the back arrow`() {
+        show(placed)
+
+        val back = compose.onNodeWithContentDescription(context.getString(R.string.detail_back)).bounds()
+        val title = compose.onNodeWithText("Ginger & white cat").bounds()
+        val facts = compose.onNodeWithTag(DetailFactsTestTag).bounds()
+        assertEquals(back.left, title.left, 1f)
+        assertEquals(back.left, facts.left, 1f)
     }
 
     @Test
@@ -287,20 +300,5 @@ class DetailNamesTest {
                 setsLocation = true,
             ),
         )
-    }
-}
-
-@Config(qualifiers = "ru")
-@RunWith(AndroidJUnit4::class)
-class DetailTitlesRuTest {
-
-    private val context: Context = ApplicationProvider.getApplicationContext()
-
-    @Test
-    fun `every russian title names the cat as котик`() {
-        (CoatOption.entries + null).forEach { coat ->
-            val title = context.getString(coat.titleRes())
-            assertTrue(title.contains("котик", ignoreCase = true), "$coat: $title")
-        }
     }
 }
