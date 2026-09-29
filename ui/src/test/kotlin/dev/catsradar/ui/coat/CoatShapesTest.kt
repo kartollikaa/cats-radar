@@ -4,15 +4,19 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.unit.Dp
 import androidx.graphics.shapes.Cubic
 import androidx.graphics.shapes.RoundedPolygon
 import dev.catsradar.presentation.coat.CoatOption
-import kotlin.math.hypot
+import dev.catsradar.ui.encounters.LeadFaceShare
+import dev.catsradar.ui.encounters.OutingLeadSize
+import dev.catsradar.ui.encounters.SelectionRingWidth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.hypot
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 class CoatShapesTest {
@@ -60,27 +64,36 @@ class CoatShapesTest {
     }
 
     @Test
-    fun aRingedTileKeepsItsFaceClearOfTheRing() {
-        val faceShare = TileFaceSize / TileSize
-        val clearance = (TileRingWidth + FaceRimWidth / 2) / TileSize
-        // Grey's fan still reaches its face's ear.
-        val crowded = (CoatOption.entries - CoatOption.GREY).filter {
-            faceMargin(coatShapeFor(it), faceShare) < clearance
-        }
-        assertTrue("$crowded have the ring over their face", crowded.isEmpty())
+    fun onlyTheKnownCoatsHaveARingOverTheirFace() {
+        // These shapes reach their faces' ears; no other coat may join them.
+        assertEquals(
+            "the coat grid",
+            setOf(CoatOption.GREY),
+            coatsUnderTheRing(TileSize, TileFaceSize / TileSize, TileRingWidth),
+        )
+        assertEquals(
+            "an outing card",
+            setOf(CoatOption.BROWN_WHITE, CoatOption.GREY, CoatOption.GREY_WHITE, CoatOption.BLACK_WHITE),
+            coatsUnderTheRing(OutingLeadSize, LeadFaceShare, SelectionRingWidth),
+        )
+    }
+
+    private fun coatsUnderTheRing(tile: Dp, faceShare: Float, ring: Dp): Set<CoatOption> {
+        val clearance = (ring + FaceRimWidth / 2) / tile
+        return CoatOption.entries.filter { faceMargin(coatShapeFor(it), faceShare) < clearance }.toSet()
     }
 
     private fun faceMargin(shape: RoundedPolygon, faceShare: Float): Float {
         val edge = shape.cubics.flatMap { cubic -> (0 until Samples).map { cubic.at(it / Samples.toFloat()) } }
         val inset = (1 - faceShare) / 2
-        return headOutline().minOf { (x, y) ->
+        return headOutline.minOf { (x, y) ->
             edge.signedDistance(inset + x / FaceUnits * faceShare, inset + y / FaceUnits * faceShare)
         }
     }
 
-    private fun headOutline(): List<Pair<Float, Float>> {
+    private val headOutline: List<Pair<Float, Float>> by lazy {
         var from = 0f to 0f
-        return PathParser().parsePathString(CatFacePaths.Head).toNodes().flatMap { node ->
+        PathParser().parsePathString(CatFacePaths.Head).toNodes().flatMap { node ->
             val points = when (node) {
                 is PathNode.MoveTo -> listOf(node.x to node.y)
                 is PathNode.LineTo -> (1..Samples).map {
@@ -92,7 +105,8 @@ class CoatShapesTest {
                     val x = bezier(t, from.first, node.x1, node.x2, node.x3)
                     x to bezier(t, from.second, node.y1, node.y2, node.y3)
                 }
-                else -> emptyList()
+                PathNode.Close -> emptyList()
+                else -> error("the head's outline has no sampling for $node")
             }
             points.lastOrNull()?.let { from = it }
             points
@@ -120,6 +134,7 @@ class CoatShapesTest {
 
     private companion object {
         const val Samples = 40
+
         // A shape spanning less of its square than this looks smaller than its neighbours even stretched onto it.
         const val ShapeSpan = 0.9f
         const val Tolerance = 0.002f

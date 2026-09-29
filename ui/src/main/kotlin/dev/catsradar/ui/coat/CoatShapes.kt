@@ -20,13 +20,13 @@ internal fun coatBaseShapeFor(coat: CoatOption?): RoundedPolygon = when (coat) {
     CoatOption.BROWN_WHITE -> MaterialShapes.Gem
     CoatOption.GREY -> MaterialShapes.Fan
     CoatOption.GREY_WHITE -> MaterialShapes.Pentagon
-    CoatOption.BLACK -> Leaf
+    CoatOption.BLACK -> leaf()
     CoatOption.BLACK_WHITE -> MaterialShapes.Bun
     null -> MaterialShapes.Ghostish
 }
 
-// A wider rounding brings the round corners onto the face's ears.
-private val Leaf = RoundedPolygon.rectangle(
+// A wider rounding lets a chosen tile's ring reach the face's ears.
+private fun leaf() = RoundedPolygon.rectangle(
     width = 1f,
     height = 1f,
     perVertexRounding = listOf(CornerRounding(0.6f), CornerRounding(0.2f), CornerRounding(0.6f), CornerRounding(0.2f)),

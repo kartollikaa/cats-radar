@@ -12,10 +12,11 @@ noted. Both paths are the same tally — same undo, same location attach, same b
 Each face sits in a rounded shape on the theme's highest container, and every coat has a shape of
 its own — ginger a circle, black a leaf, grey and white a pentagon, all of them soft,
 rounded forms, each stretched onto the whole of its square so that every shape is the same size — so
-a coat is known by its shape as well as its face; "no coat" has one too (`CoatShapesTest`). Each
-shape leaves its face enough room that the ring of a chosen coat never runs over it; grey's fan is
-the one that still reaches its cat's ear (`CoatShapesTest`, *a ringed tile keeps its face clear of
-the ring*). After a
+a coat is known by its shape as well as its face; "no coat" has one too (`CoatShapesTest`). A shape
+leaves its face room, so the ring of a chosen coat does not run over the cat's ears. The exceptions
+are grey's fan, under the grid's ring, and, under the thicker ring of a selected outing card, also
+the gem, pentagon and bun of brown and white, grey and white and black and white; no other coat may
+join them (`CoatShapesTest`, *only the known coats have a ring over their face*). After a
 tap the grid rings the coat just used — its shape fills with the primary container inside a line in
 the primary colour, its name under it — so a run of the same cat down the same street reads back at
 a glance (`CoatGridLookTest`). An Undo moves the ring back to the coat of the newest cat still

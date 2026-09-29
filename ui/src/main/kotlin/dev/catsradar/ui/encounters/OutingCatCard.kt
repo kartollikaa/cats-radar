@@ -33,6 +33,8 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 const val OutingCatCardTestTag = "outing-cat-card"
 
+internal val OutingLeadSize = 48.dp
+
 /** A cat inside its outing's card: its lead in its coat's shape, the coat's name, and when and where it was met. */
 @Composable
 internal fun OutingCatCard(
@@ -58,7 +60,7 @@ internal fun OutingCatCard(
         Box(modifier = Modifier.clearAndSetSemantics {}) {
             EncounterLead(
                 lead = cell.lead,
-                modifier = Modifier.size(48.dp).selectionOutline(cell.selected, colors.primary, leadShape),
+                modifier = Modifier.size(OutingLeadSize).selectionOutline(cell.selected, colors.primary, leadShape),
                 shape = leadShape,
             )
             if (cell.selected) SelectionBadge(modifier = Modifier.align(Alignment.TopEnd))

@@ -56,6 +56,7 @@ const val CellLeadTestTag = "cell-lead"
 
 // Between rows and between the cells of a row alike, so the grid's gutters read as one.
 internal val CellGap = 8.dp
+internal const val LeadFaceShare = 0.75f
 
 @Composable
 internal fun PhotoPairRow(
@@ -290,7 +291,7 @@ internal fun EncounterLead(
         is CellLead.Coat -> {
             val coatLabel = shot ?: stringResource(lead.coat.labelRes())
             Box(modifier = tile.semantics { contentDescription = coatLabel }, contentAlignment = Alignment.Center) {
-                CatFace(coat = lead.coat, modifier = Modifier.fillMaxSize(0.75f))
+                CatFace(coat = lead.coat, modifier = Modifier.fillMaxSize(LeadFaceShare))
             }
         }
         CellLead.Paw -> Box(
