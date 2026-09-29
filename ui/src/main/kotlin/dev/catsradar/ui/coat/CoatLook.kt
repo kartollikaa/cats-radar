@@ -2,6 +2,7 @@ package dev.catsradar.ui.coat
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.components.BarPart
 import kotlinx.collections.immutable.ImmutableList
@@ -37,6 +38,8 @@ internal data class CoatLook(
 
 /** The line around every face, so a white cat on a light surface or a black one on a dark surface still has an edge. */
 internal fun ColorScheme.faceRim(): Color = outline
+
+internal val FaceRimWidth = 1.2.dp
 
 // On a ringed coat's primary container the outline loses contrast in the dark theme; the ring's own colour keeps it.
 internal fun ColorScheme.ringedFaceRim(): Color = primary

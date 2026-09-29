@@ -24,7 +24,7 @@ import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 
 // The path data below is written in these units.
-private const val FaceUnits = 40f
+internal const val FaceUnits = 40f
 
 private fun svg(pathData: String): Path = PathParser().parsePathString(pathData).toPath()
 
@@ -67,7 +67,7 @@ internal fun CatFace(
         val side = unit * FaceUnits
         translate(left = (size.width - side) / 2, top = (size.height - side) / 2) {
             scale(scale = unit, pivot = Offset.Zero) {
-                drawFace(look, rim, rimWidth = 1.2.dp.toPx() / unit)
+                drawFace(look, rim, rimWidth = FaceRimWidth.toPx() / unit)
             }
         }
     }

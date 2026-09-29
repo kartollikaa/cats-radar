@@ -175,14 +175,17 @@ cookie**.
   by Undo's width on both sides, staying centred and clear of it; its give-way rules shorten it. The rule that the controls do not jump stands: nothing under the count moves when
   a walk starts or ends or Undo comes and goes.
 
-**The coat grid.** Four across, as today. Each face sits in a 52 dp Material shape on
+**The coat grid.** Four across, as today. Each face sits in a 52 dp rounded shape on
 `surfaceContainerHighest`, and each coat has a shape of its own (owner, 2026-09-27, over one shape
 per column): Ginger `Circle`, Ginger & white `Square`, White `Clover4Leaf`, Calico mostly white
 `Arch`, Calico little white `Cookie4Sided`, Brown `Slanted`, Brown & white `Gem`, Grey `Fan`, Grey &
-white `Pentagon`, Black `PuffyDiamond`, Black & white `Bun`, and no coat `Ghostish`: soft, rounded
+white `Pentagon`, Black a leaf (a square with two opposite corners rounded wide and two kept as
+tips), Black & white `Bun`, and no coat `Ghostish`: soft, rounded
 forms (owner: the spiky ones were "very angry"), each spanning at least nine tenths of its square
 both ways and stretched onto the whole of it, so every tile's shape is the same size (owner: the
-clam shell sat small). None is the count's twelve-sided cookie. The ringed coat's shape fills with
+clam shell sat small). None is the count's twelve-sided cookie. Each leaves its face clear of the
+ring (owner, 2026-09-29: Black's first shape, `PuffyDiamond`, was "really heavy and hard to see" —
+its body hugged the face, and the ring ran over the cat's ears). The ringed coat's shape fills with
 `primaryContainer` and takes a 2 dp `primary` outline; its name stays under it. When the ring moves,
 clears and follows Undo does not change. The rule that a row's cells share the tallest one's height
 so their rings match goes: the ring is now on the shape, and every shape is the same size. The grid
