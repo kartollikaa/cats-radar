@@ -1,6 +1,12 @@
 package dev.catsradar.ui.counter
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +32,9 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +60,7 @@ import dev.catsradar.ui.components.CatsRadarBottomSheet
 import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableSet
@@ -112,22 +122,36 @@ fun CoatPrompt(
 ) {
     val counting = prompt.counting
     // The sheet stands on the screen's bottom, so what can change size sits above everything one taps next.
+    // Scrolled from the bottom, so a count taller than the screen still grows upward, out of view.
     Column(
         modifier = modifier
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState(), reverseScrolling = true)
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SheetHeader(
-            title = promptTitle(counting),
-            supporting = promptHint(counting),
-            titleStyle = MaterialTheme.typography.headlineSmallEmphasized,
-            titleRoom = if (counting != null) countTitles() else persistentListOf(),
-            supportingRoom = if (counting != null) countHints() else persistentListOf(),
-            leading = { PromptLead(prompt.thumbPath) },
-        )
-        if (counting != null) CountTray(counting = counting, onCatClick = onTrayCatClick)
+        // The tray brings its own gap, which opens and closes with it.
+        Column {
+            SheetHeader(
+                title = promptTitle(counting),
+                supporting = promptHint(counting),
+                titleStyle = MaterialTheme.typography.headlineSmallEmphasized,
+                leading = { PromptLead(prompt.thumbPath) },
+            )
+            val tray = counting?.tray ?: persistentListOf()
+            val shownTray = rememberLastCounted(tray)
+            AnimatedVisibility(
+                visible = tray.isNotEmpty(),
+                enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
+            ) {
+                CountTray(
+                    tray = shownTray,
+                    onCatClick = onTrayCatClick,
+                    modifier = Modifier.padding(top = 16.dp).animateContentSize(alignment = Alignment.BottomStart),
+                )
+            }
+        }
         OneOrSeveral(several = counting != null, onOneCatClick = onOneCatClick, onSeveralClick = onSeveralClick)
         if (counting == null) {
             CoatGrid(selected = persistentSetOf(), onCoatClick = onCoatClick, keepsUnspecifiedPlace = true)
@@ -156,6 +180,14 @@ fun CoatPrompt(
             }
         }
     }
+}
+
+// The cats a tray last held, so they stay in it while it closes.
+@Composable
+private fun rememberLastCounted(tray: ImmutableList<CoatOption?>): ImmutableList<CoatOption?> {
+    val last = remember { mutableStateOf(tray) }
+    SideEffect { if (tray.isNotEmpty()) last.value = tray }
+    return tray.ifEmpty { last.value }
 }
 
 @Composable

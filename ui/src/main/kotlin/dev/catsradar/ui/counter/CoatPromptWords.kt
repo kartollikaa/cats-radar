@@ -5,9 +5,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.catsradar.presentation.counter.CoatCountState
 import dev.catsradar.ui.R
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 internal fun promptTitle(counting: CoatCountState?): String {
@@ -27,13 +24,3 @@ internal fun promptHint(counting: CoatCountState?): String = stringResource(
         else -> R.string.counter_coat_count_full
     },
 )
-
-@Composable
-internal fun countTitles(): ImmutableList<String> {
-    val counted = (1..CoatCountState.MOST_CATS).map { pluralStringResource(R.plurals.counter_coat_count_title, it, it) }
-    return (counted + stringResource(R.string.counter_coat_count_title_empty)).toImmutableList()
-}
-
-@Composable
-internal fun countHints(): ImmutableList<String> =
-    persistentListOf(stringResource(R.string.counter_coat_count_hint), stringResource(R.string.counter_coat_count_full))

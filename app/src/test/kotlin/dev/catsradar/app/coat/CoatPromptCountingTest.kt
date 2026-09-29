@@ -1,9 +1,11 @@
 package dev.catsradar.app.coat
 
 import android.content.Context
+import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -19,6 +21,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -27,14 +30,19 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.catsradar.app.testing.ComponentActivityRegistered
+import dev.catsradar.app.testing.talkBackOrder
+import dev.catsradar.app.testing.turnTalkBackOn
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.presentation.counter.CoatCountState
 import dev.catsradar.presentation.counter.CoatPromptState
 import dev.catsradar.ui.R
+import dev.catsradar.ui.coat.labelRes
 import dev.catsradar.ui.counter.CoatPrompt
 import dev.catsradar.ui.counter.CoatPromptPawTestTag
+import dev.catsradar.ui.counter.CoatTrayTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -131,16 +139,32 @@ class CoatPromptCountingTest {
     }
 
     @Test
-    fun `an empty count says where counted cats gather, until the first one does`() {
+    fun `an empty count shows no tray, and the first counted cat brings it`() {
         var prompt by mutableStateOf(asking.copy(counting = CoatCountState()))
         show({ prompt })
-        val gather = context.getString(R.string.counter_coat_count_tray_empty)
-        compose.onNodeWithText(gather).assertExists()
+        compose.onAllNodesWithTag(CoatTrayTestTag).assertCountEquals(0)
 
         prompt = asking.copy(counting = CoatCountState(persistentListOf(CoatOption.GINGER)))
         compose.waitForIdle()
 
-        compose.onAllNodesWithText(gather).assertCountEquals(0)
+        compose.onNodeWithTag(CoatTrayTestTag).assertExists()
+    }
+
+    @Test
+    fun `a screen reader hears counted cats in the order they were counted, the row above included`() {
+        val tray = CoatOption.entries.take(CoatCountState.MOST_CATS)
+        turnTalkBackOn()
+        lateinit var host: View
+        compose.setContent {
+            host = LocalView.current
+            CatsRadarTheme { CoatPrompt(prompt = asking.copy(counting = CoatCountState(tray.toImmutableList()))) }
+        }
+
+        val order = compose.talkBackOrder(host)
+
+        val hint = context.getString(R.string.counter_coat_count_full)
+        val heard = order.subList(order.indexOf(hint) + 1, order.indexOf(oneCat))
+        assertEquals(tray.map { context.getString(it.labelRes()) }, heard)
     }
 
     @Test

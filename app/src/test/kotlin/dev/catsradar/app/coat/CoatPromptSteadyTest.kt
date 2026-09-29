@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -32,7 +35,6 @@ import dev.catsradar.ui.counter.CoatTrayFaceTestTag
 import dev.catsradar.ui.counter.CoatTrayTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.toImmutableList
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -58,41 +60,37 @@ open class CoatPromptSteadyTest {
     private var prompt by mutableStateOf(asking)
 
     @Test
-    fun `counting cats up to the most a photo holds moves nothing one taps, nor the title`() {
+    fun `counting cats up to the most a photo holds moves nothing one taps, nor a counted cat`() {
         show(counting(0))
-        val before = taps() + ("title" to title())
-        var firstCat: Rect? = null
+        val before = taps()
+        var counted = emptyList<Rect>()
 
         (1..CoatCountState.MOST_CATS).forEach { cats ->
             showNow(counting(cats))
 
-            assertStill(before, taps() + ("title" to title()), "after counting cat $cats")
-            val first = trayFaces().first()
-            firstCat?.let { assertEquals(it, first, "the first counted cat after counting cat $cats") }
-            firstCat = first
+            assertStill(before, taps(), "after counting cat $cats")
+            val now = countedCats(cats)
+            assertEquals(counted, now.dropLast(1), "the cats counted before cat $cats")
+            counted = now
         }
     }
 
     @Test
-    fun `taking counted cats out one by one moves nothing one taps, nor the first cat left`() {
+    fun `taking counted cats out one by one moves nothing one taps, nor the cats left`() {
         show(counting(CoatCountState.MOST_CATS))
-        val before = taps() + ("title" to title())
-        val firstCat = trayFaces().first()
+        val before = taps()
+        val counted = countedCats(CoatCountState.MOST_CATS)
 
         (CoatCountState.MOST_CATS - 1 downTo 0).forEach { cats ->
             showNow(counting(cats))
 
-            assertStill(before, taps() + ("title" to title()), "with $cats cats left")
-            if (cats > 0) assertEquals(firstCat, trayFaces().first(), "the first cat with $cats cats left")
+            assertStill(before, taps(), "with $cats cats left")
+            assertEquals(counted.take(cats), countedCats(cats), "the cats left with $cats")
         }
     }
 
-    // False where Several is taller than the screen: the sheet then fills it and scrolls, so a switch moves the pair.
-    protected open val bothModesFitTheScreen = true
-
     @Test
     fun `switching One cat, Several and back moves neither the pair, a face nor Not now`() {
-        assumeTrue("Several fits the screen here", bothModesFitTheScreen)
         show(asking)
         val asked = taps()
 
@@ -105,13 +103,28 @@ open class CoatPromptSteadyTest {
     }
 
     @Test
-    fun `a full tray keeps the height it had with one cat, and shows every counted cat whole`() {
+    fun `the tray holds only the rows its cats fill, and a row opens above the others`() {
         show(counting(1))
-        val withOne = tray().height
+        val oneRow = tray().height
 
-        showNow(counting(CoatCountState.MOST_CATS))
+        (1..CoatCountState.MOST_CATS).forEach { cats ->
+            showNow(counting(cats))
 
-        assertEquals(withOne, tray().height, 1f)
+            val placed = countedCats(cats)
+            val top = placed.minOf { it.top }
+            assertEquals(top, placed.last().top, "the cat counted last is in the top row, with $cats cats")
+            assertTrue(placed.all { it.bottom <= placed.first().bottom }, "no row under the first cat's: $placed")
+            assertEquals(top, tray().top, 1f, "the tray's top with $cats cats")
+            assertEquals(placed.first().bottom, tray().bottom, 1f, "the tray's bottom with $cats cats")
+            if (placed.all { it.top == top }) assertEquals(oneRow, tray().height, 1f)
+        }
+        assertTrue(countedCats(CoatCountState.MOST_CATS).map { it.top }.distinct().size > 1, "a full tray takes rows")
+    }
+
+    @Test
+    fun `a full tray shows every counted cat whole and on the screen`() {
+        show(counting(CoatCountState.MOST_CATS))
+
         val whole = with(compose.density) { 40.dp.toPx() }
         val faces = trayFaces()
         assertEquals(CoatCountState.MOST_CATS, faces.size)
@@ -135,17 +148,17 @@ open class CoatPromptSteadyTest {
     }
 
     @Test
-    fun `no wording kept only for its room reaches a screen reader`() {
-        show(counting(3))
+    fun `once the words settle, a screen reader hears only the current ones`() {
+        show(counting(0))
+        showNow(counting(3))
 
         compose.onAllNodesWithText(context.getString(R.string.counter_coat_count_title_empty)).assertCountEquals(0)
         compose.onAllNodesWithText(context.getString(R.string.counter_coat_count_full)).assertCountEquals(0)
-        compose.onAllNodesWithText(context.getString(R.string.counter_coat_count_tray_empty)).assertCountEquals(0)
-        compose.onAllNodesWithText(saveLabel(CoatCountState.MOST_CATS)).assertCountEquals(0)
         compose.onAllNodesWithText(saveLabel(3)).assertCountEquals(1)
 
         showNow(asking)
 
+        compose.onAllNodesWithText(context.getString(R.string.counter_coat_count_hint)).assertCountEquals(0)
         compose.onAllNodesWithText(saveLabel(1)).assertCountEquals(0)
     }
 
@@ -184,16 +197,20 @@ open class CoatPromptSteadyTest {
         assertEquals(emptyMap(), moved, "moved $whenever")
     }
 
-    // Its top-left corner: the wording's width may change, where it starts may not.
     private fun title(): Rect = compose.onNode(isHeading()).fetchSemanticsNode().boundsInRoot
-        .let { Rect(it.topLeft, it.topLeft) }
 
     private fun tray(): Rect = compose.onNodeWithTag(CoatTrayTestTag).fetchSemanticsNode().boundsInRoot
 
-    // In reading order: rows top to bottom, each left to right.
+    // In the order they were counted: counting() gives each cat its own coat.
+    private fun countedCats(cats: Int): List<Rect> = (0 until cats).map { index ->
+        val label = context.getString(CoatOption.entries[index].labelRes())
+        compose.onNode(hasContentDescription(label) and hasAnyAncestor(hasTestTag(CoatTrayTestTag)))
+            .fetchSemanticsNode().boundsInRoot
+    }
+
     private fun trayFaces(): List<Rect> =
         compose.onAllNodesWithTag(CoatTrayFaceTestTag, useUnmergedTree = true).fetchSemanticsNodes()
-            .map { it.boundsInRoot }.sortedWith(compareBy({ it.top }, { it.left }))
+            .map { it.boundsInRoot }
 
     private fun bounds(text: String): Rect = compose.onNodeWithText(text).fetchSemanticsNode().boundsInRoot
 
@@ -210,14 +227,10 @@ class CoatPromptSteadyLargestFontTest : CoatPromptSteadyTest()
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "ru-w360dp-h900dp", fontScale = 1.5f)
 @RunWith(AndroidJUnit4::class)
-class CoatPromptSteadyRuLargestFontTest : CoatPromptSteadyTest() {
-    override val bothModesFitTheScreen = false
-}
+class CoatPromptSteadyRuLargestFontTest : CoatPromptSteadyTest()
 
 // The narrowest phones, where a longer Save label is likelier to wrap than a shorter one.
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "ru-w320dp-h900dp", fontScale = 1.5f)
 @RunWith(AndroidJUnit4::class)
-class CoatPromptSteadyRuNarrowLargestFontTest : CoatPromptSteadyTest() {
-    override val bothModesFitTheScreen = false
-}
+class CoatPromptSteadyRuNarrowLargestFontTest : CoatPromptSteadyTest()

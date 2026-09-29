@@ -1,5 +1,9 @@
 package dev.catsradar.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +21,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 internal fun SheetHeader(
@@ -26,8 +28,6 @@ internal fun SheetHeader(
     modifier: Modifier = Modifier,
     supporting: String? = null,
     titleStyle: TextStyle = MaterialTheme.typography.titleLarge,
-    titleRoom: ImmutableList<String> = persistentListOf(),
-    supportingRoom: ImmutableList<String> = persistentListOf(),
     leading: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -37,15 +37,15 @@ internal fun SheetHeader(
     ) {
         leading?.invoke()
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            KeepingRoomOf(titleRoom, titleStyle) {
+            ChangingText(title) {
                 Text(
-                    text = title,
+                    text = it,
                     style = titleStyle,
                     modifier = Modifier.semantics { heading() },
                 )
             }
-            supporting?.let {
-                KeepingRoomOf(supportingRoom, MaterialTheme.typography.bodyMedium) {
+            supporting?.let { words ->
+                ChangingText(words) {
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodyMedium,
@@ -54,6 +54,14 @@ internal fun SheetHeader(
                 }
             }
         }
+    }
+}
+
+// Not Crossfade: it keeps the longer wording's height to the end of the fade, then jumps.
+@Composable
+private fun ChangingText(text: String, content: @Composable (String) -> Unit) {
+    AnimatedContent(targetState = text, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "words") {
+        content(it)
     }
 }
 

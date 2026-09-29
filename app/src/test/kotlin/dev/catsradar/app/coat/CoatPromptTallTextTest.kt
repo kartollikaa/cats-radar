@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
@@ -40,7 +41,7 @@ class CoatPromptTallTextTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Test
-    fun `a count taller than the screen still reaches Save and Not now`() {
+    fun `a count taller than the screen opens on Save and Not now, and scrolls up to its title`() {
         val cats = List(CoatCountState.MOST_CATS) { CoatOption.entries[it % CoatOption.entries.size] }
         compose.setContent {
             CatsRadarTheme {
@@ -51,8 +52,11 @@ class CoatPromptTallTextTest {
         }
 
         val save = context.resources.getQuantityString(R.plurals.counter_coat_count_save, cats.size, cats.size)
-        compose.onNodeWithText(save).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(save).assertIsDisplayed()
         val notNow = context.getString(R.string.counter_coat_prompt_skip)
-        compose.onNodeWithText(notNow).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(notNow).assertIsDisplayed()
+        val title = context.resources.getQuantityString(R.plurals.counter_coat_count_title, cats.size, cats.size)
+        compose.onNodeWithText(title).assertIsNotDisplayed()
+        compose.onNodeWithText(title).performScrollTo().assertIsDisplayed()
     }
 }
