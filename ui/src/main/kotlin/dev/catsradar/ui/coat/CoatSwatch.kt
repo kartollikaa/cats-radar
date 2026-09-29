@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -72,8 +71,8 @@ fun CoatGrid(
 }
 
 /**
- * The same grid with any number of coats marked, for choosing several at once. A null in [selected] marks "no coat",
- * whose cell follows the coats with [onUnspecifiedClick], or stays an empty place with [keepsUnspecifiedPlace].
+ * The same grid with any number of coats marked, for choosing several at once. A null in [selected]
+ * marks "no coat", which gets a cell of its own after the coats only when [onUnspecifiedClick] is given.
  * A coat in [counts] shows how many of it were counted; with [enabled] false no cell takes a tap.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -86,7 +85,6 @@ fun CoatGrid(
     onCoatClick: (CoatOption) -> Unit = {},
     onUnspecifiedClick: (() -> Unit)? = null,
     @StringRes unspecifiedLabel: Int = R.string.coat_not_specified,
-    keepsUnspecifiedPlace: Boolean = false,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -108,7 +106,6 @@ fun CoatGrid(
                 CatFace(coat = coat, modifier = Modifier.size(TileFaceSize), rim = rim)
             }
         }
-        if (onUnspecifiedClick == null && keepsUnspecifiedPlace) Spacer(Modifier.width(CellWidth))
         onUnspecifiedClick?.let { onClick ->
             CoatTile(
                 label = stringResource(unspecifiedLabel),

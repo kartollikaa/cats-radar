@@ -58,7 +58,7 @@ import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableSet
 
 const val CoatPromptPawTestTag = "coat-prompt-paw"
@@ -148,18 +148,16 @@ fun CoatPrompt(
             }
         }
         OneOrSeveral(several = counting != null, onOneCatClick = onOneCatClick, onSeveralClick = onSeveralClick)
-        if (counting == null) {
-            CoatGrid(selected = persistentSetOf(), onCoatClick = onCoatClick, keepsUnspecifiedPlace = true)
-        } else {
-            CoatGrid(
-                selected = counting.counts.keys.toImmutableSet(),
-                counts = counting.counts,
-                enabled = counting.canAdd,
-                onCoatClick = onCoatClick,
-                onUnspecifiedClick = onUnseenClick,
-                unspecifiedLabel = R.string.coat_none,
-            )
-        }
+        // The same twelve faces in both modes, so switching moves none of them.
+        val counts = counting?.counts ?: persistentMapOf()
+        CoatGrid(
+            selected = counts.keys.toImmutableSet(),
+            counts = counts,
+            enabled = counting?.canAdd ?: true,
+            onCoatClick = onCoatClick,
+            onUnspecifiedClick = onUnseenClick,
+            unspecifiedLabel = R.string.coat_none,
+        )
         // Not now at the start, so Save coming and going never moves it.
         Row(
             modifier = Modifier.fillMaxWidth(),

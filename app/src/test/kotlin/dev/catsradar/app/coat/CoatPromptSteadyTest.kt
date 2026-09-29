@@ -200,10 +200,10 @@ open class CoatPromptSteadyTest {
         counting = CoatCountState(List(cats) { CoatOption.entries[it % CoatOption.entries.size] }.toImmutableList()),
     )
 
-    // Everything a finger goes for next: the pair, each coat's face and Not now.
+    // Everything a finger goes for next: the pair, each face, No coat's included, and Not now.
     private fun taps(): Map<String, Rect> {
         val labels = listOf(R.string.counter_coat_prompt_one, R.string.counter_coat_prompt_several) +
-            CoatOption.entries.map { it.labelRes() } + R.string.counter_coat_prompt_skip
+            CoatOption.entries.map { it.labelRes() } + R.string.coat_none + R.string.counter_coat_prompt_skip
         return labels.associate { res -> context.getString(res).let { it to bounds(it) } }
     }
 

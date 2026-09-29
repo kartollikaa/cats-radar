@@ -30,16 +30,19 @@ A photo cannot carry its coat the way a tap on the grid does: the Photo button o
 camera, and nothing in that press says what the cat looked like. So once the photo is saved, the
 Counter asks in a bottom sheet: the photo's thumbnail beside **What coat was it?** and a line
 saying that a tap notes the coat; under them a connected pair of buttons, **One cat · Several**,
-with *One cat* checked; then the eleven faces, and **Not now** at the start of the last row. The moment after
-the shutter is when the coat is known best, with the cat still in front of the lens.
+with *One cat* checked; then the eleven faces and a paw, **No coat**, and **Not now** at the start
+of the last row. The moment after the shutter is when the coat is known best, with the cat still in
+front of the lens.
 
 That is not the old strip coming back: a photo has no tap that chose its coat, and the sheet is the
 only place the Counter asks about it.
 
 A face sets that coat on the cat just photographed and closes the sheet
 (`CounterStorePhotoPromptTest`, *picking a coat sets it on the photographed cat and closes the
-prompt*). **Not now**, a swipe down, a tap outside it or back closes it with the coat unset
-(*dismissing the prompt leaves the coat unset*); the detail screen can still set it. The cat is
+prompt*). **No coat** answers that nobody saw it: the sheet closes and the cat keeps no coat (*no
+coat while asking closes the prompt and leaves the coat unset*). **Not now**, a swipe down, a tap
+outside it or back closes it with the coat unset (*dismissing the prompt leaves the coat unset*); the
+detail screen can still set it. The cat is
 saved before the sheet appears, so losing the sheet — the app killed in the background, say — loses
 only the question.
 
@@ -107,8 +110,7 @@ it, each into the place before (`CoatPromptSteadyTest`, also run at the largest 
   in the order they were counted.
 - *Not now* stays at the start of the last row; before the first cat is counted, that row keeps the height that
   *Save* gives it.
-- Under *One cat* the grid keeps the paw's place empty, so the last row's faces stand where they do while
-  counting.
+- Both modes show the same twelve faces, *No coat* included, so switching moves none of them.
 
 What moves is the header, and it glides. The tray opens and closes over a few frames, and so does a row it gains
 or loses; the header's words cross-fade while the room they need grows or shrinks; the sheet's top edge follows

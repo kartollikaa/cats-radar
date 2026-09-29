@@ -8,7 +8,7 @@ internal fun CoatPromptState.after(intent: CounterIntent.CoatPrompt): CoatPrompt
     CounterIntent.CoatPrompt.SeveralClicked -> copy(counting = counting ?: CoatCountState())
     CounterIntent.CoatPrompt.OneCatClicked -> copy(counting = null)
     is CounterIntent.CoatPrompt.Picked -> counting?.let { copy(counting = it.counted(intent.coat)) }
-    CounterIntent.CoatPrompt.UnseenPicked -> copy(counting = counting?.counted(null))
+    CounterIntent.CoatPrompt.UnseenPicked -> counting?.let { copy(counting = it.counted(null)) }
     is CounterIntent.CoatPrompt.TrayCatClicked -> copy(counting = counting?.without(intent.index, intent.coat))
     CounterIntent.CoatPrompt.SaveClicked -> takeIf { counting?.tray.isNullOrEmpty() }
     CounterIntent.CoatPrompt.Dismissed -> null

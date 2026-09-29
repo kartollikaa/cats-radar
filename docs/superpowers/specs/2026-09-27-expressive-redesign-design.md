@@ -242,11 +242,14 @@ button of the same weight, and the paw tile's *Not specified* broke mid-word at 
 - **It keeps still where one taps** (owner, 2026-09-29: switching modes and counting changed the sheet's
   height, and taking cats out missed). The tray sits above the group and holds only the rows its cats
   fill, stacking a new row above the others; *Not now* never moves, and the row keeps Save's height
-  before the first cat; the grid keeps the paw's place under *One cat*. A sheet taller than the screen
+  before the first cat. A sheet taller than the screen
   scrolls from its bottom. A first take kept a full tray's room from the start; the owner found the blank
   ugly and chose, from a prototype of four directions, a tray that grows upward.
 - **It glides.** The tray opens, closes and gains rows over a few frames, and the header's words
-  cross-fade while their height changes, so the sheet's top edge follows instead of jumping.
+  fade through while their height changes, so the sheet's top edge follows instead of jumping.
+- **One grid for both modes** (owner, 2026-09-29: "so the options do not differ"). *One cat* shows the
+  paw's **No coat** too; a tap on it answers that nobody saw the coat and closes the sheet with the coat
+  unset, as a face closes it with that coat.
 
 **The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
 should be like the import popup". The hint that follows a denied location request leaves the column and
