@@ -27,6 +27,8 @@ import dev.catsradar.ui.theme.ThemePreviews
 
 const val SelectionBadgeTestTag = "selection-badge"
 
+internal val SelectionRingWidth = 3.dp
+
 /** A tap opens the cat, or toggles it while selecting; a long press toggles it where [onLongClick] is given. */
 internal fun Modifier.selectableCell(
     selected: Boolean,
@@ -44,7 +46,7 @@ internal fun Modifier.selectableCell(
     )
 
 internal fun Modifier.selectionOutline(selected: Boolean, color: Color, shape: Shape): Modifier =
-    if (selected) border(3.dp, color, shape) else this
+    if (selected) border(SelectionRingWidth, color, shape) else this
 
 @Composable
 internal fun toggleLabel(selected: Boolean): String =

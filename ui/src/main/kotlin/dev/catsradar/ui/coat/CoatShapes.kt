@@ -2,11 +2,13 @@ package dev.catsradar.ui.coat
 
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
+import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.TransformResult
+import androidx.graphics.shapes.rectangle
 import dev.catsradar.presentation.coat.CoatOption
 
-/** Each coat's own Material shape, and one for "no coat" ([coat] null), so a coat is known by its shape too. */
+/** Each coat's own rounded shape, and one for "no coat" ([coat] null), so a coat is known by its shape too. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal fun coatBaseShapeFor(coat: CoatOption?): RoundedPolygon = when (coat) {
     CoatOption.GINGER -> MaterialShapes.Circle
@@ -18,10 +20,17 @@ internal fun coatBaseShapeFor(coat: CoatOption?): RoundedPolygon = when (coat) {
     CoatOption.BROWN_WHITE -> MaterialShapes.Gem
     CoatOption.GREY -> MaterialShapes.Fan
     CoatOption.GREY_WHITE -> MaterialShapes.Pentagon
-    CoatOption.BLACK -> MaterialShapes.PuffyDiamond
+    CoatOption.BLACK -> leaf()
     CoatOption.BLACK_WHITE -> MaterialShapes.Bun
     null -> MaterialShapes.Ghostish
 }
+
+// A wider rounding lets a chosen tile's ring reach the face's ears.
+private fun leaf() = RoundedPolygon.rectangle(
+    width = 1f,
+    height = 1f,
+    perVertexRounding = listOf(CornerRounding(0.6f), CornerRounding(0.2f), CornerRounding(0.6f), CornerRounding(0.2f)),
+)
 
 // Material's shapes stop short of their square by different amounts; stretched onto it, every tile's shape is one size.
 private val FilledCoatShapes = (CoatOption.entries + null).associateWith { coatBaseShapeFor(it).filledToSquare() }

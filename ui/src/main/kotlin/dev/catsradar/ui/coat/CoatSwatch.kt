@@ -52,7 +52,9 @@ import kotlinx.collections.immutable.persistentSetOf
 const val CoatShapeTestTag = "coat-shape"
 
 private val CellWidth = 70.dp
-private val TileFaceSize = 38.dp
+internal val TileSize = 52.dp
+internal val TileFaceSize = 38.dp
+internal val TileRingWidth = 2.dp
 private const val CoatsPerRow = 4
 
 /**
@@ -160,11 +162,11 @@ private fun CoatTile(
         Box {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(TileSize)
                     .testTag(CoatShapeTestTag)
                     .clip(outline)
                     .background(if (selected) colors.primaryContainer else colors.surfaceContainerHighest)
-                    .then(if (selected) Modifier.border(2.dp, colors.primary, outline) else Modifier)
+                    .then(if (selected) Modifier.border(TileRingWidth, colors.primary, outline) else Modifier)
                     .indication(interactionSource, ripple()),
                 contentAlignment = Alignment.Center,
             ) {
