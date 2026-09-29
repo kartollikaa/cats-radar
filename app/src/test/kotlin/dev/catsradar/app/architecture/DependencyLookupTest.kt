@@ -29,12 +29,14 @@ class DependencyLookupTest {
             "context.getSystemService(Vibrator::class.java)",
             "getSystemService<Vibrator>()",
             "context.getSharedPreferences(\"settings\", Context.MODE_PRIVATE)",
+            "PreferenceManager.getDefaultSharedPreferences(context)",
             "Geocoder(context)",
             "LocationServices.getFusedLocationProviderClient(context)",
             "WorkManager.getInstance(context)",
             "NotificationManagerCompat.from(context)",
             "FirebaseCrashlytics.getInstance()",
             "Firebase.analytics",
+            "Firebase.crashlytics",
             "single<Clock> { Clock.System }",
         ).forEach { line -> assertTrue(Lookup.containsMatchIn(line), "not matched: $line") }
     }
@@ -47,6 +49,24 @@ class DependencyLookupTest {
             "class SystemClock",
             "val services = getSystemServiceNames()",
         ).forEach { line -> assertFalse(Lookup.containsMatchIn(line), "matched: $line") }
+    }
+
+    @Test
+    fun `the construction pattern matches a mapper or store built by call or reference`() {
+        listOf(
+            "val mapper = CounterStateMapper(formatter)",
+            "val store = CounterStore(mapper)",
+            "factory(::CounterStateMapper)",
+        ).forEach { line -> assertTrue(MapperOrStoreConstruction.containsMatchIn(line), "not matched: $line") }
+    }
+
+    @Test
+    fun `the construction pattern leaves a declaration or a held instance alone`() {
+        listOf(
+            "class CounterStateMapper(private val formatter: DateTimeFormatter)",
+            "class CounterStore(mapper: CounterStateMapper) : Store<CounterState>()",
+            "private val mapper: CounterStateMapper",
+        ).forEach { line -> assertFalse(MapperOrStoreConstruction.containsMatchIn(line), "matched: $line") }
     }
 
     private companion object {
