@@ -2,6 +2,7 @@ package dev.catsradar.app.di
 
 import android.content.Context
 import dev.catsradar.domain.region.RegionKey
+import dev.catsradar.presentation.map.MapChoices
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.module
@@ -16,8 +17,8 @@ class KoinModulesTest {
     @Test
     fun `domain, data, presentation and worker modules resolve together`() {
         module { includes(domainModule, dataModule, presentationModule, workerModule) }
-            // RegionKey and a spot's Sets are handed in with parametersOf when the screen opens, exactly
-            // like Context; verify() cannot see call-time parameters, so it has to be told.
-            .verify(extraTypes = listOf(Context::class, RegionKey::class, Set::class))
+            // RegionKey, a spot's Sets and a map's MapChoices are handed in with parametersOf when the screen
+            // opens, exactly like Context; verify() cannot see call-time parameters, so it has to be told.
+            .verify(extraTypes = listOf(Context::class, RegionKey::class, Set::class, MapChoices::class))
     }
 }

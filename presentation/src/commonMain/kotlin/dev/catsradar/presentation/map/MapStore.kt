@@ -50,6 +50,7 @@ sealed interface MapEffect {
 }
 
 class MapStore(
+    start: MapChoices,
     observeEncounters: ObserveEncounters,
     observeOutingTracks: ObserveOutingTracks,
     private val stateMapper: MapStateMapper,
@@ -57,7 +58,7 @@ class MapStore(
     private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : Store<MapState, MapIntent, MapEffect>(MapState.Loading) {
 
-    private val choices = MutableStateFlow(MapChoices())
+    private val choices = MutableStateFlow(start)
     private val unreadableThumbnails = MutableStateFlow<Set<String>>(emptySet())
 
     init {

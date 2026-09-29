@@ -20,8 +20,9 @@ Every screen follows the same minimal MVI shape through one base class,
 `handle` to call use cases, reduce state with `setState { copy(...) }`, and fire one-shot
 `emit(effect)` calls for anything the screen shouldn't keep re-showing (navigation, haptics, a
 permission request). There are no separate reducer/actor classes and no shared message bus — each
-screen's Store is self-contained, registered with Koin as a `viewModelOf`, and created once per
-Navigation 3 entry via `rememberViewModelStoreNavEntryDecorator`.
+screen's Store is self-contained, registered with Koin as a `viewModelOf`, or as a `viewModel { }` when
+it is built from its destination's arguments, and created once per Navigation 3 entry via
+`rememberViewModelStoreNavEntryDecorator`.
 
 ## System bars and insets
 
@@ -231,3 +232,6 @@ because building it reaches Play Services, which only a real location call shoul
 The two sheets a screen opens itself — the coat choice over the map and the coat question after a
 photo — are not back-stack destinations yet, so *Sheets are destinations* above does not hold for
 them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
+
+A map opened above another screen ([map.md](./map.md#a-map-above-another-screen)) is a pushed screen without
+the back arrow *Pushed screens* above describes: its top holds the map's chips, and only system back leaves it.

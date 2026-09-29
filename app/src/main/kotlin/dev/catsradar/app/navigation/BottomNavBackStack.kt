@@ -26,18 +26,34 @@ class BottomNavBackStack internal constructor(private val entries: NavBackStack<
             ?: BottomNavTab.COUNTER
 
     fun selectTab(tab: BottomNavTab) {
+        returnedTo = null
         while (entries.size > 1) entries.removeAt(entries.lastIndex)
         val target = tab.key()
         if (entries.last() != target) entries.add(target)
     }
 
-    /** Pushes [key] unless it is already on the stack, in which case nothing changes. */
+    /** The key [push] last went back to, until its screen takes the return or the stack changes otherwise. */
+    var returnedTo: NavKey? = null
+        private set
+
+    /** True once after [push] went back to [key], so its screen shows again what that push asked for. */
+    fun takeReturn(key: NavKey): Boolean = (returnedTo == key).also { if (it) returnedTo = null }
+
+    /** Pushes [key], or, when it is already on the stack, goes back to it by popping the entries above it. */
     fun push(key: NavKey) {
-        if (key !in entries) entries.add(key)
+        if (key !in entries) {
+            returnedTo = null
+            entries.add(key)
+            return
+        }
+        if (entries.last() == key) return
+        while (entries.last() != key) entries.removeAt(entries.lastIndex)
+        returnedTo = key
     }
 
     /** Pops the top entry unless only the root remains; returns whether it popped. */
     fun popOrNull(): Boolean {
+        returnedTo = null
         if (entries.size <= 1) return false
         entries.removeAt(entries.lastIndex)
         return true

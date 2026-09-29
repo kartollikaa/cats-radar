@@ -77,8 +77,11 @@ internal fun EncounterDetailDestination(
     onOpenCoatSheet: (catId: String) -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
+    takeReturn: () -> Boolean = { false },
 ) {
     val store = rememberEncounterDetailStore(key)
+    val currentTakeReturn by rememberUpdatedState(takeReturn)
+    LaunchedEffect(store) { if (currentTakeReturn()) store.dispatch(EncounterDetailIntent.CatRequested(key.id)) }
     val state by store.state.collectAsStateWithLifecycle()
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnOpenPhoto by rememberUpdatedState(onOpenPhoto)

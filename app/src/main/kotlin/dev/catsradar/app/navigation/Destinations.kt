@@ -13,6 +13,7 @@ import coil3.ImageLoader
 import dev.catsradar.presentation.encounters.EncountersEffect
 import dev.catsradar.presentation.encounters.EncountersIntent
 import dev.catsradar.presentation.encounters.EncountersStore
+import dev.catsradar.presentation.map.MapChoices
 import dev.catsradar.presentation.map.MapEffect
 import dev.catsradar.presentation.map.MapIntent
 import dev.catsradar.presentation.map.MapSpotEffect
@@ -61,6 +62,11 @@ internal fun EncountersDestination(
     )
 }
 
+// A map opened above another screen is left by back whatever it shows, so back returns to that screen.
+internal fun MapState.backLetsGoOfFocus(opening: MapChoices?): Boolean =
+    opening == null && (this as? MapState.Located)?.focus != null
+
+/** The Map tab's own map when [opening] is null; otherwise a map pushed above another screen, opening on it. */
 @Composable
 internal fun MapDestination(
     contentPadding: PaddingValues,
@@ -68,8 +74,9 @@ internal fun MapDestination(
     onOpenCat: (String) -> Unit,
     onOpenSpot: (MapSpot) -> Unit,
     modifier: Modifier = Modifier,
+    opening: MapChoices? = null,
 ) {
-    val store = koinViewModel<MapStore>()
+    val store = koinViewModel<MapStore> { parametersOf(opening ?: MapChoices()) }
     val imageLoader = koinInject<ImageLoader>()
     val state by store.state.collectAsStateWithLifecycle()
     val openCat by rememberUpdatedState(onOpenCat)
@@ -77,7 +84,7 @@ internal fun MapDestination(
     LaunchedEffect(store, focusRequest.pending) {
         focusRequest.consume()?.let(store::dispatch)
     }
-    BackHandler(enabled = (state as? MapState.Located)?.focus != null) { store.dispatch(MapIntent.FocusCleared) }
+    BackHandler(enabled = state.backLetsGoOfFocus(opening)) { store.dispatch(MapIntent.FocusCleared) }
     LaunchedEffect(store) {
         store.effects.collect { effect ->
             when (effect) {
