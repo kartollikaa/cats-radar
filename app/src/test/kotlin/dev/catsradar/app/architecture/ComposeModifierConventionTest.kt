@@ -13,7 +13,7 @@ class ComposeModifierConventionTest {
     fun `public composables declare their Modifier param as modifier Modifier = Modifier first among defaults`() {
         Konsist.scopeFromProject()
             .functions()
-            .excludingGeneratedSources()
+            .excludingBuildOutputAndOtherWorktrees()
             .withAllAnnotationsOf(Composable::class)
             .filter { it.hasPublicOrDefaultModifier }
             .filter { function -> function.parameters.any { it.hasTypeOf(Modifier::class) } }

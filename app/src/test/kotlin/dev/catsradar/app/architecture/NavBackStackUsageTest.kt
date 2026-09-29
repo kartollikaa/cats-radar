@@ -14,7 +14,7 @@ class NavBackStackUsageTest {
 
     private val appSources = Konsist.scopeFromProject()
         .files
-        .excludingGeneratedSources()
+        .excludingBuildOutputAndOtherWorktrees()
         .filter { it.path.contains("/app/src/main/") }
 
     @Test

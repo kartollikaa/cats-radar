@@ -3,6 +3,8 @@ package dev.catsradar.app.architecture
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.verify.assertFalse
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /** Constructor injection from docs/rules/dependency-injection.md: only the composition root obtains collaborators. */
 class DependencyLookupTest {
@@ -21,6 +23,52 @@ class DependencyLookupTest {
         ) { file -> MapperOrStoreConstruction.containsMatchIn(file.text) }
     }
 
+    @Test
+    fun `the lookup pattern matches every form the rule bans`() {
+        listOf(
+            "context.getSystemService(Vibrator::class.java)",
+            "getSystemService<Vibrator>()",
+            "context.getSharedPreferences(\"settings\", Context.MODE_PRIVATE)",
+            "PreferenceManager.getDefaultSharedPreferences(context)",
+            "Geocoder(context)",
+            "LocationServices.getFusedLocationProviderClient(context)",
+            "WorkManager.getInstance(context)",
+            "NotificationManagerCompat.from(context)",
+            "FirebaseCrashlytics.getInstance()",
+            "Firebase.analytics",
+            "Firebase.crashlytics",
+            "single<Clock> { Clock.System }",
+        ).forEach { line -> assertTrue(Lookup.containsMatchIn(line), "not matched: $line") }
+    }
+
+    @Test
+    fun `the lookup pattern leaves injected collaborators alone`() {
+        listOf(
+            "private val clock: Clock",
+            "clock.now()",
+            "class SystemClock",
+            "val services = getSystemServiceNames()",
+        ).forEach { line -> assertFalse(Lookup.containsMatchIn(line), "matched: $line") }
+    }
+
+    @Test
+    fun `the construction pattern matches a mapper or store built by call or reference`() {
+        listOf(
+            "val mapper = CounterStateMapper(formatter)",
+            "val store = CounterStore(mapper)",
+            "factory(::CounterStateMapper)",
+        ).forEach { line -> assertTrue(MapperOrStoreConstruction.containsMatchIn(line), "not matched: $line") }
+    }
+
+    @Test
+    fun `the construction pattern leaves a declaration or a held instance alone`() {
+        listOf(
+            "class CounterStateMapper(private val formatter: DateTimeFormatter)",
+            "class CounterStore(mapper: CounterStateMapper) : Store<CounterState>()",
+            "private val mapper: CounterStateMapper",
+        ).forEach { line -> assertFalse(MapperOrStoreConstruction.containsMatchIn(line), "matched: $line") }
+    }
+
     private companion object {
         val ProductionSourceSet = Regex("/(app|data|domain|presentation|ui)/src/(main|commonMain|androidMain)/")
         const val CompositionRootPackage = "/app/src/main/kotlin/dev/catsradar/app/di/"
@@ -29,7 +77,7 @@ class DependencyLookupTest {
         val outsideCompositionRoot by lazy {
             Konsist.scopeFromProject()
                 .files
-                .excludingGeneratedSources()
+                .excludingBuildOutputAndOtherWorktrees()
                 .filter { file -> ProductionSourceSet.containsMatchIn(file.path) }
                 .filterNot { file -> file.path.contains(CompositionRootPackage) || file.path.endsWith(ApplicationFile) }
         }
@@ -43,6 +91,7 @@ class DependencyLookupTest {
                 """\b\w+Manager(Compat)?\.(getInstance|from)\(""",
                 """\bFirebase\w*\.getInstance\(""",
                 """\bFirebase\.(analytics|crashlytics)\b""",
+                """\bClock\.System\b""",
             ).joinToString("|"),
         )
 

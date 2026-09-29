@@ -41,6 +41,18 @@ today only by there being no `implementation(projects.domain)` in `:ui`'s `build
 no project dependency at all in `:domain`'s; no Konsist test backs either one, so an accidental
 dependency edit would not be caught by `check`.
 
+Every rule reads its files through `excludingBuildOutputAndOtherWorktrees()`, which drops build
+output — a `build` directory above `src`, so a package that happens to be called `build` stays — and
+the other worktrees. Konsist scans from the nearest directory holding the Gradle wrapper, so in a
+main checkout it also reaches every session's copy of the sources under `.claude/worktrees/`; left
+in, those copies are judged like the real ones and fail `check` for code that is not on the branch.
+Paths are judged *relative to Konsist's own project root*: a checkout that is itself a worktree has
+`.claude/worktrees/` in every absolute path, and a filter on the absolute path would empty its scope
+and leave every rule green on nothing. A file outside that root is refused with an error instead of
+being kept. `KonsistScopeSupportTest` pins each of these and that the project's own sources are in
+the scope. Only `.claude/worktrees/` is filtered: a checkout made elsewhere inside the repository
+would be scanned like the real sources.
+
 Beyond the import-boundary rules, Konsist also checks: every class named `*Store` lives under
 `dev.catsradar.presentation`; every class named `*State` has no function-typed property (a literal
 lambda type, a `fun interface`, or a typealias for either — the enforcement mechanism behind
@@ -56,10 +68,15 @@ sheet can stop half open (`BottomSheetUsageTest`, see `app-shell.md`). And outsi
 composition root (`:app`'s `di` package and `CatsRadarApplication`) no production file looks up a
 platform service or SDK singleton — `getSystemService` (either form), `getSharedPreferences`,
 `Geocoder(...)`, `LocationServices`, `WorkManager`/`NotificationManagerCompat`/Firebase
-`getInstance`/`from`, `Firebase.analytics`/`crashlytics` — or constructs a `*StateMapper` or
-`*Store`, by call or by constructor reference (`DependencyLookupTest`, see
-`docs/rules/dependency-injection.md`). `*Intent`, `*Effect`, and `*StateMapper` naming has no Konsist
-test at all.
+`getInstance`/`from`, `Firebase.analytics`/`crashlytics`, `Clock.System` — or constructs a
+`*StateMapper` or `*Store`, by call or by constructor reference (`DependencyLookupTest`, see
+`docs/rules/dependency-injection.md`); each of those two patterns has a sample for every form it bans
+and for what it must leave alone, so a pattern that stops matching fails instead of passing on
+nothing. And no file in a source set of `:domain`, `:data` or `:presentation` other than an Android
+one (`commonMain`, `commonTest`, and any `jvmMain` or `iosMain` added later) names `java.time`,
+`java.util.Date`, `Calendar` or `SimpleDateFormat`, or imports `java.util.*` or `java.text.*` whole;
+`androidMain` may (`DateTimeApiUsageTest`, see `docs/rules/date-time.md`). `*Intent`, `*Effect`, and
+`*StateMapper` naming has no Konsist test at all.
 
 The DI graph gets its own two-layer check outside the three formal tools: `KoinModulesTest`
 statically verifies every constructor-injected binding resolves, and `KoinRuntimeResolutionTest`
