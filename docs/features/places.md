@@ -139,7 +139,8 @@ only repeat the name beside them. A cat's detail names its city and country the 
 them out: one card per cat with its coat face or photo, in a run of cards under each outing header.
 This is never the Encounters grid, whatever the Settings switch says. The headline is the list's
 first item and scrolls away with it. An outing header whose cats include a located one offers
-**On the map**, which opens the Map tab on that outing, as it does from Encounters. The headers
+**On the map**, which opens that outing on a map above the place, as it does above the Encounters
+list; back returns to the place (`RegionsEntryTest`). The headers
 group only the place's own cats, so an outing that also went elsewhere starts here at its first cat in
 this place, while the map shows the whole outing and names it by its real start. A cat here has no
 long press: there is nothing to select.

@@ -15,6 +15,7 @@ import dev.catsradar.presentation.encounters.EncountersStateMapper
 import dev.catsradar.presentation.encounters.EncountersStore
 import dev.catsradar.presentation.locationpicker.LocationPickerStateMapper
 import dev.catsradar.presentation.locationpicker.LocationPickerStore
+import dev.catsradar.presentation.map.MapChoices
 import dev.catsradar.presentation.map.MapSpotStateMapper
 import dev.catsradar.presentation.map.MapSpotStore
 import dev.catsradar.presentation.map.MapStateMapper
@@ -43,7 +44,16 @@ val presentationModule = module {
     factoryOf(::EncountersStateMapper)
     viewModelOf(::EncountersStore)
     factoryOf(::MapStateMapper)
-    viewModelOf(::MapStore)
+    viewModel { (start: MapChoices) ->
+        MapStore(
+            start = start,
+            observeEncounters = get(),
+            observeOutingTracks = get(),
+            stateMapper = get(),
+            clock = get(),
+            timeZone = get(),
+        )
+    }
     factoryOf(::CoatSheetStateMapper)
     viewModel { (catId: String) ->
         CoatSheetStore(catId = catId, observeEncounter = get(), setCoat = get(), stateMapper = get())

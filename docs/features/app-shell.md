@@ -231,3 +231,6 @@ because building it reaches Play Services, which only a real location call shoul
 The two sheets a screen opens itself — the coat choice over the map and the coat question after a
 photo — are not back-stack destinations yet, so *Sheets are destinations* above does not hold for
 them. The root-stack back rule the bottom bar enforces is covered in `browsing-cats.md`.
+
+A map opened above another screen ([map.md](./map.md#a-map-above-another-screen)) is a pushed screen without
+the back arrow *Pushed screens* above describes: its top holds the map's chips, and only system back leaves it.

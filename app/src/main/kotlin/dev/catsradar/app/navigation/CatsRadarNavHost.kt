@@ -21,6 +21,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import dev.catsradar.app.photo.CameraRequest
+import dev.catsradar.presentation.map.MapChoices
 import dev.catsradar.presentation.regions.RegionRowKey
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.ui.navigation.BottomNavTab
@@ -98,28 +99,10 @@ internal fun catsRadarEntries(
         EncountersDestination(
             contentPadding = contentPadding,
             onOpenEncounter = { id -> backStack.push(EncounterDetail(id)) },
-            onOutingMapClick = { id -> backStack.showOutingOnMap(id, mapFocus) },
+            onOutingMapClick = { id -> backStack.push(OutingOnMap(id)) },
         )
     }
-    entry<CatsMap>(metadata = tabRootMetadata()) {
-        MapDestination(
-            contentPadding = contentPadding,
-            focusRequest = mapFocus,
-            onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
-            onOpenSpot = { spot -> backStack.push(spot) },
-        )
-    }
-    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { key ->
-        MapSpotDestination(
-            key = key,
-            onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
-            onFocusOuting = { id ->
-                mapFocus.postOuting(id)
-                backStack.popIfOnTop(key)
-            },
-            onClose = { backStack.popIfOnTop(key) },
-        )
-    }
+    mapEntries(backStack, contentPadding, mapFocus)
     entry<Statistics>(metadata = tabRootMetadata()) {
         StatisticsDestination(
             contentPadding = contentPadding,
@@ -134,32 +117,63 @@ internal fun catsRadarEntries(
             onBackClick = { backStack.popIfOnTop(key) },
             onRegionClick = { row -> backStack.push(row.toNavKey()) },
             onEncounterClick = { id -> backStack.push(EncounterDetail(id)) },
-            onOutingMapClick = { id -> backStack.showOutingOnMap(id, mapFocus) },
+            onOutingMapClick = { id -> backStack.push(OutingOnMap(id)) },
         )
     }
-    catEntries(backStack, contentPadding, mapFocus)
+    catEntries(backStack, contentPadding)
 }
 
-private fun BottomNavBackStack.showOutingOnMap(outingId: String, mapFocus: MapFocusRequest) {
-    mapFocus.postOuting(outingId)
-    selectTab(BottomNavTab.MAP)
-}
-
-private fun EntryProviderScope<NavKey>.catEntries(
+private fun EntryProviderScope<NavKey>.mapEntries(
     backStack: BottomNavBackStack,
     contentPadding: PaddingValues,
     mapFocus: MapFocusRequest,
 ) {
+    entry<CatsMap>(metadata = tabRootMetadata()) { MapEntryContent(backStack, contentPadding, mapFocus) }
+    entry<OutingOnMap> { key ->
+        MapEntryContent(backStack, contentPadding, mapFocus, opening = MapChoices(focus = key.encounterId))
+    }
+    entry<CatOnMap> { key ->
+        MapEntryContent(backStack, contentPadding, mapFocus, opening = MapChoices(cat = key.encounterId))
+    }
+    entry<MapSpot>(metadata = BottomSheetSceneStrategy.bottomSheet()) { key ->
+        MapSpotDestination(
+            key = key,
+            onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
+            onFocusOuting = { id ->
+                mapFocus.postOuting(id)
+                backStack.popIfOnTop(key)
+            },
+            onClose = { backStack.popIfOnTop(key) },
+        )
+    }
+}
+
+@Composable
+private fun MapEntryContent(
+    backStack: BottomNavBackStack,
+    contentPadding: PaddingValues,
+    mapFocus: MapFocusRequest,
+    modifier: Modifier = Modifier,
+    opening: MapChoices? = null,
+) {
+    MapDestination(
+        contentPadding = contentPadding,
+        focusRequest = mapFocus,
+        modifier = modifier,
+        opening = opening,
+        onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
+        onOpenSpot = { spot -> backStack.push(spot) },
+    )
+}
+
+private fun EntryProviderScope<NavKey>.catEntries(backStack: BottomNavBackStack, contentPadding: PaddingValues) {
     entry<EncounterDetail> { key ->
         EncounterDetailDestination(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popIfOnTop(key) },
             onOpenPhoto = { viewer -> backStack.push(viewer) },
-            onOpenMap = { catId ->
-                mapFocus.postCat(catId)
-                backStack.selectTab(BottomNavTab.MAP)
-            },
+            onOpenMap = { catId -> backStack.push(CatOnMap(catId)) },
             onOpenLocationPicker = { catId -> backStack.push(LocationPicker(catId)) },
             onOpenCoatSheet = { catId -> backStack.push(CoatSheet(catId)) },
         )

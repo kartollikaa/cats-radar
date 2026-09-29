@@ -14,7 +14,8 @@ return to the list, never to the Counter root. The same screen opens from a dot 
 ([map.md](./map.md)) and from a cat in the places drill-down ([places.md](./places.md#browsing-them)),
 above the screen it was tapped in. A cat that is on the map has a small map of its spot in its
 card (see [Its map](#its-map)) and a filled **Show on the map** pill at the card's foot, and a tap anywhere on the
-card switches to the Map tab with the view on that cat (see [map.md](./map.md#a-cats-coordinates)); the pill is the
+card opens a map above the screen with the view on that cat, and back returns to the cat (see
+[map.md](./map.md#a-cats-coordinates); `EncounterDetailMapLinkTest`); the pill is the
 card's visible cue, not a second control (`DetailWhereTest`). A cat with no location has no card: a notice under its
 facts, the pin in a round tertiary icon, reads **No location for this cat** and "It was logged without a fix, so it
 is not on the map or in Places.", as one item to a screen reader, with a tonal *Set on map* at its end, which opens
@@ -183,7 +184,7 @@ fix good to a few metres shows the dot alone. A circle larger than the map runs 
 shrinking to fit (`DetailWhereTest`, `MetersPerDpTest`).
 
 The map is a picture, not a map to explore: it takes no gesture. A drag that starts on it scrolls the
-screen (*a drag across the map scrolls the screen*), and a tap on it opens the Map tab on the cat, as a
+screen (*a drag across the map scrolls the screen*), and a tap on it opens the map on the cat, as a
 tap anywhere else on the card does (*a tap on the map opens the map*). Should the cat's coordinates
 change while the screen is open, the map is drawn afresh around the new spot rather than moved there.
 
@@ -345,7 +346,7 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
   nothing*). That is the defined behaviour, not an accident:
   the window is bound to the screen, and the Counter offers the same trade.
 - **Pushing the same detail twice** — a double-tap on a row — puts one entry on the back stack, not
-  two (`BottomNavigationTest`, *pushing a key already on the stack leaves the stack unchanged*).
+  two (`BottomNavigationTest`, *pushing the key on top again leaves the stack unchanged*).
 - **The cat is deleted, or given a photo some other way, while an attempt is running** — the screen
   shows no message of its own, since it already shows what the cat became: the "removed" state,
   *Missing*, or the photo it was given first, with this one kept after it (see [photos.md](./photos.md)
@@ -377,8 +378,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `app/…/navigation/EncounterDetail.kt` (the key), `BottomNavBackStack.push()`,
   `EncounterDetailDestination.kt` (the destination composable, which saves the cat on screen with the screen,
   wired into `CatsRadarNavHost.kt`, which
-  pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap hands the cat to
-  `MapFocusRequest` and selects the Map tab, and on *Set on map* pushes `LocationPicker` for the cat the
+  pushes `PhotoViewer` on the photo's tap, and on the coordinates' tap pushes `CatOnMap` for the cat on
+  screen, and on *Set on map* pushes `LocationPicker` for the cat the
   tap named), `PhotoLaunchers.kt` (the camera and the cat's photo picker), `app/…/photo/PendingCaptures.kt`
   (which camera a result belongs to, and for which cat)
 

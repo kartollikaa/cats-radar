@@ -66,7 +66,9 @@ class MapStoreTest {
     private fun newStore(
         walks: WalkRepository = StoredWalkRepository(),
         encounters: EncounterRepository = repository,
+        start: MapChoices = MapChoices(),
     ) = MapStore(
+        start = start,
         observeEncounters = ObserveEncounters(encounters),
         observeOutingTracks = ObserveOutingTracks(walks),
         stateMapper = MapStateMapper(encountersMapper, FakePhotoStorage()),
@@ -186,6 +188,34 @@ class MapStoreTest {
             assertNull(everyCat.focus)
             assertEquals(3, everyCat.points.size)
         }
+
+    @Test
+    fun `a map opened on an outing shows that outing alone`() = runTest(mainDispatcher) {
+        repository.insert(located("first", minute = 0))
+        repository.insert(located("second", minute = 5).copy(lat = 41.40))
+        repository.insert(located("other outing", minute = 180).copy(lat = 41.45))
+
+        val store = newStore(start = MapChoices(focus = "second"))
+        runCurrent()
+
+        val focused = assertIs<MapState.Located>(store.state.value)
+        assertEquals("first", focused.focus?.outingId)
+        assertEquals(listOf("second", "first"), focused.points.map { it.id })
+    }
+
+    @Test
+    fun `a map opened on a cat shows every cat with the view on that one`() = runTest(mainDispatcher) {
+        repository.insert(located("first", minute = 0))
+        repository.insert(located("other outing", minute = 180).copy(lat = 41.45))
+
+        val store = newStore(start = MapChoices(cat = "other outing"))
+        runCurrent()
+
+        val shown = assertIs<MapState.Located>(store.state.value)
+        assertNull(shown.focus)
+        assertEquals(listOf("other outing", "first"), shown.points.map { it.id })
+        assertEquals(MapArea(south = 41.445, west = 2.165, north = 41.455, east = 2.175), shown.catArea?.rounded())
+    }
 
     @Test
     fun `a focus whose outing loses its last located cat is let go, and does not come back on its own`() =

@@ -37,7 +37,6 @@ import dev.catsradar.domain.model.EncounterKind
 import dev.catsradar.domain.model.EncounterPhoto
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.repository.EncounterRepository
-import dev.catsradar.presentation.map.MapIntent
 import dev.catsradar.ui.R
 import dev.catsradar.ui.detail.DetailPagesTestTag
 import dev.catsradar.ui.theme.CatsRadarTheme
@@ -97,13 +96,14 @@ class EncounterDetailPagerEntryTest {
 
     @Test
     fun `after a swipe, the coordinates open the map on the cat swiped to`() {
-        show(older = tally(OLDER, OCCURRED).copy(lat = 41.39, lon = 2.17, locationSource = LocationSource.CURRENT_FIX))
+        val backStack =
+            show(older = tally(OLDER, OCCURRED).copy(lat = 41.39, lon = 2.17, locationSource = LocationSource.CURRENT_FIX))
         swipeToTheOlderCat()
 
         compose.onNode(hasText(COORDINATES)).performScrollTo().performClick()
         compose.waitForIdle()
 
-        assertEquals(MapIntent.CatRequested(OLDER), mapFocus.consume())
+        assertEquals(CatOnMap(OLDER), backStack.toList().last())
     }
 
     @Test

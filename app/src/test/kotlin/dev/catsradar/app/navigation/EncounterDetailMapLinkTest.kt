@@ -43,6 +43,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -62,27 +63,27 @@ class EncounterDetailMapLinkTest {
     }
 
     @Test
-    fun `a tap on a cat's coordinates switches to the map tab and asks it for that cat`() {
+    fun `a tap on a cat's coordinates opens a map of that cat above it`() {
         val backStack = show(listOf(Counter, Encounters, EncounterDetail(ID)), cat = located())
         awaitTheDatabase { mapLink().fetchSemanticsNodes().isNotEmpty() }
 
         compose.onNode(opensTheMap() and hasText(COORDINATES)).performScrollTo().performClick()
         compose.waitForIdle()
 
-        assertEquals(listOf(Counter, CatsMap), backStack.toList())
-        assertEquals(MapIntent.CatRequested(ID), mapFocus.consume())
+        assertEquals(listOf(Counter, Encounters, EncounterDetail(ID), CatOnMap(ID)), backStack.toList())
+        assertNull(mapFocus.pending)
     }
 
     @Test
-    fun `a cat opened from the map goes back to the map tab, asking it for that cat`() {
+    fun `a cat opened from the map opens a map of its own above it, leaving the Map tab under it as it was`() {
         val backStack = show(listOf(Counter, CatsMap, EncounterDetail(ID)), cat = located())
         awaitTheDatabase { mapLink().fetchSemanticsNodes().isNotEmpty() }
 
         mapLink().onFirst().performScrollTo().performClick()
         compose.waitForIdle()
 
-        assertEquals(listOf(Counter, CatsMap), backStack.toList())
-        assertEquals(MapIntent.CatRequested(ID), mapFocus.consume())
+        assertEquals(listOf(Counter, CatsMap, EncounterDetail(ID), CatOnMap(ID)), backStack.toList())
+        assertNull(mapFocus.pending)
     }
 
     @Test
@@ -96,11 +97,20 @@ class EncounterDetailMapLinkTest {
     }
 
     @Test
-    fun `the map tab takes the cat it was asked for as it opens`() {
-        mapFocus.postCat(ID)
-        assertEquals(MapIntent.CatRequested(ID), mapFocus.pending)
+    fun `the Map tab takes the outing a spot's list asks for`() {
+        mapFocus.postOuting(ID)
+        assertEquals(MapIntent.OutingFocused(ID), mapFocus.pending)
 
         show(listOf(Counter, CatsMap), cat = tally(ID, OCCURRED))
+
+        awaitTheDatabase { mapFocus.pending == null }
+    }
+
+    @Test
+    fun `a map opened above another screen takes the outing a spot's list asks for`() {
+        mapFocus.postOuting(ID)
+
+        show(listOf(Counter, Encounters, EncounterDetail(ID), CatOnMap(ID)), cat = tally(ID, OCCURRED))
 
         awaitTheDatabase { mapFocus.pending == null }
     }

@@ -80,7 +80,9 @@ write, let alone land unreviewed. `selectTab()`, its only way to change tabs, al
 the shared `Counter` root before conditionally appending the target, so at most one instance of any
 key can ever exist; a duplicate is structurally unreachable rather than merely avoided by a check
 (`BottomNavigationTest`, *every tab selection in a mixed sequence leaves each key on the stack at
-most once*). `popOrNull()` is the only way back navigation can shrink the stack.
+most once*). Besides `popOrNull()`, only `push()` shrinks the stack: a key already on it is gone back to,
+the entries above it popped, rather than pushed a second time (*pushing a key further down the stack goes
+back to it, closing what is above it*).
 
 `observeAll()` still loads every non-deleted row on every emission — there is no paging or limit in
 this slice. That is fine at the row counts the app produces today, but it does not scale
@@ -112,9 +114,10 @@ row counts stop being trivial to read and group on every emission.
 ## Showing an outing on the map
 
 An outing's header offers "On the map" when at least one of its cats has a location. The mapper
-decides, by giving the header the id of the outing's first cat. Choosing it opens the Map tab on
-that outing alone (`map.md`). The map's spot sheet and the cats of a place (`places.md`) use the same
-rows and offer the same action.
+decides, by giving the header the id of the outing's first cat. Choosing it opens a map above the
+list showing that outing alone, and back returns to the list (`map.md`, *A map above another screen*;
+`EncountersEntryTest`). The map's spot sheet and the cats of a place (`places.md`) use the same rows
+and offer the same action.
 
 ## What the grid shows
 

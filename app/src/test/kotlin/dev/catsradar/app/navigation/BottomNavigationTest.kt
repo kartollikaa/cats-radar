@@ -154,7 +154,7 @@ class BottomNavigationTest {
     }
 
     @Test
-    fun `pushing a key already on the stack leaves the stack unchanged`() {
+    fun `pushing the key on top again leaves the stack unchanged`() {
         val backStack = newStack(Counter, Encounters)
 
         backStack.push(EncounterDetail("cat-1"))
@@ -162,6 +162,26 @@ class BottomNavigationTest {
 
         assertEquals(1, backStack.count { it == EncounterDetail("cat-1") })
         assertEquals(3, backStack.size)
+    }
+
+    @Test
+    fun `pushing a key further down the stack goes back to it, closing what is above it`() {
+        val backStack = newStack(Counter, Encounters, EncounterDetail("cat-1"), CatOnMap("cat-1"))
+
+        backStack.push(EncounterDetail("cat-1"))
+
+        assertEquals(listOf<NavKey>(Counter, Encounters, EncounterDetail("cat-1")), backStack.toList())
+    }
+
+    @Test
+    fun `a map opened above a cat belongs to the cat's tab, and back returns to the cat`() {
+        val backStack = newStack(Counter, Encounters, EncounterDetail("cat-1"))
+
+        backStack.push(CatOnMap("cat-1"))
+
+        assertEquals(BottomNavTab.ENCOUNTERS, backStack.selectedTab)
+        assertTrue(backStack.popOrNull())
+        assertEquals(listOf<NavKey>(Counter, Encounters, EncounterDetail("cat-1")), backStack.toList())
     }
 
     @Test

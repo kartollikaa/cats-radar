@@ -71,6 +71,8 @@ import dev.catsradar.presentation.Store
 import dev.catsradar.presentation.coatsheet.CoatSheetStore
 import dev.catsradar.presentation.detail.EncounterDetailStore
 import dev.catsradar.presentation.locationpicker.LocationPickerStore
+import dev.catsradar.presentation.map.MapChoices
+import dev.catsradar.presentation.map.MapStore
 import dev.catsradar.presentation.regions.RegionsStore
 import dev.catsradar.presentation.settings.SettingsStore
 import dev.catsradar.presentation.viewer.PhotoViewerStore
@@ -221,6 +223,8 @@ class KoinRuntimeResolutionTest {
         // Both the root (null parent) and a drilled-in level, because they take different paths.
         assertNotNull(koin.getStore<RegionsStore> { parametersOf(null) })
         assertNotNull(koin.getStore<RegionsStore> { parametersOf(RegionKey.Country("ES")) })
+        assertNotNull(koin.getStore<MapStore> { parametersOf(MapChoices()) })
+        assertNotNull(koin.getStore<MapStore> { parametersOf(MapChoices(focus = "any-id")) })
     }
 
     @Test

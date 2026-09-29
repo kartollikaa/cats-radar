@@ -24,7 +24,6 @@ import dev.catsradar.domain.Tuning
 import dev.catsradar.domain.geo.Geohash
 import dev.catsradar.domain.model.LocationSource
 import dev.catsradar.domain.repository.EncounterRepository
-import dev.catsradar.presentation.map.MapIntent
 import dev.catsradar.ui.R
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.coroutines.runBlocking
@@ -38,6 +37,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.time.Instant
 
 @RunWith(AndroidJUnit4::class)
@@ -77,7 +77,7 @@ class RegionsEntryTest {
     }
 
     @Test
-    fun `On the map in a place's cats opens the outing on the Map tab`() {
+    fun `On the map in a place's cats opens the outing on a map above the place`() {
         val koin = startKoin {
             androidContext(context)
             modules(domainModule, dataModule, presentationModule, workerModule)
@@ -100,8 +100,8 @@ class RegionsEntryTest {
         compose.onNode(onTheMap).performClick()
         compose.waitForIdle()
 
-        assertEquals(listOf(Counter, CatsMap), backStack.toList())
-        assertEquals(MapIntent.OutingFocused("cat-1"), mapFocus.consume())
+        assertEquals(levels + OutingOnMap("cat-1"), backStack.toList())
+        assertNull(mapFocus.pending)
     }
 
     @Test
