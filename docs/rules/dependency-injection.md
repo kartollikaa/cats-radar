@@ -30,7 +30,9 @@ single<Haptics> { VibratorHaptics(androidContext().getSystemService(Vibrator::cl
 - a system service: `getSystemService(...)` or its KTX form `getSystemService<T>()`,
   `NotificationManagerCompat.from(...)`;
 - an SDK singleton: `WorkManager.getInstance(...)`, `FirebaseAnalytics.getInstance(...)`,
-  `FirebaseCrashlytics.getInstance()`, `Firebase.analytics`, any `*Manager.getInstance(...)`;
+  `FirebaseCrashlytics.getInstance()`, `Firebase.analytics`, any `*Manager.getInstance(...)`,
+  `Clock.System` (a class declares a `Clock`; the binding supplies it, so not even as a constructor
+  default);
 - a client or store built from a `Context`: `LocationServices.get…Client(...)`, `Geocoder(context)`,
   `getSharedPreferences(...)`;
 - a class the Koin graph provides: a `*StateMapper`, a `*Store`, or any class with its own binding —

@@ -41,6 +41,15 @@ today only by there being no `implementation(projects.domain)` in `:ui`'s `build
 no project dependency at all in `:domain`'s; no Konsist test backs either one, so an accidental
 dependency edit would not be caught by `check`.
 
+Every rule reads its files through `excludingGeneratedSources()`, which drops build output and the
+other worktrees. Konsist scans from the nearest `settings.gradle.kts`, so in a main checkout it also
+reaches every session's copy of the sources under `.claude/worktrees/`; left in, those copies are
+judged like the real ones and fail `check` for code that is not on the branch. The filter is applied
+to the path *relative to Konsist's own project root*: a checkout that is itself a worktree has
+`.claude/worktrees/` in every absolute path, and a filter on the absolute path would empty its scope
+and leave every rule green on nothing. `KonsistScopeSupportTest` pins both directions and that the
+project's own sources are in the scope.
+
 Beyond the import-boundary rules, Konsist also checks: every class named `*Store` lives under
 `dev.catsradar.presentation`; every class named `*State` has no function-typed property (a literal
 lambda type, a `fun interface`, or a typealias for either — the enforcement mechanism behind
@@ -56,10 +65,13 @@ sheet can stop half open (`BottomSheetUsageTest`, see `app-shell.md`). And outsi
 composition root (`:app`'s `di` package and `CatsRadarApplication`) no production file looks up a
 platform service or SDK singleton — `getSystemService` (either form), `getSharedPreferences`,
 `Geocoder(...)`, `LocationServices`, `WorkManager`/`NotificationManagerCompat`/Firebase
-`getInstance`/`from`, `Firebase.analytics`/`crashlytics` — or constructs a `*StateMapper` or
-`*Store`, by call or by constructor reference (`DependencyLookupTest`, see
-`docs/rules/dependency-injection.md`). `*Intent`, `*Effect`, and `*StateMapper` naming has no Konsist
-test at all.
+`getInstance`/`from`, `Firebase.analytics`/`crashlytics`, `Clock.System` — or constructs a
+`*StateMapper` or `*Store`, by call or by constructor reference (`DependencyLookupTest`, see
+`docs/rules/dependency-injection.md`); the lookup pattern has a sample for every form it bans and one
+for what it must leave alone, so a pattern that stops matching fails instead of passing on nothing.
+And no file in `commonMain` or `commonTest` of `:domain`, `:data` or `:presentation` names `java.time`,
+`java.util.Date` or `Calendar`, or `SimpleDateFormat`; `androidMain` may (`DateTimeApiUsageTest`, see
+`docs/rules/date-time.md`). `*Intent`, `*Effect`, and `*StateMapper` naming has no Konsist test at all.
 
 The DI graph gets its own two-layer check outside the three formal tools: `KoinModulesTest`
 statically verifies every constructor-injected binding resolves, and `KoinRuntimeResolutionTest`

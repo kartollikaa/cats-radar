@@ -73,6 +73,19 @@ Text(SimpleDateFormat("d MMMM", Locale.getDefault()).format(Date(state.occurredA
 val durationMinutes: Long
 ```
 
+## Enforcement
+
+Two Konsist tests in `:app` (`app/src/test/kotlin/dev/catsradar/app/architecture/`) hold the two
+rules that are easiest to break by accident:
+
+- `DateTimeApiUsageTest` fails `check` when a `commonMain` or `commonTest` file of `:domain`, `:data`
+  or `:presentation` names `java.time`, `java.util.Date`/`Calendar` or `SimpleDateFormat`.
+  `androidMain` is outside its scope, since that is where they are allowed.
+- `DependencyLookupTest` fails `check` when production code outside the composition root names
+  `Clock.System` — see [dependency-injection.md](./dependency-injection.md).
+
+The rest of this document — one type per concept, no formatting in a composable — is held by review.
+
 ## Testing
 
 - Pass a fixed `Clock` (`object : Clock { override fun now() = Instant.parse("2026-09-21T10:00:00Z") }`)
