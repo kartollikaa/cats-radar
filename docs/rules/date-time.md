@@ -78,9 +78,10 @@ val durationMinutes: Long
 Two Konsist tests in `:app` (`app/src/test/kotlin/dev/catsradar/app/architecture/`) hold the two
 rules that are easiest to break by accident:
 
-- `DateTimeApiUsageTest` fails `check` when a `commonMain` or `commonTest` file of `:domain`, `:data`
-  or `:presentation` names `java.time`, `java.util.Date`/`Calendar` or `SimpleDateFormat`.
-  `androidMain` is outside its scope, since that is where they are allowed.
+- `DateTimeApiUsageTest` fails `check` when a file of `:domain`, `:data` or `:presentation` in a
+  source set other than an Android one names `java.time`, `java.util.Date`/`Calendar` or
+  `SimpleDateFormat`, or imports `java.util.*` or `java.text.*` whole. `androidMain` is outside its
+  scope, since that is where they are allowed.
 - `DependencyLookupTest` fails `check` when production code outside the composition root names
   `Clock.System` — see [dependency-injection.md](./dependency-injection.md).
 
