@@ -96,8 +96,8 @@ class EncounterDetailPagerEntryTest {
 
     @Test
     fun `after a swipe, the coordinates open the map on the cat swiped to`() {
-        val backStack =
-            show(older = tally(OLDER, OCCURRED).copy(lat = 41.39, lon = 2.17, locationSource = LocationSource.CURRENT_FIX))
+        val located = tally(OLDER, OCCURRED).copy(lat = 41.39, lon = 2.17, locationSource = LocationSource.CURRENT_FIX)
+        val backStack = show(older = located)
         swipeToTheOlderCat()
 
         compose.onNode(hasText(COORDINATES)).performScrollTo().performClick()
