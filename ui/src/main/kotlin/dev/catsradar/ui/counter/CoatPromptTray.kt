@@ -44,7 +44,7 @@ private val TrayFaceSize = 40.dp
 private val BadgeOverhang = 4.dp
 private val TrayCatSize = TrayFaceSize + BadgeOverhang
 
-// The room of a full tray from the first moment, so a count never moves a counted cat or anything below the tray.
+// The room of a full tray from the first moment, so a count never moves a counted cat or the header above them.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CountTray(
@@ -57,7 +57,7 @@ internal fun CountTray(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            repeat(CoatCountState.MOST_CATS) { index ->
+            repeat(maxOf(CoatCountState.MOST_CATS, counting.tray.size)) { index ->
                 if (index < counting.tray.size) {
                     val coat = counting.tray[index]
                     TrayCat(coat = coat, onClick = { onCatClick(TrayCatInteraction(index, coat)) })

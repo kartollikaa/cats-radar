@@ -213,3 +213,11 @@ class CoatPromptSteadyLargestFontTest : CoatPromptSteadyTest()
 class CoatPromptSteadyRuLargestFontTest : CoatPromptSteadyTest() {
     override val bothModesFitTheScreen = false
 }
+
+// The narrowest phones, where a longer Save label is likelier to wrap than a shorter one.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "ru-w320dp-h900dp", fontScale = 1.5f)
+@RunWith(AndroidJUnit4::class)
+class CoatPromptSteadyRuNarrowLargestFontTest : CoatPromptSteadyTest() {
+    override val bothModesFitTheScreen = false
+}

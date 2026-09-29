@@ -112,7 +112,8 @@ in English and Russian too):
 
 At the largest text on a small phone a full count can be taller than the screen. The sheet then fills the screen
 and its content scrolls, so *Save* and *Not now* are always reachable (`CoatPromptTallTextTest`), but switching
-modes can move the pair there.
+modes can move the pair there. A swipe down on the sheet still closes it, asking and counting alike
+(`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header, before the pair.
 
 The edges above hold while counting too: a newer photo takes the sheet over and the tray goes with the old photo
 (*a newer photo takes the sheet over and drops the tray*); the sheet closes before anything is written (*saving
