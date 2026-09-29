@@ -73,6 +73,20 @@ class CounterStorePhotoPromptTest {
     }
 
     @Test
+    fun `no coat while asking closes the prompt and leaves the coat unset`() = runTest(mainDispatcher) {
+        val repository = FakeEncounterRepository()
+        val store = newCounterStore(encounterRepository = repository)
+        store.dispatch(CounterIntent.PhotoCaptured(CAPTURE))
+        runCurrent()
+
+        store.dispatch(CounterIntent.CoatPrompt.UnseenPicked)
+        runCurrent()
+
+        assertNull(store.state.value.coatPrompt)
+        assertNull(repository.encounters().single().coat)
+    }
+
+    @Test
     fun `dismissing the prompt leaves the coat unset`() = runTest(mainDispatcher) {
         val repository = FakeEncounterRepository()
         val store = newCounterStore(encounterRepository = repository)
@@ -314,7 +328,6 @@ class CounterStorePhotoPromptTest {
         runCurrent()
         val asked = store.state.value.coatPrompt
 
-        store.dispatch(CounterIntent.CoatPrompt.UnseenPicked)
         store.dispatch(CounterIntent.CoatPrompt.TrayCatClicked(index = 0, coat = null))
         store.dispatch(CounterIntent.CoatPrompt.SaveClicked)
         runCurrent()

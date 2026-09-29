@@ -1,5 +1,10 @@
 package dev.catsradar.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,19 +38,41 @@ internal fun SheetHeader(
     ) {
         leading?.invoke()
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = title,
-                style = titleStyle,
-                modifier = Modifier.semantics { heading() },
-            )
-            supporting?.let {
+            ChangingText(title) {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = titleStyle,
+                    modifier = Modifier.semantics { heading() },
                 )
             }
+            supporting?.let { words ->
+                ChangingText(words) {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
+    }
+}
+
+private const val WordsOutMillis = 90
+private const val WordsInMillis = 220
+
+// Not Crossfade, which holds the longer wording's height and overlaps both: the old words leave, then the new arrive.
+@Composable
+private fun ChangingText(text: String, content: @Composable (String) -> Unit) {
+    AnimatedContent(
+        targetState = text,
+        modifier = Modifier.fillMaxWidth(),
+        transitionSpec = {
+            fadeIn(tween(WordsInMillis, delayMillis = WordsOutMillis)) togetherWith fadeOut(tween(WordsOutMillis))
+        },
+        label = "words",
+    ) {
+        content(it)
     }
 }
 

@@ -58,10 +58,15 @@ data class CoatCountState(val tray: ImmutableList<CoatOption?> = persistentListO
     /** How many cats of each coat [tray] holds; a coat it holds none of is absent. */
     val counts: ImmutableMap<CoatOption?, Int> get() = tray.groupingBy { it }.eachCount().toImmutableMap()
 
-    val canAdd: Boolean get() = tray.size < Tuning.SHOT_MAX_CATS
+    val canAdd: Boolean get() = tray.size < MOST_CATS
 
     /** Null until a cat is counted. */
     val catCount: Int? get() = tray.size.takeIf { it > 0 }
+
+    companion object {
+        /** The most cats [tray] holds, the photographed one included. */
+        const val MOST_CATS: Int = Tuning.SHOT_MAX_CATS
+    }
 }
 
 data class ImportProgressState(

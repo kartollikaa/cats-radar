@@ -48,6 +48,7 @@ class CoatSheetsTest {
     private val coatsTapped = mutableListOf<CoatOption?>()
     private var unspecifiedTaps = 0
     private var skips = 0
+    private var unseen = 0
     private var clears = 0
 
     @Test
@@ -96,12 +97,13 @@ class CoatSheetsTest {
     }
 
     @Test
-    fun `the coat prompt asks, explains, and takes a coat or a skip`() {
+    fun `the coat prompt asks, explains, and takes a coat, no coat or a skip`() {
         compose.setContent {
             CatsRadarTheme {
                 CoatPrompt(
                     prompt = CoatPromptState("cat", "cat", thumbPath = null),
                     onCoatClick = { coatsTapped += it },
+                    onUnseenClick = { unseen++ },
                     onSkipClick = { skips++ },
                 )
             }
@@ -109,7 +111,8 @@ class CoatSheetsTest {
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_title)).assertExists()
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_hint)).assertExists()
         compose.onNodeWithText(notSpecified).assertDoesNotExist()
-        compose.onNodeWithText(context.getString(R.string.coat_none)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.coat_none)).performClick()
+        assertEquals(1, unseen)
 
         compose.onNodeWithText(context.getString(R.string.coat_ginger)).performClick()
         compose.onNodeWithText(context.getString(R.string.counter_coat_prompt_skip)).performClick()
