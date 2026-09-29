@@ -271,6 +271,25 @@ class EncounterDetailStoreTest {
     }
 
     @Test
+    fun `a cat another screen asks for is put back on screen, and one off the pages is ignored`() =
+        runTest(mainDispatcher) {
+            repository.insert(encounterFixture(ID, OCCURRED))
+            repository.insert(encounterFixture(OTHER, OCCURRED + 10.minutes))
+            val store = newStore()
+            runCurrent()
+            store.dispatch(EncounterDetailIntent.PageSettled(OTHER))
+            runCurrent()
+
+            store.dispatch(EncounterDetailIntent.CatRequested(ID))
+            store.dispatch(EncounterDetailIntent.CatRequested("elsewhere"))
+            runCurrent()
+
+            val state = assertIs<EncounterDetailState.Loaded>(store.state.value)
+            assertEquals(ID, state.currentId)
+            assertEquals(2, state.currentNumber)
+        }
+
+    @Test
     fun `a settled id off the pages is ignored`() = runTest(mainDispatcher) {
         repository.insert(encounterFixture(ID, OCCURRED))
         repository.insert(encounterFixture(OTHER, OCCURRED - 1.days))

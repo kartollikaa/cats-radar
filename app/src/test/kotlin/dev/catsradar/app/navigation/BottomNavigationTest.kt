@@ -6,6 +6,7 @@ import dev.catsradar.ui.navigation.BottomNavTab
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BottomNavigationTest {
@@ -171,6 +172,41 @@ class BottomNavigationTest {
         backStack.push(EncounterDetail("cat-1"))
 
         assertEquals(listOf<NavKey>(Counter, Encounters, EncounterDetail("cat-1")), backStack.toList())
+    }
+
+    @Test
+    fun `the screen a push goes back to takes that return once`() {
+        val backStack = newStack(Counter, Encounters, EncounterDetail("cat-1"), CatOnMap("cat-1"))
+
+        backStack.push(EncounterDetail("cat-1"))
+
+        assertFalse(backStack.takeReturn(CatOnMap("cat-1")))
+        assertTrue(backStack.takeReturn(EncounterDetail("cat-1")))
+        assertFalse(backStack.takeReturn(EncounterDetail("cat-1")))
+    }
+
+    @Test
+    fun `a push that adds its key, or finds it on top already, returns to nothing`() {
+        val backStack = newStack(Counter, Encounters)
+
+        backStack.push(EncounterDetail("cat-1"))
+        backStack.push(EncounterDetail("cat-1"))
+
+        assertNull(backStack.returnedTo)
+    }
+
+    @Test
+    fun `a return its screen has not taken is dropped by the next step`() {
+        val pushed = newStack(Counter, Encounters, EncounterDetail("cat-1"), CatOnMap("cat-1"))
+        val popped = newStack(Counter, Encounters, EncounterDetail("cat-1"), CatOnMap("cat-1"))
+        val tabbed = newStack(Counter, Encounters, EncounterDetail("cat-1"), CatOnMap("cat-1"))
+        listOf(pushed, popped, tabbed).forEach { it.push(EncounterDetail("cat-1")) }
+
+        pushed.push(CatOnMap("cat-2"))
+        popped.popOrNull()
+        tabbed.selectTab(BottomNavTab.MAP)
+
+        assertEquals(listOf(null, null, null), listOf(pushed, popped, tabbed).map { it.returnedTo })
     }
 
     @Test

@@ -18,12 +18,22 @@ class MapFocusRequestTest {
     }
 
     @Test
+    fun `a posted cat is handed over once`() {
+        val request = MapFocusRequest()
+
+        request.postCat("first")
+
+        assertEquals(MapIntent.CatRequested("first"), request.consume())
+        assertNull(request.consume())
+    }
+
+    @Test
     fun `the request posted last is the one handed over`() {
         val request = MapFocusRequest()
 
         request.postOuting("first")
-        request.postOuting("second")
+        request.postCat("second")
 
-        assertEquals(MapIntent.OutingFocused("second"), request.consume())
+        assertEquals(MapIntent.CatRequested("second"), request.consume())
     }
 }

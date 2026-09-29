@@ -120,7 +120,7 @@ internal fun catsRadarEntries(
             onOutingMapClick = { id -> backStack.push(OutingOnMap(id)) },
         )
     }
-    catEntries(backStack, contentPadding)
+    catEntries(backStack, contentPadding, mapFocus)
 }
 
 private fun EntryProviderScope<NavKey>.mapEntries(
@@ -153,29 +153,39 @@ private fun MapEntryContent(
     backStack: BottomNavBackStack,
     contentPadding: PaddingValues,
     mapFocus: MapFocusRequest,
-    modifier: Modifier = Modifier,
     opening: MapChoices? = null,
 ) {
     MapDestination(
         contentPadding = contentPadding,
         focusRequest = mapFocus,
-        modifier = modifier,
         opening = opening,
         onOpenCat = { id -> backStack.push(EncounterDetail(id)) },
         onOpenSpot = { spot -> backStack.push(spot) },
     )
 }
 
-private fun EntryProviderScope<NavKey>.catEntries(backStack: BottomNavBackStack, contentPadding: PaddingValues) {
+private fun BottomNavBackStack.showCatOnMap(catId: String, mapFocus: MapFocusRequest) {
+    val key = CatOnMap(catId)
+    push(key)
+    // A map gone back to keeps the view it was left with until it is asked for the cat again.
+    if (takeReturn(key)) mapFocus.postCat(catId)
+}
+
+private fun EntryProviderScope<NavKey>.catEntries(
+    backStack: BottomNavBackStack,
+    contentPadding: PaddingValues,
+    mapFocus: MapFocusRequest,
+) {
     entry<EncounterDetail> { key ->
         EncounterDetailDestination(
             key = key,
             contentPadding = contentPadding,
             onNavigateBack = { backStack.popIfOnTop(key) },
             onOpenPhoto = { viewer -> backStack.push(viewer) },
-            onOpenMap = { catId -> backStack.push(CatOnMap(catId)) },
+            onOpenMap = { catId -> backStack.showCatOnMap(catId, mapFocus) },
             onOpenLocationPicker = { catId -> backStack.push(LocationPicker(catId)) },
             onOpenCoatSheet = { catId -> backStack.push(CoatSheet(catId)) },
+            takeReturn = { backStack.takeReturn(key) },
         )
     }
     entry<CoatSheet>(metadata = BottomSheetSceneStrategy.bottomSheet()) { key ->

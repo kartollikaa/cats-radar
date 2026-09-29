@@ -62,6 +62,10 @@ internal fun EncountersDestination(
     )
 }
 
+// A map opened above another screen is left by back whatever it shows, so back returns to that screen.
+internal fun MapState.backLetsGoOfFocus(opening: MapChoices?): Boolean =
+    opening == null && (this as? MapState.Located)?.focus != null
+
 /** The Map tab's own map when [opening] is null; otherwise a map pushed above another screen, opening on it. */
 @Composable
 internal fun MapDestination(
@@ -80,10 +84,7 @@ internal fun MapDestination(
     LaunchedEffect(store, focusRequest.pending) {
         focusRequest.consume()?.let(store::dispatch)
     }
-    // A pushed map is left by back whatever it shows, so back returns to the screen it was opened from.
-    BackHandler(enabled = opening == null && (state as? MapState.Located)?.focus != null) {
-        store.dispatch(MapIntent.FocusCleared)
-    }
+    BackHandler(enabled = state.backLetsGoOfFocus(opening)) { store.dispatch(MapIntent.FocusCleared) }
     LaunchedEffect(store) {
         store.effects.collect { effect ->
             when (effect) {

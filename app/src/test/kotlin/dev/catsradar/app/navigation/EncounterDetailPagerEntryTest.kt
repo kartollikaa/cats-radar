@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -52,6 +55,7 @@ import org.koin.core.context.stopKoin
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -121,6 +125,24 @@ class EncounterDetailPagerEntryTest {
         assertEquals(LocationPicker(OLDER), backStack.toList().last())
     }
 
+    @Test
+    fun `a push that goes back to the screen shows the cat it was opened on, whichever was swiped to`() {
+        var onTop by mutableStateOf(true)
+        val backStack = show(older = tally(OLDER, OCCURRED), onTop = { onTop })
+        swipeToTheOlderCat()
+        awaitTheDatabase { compose.onAllNodes(hasText("2 / 2")).fetchSemanticsNodes().isNotEmpty() }
+        backStack.push(CatOnMap(OLDER))
+        onTop = false
+        compose.waitForIdle()
+
+        backStack.push(EncounterDetail(OPENED))
+        onTop = true
+
+        awaitTheDatabase { compose.onAllNodes(hasText("1 / 2")).fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(listOf(Counter, Encounters, EncounterDetail(OPENED)), backStack.toList())
+        assertNull(backStack.returnedTo)
+    }
+
     private fun swipeToTheOlderCat() {
         awaitTheDatabase { compose.onAllNodes(hasText("1 / 2")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(DetailPagesTestTag).performTouchInput { swipeLeft() }
@@ -133,7 +155,11 @@ class EncounterDetailPagerEntryTest {
         condition()
     }
 
-    private fun show(older: Encounter, restoration: StateRestorationTester? = null): BottomNavBackStack {
+    private fun show(
+        older: Encounter,
+        restoration: StateRestorationTester? = null,
+        onTop: () -> Boolean = { true },
+    ): BottomNavBackStack {
         val koin = startKoin {
             androidContext(context)
             modules(domainModule, dataModule, presentationModule, workerModule)
@@ -149,7 +175,7 @@ class EncounterDetailPagerEntryTest {
         val content: @Composable () -> Unit = {
             // A located cat's map needs MapLibre's native runtime, which the JVM cannot start.
             CompositionLocalProvider(LocalInspectionMode provides (older.lat != null)) {
-                CatsRadarTheme { ViewModelsLostOnRestore { entries(keys.last()).Content() } }
+                CatsRadarTheme { ViewModelsLostOnRestore { if (onTop()) entries(keys.last()).Content() } }
             }
         }
         if (restoration != null) restoration.setContent(content) else compose.setContent(content)

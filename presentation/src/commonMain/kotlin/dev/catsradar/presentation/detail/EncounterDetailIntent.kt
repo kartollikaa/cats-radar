@@ -5,7 +5,7 @@ sealed interface EncounterDetailIntent {
     data object DeleteClicked : EncounterDetailIntent
     data object UndoClicked : EncounterDetailIntent
 
-    /** Which cat the pages show: where a swipe came to rest, or a cat tapped on the photo on screen. */
+    /** Which cat the pages show: where a swipe came to rest, a cat tapped on the photo on screen, or one asked for. */
     sealed interface ShowCat : EncounterDetailIntent {
         val catId: String
     }
@@ -14,6 +14,9 @@ sealed interface EncounterDetailIntent {
     data class PageSettled(override val catId: String) : ShowCat
 
     data class PhotoCatClicked(override val catId: String) : ShowCat
+
+    /** Another screen asked for [catId] while this one was open under it. */
+    data class CatRequested(override val catId: String) : ShowCat
 
     data class TakePhotoClicked(val catId: String) : EncounterDetailIntent
     data class PickPhotoClicked(val catId: String) : EncounterDetailIntent

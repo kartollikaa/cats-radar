@@ -20,8 +20,9 @@ Every screen follows the same minimal MVI shape through one base class,
 `handle` to call use cases, reduce state with `setState { copy(...) }`, and fire one-shot
 `emit(effect)` calls for anything the screen shouldn't keep re-showing (navigation, haptics, a
 permission request). There are no separate reducer/actor classes and no shared message bus — each
-screen's Store is self-contained, registered with Koin as a `viewModelOf`, and created once per
-Navigation 3 entry via `rememberViewModelStoreNavEntryDecorator`.
+screen's Store is self-contained, registered with Koin as a `viewModelOf`, or as a `viewModel { }` when
+it is built from its destination's arguments, and created once per Navigation 3 entry via
+`rememberViewModelStoreNavEntryDecorator`.
 
 ## System bars and insets
 

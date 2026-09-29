@@ -87,6 +87,19 @@ class EncounterDetailMapLinkTest {
     }
 
     @Test
+    fun `the coordinates of a cat whose map is open further down go back to that map and ask it for the cat`() {
+        val below = listOf(Counter, Encounters, EncounterDetail("another cat"), CatOnMap(ID))
+        val backStack = show(below + EncounterDetail(ID), cat = located())
+        awaitTheDatabase { mapLink().fetchSemanticsNodes().isNotEmpty() }
+
+        mapLink().onFirst().performScrollTo().performClick()
+        compose.waitForIdle()
+
+        assertEquals(below, backStack.toList())
+        assertEquals(MapIntent.CatRequested(ID), mapFocus.pending)
+    }
+
+    @Test
     fun `a cat without coordinates offers no map`() {
         show(listOf(Counter, Encounters, EncounterDetail(ID)), cat = tally(ID, OCCURRED))
         val noLocation = hasText(context.getString(R.string.detail_no_location_title))

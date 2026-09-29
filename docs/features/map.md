@@ -73,8 +73,10 @@ globe, past a pole or the 180th meridian.
 
 - **A dot** opens its cat's detail above the map, among the other cats of its outing (see
   [encounter-detail.md](./encounter-detail.md#paging-through-the-outing)); back returns to the map as it was left. A tap on
-  a cat's photo is a tap on the dots beneath it: its own, and any other cat's it covers. A dot whose cat is already
-  open further down the back stack, as on a map opened from that cat, goes back to it rather than opening it twice.
+  a cat's photo is a tap on the dots beneath it: its own, and any other cat's it covers. A dot whose cat's screen is
+  already open further down the back stack, as on a map opened from that cat, goes back to that screen rather than
+  opening a second one, closing what was above it, and shows that cat again even after a swipe moved the screen to
+  another (`EncounterDetailPagerEntryTest`, *a push that goes back to the screen shows the cat it was opened on*).
 - **Dots close together** at the current zoom draw as one circle holding their count, or as a photo
   with the count in a badge (see *How a photo shows*). Tapping it, or its badge, zooms in until they
   come apart.
@@ -98,9 +100,12 @@ An outing's "On the map" and a cat's coordinates (both below) open a map of thei
 they were tapped in, rather than switching to the Map tab. It is the same map, with its heat, its coats,
 its dots and its spot lists, starting from every coat and no heat. Back leaves it for that screen whatever
 it shows: the outing it opened on, one a spot's list focused on it, or every cat once the outing's chip is
-closed. The bottom bar keeps showing the tab that screen belongs to; the Map tab opens the tab's own map,
-which stays as it was left, also under a cat opened from it. A cat opened from this map opens above it,
-and its coordinates open another map above that one, so back retraces every step.
+closed. The bottom bar keeps showing the tab that screen belongs to. The Map tab opens the tab's own map:
+as it was left when a cat opened from it is under this map, and fitted afresh otherwise. A cat opened
+from this map opens above it, and its coordinates open another map above that one. A screen already open
+further down is gone back to rather than opened twice, closing what was above it: a cat's coordinates
+whose map is already open go back to that map and move its view onto the cat again, and a spot whose
+list is open over the Map tab, under the same coats, goes back to that list.
 
 ## An outing's route
 
@@ -184,14 +189,15 @@ map above another screen clears that map's.
   tiles until there is something to show.
 - **A cat gets its location while the map is open:** its dot appears where it is, and the view stays
   where it was panned rather than jumping to fit it. Rotating the phone or switching the theme keeps
-  that view too; only leaving the tab and coming back fits the map around the cats again.
+  that view too; only leaving the tab and coming back fits the map around the cats again, and a map
+  opened above another screen is fitted afresh each time it opens.
 - **No connection:** the dots sit on the map's style, so without the style there is nothing to draw
   them on. An area already seen loads from the cache; a first look with no connection says the map
   could not load, rather than showing an empty canvas.
 - **No compass, scale or logo:** only the attribution sits over the map. Two fingers still turn and
   tilt it as on any map, and no control sets it straight; the view comes back north-up and flat
-  whenever it is fitted again, as when an outing is focused or let go, a cat's coordinates open it,
-  or the tab is left and reopened.
+  whenever it is fitted again, as when an outing is focused or let go, a map opens above another
+  screen, or the tab is left and reopened.
 - **TalkBack** hears how many cats the map shows; the dots and photos themselves are not reachable
   yet, and a spot's list is read like the Encounters tab.
 - **Cats on both sides of the 180th meridian**, in Fiji or Chukotka, open on a view spanning the
@@ -220,10 +226,11 @@ map above another screen clears that map's.
   list, drawn by the Encounters tab's own `EncounterRows` in its list layout; `MapOverlay.kt` — the chips
   over the map; `MapAttribution.kt` — the attribution, the one library control kept on it;
   `MapCoatSheet.kt` — the coat choice
-- `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab; `OutingOnMap.kt`, `CatOnMap.kt` — a map
-  above another screen, whose `MapStore` starts from the outing or the cat its key names; `MapSpot.kt` —
-  a spot's list on the back stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`;
-  `MapFocusRequest.kt` — the outing a spot's list asked the map beneath it to show;
+- `app/…/navigation/CatsMap.kt`, `Destinations.kt` — the tab, and `backLetsGoOfFocus`, which map back
+  lets go of an outing on; `OutingOnMap.kt`, `CatOnMap.kt` — a map above another screen, whose
+  `MapStore` starts from the outing or the cat its key names; `MapSpot.kt` — a spot's list on the back
+  stack, drawn as a sheet by `BottomSheetSceneStrategy.kt`; `MapFocusRequest.kt` — the outing a spot's
+  list asked the map beneath it to show, or the cat a map gone back to is asked for again;
   `BottomNavBackStack.push()` — a key already on the stack is gone back to, not pushed twice
 
 ## Not built yet

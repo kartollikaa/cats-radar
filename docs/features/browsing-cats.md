@@ -77,12 +77,15 @@ sharing a key silently share one `ViewModelStore`. `CatsRadarNavHost` never hold
 stack at all — `rememberBottomNavBackStack()` returns a `BottomNavBackStack`, which implements
 `List<NavKey>` but not `MutableList<NavKey>`, so a bare push is not something the host can even
 write, let alone land unreviewed. `selectTab()`, its only way to change tabs, always trims down to
-the shared `Counter` root before conditionally appending the target, so at most one instance of any
-key can ever exist; a duplicate is structurally unreachable rather than merely avoided by a check
+the shared `Counter` root before conditionally appending the target, and `push()` adds a key only
+when it is not on the stack yet, so at most one instance of any key can ever exist
 (`BottomNavigationTest`, *every tab selection in a mixed sequence leaves each key on the stack at
 most once*). Besides `popOrNull()`, only `push()` shrinks the stack: a key already on it is gone back to,
 the entries above it popped, rather than pushed a second time (*pushing a key further down the stack goes
-back to it, closing what is above it*).
+back to it, closing what is above it*). The screen gone back to takes that return once, through
+`takeReturn()`, to show again what the push asked for; any other step drops a return not taken (*the
+screen a push goes back to takes that return once*; *a return its screen has not taken is dropped by
+the next step*).
 
 `observeAll()` still loads every non-deleted row on every emission — there is no paging or limit in
 this slice. That is fine at the row counts the app produces today, but it does not scale
