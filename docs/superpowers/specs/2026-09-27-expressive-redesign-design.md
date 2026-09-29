@@ -227,8 +227,9 @@ button of the same weight, and the paw tile's *Not specified* broke mid-word at 
 
 - **The header stays.** The photo just taken in a 64 dp `medium` square, or the paw in no coat's
   shape on `surfaceContainerHighest` when there is no thumbnail, beside the question in
-  `headlineSmallEmphasized` and one supporting line. Through a count only the words change (*4 cats
-  on this photo*); the photo does not move. The detail's coat sheet (section 3, slice E7b) takes the
+  `headlineSmallEmphasized` and one supporting line. Through a count the words change (*4 cats on this
+  photo*) and the photo stays beside them, gliding up with the header as the tray grows. The detail's
+  coat sheet (section 3, slice E7b) takes the
   same header with the cat's face.
 - **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
   check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and

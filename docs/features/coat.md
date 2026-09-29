@@ -81,7 +81,8 @@ one of them checked (`CoatPromptCountingTest`).
 While counting:
 
 - The title is the number of cats counted on the photo ("3 cats on this photo"), or asks how many there are
-  before the first; the photo stays beside it, where it was. Between the header and the pair a **tray** shows one
+  before the first; the photo stays beside it. The line under it says to tap a coat for each cat and a counted
+  cat to take it out. Between the header and the pair a **tray** shows one
   cat per tap, in the order they were tapped, each its coat's face in its coat's shape with a small ×; a tapped
   tray cat is taken out. The tray appears with the first cat counted and closes with the last one taken out.
 - Each face in the grid adds a cat of that coat and shows how many of it the tray holds, ringed like a chosen
@@ -113,8 +114,9 @@ it, each into the place before (`CoatPromptSteadyTest`, also run at the largest 
 - Both modes show the same twelve faces, *No coat* included, so switching moves none of them.
 
 What moves is the header, and it glides. The tray opens and closes over a few frames, and so does a row it gains
-or loses; the header's words cross-fade while the room they need grows or shrinks; the sheet's top edge follows
-(`CoatPromptMotionTest`, on the real sheet). While the tray closes it still shows the cats it held.
+or loses; the header's words fade through, the old leaving before the new arrive, while the room they need grows
+or shrinks; the sheet's top edge follows (`CoatPromptMotionTest`, on the real sheet). While the tray closes it
+still shows the cats it held.
 
 At the largest text a count can be taller than the screen: on a small phone, and in Russian. The sheet then fills
 the screen and its content scrolls from the bottom, so it opens on *Save* and *Not now*, and a count still grows
