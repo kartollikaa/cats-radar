@@ -80,7 +80,7 @@ While counting:
 - The title is the number of cats counted on the photo ("3 cats on this photo"), or asks how many there are
   before the first; the photo stays beside it, where it was. Between the header and the pair a **tray** shows one
   cat per tap, in the order they were tapped, each its coat's face in its coat's shape with a small ×; a tapped
-  tray cat is taken out. Before the first, the tray says that counted cats gather there.
+  tray cat is taken out. The tray appears with the first cat counted and closes with the last one taken out.
 - Each face in the grid adds a cat of that coat and shows how many of it the tray holds, ringed like a chosen
   coat. A **paw** after the eleven coats, **No coat**, adds a cat whose coat nobody saw. The map's filter names
   the same cell *Not specified*.
@@ -97,23 +97,28 @@ While counting:
   photographed cat stays with no coat and no other cat is added (*leaving the count without saving keeps the
   photographed cat alone and uncoated*).
 
-**The sheet keeps still.** It stands on the screen's bottom, so anything that changed size would move everything
-above it. Counting cats, taking them out and switching between *One cat* and *Several* never move the pair, a face
-or *Not now*, and a count never moves a counted cat or the title (`CoatPromptSteadyTest`, also run at the largest
-text in English, and in Russian for counting only, where the next paragraph's limit applies):
+**The sheet keeps still where one taps.** It stands on the screen's bottom, so anything that changes size moves
+everything above it. Counting cats, taking them out and switching between *One cat* and *Several* never move the
+pair, a face, *Not now* or a counted cat (`CoatPromptSteadyTest`, also run at the largest text in English and in
+Russian):
 
-- The tray keeps the room of a full tray from the first moment of a count, so a tenth cat still fits without
-  pushing anything.
-- While counting, the title and the line under it keep the room of their longest wording.
+- The tray holds only the rows its cats fill. A cat that no longer fits the bottom row opens a row above it, so
+  the rows stack upward and the row one takes cats out of stays where it is. A screen reader still hears the cats
+  in the order they were counted.
 - *Not now* stays at the start of the last row; before the first cat is counted, that row keeps the height that
   *Save* gives it.
 - Under *One cat* the grid keeps the paw's place empty, so the last row's faces stand where they do while
   counting.
 
-At the largest text a count can be taller than the screen: on a small phone, and in Russian even with no cat
-counted yet. The sheet then fills the screen and its content scrolls, so *Save* and *Not now* are always reachable
-(`CoatPromptTallTextTest`), but switching modes can move the pair there. A swipe down on the sheet still closes it, asking and counting alike
-(`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header, before the pair.
+What moves is the header, and it glides. The tray opens and closes over a few frames, and so does a row it gains
+or loses; the header's words cross-fade while the room they need grows or shrinks; the sheet's top edge follows
+(`CoatPromptMotionTest`, on the real sheet). While the tray closes it still shows the cats it held.
+
+At the largest text a count can be taller than the screen: on a small phone, and in Russian. The sheet then fills
+the screen and its content scrolls from the bottom, so it opens on *Save* and *Not now*, and a count still grows
+upward, out of view; the title is a scroll up (`CoatPromptTallTextTest`). A swipe down on the sheet still closes it,
+asking and counting alike (`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header,
+before the pair.
 
 The edges above hold while counting too: a newer photo takes the sheet over and the tray goes with the old photo
 (*a newer photo takes the sheet over and drops the tray*); the sheet closes before anything is written (*saving
