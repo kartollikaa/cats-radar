@@ -11,7 +11,7 @@ class BottomSheetUsageTest {
     fun `only the app's own sheet uses material's sheets`() {
         val users = Konsist.scopeFromPackage("dev.catsradar..")
             .files
-            .excludingGeneratedSources()
+            .excludingBuildOutputAndOtherWorktrees()
             .filter { MATERIAL_SHEET.containsMatchIn(it.text) }
             .map { it.nameWithExtension }
 

@@ -15,7 +15,7 @@ class NavKeySerializableTest {
     fun `classes and objects implementing NavKey are annotated Serializable`() {
         Konsist.scopeFromProject()
             .classesAndObjects()
-            .excludingGeneratedSources()
+            .excludingBuildOutputAndOtherWorktrees()
             .filter { it.hasParentWithName("NavKey") }
             .assertTrue(testName = "classes and objects implementing NavKey are annotated @Serializable") {
                 it.hasAnnotationOf(Serializable::class)

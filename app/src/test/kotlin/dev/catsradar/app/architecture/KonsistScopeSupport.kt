@@ -3,7 +3,7 @@ package dev.catsradar.app.architecture
 import com.lemonappdev.konsist.api.provider.KoPathProvider
 import com.lemonappdev.konsist.core.filesystem.PathProvider
 
-internal fun <T : KoPathProvider> List<T>.excludingGeneratedSources(): List<T> =
+internal fun <T : KoPathProvider> List<T>.excludingBuildOutputAndOtherWorktrees(): List<T> =
     filterNot { isExcludedSource(it.path, PathProvider.rootProjectPath) }
 
 // Konsist's scope* methods return build-directory files too (its own KDoc says so), which would put

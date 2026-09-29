@@ -57,7 +57,7 @@ class DependencyLookupTest {
         val outsideCompositionRoot by lazy {
             Konsist.scopeFromProject()
                 .files
-                .excludingGeneratedSources()
+                .excludingBuildOutputAndOtherWorktrees()
                 .filter { file -> ProductionSourceSet.containsMatchIn(file.path) }
                 .filterNot { file -> file.path.contains(CompositionRootPackage) || file.path.endsWith(ApplicationFile) }
         }

@@ -41,7 +41,7 @@ today only by there being no `implementation(projects.domain)` in `:ui`'s `build
 no project dependency at all in `:domain`'s; no Konsist test backs either one, so an accidental
 dependency edit would not be caught by `check`.
 
-Every rule reads its files through `excludingGeneratedSources()`, which drops build output and the
+Every rule reads its files through `excludingBuildOutputAndOtherWorktrees()`, which drops build output and the
 other worktrees. Konsist scans from the nearest `settings.gradle.kts`, so in a main checkout it also
 reaches every session's copy of the sources under `.claude/worktrees/`; left in, those copies are
 judged like the real ones and fail `check` for code that is not on the branch. The filter is applied

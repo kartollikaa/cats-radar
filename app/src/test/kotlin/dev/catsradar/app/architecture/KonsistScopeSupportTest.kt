@@ -36,7 +36,7 @@ class KonsistScopeSupportTest {
 
     @Test
     fun `the project scope holds this module's sources and no other worktree's`() {
-        val files = Konsist.scopeFromProject().files.excludingGeneratedSources()
+        val files = Konsist.scopeFromProject().files.excludingBuildOutputAndOtherWorktrees()
 
         assertTrue(
             files.any { it.path.endsWith("/app/src/test/kotlin/dev/catsradar/app/architecture/$SUPPORT_FILE") },

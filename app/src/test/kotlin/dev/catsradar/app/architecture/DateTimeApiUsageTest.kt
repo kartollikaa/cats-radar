@@ -59,7 +59,7 @@ class DateTimeApiUsageTest {
         val sharedSources by lazy {
             Konsist.scopeFromProject()
                 .files
-                .excludingGeneratedSources()
+                .excludingBuildOutputAndOtherWorktrees()
                 .filter { file -> SharedSourceSet.containsMatchIn(file.path) }
         }
     }
