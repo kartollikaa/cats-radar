@@ -18,7 +18,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,13 +48,11 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
 import dev.catsradar.ui.coat.coatShapeFor
 import dev.catsradar.ui.components.CatsRadarBottomSheet
-import dev.catsradar.ui.components.KeepingRoomOf
 import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 
 const val CoatPromptPawTestTag = "coat-prompt-paw"
@@ -163,11 +160,8 @@ fun CoatPrompt(
 
 @Composable
 private fun SaveButton(count: Int, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
-    val labels = (1..CoatCountState.MOST_CATS).map { pluralStringResource(R.plurals.counter_coat_count_save, it, it) }
     Button(onClick = onClick, modifier = modifier) {
-        KeepingRoomOf(labels.toImmutableList(), LocalTextStyle.current, contentAlignment = Alignment.Center) {
-            Text(pluralStringResource(R.plurals.counter_coat_count_save, count, count))
-        }
+        Text(pluralStringResource(R.plurals.counter_coat_count_save, count, count))
     }
 }
 

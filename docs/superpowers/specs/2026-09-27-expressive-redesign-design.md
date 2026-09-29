@@ -233,12 +233,17 @@ button of the same weight, and the paw tile's *Not specified* broke mid-word at 
 - **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
   check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and
   empties the tray: a behaviour change, since a count had no way back but leaving the sheet.
-- **The count.** Counted cats line up under the group in their coat shapes, each with a small ×,
-  heard as its coat with a Remove action; before the first, a muted line says they gather there. The
-  grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the
-  detail's sheet uses; the map's filter keeps *Not specified*.
-- **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
-  counted. What saving writes does not change.
+- **The count.** Counted cats line up between the header and the group, in their coat shapes, each with
+  a small ×, heard as its coat with a Remove action; before the first, a muted line says they gather
+  there. The grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the
+  word the detail's sheet uses; the map's filter keeps *Not specified*.
+- **The row at the end.** **Not now** at its start, then **Save N cats** at its end as the filled button
+  once a cat is counted. What saving writes does not change.
+- **It keeps still** (owner, 2026-09-29: switching modes and counting changed the sheet's height, and
+  taking cats out missed). The tray sits above the group and keeps a full tray's room from the first cat;
+  while counting, the title and its line keep their longest wording's room; *Not now* never moves, and
+  the row keeps Save's height before the first cat; the grid keeps the paw's place under *One cat*. A
+  sheet taller than the screen scrolls.
 
 **The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
 should be like the import popup". The hint that follows a denied location request leaves the column and

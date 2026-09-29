@@ -30,8 +30,8 @@ A photo cannot carry its coat the way a tap on the grid does: the Photo button o
 camera, and nothing in that press says what the cat looked like. So once the photo is saved, the
 Counter asks in a bottom sheet: the photo's thumbnail beside **What coat was it?** and a line
 saying that a tap notes the coat; under them a connected pair of buttons, **One cat · Several**,
-with *One cat* checked; then the eleven faces, and **Not now** at the end. The moment after the
-shutter is when the coat is known best, with the cat still in front of the lens.
+with *One cat* checked; then the eleven faces, and **Not now** at the start of the last row. The moment after
+the shutter is when the coat is known best, with the cat still in front of the lens.
 
 That is not the old strip coming back: a photo has no tap that chose its coat, and the sheet is the
 only place the Counter asks about it.
@@ -78,9 +78,9 @@ one of them checked (`CoatPromptCountingTest`).
 While counting:
 
 - The title is the number of cats counted on the photo ("3 cats on this photo"), or asks how many there are
-  before the first; the photo stays beside it, where it was. Under the pair a **tray** shows one cat per tap, in
-  the order they were tapped, each its coat's face in its coat's shape with a small ×; a tapped tray cat is taken
-  out. Before the first, the tray says that counted cats gather there.
+  before the first; the photo stays beside it, where it was. Between the header and the pair a **tray** shows one
+  cat per tap, in the order they were tapped, each its coat's face in its coat's shape with a small ×; a tapped
+  tray cat is taken out. Before the first, the tray says that counted cats gather there.
 - Each face in the grid adds a cat of that coat and shows how many of it the tray holds, ringed like a chosen
   coat. A **paw** after the eleven coats, **No coat**, adds a cat whose coat nobody saw. The map's filter names
   the same cell *Not specified*.
@@ -88,14 +88,31 @@ While counting:
   paw dim and take no tap, and the line under the title says the photo holds no more (`CounterStorePhotoPromptTest`,
   *past the most cats a photo can hold, faces stop adding*). A tray cat is taken out only while it is still the one
   tapped, so a second tap landing after the tray moved takes out no other cat.
-- **Save N cats** appears with the first cat counted. It closes the sheet, then sets the first counted coat on the
-  cat the camera saved and adds the others to its shot, each a cat of its own with its own copy of the photo (see
-  [photos.md](./photos.md)). An added cat still waiting for a location goes to the background attach, as the
-  photographed cat did (*every added cat still without a location is sent to the location attach*). Encounters
-  shows the shot as one entry with a badge of its count (see [browsing-cats.md](./browsing-cats.md)).
+- **Save N cats** appears at the end of the last row with the first cat counted. It closes the sheet, then sets the
+  first counted coat on the cat the camera saved and adds the others to its shot, each a cat of its own with its own
+  copy of the photo (see [photos.md](./photos.md)). An added cat still waiting for a location goes to the background
+  attach, as the photographed cat did (*every added cat still without a location is sent to the location attach*).
+  Encounters shows the shot as one entry with a badge of its count (see [browsing-cats.md](./browsing-cats.md)).
 - Leaving the count any other way — **Not now**, a swipe down, a tap outside, back — is **Not now**: the
   photographed cat stays with no coat and no other cat is added (*leaving the count without saving keeps the
   photographed cat alone and uncoated*).
+
+**The sheet keeps still.** It stands on the screen's bottom, so anything that changed size would move everything
+above it. Counting cats, taking them out and switching between *One cat* and *Several* never move the pair, a face
+or *Not now*, and a count never moves a counted cat or the title (`CoatPromptSteadyTest`, run at the largest text
+in English and Russian too):
+
+- The tray keeps the room of a full tray from the first moment of a count, so a tenth cat still fits without
+  pushing anything.
+- While counting, the title and the line under it keep the room of their longest wording.
+- *Not now* stays at the start of the last row; before the first cat is counted, that row keeps the height that
+  *Save* gives it.
+- Under *One cat* the grid keeps the paw's place empty, so the last row's faces stand where they do while
+  counting.
+
+At the largest text on a small phone a full count can be taller than the screen. The sheet then fills the screen
+and its content scrolls, so *Save* and *Not now* are always reachable (`CoatPromptTallTextTest`), but switching
+modes can move the pair there.
 
 The edges above hold while counting too: a newer photo takes the sheet over and the tray goes with the old photo
 (*a newer photo takes the sheet over and drops the tray*); the sheet closes before anything is written (*saving
@@ -186,7 +203,7 @@ blend along one bar, and a colour too faint for the track is shaded until it sho
 - `ui/…/detail/CoatCard.kt` — the detail's coat card; `ui/…/detail/CoatSheet.kt` — the coat sheet's content;
   `presentation/…/coatsheet/` — its Store, which writes through `SetCoat`; `app/…/navigation/CoatSheet.kt` — its key
 - `ui/…/counter/CoatPromptSheet.kt` — the sheet after a photo, its header and *One cat · Several*;
-  `CoatPromptTray.kt` its tray; `CounterStore` opens and
+  `CoatPromptTray.kt` its tray; `CoatPromptWords.kt` the header's wordings; `CounterStore` opens and
   closes it, `presentation/…/counter/CoatCounting.kt` moves it between prompts and `CoatQuestion.kt` makes its writes
 - `ui/…/coat/CoatShapes.kt` — each coat's shape, stretched onto its square
 - `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, the line around every face, and the colours
