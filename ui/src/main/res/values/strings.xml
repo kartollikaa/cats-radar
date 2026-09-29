@@ -58,10 +58,9 @@
     <string name="counter_coat_prompt_one">One cat</string>
     <string name="counter_coat_prompt_several">Several</string>
     <string name="counter_coat_count_title_empty">How many cats are on it?</string>
-    <string name="counter_coat_count_hint">Tap a coat for each cat. Tap a cat above to take it out</string>
-    <string name="counter_coat_count_full">That is as many cats as one photo holds. Tap a cat above to take it out</string>
+    <string name="counter_coat_count_hint">Tap a coat for each cat. Tap a counted cat to take it out</string>
+    <string name="counter_coat_count_full">That is as many cats as one photo holds. Tap a counted cat to take it out</string>
     <string name="counter_coat_count_remove">Remove</string>
-    <string name="counter_coat_count_tray_empty">Counted cats gather here</string>
     <plurals name="counter_coat_count_title">
         <item quantity="one">%1$d cat on this photo</item>
         <item quantity="other">%1$d cats on this photo</item>

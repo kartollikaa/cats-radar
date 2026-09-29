@@ -1,6 +1,12 @@
 package dev.catsradar.ui.counter
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -28,11 +36,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -44,11 +54,11 @@ import dev.catsradar.ui.R
 import dev.catsradar.ui.coat.CoatGrid
 import dev.catsradar.ui.coat.coatShapeFor
 import dev.catsradar.ui.components.CatsRadarBottomSheet
-import dev.catsradar.ui.components.SheetActions
 import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableSet
 
 const val CoatPromptPawTestTag = "coat-prompt-paw"
@@ -107,59 +117,76 @@ fun CoatPrompt(
     onSkipClick: () -> Unit = {},
 ) {
     val counting = prompt.counting
+    // Anchored at its bottom, as the sheet is, so what changes size grows upward, above what one taps next.
     Column(
-        modifier = modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp),
+        modifier = modifier
+            .verticalScroll(rememberScrollState(), reverseScrolling = true)
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SheetHeader(
-            title = promptTitle(counting),
-            supporting = promptHint(counting),
-            titleStyle = MaterialTheme.typography.headlineSmallEmphasized,
-            leading = { PromptLead(prompt.thumbPath) },
-        )
-        OneOrSeveral(several = counting != null, onOneCatClick = onOneCatClick, onSeveralClick = onSeveralClick)
-        if (counting == null) {
-            CoatGrid(onCoatClick = onCoatClick)
-        } else {
-            CountTray(counting = counting, onCatClick = onTrayCatClick)
-            CoatGrid(
-                selected = counting.counts.keys.toImmutableSet(),
-                counts = counting.counts,
-                enabled = counting.canAdd,
-                onCoatClick = onCoatClick,
-                onUnspecifiedClick = onUnseenClick,
-                unspecifiedLabel = R.string.coat_none,
+        // The tray brings its own gap, which opens and closes with it.
+        Column {
+            SheetHeader(
+                title = promptTitle(counting),
+                supporting = promptHint(counting),
+                titleStyle = MaterialTheme.typography.headlineSmallEmphasized,
+                leading = { PromptLead(prompt.thumbPath) },
             )
+            val tray = counting?.tray ?: persistentListOf()
+            val shownTray = rememberLastCounted(tray)
+            AnimatedVisibility(
+                visible = tray.isNotEmpty(),
+                enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
+            ) {
+                CountTray(
+                    tray = shownTray,
+                    onCatClick = onTrayCatClick,
+                    modifier = Modifier.padding(top = 16.dp).animateContentSize(alignment = Alignment.BottomStart),
+                )
+            }
         }
-        SheetActions {
+        OneOrSeveral(several = counting != null, onOneCatClick = onOneCatClick, onSeveralClick = onSeveralClick)
+        // The same twelve faces in both modes, so switching moves none of them.
+        val counts = counting?.counts ?: persistentMapOf()
+        CoatGrid(
+            selected = counts.keys.toImmutableSet(),
+            counts = counts,
+            enabled = counting?.canAdd ?: true,
+            onCoatClick = onCoatClick,
+            onUnspecifiedClick = onUnseenClick,
+            unspecifiedLabel = R.string.coat_none,
+        )
+        // Not now at the start, so Save coming and going never moves it.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             TextButton(onClick = onSkipClick) { Text(stringResource(R.string.counter_coat_prompt_skip)) }
-            counting?.catCount?.let { count ->
-                Button(onClick = onSaveClick) {
-                    Text(pluralStringResource(R.plurals.counter_coat_count_save, count, count))
-                }
+            val count = counting?.catCount
+            if (count != null) {
+                SaveButton(count = count, onClick = onSaveClick)
+            } else {
+                Box(modifier = Modifier.onlyItsHeight().clearAndSetSemantics {}) { SaveButton(count = 1) }
             }
         }
     }
 }
 
 @Composable
-private fun promptTitle(counting: CoatCountState?): String {
-    val count = counting?.catCount
-    return when {
-        counting == null -> stringResource(R.string.counter_coat_prompt_title)
-        count == null -> stringResource(R.string.counter_coat_count_title_empty)
-        else -> pluralStringResource(R.plurals.counter_coat_count_title, count, count)
+private fun SaveButton(count: Int, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+    Button(onClick = onClick, modifier = modifier) {
+        Text(pluralStringResource(R.plurals.counter_coat_count_save, count, count))
     }
 }
 
-@Composable
-private fun promptHint(counting: CoatCountState?): String = stringResource(
-    when {
-        counting == null -> R.string.counter_coat_prompt_hint
-        counting.canAdd -> R.string.counter_coat_count_hint
-        else -> R.string.counter_coat_count_full
-    },
-)
+// Save's height with nothing drawn: the row keeps it before the first cat is counted and while asking.
+private fun Modifier.onlyItsHeight(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(0, placeable.height) {}
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

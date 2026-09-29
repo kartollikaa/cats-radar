@@ -227,18 +227,30 @@ button of the same weight, and the paw tile's *Not specified* broke mid-word at 
 
 - **The header stays.** The photo just taken in a 64 dp `medium` square, or the paw in no coat's
   shape on `surfaceContainerHighest` when there is no thumbnail, beside the question in
-  `headlineSmallEmphasized` and one supporting line. Through a count only the words change (*4 cats
-  on this photo*); the photo does not move. The detail's coat sheet (section 3, slice E7b) takes the
+  `headlineSmallEmphasized` and one supporting line. Through a count the words change (*4 cats on this
+  photo*) and the photo stays beside them, gliding up with the header as the tray grows. The detail's
+  coat sheet (section 3, slice E7b) takes the
   same header with the cat's face.
 - **The mode is named.** Under the header, a connected button group, **One cat · Several**, with a
   check on the chosen one. **Several** starts a count. **One cat** goes back to a single tap and
   empties the tray: a behaviour change, since a count had no way back but leaving the sheet.
-- **The count.** Counted cats line up under the group in their coat shapes, each with a small ×,
-  heard as its coat with a Remove action; before the first, a muted line says they gather there. The
-  grid is section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the
-  detail's sheet uses; the map's filter keeps *Not specified*.
-- **The row at the end.** **Not now**, then **Save N cats** as the filled button once a cat is
-  counted. What saving writes does not change.
+- **The count.** Counted cats line up between the header and the group, in their coat shapes, each with
+  a small ×, heard as its coat with a Remove action; the tray appears with the first cat. The grid is
+  section 2's with the counts on its tiles, and its paw tile reads **No coat**, the word the detail's
+  sheet uses; the map's filter keeps *Not specified*.
+- **The row at the end.** **Not now** at its start, then **Save N cats** at its end as the filled button
+  once a cat is counted. What saving writes does not change.
+- **It keeps still where one taps** (owner, 2026-09-29: switching modes and counting changed the sheet's
+  height, and taking cats out missed). The tray sits above the group and holds only the rows its cats
+  fill, stacking a new row above the others; *Not now* never moves, and the row keeps Save's height
+  before the first cat. A sheet taller than the screen
+  scrolls from its bottom. A first take kept a full tray's room from the start; the owner found the blank
+  ugly and chose, from a prototype of four directions, a tray that grows upward.
+- **It glides.** The tray opens, closes and gains rows over a few frames, and the header's words
+  fade through while their height changes, so the sheet's top edge follows instead of jumping.
+- **One grid for both modes** (owner, 2026-09-29: "so the options do not differ"). *One cat* shows the
+  paw's **No coat** too; a tap on it answers that nobody saw the coat and closes the sheet with the coat
+  unset, as a face closes it with that coat.
 
 **The location hint** (slice E16). The owner, 2026-09-28: "location required dialog in counter page
 should be like the import popup". The hint that follows a denied location request leaves the column and

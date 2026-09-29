@@ -68,10 +68,9 @@
     <string name="counter_coat_prompt_one">Один котик</string>
     <string name="counter_coat_prompt_several">Несколько</string>
     <string name="counter_coat_count_title_empty">Сколько котиков на фото?</string>
-    <string name="counter_coat_count_hint">Нажмите на окрас каждого котика. Нажмите на котика выше, чтобы убрать его</string>
-    <string name="counter_coat_count_full">Больше котиков на одно фото не поместится. Нажмите на котика выше, чтобы убрать его</string>
+    <string name="counter_coat_count_hint">Нажмите на окрас каждого котика. Нажмите на посчитанного котика, чтобы убрать его</string>
+    <string name="counter_coat_count_full">Больше котиков на одно фото не поместится. Нажмите на посчитанного котика, чтобы убрать его</string>
     <string name="counter_coat_count_remove">Убрать</string>
-    <string name="counter_coat_count_tray_empty">Здесь соберутся посчитанные котики</string>
     <plurals name="counter_coat_count_title">
         <item quantity="one">%1$d котик на этом фото</item>
         <item quantity="few">%1$d котика на этом фото</item>
