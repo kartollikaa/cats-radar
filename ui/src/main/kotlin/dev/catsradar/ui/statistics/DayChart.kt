@@ -1,8 +1,11 @@
 package dev.catsradar.ui.statistics
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +28,7 @@ import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.material3.ToggleButtonSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -114,10 +118,12 @@ private fun DayBars(
 private fun DayBar(bar: DayBarState, shape: Shape, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val description = pluralStringResource(R.plurals.statistics_day_bar, bar.count, bar.count, bar.dayLabel)
     val colors = MaterialTheme.colorScheme
+    val interactions = remember { MutableInteractionSource() }
+    // The whole column takes the tap, a thin bar being hard to hit, but the press shows on the bar alone.
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .selectable(selected = bar.isPicked, onClick = onClick)
+            .selectable(selected = bar.isPicked, interactionSource = interactions, indication = null, onClick = onClick)
             .semantics { contentDescription = description }
             .testTag(DayBarTestTag),
         contentAlignment = Alignment.BottomCenter,
@@ -131,6 +137,7 @@ private fun DayBar(bar: DayBarState, shape: Shape, modifier: Modifier = Modifier
                 .height(StubHeight + (BarsHeight - StubHeight) * bar.height)
                 .clip(shape)
                 .background(if (bar.isToday) colors.primary else colors.surfaceContainerHighest)
+                .indication(interactions, LocalIndication.current)
                 .then(if (bar.isPicked) Modifier.border(2.dp, colors.primary, shape) else Modifier),
         )
     }
