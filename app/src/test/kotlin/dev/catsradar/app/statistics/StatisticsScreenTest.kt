@@ -1,6 +1,10 @@
 package dev.catsradar.app.statistics
 
 import android.content.Context
+import androidx.compose.foundation.IndicationNodeFactory
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -8,9 +12,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.ui.node.DrawModifierNode
+import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -26,6 +36,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -60,6 +71,7 @@ import dev.catsradar.ui.theme.CatsRadarLightColors
 import dev.catsradar.ui.theme.CatsRadarTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -100,7 +112,9 @@ class StatisticsScreenTest {
                 CatsRadarTheme(colorScheme = colors) {
                     scheme = MaterialTheme.colorScheme
                     typography = MaterialTheme.typography
-                    StatisticsScreen(state = state, onRangeClick = onRange, onDayClick = onDay)
+                    CompositionLocalProvider(LocalIndication provides PressMarker) {
+                        StatisticsScreen(state = state, onRangeClick = onRange, onDayClick = onDay)
+                    }
                 }
             }
         }
@@ -118,6 +132,12 @@ class StatisticsScreenTest {
     private fun SemanticsNodeInteraction.pixelAt(fraction: Float): Color {
         val pixels = captureToImage().toPixelMap()
         return pixels[(pixels.width * fraction).toInt(), pixels.height / 2]
+    }
+
+    private fun press(column: SemanticsNodeInteraction) {
+        compose.mainClock.autoAdvance = false
+        column.performTouchInput { down(Offset(width / 2f, height / 2f)) }
+        compose.mainClock.advanceTimeBy(300)
     }
 
     private fun coatFill(row: Int) = compose.onAllNodesWithTag(ShareBarFillTestTag, useUnmergedTree = true)[row]
@@ -206,6 +226,26 @@ class StatisticsScreenTest {
 
         assertEquals(scheme.primary, barFill(6).centrePixel())
         assertEquals(scheme.surfaceContainerHighest, barFill(0).centrePixel())
+    }
+
+    @Test
+    fun `a press on a bar draws its feedback on the bar`() {
+        show(dashboard(ChartRange.WEEK))
+
+        press(bars()[4])
+
+        assertEquals(PressMarkerColor, barFill(4).centrePixel())
+    }
+
+    @Test
+    fun `a press on a bar leaves the empty column above it without feedback`() {
+        show(dashboard(ChartRange.WEEK))
+        val zeroDay = bars()[5]
+        val aboveTheStub = zeroDay.topPixel()
+
+        press(zeroDay)
+
+        assertEquals(aboveTheStub, zeroDay.topPixel())
     }
 
     @Test
@@ -436,3 +476,32 @@ class StatisticsScreenTest {
             CoatShareState(CoatOption.GINGER_WHITE, countLabel = "38", sharePercentLabel = "26", share = 1f)
     }
 }
+
+// Robolectric does not draw Material's ripple; this indication paints its node while it is pressed.
+private object PressMarker : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode = PressMarkerNode(interactionSource)
+
+    override fun equals(other: Any?): Boolean = other === this
+
+    override fun hashCode(): Int = System.identityHashCode(this)
+}
+
+private class PressMarkerNode(private val source: InteractionSource) : Modifier.Node(), DrawModifierNode {
+    private var pressed = false
+
+    override fun onAttach() {
+        coroutineScope.launch {
+            source.interactions.collect { interaction ->
+                pressed = interaction is PressInteraction.Press
+                invalidateDraw()
+            }
+        }
+    }
+
+    override fun ContentDrawScope.draw() {
+        drawContent()
+        if (pressed) drawRect(PressMarkerColor)
+    }
+}
+
+private val PressMarkerColor = Color(0xFFFF00FF)

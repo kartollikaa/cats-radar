@@ -65,8 +65,12 @@ where the cat on screen is — "2 / 5", read by TalkBack as "Cat 2 of 5" — and
 (`EncounterDetailPagerTest`, *several pages show the position of the cat on screen, read as Cat n of m*; *a single
 cat shows no position*).
 
-A swipe that comes to rest on another cat makes it the cat on screen: the position follows, and *Remove this cat*
-removes it (`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
+The position turns to the page a swipe heads for as soon as the pages set off for it, not when they come to rest,
+and it names the cat on screen again once they do (`EncounterDetailPagerTest`, *the position names the page a swipe
+heads for before the pages come to rest*).
+
+A swipe that comes to rest on another cat makes it the cat on screen, and *Remove this cat* removes it
+(`EncounterDetailPagerTest`, *a swipe to the next page reports the older cat, once*;
 `EncounterDetailStoreTest`, *settling on another page puts that cat on screen*; *after settling, a delete removes
 the settled cat*). Only the state moves the cat on screen, and the pager follows it — when a cat deleted
 elsewhere hands the screen to its neighbour, say (*the pager follows the cat on screen when the state moves
@@ -81,7 +85,17 @@ A cat with photos keeps its own carousel inside its page: a drag that starts on 
 one item a fling, and past its end — its two add items — the rest of the drag moves on to the next cat
 (`EncounterDetailPagerTest`, *a drag past the row's end moves on to the next cat*). Each page keeps its place in the
 carousel while the user swipes to other cats and back (*a cat swiped away from and back to keeps its place in the
-row*).
+row*), and every cat's carousel draws its cards whole however many pages were swiped past (`DetailPhotoCarouselTest`,
+*the photo in front fills its card on every cat paged to, after a row was scrolled*).
+
+The pages take a moment to come to rest after a swipe, and a touch in that moment stops them. A sideways drag that
+starts on the carousel then moves the carousel while the pages wait under it, and once the finger lifts they carry
+on to the cat they were heading for (`EncounterDetailPagerTest`, *a drag on the row while the pages still settle
+moves the row, not the pages*; *while the row is dragged during a settle the pages wait under it, then carry on*);
+after a tap they carry on at once (*a tap while the pages still settle, however shaky, lets them carry on to the cat
+they head for*). A drag that runs on past the carousel's end moves the pages itself, and they come to rest where it
+leaves them. A drag anywhere else catches the pages as before, so a second quick swipe moves on to the cat after (*a
+second flick below the row while the pages still settle moves on to the cat after*).
 
 The cat on screen is saved with the screen, so after the process died it reopens on the cat that was on screen,
 while that cat is live, and on the opened one otherwise (`EncounterDetailPagerEntryTest`, *a restored entry
@@ -351,7 +365,8 @@ attempt itself does with the files, the gallery setting, and an image it cannot 
 - `presentation/…/detail/` — `EncounterDetailState` (a `CatPage` per cat), `Intent`, `Effect`, `StateMapper`, `Store`;
   `OutingPages.kt` (the cats on the pages and the one on screen), `PhotoAttempts.kt` (each cat's attempt)
 - `data/…/db/EncounterDao.kt` — `observeNumber`, the count behind a cat's number
-- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `DetailHeading.kt`
+- `ui/…/detail/EncounterDetailScreen.kt`, `CatPager.kt` (the pages and what each one draws), `PagerGestures.kt`
+  (how the settling pages share a touch with the carousel), `DetailHeading.kt`
   (the title and the facts row), `DetailMore.kt` (More and its menu), `WhereCard.kt` (the card and the no-location
   notice), `CoatCard.kt` and `CoatSheet.kt` (the coat, see [coat.md](./coat.md#changing-it-later)),
   `DetailPhotoCarousel.kt` (the photos and the add items), `NoPhotoBlock.kt` (a cat without a photo), `AttachingBar.kt`,

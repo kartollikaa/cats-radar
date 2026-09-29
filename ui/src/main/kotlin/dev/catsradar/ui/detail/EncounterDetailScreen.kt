@@ -51,23 +51,28 @@ fun EncounterDetailScreen(
     onSetLocationClick: (catId: String) -> Unit = {},
 ) {
     val belowBar = belowBackBar(contentPadding)
-    val several = (state as? EncounterDetailState.Loaded)?.takeIf { it.pages.size > 1 }
+    val loaded = state as? EncounterDetailState.Loaded
+    val pagerState = loaded?.let { rememberCatPagerState(it) }
+    val several = loaded?.takeIf { it.pages.size > 1 }
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
             EncounterDetailState.Loading -> Unit
-            is EncounterDetailState.Loaded -> CatPager(
-                state,
-                contentPadding = belowBar,
-                onPageSettle = onPageSettle,
-                onPhotoCatClick = onPhotoCatClick,
-                onDeleteClick = onDeleteClick,
-                onCoatCardClick = onCoatCardClick,
-                onTakePhotoClick = onTakePhotoClick,
-                onPickPhotoClick = onPickPhotoClick,
-                onPhotoClick = onPhotoClick,
-                onCoordinatesClick = onCoordinatesClick,
-                onSetLocationClick = onSetLocationClick,
-            )
+            is EncounterDetailState.Loaded -> pagerState?.let { pages ->
+                CatPager(
+                    state,
+                    pagerState = pages,
+                    contentPadding = belowBar,
+                    onPageSettle = onPageSettle,
+                    onPhotoCatClick = onPhotoCatClick,
+                    onDeleteClick = onDeleteClick,
+                    onCoatCardClick = onCoatCardClick,
+                    onTakePhotoClick = onTakePhotoClick,
+                    onPickPhotoClick = onPickPhotoClick,
+                    onPhotoClick = onPhotoClick,
+                    onCoordinatesClick = onCoordinatesClick,
+                    onSetLocationClick = onSetLocationClick,
+                )
+            }
             is EncounterDetailState.Deleted ->
                 DeletedDetail(state, modifier = Modifier.padding(belowBar), onUndoClick = onUndoClick)
             EncounterDetailState.Missing -> CenteredMessage(R.string.detail_missing, Modifier.padding(belowBar))
@@ -75,7 +80,12 @@ fun EncounterDetailScreen(
         BackBar(
             contentDescription = stringResource(R.string.detail_back),
             contentPadding = contentPadding,
-            center = several?.let { loaded -> { PagePosition(loaded.currentNumber, loaded.pages.size) } },
+            // The page a swipe heads for, which the state names only once the pages come to rest.
+            center = if (several != null && pagerState != null) {
+                { PagePosition(pagerState.targetPage + 1, several.pages.size) }
+            } else {
+                null
+            },
             end = {
                 if (state is EncounterDetailState.Loaded) {
                     DetailMore(

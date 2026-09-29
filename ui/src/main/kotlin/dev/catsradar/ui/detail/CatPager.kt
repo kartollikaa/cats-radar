@@ -38,10 +38,18 @@ const val DetailPagesTestTag = "detail-pages"
 // In line with the back arrow's edge, as everything on the page is.
 internal val PageInset = 16.dp
 
+@Composable
+internal fun rememberCatPagerState(state: EncounterDetailState.Loaded): PagerState {
+    val currentState by rememberUpdatedState(state)
+    // Not saved: an index restored after the process died can name another cat than the state's.
+    return remember { PagerState(currentPage = state.currentNumber - 1) { currentState.pages.size } }
+}
+
 /** [onPageSettle] names the cat a swipe comes to rest on, only when it is not already [state]'s cat on screen. */
 @Composable
 internal fun CatPager(
     state: EncounterDetailState.Loaded,
+    pagerState: PagerState,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onPageSettle: (catId: String) -> Unit = {},
@@ -56,8 +64,8 @@ internal fun CatPager(
 ) {
     val currentState by rememberUpdatedState(state)
     val currentOnPageSettle by rememberUpdatedState(onPageSettle)
-    // Not saved: an index restored after the process died can name another cat than the state's.
-    val pagerState = remember { PagerState(currentPage = state.currentNumber - 1) { currentState.pages.size } }
+    val gestures = rememberPagerGestures(pagerState)
+    val pagesMoving = remember(pagerState) { { pagerState.isScrollInProgress } }
     LaunchedEffect(state.currentId) {
         val onScreen = currentState.currentNumber - 1
         if (onScreen != pagerState.currentPage) pagerState.scrollToPage(onScreen)
@@ -70,14 +78,17 @@ internal fun CatPager(
     }
     HorizontalPager(
         state = pagerState,
-        modifier = modifier.fillMaxSize().testTag(DetailPagesTestTag),
+        modifier = modifier.fillMaxSize().testTag(DetailPagesTestTag).then(gestures.touches),
         overscrollEffect = null,
         key = { index -> state.pages[index].pageKey },
+        flingBehavior = gestures.fling,
+        pageNestedScrollConnection = gestures.connection,
     ) { index ->
         val page = state.pages[index]
         CatPageContent(
             page,
             contentPadding = contentPadding,
+            rowTakesDragAtOnce = pagesMoving,
             onPhotoCatClick = onPhotoCatClick,
             onDeleteClick = onDeleteClick,
             onCoatCardClick = { onCoatCardClick(page.id) },
@@ -95,6 +106,7 @@ private fun CatPageContent(
     page: CatPage,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    rowTakesDragAtOnce: () -> Boolean = { false },
     onPhotoCatClick: (catId: String) -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onCoatCardClick: () -> Unit = {},
@@ -127,6 +139,7 @@ private fun CatPageContent(
                 photos = page.photos,
                 addPhoto = page.addPhoto,
                 progress = page.attachProgress,
+                takesDragAtOnce = rowTakesDragAtOnce,
                 onPhotoClick = onPhotoClick,
                 onTakePhotoClick = onTakePhotoClick,
                 onPickPhotoClick = onPickPhotoClick,
@@ -181,7 +194,13 @@ private fun CatFacts(
 @Composable
 private fun CatPagerPreview() {
     CatsRadarTheme {
-        Surface { CatPager(state = samplePages, contentPadding = PaddingValues()) }
+        Surface {
+            CatPager(
+                state = samplePages,
+                pagerState = rememberCatPagerState(samplePages),
+                contentPadding = PaddingValues(),
+            )
+        }
     }
 }
 

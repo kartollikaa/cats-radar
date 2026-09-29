@@ -113,7 +113,8 @@ The tab reads top to bottom as a dashboard.
   chart and today's bar is in the primary colour. A day with no cats keeps a short stub, so the row never
   has gaps, and any day with a cat rises above the stub, so one cat among fifty never looks like none.
   Seven bars carry their weekdays; thirty carry a date under today's bar and under every seventh bar
-  before it, since thirty labels cannot fit.
+  before it, since thirty labels cannot fit. A tap anywhere in a bar's column picks its day, but the press
+  ripple shows on the bar alone (`StatisticsScreenTest`).
 - **The line under the chart** names one day and its count, "6 cats · Sat, Sep 26": today until a bar is
   tapped, then the tapped day. The pick is kept by date, so a new day starting does not move it to the
   bar beside it; switching the range keeps it while the range still shows that day, and once a range

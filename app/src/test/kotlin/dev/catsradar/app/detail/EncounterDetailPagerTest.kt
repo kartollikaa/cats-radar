@@ -77,6 +77,7 @@ class EncounterDetailPagerTest {
         compose.waitForIdle()
 
         compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
+        compose.onNodeWithText("2 / 2").assertIsDisplayed()
         assertEquals(emptyList(), settled)
     }
 
@@ -180,22 +181,158 @@ class EncounterDetailPagerTest {
         assertEquals(listOf(older.id), settled)
     }
 
+    @Test
+    fun `the position names the page a swipe heads for before the pages come to rest`() {
+        val settled = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(state = loadedOn(newer, logged, newer, older), onPageSettle = { settled += it })
+            }
+        }
+        compose.onNodeWithText("2 / 3").assertIsDisplayed()
+
+        flickPagesAndLeaveThemSettling(frames = 1)
+
+        compose.onNodeWithText("3 / 3").assertIsDisplayed()
+        assertEquals(emptyList(), settled, "the pages are still on their way")
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        compose.onNodeWithText("3 / 3").assertIsDisplayed()
+        assertEquals(listOf(older.id), settled)
+    }
+
+    @Test
+    fun `a drag on the row while the pages still settle moves the row, not the pages`() {
+        val settled = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(
+                    state = loadedOn(newer, newer, photographedOlder, oldest),
+                    onPageSettle = { settled += it },
+                )
+            }
+        }
+        flickPagesAndLeaveThemSettling(frames = 3)
+        assertEquals(emptyList(), settled, "the pages are still on their way")
+
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput {
+            swipe(Offset(width * 0.6f, centerY), Offset(width * 0.1f, centerY), durationMillis = 150)
+        }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+
+        compose.onNodeWithText(context.getString(R.string.viewer_position, 2, 2)).assertIsDisplayed()
+        compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
+        assertEquals(listOf(photographedOlder.id), settled)
+    }
+
+    @Test
+    fun `while the row is dragged during a settle the pages wait under it, then carry on`() {
+        val settled = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(
+                    state = loadedOn(newer, newer, photographedOlder, oldest),
+                    onPageSettle = { settled += it },
+                )
+            }
+        }
+        flickPagesAndLeaveThemSettling(frames = 3)
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput {
+            down(Offset(width * 0.6f, centerY))
+            repeat(4) { moveBy(Offset(-12f, 0f)) }
+        }
+        compose.mainClock.advanceTimeByFrame()
+        val held = timeLeft(OLDER_TIME)
+
+        repeat(6) { compose.mainClock.advanceTimeByFrame() }
+
+        assertEquals(held, timeLeft(OLDER_TIME), "the pages moved under the finger")
+        compose.onNodeWithTag(DetailCarouselTestTag).performTouchInput { up() }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(listOf(photographedOlder.id), settled)
+    }
+
+    @Test
+    fun `a second flick below the row while the pages still settle moves on to the cat after`() {
+        val settled = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(
+                    state = loadedOn(newer, newer, photographedOlder, oldest),
+                    onPageSettle = { settled += it },
+                )
+            }
+        }
+        // Past halfway, so the second flick starts from the cat the first one heads for.
+        flickPagesAndLeaveThemSettling(frames = 12)
+        assertEquals(emptyList(), settled, "the pages are still on their way")
+
+        val belowTheRow = compose.onNodeWithText(OLDER_TIME).fetchSemanticsNode().boundsInRoot.center.y
+        compose.onNodeWithTag(DetailPagesTestTag).performTouchInput {
+            swipe(Offset(width * 0.7f, belowTheRow), Offset(width * 0.5f, belowTheRow), durationMillis = 40)
+        }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+
+        compose.onNodeWithText(OLDEST_TIME).assertIsDisplayed()
+        assertEquals(oldest.id, settled.last())
+    }
+
+    @Test
+    fun `a tap while the pages still settle, however shaky, lets them carry on to the cat they head for`() {
+        val settled = mutableListOf<String>()
+        compose.setContent {
+            CatsRadarTheme {
+                EncounterDetailScreen(state = loadedOn(newer, newer, older, oldest), onPageSettle = { settled += it })
+            }
+        }
+        flickPagesAndLeaveThemSettling(frames = 3)
+        assertEquals(emptyList(), settled, "the pages are still on their way")
+
+        compose.onNodeWithTag(DetailPagesTestTag).performTouchInput {
+            down(Offset(width * 0.9f, centerY))
+            moveBy(Offset(-2f, 0f), delayMillis = 8)
+            moveBy(Offset(-2f, 0f), delayMillis = 8)
+            up()
+        }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+
+        compose.onNodeWithText(OLDER_TIME).assertIsDisplayed()
+        assertEquals(listOf(older.id), settled)
+    }
+
+    private fun timeLeft(time: String): Float = compose.onNodeWithText(time).fetchSemanticsNode().boundsInRoot.left
+
+    // A short, quick drag: the pages still have most of the way to go when the finger lifts.
+    private fun flickPagesAndLeaveThemSettling(frames: Int) {
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag(DetailPagesTestTag).performTouchInput {
+            swipe(Offset(width * 0.7f, centerY), Offset(width * 0.5f, centerY), durationMillis = 40)
+        }
+        repeat(frames) { compose.mainClock.advanceTimeByFrame() }
+    }
+
     private companion object {
         // One advance per swipe: to the second photo, to the row's end, then over into the next cat.
         const val SWIPES_TO_PASS_THE_ROW = 3
         const val LOGGED_TIME = "14:40"
         const val NEWER_TIME = "14:32"
         const val OLDER_TIME = "13:58"
+        const val OLDEST_TIME = "13:40"
 
         val logged = page("cat-0", LOGGED_TIME)
         val newer = page("cat-1", NEWER_TIME)
         val older = page("cat-2", OLDER_TIME)
-        val photographed = newer.copy(
-            photos = persistentListOf(
-                DetailPhoto(id = "photo-1", path = "/data/photos/photo-1.jpg"),
-                DetailPhoto(id = "photo-2", path = "/data/photos/photo-2.jpg"),
-            ),
+        val oldest = page("cat-3", OLDEST_TIME)
+        val twoPhotos = persistentListOf(
+            DetailPhoto(id = "photo-1", path = "/data/photos/photo-1.jpg"),
+            DetailPhoto(id = "photo-2", path = "/data/photos/photo-2.jpg"),
         )
+        val photographed = newer.copy(photos = twoPhotos)
+        val photographedOlder = older.copy(photos = twoPhotos)
 
         fun page(id: String, time: String) = CatPage(
             id = id,
