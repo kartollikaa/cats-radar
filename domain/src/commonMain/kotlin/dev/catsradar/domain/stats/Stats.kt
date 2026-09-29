@@ -2,6 +2,7 @@ package dev.catsradar.domain.stats
 
 import dev.catsradar.domain.model.CatCoat
 import dev.catsradar.domain.model.Session
+import kotlinx.datetime.LocalDate
 import kotlin.time.Duration
 
 data class Stats(
@@ -14,6 +15,8 @@ data class Stats(
     val byCoat: List<CoatCount>,
     val currentStreak: Int,
     val longestStreak: Int,
+    /** The last thirty days, oldest first and today last, each with its cats; a day with none is zero. */
+    val byDay: List<DayCount>,
     val nextMilestone: Milestone?,
     val outings: Int,
     val activeTime: Duration,
@@ -22,6 +25,8 @@ data class Stats(
     val bestOuting: RatedOuting?,
     val currentOuting: CurrentOuting?,
 )
+
+data class DayCount(val date: LocalDate, val count: Int)
 
 /** [coat] of null is the "not specified" row. */
 data class CoatCount(val coat: CatCoat?, val count: Int, val shareOfTotal: Double)

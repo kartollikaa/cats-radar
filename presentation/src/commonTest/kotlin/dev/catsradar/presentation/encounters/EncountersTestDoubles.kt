@@ -95,6 +95,12 @@ internal class FakeDateTimeFormatter : DateTimeFormatter {
     override fun time(instant: Instant, offset: UtcOffset): String = instant.toString()
 
     override fun duration(duration: Duration): String = duration.toString()
+
+    override fun weekday(date: LocalDate): String = "weekday $date"
+
+    override fun dayMonth(date: LocalDate): String = "dayMonth $date"
+
+    override fun weekdayDayMonth(date: LocalDate): String = "weekdayDayMonth $date"
 }
 
 // Mirrors AndroidPhotoStorage's contract: a stored path is relative, and resolving prefixes it with

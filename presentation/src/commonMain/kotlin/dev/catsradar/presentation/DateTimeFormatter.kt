@@ -17,6 +17,15 @@ interface DateTimeFormatter {
 
     /** [duration] as a short span in whole minutes; the hour part is left out below one hour. */
     fun duration(duration: Duration): String
+
+    /** [date]'s weekday, abbreviated. */
+    fun weekday(date: LocalDate): String
+
+    /** [date]'s day and abbreviated month, without the year. */
+    fun dayMonth(date: LocalDate): String
+
+    /** [date]'s abbreviated weekday, day and month, without the year. */
+    fun weekdayDayMonth(date: LocalDate): String
 }
 
 /** The wall-clock time [encounter] was logged at, where it was logged. */

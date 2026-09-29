@@ -1,27 +1,20 @@
 package dev.catsradar.ui.regions
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -39,12 +32,11 @@ import dev.catsradar.presentation.regions.RegionsTitle
 import dev.catsradar.ui.R
 import dev.catsradar.ui.components.Flag
 import dev.catsradar.ui.components.HeadlineCard
+import dev.catsradar.ui.components.ShareBar
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-
-private val ShareBarHeight = 4.dp
 
 @Composable
 internal fun RegionsHeadline(header: RegionsHeader, modifier: Modifier = Modifier) {
@@ -92,7 +84,7 @@ internal fun RegionRow(row: RegionRowState, modifier: Modifier = Modifier, onCli
                 )
                 Text(text = row.countLabel, style = MaterialTheme.typography.titleMedium)
             }
-            ShareBar(share = row.share)
+            ShareBar(share = row.share, color = MaterialTheme.colorScheme.primary)
         }
         Icon(
             painter = painterResource(R.drawable.ic_chevron_right),
@@ -127,27 +119,6 @@ private fun RegionsTrail(trail: ImmutableList<RegionsCrumb>, modifier: Modifier 
                 Text(text = names[index], style = MaterialTheme.typography.titleSmall)
             }
         }
-    }
-}
-
-@Composable
-private fun ShareBar(share: Float, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(ShareBarHeight)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-    ) {
-        // At least a round dot, so a row holding one cat among hundreds never reads as holding none.
-        Box(
-            modifier = Modifier
-                .widthIn(min = ShareBarHeight)
-                .fillMaxWidth(share)
-                .fillMaxHeight()
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
-        )
     }
 }
 

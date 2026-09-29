@@ -25,6 +25,15 @@ class AndroidDateTimeFormatterRussianTest {
     }
 
     @Test
+    fun shortDatesAreInTheDeviceLanguage() {
+        val date = LocalDate.parse("2026-09-26")
+
+        assertEquals("сб", formatter.weekday(date))
+        assertEquals("26 сент.", formatter.dayMonth(date))
+        assertEquals("сб, 26 сент.", formatter.weekdayDayMonth(date))
+    }
+
+    @Test
     fun durationCarriesItsUnitsInTheDeviceLanguage() {
         assertEquals("20 мин", formatter.duration(MINUTES_UNDER_AN_HOUR.minutes))
         assertEquals("1 ч 20 мин", formatter.duration(MINUTES_OVER_AN_HOUR.minutes))

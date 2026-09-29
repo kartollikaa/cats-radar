@@ -369,9 +369,20 @@ streak** with "days" set small beside the number. They are the numbers of today'
 *Streaks* cards, and each reads to TalkBack as one item ("3, Today").
 
 **By coat.** Each row keeps its face, its name and "38 · 26%", and gains a share bar under the name:
-the row's count over the busiest coat's, in the coat's fur colour, on `surfaceContainerHighest`. The
-*Not specified* row's bar is `outline`. It is the Places drill-down's share bar, drawn in the coat's
-own colour.
+the row's count over the busiest coat's, on `surfaceContainerHighest`. It is the Places drill-down's
+share bar, 4 dp tall and with no outline, drawn in the coat's own colours (owner, 2026-09-28, from
+prototype versions 26 to 30):
+- a one-colour coat's bar is its fur;
+- a two-colour or calico coat's bar is one fill whose colours blend into each other, each taking the
+  share its face shows: a two-colour coat is about two thirds its main colour, calico *mostly white*
+  half white, calico *little white* a fifth;
+- the colours run from the one closest to the track to the one furthest from it, so the bar always
+  ends on its clearest colour. Ginger & white runs white into ginger on the light theme and ginger
+  into white on the dark;
+- a colour fainter than 1.3:1 against the track is blended toward `onSurface` just far enough to reach
+  it, so a white bar on the light theme and a black one on the dark still show.
+
+The *Not specified* row's bar is `outline`.
 
 **Outings.** The same figures in the same order, as a two-column grid of small stats: the value in
 `titleMediumEmphasized` with its unit set small beside it, the label under it. The best outing's rate

@@ -1,6 +1,7 @@
 package dev.catsradar.presentation
 
 import android.content.Context
+import android.text.format.DateFormat
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.UtcOffset
@@ -11,11 +12,14 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.FormatStyle
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Instant
 import java.time.format.DateTimeFormatter as JavaDateTimeFormatter
 
 class AndroidDateTimeFormatter(private val context: Context) : DateTimeFormatter {
+
+    private val bestFormatters = ConcurrentHashMap<Pair<Locale, String>, JavaDateTimeFormatter>()
 
     override fun dayHeader(date: LocalDate, today: LocalDate): String = when (date) {
         today -> context.getString(R.string.day_today)
@@ -36,5 +40,20 @@ class AndroidDateTimeFormatter(private val context: Context) : DateTimeFormatter
         } else {
             context.getString(R.string.duration_minutes, minutes)
         }
+    }
+
+    override fun weekday(date: LocalDate): String = date.formatBest("EEE")
+
+    override fun dayMonth(date: LocalDate): String = date.formatBest("dMMM")
+
+    override fun weekdayDayMonth(date: LocalDate): String = date.formatBest("EEEdMMM")
+
+    // The locale's own order and punctuation for the fields a skeleton names: "Sep 26" here, "26 сент." in Russian.
+    private fun LocalDate.formatBest(skeleton: String): String {
+        val locale = Locale.getDefault()
+        val formatter = bestFormatters.getOrPut(locale to skeleton) {
+            JavaDateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale)
+        }
+        return formatter.format(toJavaLocalDate())
     }
 }
