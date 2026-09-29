@@ -18,6 +18,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -71,6 +74,10 @@ class CoatPromptCountingTest {
     private val photo get() = context.getString(R.string.counter_coat_prompt_photo)
     private val asking = CoatPromptState("cat", "cat", thumbPath = null)
     private val radio = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton)
+
+    private fun trayCat(label: String) =
+        compose.onNode(hasContentDescription(label) and hasAnyAncestor(hasTestTag(CoatTrayTestTag)))
+            .fetchSemanticsNode().boundsInRoot
 
     private fun show(prompt: () -> CoatPromptState, onOneCatClick: () -> Unit = {}, onSeveralClick: () -> Unit = {}) {
         compose.setContent {
@@ -165,6 +172,17 @@ class CoatPromptCountingTest {
         val hint = context.getString(R.string.counter_coat_count_full)
         val heard = order.subList(order.indexOf(hint) + 1, order.indexOf(oneCat))
         assertEquals(tray.map { context.getString(it.labelRes()) }, heard)
+    }
+
+    @Test
+    @Config(qualifiers = "+ar-ldrtl")
+    fun `right to left, the tray fills from the right edge, as the grid does`() {
+        show({ asking.copy(counting = CoatCountState(persistentListOf(CoatOption.GINGER, CoatOption.BLACK))) })
+
+        val tray = compose.onNodeWithTag(CoatTrayTestTag).fetchSemanticsNode().boundsInRoot
+        val first = trayCat(ginger)
+        assertEquals(tray.right, first.right, 1f)
+        assertTrue(trayCat(black).right <= first.left, "the second cat to the first one's left")
     }
 
     @Test

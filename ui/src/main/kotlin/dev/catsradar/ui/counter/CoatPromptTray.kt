@@ -72,7 +72,7 @@ internal fun CountTray(
         layout(constraints.maxWidth, height) {
             cats.forEachIndexed { index, cat ->
                 val rowFromBottom = index / perRow
-                cat.place(x = index % perRow * (cell + gap), y = height - cell - rowFromBottom * (cell + gap))
+                cat.placeRelative(x = index % perRow * (cell + gap), y = height - cell - rowFromBottom * (cell + gap))
             }
         }
     }

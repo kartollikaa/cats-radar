@@ -116,9 +116,9 @@ or loses; the header's words cross-fade while the room they need grows or shrink
 
 At the largest text a count can be taller than the screen: on a small phone, and in Russian. The sheet then fills
 the screen and its content scrolls from the bottom, so it opens on *Save* and *Not now*, and a count still grows
-upward, out of view; the title is a scroll up (`CoatPromptTallTextTest`). A swipe down on the sheet still closes it,
-asking and counting alike (`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header,
-before the pair.
+upward, out of view; the title is a scroll up (`CoatPromptTallTextTest`), and a swipe down scrolls to it before it
+closes the sheet. Where the sheet fits, a swipe down closes it, asking and counting alike
+(`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header, before the pair.
 
 The edges above hold while counting too: a newer photo takes the sheet over and the tray goes with the old photo
 (*a newer photo takes the sheet over and drops the tray*); the sheet closes before anything is written (*saving

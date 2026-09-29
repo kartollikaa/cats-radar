@@ -121,8 +121,7 @@ fun CoatPrompt(
     onSkipClick: () -> Unit = {},
 ) {
     val counting = prompt.counting
-    // The sheet stands on the screen's bottom, so what can change size sits above everything one taps next.
-    // Scrolled from the bottom, so a count taller than the screen still grows upward, out of view.
+    // Anchored at its bottom, as the sheet is, so what changes size grows upward, above what one taps next.
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState(), reverseScrolling = true)

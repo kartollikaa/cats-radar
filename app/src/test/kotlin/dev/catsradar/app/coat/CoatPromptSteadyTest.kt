@@ -218,7 +218,7 @@ open class CoatPromptSteadyTest {
         context.resources.getQuantityString(R.plurals.counter_coat_count_save, count, count)
 }
 
-// Tall enough that the sheet still stands on the bottom rather than filling the screen, where it scrolls instead.
+// Tall enough that the sheet fits the screen, so a full tray is on it.
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w360dp-h900dp", fontScale = 1.5f)
 @RunWith(AndroidJUnit4::class)

@@ -60,7 +60,12 @@ internal fun SheetHeader(
 // Not Crossfade: it keeps the longer wording's height to the end of the fade, then jumps.
 @Composable
 private fun ChangingText(text: String, content: @Composable (String) -> Unit) {
-    AnimatedContent(targetState = text, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "words") {
+    AnimatedContent(
+        targetState = text,
+        modifier = Modifier.fillMaxWidth(),
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "words",
+    ) {
         content(it)
     }
 }

@@ -100,7 +100,9 @@ class CoatPromptMotionTest {
         prompt = state
         compose.setContent {
             CatsRadarTheme {
-                CounterScreen(state = CounterState(totalLabel = "3", count = 3, undoVisible = false, coatPrompt = prompt))
+                CounterScreen(
+                    state = CounterState(totalLabel = "3", count = 3, undoVisible = false, coatPrompt = prompt),
+                )
             }
         }
         compose.waitForIdle()
