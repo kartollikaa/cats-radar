@@ -3,6 +3,7 @@ package dev.catsradar.app.architecture
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.core.filesystem.PathProvider
 import org.junit.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -15,6 +16,29 @@ class KonsistScopeSupportTest {
     @Test
     fun `a build output file is outside the scope`() {
         assertTrue(isExcludedSource("/r/app/build/generated/ksp/debug/A.kt", projectRoot = "/r"))
+    }
+
+    @Test
+    fun `the build directories of the root and of a nested module are build output`() {
+        assertTrue(isExcludedSource("/r/build/reports/A.kt", projectRoot = "/r"))
+        assertTrue(isExcludedSource("/r/build-logic/convention/build/classes/A.kt", projectRoot = "/r"))
+    }
+
+    @Test
+    fun `a package directory named build is a hand-placed source`() {
+        assertFalse(
+            isExcludedSource(
+                "/r/presentation/src/commonMain/kotlin/dev/catsradar/presentation/build/A.kt",
+                projectRoot = "/r",
+            ),
+        )
+    }
+
+    @Test
+    fun `a path outside the project root is refused instead of kept`() {
+        assertFailsWith<IllegalArgumentException> {
+            isExcludedSource("/elsewhere/app/src/main/A.kt", projectRoot = "/r")
+        }
     }
 
     @Test
