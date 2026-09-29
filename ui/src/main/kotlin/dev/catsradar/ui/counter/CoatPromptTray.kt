@@ -15,6 +15,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,6 +78,14 @@ internal fun CountTray(
             }
         }
     }
+}
+
+// The cats a tray last held, so they stay in it while it closes.
+@Composable
+internal fun rememberLastCounted(tray: ImmutableList<CoatOption?>): ImmutableList<CoatOption?> {
+    val last = remember { mutableStateOf(tray) }
+    SideEffect { if (tray.isNotEmpty()) last.value = tray }
+    return tray.ifEmpty { last.value }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

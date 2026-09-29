@@ -32,9 +32,6 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,7 +57,6 @@ import dev.catsradar.ui.components.CatsRadarBottomSheet
 import dev.catsradar.ui.components.SheetHeader
 import dev.catsradar.ui.theme.CatsRadarTheme
 import dev.catsradar.ui.theme.ThemePreviews
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableSet
@@ -179,14 +175,6 @@ fun CoatPrompt(
             }
         }
     }
-}
-
-// The cats a tray last held, so they stay in it while it closes.
-@Composable
-private fun rememberLastCounted(tray: ImmutableList<CoatOption?>): ImmutableList<CoatOption?> {
-    val last = remember { mutableStateOf(tray) }
-    SideEffect { if (tray.isNotEmpty()) last.value = tray }
-    return tray.ifEmpty { last.value }
 }
 
 @Composable
