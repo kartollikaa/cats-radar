@@ -1,6 +1,7 @@
 package dev.catsradar.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -57,13 +58,18 @@ internal fun SheetHeader(
     }
 }
 
-// Not Crossfade: it keeps the longer wording's height to the end of the fade, then jumps.
+private const val WordsOutMillis = 90
+private const val WordsInMillis = 220
+
+// Not Crossfade, which holds the longer wording's height and overlaps both: the old words leave, then the new arrive.
 @Composable
 private fun ChangingText(text: String, content: @Composable (String) -> Unit) {
     AnimatedContent(
         targetState = text,
         modifier = Modifier.fillMaxWidth(),
-        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        transitionSpec = {
+            fadeIn(tween(WordsInMillis, delayMillis = WordsOutMillis)) togetherWith fadeOut(tween(WordsOutMillis))
+        },
         label = "words",
     ) {
         content(it)

@@ -99,8 +99,8 @@ While counting:
 
 **The sheet keeps still where one taps.** It stands on the screen's bottom, so anything that changes size moves
 everything above it. Counting cats, taking them out and switching between *One cat* and *Several* never move the
-pair, a face, *Not now* or a counted cat (`CoatPromptSteadyTest`, also run at the largest text in English and in
-Russian):
+pair, a face or *Not now*, and counting never moves a counted cat; taking a cat out moves only the cats counted after
+it, each into the place before (`CoatPromptSteadyTest`, also run at the largest text in English and in Russian):
 
 - The tray holds only the rows its cats fill. A cat that no longer fits the bottom row opens a row above it, so
   the rows stack upward and the row one takes cats out of stays where it is. A screen reader still hears the cats
@@ -116,9 +116,8 @@ or loses; the header's words cross-fade while the room they need grows or shrink
 
 At the largest text a count can be taller than the screen: on a small phone, and in Russian. The sheet then fills
 the screen and its content scrolls from the bottom, so it opens on *Save* and *Not now*, and a count still grows
-upward, out of view; the title is a scroll up (`CoatPromptTallTextTest`), and a swipe down scrolls to it before it
-closes the sheet. Where the sheet fits, a swipe down closes it, asking and counting alike
-(`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header, before the pair.
+upward, out of view; the title is a scroll up (`CoatPromptTallTextTest`). Where the sheet fits, a swipe down closes
+it, asking and counting alike (`CoatPromptSheetDismissTest`). A screen reader reaches the counted cats after the header, before the pair.
 
 The edges above hold while counting too: a newer photo takes the sheet over and the tray goes with the old photo
 (*a newer photo takes the sheet over and drops the tray*); the sheet closes before anything is written (*saving

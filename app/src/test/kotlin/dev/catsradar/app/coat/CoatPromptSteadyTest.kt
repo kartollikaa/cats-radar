@@ -103,6 +103,21 @@ open class CoatPromptSteadyTest {
     }
 
     @Test
+    fun `taking out a cat moves nothing one taps, and each cat counted after it takes the place before`() {
+        val full = CoatOption.entries.take(CoatCountState.MOST_CATS)
+        show(counting(CoatCountState.MOST_CATS))
+        val before = taps()
+        val placed = placesOf(full)
+        val takenOut = CoatCountState.MOST_CATS / 2
+
+        val left = full.filterIndexed { index, _ -> index != takenOut }
+        showNow(asking.copy(counting = CoatCountState(left.toImmutableList())))
+
+        assertStill(before, taps(), "after taking out cat $takenOut")
+        assertEquals(placed.dropLast(1), placesOf(left), "the cats left, in the order they were counted")
+    }
+
+    @Test
     fun `the tray holds only the rows its cats fill, and a row opens above the others`() {
         show(counting(1))
         val oneRow = tray().height
@@ -140,7 +155,8 @@ open class CoatPromptSteadyTest {
     fun `while counting, the tray lies between the header and the pair`() {
         show(counting(3))
 
-        val header = title()
+        val hint = bounds(context.getString(R.string.counter_coat_count_hint))
+        val header = title().let { Rect(it.left, it.top, maxOf(it.right, hint.right), maxOf(it.bottom, hint.bottom)) }
         val tray = tray()
         val pair = bounds(context.getString(R.string.counter_coat_prompt_one))
         assertTrue(header.bottom <= tray.top, "the header $header above the tray $tray")
@@ -202,8 +218,10 @@ open class CoatPromptSteadyTest {
     private fun tray(): Rect = compose.onNodeWithTag(CoatTrayTestTag).fetchSemanticsNode().boundsInRoot
 
     // In the order they were counted: counting() gives each cat its own coat.
-    private fun countedCats(cats: Int): List<Rect> = (0 until cats).map { index ->
-        val label = context.getString(CoatOption.entries[index].labelRes())
+    private fun countedCats(cats: Int): List<Rect> = placesOf(CoatOption.entries.take(cats))
+
+    private fun placesOf(coats: List<CoatOption>): List<Rect> = coats.map { coat ->
+        val label = context.getString(coat.labelRes())
         compose.onNode(hasContentDescription(label) and hasAnyAncestor(hasTestTag(CoatTrayTestTag)))
             .fetchSemanticsNode().boundsInRoot
     }
