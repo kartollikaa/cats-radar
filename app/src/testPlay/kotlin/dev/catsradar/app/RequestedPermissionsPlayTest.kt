@@ -7,18 +7,18 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertContains
+import kotlin.test.assertFalse
 
 @RunWith(AndroidJUnit4::class)
-class RequestedPermissionsTest {
+class RequestedPermissionsPlayTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    // Undeclared, the request is refused without a dialog and every gallery photo arrives stripped of GPS.
+    // Google Play policy prohibits REQUEST_INSTALL_PACKAGES unless the app's core purpose is managing APKs.
     @Test
-    fun theAppRequestsTheLocationOfPhotosItIsGiven() {
+    fun playStoreFlavorDoesNotRequestPackageInstallPermission() {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
 
-        assertContains(info.requestedPermissions.orEmpty().toList(), Manifest.permission.ACCESS_MEDIA_LOCATION)
+        assertFalse(info.requestedPermissions.orEmpty().toList().contains(Manifest.permission.REQUEST_INSTALL_PACKAGES))
     }
 }

@@ -107,7 +107,7 @@ installs.
   | another application id | the downloaded file isn't Cats Radar |
   | a `versionCode` not above the installed one | the downloaded version isn't newer |
   | anything else (`BLOCKED`, `INVALID`, a refused session) | the version wasn't installed |
-- `REQUEST_INSTALL_PACKAGES` is declared; without it Android refuses the session outright.
+- `REQUEST_INSTALL_PACKAGES` is declared in the `sideload` product flavor (`app/src/sideload/AndroidManifest.xml`); the `play` flavor omits it to comply with Google Play Store policy. Without it on `sideload`, Android refuses the session outright.
 - A debug build is signed with another key than a release, so it cannot update to one: Android refuses
   the session.
 - **Play Protect may step in** on a phone with Google Play: an app it has not seen before gets "App scan

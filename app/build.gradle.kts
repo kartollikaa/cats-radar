@@ -5,6 +5,18 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+android {
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("play") {
+            dimension = "distribution"
+        }
+        create("sideload") {
+            dimension = "distribution"
+        }
+    }
+}
+
 dependencies {
     implementation(projects.ui)
     implementation(projects.presentation)

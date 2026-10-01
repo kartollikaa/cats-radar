@@ -16,7 +16,7 @@ class FirebaseConventionPlugin : Plugin<Project> {
         pluginManager.apply(libs.pluginId("google-services"))
         pluginManager.apply(libs.pluginId("firebase-crashlytics"))
 
-        tasks.matching { it.name == "processDebugGoogleServices" }.configureEach {
+        tasks.matching { it.name.contains("DebugGoogleServices") }.configureEach {
             enabled = false
         }
         registerDebugGoogleServicesCleanup()
@@ -41,9 +41,13 @@ class FirebaseConventionPlugin : Plugin<Project> {
 
 internal fun Project.registerDebugGoogleServicesCleanup() {
     val clearDebugGoogleServices = tasks.register<Delete>("clearDebugGoogleServices") {
-        delete(layout.buildDirectory.dir("generated/res/processDebugGoogleServices"))
+        delete(
+            layout.buildDirectory.dir("generated/res/processDebugGoogleServices"),
+            layout.buildDirectory.dir("generated/res/processPlayDebugGoogleServices"),
+            layout.buildDirectory.dir("generated/res/processSideloadDebugGoogleServices"),
+        )
     }
-    tasks.matching { it.name == "mergeDebugResources" }.configureEach {
+    tasks.matching { it.name.contains("DebugResources") }.configureEach {
         dependsOn(clearDebugGoogleServices)
     }
 }

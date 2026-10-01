@@ -10,15 +10,15 @@ import org.junit.runner.RunWith
 import kotlin.test.assertContains
 
 @RunWith(AndroidJUnit4::class)
-class RequestedPermissionsTest {
+class RequestedPermissionsSideloadTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    // Undeclared, the request is refused without a dialog and every gallery photo arrives stripped of GPS.
+    // Undeclared, Android refuses the update's install session without asking the user.
     @Test
-    fun theAppRequestsTheLocationOfPhotosItIsGiven() {
+    fun theAppMayAskToInstallItsOwnUpdates() {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
 
-        assertContains(info.requestedPermissions.orEmpty().toList(), Manifest.permission.ACCESS_MEDIA_LOCATION)
+        assertContains(info.requestedPermissions.orEmpty().toList(), Manifest.permission.REQUEST_INSTALL_PACKAGES)
     }
 }
