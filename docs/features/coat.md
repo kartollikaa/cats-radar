@@ -140,7 +140,10 @@ with how many the tray holds (`CoatPromptCountingTest`).
 
 ## Telling them apart
 
-Every coat is drawn as a **cat's face in that coat's real markings**, with its name beneath it:
+Every coat is shown as a **raster cat face in that coat's real markings**, with its name beneath it.
+The faces have rounded ink outlines, smooth painted fills and restrained expressions. An expression
+belongs to the coat's artwork; it is not a mood recorded about an encounter. The same face appears
+in the picker, encounter list, detail, photo tray and statistics.
 
 - a **solid** coat is one colour all over;
 - an **"& white"** coat has a white muzzle and a blaze running up between the eyes;
@@ -153,18 +156,15 @@ stripes separate brown from black, whose furs are only a shade apart. Ginger and
 alone; the name under every face carries that difference, and every other one, for anyone who cannot
 see the colours.
 
-**Every face is visible on both themes.** A white cat on the light surface and a black one on the
-dark surface have almost no contrast with what is behind them, so each face has a line around it in
-the theme's `outline` colour. Dark-furred cats have amber eyes, and each coat's nose is pink or
-dark, whichever shows against what it sits on. `CoatLookTest` holds all three to the contrast a
-meaningful shape needs: the line against the surface and against the shape a face sits in, in both
-themes (a ringed face's line takes the primary colour, since the outline fades on the primary
-container in the dark theme), the eyes against the fur, and the nose against the muzzle or the fur.
-The rim test fails if the line goes back to `outlineVariant`, which is not enough.
+**Every face keeps an edge on both themes.** A thin theme-coloured rim follows the raster's alpha
+behind its painted outline. A ringed grid face uses the primary colour for that rim; other faces
+use `outline`. The artwork's fur colours remain unchanged by the theme. `CoatLookTest` checks the
+rim colours against the surfaces; `CatFaceResourceTest` checks the packaged images and transparent
+padding. Rendered checks cover their fit in the existing Material containers.
 
-The shapes are one set of paths, scaled and centred in whatever space a face is given, so the grid,
-the card, the sheet and anything later draw the same cat. The launcher icon is the ginger-and-white face drawn
-with those paths (see [app-shell.md](./app-shell.md)).
+The transparent images are bundled locally and centred in whatever space a face is given. They
+do not require a download. Launcher and monochrome notification icons retain their separate vector
+paths (see [app-shell.md](./app-shell.md)).
 
 The labels say **calico**. The stored values are still `TRICOLOR_*`: the database and backup
 archives hold those names, and renaming what nobody sees would need a migration for nothing.
@@ -219,9 +219,10 @@ blend along one bar, and a colour too faint for the track is shaded until it sho
   `CoatPromptTray.kt` its tray; `CoatPromptWords.kt` the header's wordings; `CounterStore` opens and
   closes it, `presentation/…/counter/CoatCounting.kt` moves it between prompts and `CoatQuestion.kt` makes its writes
 - `ui/…/coat/CoatShapes.kt` — each coat's shape, stretched onto its square
-- `ui/…/coat/CoatLook.kt` — each coat's fur, patches and eyes, the line around every face, and the colours
-  its share bar blends
-- `ui/…/coat/CatFace.kt` — the face itself
+- `ui/…/coat/CoatLook.kt` — coat colours, markings and the theme rim used by the face and share bar
+- `ui/…/coat/CatFace.kt` — shared raster rendering and theme rim
+- `ui/…/coat/CatFacePaths.kt` — legacy monochrome launcher and notification paths
+- `ui/src/main/res/drawable-nodpi/cat_face_*.webp` — the coat artwork
 
 ## On the map
 
