@@ -1,12 +1,11 @@
 package dev.catsradar.ui.coat
 
+import android.graphics.BitmapFactory
+import android.graphics.Color
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
-import androidx.compose.ui.graphics.vector.PathNode
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.graphics.shapes.Cubic
-import androidx.graphics.shapes.RoundedPolygon
 import dev.catsradar.presentation.coat.CoatOption
 import dev.catsradar.ui.encounters.LeadFaceShare
 import dev.catsradar.ui.encounters.OutingLeadSize
@@ -16,9 +15,16 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
+import java.io.File
+import java.util.Locale
 import kotlin.math.hypot
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class CoatShapesTest {
 
     private val everyCell = CoatOption.entries + listOf(null)
@@ -68,49 +74,44 @@ class CoatShapesTest {
         // These shapes reach their faces' ears; no other coat may join them.
         assertEquals(
             "the coat grid",
-            setOf(CoatOption.GREY),
+            setOf(CoatOption.GREY, CoatOption.BLACK_WHITE),
             coatsUnderTheRing(TileSize, TileFaceSize / TileSize, TileRingWidth),
         )
         assertEquals(
             "an outing card",
-            setOf(CoatOption.BROWN_WHITE, CoatOption.GREY, CoatOption.GREY_WHITE, CoatOption.BLACK_WHITE),
+            setOf(CoatOption.GREY, CoatOption.BLACK_WHITE),
             coatsUnderTheRing(OutingLeadSize, LeadFaceShare, SelectionRingWidth),
         )
     }
 
     private fun coatsUnderTheRing(tile: Dp, faceShare: Float, ring: Dp): Set<CoatOption> {
         val clearance = (ring + FaceRimWidth / 2) / tile
-        return CoatOption.entries.filter { faceMargin(coatShapeFor(it), faceShare) < clearance }.toSet()
+        return CoatOption.entries.filter { faceMargin(it, faceShare) < clearance }.toSet()
     }
 
-    private fun faceMargin(shape: RoundedPolygon, faceShare: Float): Float {
+    private fun faceMargin(coat: CoatOption, faceShare: Float): Float {
+        val shape = coatShapeFor(coat)
         val edge = shape.cubics.flatMap { cubic -> (0 until Samples).map { cubic.at(it / Samples.toFloat()) } }
         val inset = (1 - faceShare) / 2
-        return headOutline.minOf { (x, y) ->
-            edge.signedDistance(inset + x / FaceUnits * faceShare, inset + y / FaceUnits * faceShare)
+        return headOutline(coat).minOf { (x, y) ->
+            edge.signedDistance(inset + x * faceShare, inset + y * faceShare)
         }
     }
 
-    private val headOutline: List<Pair<Float, Float>> by lazy {
-        var from = 0f to 0f
-        PathParser().parsePathString(CatFacePaths.Head).toNodes().flatMap { node ->
-            val points = when (node) {
-                is PathNode.MoveTo -> listOf(node.x to node.y)
-                is PathNode.LineTo -> (1..Samples).map {
-                    val t = it / Samples.toFloat()
-                    (from.first + (node.x - from.first) * t) to (from.second + (node.y - from.second) * t)
+    private fun headOutline(coat: CoatOption): List<Pair<Float, Float>> {
+        val file = File("src/main/res/drawable-nodpi/cat_face_${coat.name.lowercase(Locale.ROOT)}.webp")
+        val bitmap = BitmapFactory.decodeFile(file.path)
+        val points = buildList {
+            for (y in 0 until bitmap.height step 4) {
+                val row = (0 until bitmap.width).filter { Color.alpha(bitmap.getPixel(it, y)) > 127 }
+                if (row.isNotEmpty()) {
+                    add(row.first().toFloat() / bitmap.width to y.toFloat() / bitmap.height)
+                    add(row.last().toFloat() / bitmap.width to y.toFloat() / bitmap.height)
                 }
-                is PathNode.CurveTo -> (1..Samples).map {
-                    val t = it / Samples.toFloat()
-                    val x = bezier(t, from.first, node.x1, node.x2, node.x3)
-                    x to bezier(t, from.second, node.y1, node.y2, node.y3)
-                }
-                PathNode.Close -> emptyList()
-                else -> error("the head's outline has no sampling for $node")
             }
-            points.lastOrNull()?.let { from = it }
-            points
         }
+        bitmap.recycle()
+        return points
     }
 
     private fun Cubic.at(t: Float): Pair<Float, Float> =
